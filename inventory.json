@@ -1,0 +1,1502 @@
+﻿[
+    {
+        "Path":  "lib\\app.dart",
+        "Size":  2134,
+        "Lines":  59
+    },
+    {
+        "Path":  "lib\\main.dart",
+        "Size":  3410,
+        "Lines":  97
+    },
+    {
+        "Path":  "lib\\routes.dart",
+        "Size":  8515,
+        "Lines":  222
+    },
+    {
+        "Path":  "lib\\core\\base\\base_state.dart",
+        "Size":  775,
+        "Lines":  25
+    },
+    {
+        "Path":  "lib\\core\\base\\base_usecase.dart",
+        "Size":  436,
+        "Lines":  14
+    },
+    {
+        "Path":  "lib\\core\\config\\app_environment.dart",
+        "Size":  2423,
+        "Lines":  73
+    },
+    {
+        "Path":  "lib\\core\\constants\\app_constants.dart",
+        "Size":  2098,
+        "Lines":  63
+    },
+    {
+        "Path":  "lib\\core\\engine\\hos_calculator.dart",
+        "Size":  5530,
+        "Lines":  138
+    },
+    {
+        "Path":  "lib\\core\\engine\\hos_period_classifier.dart",
+        "Size":  3736,
+        "Lines":  113
+    },
+    {
+        "Path":  "lib\\core\\engine\\hos_rules_engine.dart",
+        "Size":  8942,
+        "Lines":  246
+    },
+    {
+        "Path":  "lib\\core\\engine\\hos_state_machine.dart",
+        "Size":  3063,
+        "Lines":  93
+    },
+    {
+        "Path":  "lib\\core\\engine\\hos_violations_engine.dart",
+        "Size":  8988,
+        "Lines":  244
+    },
+    {
+        "Path":  "lib\\core\\engine\\diagnostics\\diagnostics_engine.dart",
+        "Size":  9124,
+        "Lines":  256
+    },
+    {
+        "Path":  "lib\\core\\engine\\tracking\\distance_tracker.dart",
+        "Size":  2884,
+        "Lines":  96
+    },
+    {
+        "Path":  "lib\\core\\engine\\tracking\\duty_status_tracker.dart",
+        "Size":  7545,
+        "Lines":  244
+    },
+    {
+        "Path":  "lib\\core\\errors\\failures.dart",
+        "Size":  2863,
+        "Lines":  97
+    },
+    {
+        "Path":  "lib\\core\\extensions\\context_extensions.dart",
+        "Size":  2612,
+        "Lines":  79
+    },
+    {
+        "Path":  "lib\\core\\extensions\\string_extensions.dart",
+        "Size":  1488,
+        "Lines":  39
+    },
+    {
+        "Path":  "lib\\core\\localization\\locale_provider.dart",
+        "Size":  881,
+        "Lines":  23
+    },
+    {
+        "Path":  "lib\\core\\network\\api_client.dart",
+        "Size":  4297,
+        "Lines":  122
+    },
+    {
+        "Path":  "lib\\core\\network\\api_config.dart",
+        "Size":  572,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\core\\network\\api_exception.dart",
+        "Size":  300,
+        "Lines":  12
+    },
+    {
+        "Path":  "lib\\core\\network\\api_response.dart",
+        "Size":  654,
+        "Lines":  23
+    },
+    {
+        "Path":  "lib\\core\\network\\auth_interceptor.dart",
+        "Size":  1417,
+        "Lines":  37
+    },
+    {
+        "Path":  "lib\\core\\network\\network_info.dart",
+        "Size":  1047,
+        "Lines":  30
+    },
+    {
+        "Path":  "lib\\core\\network\\network_providers.dart",
+        "Size":  1275,
+        "Lines":  40
+    },
+    {
+        "Path":  "lib\\core\\network\\request_logger.dart",
+        "Size":  982,
+        "Lines":  26
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar_client_sdk.dart",
+        "Size":  3932,
+        "Lines":  136
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_api_client.dart",
+        "Size":  889,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_api_client_impl.dart",
+        "Size":  3186,
+        "Lines":  90
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_native_client.dart",
+        "Size":  991,
+        "Lines":  24
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_native_client_impl.dart",
+        "Size":  2136,
+        "Lines":  69
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_websocket_client.dart",
+        "Size":  829,
+        "Lines":  21
+    },
+    {
+        "Path":  "lib\\core\\network\\traccar\\traccar_websocket_client_impl.dart",
+        "Size":  3992,
+        "Lines":  117
+    },
+    {
+        "Path":  "lib\\core\\services\\battery_optimization_service.dart",
+        "Size":  3236,
+        "Lines":  76
+    },
+    {
+        "Path":  "lib\\core\\services\\bluetooth_service.dart",
+        "Size":  9432,
+        "Lines":  280
+    },
+    {
+        "Path":  "lib\\core\\services\\erods_generator.dart",
+        "Size":  3381,
+        "Lines":  84
+    },
+    {
+        "Path":  "lib\\core\\services\\event_log_service.dart",
+        "Size":  3014,
+        "Lines":  91
+    },
+    {
+        "Path":  "lib\\core\\services\\event_queue_service.dart",
+        "Size":  4122,
+        "Lines":  120
+    },
+    {
+        "Path":  "lib\\core\\services\\live_tracking_data_source.dart",
+        "Size":  5127,
+        "Lines":  142
+    },
+    {
+        "Path":  "lib\\core\\services\\local_database_service.dart",
+        "Size":  8998,
+        "Lines":  230
+    },
+    {
+        "Path":  "lib\\core\\services\\local_storage_service.dart",
+        "Size":  9786,
+        "Lines":  207
+    },
+    {
+        "Path":  "lib\\core\\services\\password_service.dart",
+        "Size":  3552,
+        "Lines":  112
+    },
+    {
+        "Path":  "lib\\core\\services\\push_notification_service.dart",
+        "Size":  3943,
+        "Lines":  102
+    },
+    {
+        "Path":  "lib\\core\\services\\quick_actions_initializer.dart",
+        "Size":  2210,
+        "Lines":  69
+    },
+    {
+        "Path":  "lib\\core\\services\\remote_config_service.dart",
+        "Size":  4580,
+        "Lines":  120
+    },
+    {
+        "Path":  "lib\\core\\services\\utc_sync_service.dart",
+        "Size":  1839,
+        "Lines":  54
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_colors.dart",
+        "Size":  4015,
+        "Lines":  93
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_radius.dart",
+        "Size":  482,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_spacing.dart",
+        "Size":  595,
+        "Lines":  16
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_text_styles.dart",
+        "Size":  2249,
+        "Lines":  77
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_theme.dart",
+        "Size":  5247,
+        "Lines":  137
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_theme_provider.dart",
+        "Size":  1145,
+        "Lines":  33
+    },
+    {
+        "Path":  "lib\\core\\theme\\app_typography.dart",
+        "Size":  3637,
+        "Lines":  103
+    },
+    {
+        "Path":  "lib\\core\\utils\\logger.dart",
+        "Size":  1068,
+        "Lines":  29
+    },
+    {
+        "Path":  "lib\\core\\widgets\\app_button.dart",
+        "Size":  2746,
+        "Lines":  97
+    },
+    {
+        "Path":  "lib\\core\\widgets\\app_card.dart",
+        "Size":  915,
+        "Lines":  35
+    },
+    {
+        "Path":  "lib\\core\\widgets\\app_error_widget.dart",
+        "Size":  1500,
+        "Lines":  50
+    },
+    {
+        "Path":  "lib\\core\\widgets\\app_loading_indicator.dart",
+        "Size":  1124,
+        "Lines":  43
+    },
+    {
+        "Path":  "lib\\core\\widgets\\app_text_field.dart",
+        "Size":  1878,
+        "Lines":  65
+    },
+    {
+        "Path":  "lib\\core\\widgets\\connection_status_indicator.dart",
+        "Size":  3531,
+        "Lines":  92
+    },
+    {
+        "Path":  "lib\\core\\widgets\\countdown_wheel.dart",
+        "Size":  2935,
+        "Lines":  102
+    },
+    {
+        "Path":  "lib\\core\\widgets\\eld_card.dart",
+        "Size":  1080,
+        "Lines":  35
+    },
+    {
+        "Path":  "lib\\core\\widgets\\eld_info_row.dart",
+        "Size":  1622,
+        "Lines":  55
+    },
+    {
+        "Path":  "lib\\features\\account\\presentation\\pages\\account_page.dart",
+        "Size":  6523,
+        "Lines":  178
+    },
+    {
+        "Path":  "lib\\features\\account\\presentation\\pages\\info_packet_page.dart",
+        "Size":  20258,
+        "Lines":  411
+    },
+    {
+        "Path":  "lib\\features\\account\\presentation\\pages\\manual_detail_page.dart",
+        "Size":  3067,
+        "Lines":  79
+    },
+    {
+        "Path":  "lib\\features\\account\\presentation\\pages\\rules_page.dart",
+        "Size":  9367,
+        "Lines":  230
+    },
+    {
+        "Path":  "lib\\features\\account\\presentation\\pages\\user_manual_page.dart",
+        "Size":  3101,
+        "Lines":  54
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\auth_local_data_source.dart",
+        "Size":  3768,
+        "Lines":  101
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\auth_remote_data_source.dart",
+        "Size":  1392,
+        "Lines":  38
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\nano_auth_remote_data_source.dart",
+        "Size":  5163,
+        "Lines":  120
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\nano_token_store.dart",
+        "Size":  3099,
+        "Lines":  85
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\traccar_auth_remote_data_source.dart",
+        "Size":  6452,
+        "Lines":  148
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\traccar_auth_remote_data_source_adapter.dart",
+        "Size":  4240,
+        "Lines":  110
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\datasources\\traccar_session_store.dart",
+        "Size":  2461,
+        "Lines":  66
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\models\\auth_result_model.dart",
+        "Size":  926,
+        "Lines":  29
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\models\\user_model.dart",
+        "Size":  1737,
+        "Lines":  59
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\repositories\\auth_repository_impl.dart",
+        "Size":  6371,
+        "Lines":  171
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\repositories\\mock_auth_repository.dart",
+        "Size":  4649,
+        "Lines":  140
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\repositories\\nano_auth_repository_impl.dart",
+        "Size":  2299,
+        "Lines":  65
+    },
+    {
+        "Path":  "lib\\features\\auth\\data\\repositories\\traccar_auth_repository_adapter.dart",
+        "Size":  8366,
+        "Lines":  208
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\auth_credentials.dart",
+        "Size":  402,
+        "Lines":  14
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\auth_result.dart",
+        "Size":  525,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\nano_auth_entities.dart",
+        "Size":  2172,
+        "Lines":  82
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\nano_auth_failures.dart",
+        "Size":  1974,
+        "Lines":  41
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\traccar_session.dart",
+        "Size":  2612,
+        "Lines":  62
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\entities\\user.dart",
+        "Size":  1391,
+        "Lines":  54
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\repositories\\auth_repository.dart",
+        "Size":  2018,
+        "Lines":  47
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\repositories\\nano_auth_repository.dart",
+        "Size":  385,
+        "Lines":  8
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\repositories\\traccar_auth_repository.dart",
+        "Size":  5914,
+        "Lines":  145
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\usercases\\login.dart",
+        "Size":  1440,
+        "Lines":  42
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\usercases\\logout.dart",
+        "Size":  679,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\auth\\domain\\usercases\\verify_local_password.dart",
+        "Size":  742,
+        "Lines":  16
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\pages\\auth_page.dart",
+        "Size":  3509,
+        "Lines":  91
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\pages\\login_page.dart",
+        "Size":  3046,
+        "Lines":  82
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\pages\\splash_page.dart",
+        "Size":  2441,
+        "Lines":  69
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\auth_mode_provider.dart",
+        "Size":  280,
+        "Lines":  11
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\auth_providers.dart",
+        "Size":  4578,
+        "Lines":  95
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\auth_state_provider.dart",
+        "Size":  4829,
+        "Lines":  143
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\login_form_provider.dart",
+        "Size":  1043,
+        "Lines":  32
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\nano_auth_provider.dart",
+        "Size":  1881,
+        "Lines":  63
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\providers\\traccar_auth_provider.dart",
+        "Size":  5482,
+        "Lines":  133
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\widgets\\forgot_password_form.dart",
+        "Size":  3582,
+        "Lines":  97
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\widgets\\login_form.dart",
+        "Size":  5966,
+        "Lines":  164
+    },
+    {
+        "Path":  "lib\\features\\auth\\presentation\\widgets\\register_form.dart",
+        "Size":  6828,
+        "Lines":  169
+    },
+    {
+        "Path":  "lib\\features\\codriver\\data\\datasources\\codriver_mock_data.dart",
+        "Size":  509,
+        "Lines":  12
+    },
+    {
+        "Path":  "lib\\features\\codriver\\domain\\entities\\codriver.dart",
+        "Size":  297,
+        "Lines":  12
+    },
+    {
+        "Path":  "lib\\features\\codriver\\presentation\\pages\\codriver_page.dart",
+        "Size":  14254,
+        "Lines":  285
+    },
+    {
+        "Path":  "lib\\features\\codriver\\presentation\\providers\\codriver_provider.dart",
+        "Size":  2055,
+        "Lines":  65
+    },
+    {
+        "Path":  "lib\\features\\connection\\presentation\\pages\\eld_connection_page.dart",
+        "Size":  7481,
+        "Lines":  196
+    },
+    {
+        "Path":  "lib\\features\\dvir\\data\\datasources\\dvir_mock_data.dart",
+        "Size":  2076,
+        "Lines":  58
+    },
+    {
+        "Path":  "lib\\features\\dvir\\data\\models\\dvir_model.dart",
+        "Size":  3148,
+        "Lines":  95
+    },
+    {
+        "Path":  "lib\\features\\dvir\\domain\\entities\\dvir_report.dart",
+        "Size":  3175,
+        "Lines":  97
+    },
+    {
+        "Path":  "lib\\features\\dvir\\domain\\repositories\\dvir_repository.dart",
+        "Size":  593,
+        "Lines":  14
+    },
+    {
+        "Path":  "lib\\features\\dvir\\presentation\\pages\\dvir_form_page.dart",
+        "Size":  21258,
+        "Lines":  520
+    },
+    {
+        "Path":  "lib\\features\\dvir\\presentation\\pages\\dvir_list_page.dart",
+        "Size":  7249,
+        "Lines":  186
+    },
+    {
+        "Path":  "lib\\features\\dvir\\presentation\\providers\\dvir_provider.dart",
+        "Size":  1637,
+        "Lines":  54
+    },
+    {
+        "Path":  "lib\\features\\home\\presentation\\pages\\home_page.dart",
+        "Size":  3705,
+        "Lines":  89
+    },
+    {
+        "Path":  "lib\\features\\home\\presentation\\providers\\dashboard_provider.dart",
+        "Size":  2492,
+        "Lines":  78
+    },
+    {
+        "Path":  "lib\\features\\home\\presentation\\providers\\home_provider.dart",
+        "Size":  2412,
+        "Lines":  40
+    },
+    {
+        "Path":  "lib\\features\\home\\presentation\\widgets\\eld_bottom_nav.dart",
+        "Size":  1655,
+        "Lines":  48
+    },
+    {
+        "Path":  "lib\\features\\home\\presentation\\widgets\\eld_drawer.dart",
+        "Size":  6672,
+        "Lines":  173
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\pages\\change_status_page.dart",
+        "Size":  8554,
+        "Lines":  215
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\pages\\hos_page.dart",
+        "Size":  5037,
+        "Lines":  122
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\pages\\recap_page.dart",
+        "Size":  3904,
+        "Lines":  121
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\providers\\diagnostics_stream_provider.dart",
+        "Size":  925,
+        "Lines":  19
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\providers\\hos_provider.dart",
+        "Size":  1194,
+        "Lines":  37
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\diagnostics_alert_card.dart",
+        "Size":  3545,
+        "Lines":  85
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\duty_status_selector.dart",
+        "Size":  3235,
+        "Lines":  92
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\hos_alerts_card.dart",
+        "Size":  3250,
+        "Lines":  94
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\hos_timers_grid.dart",
+        "Size":  2791,
+        "Lines":  76
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\hos_timer_list.dart",
+        "Size":  3829,
+        "Lines":  118
+    },
+    {
+        "Path":  "lib\\features\\hos\\presentation\\widgets\\main_circular_timer.dart",
+        "Size":  3666,
+        "Lines":  117
+    },
+    {
+        "Path":  "lib\\features\\inspection\\data\\datasources\\inspection_mock_data.dart",
+        "Size":  616,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\inspection\\domain\\entities\\inspection_data.dart",
+        "Size":  1265,
+        "Lines":  38
+    },
+    {
+        "Path":  "lib\\features\\inspection\\presentation\\pages\\dot_inspection_page.dart",
+        "Size":  13977,
+        "Lines":  358
+    },
+    {
+        "Path":  "lib\\features\\inspection\\presentation\\pages\\inspection_logs_page.dart",
+        "Size":  6805,
+        "Lines":  140
+    },
+    {
+        "Path":  "lib\\features\\inspection\\presentation\\pages\\send_logs_page.dart",
+        "Size":  5870,
+        "Lines":  144
+    },
+    {
+        "Path":  "lib\\features\\inspection\\presentation\\providers\\inspection_provider.dart",
+        "Size":  2310,
+        "Lines":  76
+    },
+    {
+        "Path":  "lib\\features\\logs\\data\\datasources\\logs_mock_data.dart",
+        "Size":  6710,
+        "Lines":  200
+    },
+    {
+        "Path":  "lib\\features\\logs\\data\\datasources\\log_local_data_source.dart",
+        "Size":  4433,
+        "Lines":  114
+    },
+    {
+        "Path":  "lib\\features\\logs\\data\\repositories\\log_repository_impl.dart",
+        "Size":  3519,
+        "Lines":  86
+    },
+    {
+        "Path":  "lib\\features\\logs\\domain\\entities\\audit_entry.dart",
+        "Size":  1182,
+        "Lines":  40
+    },
+    {
+        "Path":  "lib\\features\\logs\\domain\\entities\\daily_log.dart",
+        "Size":  2843,
+        "Lines":  95
+    },
+    {
+        "Path":  "lib\\features\\logs\\domain\\repositories\\log_repository.dart",
+        "Size":  718,
+        "Lines":  14
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\edit_log_page.dart",
+        "Size":  18353,
+        "Lines":  460
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\inspection_preview_page.dart",
+        "Size":  20275,
+        "Lines":  515
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\logs_list_page.dart",
+        "Size":  6694,
+        "Lines":  185
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\log_detail_page.dart",
+        "Size":  22168,
+        "Lines":  632
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\shipping_documents_page.dart",
+        "Size":  6555,
+        "Lines":  169
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\pages\\trailers_page.dart",
+        "Size":  6560,
+        "Lines":  170
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\providers\\logs_provider.dart",
+        "Size":  3330,
+        "Lines":  106
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\widgets\\codriver_picker_dialog.dart",
+        "Size":  2788,
+        "Lines":  80
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\widgets\\log_graph.dart",
+        "Size":  11091,
+        "Lines":  242
+    },
+    {
+        "Path":  "lib\\features\\logs\\presentation\\widgets\\vehicle_picker_dialog.dart",
+        "Size":  2288,
+        "Lines":  55
+    },
+    {
+        "Path":  "lib\\features\\permissions\\presentation\\pages\\permissions_page.dart",
+        "Size":  8677,
+        "Lines":  233
+    },
+    {
+        "Path":  "lib\\features\\reports\\data\\services\\pdf_export_service.dart",
+        "Size":  6427,
+        "Lines":  177
+    },
+    {
+        "Path":  "lib\\features\\reports\\data\\services\\report_generator_service.dart",
+        "Size":  4541,
+        "Lines":  129
+    },
+    {
+        "Path":  "lib\\features\\reports\\presentation\\pages\\reports_page.dart",
+        "Size":  14852,
+        "Lines":  353
+    },
+    {
+        "Path":  "lib\\features\\reports\\presentation\\providers\\reports_provider.dart",
+        "Size":  7641,
+        "Lines":  197
+    },
+    {
+        "Path":  "lib\\features\\settings\\domain\\usercases\\apply_remote_config.dart",
+        "Size":  1314,
+        "Lines":  35
+    },
+    {
+        "Path":  "lib\\features\\settings\\presentation\\pages\\developer_options_page.dart",
+        "Size":  2304,
+        "Lines":  54
+    },
+    {
+        "Path":  "lib\\features\\settings\\presentation\\pages\\qr_scanner_page.dart",
+        "Size":  3343,
+        "Lines":  103
+    },
+    {
+        "Path":  "lib\\features\\settings\\presentation\\pages\\settings_page.dart",
+        "Size":  18453,
+        "Lines":  504
+    },
+    {
+        "Path":  "lib\\features\\sync\\data\\datasources\\sync_local_data_source.dart",
+        "Size":  1918,
+        "Lines":  52
+    },
+    {
+        "Path":  "lib\\features\\sync\\data\\models\\sync_item_model.dart",
+        "Size":  1542,
+        "Lines":  52
+    },
+    {
+        "Path":  "lib\\features\\sync\\data\\repositories\\memory_offline_queue.dart",
+        "Size":  1694,
+        "Lines":  50
+    },
+    {
+        "Path":  "lib\\features\\sync\\data\\repositories\\sqlite_offline_queue.dart",
+        "Size":  3414,
+        "Lines":  102
+    },
+    {
+        "Path":  "lib\\features\\sync\\data\\repositories\\sync_repository_impl.dart",
+        "Size":  3927,
+        "Lines":  108
+    },
+    {
+        "Path":  "lib\\features\\sync\\domain\\entities\\pending_event.dart",
+        "Size":  1804,
+        "Lines":  57
+    },
+    {
+        "Path":  "lib\\features\\sync\\domain\\entities\\sync_item.dart",
+        "Size":  2139,
+        "Lines":  84
+    },
+    {
+        "Path":  "lib\\features\\sync\\domain\\repositories\\offline_queue.dart",
+        "Size":  731,
+        "Lines":  17
+    },
+    {
+        "Path":  "lib\\features\\sync\\domain\\repositories\\sync_repository.dart",
+        "Size":  796,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\sync\\domain\\usecases\\sync_engine.dart",
+        "Size":  2687,
+        "Lines":  71
+    },
+    {
+        "Path":  "lib\\features\\sync\\presentation\\providers\\sync_engine_provider.dart",
+        "Size":  2775,
+        "Lines":  62
+    },
+    {
+        "Path":  "lib\\features\\sync\\presentation\\providers\\sync_provider.dart",
+        "Size":  2629,
+        "Lines":  78
+    },
+    {
+        "Path":  "lib\\features\\sync\\presentation\\widgets\\sync_status_indicator.dart",
+        "Size":  2597,
+        "Lines":  70
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\datasources\\fake_direct_traccar_adapter.dart",
+        "Size":  1675,
+        "Lines":  36
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\datasources\\native_event_channel_client.dart",
+        "Size":  5460,
+        "Lines":  122
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\datasources\\traccar_data_source.dart",
+        "Size":  5400,
+        "Lines":  115
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\datasources\\tracking_data_source.dart",
+        "Size":  820,
+        "Lines":  17
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\datasources\\tracking_local_data_source.dart",
+        "Size":  2195,
+        "Lines":  56
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\mappers\\traccar_mapper.dart",
+        "Size":  3504,
+        "Lines":  80
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\models\\location_model.dart",
+        "Size":  1650,
+        "Lines":  55
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\repositories\\tracking_repository_impl.dart",
+        "Size":  9041,
+        "Lines":  237
+    },
+    {
+        "Path":  "lib\\features\\tracking\\data\\services\\tracking_service.dart",
+        "Size":  6651,
+        "Lines":  193
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\entities\\connection_status.dart",
+        "Size":  145,
+        "Lines":  8
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\entities\\device_identity.dart",
+        "Size":  1229,
+        "Lines":  40
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\entities\\location_entity.dart",
+        "Size":  3033,
+        "Lines":  118
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\entities\\native_location_event.dart",
+        "Size":  1965,
+        "Lines":  74
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\entities\\tracking_event.dart",
+        "Size":  2574,
+        "Lines":  99
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\repositories\\location_upload_adapter.dart",
+        "Size":  492,
+        "Lines":  13
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\repositories\\tracking_repository.dart",
+        "Size":  1196,
+        "Lines":  26
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\usecases\\tracking_event_processor.dart",
+        "Size":  5124,
+        "Lines":  115
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\usercases\\get_current_location.dart",
+        "Size":  794,
+        "Lines":  19
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\usercases\\start_tracking.dart",
+        "Size":  685,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\tracking\\domain\\usercases\\stop_tracking.dart",
+        "Size":  683,
+        "Lines":  18
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\pages\\tracking_logs_page.dart",
+        "Size":  5157,
+        "Lines":  146
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\pages\\tracking_page.dart",
+        "Size":  5432,
+        "Lines":  138
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\providers\\native_location_ui_provider.dart",
+        "Size":  1968,
+        "Lines":  49
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\providers\\tracking_events_stream_provider.dart",
+        "Size":  611,
+        "Lines":  9
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\providers\\tracking_provider.dart",
+        "Size":  6805,
+        "Lines":  208
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\providers\\tracking_providers.dart",
+        "Size":  1549,
+        "Lines":  34
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\widgets\\quick_actions.dart",
+        "Size":  3461,
+        "Lines":  92
+    },
+    {
+        "Path":  "lib\\features\\tracking\\presentation\\widgets\\tracking_status_card.dart",
+        "Size":  3651,
+        "Lines":  109
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\data\\datasources\\vehicle_mock_data.dart",
+        "Size":  1139,
+        "Lines":  48
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\data\\models\\vehicle_model.dart",
+        "Size":  1183,
+        "Lines":  46
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\domain\\entities\\vehicle.dart",
+        "Size":  631,
+        "Lines":  25
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\domain\\repositories\\vehicle_repository.dart",
+        "Size":  567,
+        "Lines":  12
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\presentation\\pages\\select_vehicle_page.dart",
+        "Size":  10161,
+        "Lines":  257
+    },
+    {
+        "Path":  "lib\\features\\vehicle\\presentation\\providers\\vehicle_provider.dart",
+        "Size":  2183,
+        "Lines":  71
+    },
+    {
+        "Path":  "lib\\l10n\\app_ar.arb",
+        "Size":  18527,
+        "Lines":  422
+    },
+    {
+        "Path":  "lib\\l10n\\app_en.arb",
+        "Size":  14614,
+        "Lines":  422
+    },
+    {
+        "Path":  "lib\\l10n\\app_localizations.dart",
+        "Size":  70305,
+        "Lines":  2088
+    },
+    {
+        "Path":  "lib\\l10n\\app_localizations_ar.dart",
+        "Size":  29130,
+        "Lines":  809
+    },
+    {
+        "Path":  "lib\\l10n\\app_localizations_en.dart",
+        "Size":  25230,
+        "Lines":  808
+    },
+    {
+        "Path":  "test\\diagnostics_engine_test.dart",
+        "Size":  3365,
+        "Lines":  87
+    },
+    {
+        "Path":  "test\\haversine_distance_test.dart",
+        "Size":  984,
+        "Lines":  29
+    },
+    {
+        "Path":  "test\\hos_calculator_test.dart",
+        "Size":  1802,
+        "Lines":  44
+    },
+    {
+        "Path":  "test\\hos_period_classifier_test.dart",
+        "Size":  2577,
+        "Lines":  70
+    },
+    {
+        "Path":  "test\\hos_violations_engine_test.dart",
+        "Size":  3084,
+        "Lines":  82
+    },
+    {
+        "Path":  "test\\sync_data_loss_prevention_test.dart",
+        "Size":  1670,
+        "Lines":  42
+    },
+    {
+        "Path":  "test\\widget_test.dart",
+        "Size":  634,
+        "Lines":  14
+    },
+    {
+        "Path":  "test\\core\\config\\app_environment_test.dart",
+        "Size":  2055,
+        "Lines":  45
+    },
+    {
+        "Path":  "test\\core\\services\\startup_checks_test.dart",
+        "Size":  3418,
+        "Lines":  112
+    },
+    {
+        "Path":  "test\\features\\auth\\data\\datasources\\nano_auth_remote_data_source_test.dart",
+        "Size":  4475,
+        "Lines":  126
+    },
+    {
+        "Path":  "test\\features\\auth\\data\\datasources\\traccar_auth_remote_data_source_adapter_test.dart",
+        "Size":  5273,
+        "Lines":  120
+    },
+    {
+        "Path":  "test\\features\\auth\\data\\datasources\\traccar_auth_remote_data_source_test.dart",
+        "Size":  3004,
+        "Lines":  76
+    },
+    {
+        "Path":  "test\\features\\auth\\data\\datasources\\traccar_session_store_test.dart",
+        "Size":  1663,
+        "Lines":  32
+    },
+    {
+        "Path":  "test\\features\\auth\\data\\repositories\\traccar_auth_repository_adapter_test.dart",
+        "Size":  8063,
+        "Lines":  197
+    },
+    {
+        "Path":  "test\\features\\auth\\domain\\entities\\traccar_session_test.dart",
+        "Size":  1479,
+        "Lines":  29
+    },
+    {
+        "Path":  "test\\features\\auth\\presentation\\providers\\auth_providers_test.dart",
+        "Size":  3501,
+        "Lines":  80
+    },
+    {
+        "Path":  "test\\features\\auth\\presentation\\providers\\auth_state_provider_test.dart",
+        "Size":  3526,
+        "Lines":  79
+    },
+    {
+        "Path":  "test\\features\\tracking\\data\\datasources\\fake_direct_traccar_adapter_test.dart",
+        "Size":  2512,
+        "Lines":  69
+    },
+    {
+        "Path":  "test\\features\\tracking\\data\\datasources\\native_event_channel_client_integration_test.dart",
+        "Size":  5528,
+        "Lines":  144
+    },
+    {
+        "Path":  "test\\features\\tracking\\data\\datasources\\native_event_channel_client_test.dart",
+        "Size":  3266,
+        "Lines":  88
+    },
+    {
+        "Path":  "test\\features\\tracking\\presentation\\providers\\tracking_provider_test.dart",
+        "Size":  5917,
+        "Lines":  133
+    },
+    {
+        "Path":  "test\\mocks\\traccar_client_sdk.dart",
+        "Size":  1206,
+        "Lines":  43
+    },
+    {
+        "Path":  "assets\\images\\ic_launcher.png",
+        "Size":  628783,
+        "Lines":  4619
+    },
+    {
+        "Path":  "android\\app\\src\\main\\AndroidManifest.xml",
+        "Size":  3846,
+        "Lines":  73
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\MainActivity.kt",
+        "Size":  2426,
+        "Lines":  54
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\plugins\\BatteryPlugin.kt",
+        "Size":  1937,
+        "Lines":  47
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\plugins\\BluetoothPlugin.kt",
+        "Size":  7235,
+        "Lines":  173
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\plugins\\TraccarPlugin.kt",
+        "Size":  8250,
+        "Lines":  185
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\receivers\\BootReceiver.kt",
+        "Size":  571,
+        "Lines":  13
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\services\\TrackingForegroundService.kt",
+        "Size":  2430,
+        "Lines":  67
+    },
+    {
+        "Path":  "android\\app\\src\\main\\kotlin\\com\\goldenfeather\\golden_feather_eld\\services\\TrackingServiceManager.kt",
+        "Size":  651,
+        "Lines":  16
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable\\launch_background.xml",
+        "Size":  446,
+        "Lines":  11
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-hdpi\\ic_launcher_foreground.png",
+        "Size":  14237,
+        "Lines":  109
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-mdpi\\ic_launcher_foreground.png",
+        "Size":  6738,
+        "Lines":  48
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-v21\\launch_background.xml",
+        "Size":  450,
+        "Lines":  11
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-xhdpi\\ic_launcher_foreground.png",
+        "Size":  24761,
+        "Lines":  180
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-xxhdpi\\ic_launcher_foreground.png",
+        "Size":  51992,
+        "Lines":  412
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\drawable-xxxhdpi\\ic_launcher_foreground.png",
+        "Size":  84911,
+        "Lines":  702
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher.xml",
+        "Size":  335,
+        "Lines":  9
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png",
+        "Size":  3371,
+        "Lines":  38
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png",
+        "Size":  1751,
+        "Lines":  18
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png",
+        "Size":  5486,
+        "Lines":  49
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png",
+        "Size":  11278,
+        "Lines":  84
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png",
+        "Size":  19963,
+        "Lines":  169
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\values\\colors.xml",
+        "Size":  120,
+        "Lines":  4
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\values\\styles.xml",
+        "Size":  1014,
+        "Lines":  17
+    },
+    {
+        "Path":  "android\\app\\src\\main\\res\\values-night\\styles.xml",
+        "Size":  1013,
+        "Lines":  17
+    },
+    {
+        "Path":  "ios\\Runner\\AppDelegate.swift",
+        "Size":  404,
+        "Lines":  12
+    },
+    {
+        "Path":  "ios\\Runner\\BackgroundTaskManager.swift",
+        "Size":  683,
+        "Lines":  23
+    },
+    {
+        "Path":  "ios\\Runner\\Info.plist",
+        "Size":  2662,
+        "Lines":  69
+    },
+    {
+        "Path":  "ios\\Runner\\LocationBackgroundManager.swift",
+        "Size":  1099,
+        "Lines":  32
+    },
+    {
+        "Path":  "ios\\Runner\\Runner-Bridging-Header.h",
+        "Size":  39,
+        "Lines":  1
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Contents.json",
+        "Size":  2097,
+        "Lines":  1
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-1024x1024@1x.png",
+        "Size":  387583,
+        "Lines":  2777
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@1x.png",
+        "Size":  529,
+        "Lines":  4
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@2x.png",
+        "Size":  1309,
+        "Lines":  15
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@3x.png",
+        "Size":  2479,
+        "Lines":  25
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@1x.png",
+        "Size":  867,
+        "Lines":  8
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@2x.png",
+        "Size":  2320,
+        "Lines":  13
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@3x.png",
+        "Size":  4591,
+        "Lines":  37
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@1x.png",
+        "Size":  1309,
+        "Lines":  15
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@2x.png",
+        "Size":  3998,
+        "Lines":  31
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@3x.png",
+        "Size":  8108,
+        "Lines":  47
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-50x50@1x.png",
+        "Size":  1849,
+        "Lines":  11
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-50x50@2x.png",
+        "Size":  5879,
+        "Lines":  62
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-57x57@1x.png",
+        "Size":  2261,
+        "Lines":  25
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-57x57@2x.png",
+        "Size":  7401,
+        "Lines":  61
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@2x.png",
+        "Size":  8108,
+        "Lines":  47
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@3x.png",
+        "Size":  17523,
+        "Lines":  128
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-72x72@1x.png",
+        "Size":  3371,
+        "Lines":  38
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-72x72@2x.png",
+        "Size":  11278,
+        "Lines":  84
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@1x.png",
+        "Size":  3643,
+        "Lines":  28
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@2x.png",
+        "Size":  12645,
+        "Lines":  112
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-83.5x83.5@2x.png",
+        "Size":  15114,
+        "Lines":  118
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\Contents.json",
+        "Size":  414,
+        "Lines":  23
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage.png",
+        "Size":  68,
+        "Lines":  4
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@2x.png",
+        "Size":  68,
+        "Lines":  4
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@3x.png",
+        "Size":  68,
+        "Lines":  4
+    },
+    {
+        "Path":  "ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\README.md",
+        "Size":  340,
+        "Lines":  3
+    },
+    {
+        "Path":  "ios\\Runner\\Base.lproj\\LaunchScreen.storyboard",
+        "Size":  2414,
+        "Lines":  37
+    },
+    {
+        "Path":  "ios\\Runner\\Base.lproj\\Main.storyboard",
+        "Size":  1631,
+        "Lines":  26
+    },
+    {
+        "Path":  "ios\\Runner\\Plugins\\BluetoothPlugin.swift",
+        "Size":  5826,
+        "Lines":  160
+    },
+    {
+        "Path":  "ios\\Runner\\Plugins\\TraccarPlugin.swift",
+        "Size":  4431,
+        "Lines":  126
+    }
+]
