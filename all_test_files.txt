@@ -1,7 +1,0 @@
-@{FullName=D:\Flutter projects\golden_feather_eld\test\diagnostics_engine_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\haversine_distance_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\hos_calculator_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\hos_period_classifier_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\hos_violations_engine_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\widget_test.dart}
-@{FullName=D:\Flutter projects\golden_feather_eld\test\mocks\traccar_client_sdk.dart}
