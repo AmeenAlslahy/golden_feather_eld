@@ -1,0 +1,33 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef orphan fill:#ffcccb,stroke:#ff0000,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+
+    StartUI(["تغيير الحالة يدوياً<br>Manual Status Change<br>HosPage / ChangeStatusPage"]):::foreground
+    
+    StartUI --> Provider["مزود الواجهة<br>HosNotifier<br>changeStatus()"]:::foreground
+    Provider --> ValidateSpeed{"التحقق من السرعة<br>Check Current Speed"}:::decision
+    
+    ValidateSpeed -- "سرعة > 8 (والحالة قيادة)" --> Reject["رفض التغيير<br>Reject Transition"]:::error
+    ValidateSpeed -- "مسموح — Allowed" --> Engine["محرك HOS<br>HosRulesEngine<br>manualTransition()"]:::foreground
+    
+    Engine --> StateMachine["تحديث آلة الحالات<br>HosStateMachine<br>transitionTo()"]:::foreground
+    StateMachine --> Timer{"هل الحالة قيادة؟<br>Is Driving?"}:::decision
+    Timer -- "نعم — Yes" --> StartTimer["بدء مؤقت القيادة<br>Start 1-min Timer<br>_startDrivingTimer()"]:::foreground
+    Timer -- "لا — No" --> StopTimer["إيقاف مؤقت القيادة<br>Stop Timer<br>_stopDrivingTimer()"]:::foreground
+    
+    StartTimer --> RefreshUI["تحديث الواجهة<br>UI Refresh<br>HosNotifier.refresh()"]:::foreground
+    StopTimer --> RefreshUI
+    
+    RefreshUI --> Calc["حساب الحدود<br>Calculate Limits<br>HosCalculator.calculateAllLimits()"]:::foreground
+    Calc --> Alerts["توليد التنبيهات<br>Generate Alerts<br>_generateAlerts()"]:::foreground
+    Alerts --> Violations["التحقق من الانتهاكات<br>Check Violations<br>_checkViolations()"]:::foreground
+    Violations --> UpdateState["إرسال للواجهة<br>HosStatusUpdate"]:::foreground
+    
+    %% Orphan Flow
+    EldEvent(["حدث ELD مقلد<br>Mock ELD Event<br>Bluetooth / LiveTracking"]):::orphan
+    EldEvent -. "مقطوع — ORPHAN" .-> ProcessEvent["معالجة الحدث آلياً<br>HosRulesEngine<br>processEvent()"]:::orphan
+```

@@ -1,0 +1,92 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/engine/diagnostics/diagnostics_engine.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../providers/diagnostics_state_provider.dart';
+import '../../../../core/extensions/context_extensions.dart';
+
+class DiagnosticsAlertCard extends ConsumerWidget {
+  const DiagnosticsAlertCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stateAsync = ref.watch(diagnosticsStateProvider);
+
+    return stateAsync.when(
+      data: (state) {
+        if (!state.hasActiveMalfunctions || state.activeMalfunctions.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final latestAlert = state.activeMalfunctions.last;
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+        Color getSeverityColor(MalfunctionSeverity severity) {
+          switch (severity) {
+            case MalfunctionSeverity.critical:
+              return AppColors.dangerRed;
+            case MalfunctionSeverity.major:
+              return AppColors.warningYellow;
+            case MalfunctionSeverity.minor:
+              return AppColors.primaryBlue;
+          }
+        }
+
+        final color = getSeverityColor(latestAlert.severity);
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            border: Border.all(color: color.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.warning_rounded, color: color, size: 28),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      context.loc.malfunctionAlerts,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isArabic ? latestAlert.arabicMessage : latestAlert.message,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (state.activeMalfunctions.length > 1)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '+${state.activeMalfunctions.length - 1}',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}

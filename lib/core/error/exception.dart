@@ -1,0 +1,51 @@
+/// استثناء الخادم: يتم رميه عند وجود مشكلة في استجابة الخادم
+class ServerException implements Exception {
+  final String? message;
+  final String? arabicMessage;
+  final int? statusCode;
+
+  const ServerException({
+    this.message,
+    this.arabicMessage,
+    this.statusCode,
+  });
+
+  @override
+  String toString() => 'ServerException: $message';
+}
+
+/// استثناء عدم الاتصال: يتم رميه عند انقطاع الإنترنت أو انتهاء وقت الاتصال
+class OfflineException implements Exception {
+  final String? message;
+
+  const OfflineException([this.message = 'Network error or timeout']);
+
+  @override
+  String toString() => 'OfflineException: $message';
+}
+
+/// استثناء عدم التصريح: يتم رميه عند مشاكل الصلاحيات أو انتهاء الجلسة (401/403)
+class UnauthorizedException implements Exception {
+  final String? message;
+  final String? arabicMessage;
+  final int? statusCode;
+
+  const UnauthorizedException({
+    this.message = 'Unauthorized',
+    this.arabicMessage = 'انتهت صلاحية الجلسة أو غير مصرح لك',
+    this.statusCode = 401,
+  });
+
+  @override
+  String toString() => 'UnauthorizedException: $message';
+}
+
+/// استثناء الذاكرة المحلية: يتم رميه عند فشل حفظ أو قراءة البيانات من الجهاز
+class CacheException implements Exception {
+  final String? message;
+  
+  const CacheException([this.message]);
+
+  @override
+  String toString() => 'CacheException: $message';
+}

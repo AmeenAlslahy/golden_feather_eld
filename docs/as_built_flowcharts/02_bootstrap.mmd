@@ -1,0 +1,36 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء التهيئة<br>Start Bootstrap<br>AppInitializer.initialize()"]):::foreground
+    
+    Start --> EnvInit["تهيئة المتغيرات البيئية<br>Init Env<br>AppEnvironmentConfig.init()"]:::foreground
+    EnvInit --> FBInit{"تهيئة فايربيز<br>Init Firebase<br>Firebase.initializeApp()"}:::decision
+    
+    FBInit -- "نجاح — Success" --> CoreInit
+    FBInit -- "فشل — Error (Catch)" --> CoreInit
+    
+    CoreInit["تهيئة الخدمات الأساسية<br>Core Services Init<br>_initCoreServices()"]:::foreground
+    CoreInit --> LocalStorage[("التخزين المحلي<br>Local Storage<br>LocalStorageService.init()")]:::local
+    LocalStorage --> LocalDB[("قاعدة البيانات المحلية<br>Local DB<br>LocalDatabaseService.init()")]:::local
+    
+    LocalDB --> DepInit["تهيئة الخدمات المعتمدة<br>Dependent Services Init<br>_initDependentServices()"]:::foreground
+    DepInit --> TrackService["خدمة التتبع<br>Tracking Service<br>TrackingService.init()"]:::foreground
+    TrackService --> PushService["خدمة الإشعارات<br>Push Service<br>PushNotificationService.init()"]:::network
+    
+    PushService --> SyncInit["تهيئة المزامنة<br>Sync Services Init<br>_initSyncServices()"]:::foreground
+    SyncInit --> UtcSync["مزامنة الوقت<br>UTC Sync<br>UtcSyncService.syncWithUtc()"]:::network
+    
+    UtcSync --> Container["إنشاء حاوية المزودات<br>Create Provider Container<br>createProviderContainer()"]:::foreground
+    Container --> PostInit["مهام ما بعد الإنشاء<br>Post Container Init<br>initializePostContainer()"]:::foreground
+    
+    PostInit --> RemoteConfig["جلب التكوين عن بعد<br>Fetch Remote Config<br>RemoteConfigService.fetchOnStartup()"]:::network
+    RemoteConfig --> MicroTask["بدء المزامنة في الخلفية<br>Start Sync Engine<br>syncEngineProvider"]:::foreground
+    
+    MicroTask --> RunApp(["تشغيل واجهة المستخدم<br>Run App<br>runApp(GoldenFeatherApp)"]):::foreground
+```

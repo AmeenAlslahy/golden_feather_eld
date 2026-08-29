@@ -1,0 +1,9 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    OpenTeam["واجهة القيادة المشتركة<br>CodriverPage"]:::action
+    AddCo["إضافة مساعد / تسجيل دخول"]:::action
+    Swap["تبديل الأدوار<br>Make Active"]:::system
+    
+    OpenTeam --> AddCo --> Swap

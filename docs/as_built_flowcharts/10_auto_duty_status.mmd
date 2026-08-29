@@ -1,0 +1,30 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["حدث تتبع جديد<br>Live Tracking Event<br>TrackingEventsStreamProvider"]):::foreground
+    
+    Start --> Tracker["استلام الحدث<br>DutyStatusTracker<br>_processEldEvent()"]:::foreground
+    Tracker --> SpeedCheck{"تحليل السرعة<br>Check Speed"}:::decision
+    
+    SpeedCheck -- "أكبر من 5 ميل/س — > 5 MPH" --> StatusDrive["الحالة الجديدة: قيادة<br>New Status = DRIVING"]:::foreground
+    SpeedCheck -- "سرعة 0 (وكان قيادة) — Speed 0" --> StatusOnDuty["الحالة الجديدة: على أهبة العمل<br>New Status = ON_DUTY"]:::foreground
+    SpeedCheck -- "أخرى — Other" --> StatusKeep["لا تغيير<br>Keep Current Status"]:::foreground
+    
+    StatusDrive --> ChangeCheck{"هل الحالة مختلفة؟<br>Status Changed?"}:::decision
+    StatusOnDuty --> ChangeCheck
+    StatusKeep --> ChangeCheck
+    
+    ChangeCheck -- "نعم — Yes" --> Transition["تنفيذ الانتقال<br>Execute Transition<br>_transitionTo()"]:::foreground
+    ChangeCheck -- "لا — No" --> End(["إنهاء<br>End"]):::foreground
+    
+    Transition --> CreatePeriod["إنشاء فترة منتهية<br>Create DutyPeriod"]:::foreground
+    CreatePeriod --> SavePeriod[("حفظ في السجل<br>Save Period<br>LogRepository.savePeriod()")]:::local
+    
+    SavePeriod --> UpdateCurrent["تحديث الحالة الحالية<br>Update currentStatus"]:::foreground
+```

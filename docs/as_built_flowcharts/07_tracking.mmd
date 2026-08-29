@@ -1,0 +1,38 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء التتبع<br>Start Tracking<br>TrackingProvider.toggleTracking()"]):::foreground
+    
+    Start --> FlutterService["خدمة التتبع (Flutter)<br>Tracking Service<br>TrackingService.start()"]:::foreground
+    FlutterService --> SDK["واجهة العميل<br>Traccar SDK<br>TraccarRealClient.start()"]:::foreground
+    
+    SDK --> MethodChannel[["قناة الاتصال<br>Method Channel<br>com.goldenfeather.eld/traccar"]]:::native
+    MethodChannel --> NativePlugin["إضافة أندرويد<br>Android Plugin<br>TraccarPlugin.startTracking()"]:::native
+    
+    NativePlugin --> PermCheck{"صلاحيات الموقع<br>Location Permission<br>checkLocationPermission()"}:::decision
+    PermCheck -- "مرفوضة — Denied" --> PermError["خطأ صلاحيات<br>Permission Denied<br>PERMISSION_DENIED"]:::error
+    
+    PermCheck -- "ممنوحة — Granted" --> StartNative["بدء خدمة التتبع<br>Start Service<br>TrackingServiceManager.start()"]:::native
+    StartNative --> ForegroundService["خدمة بالواجهة<br>Foreground Service<br>TrackingForegroundService.startForeground()"]:::background
+    
+    ForegroundService --> LocationManager["مدير المواقع<br>Request Updates<br>LocationManager.requestLocationUpdates()"]:::native
+    
+    LocationManager --> OnLocationChanged(["استلام موقع جديد<br>New Location<br>onLocationChanged()"]):::background
+    
+    OnLocationChanged --> DBInsert[("تخزين محلي<br>Insert Location<br>LocationDatabaseHelper.insertLocation()")]:::local
+    OnLocationChanged --> TriggerUpload["رفع البيانات<br>Trigger Upload<br>NetworkUploader.triggerUpload()"]:::background
+    
+    OnLocationChanged --> Broadcast["بث الحدث<br>Send Broadcast<br>ACTION_LOCATION_UPDATE"]:::background
+    Broadcast --> BroadcastReceiver["استقبال الحدث<br>Event Receiver<br>TraccarPlugin.locationReceiver"]:::native
+    
+    BroadcastReceiver --> SendEvent["إرسال عبر القناة<br>Send to Flutter<br>EventChannel"]:::native
+    SendEvent --> FlutterListen(["استلام في التطبيق<br>Flutter Listener<br>trackingStateProvider"]):::foreground
+```

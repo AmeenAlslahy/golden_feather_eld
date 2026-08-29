@@ -1,0 +1,11 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الرئيسية"]:::action
+    OpenDot["فتح تفتيش الطريق<br>DotInspectionPage"]:::action
+    ViewLogs["عرض السجلات 8 أيام<br>InspectionPreviewPage"]:::system
+    SendLogs["إرسال السجلات<br>SendLogsPage"]:::action
+    Method["اختيار Web Services أو Email"]:::action
+    
+    Home --> OpenDot --> ViewLogs --> SendLogs --> Method

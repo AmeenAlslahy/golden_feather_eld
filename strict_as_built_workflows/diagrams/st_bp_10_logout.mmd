@@ -1,0 +1,17 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    Drawer["القائمة الجانبية<br>EldDrawer"]:::action
+    ClickLogout["النقر على تسجيل الخروج"]:::action
+    Confirm{"حوار التأكيد<br>confirmLogout"}:::gateway
+    CallUseCase["استدعاء AuthStateProvider.logout"]:::system
+    MissedCertify["لا يوجد إجبار لاعتماد السجلات (Certify) قبل تسجيل الخروج"]:::bug
+    ClearSession["مسح التوكن والجلسة والعودة لتسجيل الدخول"]:::system
+    
+    Drawer --> ClickLogout --> Confirm
+    Confirm -- "نعم" --> CallUseCase
+    CallUseCase -. "ثغرة امتثال" .-> MissedCertify
+    CallUseCase --> ClearSession

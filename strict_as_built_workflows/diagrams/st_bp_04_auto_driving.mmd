@@ -1,0 +1,18 @@
+﻿flowchart TD
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    GPS["مستشعر GPS / ECM"]:::system
+    SpeedCheck{"هل السرعة >= 8.0 كم/س (5 ميل/س)؟"}:::gateway
+    SetDriving["تغيير الحالة تلقائياً لـ Driving"]:::system
+    StopCheck{"هل السرعة = 0؟"}:::gateway
+    StartTimer["بدء مؤقت التوقف<br>_checkStopTimer"]:::system
+    SetOnDuty["تغيير الحالة تلقائياً لـ OnDutyNotDriving"]:::system
+    NoDialog["لا يظهر تنبيه للسائق لتأكيد التوقف (يتحول فوراً بعد المؤقت)"]:::bug
+    
+    GPS --> SpeedCheck
+    SpeedCheck -- "نعم" --> SetDriving
+    SpeedCheck -- "لا" --> StopCheck
+    StopCheck -- "نعم" --> StartTimer
+    StartTimer --> SetOnDuty -. "ثغرة امتثال" .-> NoDialog

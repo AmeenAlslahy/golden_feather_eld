@@ -1,0 +1,52 @@
+```mermaid
+flowchart TD
+    %% Global Styling
+    classDef master fill:#f8f9fa,stroke:#343a40,stroke-width:3px,color:#000,font-weight:bold
+    classDef subflow fill:#e9ecef,stroke:#6c757d,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    classDef decision fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+
+    %% Nodes
+    Start(["تثبيت التطبيق<br>App Installation"]):::master
+    
+    Launch["التشغيل وبناء بيئة العمل<br>Bootstrap & Init<br>👉 FLOW-BOOT-001"]:::subflow
+    
+    Perms{"الصلاحيات ممنوحة؟<br>Permissions Granted?<br>👉 FLOW-PERM-001"}:::decision
+    
+    Auth{"المستخدم مسجل؟<br>User Authenticated?<br>👉 FLOW-AUTH-002"}:::decision
+    
+    LoginFlow["عملية تسجيل الدخول<br>Login Flow<br>👉 FLOW-AUTH-004"]:::subflow
+    
+    ConnectionFlow["الاتصال بالمركبة (وهمي)<br>Vehicle Connection<br>👉 FLOW-CONN-001"]:::subflow
+    
+    Home(["الشاشة الرئيسية<br>Home Dashboard"]):::master
+    
+    %% Split to parallel execution paths
+    TrackingCore["نظام التتبع والخلفية<br>Background Tracking Engine<br>👉 FLOW-TRK-001"]:::subflow
+    HOSCore["محرك ساعات الخدمة<br>HOS Rules Engine<br>👉 FLOW-HOS-001"]:::subflow
+    SyncCore["محرك المزامنة<br>Offline Sync Engine<br>👉 FLOW-SYNC-001"]:::subflow
+
+    %% Connections
+    Start --> Launch
+    Launch --> Perms
+    
+    Perms -- "لا — No" --> RequestPerms["طلب الصلاحيات<br>Request Permissions"]:::master
+    RequestPerms --> Perms
+    
+    Perms -- "نعم — Yes" --> Auth
+    
+    Auth -- "لا — No" --> LoginFlow
+    LoginFlow --> Home
+    
+    Auth -- "نعم — Yes" --> ConnectionFlow
+    ConnectionFlow --> Home
+    
+    Home ===> TrackingCore
+    Home ===> HOSCore
+    Home ===> SyncCore
+    
+    TrackingCore -. "بيانات الموقع<br>Location Data" .-> SyncCore
+    HOSCore -. "تغييرات الحالة<br>Status Changes" .-> SyncCore
+    
+    SyncCore --> Cloud[("خادم Traccar / ELD Cloud")]:::master
+```

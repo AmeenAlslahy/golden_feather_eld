@@ -1,0 +1,36 @@
+```mermaid
+flowchart TD
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء الخدمة في الخلفية<br>Background Service Start<br>TrackingForegroundService"]):::background
+    
+    Start --> SetupOS(تسجيل إشعار مستمر<br>Ongoing Notification<br>startForeground):::native
+    SetupOS --> OSUpdate["مراقب المواقع<br>Location Listener<br>LocationManager"]:::native
+    
+    OSUpdate --> FetchLoc(["تحديث الموقع<br>onLocationChanged()"]):::background
+    
+    FetchLoc --> InsertDB[("حفظ محلي<br>Insert Location<br>LocationDatabaseHelper")]:::local
+    InsertDB --> CheckNetwork{"تحقق من الشبكة<br>Check Connectivity<br>NetworkCapabilities"}:::decision
+    
+    CheckNetwork -- "متصل — Connected" --> Uploader["الرفع للشبكة<br>Network Uploader<br>NetworkUploader.triggerUpload()"]:::background
+    CheckNetwork -- "غير متصل — Disconnected" --> Queue[("تراكم في القاعدة<br>Queue in Local DB")]:::local
+    
+    Uploader --> LoopDB["سحب المواقع المعلقة<br>Fetch Pending<br>getPendingLocations()"]:::local
+    LoopDB --> TryUpload["رفع موقع فردي<br>Upload Single Location<br>uploadSingleLocation()"]:::network
+    
+    TryUpload --> UploadResult{"نتيجة الرفع<br>Upload Result<br>HTTP Response"}:::decision
+    
+    UploadResult -- "نجاح — 200 OK" --> DelDB[("حذف من المحلي<br>Delete Location<br>deleteLocation()")]:::local
+    DelDB --> LoopDB
+    
+    UploadResult -- "فشل — Error" --> StopUpload["إيقاف الرفع مؤقتاً<br>Stop Upload Loop<br>return@execute"]:::background
+    StopUpload --> Queue
+    
+    OSUpdate --> NetworkCallback(["استعادة الشبكة<br>Network Restored<br>onAvailable()"]):::background
+    NetworkCallback --> Uploader
+```

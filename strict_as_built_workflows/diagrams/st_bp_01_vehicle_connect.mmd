@@ -1,0 +1,10 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الشاشة الرئيسية"]:::action
+    SelectVehicle["النقر على اختيار مركبة<br>SelectVehiclePage"]:::action
+    Connect["محاولة الاتصال بالمركبة<br>EldConnectionPage"]:::action
+    StartTracking["بدء استلام بيانات السرعة والمحرك<br>LiveTrackingDataSource"]:::system
+    
+    Home --> SelectVehicle --> Connect --> StartTracking

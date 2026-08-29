@@ -1,0 +1,11 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    LogList["قائمة السجلات<br>LogsListPage"]:::action
+    EditLog["تعديل سجل<br>EditLogPage"]:::action
+    SaveEdit["حفظ التعديل<br>LogRepositoryImpl.logAudit()"]:::system
+    NoAdmin["الكود الحالي لا يحتوي على واجهة لمراجعة أو استقبال تعديلات المدير في الواجهة الأمامية"]:::bug
+    
+    LogList --> EditLog --> SaveEdit -. "ثغرة بزنس" .-> NoAdmin

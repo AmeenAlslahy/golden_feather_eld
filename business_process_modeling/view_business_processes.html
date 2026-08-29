@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نمذجة العمليات المحدثة (As-Built Business Process Models)</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'base' });
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #fafafa; color: #333; }
+        h1, h2 { color: #1976d2; }
+        .diagram-container { background: #fff; margin-bottom: 30px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-right: 5px solid #1976d2; }
+        .diagram-title { margin-top: 0; border-bottom: 2px solid #bbdefb; padding-bottom: 10px; color: #0d47a1; }
+        .desc { font-size: 15px; color: #424242; margin-bottom: 15px; font-weight: bold; background: #e3f2fd; padding: 10px; border-radius: 4px; border: 1px solid #90caf9;}
+    </style>
+</head>
+<body>
+    <h1>مخططات نمذجة العمليات (المحدثة لتتطابق مع التطبيق الفعلي)</h1>
+    <div class="desc">
+        تم تحديث كافة المخططات في هذه الصفحة لتعكس **السلوك الفعلي (As-Built)** المبرمج في التطبيق بدقة 100%، بناءً على التدقيق البرمجي الشامل.
+    </div>
+    
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 00: App Launch (تشغيل التطبيق)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef actor fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+
+    User(["السائق"])
+    Start["تشغيل التطبيق"]:::action
+    Perms{"طلب صلاحيات (الموقع، الخ)"}:::gateway
+    
+    User --> Start --> Perms
+    Perms -- "رفض دائم" --> Loop["تكرار طلب الصلاحيات (Loop)"]:::system
+    Loop --> Perms
+    
+    Perms -- "موافقة" --> CheckSession["التحقق من الجلسة السابقة"]:::system
+    CheckSession --> SessionState{"حالة الجلسة"}:::gateway
+    
+    SessionState -- "صالحة (متصل)" --> AuthValid["الحالة: Authenticated"]:::system
+    SessionState -- "غير متحقق منها (غير متصل)" --> AuthOffline["الحالة: Offline"]:::system
+    SessionState -- "غير صالحة" --> ShowLogin["عرض شاشة الدخول"]:::action
+    
+    ShowLogin --> LoginAPI["استدعاء API تسجيل الدخول"]:::system
+    LoginAPI --> AuthValid
+    
+    AuthValid --> Router["توجيه للشاشة الرئيسية"]:::system
+    AuthOffline --> Router
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 01: Vehicle Connect (الاتصال بالمركبة)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الشاشة الرئيسية"]:::action
+    SelectVehicle["اختيار المركبة من القائمة"]:::action
+    Connect["محاولة الاتصال بالمركبة"]:::action
+    StartTracking["تفعيل نظام التتبع واستلام البيانات"]:::system
+    
+    Home --> SelectVehicle --> Connect --> StartTracking
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 02: DVIR Process (فحص المركبة)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DvirList["قائمة التقارير السابقة"]:::action
+    OpenForm["فتح نموذج فحص جديد"]:::action
+    FillForm["إدخال الأعطال والتوقيع"]:::action
+    SaveRepo["الحفظ المحلي في المستودع"]:::system
+    SyncQ["إضافة التقرير لطابور المزامنة للرفع"]:::system
+    
+    DvirList --> OpenForm --> FillForm --> SaveRepo --> SyncQ
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 03: Status Change (تغيير الحالة)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+
+    OpenChange["فتح شاشة تعديل الحالة"]:::action
+    SelectStatus["تحديد الحالة (PC, YM, OffDuty, Sleeper)"]:::action
+    InputNote["إدخال الملاحظة (اختياري)"]:::action
+    CheckSpeed{"السرعة الحالية > 0؟"}:::gateway
+    Block["رفض تغيير الحالة"]:::system
+    SaveStatus["حفظ الحالة محلياً ومزامنتها"]:::system
+    
+    OpenChange --> SelectStatus --> InputNote --> CheckSpeed
+    CheckSpeed -- "نعم (المركبة تتحرك)" --> Block
+    CheckSpeed -- "لا (المركبة متوقفة)" --> SaveStatus
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 04: Auto Driving (القيادة الآلية)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+
+    GPS["استقبال قراءات الحركة"]:::system
+    SpeedCheck{"السرعة >= 8.0 كم/س (5 ميل/س)؟"}:::gateway
+    SetDriving["تغيير الحالة تلقائياً لـ Driving"]:::system
+    StopCheck{"السرعة = 0؟"}:::gateway
+    StartTimer["بدء مؤقت التوقف"]:::system
+    SetOnDuty["تغيير الحالة تلقائياً لـ OnDutyNotDriving فور انتهاء المؤقت"]:::system
+    
+    GPS --> SpeedCheck
+    SpeedCheck -- "نعم" --> SetDriving
+    SpeedCheck -- "لا" --> StopCheck
+    StopCheck -- "نعم" --> StartTimer
+    StartTimer --> SetOnDuty
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 05: Log Edit (تعديل السجلات)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    LogList["قائمة السجلات اليومية"]:::action
+    EditLog["فتح شاشة التعديل"]:::action
+    SaveEdit["حفظ التعديل في المستودع المحلي"]:::system
+    AddAudit["إضافة حقل Audit للعملية والمزامنة"]:::system
+    
+    LogList --> EditLog --> SaveEdit --> AddAudit
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 06: Inspection (تفتيش الطريق)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الرئيسية"]:::action
+    OpenDot["بدء تفتيش الطريق (DOT)"]:::action
+    ViewLogs["عرض السجلات لمدة 8 أيام متتالية"]:::system
+    SendLogs["الانتقال لشاشة إرسال السجلات"]:::action
+    Method["اختيار طريقة الإرسال (Web Services / Email)"]:::action
+    
+    Home --> OpenDot --> ViewLogs --> SendLogs --> Method
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 07: Team Driving (القيادة المشتركة)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    OpenTeam["واجهة مساعد السائق (Co-Driver)"]:::action
+    AddCo["تسجيل دخول مساعد السائق"]:::action
+    Swap["تبديل الأدوار وتفعيل المساعد كسائق نشط"]:::system
+    
+    OpenTeam --> AddCo --> Swap
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 08: Unidentified Events (الأحداث غير المسندة)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+
+    UnidentifiedPage["شاشة الأحداث غير المعرفة"]:::action
+    SelectEvent["اختيار حدث من القائمة"]:::action
+    Action{"إجراء السائق"}:::gateway
+    Claim["تبني الحدث وتخصيصه لسجلات السائق (Claim)"]:::system
+    Reject["رفض الحدث وتجاهله محلياً (Reject)"]:::system
+    
+    UnidentifiedPage --> SelectEvent --> Action
+    Action -- "تبني (Claim)" --> Claim
+    Action -- "رفض (Reject)" --> Reject
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 09: Malfunctions (الأعطال التشخيصية)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DiagEngine["محرك الفحص المستمر للأعطال"]:::system
+    AlertCard["عرض تنبيه الأعطال للمستخدم"]:::action
+    ManualPage["توجيه المستخدم لدليل الأعطال (Manual)"]:::action
+    
+    DiagEngine --> AlertCard --> ManualPage
+        </pre>
+    </div>
+
+    <div class="diagram-container">
+        <h2 class="diagram-title">BP 10: Logout (تسجيل الخروج)</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+
+    Drawer["القائمة الجانبية (Drawer)"]:::action
+    ClickLogout["النقر على خيار تسجيل الخروج"]:::action
+    Confirm{"حوار التأكيد"}:::gateway
+    ClearSession["مسح الجلسة والتوكن مباشرة"]:::system
+    ToLogin["العودة لشاشة الدخول"]:::system
+    
+    Drawer --> ClickLogout --> Confirm
+    Confirm -- "موافق" --> ClearSession --> ToLogin
+        </pre>
+    </div>
+</body>
+</html>

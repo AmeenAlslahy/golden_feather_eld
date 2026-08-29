@@ -1,0 +1,43 @@
+```mermaid
+flowchart TD
+    %% Legend
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    
+    subgraph Legend ["Legend - المفتاح"]
+        L1["Foreground"]:::foreground
+        L2["Background"]:::background
+        L3["Native"]:::native
+        L4["Local Storage"]:::local
+        L5["Network / API"]:::network
+        L6["Error"]:::error
+        L7{"Decision"}:::decision
+    end
+
+    %% Flow: 01_installation_first_launch
+    Start((تثبيت التطبيق<br>App Installation)):::native --> Launch["تشغيل التطبيق لأول مرة<br>First Launch<br>main()"]:::foreground
+    
+    Launch --> Init["تهيئة الخدمات<br>Initialize Services<br>AppInitializer"]:::foreground
+    Init --> DBInit[("تهيئة قاعدة البيانات<br>Init Local DB<br>LocalDatabaseService")]:::local
+    Init --> StorageInit[("تهيئة التخزين المحلي<br>Init Storage<br>LocalStorageService")]:::local
+    
+    StorageInit --> RunApp["بدء واجهة المستخدم<br>Start UI<br>runApp()"]:::foreground
+    RunApp --> Splash["الشاشة الافتتاحية<br>Splash Screen<br>SplashPage"]:::foreground
+    
+    Splash --> CheckPerms{"التحقق من الصلاحيات<br>Check Permissions<br>Permission.location.isGranted"}:::decision
+    
+    CheckPerms -- "لا — No" --> PermPage["طلب الصلاحيات<br>Request Permissions<br>PermissionsPage"]:::foreground
+    PermPage --> WaitUser(إجراء المستخدم<br>User Action)
+    
+    CheckPerms -- "نعم — Yes" --> CheckAuth["التحقق من حالة المصادقة<br>Check Auth Status<br>checkAuthStatus()"]:::foreground
+    CheckAuth --> AuthDecision{"هل المستخدم مسجل؟<br>Is User Authenticated?<br>authStateProvider"}:::decision
+    
+    AuthDecision -- "نعم — Yes" --> ConnectionPage["صفحة الاتصال<br>Connection Page<br>EldConnectionPage"]:::foreground
+    AuthDecision -- "لا — No" --> LoginPage["تسجيل الدخول<br>Login Page<br>AuthPage"]:::foreground
+```

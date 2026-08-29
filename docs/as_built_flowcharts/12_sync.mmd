@@ -1,0 +1,35 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["إرسال حدث جديد<br>Submit Event<br>SyncEngine.submitEvent()"]):::foreground
+    
+    Start --> Enqueue[("طابور غير متصل<br>Offline Queue<br>OfflineQueue.enqueue()")]:::local
+    Enqueue --> TriggerSync["بدء المزامنة<br>Trigger Sync<br>SyncEngine.triggerSync()"]:::background
+    
+    TriggerSync --> Fetch["سحب الأحداث<br>Get Ready Events<br>getReadyEvents(limit: 10)"]:::local
+    Fetch --> CheckEvents{"هل توجد أحداث؟<br>Has Events?"}:::decision
+    
+    CheckEvents -- "لا — No" --> End(["انتهاء المزامنة<br>Sync Complete"]):::background
+    CheckEvents -- "نعم — Yes" --> Dispatch["الإرسال للخادم<br>Dispatch Event<br>RemoteEventDispatcher.dispatch()"]:::network
+    
+    Dispatch --> DispatchResult{"نتيجة الإرسال<br>Dispatch Result"}:::decision
+    
+    DispatchResult -- "نجاح — Success" --> DeleteEvent[("حذف الحدث<br>Remove Event<br>removeEvent()")]:::local
+    DeleteEvent --> Fetch
+    
+    DispatchResult -- "فشل — Failure" --> RetryPolicy["سياسة الإعادة<br>Retry Policy<br>calculateNextRetry()"]:::background
+    RetryPolicy --> CheckRetry{"هل يمكن الإعادة؟<br>Can Retry?"}:::decision
+    
+    CheckRetry -- "نعم — Yes" --> UpdateEvent[("تحديث موعد المحاولة<br>Update nextRetryAt")]:::local
+    UpdateEvent --> Fetch
+    
+    CheckRetry -- "لا — No (Max limit)" --> KeepEvent[("إبقاء الحدث للفحص اليدوي<br>Keep Event for Audit")]:::local
+    KeepEvent --> Fetch
+```

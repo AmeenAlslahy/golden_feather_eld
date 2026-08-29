@@ -1,0 +1,394 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Golden Feather ELD Flowcharts</title>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f6f9; }
+        .diagram-container { background: white; margin-bottom: 40px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow-x: auto; text-align: center; }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; text-align: right; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #2c3e50;">مخططات النظام (Golden Feather ELD)</h1>
+    <p style="text-align: center; font-size: 16px;">هذا الملف يجمع كافة المخططات الانسيابية لسهولة عرضها.</p>
+    <div class='diagram-container'>
+        <h2>01_installation_first_launch.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    %% Legend
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    
+    subgraph Legend ["Legend - المفتاح"]
+        L1["Foreground"]:::foreground
+        L2["Background"]:::background
+        L3["Native"]:::native
+        L4["Local Storage"]:::local
+        L5["Network / API"]:::network
+        L6["Error"]:::error
+        L7{"Decision"}:::decision
+    end
+
+    %% Flow: 01_installation_first_launch
+    Start((تثبيت التطبيق<br>App Installation)):::native --> Launch["تشغيل التطبيق لأول مرة<br>First Launch<br>main()"]:::foreground
+    
+    Launch --> Init["تهيئة الخدمات<br>Initialize Services<br>AppInitializer"]:::foreground
+    Init --> DBInit[("تهيئة قاعدة البيانات<br>Init Local DB<br>LocalDatabaseService")]:::local
+    Init --> StorageInit[("تهيئة التخزين المحلي<br>Init Storage<br>LocalStorageService")]:::local
+    
+    StorageInit --> RunApp["بدء واجهة المستخدم<br>Start UI<br>runApp()"]:::foreground
+    RunApp --> Splash["الشاشة الافتتاحية<br>Splash Screen<br>SplashPage"]:::foreground
+    
+    Splash --> CheckPerms{"التحقق من الصلاحيات<br>Check Permissions<br>Permission.location.isGranted"}:::decision
+    
+    CheckPerms -- "لا — No" --> PermPage["طلب الصلاحيات<br>Request Permissions<br>PermissionsPage"]:::foreground
+    PermPage --> WaitUser(إجراء المستخدم<br>User Action)
+    
+    CheckPerms -- "نعم — Yes" --> CheckAuth["التحقق من حالة المصادقة<br>Check Auth Status<br>checkAuthStatus()"]:::foreground
+    CheckAuth --> AuthDecision{"هل المستخدم مسجل؟<br>Is User Authenticated?<br>authStateProvider"}:::decision
+    
+    AuthDecision -- "نعم — Yes" --> ConnectionPage["صفحة الاتصال<br>Connection Page<br>EldConnectionPage"]:::foreground
+    AuthDecision -- "لا — No" --> LoginPage["تسجيل الدخول<br>Login Page<br>AuthPage"]:::foreground
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>02_bootstrap.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء التهيئة<br>Start Bootstrap<br>AppInitializer.initialize()"]):::foreground
+    
+    Start --> EnvInit["تهيئة المتغيرات البيئية<br>Init Env<br>AppEnvironmentConfig.init()"]:::foreground
+    EnvInit --> FBInit{"تهيئة فايربيز<br>Init Firebase<br>Firebase.initializeApp()"}:::decision
+    
+    FBInit -- "نجاح — Success" --> CoreInit
+    FBInit -- "فشل — Error (Catch)" --> CoreInit
+    
+    CoreInit["تهيئة الخدمات الأساسية<br>Core Services Init<br>_initCoreServices()"]:::foreground
+    CoreInit --> LocalStorage[("التخزين المحلي<br>Local Storage<br>LocalStorageService.init()")]:::local
+    LocalStorage --> LocalDB[("قاعدة البيانات المحلية<br>Local DB<br>LocalDatabaseService.init()")]:::local
+    
+    LocalDB --> DepInit["تهيئة الخدمات المعتمدة<br>Dependent Services Init<br>_initDependentServices()"]:::foreground
+    DepInit --> TrackService["خدمة التتبع<br>Tracking Service<br>TrackingService.init()"]:::foreground
+    TrackService --> PushService["خدمة الإشعارات<br>Push Service<br>PushNotificationService.init()"]:::network
+    
+    PushService --> SyncInit["تهيئة المزامنة<br>Sync Services Init<br>_initSyncServices()"]:::foreground
+    SyncInit --> UtcSync["مزامنة الوقت<br>UTC Sync<br>UtcSyncService.syncWithUtc()"]:::network
+    
+    UtcSync --> Container["إنشاء حاوية المزودات<br>Create Provider Container<br>createProviderContainer()"]:::foreground
+    Container --> PostInit["مهام ما بعد الإنشاء<br>Post Container Init<br>initializePostContainer()"]:::foreground
+    
+    PostInit --> RemoteConfig["جلب التكوين عن بعد<br>Fetch Remote Config<br>RemoteConfigService.fetchOnStartup()"]:::network
+    RemoteConfig --> MicroTask["بدء المزامنة في الخلفية<br>Start Sync Engine<br>syncEngineProvider"]:::foreground
+    
+    MicroTask --> RunApp(["تشغيل واجهة المستخدم<br>Run App<br>runApp(GoldenFeatherApp)"]):::foreground
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>04_authentication.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["المستخدم يضغط تسجيل الدخول<br>User taps Login<br>_handleLogin()"]):::foreground
+    
+    Start --> Validate{"التحقق من صحة النموذج<br>Form Validation<br>_formKey.currentState.validate()"}:::decision
+    Validate -- "خطأ — Invalid" --> FormError["إظهار الأخطاء<br>Show Errors"]:::error
+    Validate -- "صحيح — Valid" --> AuthNotifier["إرسال طلب الدخول<br>Submit Login<br>AuthNotifier.login()"]:::foreground
+    
+    AuthNotifier --> UseCase["حالة استخدام تسجيل الدخول<br>Login UseCase<br>Login.call()"]:::foreground
+    UseCase --> Repo["مستودع المصادقة<br>Auth Repository<br>AuthRepositoryImpl.login()"]:::foreground
+    
+    Repo --> CheckNet{"تحقق من الاتصال<br>Network Info<br>_networkInfo.isConnected"}:::decision
+    CheckNet -- "غير متصل — Offline" --> NetError["فشل الاتصال<br>Network Failure<br>NetworkFailure"]:::error
+    CheckNet -- "متصل — Online" --> Remote["المصدر البعيد<br>Remote Data Source<br>AuthRemoteDataSource.login()"]:::network
+    
+    Remote --> APIResult{"نتيجة الـ API<br>API Response"}:::decision
+    
+    APIResult -- "فشل — Error (Catch)" --> ApiException["استثناء الواجهة البرمجية<br>API Exception<br>ApiException"]:::error
+    ApiException --> RepoError["إرجاع خطأ<br>Return ServerFailure"]:::error
+    RepoError --> NotifierError["تحديث الحالة لخطأ<br>Update State to Error<br>AuthStatus.error"]:::foreground
+    NotifierError --> UIError["عرض رسالة الخطأ<br>Show Error Message<br>authState.errorMessage"]:::foreground
+    
+    APIResult -- "نجاح — Success" --> LocalSave[("حفظ التوكن<br>Save Token<br>AuthLocalDataSource.saveToken()")]:::local
+    LocalSave --> SaveRT[("حفظ توكن التجديد<br>Save Refresh Token<br>AuthLocalDataSource.saveRefreshToken()")]:::local
+    SaveRT --> SaveUser[("حفظ المستخدم<br>Save User<br>AuthLocalDataSource.saveUser()")]:::local
+    
+    SaveUser --> NotifierSuccess["تحديث الحالة لمسجل<br>Update State Authenticated<br>AuthStatus.authenticated"]:::foreground
+    NotifierSuccess --> Navigate["توجيه للرئيسية<br>Navigate to Home<br>context.goNamed('home')"]:::foreground
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>07_tracking.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء التتبع<br>Start Tracking<br>TrackingProvider.toggleTracking()"]):::foreground
+    
+    Start --> FlutterService["خدمة التتبع (Flutter)<br>Tracking Service<br>TrackingService.start()"]:::foreground
+    FlutterService --> SDK["واجهة العميل<br>Traccar SDK<br>TraccarRealClient.start()"]:::foreground
+    
+    SDK --> MethodChannel[["قناة الاتصال<br>Method Channel<br>com.goldenfeather.eld/traccar"]]:::native
+    MethodChannel --> NativePlugin["إضافة أندرويد<br>Android Plugin<br>TraccarPlugin.startTracking()"]:::native
+    
+    NativePlugin --> PermCheck{"صلاحيات الموقع<br>Location Permission<br>checkLocationPermission()"}:::decision
+    PermCheck -- "مرفوضة — Denied" --> PermError["خطأ صلاحيات<br>Permission Denied<br>PERMISSION_DENIED"]:::error
+    
+    PermCheck -- "ممنوحة — Granted" --> StartNative["بدء خدمة التتبع<br>Start Service<br>TrackingServiceManager.start()"]:::native
+    StartNative --> ForegroundService["خدمة بالواجهة<br>Foreground Service<br>TrackingForegroundService.startForeground()"]:::background
+    
+    ForegroundService --> LocationManager["مدير المواقع<br>Request Updates<br>LocationManager.requestLocationUpdates()"]:::native
+    
+    LocationManager --> OnLocationChanged(["استلام موقع جديد<br>New Location<br>onLocationChanged()"]):::background
+    
+    OnLocationChanged --> DBInsert[("تخزين محلي<br>Insert Location<br>LocationDatabaseHelper.insertLocation()")]:::local
+    OnLocationChanged --> TriggerUpload["رفع البيانات<br>Trigger Upload<br>NetworkUploader.triggerUpload()"]:::background
+    
+    OnLocationChanged --> Broadcast["بث الحدث<br>Send Broadcast<br>ACTION_LOCATION_UPDATE"]:::background
+    Broadcast --> BroadcastReceiver["استقبال الحدث<br>Event Receiver<br>TraccarPlugin.locationReceiver"]:::native
+    
+    BroadcastReceiver --> SendEvent["إرسال عبر القناة<br>Send to Flutter<br>EventChannel"]:::native
+    SendEvent --> FlutterListen(["استلام في التطبيق<br>Flutter Listener<br>trackingStateProvider"]):::foreground
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>08_background_execution.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef native fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["بدء الخدمة في الخلفية<br>Background Service Start<br>TrackingForegroundService"]):::background
+    
+    Start --> SetupOS(تسجيل إشعار مستمر<br>Ongoing Notification<br>startForeground):::native
+    SetupOS --> OSUpdate["مراقب المواقع<br>Location Listener<br>LocationManager"]:::native
+    
+    OSUpdate --> FetchLoc(["تحديث الموقع<br>onLocationChanged()"]):::background
+    
+    FetchLoc --> InsertDB[("حفظ محلي<br>Insert Location<br>LocationDatabaseHelper")]:::local
+    InsertDB --> CheckNetwork{"تحقق من الشبكة<br>Check Connectivity<br>NetworkCapabilities"}:::decision
+    
+    CheckNetwork -- "متصل — Connected" --> Uploader["الرفع للشبكة<br>Network Uploader<br>NetworkUploader.triggerUpload()"]:::background
+    CheckNetwork -- "غير متصل — Disconnected" --> Queue[("تراكم في القاعدة<br>Queue in Local DB")]:::local
+    
+    Uploader --> LoopDB["سحب المواقع المعلقة<br>Fetch Pending<br>getPendingLocations()"]:::local
+    LoopDB --> TryUpload["رفع موقع فردي<br>Upload Single Location<br>uploadSingleLocation()"]:::network
+    
+    TryUpload --> UploadResult{"نتيجة الرفع<br>Upload Result<br>HTTP Response"}:::decision
+    
+    UploadResult -- "نجاح — 200 OK" --> DelDB[("حذف من المحلي<br>Delete Location<br>deleteLocation()")]:::local
+    DelDB --> LoopDB
+    
+    UploadResult -- "فشل — Error" --> StopUpload["إيقاف الرفع مؤقتاً<br>Stop Upload Loop<br>return@execute"]:::background
+    StopUpload --> Queue
+    
+    OSUpdate --> NetworkCallback(["استعادة الشبكة<br>Network Restored<br>onAvailable()"]):::background
+    NetworkCallback --> Uploader
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>09_hos_logic.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef orphan fill:#ffcccb,stroke:#ff0000,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+
+    StartUI(["تغيير الحالة يدوياً<br>Manual Status Change<br>HosPage / ChangeStatusPage"]):::foreground
+    
+    StartUI --> Provider["مزود الواجهة<br>HosNotifier<br>changeStatus()"]:::foreground
+    Provider --> ValidateSpeed{"التحقق من السرعة<br>Check Current Speed"}:::decision
+    
+    ValidateSpeed -- "سرعة > 8 (والحالة قيادة)" --> Reject["رفض التغيير<br>Reject Transition"]:::error
+    ValidateSpeed -- "مسموح — Allowed" --> Engine["محرك HOS<br>HosRulesEngine<br>manualTransition()"]:::foreground
+    
+    Engine --> StateMachine["تحديث آلة الحالات<br>HosStateMachine<br>transitionTo()"]:::foreground
+    StateMachine --> Timer{"هل الحالة قيادة؟<br>Is Driving?"}:::decision
+    Timer -- "نعم — Yes" --> StartTimer["بدء مؤقت القيادة<br>Start 1-min Timer<br>_startDrivingTimer()"]:::foreground
+    Timer -- "لا — No" --> StopTimer["إيقاف مؤقت القيادة<br>Stop Timer<br>_stopDrivingTimer()"]:::foreground
+    
+    StartTimer --> RefreshUI["تحديث الواجهة<br>UI Refresh<br>HosNotifier.refresh()"]:::foreground
+    StopTimer --> RefreshUI
+    
+    RefreshUI --> Calc["حساب الحدود<br>Calculate Limits<br>HosCalculator.calculateAllLimits()"]:::foreground
+    Calc --> Alerts["توليد التنبيهات<br>Generate Alerts<br>_generateAlerts()"]:::foreground
+    Alerts --> Violations["التحقق من الانتهاكات<br>Check Violations<br>_checkViolations()"]:::foreground
+    Violations --> UpdateState["إرسال للواجهة<br>HosStatusUpdate"]:::foreground
+    
+    %% Orphan Flow
+    EldEvent(["حدث ELD مقلد<br>Mock ELD Event<br>Bluetooth / LiveTracking"]):::orphan
+    EldEvent -. "مقطوع — ORPHAN" .-> ProcessEvent["معالجة الحدث آلياً<br>HosRulesEngine<br>processEvent()"]:::orphan
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>10_auto_duty_status.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["حدث تتبع جديد<br>Live Tracking Event<br>TrackingEventsStreamProvider"]):::foreground
+    
+    Start --> Tracker["استلام الحدث<br>DutyStatusTracker<br>_processEldEvent()"]:::foreground
+    Tracker --> SpeedCheck{"تحليل السرعة<br>Check Speed"}:::decision
+    
+    SpeedCheck -- "أكبر من 5 ميل/س — > 5 MPH" --> StatusDrive["الحالة الجديدة: قيادة<br>New Status = DRIVING"]:::foreground
+    SpeedCheck -- "سرعة 0 (وكان قيادة) — Speed 0" --> StatusOnDuty["الحالة الجديدة: على أهبة العمل<br>New Status = ON_DUTY"]:::foreground
+    SpeedCheck -- "أخرى — Other" --> StatusKeep["لا تغيير<br>Keep Current Status"]:::foreground
+    
+    StatusDrive --> ChangeCheck{"هل الحالة مختلفة؟<br>Status Changed?"}:::decision
+    StatusOnDuty --> ChangeCheck
+    StatusKeep --> ChangeCheck
+    
+    ChangeCheck -- "نعم — Yes" --> Transition["تنفيذ الانتقال<br>Execute Transition<br>_transitionTo()"]:::foreground
+    ChangeCheck -- "لا — No" --> End(["إنهاء<br>End"]):::foreground
+    
+    Transition --> CreatePeriod["إنشاء فترة منتهية<br>Create DutyPeriod"]:::foreground
+    CreatePeriod --> SavePeriod[("حفظ في السجل<br>Save Period<br>LogRepository.savePeriod()")]:::local
+    
+    SavePeriod --> UpdateCurrent["تحديث الحالة الحالية<br>Update currentStatus"]:::foreground
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>12_sync.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["إرسال حدث جديد<br>Submit Event<br>SyncEngine.submitEvent()"]):::foreground
+    
+    Start --> Enqueue[("طابور غير متصل<br>Offline Queue<br>OfflineQueue.enqueue()")]:::local
+    Enqueue --> TriggerSync["بدء المزامنة<br>Trigger Sync<br>SyncEngine.triggerSync()"]:::background
+    
+    TriggerSync --> Fetch["سحب الأحداث<br>Get Ready Events<br>getReadyEvents(limit: 10)"]:::local
+    Fetch --> CheckEvents{"هل توجد أحداث؟<br>Has Events?"}:::decision
+    
+    CheckEvents -- "لا — No" --> End(["انتهاء المزامنة<br>Sync Complete"]):::background
+    CheckEvents -- "نعم — Yes" --> Dispatch["الإرسال للخادم<br>Dispatch Event<br>RemoteEventDispatcher.dispatch()"]:::network
+    
+    Dispatch --> DispatchResult{"نتيجة الإرسال<br>Dispatch Result"}:::decision
+    
+    DispatchResult -- "نجاح — Success" --> DeleteEvent[("حذف الحدث<br>Remove Event<br>removeEvent()")]:::local
+    DeleteEvent --> Fetch
+    
+    DispatchResult -- "فشل — Failure" --> RetryPolicy["سياسة الإعادة<br>Retry Policy<br>calculateNextRetry()"]:::background
+    RetryPolicy --> CheckRetry{"هل يمكن الإعادة؟<br>Can Retry?"}:::decision
+    
+    CheckRetry -- "نعم — Yes" --> UpdateEvent[("تحديث موعد المحاولة<br>Update nextRetryAt")]:::local
+    UpdateEvent --> Fetch
+    
+    CheckRetry -- "لا — No (Max limit)" --> KeepEvent[("إبقاء الحدث للفحص اليدوي<br>Keep Event for Audit")]:::local
+    KeepEvent --> Fetch
+
+        </pre>
+    </div>
+    <div class='diagram-container'>
+        <h2>MASTER_FLOWCHART.mmd</h2>
+        <pre class='mermaid'>
+flowchart TD
+    %% Global Styling
+    classDef master fill:#f8f9fa,stroke:#343a40,stroke-width:3px,color:#000,font-weight:bold
+    classDef subflow fill:#e9ecef,stroke:#6c757d,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    classDef decision fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef background fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#000
+
+    %% Nodes
+    Start(["تثبيت التطبيق<br>App Installation"]):::master
+    
+    Launch["التشغيل وبناء بيئة العمل<br>Bootstrap & Init<br>👉 FLOW-BOOT-001"]:::subflow
+    
+    Perms{"الصلاحيات ممنوحة؟<br>Permissions Granted?<br>👉 FLOW-PERM-001"}:::decision
+    
+    Auth{"المستخدم مسجل؟<br>User Authenticated?<br>👉 FLOW-AUTH-002"}:::decision
+    
+    LoginFlow["عملية تسجيل الدخول<br>Login Flow<br>👉 FLOW-AUTH-004"]:::subflow
+    
+    ConnectionFlow["الاتصال بالمركبة (وهمي)<br>Vehicle Connection<br>👉 FLOW-CONN-001"]:::subflow
+    
+    Home(["الشاشة الرئيسية<br>Home Dashboard"]):::master
+    
+    %% Split to parallel execution paths
+    TrackingCore["نظام التتبع والخلفية<br>Background Tracking Engine<br>👉 FLOW-TRK-001"]:::subflow
+    HOSCore["محرك ساعات الخدمة<br>HOS Rules Engine<br>👉 FLOW-HOS-001"]:::subflow
+    SyncCore["محرك المزامنة<br>Offline Sync Engine<br>👉 FLOW-SYNC-001"]:::subflow
+
+    %% Connections
+    Start --> Launch
+    Launch --> Perms
+    
+    Perms -- "لا — No" --> RequestPerms["طلب الصلاحيات<br>Request Permissions"]:::master
+    RequestPerms --> Perms
+    
+    Perms -- "نعم — Yes" --> Auth
+    
+    Auth -- "لا — No" --> LoginFlow
+    LoginFlow --> Home
+    
+    Auth -- "نعم — Yes" --> ConnectionFlow
+    ConnectionFlow --> Home
+    
+    Home ===> TrackingCore
+    Home ===> HOSCore
+    Home ===> SyncCore
+    
+    TrackingCore -. "بيانات الموقع<br>Location Data" .-> SyncCore
+    HOSCore -. "تغييرات الحالة<br>Status Changes" .-> SyncCore
+    
+    SyncCore --> Cloud[("خادم Traccar / ELD Cloud")]:::master
+
+        </pre>
+    </div></body>
+</html>

@@ -1,0 +1,18 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    OpenChange["فتح شاشة تعديل الحالة<br>ChangeStatusPage"]:::action
+    SelectStatus["تحديد الحالة (PC, YM, Sleeper, OffDuty)"]:::action
+    InputNote["إدخال الملاحظة (Annotation)"]:::action
+    NoteBug["الملاحظة اختيارية برمجياً ولا تُجبر السائق حتى مع PC/YM"]:::bug
+    CheckSpeed{"سرعة > 0؟"}:::gateway
+    Block["رفض التغيير / تجاهل"]:::system
+    SaveStatus["حفظ الحالة<br>HosRulesEngine.changeStatus"]:::system
+    
+    OpenChange --> SelectStatus --> InputNote -. "ثغرة امتثال" .-> NoteBug
+    InputNote --> CheckSpeed
+    CheckSpeed -- "نعم" --> Block
+    CheckSpeed -- "لا" --> SaveStatus

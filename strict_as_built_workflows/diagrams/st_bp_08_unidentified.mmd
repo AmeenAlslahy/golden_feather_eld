@@ -1,0 +1,16 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    UnidentifiedPage["شاشة القيادة غير المسندة<br>UnidentifiedEventsPage"]:::action
+    SelectEvent["اختيار حدث مجهول"]:::action
+    Action{"إجراء السائق"}:::gateway
+    Claim["قبول (Claim)"]:::system
+    Reject["رفض (Reject)"]:::system
+    NoBackendPush["الحدث المرفوض يبقى في القائمة المحلية أو يحذف محلياً بدون إشعار مباشر لمدير الأسطول في واجهة التطبيق"]:::bug
+    
+    UnidentifiedPage --> SelectEvent --> Action
+    Action -- "Claim" --> Claim
+    Action -- "Reject" --> Reject -. "ملاحظة" .-> NoBackendPush

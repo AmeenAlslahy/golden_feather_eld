@@ -1,0 +1,9 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DiagEngine["محرك التشخيص<br>DiagnosticsEngine"]:::system
+    AlertCard["بطاقة التنبيهات<br>DiagnosticsAlertCard"]:::action
+    ManualPage["دليل الأعطال<br>MalfunctionManual"]:::action
+    
+    DiagEngine --> AlertCard --> ManualPage

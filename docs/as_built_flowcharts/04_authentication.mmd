@@ -1,0 +1,36 @@
+```mermaid
+flowchart TD
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000
+    classDef foreground fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000
+    classDef local fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#000
+    classDef network fill:#cce5ff,stroke:#17a2b8,stroke-width:2px,color:#000
+    classDef error fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+
+    Start(["المستخدم يضغط تسجيل الدخول<br>User taps Login<br>_handleLogin()"]):::foreground
+    
+    Start --> Validate{"التحقق من صحة النموذج<br>Form Validation<br>_formKey.currentState.validate()"}:::decision
+    Validate -- "خطأ — Invalid" --> FormError["إظهار الأخطاء<br>Show Errors"]:::error
+    Validate -- "صحيح — Valid" --> AuthNotifier["إرسال طلب الدخول<br>Submit Login<br>AuthNotifier.login()"]:::foreground
+    
+    AuthNotifier --> UseCase["حالة استخدام تسجيل الدخول<br>Login UseCase<br>Login.call()"]:::foreground
+    UseCase --> Repo["مستودع المصادقة<br>Auth Repository<br>AuthRepositoryImpl.login()"]:::foreground
+    
+    Repo --> CheckNet{"تحقق من الاتصال<br>Network Info<br>_networkInfo.isConnected"}:::decision
+    CheckNet -- "غير متصل — Offline" --> NetError["فشل الاتصال<br>Network Failure<br>NetworkFailure"]:::error
+    CheckNet -- "متصل — Online" --> Remote["المصدر البعيد<br>Remote Data Source<br>AuthRemoteDataSource.login()"]:::network
+    
+    Remote --> APIResult{"نتيجة الـ API<br>API Response"}:::decision
+    
+    APIResult -- "فشل — Error (Catch)" --> ApiException["استثناء الواجهة البرمجية<br>API Exception<br>ApiException"]:::error
+    ApiException --> RepoError["إرجاع خطأ<br>Return ServerFailure"]:::error
+    RepoError --> NotifierError["تحديث الحالة لخطأ<br>Update State to Error<br>AuthStatus.error"]:::foreground
+    NotifierError --> UIError["عرض رسالة الخطأ<br>Show Error Message<br>authState.errorMessage"]:::foreground
+    
+    APIResult -- "نجاح — Success" --> LocalSave[("حفظ التوكن<br>Save Token<br>AuthLocalDataSource.saveToken()")]:::local
+    LocalSave --> SaveRT[("حفظ توكن التجديد<br>Save Refresh Token<br>AuthLocalDataSource.saveRefreshToken()")]:::local
+    SaveRT --> SaveUser[("حفظ المستخدم<br>Save User<br>AuthLocalDataSource.saveUser()")]:::local
+    
+    SaveUser --> NotifierSuccess["تحديث الحالة لمسجل<br>Update State Authenticated<br>AuthStatus.authenticated"]:::foreground
+    NotifierSuccess --> Navigate["توجيه للرئيسية<br>Navigate to Home<br>context.goNamed('home')"]:::foreground
+```

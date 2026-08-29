@@ -1,0 +1,11 @@
+﻿flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DvirList["قائمة الفحص<br>DvirListPage"]:::action
+    OpenForm["فتح نموذج الفحص<br>DvirFormPage"]:::action
+    FillForm["إدخال الأعطال والتقييم (آمن/غير آمن) والتوقيع"]:::action
+    SaveRepo["حفظ في<br>DvirRepositoryImpl"]:::system
+    SyncQ["إضافة لطابور الرفع<br>Offline Queue"]:::system
+    
+    DvirList --> OpenForm --> FillForm --> SaveRepo --> SyncQ

@@ -1,0 +1,248 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحليل مسارات العمل الفعلية المبرمجة (Strict As-Built Workflows)</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'base' });
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #fafafa; color: #333; }
+        h1, h2 { color: #d32f2f; }
+        .diagram-container { background: #fff; margin-bottom: 30px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-right: 5px solid #d32f2f; }
+        .diagram-title { margin-top: 0; border-bottom: 2px solid #ffcdd2; padding-bottom: 10px; color: #b71c1c; }
+        .desc { font-size: 15px; color: #424242; margin-bottom: 15px; font-weight: bold; background: #fff9c4; padding: 10px; border-radius: 4px; border: 1px solid #fbc02d;}
+    </style>
+</head>
+<body>
+    <h1>تحليل مسارات العمل الفعلية (Strict As-Built Workflows) - كشف الأخطاء</h1>
+    <div class="desc">
+        هذا الملف تم تصميمه خصيصاً ليطابق <b>الكود الفعلي 100%</b>. تم تجريده من أي سيناريوهات افتراضية أو بشرية.<br>
+        تم تمييز أي نقص في الامتثال للقوانين (Bugs/Compliance Gaps) بالعُقَد ذات <b>اللون الأحمر</b> لتتمكن من رصد الأخطاء البرمجية بوضوح.
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 00 App Launch</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef actor fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    User(["السائق"])
+    Start["تشغيل التطبيق"]:::action
+    Perms{"طلب صلاحيات (الموقع، الخ)"}:::gateway
+    
+    User --> Start --> Perms
+    Perms -- "رفض دائم (permanentlyDenied)" --> LoopBug["حلقة مفرغة (Infinite Loop)<br>التطبيق يطلب الصلاحية مجدداً دون توجيه للإعدادات"]:::bug
+    LoopBug --> Perms
+    
+    Perms -- "موافقة" --> CheckSession["استدعاء repository.checkSessionStatus()"]:::system
+    CheckSession --> SessionState{"حالة الاستجابة"}:::gateway
+    
+    SessionState -- "صالحة (متصل بالإنترنت)" --> AuthValid["حالة: AuthStatus.authenticated"]:::system
+    SessionState -- "غير متحقق منها (لا يوجد إنترنت)" --> AuthOffline["حالة: AuthStatus.offline"]:::system
+    SessionState -- "غير صالحة (Invalid)" --> ShowLogin["عرض شاشة الدخول"]:::action
+    
+    ShowLogin --> LoginAPI["استدعاء AuthRemoteDataSource.login"]:::system
+    LoginAPI --> AuthValid
+    
+    AuthValid --> Router["GoRouter يوجه للرئيسية"]:::system
+    AuthOffline --> Router
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 01 Vehicle Connect</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الشاشة الرئيسية"]:::action
+    SelectVehicle["النقر على اختيار مركبة<br>SelectVehiclePage"]:::action
+    Connect["محاولة الاتصال بالمركبة<br>EldConnectionPage"]:::action
+    StartTracking["بدء استلام بيانات السرعة والمحرك<br>LiveTrackingDataSource"]:::system
+    
+    Home --> SelectVehicle --> Connect --> StartTracking
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 02 Dvir Process</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DvirList["قائمة الفحص<br>DvirListPage"]:::action
+    OpenForm["فتح نموذج الفحص<br>DvirFormPage"]:::action
+    FillForm["إدخال الأعطال والتقييم (آمن/غير آمن) والتوقيع"]:::action
+    SaveRepo["حفظ في<br>DvirRepositoryImpl"]:::system
+    SyncQ["إضافة لطابور الرفع<br>Offline Queue"]:::system
+    
+    DvirList --> OpenForm --> FillForm --> SaveRepo --> SyncQ
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 03 Status Change</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    OpenChange["فتح شاشة تعديل الحالة<br>ChangeStatusPage"]:::action
+    SelectStatus["تحديد الحالة (PC, YM, Sleeper, OffDuty)"]:::action
+    InputNote["إدخال الملاحظة (Annotation)"]:::action
+    NoteBug["الملاحظة اختيارية برمجياً ولا تُجبر السائق حتى مع PC/YM"]:::bug
+    CheckSpeed{"سرعة > 0؟"}:::gateway
+    Block["رفض التغيير / تجاهل"]:::system
+    SaveStatus["حفظ الحالة<br>HosRulesEngine.changeStatus"]:::system
+    
+    OpenChange --> SelectStatus --> InputNote -. "ثغرة امتثال" .-> NoteBug
+    InputNote --> CheckSpeed
+    CheckSpeed -- "نعم" --> Block
+    CheckSpeed -- "لا" --> SaveStatus
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 04 Auto Driving</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    GPS["مستشعر GPS / ECM"]:::system
+    SpeedCheck{"هل السرعة >= 8.0 كم/س (5 ميل/س)؟"}:::gateway
+    SetDriving["تغيير الحالة تلقائياً لـ Driving"]:::system
+    StopCheck{"هل السرعة = 0؟"}:::gateway
+    StartTimer["بدء مؤقت التوقف<br>_checkStopTimer"]:::system
+    SetOnDuty["تغيير الحالة تلقائياً لـ OnDutyNotDriving"]:::system
+    NoDialog["لا يظهر تنبيه للسائق لتأكيد التوقف (يتحول فوراً بعد المؤقت)"]:::bug
+    
+    GPS --> SpeedCheck
+    SpeedCheck -- "نعم" --> SetDriving
+    SpeedCheck -- "لا" --> StopCheck
+    StopCheck -- "نعم" --> StartTimer
+    StartTimer --> SetOnDuty -. "ثغرة امتثال" .-> NoDialog
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 05 Log Edit</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    LogList["قائمة السجلات<br>LogsListPage"]:::action
+    EditLog["تعديل سجل<br>EditLogPage"]:::action
+    SaveEdit["حفظ التعديل<br>LogRepositoryImpl.logAudit()"]:::system
+    NoAdmin["الكود الحالي لا يحتوي على واجهة لمراجعة أو استقبال تعديلات المدير في الواجهة الأمامية"]:::bug
+    
+    LogList --> EditLog --> SaveEdit -. "ثغرة بزنس" .-> NoAdmin
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 06 Inspection</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    Home["الرئيسية"]:::action
+    OpenDot["فتح تفتيش الطريق<br>DotInspectionPage"]:::action
+    ViewLogs["عرض السجلات 8 أيام<br>InspectionPreviewPage"]:::system
+    SendLogs["إرسال السجلات<br>SendLogsPage"]:::action
+    Method["اختيار Web Services أو Email"]:::action
+    
+    Home --> OpenDot --> ViewLogs --> SendLogs --> Method
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 07 Team Driving</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    OpenTeam["واجهة القيادة المشتركة<br>CodriverPage"]:::action
+    AddCo["إضافة مساعد / تسجيل دخول"]:::action
+    Swap["تبديل الأدوار<br>Make Active"]:::system
+    
+    OpenTeam --> AddCo --> Swap
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 08 Unidentified</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    UnidentifiedPage["شاشة القيادة غير المسندة<br>UnidentifiedEventsPage"]:::action
+    SelectEvent["اختيار حدث مجهول"]:::action
+    Action{"إجراء السائق"}:::gateway
+    Claim["قبول (Claim)"]:::system
+    Reject["رفض (Reject)"]:::system
+    NoBackendPush["الحدث المرفوض يبقى في القائمة المحلية أو يحذف محلياً بدون إشعار مباشر لمدير الأسطول في واجهة التطبيق"]:::bug
+    
+    UnidentifiedPage --> SelectEvent --> Action
+    Action -- "Claim" --> Claim
+    Action -- "Reject" --> Reject -. "ملاحظة" .-> NoBackendPush
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 09 Malfunctions</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+
+    DiagEngine["محرك التشخيص<br>DiagnosticsEngine"]:::system
+    AlertCard["بطاقة التنبيهات<br>DiagnosticsAlertCard"]:::action
+    ManualPage["دليل الأعطال<br>MalfunctionManual"]:::action
+    
+    DiagEngine --> AlertCard --> ManualPage
+
+        </pre>
+    </div>
+    <div class="diagram-container">
+        <h2 class="diagram-title">St Bp 10 Logout</h2>
+        <pre class="mermaid">
+flowchart TD
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    Drawer["القائمة الجانبية<br>EldDrawer"]:::action
+    ClickLogout["النقر على تسجيل الخروج"]:::action
+    Confirm{"حوار التأكيد<br>confirmLogout"}:::gateway
+    CallUseCase["استدعاء AuthStateProvider.logout"]:::system
+    MissedCertify["لا يوجد إجبار لاعتماد السجلات (Certify) قبل تسجيل الخروج"]:::bug
+    ClearSession["مسح التوكن والجلسة والعودة لتسجيل الدخول"]:::system
+    
+    Drawer --> ClickLogout --> Confirm
+    Confirm -- "نعم" --> CallUseCase
+    CallUseCase -. "ثغرة امتثال" .-> MissedCertify
+    CallUseCase --> ClearSession
+
+        </pre>
+    </div>
+</body>
+</html>

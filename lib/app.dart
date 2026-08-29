@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'l10n/app_localizations.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme_provider.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/constants/app_constants.dart';
+import 'core/services/quick_actions_initializer.dart';
+import 'routes.dart';
+
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+/// تطبيق Golden Feather ELD الرئيسي
+class GoldenFeatherApp extends ConsumerWidget {
+  const GoldenFeatherApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
+
+    return ScreenUtilInit(
+      designSize: const Size(375, 812), // iPhone X
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp.router(
+          scaffoldMessengerKey: scaffoldMessengerKey,
+          // معلومات التطبيق
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+
+          // الترجمة
+          locale: locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localeResolutionCallback: (locale, supportedLocales) {
+            if (locale == null) return const Locale('ar');
+            for (final supportedLocale in supportedLocales) {
+              if (supportedLocale.languageCode == locale.languageCode) {
+                return supportedLocale;
+              }
+            }
+            return const Locale('ar');
+          },
+
+          // الثيم
+          themeMode: themeMode,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+
+          // التوجيه
+          routerConfig: ref.watch(routerProvider),
+          
+          builder: (context, child) {
+            return Stack(
+              children: [
+                if (child != null) child,
+                const QuickActionsInitializer(),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+

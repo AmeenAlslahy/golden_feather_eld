@@ -1,0 +1,27 @@
+﻿flowchart TD
+    classDef actor fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#000
+    classDef action fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef system fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px,color:#000
+    classDef bug fill:#f8d7da,stroke:#dc3545,stroke-width:3px,color:#000
+
+    User(["السائق"])
+    Start["تشغيل التطبيق"]:::action
+    Perms{"طلب صلاحيات (الموقع، الخ)"}:::gateway
+    
+    User --> Start --> Perms
+    Perms -- "رفض دائم (permanentlyDenied)" --> LoopBug["حلقة مفرغة (Infinite Loop)<br>التطبيق يطلب الصلاحية مجدداً دون توجيه للإعدادات"]:::bug
+    LoopBug --> Perms
+    
+    Perms -- "موافقة" --> CheckSession["استدعاء repository.checkSessionStatus()"]:::system
+    CheckSession --> SessionState{"حالة الاستجابة"}:::gateway
+    
+    SessionState -- "صالحة (متصل بالإنترنت)" --> AuthValid["حالة: AuthStatus.authenticated"]:::system
+    SessionState -- "غير متحقق منها (لا يوجد إنترنت)" --> AuthOffline["حالة: AuthStatus.offline"]:::system
+    SessionState -- "غير صالحة (Invalid)" --> ShowLogin["عرض شاشة الدخول"]:::action
+    
+    ShowLogin --> LoginAPI["استدعاء AuthRemoteDataSource.login"]:::system
+    LoginAPI --> AuthValid
+    
+    AuthValid --> Router["GoRouter يوجه للرئيسية"]:::system
+    AuthOffline --> Router

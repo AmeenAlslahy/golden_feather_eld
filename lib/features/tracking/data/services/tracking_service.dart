@@ -1,0 +1,203 @@
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/network/tracking_client_sdk.dart';
+import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/config/app_environment.dart';
+import '../../../../core/utils/logger.dart';
+
+/// خدمة التتبع - متكاملة مع Traccar Client SDK
+class TrackingService {
+  final TrackingClientInterface _tracker;
+  final LocalStorageService _storage;
+  StreamSubscription? _locationSubscription;
+  bool _isInitialized = false;
+
+  TrackingService({
+    TrackingClientInterface? tracker,
+    required LocalStorageService storage,
+  })  : _tracker = tracker ?? MockTrackingClient(),
+        _storage = storage;
+
+  // ========== التهيئة ==========
+
+  /// تهيئة المتتبع مع الإعدادات الحالية
+  Future<void> init() async {
+    if (_isInitialized) return;
+
+    try {
+      final config = _buildConfig();
+      
+      // لا تسمح ببدء التتبع بعنوان وهمي أو فارغ في بيئة temporaryTraccar
+      if (AppEnvironmentConfig.current == AppEnvironment.temporaryTraccar) {
+        if (config.serverUrl.isEmpty || config.serverUrl.contains('mock-traccar-server')) {
+          AppLogger.error('❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar');
+          throw Exception('Configuration Error: Valid Server URL required for temporaryTraccar');
+        }
+      }
+
+      await _tracker.setConfig(config);
+      _isInitialized = true;
+      AppLogger.info('✅ TrackingService initialized with Traccar SDK');
+      AppLogger.info('   Server: ${config.serverUrl}');
+      AppLogger.info('   Device: ${config.deviceId}');
+    } catch (e) {
+      AppLogger.error('❌ Failed to initialize Traccar SDK', e);
+      rethrow;
+    }
+  }
+
+  /// بناء Config من الإعدادات المحلية أو البيئة
+  Config _buildConfig() {
+    String serverUrl = _storage.serverUrl;
+    
+    // في temporaryTraccar نفضل URL البيئة لتجنب mock المخزن محلياً
+    if (AppEnvironmentConfig.current == AppEnvironment.temporaryTraccar) {
+      if (serverUrl.isEmpty || serverUrl.contains('mock-traccar-server')) {
+        serverUrl = AppEnvironmentConfig.apiBaseUrl;
+      }
+    }
+
+    // Ensure tracking uses port 5055 (OsmAnd default) instead of Web port
+    try {
+      final uri = Uri.parse(serverUrl);
+      if (uri.port != 5055 && !serverUrl.contains('5055')) {
+        serverUrl = uri.replace(port: 5055, path: '/').toString();
+      }
+    } catch (_) {}
+
+    return Config(
+      serverUrl: serverUrl,
+      deviceId: _storage.deviceId,
+      location: LocationConfig(
+        accuracy: _mapAccuracy(_storage.accuracy),
+        distanceMeters: _storage.distance,
+        intervalSeconds: _storage.interval,
+        angleDegrees: _storage.angle,
+        heartbeatIntervalSeconds: _storage.heartbeat,
+        stopDetection: _storage.stopDetection,
+      ),
+      wakeLock: _storage.wakelock,
+      buffer: _storage.buffer,
+      preferPlatformProviders: _storage.preferPlatformProviders,
+    );
+  }
+
+  Accuracy _mapAccuracy(String accuracy) {
+    return switch (accuracy) {
+      'highest' => Accuracy.highest,
+      'high' => Accuracy.high,
+      'low' => Accuracy.low,
+      _ => Accuracy.medium,
+    };
+  }
+
+  // ========== التحكم في التتبع ==========
+
+  /// بدء التتبع
+  Future<void> start() async {
+    if (!_isInitialized) await init();
+    try {
+      await _tracker.start();
+      AppLogger.info('📍 Tracking started');
+    } catch (e) {
+      AppLogger.error('Failed to start tracking', e);
+      rethrow;
+    }
+  }
+
+  /// إيقاف التتبع
+  Future<void> stop() async {
+    try {
+      await _tracker.stop();
+      AppLogger.info('⏹️ Tracking stopped');
+    } catch (e) {
+      AppLogger.error('Failed to stop tracking', e);
+      rethrow;
+    }
+  }
+
+  /// هل التتبع نشط
+  Future<bool> isTracking() async {
+    try {
+      return _tracker.isTracking();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// طلب الموقع الحالي
+  Future<void> requestPosition({String? alarm}) async {
+    if (!_isInitialized) await init();
+    try {
+      await _tracker.requestPosition(alarm: alarm);
+      AppLogger.info('📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}');
+    } catch (e) {
+      AppLogger.error('Failed to request position', e);
+      rethrow;
+    }
+  }
+
+  /// تحديث الإعدادات
+  Future<void> updateConfig() async {
+    if (!_isInitialized) await init();
+    try {
+      final config = _buildConfig();
+      await _tracker.setConfig(config);
+      _isInitialized = true;
+      AppLogger.info('⚙️ Tracking config updated');
+    } catch (e) {
+      AppLogger.error('Failed to update config', e);
+      rethrow;
+    }
+  }
+
+  // ========== السجلات ==========
+
+  /// الحصول على سجلات التتبع
+  Future<List<Map<String, dynamic>>> getLogs() async {
+    try {
+      final logs = await _tracker.getLogs();
+      return logs
+          .map((log) => {
+                'time': log.time,
+                'message': log.message,
+              })
+          .toList();
+    } catch (e) {
+      // In production, we don't mock logs anymore
+      AppLogger.error('Failed to get logs from native tracker', e);
+      return [];
+    }
+  }
+
+  /// مسح السجلات
+  Future<void> clearLogs() async {
+    try {
+      await _tracker.clearLogs();
+      AppLogger.info('🗑️ Logs cleared');
+    } catch (e) {
+      AppLogger.error('Failed to clear logs', e);
+    }
+  }
+
+
+
+  // ========== التخلص ==========
+
+  void dispose() {
+    _locationSubscription?.cancel();
+    _isInitialized = false;
+    AppLogger.info('TrackingService disposed');
+  }
+}
+
+/// مزود خدمة التتبع
+final trackingServiceProvider = Provider<TrackingService>((ref) {
+  final storage = ref.watch(localStorageProvider);
+  final tracker = ref.watch(trackingClientProvider);
+  return TrackingService(storage: storage, tracker: tracker);
+});
+
+
+

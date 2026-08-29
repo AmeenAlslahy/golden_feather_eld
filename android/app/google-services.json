@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "621421152187",
+    "project_id": "golden-feather-eld",
+    "storage_bucket": "golden-feather-eld.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621421152187:android:b248e920d876cca1fbe69e",
+        "android_client_info": {
+          "package_name": "com.goldenfeather.golden_feather_eld"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhngLnNsOfV9ksSAAJDkf4-pjgHoVoP2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
