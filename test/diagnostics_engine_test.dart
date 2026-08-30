@@ -5,11 +5,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/core/engine/diagnostics/diagnostics_engine.dart';
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/core/services/local_database_service.dart';
-import 'package:golden_feather_eld/core/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/engine/tracking/distance_tracker.dart';
 import 'package:fpdart/fpdart.dart';
 
-class MockLiveTrackingDataSource extends Mock implements LiveTrackingDataSource {}
+class MockLiveTrackingDataSource extends Mock
+    implements LiveTrackingDataSource {}
+
 class MockLocalDatabaseService extends Mock implements LocalDatabaseService {}
 
 void main() {
@@ -26,15 +27,17 @@ void main() {
   setUp(() {
     mockTracking = MockLiveTrackingDataSource();
     mockDb = MockLocalDatabaseService();
-    
+
     locationController = StreamController<LocationPoint>.broadcast();
     eventController = StreamController<EldEvent>.broadcast();
-    
-    when(() => mockTracking.locations).thenAnswer((_) => locationController.stream);
+
+    when(() => mockTracking.locations)
+        .thenAnswer((_) => locationController.stream);
     when(() => mockTracking.events).thenAnswer((_) => eventController.stream);
-    
-    when(() => mockDb.saveDiagnostic(any())).thenAnswer((_) async => const Right(true));
-    
+
+    when(() => mockDb.saveDiagnostic(any()))
+        .thenAnswer((_) async => const Right(true));
+
     engine = DiagnosticsEngine(mockTracking, mockDb);
   });
 
@@ -45,7 +48,9 @@ void main() {
   });
 
   group('Diagnostics Engine Tests', () {
-    test('processDataPoint should detect positioning malfunction when speed is high and coords are zero', () {
+    test(
+        'processDataPoint should detect positioning malfunction when speed is high and coords are zero',
+        () {
       engine.processDataPoint(
         timestamp: DateTime.now(),
         speed: 10.0,
@@ -55,12 +60,13 @@ void main() {
       );
 
       expect(engine.state.hasActiveMalfunctions, true);
-      expect(engine.state.activeMalfunctions.first.type, MalfunctionType.positioningMalfunction);
+      expect(engine.state.activeMalfunctions.first.type,
+          MalfunctionType.positioningMalfunction);
     });
 
     test('processDataPoint should detect data gap', () {
       final now = DateTime.now();
-      
+
       // First point
       engine.processDataPoint(
         timestamp: now,
@@ -82,7 +88,8 @@ void main() {
       );
 
       expect(engine.state.hasActiveMalfunctions, true);
-      expect(engine.state.activeMalfunctions.last.type, MalfunctionType.dataGap);
+      expect(
+          engine.state.activeMalfunctions.last.type, MalfunctionType.dataGap);
     });
 
     test('processDataPoint should detect unidentified drive', () {
@@ -95,7 +102,10 @@ void main() {
       );
 
       expect(engine.state.hasActiveMalfunctions, true);
-      expect(engine.state.activeMalfunctions.any((m) => m.type == MalfunctionType.unidentifiedDrive), true);
+      expect(
+          engine.state.activeMalfunctions
+              .any((m) => m.type == MalfunctionType.unidentifiedDrive),
+          true);
     });
   });
 }

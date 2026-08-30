@@ -49,7 +49,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
   Future<void> _requestLocation() async {
     final status = await Permission.location.request();
     final alwaysStatus = await Permission.locationAlways.request();
-    setState(() => _locationGranted = alwaysStatus.isGranted || status.isGranted);
+    setState(
+        () => _locationGranted = alwaysStatus.isGranted || status.isGranted);
 
     if (!status.isGranted) {
       _showRequiredPermissionDialog(
@@ -229,7 +230,9 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
 
               // زر المتابعة
               AppButton(
-                label: (_locationGranted && _batteryGranted) ? 'متابعة' : 'منح الصلاحيات',
+                label: (_locationGranted && _batteryGranted)
+                    ? 'متابعة'
+                    : 'منح الصلاحيات',
                 onPressed: (_locationGranted && _batteryGranted)
                     ? _navigateToLogin
                     : () {
@@ -264,7 +267,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
           children: [
             Expanded(child: Text(title)),
             if (isRequired)
-              AppStatusBadge(
+              const AppStatusBadge(
                 label: 'مطلوب',
                 type: AppStatusBadgeType.error,
               ),
@@ -281,6 +284,3 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     );
   }
 }
-
-
-

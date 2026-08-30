@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,19 +49,35 @@ class LocalStorageService {
           : const SharedPreferencesOptions(),
       cacheOptions: const SharedPreferencesWithCacheOptions(
         allowList: {
-          _deviceIdKey, _serverUrlKey, _accuracyKey, _distanceKey,
-          _intervalKey, _angleKey, _heartbeatKey, _bufferKey,
-          _wakelockKey, _stopDetectionKey, _preferPlatformProvidersKey,
-          _languageKey, _themeKey, _selectedVehicleKey,
+          _deviceIdKey,
+          _serverUrlKey,
+          _accuracyKey,
+          _distanceKey,
+          _intervalKey,
+          _angleKey,
+          _heartbeatKey,
+          _bufferKey,
+          _wakelockKey,
+          _stopDetectionKey,
+          _preferPlatformProvidersKey,
+          _languageKey,
+          _themeKey,
+          _selectedVehicleKey,
         },
       ),
     );
 
     // إصلاح Android
     if (Platform.isAndroid) {
-      for (final key in {_intervalKey, _distanceKey, _angleKey, _heartbeatKey}) {
+      for (final key in {
+        _intervalKey,
+        _distanceKey,
+        _angleKey,
+        _heartbeatKey
+      }) {
         if (_prefs.get(key) is String) {
-          await _prefs.setInt(key, int.tryParse(_prefs.getString(key) ?? '') ?? 0);
+          await _prefs.setInt(
+              key, int.tryParse(_prefs.getString(key) ?? '') ?? 0);
         }
       }
     }
@@ -80,7 +95,9 @@ class LocalStorageService {
 
     // مسح Demo fallback - الخادم الافتراضي يجب أن يكون demo.traccar.org
     final currentUrl = _prefs.getString(_serverUrlKey);
-    if (currentUrl == null || currentUrl.contains('mock-traccar-server') || currentUrl.contains('api.goldenfeather.com')) {
+    if (currentUrl == null ||
+        currentUrl.contains('mock-traccar-server') ||
+        currentUrl.contains('api.goldenfeather.com')) {
       await _prefs.setString(_serverUrlKey, 'https://demo.traccar.org');
     }
     await _setIfNull(_accuracyKey, 'medium');
@@ -109,14 +126,17 @@ class LocalStorageService {
   String get deviceId => _prefs.getString(_deviceIdKey) ?? '';
   String get serverUrl => _prefs.getString(_serverUrlKey) ?? '';
   String get accuracy => _prefs.getString(_accuracyKey) ?? 'medium';
-  int get distance => _prefs.getInt(_distanceKey) ?? AppConstants.defaultDistanceMeters.toInt();
-  int get interval => _prefs.getInt(_intervalKey) ?? AppConstants.defaultIntervalSeconds;
+  int get distance =>
+      _prefs.getInt(_distanceKey) ?? AppConstants.defaultDistanceMeters.toInt();
+  int get interval =>
+      _prefs.getInt(_intervalKey) ?? AppConstants.defaultIntervalSeconds;
   int get angle => _prefs.getInt(_angleKey) ?? 0;
   int get heartbeat => _prefs.getInt(_heartbeatKey) ?? 0;
   bool get buffer => _prefs.getBool(_bufferKey) ?? true;
   bool get wakelock => _prefs.getBool(_wakelockKey) ?? false;
   bool get stopDetection => _prefs.getBool(_stopDetectionKey) ?? true;
-  bool get preferPlatformProviders => _prefs.getBool(_preferPlatformProvidersKey) ?? false;
+  bool get preferPlatformProviders =>
+      _prefs.getBool(_preferPlatformProvidersKey) ?? false;
   Future<String?> get password => _secureStorage.read(key: 'password');
   String get language => _prefs.getString(_languageKey) ?? 'ar';
   String get theme => _prefs.getString(_themeKey) ?? 'system';
@@ -128,18 +148,24 @@ class LocalStorageService {
 
   // ========== Setters ==========
 
-  Future<void> setDeviceId(String value) => _prefs.setString(_deviceIdKey, value);
-  Future<void> setServerUrl(String value) => _prefs.setString(_serverUrlKey, value);
-  Future<void> setAccuracy(String value) => _prefs.setString(_accuracyKey, value);
+  Future<void> setDeviceId(String value) =>
+      _prefs.setString(_deviceIdKey, value);
+  Future<void> setServerUrl(String value) =>
+      _prefs.setString(_serverUrlKey, value);
+  Future<void> setAccuracy(String value) =>
+      _prefs.setString(_accuracyKey, value);
   Future<void> setDistance(int value) => _prefs.setInt(_distanceKey, value);
   Future<void> setInterval(int value) => _prefs.setInt(_intervalKey, value);
   Future<void> setAngle(int value) => _prefs.setInt(_angleKey, value);
   Future<void> setHeartbeat(int value) => _prefs.setInt(_heartbeatKey, value);
   Future<void> setBuffer(bool value) => _prefs.setBool(_bufferKey, value);
   Future<void> setWakelock(bool value) => _prefs.setBool(_wakelockKey, value);
-  Future<void> setStopDetection(bool value) => _prefs.setBool(_stopDetectionKey, value);
-  Future<void> setPreferPlatformProviders(bool value) => _prefs.setBool(_preferPlatformProvidersKey, value);
-  Future<void> setLanguage(String value) => _prefs.setString(_languageKey, value);
+  Future<void> setStopDetection(bool value) =>
+      _prefs.setBool(_stopDetectionKey, value);
+  Future<void> setPreferPlatformProviders(bool value) =>
+      _prefs.setBool(_preferPlatformProvidersKey, value);
+  Future<void> setLanguage(String value) =>
+      _prefs.setString(_languageKey, value);
   Future<void> setTheme(String value) => _prefs.setString(_themeKey, value);
 
   Future<void> setPassword(String value) async {
@@ -192,15 +218,22 @@ class LocalStorageService {
     // تطبيق المعاملات
     if (params['id'] != null) await setDeviceId(params['id']!);
     if (params['accuracy'] != null) await setAccuracy(params['accuracy']!);
-    if (params['interval'] != null) await setInterval(int.tryParse(params['interval']!) ?? interval);
-    if (params['distance'] != null) await setDistance(int.tryParse(params['distance']!) ?? distance);
-    if (params['angle'] != null) await setAngle(int.tryParse(params['angle']!) ?? angle);
-    if (params['heartbeat'] != null) await setHeartbeat(int.tryParse(params['heartbeat']!) ?? heartbeat);
+    if (params['interval'] != null)
+      await setInterval(int.tryParse(params['interval']!) ?? interval);
+    if (params['distance'] != null)
+      await setDistance(int.tryParse(params['distance']!) ?? distance);
+    if (params['angle'] != null)
+      await setAngle(int.tryParse(params['angle']!) ?? angle);
+    if (params['heartbeat'] != null)
+      await setHeartbeat(int.tryParse(params['heartbeat']!) ?? heartbeat);
     if (params['buffer'] != null) await setBuffer(params['buffer'] == 'true');
-    if (params['wakelock'] != null) await setWakelock(params['wakelock'] == 'true');
-    if (params['stopDetection'] != null) await setStopDetection(params['stopDetection'] == 'true');
+    if (params['wakelock'] != null)
+      await setWakelock(params['wakelock'] == 'true');
+    if (params['stopDetection'] != null)
+      await setStopDetection(params['stopDetection'] == 'true');
     if (params['preferPlatformProviders'] != null) {
-      await setPreferPlatformProviders(params['preferPlatformProviders'] == 'true');
+      await setPreferPlatformProviders(
+          params['preferPlatformProviders'] == 'true');
     }
   }
 
@@ -229,5 +262,3 @@ class LocalStorageService {
 final localStorageProvider = Provider<LocalStorageService>((ref) {
   return LocalStorageService();
 });
-
-

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../utils/logger.dart';
-import '../engine/hos_rules_engine.dart'; // import EldEvent
+// import EldEvent
 import '../constants/channel_constants.dart';
 import 'mock_bluetooth_data_source.dart';
 
@@ -43,26 +43,27 @@ enum BluetoothConnectionStatus {
   error,
 }
 
-
 /// واجهة تجريد اتصال البلوتوث
 abstract class BluetoothDataSource {
   Stream<List<EldDevice>> startScanning();
   Future<void> stopScanning();
   Future<EldDevice?> connect(String macAddress);
   Future<void> disconnect();
-  
+
   Stream<EldEvent> get dataStream;
   Stream<BluetoothConnectionStatus> get statusStream;
-  
+
   void dispose();
 }
 
 /// التنفيذ الحقيقي لـ Bluetooth عبر MethodChannel
 class RealBluetoothDataSource implements BluetoothDataSource {
-  static const MethodChannel _channel = MethodChannel(ChannelConstants.bluetooth);
-  
+  static const MethodChannel _channel =
+      MethodChannel(ChannelConstants.bluetooth);
+
   final _dataController = StreamController<EldEvent>.broadcast();
-  final _statusController = StreamController<BluetoothConnectionStatus>.broadcast();
+  final _statusController =
+      StreamController<BluetoothConnectionStatus>.broadcast();
   final _scanController = StreamController<List<EldDevice>>.broadcast();
 
   RealBluetoothDataSource() {
@@ -108,7 +109,8 @@ class RealBluetoothDataSource implements BluetoothDataSource {
 
   @override
   Future<EldDevice?> connect(String macAddress) async {
-    final result = await _channel.invokeMethod('connect', {'macAddress': macAddress});
+    final result =
+        await _channel.invokeMethod('connect', {'macAddress': macAddress});
     if (result != null) {
       return EldDevice.fromMap(result as Map);
     }
@@ -124,8 +126,9 @@ class RealBluetoothDataSource implements BluetoothDataSource {
   Stream<EldEvent> get dataStream => _dataController.stream;
 
   @override
-  Stream<BluetoothConnectionStatus> get statusStream => _statusController.stream;
-  
+  Stream<BluetoothConnectionStatus> get statusStream =>
+      _statusController.stream;
+
   @override
   void dispose() {
     _dataController.close();
@@ -134,21 +137,21 @@ class RealBluetoothDataSource implements BluetoothDataSource {
   }
 }
 
-
 /// خدمة Bluetooth محسنة لإدارة الذاكرة
 class BluetoothService {
   final BluetoothDataSource _dataSource;
-  
+
   BluetoothConnectionStatus _status = BluetoothConnectionStatus.disconnected;
   EldDevice? _connectedDevice;
-  
+
   StreamSubscription? _dataSubscription;
   StreamSubscription? _statusSubscription;
-  
+
   void Function(EldEvent)? _onDataReceived;
   void Function(BluetoothConnectionStatus)? _onStatusChanged;
 
-  BluetoothService({required BluetoothDataSource dataSource}) : _dataSource = dataSource {
+  BluetoothService({required BluetoothDataSource dataSource})
+      : _dataSource = dataSource {
     _statusSubscription = _dataSource.statusStream.listen((status) {
       _status = status;
       _onStatusChanged?.call(status);
@@ -156,7 +159,7 @@ class BluetoothService {
         _connectedDevice = null;
       }
     });
-    
+
     _dataSubscription = _dataSource.dataStream.listen((data) {
       _onDataReceived?.call(data);
     });
@@ -210,8 +213,10 @@ class BluetoothService {
 
 /// مزود مصدر بيانات البلوتوث
 final bluetoothDataSourceProvider = Provider<BluetoothDataSource>((ref) {
-  const bool useRealBluetooth = bool.fromEnvironment('USE_REAL_BLUETOOTH', defaultValue: false);
-  final dataSource = useRealBluetooth ? RealBluetoothDataSource() : MockBluetoothDataSource();
+  const bool useRealBluetooth =
+      bool.fromEnvironment('USE_REAL_BLUETOOTH', defaultValue: false);
+  final dataSource =
+      useRealBluetooth ? RealBluetoothDataSource() : MockBluetoothDataSource();
   ref.onDispose(() => dataSource.dispose());
   return dataSource;
 });

@@ -1,22 +1,29 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'dart:async';
 import 'bluetooth_service.dart';
-import '../engine/hos_rules_engine.dart'; // import EldEvent
+// import EldEvent
 
 /// التنفيذ الوهمي لـ Bluetooth للبيئة التطويرية
 class MockBluetoothDataSource implements BluetoothDataSource {
   final _dataController = StreamController<EldEvent>.broadcast();
-  final _statusController = StreamController<BluetoothConnectionStatus>.broadcast();
+  final _statusController =
+      StreamController<BluetoothConnectionStatus>.broadcast();
   StreamSubscription? _mockDataSub;
-  
+
   @override
   Stream<List<EldDevice>> startScanning() {
     _statusController.add(BluetoothConnectionStatus.scanning);
     return Stream.periodic(
       const Duration(seconds: 2),
       (_) => [
-        const EldDevice(name: 'ELD Adapter 9824', macAddress: '00:11:22:33:44:55', rssi: -45),
-        const EldDevice(name: 'ELD Adapter 7731', macAddress: 'AA:BB:CC:DD:EE:FF', rssi: -78),
+        const EldDevice(
+            name: 'ELD Adapter 9824',
+            macAddress: '00:11:22:33:44:55',
+            rssi: -45),
+        const EldDevice(
+            name: 'ELD Adapter 7731',
+            macAddress: 'AA:BB:CC:DD:EE:FF',
+            rssi: -78),
       ],
     );
   }
@@ -31,7 +38,7 @@ class MockBluetoothDataSource implements BluetoothDataSource {
     _statusController.add(BluetoothConnectionStatus.connecting);
     await Future.delayed(const Duration(seconds: 1));
     _statusController.add(BluetoothConnectionStatus.connected);
-    
+
     _mockDataSub?.cancel();
     _mockDataSub = Stream.periodic(const Duration(seconds: 1), (_) {
       return EldEvent(
@@ -42,7 +49,7 @@ class MockBluetoothDataSource implements BluetoothDataSource {
         timestamp: DateTime.now(),
       );
     }).listen((data) => _dataController.add(data));
-    
+
     return EldDevice(
       name: 'ELD Adapter 9824',
       macAddress: macAddress,
@@ -62,8 +69,9 @@ class MockBluetoothDataSource implements BluetoothDataSource {
   Stream<EldEvent> get dataStream => _dataController.stream;
 
   @override
-  Stream<BluetoothConnectionStatus> get statusStream => _statusController.stream;
-  
+  Stream<BluetoothConnectionStatus> get statusStream =>
+      _statusController.stream;
+
   @override
   void dispose() {
     _mockDataSub?.cancel();

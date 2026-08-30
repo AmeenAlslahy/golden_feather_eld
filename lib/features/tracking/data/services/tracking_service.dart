@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/tracking_client_sdk.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/config/app_environment.dart';
@@ -27,12 +26,15 @@ class TrackingService {
 
     try {
       final config = _buildConfig();
-      
+
       // لا تسمح ببدء التتبع بعنوان وهمي أو فارغ في بيئة temporaryTraccar
       if (AppEnvironmentConfig.current == AppEnvironment.temporaryTraccar) {
-        if (config.serverUrl.isEmpty || config.serverUrl.contains('mock-traccar-server')) {
-          AppLogger.error('❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar');
-          throw Exception('Configuration Error: Valid Server URL required for temporaryTraccar');
+        if (config.serverUrl.isEmpty ||
+            config.serverUrl.contains('mock-traccar-server')) {
+          AppLogger.error(
+              '❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar');
+          throw Exception(
+              'Configuration Error: Valid Server URL required for temporaryTraccar');
         }
       }
 
@@ -50,7 +52,7 @@ class TrackingService {
   /// بناء Config من الإعدادات المحلية أو البيئة
   Config _buildConfig() {
     String serverUrl = _storage.serverUrl;
-    
+
     // في temporaryTraccar نفضل URL البيئة لتجنب mock المخزن محلياً
     if (AppEnvironmentConfig.current == AppEnvironment.temporaryTraccar) {
       if (serverUrl.isEmpty || serverUrl.contains('mock-traccar-server')) {
@@ -131,7 +133,8 @@ class TrackingService {
     if (!_isInitialized) await init();
     try {
       await _tracker.requestPosition(alarm: alarm);
-      AppLogger.info('📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}');
+      AppLogger.info(
+          '📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}');
     } catch (e) {
       AppLogger.error('Failed to request position', e);
       rethrow;
@@ -181,8 +184,6 @@ class TrackingService {
     }
   }
 
-
-
   // ========== التخلص ==========
 
   void dispose() {
@@ -198,6 +199,3 @@ final trackingServiceProvider = Provider<TrackingService>((ref) {
   final tracker = ref.watch(trackingClientProvider);
   return TrackingService(storage: storage, tracker: tracker);
 });
-
-
-

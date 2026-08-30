@@ -36,10 +36,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final success = await ref.read(authStateProvider.notifier).register(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
 
     if (success && mounted) {
       context.goNamed('home');
@@ -70,7 +70,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                
+
                 // Name Field
                 AppTextField(
                   label: 'الاسم الكامل',
@@ -134,12 +134,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     return null;
                   },
                 ),
-                
+
                 if (authState.status == AuthStatus.error) ...[
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    authState.arabicErrorMessage ?? authState.errorMessage ?? 'حدث خطأ',
-                    style: TextStyle(color: AppColors.error),
+                    authState.arabicErrorMessage ??
+                        authState.errorMessage ??
+                        'حدث خطأ',
+                    style: const TextStyle(color: AppColors.error),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -152,12 +154,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   isLoading: isLoading,
                   onPressed: isLoading ? null : _submit,
                 ),
-                
+
                 const SizedBox(height: AppSpacing.md),
                 TextButton(
-                  onPressed: isLoading ? null : () {
-                    if (mounted) Navigator.pop(context);
-                  },
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (mounted) Navigator.pop(context);
+                        },
                   child: const Text('لدي حساب بالفعل؟ تسجيل الدخول'),
                 ),
               ],

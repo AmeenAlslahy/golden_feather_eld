@@ -1,7 +1,6 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/hos_rules_engine.dart';
 import '../../../../core/services/battery_optimization_service.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/logger.dart';
@@ -11,7 +10,6 @@ import 'tracking_providers.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
-import '../../../../core/engine/tracking/duty_status_tracker.dart';
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -71,14 +69,16 @@ final trackingStateProvider =
 
   // 1) إيقاف التتبع عند تسجيل الخروج
   ref.listen<AuthState>(authStateProvider, (previous, next) {
-    if (next.status == AuthStatus.unauthenticated && previous?.status == AuthStatus.authenticated) {
+    if (next.status == AuthStatus.unauthenticated &&
+        previous?.status == AuthStatus.authenticated) {
       notifier.stopTracking(force: true);
     }
   });
 
   // 2) بدء التتبع عند اختيار مركبة
   ref.listen<VehicleState>(vehicleProvider, (previous, next) {
-    if (next.selectedVehicle != null && previous?.selectedVehicle != next.selectedVehicle) {
+    if (next.selectedVehicle != null &&
+        previous?.selectedVehicle != next.selectedVehicle) {
       if (!notifier.isActiveOrLoading) {
         AppLogger.info('🚀 Auto-starting tracking due to vehicle selection');
         notifier.startTracking(skipBatteryCheck: true);
@@ -90,7 +90,8 @@ final trackingStateProvider =
   ref.listen<HosStatusUpdate>(hosStatusProvider, (previous, next) {
     if (next.currentStatus == DutyStatus.driving) {
       if (!notifier.isActiveOrLoading) {
-        AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
+        AppLogger.info(
+            '🚀 Auto-starting tracking because status changed to DRIVING');
         notifier.startTracking(skipBatteryCheck: true);
       }
     }
@@ -109,7 +110,9 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
 
   /// Helper getters to safely access state from the provider definition
   TrackingStatus get currentStatus => state.status;
-  bool get isActiveOrLoading => state.status == TrackingStatus.active || state.status == TrackingStatus.loading;
+  bool get isActiveOrLoading =>
+      state.status == TrackingStatus.active ||
+      state.status == TrackingStatus.loading;
 
   @override
   void dispose() {
@@ -125,13 +128,14 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     // ✅ فحص تحسين البطارية
     if (!skipBatteryCheck) {
       final batteryService = ref.read(batteryOptimizationServiceProvider);
-      final isBatteryOptimized = await batteryService.isBatteryOptimizationEnabled();
-      
+      final isBatteryOptimized =
+          await batteryService.isBatteryOptimizationEnabled();
+
       if (isBatteryOptimized) {
         // نحتاج context لإظهار الحوار - نمرر إشارة للـ UI
         state = state.copyWith(
           status: TrackingStatus.initial,
-          showBatteryDialog: true, 
+          showBatteryDialog: true,
         );
         return; // نوقف التتبع مؤقتاً حتى يستجيب المستخدم للحوار
       }
@@ -147,7 +151,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
         // إيقاف الاستماع في حال الفشل
         _locationSubscription?.cancel();
         _gpsTimeoutTimer?.cancel();
-        
+
         if (failure is PermissionFailure) {
           state = state.copyWith(
             status: TrackingStatus.error,
@@ -165,7 +169,8 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
         }
       },
       (_) {
-        AppLogger.info('Tracking service started. Waiting for first location...');
+        AppLogger.info(
+            'Tracking service started. Waiting for first location...');
       },
     );
   }
@@ -179,7 +184,8 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       if (!state.isTracking) {
         state = state.copyWith(
           errorMessage: 'No GPS signal received from device',
-          arabicErrorMessage: 'جاري انتظار إشارة الـ GPS. لم تصل أي قراءات من النظام حتى الآن.',
+          arabicErrorMessage:
+              'جاري انتظار إشارة الـ GPS. لم تصل أي قراءات من النظام حتى الآن.',
           errorType: TrackingErrorType.technical,
         );
       }
@@ -304,6 +310,3 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     state = state.copyWith(showBatteryDialog: false);
   }
 }
-
-
-

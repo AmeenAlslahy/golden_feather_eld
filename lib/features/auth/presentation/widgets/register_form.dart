@@ -4,7 +4,6 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../providers/auth_providers.dart';
 import '../providers/auth_mode_provider.dart';
 
 class RegisterFormState {
@@ -26,7 +25,8 @@ class RegisterFormState {
     return RegisterFormState(
       isLoading: isLoading ?? this.isLoading,
       obscurePassword: obscurePassword ?? this.obscurePassword,
-      obscureConfirmPassword: obscureConfirmPassword ?? this.obscureConfirmPassword,
+      obscureConfirmPassword:
+          obscureConfirmPassword ?? this.obscureConfirmPassword,
     );
   }
 }
@@ -35,11 +35,15 @@ class RegisterFormNotifier extends StateNotifier<RegisterFormState> {
   RegisterFormNotifier() : super(RegisterFormState());
 
   void setLoading(bool loading) => state = state.copyWith(isLoading: loading);
-  void togglePasswordVisibility() => state = state.copyWith(obscurePassword: !state.obscurePassword);
-  void toggleConfirmPasswordVisibility() => state = state.copyWith(obscureConfirmPassword: !state.obscureConfirmPassword);
+  void togglePasswordVisibility() =>
+      state = state.copyWith(obscurePassword: !state.obscurePassword);
+  void toggleConfirmPasswordVisibility() => state =
+      state.copyWith(obscureConfirmPassword: !state.obscureConfirmPassword);
 }
 
-final registerFormProvider = StateNotifierProvider.autoDispose<RegisterFormNotifier, RegisterFormState>((ref) {
+final registerFormProvider =
+    StateNotifierProvider.autoDispose<RegisterFormNotifier, RegisterFormState>(
+        (ref) {
   return RegisterFormNotifier();
 });
 
@@ -74,7 +78,8 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
     if (mounted) {
       ref.read(registerFormProvider.notifier).setLoading(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration is not supported in this version.')),
+        const SnackBar(
+            content: Text('Registration is not supported in this version.')),
       );
     }
   }
@@ -94,17 +99,21 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             label: context.loc.fullName,
             prefixIcon: const Icon(Icons.badge_outlined),
             textInputAction: TextInputAction.next,
-            validator: (v) => v == null || v.trim().isEmpty ? context.loc.fullNameRequired : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? context.loc.fullNameRequired
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
-          
+
           // اسم المستخدم
           AppTextField(
             controller: _usernameController,
             label: context.loc.username,
             prefixIcon: const Icon(Icons.person_outline),
             textInputAction: TextInputAction.next,
-            validator: (v) => v == null || v.trim().isEmpty ? context.loc.usernameRequired : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? context.loc.usernameRequired
+                : null,
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -114,12 +123,17 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             label: context.loc.password,
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(formState.obscurePassword ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => ref.read(registerFormProvider.notifier).togglePasswordVisibility(),
+              icon: Icon(formState.obscurePassword
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () => ref
+                  .read(registerFormProvider.notifier)
+                  .togglePasswordVisibility(),
             ),
             obscureText: formState.obscurePassword,
             textInputAction: TextInputAction.next,
-            validator: (v) => v == null || v.isEmpty ? context.loc.passwordRequired : null,
+            validator: (v) =>
+                v == null || v.isEmpty ? context.loc.passwordRequired : null,
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -129,14 +143,19 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             label: context.loc.confirmPassword,
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(formState.obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => ref.read(registerFormProvider.notifier).toggleConfirmPasswordVisibility(),
+              icon: Icon(formState.obscureConfirmPassword
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () => ref
+                  .read(registerFormProvider.notifier)
+                  .toggleConfirmPasswordVisibility(),
             ),
             obscureText: formState.obscureConfirmPassword,
             textInputAction: TextInputAction.done,
             validator: (v) {
               if (v == null || v.isEmpty) return context.loc.passwordRequired;
-              if (v != _passwordController.text) return context.loc.passwordMismatch;
+              if (v != _passwordController.text)
+                return context.loc.passwordMismatch;
               return null;
             },
             onSubmitted: (_) => _handleRegister(),

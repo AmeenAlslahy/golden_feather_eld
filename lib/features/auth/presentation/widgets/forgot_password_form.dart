@@ -4,10 +4,10 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../providers/auth_providers.dart';
 import '../providers/auth_mode_provider.dart';
 
-final forgotPasswordLoadingProvider = StateProvider.autoDispose<bool>((ref) => false);
+final forgotPasswordLoadingProvider =
+    StateProvider.autoDispose<bool>((ref) => false);
 
 class ForgotPasswordForm extends ConsumerStatefulWidget {
   const ForgotPasswordForm({super.key});
@@ -34,7 +34,8 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
     if (mounted) {
       ref.read(forgotPasswordLoadingProvider.notifier).state = false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Password reset is not supported in this version.')),
+        const SnackBar(
+            content: Text('Password reset is not supported in this version.')),
       );
     }
   }
@@ -51,19 +52,21 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
           Text(
             context.loc.resetPassword,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.md),
-          
+
           // البريد الإلكتروني
           AppTextField(
             controller: _emailController,
             label: context.loc.email,
             prefixIcon: const Icon(Icons.email_outlined),
             textInputAction: TextInputAction.done,
-            validator: (v) => v == null || v.trim().isEmpty ? context.loc.emailRequired : null,
+            validator: (v) => v == null || v.trim().isEmpty
+                ? context.loc.emailRequired
+                : null,
             onSubmitted: (_) => _handleReset(),
           ),
           const SizedBox(height: AppSpacing.lg),

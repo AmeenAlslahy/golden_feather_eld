@@ -11,7 +11,8 @@ import 'package:golden_feather_eld/core/services/battery_optimization_service.da
 
 // Fake Repository
 class FakeTrackingRepository implements TrackingRepository {
-  final StreamController<LocationEntity> _locationStreamController = StreamController<LocationEntity>.broadcast();
+  final StreamController<LocationEntity> _locationStreamController =
+      StreamController<LocationEntity>.broadcast();
   bool isServiceStarted = false;
 
   @override
@@ -41,22 +42,29 @@ class FakeTrackingRepository implements TrackingRepository {
   Future<Either<Failure, bool>> clearLogs() async => const Right(true);
 
   @override
-  Future<TrackingConfigEntity> getCurrentConfig() async => throw UnimplementedError();
+  Future<TrackingConfigEntity> getCurrentConfig() async =>
+      throw UnimplementedError();
 
   @override
-  Future<Either<Failure, LocationEntity>> getCurrentLocation() async => throw UnimplementedError();
+  Future<Either<Failure, LocationEntity>> getCurrentLocation() async =>
+      throw UnimplementedError();
 
   @override
-  Future<Either<Failure, List<TrackingLogEntity>>> getLogs() async => const Right([]);
+  Future<Either<Failure, List<TrackingLogEntity>>> getLogs() async =>
+      const Right([]);
 
   @override
   Future<bool> isTracking() async => isServiceStarted;
 
   @override
-  Future<Either<Failure, LocationEntity>> requestPosition({String? alarm}) async => throw UnimplementedError();
+  Future<Either<Failure, LocationEntity>> requestPosition(
+          {String? alarm}) async =>
+      throw UnimplementedError();
 
   @override
-  Future<Either<Failure, bool>> updateConfig(TrackingConfigEntity config) async => const Right(true);
+  Future<Either<Failure, bool>> updateConfig(
+          TrackingConfigEntity config) async =>
+      const Right(true);
 
   void dispose() {
     _locationStreamController.close();
@@ -73,6 +81,7 @@ class FakeBatteryOptimizationService implements BatteryOptimizationService {
 
   Future<bool> requestIgnoreBatteryOptimizations() async => true;
 
+  @override
   Future<void> requestDisableBatteryOptimization() async {}
 }
 
@@ -85,7 +94,8 @@ void main() {
     fakeRepository = FakeTrackingRepository();
     container = ProviderContainer(
       overrides: [
-        batteryOptimizationServiceProvider.overrideWithValue(FakeBatteryOptimizationService()),
+        batteryOptimizationServiceProvider
+            .overrideWithValue(FakeBatteryOptimizationService()),
         trackingRepositoryProvider.overrideWithValue(fakeRepository),
       ],
     );
@@ -97,7 +107,9 @@ void main() {
     container.dispose();
   });
 
-  test('startTracking sets status to loading initially and waits for first location to become active', () async {
+  test(
+      'startTracking sets status to loading initially and waits for first location to become active',
+      () async {
     expect(notifier.state.status, TrackingStatus.initial);
 
     // Call startTracking
@@ -106,7 +118,8 @@ void main() {
     // After startTracking completes, the service is started but UI shouldn't be active yet.
     // It should be loading or waiting. Wait, my code sets it to active ON first location.
     // So immediately after start, status is loading!
-    expect(container.read(trackingStateProvider).status, TrackingStatus.loading);
+    expect(
+        container.read(trackingStateProvider).status, TrackingStatus.loading);
     expect(container.read(trackingStateProvider).isTracking, false);
     expect(fakeRepository.isServiceStarted, true);
 
@@ -127,31 +140,34 @@ void main() {
     expect(container.read(trackingStateProvider).currentLocation, testLocation);
   });
 
-  test('location stream error sets state to error and stops tracking status', () async {
+  test('location stream error sets state to error and stops tracking status',
+      () async {
     await notifier.startTracking(skipBatteryCheck: true);
-    
+
     fakeRepository.emitError(Exception('Stream error'));
-    
+
     await Future.delayed(Duration.zero);
 
     expect(container.read(trackingStateProvider).status, TrackingStatus.error);
     expect(container.read(trackingStateProvider).isTracking, false);
-    expect(container.read(trackingStateProvider).errorType, TrackingErrorType.technical);
+    expect(container.read(trackingStateProvider).errorType,
+        TrackingErrorType.technical);
   });
 
   test('stopTracking cancels subscription and sets state to stopped', () async {
     await notifier.startTracking(skipBatteryCheck: true);
-    
+
     fakeRepository.emitLocation(LocationEntity.empty());
     await Future.delayed(Duration.zero);
     expect(container.read(trackingStateProvider).isTracking, true);
 
     await notifier.stopTracking();
 
-    expect(container.read(trackingStateProvider).status, TrackingStatus.stopped);
+    expect(
+        container.read(trackingStateProvider).status, TrackingStatus.stopped);
     expect(container.read(trackingStateProvider).isTracking, false);
     expect(fakeRepository.isServiceStarted, false);
-    
+
     // Emitting location after stop should not change state
     fakeRepository.emitLocation(LocationEntity(
       latitude: 10.0,
@@ -160,7 +176,8 @@ void main() {
     ));
     await Future.delayed(Duration.zero);
 
-    expect(container.read(trackingStateProvider).status, TrackingStatus.stopped);
+    expect(
+        container.read(trackingStateProvider).status, TrackingStatus.stopped);
     expect(container.read(trackingStateProvider).isTracking, false);
   });
 }

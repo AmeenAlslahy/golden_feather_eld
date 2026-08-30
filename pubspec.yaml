@@ -71,6 +71,7 @@ dependencies:
   fpdart: ^1.2.0
   internet_connection_checker: ^3.0.1
 
+  shared_preferences_android: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

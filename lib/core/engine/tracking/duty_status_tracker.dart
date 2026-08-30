@@ -6,9 +6,6 @@ import '../../../features/logs/data/repositories/log_repository_impl.dart';
 import '../../services/live_tracking_data_source.dart';
 import '../../services/local_database_service.dart';
 
-
-
-
 /// متتبع حالة السائق (Domain Pure)
 import '../hos_models.dart';
 
@@ -67,13 +64,11 @@ class DutyStatusTracker {
   void processEldEvent(EldEvent eldEvent) {
     if (eldEvent.speedMph > 5.0) {
       // Moving logic
-      if (_movingSince == null) {
-        _movingSince = eldEvent.timestamp;
-      }
+      _movingSince ??= eldEvent.timestamp;
       _consecutiveMovingEvents++;
 
       final elapsed = eldEvent.timestamp.difference(_movingSince!);
-      
+
       // Require at least 3 seconds of sustained movement AND 3 consecutive events
       // to reject GPS hardware spikes (Outliers).
       if (_consecutiveMovingEvents >= 3 && elapsed.inSeconds >= 3) {
@@ -82,11 +77,12 @@ class DutyStatusTracker {
           _saveSetting('stationary_since', '');
           _wakeupTimer?.cancel();
         }
-        
+
         if (_currentStatus != 'driving') {
           _transitionTo(
             newStatus: 'driving',
-            timestamp: _movingSince!, // Use the timestamp when movement first started
+            timestamp:
+                _movingSince!, // Use the timestamp when movement first started
             odometer: eldEvent.odometerMiles,
             engineHours: eldEvent.engineHours,
             annotation: 'Auto Transition to Driving (> 5 mph sustained)',
@@ -103,12 +99,16 @@ class DutyStatusTracker {
           _stationarySince = eldEvent.timestamp;
           _saveSetting('stationary_since', _stationarySince!.toIso8601String());
         }
-        _evaluateStationaryState(eventTimestamp: eldEvent.timestamp, odometer: eldEvent.odometerMiles, engineHours: eldEvent.engineHours);
+        _evaluateStationaryState(
+            eventTimestamp: eldEvent.timestamp,
+            odometer: eldEvent.odometerMiles,
+            engineHours: eldEvent.engineHours);
       }
     }
   }
 
-  void _evaluateStationaryState({DateTime? eventTimestamp, double? odometer, double? engineHours}) {
+  void _evaluateStationaryState(
+      {DateTime? eventTimestamp, double? odometer, double? engineHours}) {
     if (_stationarySince == null || _currentStatus != 'driving') return;
 
     final currentTime = _now();
@@ -172,12 +172,13 @@ class DutyStatusTracker {
         endLat: event.latitude,
         endLon: event.longitude,
       );
-      
+
       _periods.add(period);
-      
+
       _logRepository.savePeriod(period).then((result) {
         result.match(
-          (failure) => AppLogger.error('Failed to save period', failure.message),
+          (failure) =>
+              AppLogger.error('Failed to save period', failure.message),
           (success) => AppLogger.info('Period saved successfully'),
         );
       });
@@ -196,19 +197,20 @@ class DutyStatusTracker {
 
   void manualTransition(String newStatus, {double? lat, double? lon}) {
     if (_currentStatus == 'driving' && newStatus != 'driving') {
-       AppLogger.warning('Cannot manually transition from driving while moving.');
+      AppLogger.warning(
+          'Cannot manually transition from driving while moving.');
     }
-    
+
     // Clear stationary timer and movement buffers if manually transitioning
     _stationarySince = null;
     _saveSetting('stationary_since', '');
     _wakeupTimer?.cancel();
-    
+
     _movingSince = null;
     _consecutiveMovingEvents = 0;
-    
+
     _transitionTo(
-      newStatus: newStatus, 
+      newStatus: newStatus,
       timestamp: _now(),
       latitude: lat,
       longitude: lon,
@@ -300,7 +302,7 @@ class DutyStatusTracker {
     _stationarySince = null;
     _saveSetting('stationary_since', '');
     _wakeupTimer?.cancel();
-    
+
     _movingSince = null;
     _consecutiveMovingEvents = 0;
   }
@@ -321,17 +323,17 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
     saveSetting: db.saveSetting,
     getSetting: db.getSetting,
   );
-  
+
   // Wire up the GPS stream to the tracker
   final tracking = ref.watch(liveTrackingDataSourceProvider);
   final sub = tracking.events.listen((event) {
     tracker.processEldEvent(event);
   });
-  
+
   ref.onDispose(() {
     sub.cancel();
     tracker.dispose();
   });
-  
+
   return tracker;
 });

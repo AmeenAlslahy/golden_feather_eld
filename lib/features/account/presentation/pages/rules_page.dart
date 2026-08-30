@@ -43,8 +43,10 @@ class RulesState {
       cycleRule: cycleRule ?? this.cycleRule,
       cargoType: cargoType ?? this.cargoType,
       enable30MinBreak: enable30MinBreak ?? this.enable30MinBreak,
-      enableShortHaul16Hour: enableShortHaul16Hour ?? this.enableShortHaul16Hour,
-      enablePersonalConveyance: enablePersonalConveyance ?? this.enablePersonalConveyance,
+      enableShortHaul16Hour:
+          enableShortHaul16Hour ?? this.enableShortHaul16Hour,
+      enablePersonalConveyance:
+          enablePersonalConveyance ?? this.enablePersonalConveyance,
       enableYardMoves: enableYardMoves ?? this.enableYardMoves,
     );
   }
@@ -55,10 +57,14 @@ class RulesNotifier extends StateNotifier<RulesState> {
 
   void setCycleRule(String rule) => state = state.copyWith(cycleRule: rule);
   void setCargoType(String type) => state = state.copyWith(cargoType: type);
-  void toggle30MinBreak() => state = state.copyWith(enable30MinBreak: !state.enable30MinBreak);
-  void toggleShortHaul() => state = state.copyWith(enableShortHaul16Hour: !state.enableShortHaul16Hour);
-  void togglePersonalConveyance() => state = state.copyWith(enablePersonalConveyance: !state.enablePersonalConveyance);
-  void toggleYardMoves() => state = state.copyWith(enableYardMoves: !state.enableYardMoves);
+  void toggle30MinBreak() =>
+      state = state.copyWith(enable30MinBreak: !state.enable30MinBreak);
+  void toggleShortHaul() => state =
+      state.copyWith(enableShortHaul16Hour: !state.enableShortHaul16Hour);
+  void togglePersonalConveyance() => state =
+      state.copyWith(enablePersonalConveyance: !state.enablePersonalConveyance);
+  void toggleYardMoves() =>
+      state = state.copyWith(enableYardMoves: !state.enableYardMoves);
 
   void save() {
     // حفظ الإعدادات
@@ -75,7 +81,12 @@ class RulesPage extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final loc = context.loc;
 
-    final cycleOptions = ['USA 70/8', 'USA 60/7', 'Canada 70/7', 'Canada 120/14'];
+    final cycleOptions = [
+      'USA 70/8',
+      'USA 60/7',
+      'Canada 70/7',
+      'Canada 120/14'
+    ];
     final cargoOptions = ['Property', 'Passenger'];
 
     return Scaffold(
@@ -115,13 +126,15 @@ class RulesPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   DropdownButtonFormField<String>(
-                    value: rules.cycleRule,
+                    initialValue: rules.cycleRule,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: cycleOptions.map((option) {
-                      return DropdownMenuItem(value: option, child: Text(option));
+                      return DropdownMenuItem(
+                          value: option, child: Text(option));
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -145,13 +158,15 @@ class RulesPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   DropdownButtonFormField<String>(
-                    value: rules.cargoType,
+                    initialValue: rules.cargoType,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: cargoOptions.map((option) {
-                      return DropdownMenuItem(value: option, child: Text(option));
+                      return DropdownMenuItem(
+                          value: option, child: Text(option));
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -178,7 +193,9 @@ class RulesPage extends ConsumerWidget {
                   const Divider(color: AppColors.border),
                   _buildSwitch(
                     context,
-                    isArabic ? 'تجاوز 16 ساعة قصيرة المدى' : 'Short Haul 16-Hour Exception',
+                    isArabic
+                        ? 'تجاوز 16 ساعة قصيرة المدى'
+                        : 'Short Haul 16-Hour Exception',
                     'FMCSA 49 CFR §395.1(o)',
                     rules.enableShortHaul16Hour,
                     () => ref.read(rulesProvider.notifier).toggleShortHaul(),
@@ -189,7 +206,9 @@ class RulesPage extends ConsumerWidget {
                     isArabic ? 'استخدام شخصي' : 'Personal Conveyance',
                     'FMCSA 49 CFR §395.8',
                     rules.enablePersonalConveyance,
-                    () => ref.read(rulesProvider.notifier).togglePersonalConveyance(),
+                    () => ref
+                        .read(rulesProvider.notifier)
+                        .togglePersonalConveyance(),
                   ),
                   const Divider(color: AppColors.border),
                   _buildSwitch(
@@ -213,7 +232,8 @@ class RulesPage extends ConsumerWidget {
                 ref.read(rulesProvider.notifier).save();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(isArabic ? '✅ تم حفظ القواعد' : '✅ Rules saved'),
+                    content:
+                        Text(isArabic ? '✅ تم حفظ القواعد' : '✅ Rules saved'),
                     backgroundColor: AppColors.successGreen,
                   ),
                 );
@@ -234,11 +254,13 @@ class RulesPage extends ConsumerWidget {
     VoidCallback onChanged,
   ) {
     return SwitchListTile(
-      title: Text(title, style: const TextStyle(fontSize: AppTypography.bodySize)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: AppTypography.smallSize)),
+      title:
+          Text(title, style: const TextStyle(fontSize: AppTypography.bodySize)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(fontSize: AppTypography.smallSize)),
       value: value,
       onChanged: (_) => onChanged(),
-      activeColor: AppColors.primaryBlue,
+      activeThumbColor: AppColors.primaryBlue,
       contentPadding: EdgeInsets.zero,
     );
   }

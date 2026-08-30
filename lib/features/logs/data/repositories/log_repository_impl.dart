@@ -6,7 +6,6 @@ import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
 import '../../../../core/engine/hos_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/utils/logger.dart';
 
 import '../../../../core/utils/repository_helper.dart';
 

@@ -37,7 +37,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   Future<void> _handleSend() async {
     if (widget.isEmailMode) {
       final email = _emailController.text.trim();
-      if (email.isEmpty || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      if (email.isEmpty ||
+          !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(context.loc.invalidValue),
@@ -124,15 +125,16 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    ...TransferMethod.values.map((method) => RadioListTile<TransferMethod>(
-                          title: Text(method.englishName),
-                          value: method,
-                          groupValue: _selectedMethod,
-                          onChanged: (value) {
-                            setState(() => _selectedMethod = value!);
-                          },
-                          activeColor: AppColors.primaryBlue,
-                        )),
+                    ...TransferMethod.values
+                        .map((method) => RadioListTile<TransferMethod>(
+                              title: Text(method.englishName),
+                              value: method,
+                              groupValue: _selectedMethod,
+                              onChanged: (value) {
+                                setState(() => _selectedMethod = value!);
+                              },
+                              activeColor: AppColors.primaryBlue,
+                            )),
                     if (_selectedMethod == TransferMethod.webService) ...[
                       const SizedBox(height: AppSpacing.md),
                       AppTextField(
@@ -147,7 +149,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                     title: Text(context.loc.exportErods),
                     subtitle: Text(context.loc.requiredForFmcsa),
                     value: _exportAsErods,
-                    activeColor: AppColors.primaryBlue,
+                    activeThumbColor: AppColors.primaryBlue,
                     onChanged: (val) {
                       setState(() => _exportAsErods = val);
                     },

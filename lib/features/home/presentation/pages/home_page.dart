@@ -11,7 +11,6 @@ import '../widgets/eld_drawer.dart';
 import '../widgets/eld_bottom_nav.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../../core/network/network_provider.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -23,8 +22,8 @@ class HomePage extends ConsumerWidget {
 
   // قائمة الصفحات التي تظهر في المحتوى الرئيسي
   static const List<Widget> _pages = [
-    StatusDashboard(),  // الشاشة الرئيسية - حالة السائق
-    RecapPage(),        // ملخص أسبوعي
+    StatusDashboard(), // الشاشة الرئيسية - حالة السائق
+    RecapPage(), // ملخص أسبوعي
   ];
 
   @override
@@ -37,7 +36,9 @@ class HomePage extends ConsumerWidget {
       // ========== شريط العنوان ==========
       appBar: AppBar(
         title: Text(
-          currentNavIndex == 0 ? '${dashboard.driverName} - ${dashboard.vehicleId}' : context.loc.hoursRecap,
+          currentNavIndex == 0
+              ? '${dashboard.driverName} - ${dashboard.vehicleId}'
+              : context.loc.hoursRecap,
           style: const TextStyle(
             fontSize: AppTypography.bodySize,
             fontWeight: AppTypography.bold,
@@ -51,44 +52,47 @@ class HomePage extends ConsumerWidget {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: currentNavIndex == 0 ? [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4.0),
-            child: ConnectionStatusIndicator(),
-          ),
-          const SyncStatusIndicator(),
-          Consumer(
-            builder: (context, ref, child) {
-              final gpsStatus = ref.watch(gpsStatusProvider);
-              final isGpsOff = gpsStatus.value == ServiceStatus.disabled;
-              if (isGpsOff) {
-                return IconButton(
-                  icon: const Icon(
-                    Icons.build,
-                    color: AppColors.warningYellow,
-                    size: 28,
-                  ),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Problems Detected'),
-                        content: const Text('• GPS is Turned Off', style: TextStyle(fontSize: 16)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
+        actions: currentNavIndex == 0
+            ? [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ConnectionStatusIndicator(),
+                ),
+                const SyncStatusIndicator(),
+                Consumer(
+                  builder: (context, ref, child) {
+                    final gpsStatus = ref.watch(gpsStatusProvider);
+                    final isGpsOff = gpsStatus.value == ServiceStatus.disabled;
+                    if (isGpsOff) {
+                      return IconButton(
+                        icon: const Icon(
+                          Icons.build,
+                          color: AppColors.warningYellow,
+                          size: 28,
+                        ),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Problems Detected'),
+                              content: const Text('• GPS is Turned Off',
+                                  style: TextStyle(fontSize: 16)),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return const SizedBox.shrink();
                   },
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ] : null,
+                ),
+              ]
+            : null,
       ),
 
       // ========== الدرج الجانبي ==========
@@ -139,11 +143,6 @@ class StatusDashboard extends StatelessWidget {
     // Scaffold داخل Scaffold ليس جيداً، لكن مؤقتاً لعرض محتوى HosPage
     // تم إزالة الـ AppBar من HosPage في التحديث القادم أو يتم تجاهله.
     // لتفادي تكرار الـ AppBar هنا سنقوم فقط بعرض HosPage
-    return const HosPage(); 
+    return const HosPage();
   }
 }
-
-
-
-
-

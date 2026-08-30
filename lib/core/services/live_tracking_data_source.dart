@@ -1,8 +1,7 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../engine/hos_rules_engine.dart'; // For EldEvent
+// For EldEvent
 import '../engine/tracking/distance_tracker.dart'; // For LocationPoint
 import '../config/app_environment.dart';
 import '../../features/tracking/data/datasources/traccar_data_source.dart';
@@ -11,13 +10,11 @@ import '../network/traccar/traccar_api_client_impl.dart';
 import '../network/traccar/traccar_websocket_client_impl.dart';
 import '../network/traccar/traccar_native_client_impl.dart';
 import '../../features/tracking/domain/entities/connection_status.dart';
-import 'package:dio/dio.dart';
-import '../../features/auth/presentation/providers/auth_state_provider.dart';
-import '../../features/tracking/presentation/providers/tracking_providers.dart';
 import '../../features/tracking/data/datasources/native_event_channel_client.dart';
 import '../network/network_providers.dart';
 
-final nativeEventChannelClientProvider = Provider<NativeEventChannelClient>((ref) {
+final nativeEventChannelClientProvider =
+    Provider<NativeEventChannelClient>((ref) {
   return NativeEventChannelClient();
 });
 
@@ -84,7 +81,7 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
     _timer?.cancel();
     _mockSpeed = 0.0;
     _connectionController.add(ConnectionStatus.disconnected);
-    
+
     final now = DateTime.now();
     _eventsController.add(EldEvent(
       timestamp: now,
@@ -115,7 +112,8 @@ class ProcessorLiveTrackingDataSource implements LiveTrackingDataSource {
   Stream<LocationPoint> get locations => processor.locationStream;
 
   @override
-  Stream<ConnectionStatus> get connectionStatus => processor.connectionStatusStream;
+  Stream<ConnectionStatus> get connectionStatus =>
+      processor.connectionStatusStream;
 
   @override
   Future<bool> start() async {
@@ -146,25 +144,26 @@ final liveTrackingDataSourceProvider = Provider<LiveTrackingDataSource>((ref) {
       nativeClient: TraccarNativeClientImpl(),
       nativeEventClient: ref.watch(nativeEventChannelClientProvider),
     );
-    
+
     // إنشاء EventProcessor
-    final processor = TrackingEventProcessor(trackingDataSource: traccarDataSource);
-    
+    final processor =
+        TrackingEventProcessor(trackingDataSource: traccarDataSource);
+
     final dataSource = ProcessorLiveTrackingDataSource(
       processor: processor,
     );
-    
+
     // Start processing (starts native tracking)
     dataSource.start();
 
     // WebSocket connection is disabled to focus entirely on GPS events over OsmAnd.
     // The connection status will effectively remain disconnected or only reflect Native state.
-    
+
     ref.onDispose(() {
       traccarDataSource.dispose();
       processor.dispose();
     });
-    
+
     return dataSource;
   }
 });

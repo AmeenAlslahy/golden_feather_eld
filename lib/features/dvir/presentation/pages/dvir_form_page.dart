@@ -22,7 +22,7 @@ class DvirFormPage extends ConsumerStatefulWidget {
 
 class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers for the new flat layout
   late TextEditingController _locationController;
   late TextEditingController _odometerController;
@@ -30,7 +30,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   late TextEditingController _trailerDefectsController;
   late TextEditingController _companyController;
   late TextEditingController _remarksController;
-  
+
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 3,
     penColor: Colors.black,
@@ -43,11 +43,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   void initState() {
     super.initState();
     final r = widget.existingReport;
-    _locationController = TextEditingController(text: r?.location ?? '8257mi SE from Isla Mujeres, Quintana Roo');
-    _odometerController = TextEditingController(text: r?.odometer?.toString() ?? '');
-    _vehicleDefectsController = TextEditingController(text: r?.vehicleDefects ?? '');
-    _trailerDefectsController = TextEditingController(text: r?.trailerDefects ?? '');
-    _companyController = TextEditingController(text: r?.companyName ?? 'GOLDEN GATE TRANSPORT LLC - 3433 MELWOOD DR...');
+    _locationController = TextEditingController(
+        text: r?.location ?? '8257mi SE from Isla Mujeres, Quintana Roo');
+    _odometerController =
+        TextEditingController(text: r?.odometer?.toString() ?? '');
+    _vehicleDefectsController =
+        TextEditingController(text: r?.vehicleDefects ?? '');
+    _trailerDefectsController =
+        TextEditingController(text: r?.trailerDefects ?? '');
+    _companyController = TextEditingController(
+        text:
+            r?.companyName ?? 'GOLDEN GATE TRANSPORT LLC - 3433 MELWOOD DR...');
     _remarksController = TextEditingController(text: r?.notes ?? '');
   }
 
@@ -74,7 +80,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final signatureData = await _signatureController.toPngBytes();
 
     final report = DvirReport(
-      id: widget.existingReport?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.existingReport?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       type: InspectionType.preTrip, // Defaulted for this layout
       date: widget.existingReport?.date ?? DateTime.now(),
       driverName: dashboard.driverName,
@@ -82,11 +89,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       trailerId: dashboard.trailerId,
       odometer: double.tryParse(_odometerController.text),
       items: const [], // No longer using the detailed checklist
-      notes: _remarksController.text.isNotEmpty ? _remarksController.text : null,
-      signature: signatureData != null ? 'signature_${DateTime.now().millisecondsSinceEpoch}' : null,
-      condition: VehicleCondition.safe, // Defaulted based on "Satisfactory" text
+      notes:
+          _remarksController.text.isNotEmpty ? _remarksController.text : null,
+      signature: signatureData != null
+          ? 'signature_${DateTime.now().millisecondsSinceEpoch}'
+          : null,
+      condition:
+          VehicleCondition.safe, // Defaulted based on "Satisfactory" text
       isSubmitted: true,
-      
+
       // New fields
       location: _locationController.text,
       companyName: _companyController.text,
@@ -123,7 +134,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final textColor = AppColors.textPrimaryForBrightness(brightness);
     final borderColor = AppColors.borderForBrightness(brightness);
 
-    final String currentTime = DateFormat('d MMM yy, hh:mm a').format(DateTime.now());
+    final String currentTime =
+        DateFormat('d MMM yy, hh:mm a').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -150,40 +162,59 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           children: [
             _buildFieldGroup(
               title: 'Time (ET)',
-              child: Text(currentTime, style: TextStyle(color: textColor, fontSize: 14)),
+              child: Text(currentTime,
+                  style: TextStyle(color: textColor, fontSize: 14)),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: 'Location',
-              child: _buildFlatTextField(_locationController, 'Location', textColor),
+              child: _buildFlatTextField(
+                  _locationController, 'Location', textColor),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: 'Odometer (mi)',
-              child: _buildFlatTextField(_odometerController, 'Odometer', textColor, keyboardType: TextInputType.number),
+              child: _buildFlatTextField(
+                  _odometerController, 'Odometer', textColor,
+                  keyboardType: TextInputType.number),
               borderColor: borderColor,
               textColor: textColor,
             ),
-            
+
             // Grid for Vehicle and Trailers
             Container(
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: borderColor))),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
               child: Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(context.loc.vehicle, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
+                        Text(context.loc.vehicle,
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
                         const SizedBox(height: 4),
-                        Text(dashboard.vehicleDisplayName, style: TextStyle(color: textColor, fontSize: 14)),
+                        Text(dashboard.vehicleDisplayName,
+                            style: TextStyle(color: textColor, fontSize: 14)),
                         const SizedBox(height: AppSpacing.md),
-                        Text(context.loc.trailers, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
+                        Text(context.loc.trailers,
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
                         const SizedBox(height: 4),
-                        Text(dashboard.trailerId ?? context.loc.trailers, style: TextStyle(color: AppColors.textSecondaryForBrightness(brightness), fontSize: 14)),
+                        Text(dashboard.trailerId ?? context.loc.trailers,
+                            style: TextStyle(
+                                color: AppColors.textSecondaryForBrightness(
+                                    brightness),
+                                fontSize: 14)),
                       ],
                     ),
                   ),
@@ -191,37 +222,50 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(context.loc.defectsTitle, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                        _buildFlatTextField(_vehicleDefectsController, context.loc.defectsTitle, textColor),
+                        Text(context.loc.defectsTitle,
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
+                        _buildFlatTextField(_vehicleDefectsController,
+                            context.loc.defectsTitle, textColor),
                         const SizedBox(height: AppSpacing.sm),
-                        Text(context.loc.defectsTitle, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                        _buildFlatTextField(_trailerDefectsController, context.loc.defectsTitle, textColor),
+                        Text(context.loc.defectsTitle,
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
+                        _buildFlatTextField(_trailerDefectsController,
+                            context.loc.defectsTitle, textColor),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
+
             _buildFieldGroup(
               title: 'Company',
-              child: _buildFlatTextField(_companyController, 'Company', textColor),
+              child:
+                  _buildFlatTextField(_companyController, 'Company', textColor),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: 'Remarks',
-              child: _buildFlatTextField(_remarksController, 'Remarks', textColor),
+              child:
+                  _buildFlatTextField(_remarksController, 'Remarks', textColor),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: 'Status',
-              child: Text(context.loc.vehicleConditionSatisfactory, style: TextStyle(color: textColor, fontSize: 14)),
+              child: Text(context.loc.vehicleConditionSatisfactory,
+                  style: TextStyle(color: textColor, fontSize: 14)),
               borderColor: borderColor,
               textColor: textColor,
             ),
-            
+
             // Signature Section
             Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -231,8 +275,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     height: 200,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border: Border.all(color: borderColor.withOpacity(0.5)),
-                      color: Colors.white, // Ensure signature pad is visible against white
+                      border:
+                          Border.all(color: borderColor.withValues(alpha: 0.5)),
+                      color: Colors
+                          .white, // Ensure signature pad is visible against white
                     ),
                     child: Stack(
                       children: [
@@ -269,10 +315,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 ],
               ),
             ),
-            
+
             // Sign Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
               child: AppButton(
                 label: 'SIGN', // Fixed text matching screenshot
                 type: EldButtonType.agree,
@@ -297,7 +344,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: borderColor)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -316,7 +364,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 
-  Widget _buildFlatTextField(TextEditingController controller, String hint, Color textColor, {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildFlatTextField(
+      TextEditingController controller, String hint, Color textColor,
+      {TextInputType keyboardType = TextInputType.text}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,

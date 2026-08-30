@@ -5,7 +5,6 @@ import '../../../../core/theme/app_spacing.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../tracking/presentation/providers/tracking_events_stream_provider.dart';
-import '../../../../core/engine/hos_rules_engine.dart';
 
 /// رسم بياني لـ 24 ساعة على شكل خط متصل (تخطيط قلب)
 class LogGraph extends ConsumerWidget {
@@ -19,7 +18,7 @@ class LogGraph extends ConsumerWidget {
     final latestEldEvent = ref.watch(trackingEventsStreamProvider).valueOrNull;
 
     return Container(
-      height: 190, 
+      height: 190,
       color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.only(
         left: AppSpacing.md,
@@ -47,7 +46,7 @@ class LogGraph extends ConsumerWidget {
               },
             ),
           ),
-          
+
           // محور الوقت
           const SizedBox(height: 4),
           _buildTimeAxis(context),
@@ -57,7 +56,33 @@ class LogGraph extends ConsumerWidget {
   }
 
   Widget _buildTimeAxis(BuildContext context) {
-    final hours = ['M', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 'N', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 'M'];
+    final hours = [
+      'M',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      'N',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      'M'
+    ];
     return Row(
       children: hours.map((h) {
         return Expanded(
@@ -93,7 +118,7 @@ class _LogGraphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final chartWidth = size.width - 40; 
+    final chartWidth = size.width - 40;
     final chartHeight = size.height;
     const offsetX = 40.0;
     final rowHeight = chartHeight / 4;
@@ -116,19 +141,20 @@ class _LogGraphPainter extends CustomPainter {
     }
   }
 
-  void _drawLiveMarker(Canvas canvas, Size size, double offsetX, double chartWidth, double rowHeight) {
+  void _drawLiveMarker(Canvas canvas, Size size, double offsetX,
+      double chartWidth, double rowHeight) {
     final now = latestEldEvent!.timestamp;
     final startHour = now.hour + now.minute / 60.0;
     final xPos = offsetX + (startHour / 24.0) * chartWidth;
 
     // الحصول على الحالة الحالية (افتراضياً ON إذا لم يتم تحديدها بدقة)
     // يمكن تحسينها لاحقاً لتقرأ الحالة الفعلية من محرك HOS
-    final yPos = _getYPosition('ON', rowHeight); 
+    final yPos = _getYPosition('ON', rowHeight);
 
     final markerPaint = Paint()
       ..color = AppColors.warningYellow
       ..style = PaintingStyle.fill;
-    
+
     final glowPaint = Paint()
       ..color = AppColors.warningYellow.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
@@ -139,20 +165,23 @@ class _LogGraphPainter extends CustomPainter {
     canvas.drawCircle(Offset(xPos, yPos), 3.0, markerPaint);
   }
 
-  void _drawGridLines(Canvas canvas, Size size, double offsetX, double chartWidth, double rowHeight) {
+  void _drawGridLines(Canvas canvas, Size size, double offsetX,
+      double chartWidth, double rowHeight) {
     final gridPaint = Paint()
       ..color = gridColor.withValues(alpha: 0.3)
       ..strokeWidth = 0.5;
 
     // أفقي
     for (int i = 0; i <= 4; i++) {
-      canvas.drawLine(Offset(offsetX, i * rowHeight), Offset(size.width, i * rowHeight), gridPaint);
+      canvas.drawLine(Offset(offsetX, i * rowHeight),
+          Offset(size.width, i * rowHeight), gridPaint);
     }
 
     // عمودي (كل ساعة)
     final colWidth = chartWidth / 24;
     for (int i = 0; i <= 24; i++) {
-      canvas.drawLine(Offset(offsetX + i * colWidth, 0), Offset(offsetX + i * colWidth, size.height), gridPaint);
+      canvas.drawLine(Offset(offsetX + i * colWidth, 0),
+          Offset(offsetX + i * colWidth, size.height), gridPaint);
     }
   }
 
@@ -161,11 +190,16 @@ class _LogGraphPainter extends CustomPainter {
     for (int i = 0; i < labels.length; i++) {
       final textSpan = TextSpan(
         text: labels[i],
-        style: TextStyle(fontSize: 9, color: textColor.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
+        style: TextStyle(
+            fontSize: 9,
+            color: textColor.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w500),
       );
-      final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+      final textPainter =
+          TextPainter(text: textSpan, textDirection: TextDirection.ltr);
       textPainter.layout();
-      textPainter.paint(canvas, Offset(4, i * rowHeight + rowHeight / 2 - textPainter.height / 2));
+      textPainter.paint(canvas,
+          Offset(4, i * rowHeight + rowHeight / 2 - textPainter.height / 2));
     }
   }
 
@@ -182,19 +216,28 @@ class _LogGraphPainter extends CustomPainter {
     }
 
     for (int i = 0; i < labels.length; i++) {
-      final String formattedStat = (stats[labels[i]] ?? 0.0).toStringAsFixed(2).padLeft(5, '0');
+      final String formattedStat =
+          (stats[labels[i]] ?? 0.0).toStringAsFixed(2).padLeft(5, '0');
       final textSpan = TextSpan(
         text: formattedStat,
-        style: TextStyle(fontSize: 10, color: textColor.withValues(alpha: 0.7), fontWeight: FontWeight.w600),
+        style: TextStyle(
+            fontSize: 10,
+            color: textColor.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w600),
       );
-      final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+      final textPainter =
+          TextPainter(text: textSpan, textDirection: TextDirection.ltr);
       textPainter.layout();
-      textPainter.paint(canvas, Offset(size.width - textPainter.width - 4, i * rowHeight + rowHeight / 2 - textPainter.height / 2));
+      textPainter.paint(
+          canvas,
+          Offset(size.width - textPainter.width - 4,
+              i * rowHeight + rowHeight / 2 - textPainter.height / 2));
     }
   }
 
   /// الدالة الأساسية لرسم الخط المتصل الأزرق
-  void _drawStepLine(Canvas canvas, Size size, double offsetX, double chartWidth, double chartHeight, double rowHeight) {
+  void _drawStepLine(Canvas canvas, Size size, double offsetX,
+      double chartWidth, double chartHeight, double rowHeight) {
     if (events.isEmpty) return;
 
     // إعدادات القلم للخط الأزرق الرفيع
@@ -205,16 +248,17 @@ class _LogGraphPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final path = Path();
-    
+
     // ترتيب الأحداث حسب الوقت (ضروري لرسم خط متصل صحيح)
-    final sortedEvents = List<dynamic>.from(events)..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final sortedEvents = List<dynamic>.from(events)
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     // 1. إيجاد الحالة عند منتصف الليل (لبدء الرسم من أقصى اليسار)
     // نفترض أن أول حدث يبدأ عند منتصف الليل أو قبله.
     // سنبدأ رسم الخط من الساعة 0:00 (x = offsetX) عند مستوى الحالة الأولى
     final firstEvent = sortedEvents.first;
     final double startY = _getYPosition(firstEvent.status, rowHeight);
-    
+
     path.moveTo(offsetX, startY); // نقطة البداية عند أقصى اليسار
 
     double currentX = offsetX;
@@ -235,17 +279,17 @@ class _LogGraphPainter extends CustomPainter {
 
       // 2. الحركة العمودية المفاجئة (تغيير الحالة)
       final double newY = _getYPosition(status, rowHeight);
-      
+
       // إذا تغيرت الحالة، ارسم خطاً عمودياً (انتقال مباشر للأسفل/للأعلى)
       // (ملاحظة: نحرص على عدم رسم خط عامودي إذا كانت xStart مساوية لـ currentX بسبب أخطاء التوقيت)
-      if (xStart > currentX + 0.01) { 
+      if (xStart > currentX + 0.01) {
         path.lineTo(xStart, currentY); // خط أفقي قبل تغيير الحالة
       }
-      
+
       path.lineTo(xStart, newY); // خط عمودي (نقلة نوعية)
-      
+
       // 3. الحركة الأفقية (استمرار الحالة)
-      path.lineTo(xEnd, newY); 
+      path.lineTo(xEnd, newY);
 
       // تحديث المتغيرات الحالية للنقطة التالية
       currentX = xEnd;
@@ -264,11 +308,20 @@ class _LogGraphPainter extends CustomPainter {
   double _getYPosition(String status, double rowHeight) {
     int index = 0;
     switch (status) {
-      case 'OFF': index = 0; break;
-      case 'SB':  index = 1; break;
-      case 'D':   index = 2; break;
-      case 'ON':  index = 3; break;
-      default:    index = 0;
+      case 'OFF':
+        index = 0;
+        break;
+      case 'SB':
+        index = 1;
+        break;
+      case 'D':
+        index = 2;
+        break;
+      case 'ON':
+        index = 3;
+        break;
+      default:
+        index = 0;
     }
     // إضافة (rowHeight / 2) ليتمركز الخط في منتصف الصف بالضبط
     return index * rowHeight + (rowHeight / 2);
@@ -276,6 +329,7 @@ class _LogGraphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LogGraphPainter oldDelegate) {
-    return events != oldDelegate.events || latestEldEvent != oldDelegate.latestEldEvent;
+    return events != oldDelegate.events ||
+        latestEldEvent != oldDelegate.latestEldEvent;
   }
 }

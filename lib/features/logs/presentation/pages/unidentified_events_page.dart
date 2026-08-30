@@ -31,7 +31,7 @@ class UnidentifiedEventsPage extends StatelessWidget {
             indicatorColor: AppColors.surface,
             indicatorWeight: 3,
             labelColor: AppColors.surface,
-            unselectedLabelColor: AppColors.surface.withOpacity(0.7),
+            unselectedLabelColor: AppColors.surface.withValues(alpha: 0.7),
             labelStyle: const TextStyle(
               fontWeight: AppTypography.bold,
               fontSize: 13,
@@ -60,9 +60,21 @@ class _UnclaimedTab extends StatelessWidget {
   Widget build(BuildContext context) {
     // Dummy events based on the screenshot
     final events = [
-      {'status': 'ON', 'color': Colors.blue, 'date': 'Aug 26, 2026 7:19 AM EDT'},
-      {'status': 'D', 'color': Colors.green, 'date': 'Aug 26, 2026 7:15 AM EDT'},
-      {'status': 'ON', 'color': Colors.blue, 'date': 'Aug 26, 2026 7:14 AM EDT'},
+      {
+        'status': 'ON',
+        'color': Colors.blue,
+        'date': 'Aug 26, 2026 7:19 AM EDT'
+      },
+      {
+        'status': 'D',
+        'color': Colors.green,
+        'date': 'Aug 26, 2026 7:15 AM EDT'
+      },
+      {
+        'status': 'ON',
+        'color': Colors.blue,
+        'date': 'Aug 26, 2026 7:14 AM EDT'
+      },
     ];
 
     return Column(
@@ -71,7 +83,8 @@ class _UnclaimedTab extends StatelessWidget {
         Container(
           width: double.infinity,
           color: Theme.of(context).scaffoldBackgroundColor,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           child: const Text(
             '286 (1FUJA6CK06LV66287)',
             style: TextStyle(
@@ -85,17 +98,21 @@ class _UnclaimedTab extends StatelessWidget {
           child: ListView.separated(
             padding: EdgeInsets.zero,
             itemCount: events.length,
-            separatorBuilder: (context, index) => const Divider(height: 1, thickness: 1),
+            separatorBuilder: (context, index) =>
+                const Divider(height: 1, thickness: 1),
             itemBuilder: (context, index) {
               final event = events[index];
               return InkWell(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ميزة تبني الأحداث المجهولة قيد التطوير')),
+                    const SnackBar(
+                        content:
+                            Text('ميزة تبني الأحداث المجهولة قيد التطوير')),
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md, vertical: AppSpacing.md),
                   color: Theme.of(context).colorScheme.surface,
                   child: Row(
                     children: [
@@ -150,7 +167,10 @@ class _RejectedTab extends StatelessWidget {
         context.loc.noRecords,
         style: TextStyle(
           fontSize: 18.0,
-          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+          color: Theme.of(context)
+              .colorScheme
+              .onSurfaceVariant
+              .withValues(alpha: 0.5),
           fontWeight: AppTypography.semiBold,
         ),
       ),

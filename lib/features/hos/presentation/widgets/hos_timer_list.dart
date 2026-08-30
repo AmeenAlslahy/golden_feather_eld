@@ -2,7 +2,6 @@ import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/engine/hos_rules_engine.dart';
 
 class HosTimerList extends StatelessWidget {
   final HosStatusUpdate status;
@@ -36,12 +35,11 @@ class HosTimerList extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: AppTypography.regular,
-              
               letterSpacing: 0.5,
             ),
           ),
         ),
-        
+
         // القائمة
         Container(
           color: AppColors.surface,
@@ -62,7 +60,9 @@ class HosTimerList extends StatelessWidget {
               _buildRow(
                 title: 'BREAK',
                 subtitle: '30 Minute Rest Break',
-                time: _formatMinutes(limits.breakRemainingMinutes > 0 ? limits.breakRemainingMinutes : 8 * 60), // مؤقت لعرض وقت الاستراحة
+                time: _formatMinutes(limits.breakRemainingMinutes > 0
+                    ? limits.breakRemainingMinutes
+                    : 8 * 60), // مؤقت لعرض وقت الاستراحة
               ),
               const Divider(height: 1, color: AppColors.border),
               _buildRow(
@@ -95,7 +95,6 @@ class HosTimerList extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: AppTypography.bold,
-                  
                 ),
               ),
               const SizedBox(height: 2),
@@ -104,7 +103,6 @@ class HosTimerList extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: AppTypography.regular,
-                  
                 ),
               ),
             ],
@@ -114,7 +112,6 @@ class HosTimerList extends StatelessWidget {
             style: const TextStyle(
               fontSize: 32,
               fontWeight: AppTypography.regular,
-              
               fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
@@ -123,6 +120,3 @@ class HosTimerList extends StatelessWidget {
     );
   }
 }
-
-
-

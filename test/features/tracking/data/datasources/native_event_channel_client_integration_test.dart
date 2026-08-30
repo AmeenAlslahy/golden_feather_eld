@@ -9,20 +9,21 @@ void main() {
 
   group('NativeEventChannelClient', () {
     late NativeEventChannelClient client;
-    final String channelName = 'com.goldenfeather.eld/traccar/events';
+    const String channelName = 'com.goldenfeather.eld/traccar/events';
     late StreamController<dynamic> mockStreamController;
 
     setUp(() {
       mockStreamController = StreamController<dynamic>();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockStreamHandler(
-        EventChannel(channelName),
+        const EventChannel(channelName),
         MockStreamHandler.inline(
           onListen: (arguments, events) {
             mockStreamController.stream.listen((event) {
               events.success(event);
             }, onError: (error) {
-              events.error(code: 'ERROR', message: error.toString(), details: null);
+              events.error(
+                  code: 'ERROR', message: error.toString(), details: null);
             }, onDone: () {
               events.endOfStream();
             });
@@ -39,14 +40,14 @@ void main() {
     tearDown(() {
       client.dispose();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockStreamHandler(EventChannel(channelName), null);
+          .setMockStreamHandler(const EventChannel(channelName), null);
     });
 
     test('Parses valid Android payload successfully', () async {
       final now = DateTime.now().toUtc();
-      
+
       client.startListening();
-      
+
       // Delay to ensure subscription is active before pushing events
       await Future.delayed(Duration.zero);
 
@@ -68,12 +69,13 @@ void main() {
       expect(event.speedMetersPerSecond, 15.0);
       expect(event.source, LocationSource.localNative);
       // Ensure recordedAt uses the provided timestamp
-      expect(event.recordedAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
+      expect(
+          event.recordedAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
     });
 
     test('Parses valid iOS payload successfully (using doubles)', () async {
       final now = DateTime.now().toUtc();
-      
+
       client.startListening();
       await Future.delayed(Duration.zero);
 
@@ -86,7 +88,7 @@ void main() {
         'bearing': 90.5,
         'altitude': 100.5,
         'accuracy': 5.5,
-        // iOS might send double or Int timestamp depending on bridge implementation. 
+        // iOS might send double or Int timestamp depending on bridge implementation.
         // Our parsing `(data['timestamp'] as num?)?.toInt()` handles both.
         'timestamp': now.millisecondsSinceEpoch.toDouble(),
       });
@@ -94,12 +96,14 @@ void main() {
       final event = await futureEvent;
 
       expect(event.speedMetersPerSecond, 15.5);
-      expect(event.recordedAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
+      expect(
+          event.recordedAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
     });
 
-    test('Handles invalid payloads and produces correct quality status', () async {
+    test('Handles invalid payloads and produces correct quality status',
+        () async {
       final now = DateTime.now().toUtc();
-      
+
       client.startListening();
       await Future.delayed(Duration.zero);
 
@@ -154,16 +158,13 @@ void main() {
 
       client.dispose();
       await Future.delayed(Duration.zero);
-      
+
       // Creating a new subscription on a closed stream should throw or return done immediately
       var isDone = false;
-      client.locationStream.listen(
-        (_) {},
-        onDone: () {
-          isDone = true;
-        }
-      );
-      
+      client.locationStream.listen((_) {}, onDone: () {
+        isDone = true;
+      });
+
       await Future.delayed(Duration.zero);
       expect(isDone, true);
     });

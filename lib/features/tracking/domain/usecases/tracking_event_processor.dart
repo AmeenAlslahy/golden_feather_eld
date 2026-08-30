@@ -5,17 +5,20 @@ import '../../../../core/utils/logger.dart';
 import '../entities/tracking_event.dart';
 import '../entities/connection_status.dart';
 import '../../data/datasources/tracking_data_source.dart';
-import '../../../../core/engine/hos_rules_engine.dart'; // For EldEvent
+// For EldEvent
 import '../../../../core/engine/tracking/distance_tracker.dart'; // For LocationPoint
 
 /// المحرك المركزي الذي يستقبل أحداث التتبع (TrackingEvent) من المصدر
-/// ويقوم بتوزيعها على محركات التطبيق (HOS, Diagnostics, Distance) 
+/// ويقوم بتوزيعها على محركات التطبيق (HOS, Diagnostics, Distance)
 /// عبر محول (Mapper) داخلي بحيث لا تعرف هذه المحركات أي شيء عن Traccar.
 class TrackingEventProcessor {
   final TrackingDataSource? _trackingDataSource;
-  final StreamController<EldEvent> _eldEventsController = StreamController<EldEvent>.broadcast();
-  final StreamController<LocationPoint> _locationEventsController = StreamController<LocationPoint>.broadcast();
-  final StreamController<ConnectionStatus> _connectionStatusController = StreamController<ConnectionStatus>.broadcast();
+  final StreamController<EldEvent> _eldEventsController =
+      StreamController<EldEvent>.broadcast();
+  final StreamController<LocationPoint> _locationEventsController =
+      StreamController<LocationPoint>.broadcast();
+  final StreamController<ConnectionStatus> _connectionStatusController =
+      StreamController<ConnectionStatus>.broadcast();
   StreamSubscription? _subscription;
   StreamSubscription? _connectionSubscription;
   Timer? _mockTimer;
@@ -26,12 +29,14 @@ class TrackingEventProcessor {
 
   Stream<EldEvent> get eldEventsStream => _eldEventsController.stream;
   Stream<LocationPoint> get locationStream => _locationEventsController.stream;
-  Stream<ConnectionStatus> get connectionStatusStream => _connectionStatusController.stream;
+  Stream<ConnectionStatus> get connectionStatusStream =>
+      _connectionStatusController.stream;
 
   void startProcessing() {
     if (_trackingDataSource != null) {
       _subscription = _trackingDataSource.events.listen(_processTrackingEvent);
-      _connectionSubscription = _trackingDataSource.connectionStatusStream.listen((status) {
+      _connectionSubscription =
+          _trackingDataSource.connectionStatusStream.listen((status) {
         _connectionStatusController.add(status);
       });
     } else {
@@ -76,7 +81,8 @@ class TrackingEventProcessor {
   }
 
   void _processTrackingEvent(TrackingEvent event) {
-    AppLogger.info('📍 [TrackingEventProcessor] Received event: Lat=${event.latitude}, Lon=${event.longitude}, Speed=${event.speed}');
+    AppLogger.info(
+        '📍 [TrackingEventProcessor] Received event: Lat=${event.latitude}, Lon=${event.longitude}, Speed=${event.speed}');
     // 1. تحويل الحدث إلى EldEvent لمحرك HOS و Diagnostics
     final eldEvent = _mapToEldEvent(event);
     _eldEventsController.add(eldEvent);
@@ -88,7 +94,8 @@ class TrackingEventProcessor {
 
   EldEvent _mapToEldEvent(TrackingEvent event) {
     return EldEvent(
-      timestamp: event.timestampUtc, // يتم تحويله إلى التوقيت المناسب لاحقاً إذا لزم
+      timestamp:
+          event.timestampUtc, // يتم تحويله إلى التوقيت المناسب لاحقاً إذا لزم
       speedMph: event.speed,
       speedDurationSeconds: 0,
       odometerMiles: event.odometer ?? 0.0,
@@ -113,4 +120,3 @@ class TrackingEventProcessor {
     _connectionStatusController.close();
   }
 }
-

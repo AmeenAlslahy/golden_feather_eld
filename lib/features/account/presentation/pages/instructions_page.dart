@@ -35,10 +35,10 @@ class InstructionsPage extends StatelessWidget {
         children: [
           // Section 1: Inspection Mode
           _buildInspectionModeSection(isArabic, brightness),
-          
+
           // Section 2: Send Logs
           _buildSendLogsSection(isArabic, brightness),
-          
+
           // Section 3: Malfunction Manual
           _buildMalfunctionManualSection(isArabic, brightness),
         ],
@@ -48,8 +48,10 @@ class InstructionsPage extends StatelessWidget {
 
   Widget _buildInspectionModeSection(bool isArabic, Brightness brightness) {
     // Dark background for this section as per design
-    final sectionColor = brightness == Brightness.light ? const Color(0xFF333A45) : const Color(0xFF1E242C);
-    final textColor = Colors.white;
+    final sectionColor = brightness == Brightness.light
+        ? const Color(0xFF333A45)
+        : const Color(0xFF1E242C);
+    const textColor = Colors.white;
 
     return Container(
       color: sectionColor,
@@ -79,8 +81,10 @@ class InstructionsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic ? 'وضع التفتيش لـ TOP COMPLIANCE ELD' : 'TOP COMPLIANCE ELD Inspection Mode',
-                  style: TextStyle(
+                  isArabic
+                      ? 'وضع التفتيش لـ TOP COMPLIANCE ELD'
+                      : 'TOP COMPLIANCE ELD Inspection Mode',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: textColor,
@@ -131,11 +135,12 @@ class InstructionsPage extends StatelessWidget {
 
     return Container(
       color: sectionColor,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
       child: Row(
         children: [
           // Empty space to align with the text above
-          Expanded(flex: 4, child: const SizedBox()),
+          const Expanded(flex: 4, child: SizedBox()),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
             flex: 6,
@@ -144,14 +149,18 @@ class InstructionsPage extends StatelessWidget {
               children: [
                 Text(
                   isArabic ? 'إرسال السجلات' : 'Send Logs',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   isArabic
                       ? 'جهاز TOP COMPLIANCE ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
                       : 'TOP COMPLIANCE ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
-                  style: TextStyle(fontSize: 10, color: textSecondaryColor, height: 1.5),
+                  style: TextStyle(
+                      fontSize: 10, color: textSecondaryColor, height: 1.5),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 _buildContactInfo(isArabic, textSecondaryColor),
@@ -165,7 +174,9 @@ class InstructionsPage extends StatelessWidget {
 
   Widget _buildMalfunctionManualSection(bool isArabic, Brightness brightness) {
     // Light gray background
-    final sectionColor = brightness == Brightness.light ? const Color(0xFFF7F7F7) : const Color(0xFF1C1C1E);
+    final sectionColor = brightness == Brightness.light
+        ? const Color(0xFFF7F7F7)
+        : const Color(0xFF1C1C1E);
     final textColor = AppColors.textPrimaryForBrightness(brightness);
     final textSecondaryColor = AppColors.textSecondaryForBrightness(brightness);
 
@@ -186,7 +197,8 @@ class InstructionsPage extends StatelessWidget {
                     color: Colors.grey.shade800,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Center(child: Icon(Icons.router, color: Colors.white, size: 48)),
+                  child: const Center(
+                      child: Icon(Icons.router, color: Colors.white, size: 48)),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
@@ -208,16 +220,23 @@ class InstructionsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic ? 'دليل الأعطال لـ TOP COMPLIANCE ELD' : 'TOP COMPLIANCE ELD Malfunction Manual',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor, height: 1.2),
+                  isArabic
+                      ? 'دليل الأعطال لـ TOP COMPLIANCE ELD'
+                      : 'TOP COMPLIANCE ELD Malfunction Manual',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      height: 1.2),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  isArabic ? 'وفقاً للإرشادات المحددة في 395.34' : 'In accordance with the guidelines set forth in 395.34',
+                  isArabic
+                      ? 'وفقاً للإرشادات المحددة في 395.34'
+                      : 'In accordance with the guidelines set forth in 395.34',
                   style: TextStyle(fontSize: 11, color: textSecondaryColor),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                
                 _buildSquareChecklistItem(
                   title: isArabic ? 'مؤشر العطل' : 'Malfunction indication',
                   desc: isArabic
@@ -235,7 +254,9 @@ class InstructionsPage extends StatelessWidget {
                   secondaryColor: textSecondaryColor,
                 ),
                 _buildSquareChecklistItem(
-                  title: isArabic ? 'التبديل للسجلات الورقية' : 'Switch to paper logs',
+                  title: isArabic
+                      ? 'التبديل للسجلات الورقية'
+                      : 'Switch to paper logs',
                   desc: isArabic
                       ? 'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.'
                       : 'Keep a paper log for that day and until the device is repaired or replaced. In the event of an inspection, display the previous 7 days from the app.',
@@ -250,7 +271,6 @@ class InstructionsPage extends StatelessWidget {
                   textColor: textColor,
                   secondaryColor: textSecondaryColor,
                 ),
-                
                 const SizedBox(height: AppSpacing.xl),
                 _buildContactInfo(isArabic, textSecondaryColor),
               ],
@@ -261,7 +281,10 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildChecklistItem({required String text, required Color textColor, required Color iconColor}) {
+  Widget _buildChecklistItem(
+      {required String text,
+      required Color textColor,
+      required Color iconColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
@@ -280,7 +303,11 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSquareChecklistItem({required String title, required String desc, required Color textColor, required Color secondaryColor}) {
+  Widget _buildSquareChecklistItem(
+      {required String title,
+      required String desc,
+      required Color textColor,
+      required Color secondaryColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -291,7 +318,8 @@ class InstructionsPage extends StatelessWidget {
             width: 14,
             height: 14,
             decoration: BoxDecoration(
-              color: Colors.black54, // Matches the dark grey square checkmark in design
+              color: Colors
+                  .black54, // Matches the dark grey square checkmark in design
               borderRadius: BorderRadius.circular(2),
             ),
             child: const Icon(Icons.check, size: 12, color: Colors.white),
@@ -301,8 +329,14 @@ class InstructionsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                Text(desc, style: TextStyle(fontSize: 10, color: secondaryColor, height: 1.3)),
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: textColor)),
+                Text(desc,
+                    style: TextStyle(
+                        fontSize: 10, color: secondaryColor, height: 1.3)),
               ],
             ),
           ),
@@ -317,10 +351,13 @@ class InstructionsPage extends StatelessWidget {
       children: [
         Text(
           'www.topceld.com',
-          style: TextStyle(fontSize: 10, color: secondaryColor, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 10, color: secondaryColor, fontWeight: FontWeight.bold),
         ),
         Text(
-          isArabic ? 'تواصل مع الدعم عبر topceld@gmail.com' : 'Contact the support team at topceld@gmail.com',
+          isArabic
+              ? 'تواصل مع الدعم عبر topceld@gmail.com'
+              : 'Contact the support team at topceld@gmail.com',
           style: TextStyle(fontSize: 9, color: secondaryColor),
         ),
       ],

@@ -26,7 +26,8 @@ class RemoteConfigService {
     try {
       final baseUrl = AppEnvironmentConfig.apiBaseUrl;
       if (baseUrl.isEmpty || baseUrl.contains('mock-traccar-server')) {
-        AppLogger.info('ℹ️ Remote config aborted: Server URL is not configured or is mock');
+        AppLogger.info(
+            'ℹ️ Remote config aborted: Server URL is not configured or is mock');
         return false;
       }
 
@@ -39,8 +40,8 @@ class RemoteConfigService {
       AppLogger.info('📡 Fetching remote config for device: $deviceId');
 
       // استخدام Endpoint واضح
-      final String endpoint = '/api/server';
-      
+      const String endpoint = '/api/server';
+
       try {
         final response = await _client.get<Map<String, dynamic>>(endpoint);
 
@@ -57,10 +58,12 @@ class RemoteConfigService {
         return false;
       } on ServerException catch (e) {
         if (e.statusCode == 404) {
-          AppLogger.info('ℹ️ Remote config not available for this device (404). Endpoint: $endpoint');
+          AppLogger.info(
+              'ℹ️ Remote config not available for this device (404). Endpoint: $endpoint');
           return false;
         }
-        AppLogger.warning('Remote config API error: ${e.statusCode} for endpoint: $endpoint');
+        AppLogger.warning(
+            'Remote config API error: ${e.statusCode} for endpoint: $endpoint');
         return false;
       }
     } catch (e) {
@@ -119,7 +122,8 @@ class RemoteConfigService {
     if (success) {
       AppLogger.info('✅ Remote config fetched on startup');
     } else {
-      AppLogger.info('ℹ️ Using local config (remote fetch failed or not available)');
+      AppLogger.info(
+          'ℹ️ Using local config (remote fetch failed or not available)');
     }
   }
 }

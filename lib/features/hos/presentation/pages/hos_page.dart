@@ -1,7 +1,6 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/hos_rules_engine.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/hos_provider.dart';
 import '../widgets/main_circular_timer.dart';
@@ -33,15 +32,16 @@ class HosPage extends ConsumerWidget {
       remainingMinutes = limits.remainingDriveMinutes;
       // التأكد من استراحة الـ 8 ساعات
       if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
-         // إذا كان يحتاج استراحة الآن
-         remainingMinutes = 0; 
+        // إذا كان يحتاج استراحة الآن
+        remainingMinutes = 0;
       }
     } else {
       remainingMinutes = limits.remainingShiftMinutes;
     }
 
     final timeString = _formatMinutes(remainingMinutes);
-    final progress = remainingMinutes / (11 * 60); // نسبة التقدم بناء على 11 ساعة (أو 14)
+    final progress =
+        remainingMinutes / (11 * 60); // نسبة التقدم بناء على 11 ساعة (أو 14)
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
@@ -53,7 +53,7 @@ class HosPage extends ConsumerWidget {
                 children: [
                   // بطاقة التنبيهات والأعطال
                   const DiagnosticsAlertCard(),
-                  
+
                   // القسم العلوي
                   Stack(
                     children: [
@@ -67,7 +67,9 @@ class HosPage extends ConsumerWidget {
                           elevation: 2,
                           child: InkWell(
                             onTap: () {
-                              ref.read(themeModeProvider.notifier).toggleTheme();
+                              ref
+                                  .read(themeModeProvider.notifier)
+                                  .toggleTheme();
                             },
                             customBorder: const CircleBorder(),
                             child: const Padding(
@@ -81,14 +83,15 @@ class HosPage extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      
+
                       // الدائرة المركزية
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 32, bottom: 24),
                           child: MainCircularTimer(
                             timeString: timeString,
-                            statusText: _getStatusText(hosState.currentStatus, context),
+                            statusText:
+                                _getStatusText(hosState.currentStatus, context),
                             progress: progress.clamp(0.0, 1.0),
                             onTap: () {
                               _showStatusSelector(context);
@@ -98,7 +101,7 @@ class HosPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  
+
                   // قائمة الساعات
                   HosTimerList(status: hosState),
                 ],
@@ -130,6 +133,3 @@ class HosPage extends ConsumerWidget {
     };
   }
 }
-
-
-

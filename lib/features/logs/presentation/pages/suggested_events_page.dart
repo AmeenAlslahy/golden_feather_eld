@@ -30,7 +30,10 @@ class SuggestedEventsPage extends StatelessWidget {
           context.loc.noRecords,
           style: TextStyle(
             fontSize: 18.0,
-            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+            color: Theme.of(context)
+                .colorScheme
+                .onSurfaceVariant
+                .withValues(alpha: 0.5),
             fontWeight: AppTypography.semiBold,
           ),
         ),
