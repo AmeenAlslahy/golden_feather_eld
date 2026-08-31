@@ -1261,4 +1261,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get calculatingLocation => 'جاري حساب الموقع...';
+
+  @override
+  String get driveLimitTitle => 'القيادة';
+
+  @override
+  String get driveLimitDesc => 'حد 11 ساعة للقيادة';
+
+  @override
+  String get shiftLimitTitle => 'الوردية';
+
+  @override
+  String get shiftLimitDesc => 'حد 14 ساعة للعمل';
+
+  @override
+  String get breakLimitTitle => 'الاستراحة';
+
+  @override
+  String get breakLimitDesc => 'استراحة 30 دقيقة';
+
+  @override
+  String get cycleLimitTitle => 'الدورة';
+
+  @override
+  String get cycleLimitDesc => 'USA 70/8';
+
+  @override
+  String get hoursOfService => 'ساعات الخدمة';
 }

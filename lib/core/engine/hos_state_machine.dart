@@ -1,5 +1,6 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
 import 'dart:async';
+import '../config/hos_configuration.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/logger.dart';
 import 'hos_rules_engine.dart';
@@ -101,14 +102,20 @@ class StatusTransition {
   });
 }
 
+
+
+/// مزود الإعدادات (يمكن تغييره لاحقاً ليكون ديناميكياً يقرأ من DB أو SharedPreferences)
+final hosConfigurationProvider = Provider<HosConfiguration>((ref) {
+  return HosConfiguration.usa70_8();
+});
+
 /// مزود محرك HOS
 final hosEngineProvider = Provider<HosRulesEngine>((ref) {
-  final calculator = HosCalculator();
+  final config = ref.watch(hosConfigurationProvider);
+  final calculator = HosCalculator(config);
   final stateMachine = HosStateMachine();
   return HosRulesEngine(
     calculator: calculator,
     stateMachine: stateMachine,
   );
 });
-
-

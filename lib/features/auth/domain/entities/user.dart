@@ -56,16 +56,31 @@ class User extends Equatable {
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Traccar API returns id as int, name, email, administrator boolean
+    final idValue = json['id']?.toString() ?? '';
+    final nameValue = json['name']?.toString() ?? json['fullName']?.toString() ?? '';
+    final emailValue = json['email']?.toString() ?? json['username']?.toString() ?? nameValue;
+    
+    // Determine role
+    UserRole userRole = UserRole.fieldWorker;
+    if (json['administrator'] == true) {
+      userRole = UserRole.admin;
+    } else if (json['role'] != null) {
+      userRole = UserRole.fromCode(json['role'] as String);
+    }
+
+    final isActive = json['disabled'] != null ? !(json['disabled'] as bool) : (json['isActive'] as bool? ?? true);
+
     return User(
-      id: json['id'] as String,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      fullName: json['fullName'] as String,
-      phone: json['phone'] as String?,
-      role: UserRole.fromCode(json['role'] as String? ?? 'field_worker'),
-      isActive: json['isActive'] as bool? ?? true,
-      lastLogin: json['lastLogin'] != null ? DateTime.parse(json['lastLogin'] as String) : null,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: idValue,
+      username: emailValue,
+      email: emailValue,
+      fullName: nameValue,
+      phone: json['phone']?.toString(),
+      role: userRole,
+      isActive: isActive,
+      lastLogin: json['lastLogin'] != null ? DateTime.tryParse(json['lastLogin'].toString()) : null,
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now() : DateTime.now(),
     );
   }
 }

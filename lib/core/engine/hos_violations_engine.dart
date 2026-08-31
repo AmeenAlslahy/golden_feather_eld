@@ -4,7 +4,8 @@ import '../../../core/utils/logger.dart';
 import 'hos_calculator.dart';
 import 'tracking/duty_status_tracker.dart';
 import '../services/local_database_service.dart';
-
+import '../config/hos_configuration.dart';
+import 'hos_state_machine.dart';
 
 
 
@@ -14,11 +15,12 @@ import 'hos_models.dart';
 class HosViolationsEngine {
   final DutyStatusTracker _tracker;
   final LocalDatabaseService _localDb;
+  final HosConfiguration _config;
   
   final List<HosViolation> _violations = [];
   Timer? _timer;
 
-  HosViolationsEngine(this._tracker, this._localDb) {
+  HosViolationsEngine(this._tracker, this._localDb, this._config) {
     _startMonitoring();
   }
 
@@ -134,13 +136,13 @@ class HosViolationsEngine {
       );
     }
 
-    if (drivingHoursWeek > HosCalculator.activeMaxCycleHours) {
+    if (drivingHoursWeek > _config.cycleLimitHours) {
       _addViolation(
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
-        message: 'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${HosCalculator.activeMaxCycleHours}h',
-        arabicMessage: 'تجاوز حد القيادة الأسبوعي: ${drivingHoursWeek.toStringAsFixed(1)} ساعة / ${HosCalculator.activeMaxCycleHours} ساعة',
-        details: {'actual': drivingHoursWeek, 'limit': HosCalculator.activeMaxCycleHours},
+        message: 'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${_config.cycleLimitHours}h',
+        arabicMessage: 'تجاوز حد القيادة الأسبوعي: ${drivingHoursWeek.toStringAsFixed(1)} ساعة / ${_config.cycleLimitHours} ساعة',
+        details: {'actual': drivingHoursWeek, 'limit': _config.cycleLimitHours},
       );
     }
 
@@ -218,7 +220,8 @@ class HosViolationsEngine {
 final hosViolationsEngineProvider = Provider<HosViolationsEngine>((ref) {
   final tracker = ref.watch(dutyStatusTrackerProvider);
   final db = ref.watch(localDatabaseServiceProvider);
-  final engine = HosViolationsEngine(tracker, db);
+  final config = ref.watch(hosConfigurationProvider);
+  final engine = HosViolationsEngine(tracker, db, config);
   ref.onDispose(() {
     engine.dispose();
   });

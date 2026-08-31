@@ -4,23 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/engine/hos_rules_engine.dart';
 import '../../../../core/engine/hos_state_machine.dart';
 import '../../../../core/utils/logger.dart';
-
+import '../../../../core/config/hos_configuration.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/engine/tracking/duty_status_tracker.dart';
 
 /// مزود حالة HOS
 final hosStatusProvider = StateNotifierProvider<HosNotifier, HosStatusUpdate>((ref) {
   final engine = ref.watch(hosEngineProvider);
   final tracker = ref.watch(dutyStatusTrackerProvider);
-  return HosNotifier(engine, tracker);
+  return HosNotifier(engine, tracker, ref);
 });
 
 class HosNotifier extends StateNotifier<HosStatusUpdate> {
   final HosRulesEngine _engine;
   final DutyStatusTracker _tracker;
+  final Ref _ref;
   Timer? _refreshTimer;
   StreamSubscription? _trackerSub;
 
-  HosNotifier(this._engine, this._tracker) : super(_engine.currentStatus) {
+  HosNotifier(this._engine, this._tracker, this._ref) : super(_engine.currentStatus) {
     _startRefreshTimer();
     _trackerSub = _tracker.onTransition.listen((transition) {
       final status = _mapStatus(transition.newStatus);
@@ -49,10 +51,15 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
   }
 
   /// تغيير حالة الخدمة
-  bool changeStatus(DutyStatus newStatus, {String? annotation, double? currentSpeed}) {
+  bool changeStatus(DutyStatus newStatus, {String? annotation}) {
     if (state.currentStatus == DutyStatus.driving && newStatus != DutyStatus.driving) {
-      if (currentSpeed != null && currentSpeed >= 8.0) {
-        AppLogger.warning('⚠️ Cannot manually change from DRIVING while vehicle is moving');
+      final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
+      final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
+      
+      final speedThreshold = _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
+      
+      if (currentSpeedKmh >= speedThreshold) {
+        AppLogger.warning('⚠️ Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)');
         // تم رفض التغيير
         return false;
       }

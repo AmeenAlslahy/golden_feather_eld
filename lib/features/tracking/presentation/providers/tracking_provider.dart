@@ -10,6 +10,8 @@ import 'tracking_providers.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
+import '../../../../routes.dart'; // 🆕
+import 'package:flutter/material.dart'; // 🆕
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -61,6 +63,9 @@ class TrackingState {
   }
 }
 
+/// مزود مستقل للسرعة الحالية لكسر الاعتمادية الدائرية (Circular Dependency)
+final currentVehicleSpeedProvider = StateProvider<double?>((ref) => null);
+
 /// مزود حالة التتبع
 final trackingStateProvider =
     StateNotifierProvider<TrackingNotifier, TrackingState>((ref) {
@@ -88,11 +93,23 @@ final trackingStateProvider =
 
   // 3) بدء التتبع إجبارياً عند تغيير الحالة إلى Driving يدوياً
   ref.listen<HosStatusUpdate>(hosStatusProvider, (previous, next) {
-    if (next.currentStatus == DutyStatus.driving) {
+    if (next.currentStatus == DutyStatus.driving && previous?.currentStatus != DutyStatus.driving) {
       if (!notifier.isActiveOrLoading) {
-        AppLogger.info(
-            '🚀 Auto-starting tracking because status changed to DRIVING');
+        AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
         notifier.startTracking(skipBatteryCheck: true);
+        
+        // 🆕 عرض إشعار مرئي للمستخدم ببدء التتبع التلقائي
+        final context = rootNavigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   });
@@ -206,6 +223,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
           arabicErrorMessage: null,
           errorType: null,
         );
+        ref.read(currentVehicleSpeedProvider.notifier).state = location.speed;
       },
       onError: (error) {
         AppLogger.error('Location stream error: $error');

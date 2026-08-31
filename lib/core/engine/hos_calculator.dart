@@ -1,35 +1,10 @@
+import '../config/hos_configuration.dart';
+
 /// حاسب ساعات الخدمة (HOS Calculator)
 class HosCalculator {
-  /// حدود FMCSA القانونية
-  static const int maxDriveMinutes = 11 * 60; // 11 ساعة
-  static const int maxShiftMinutes = 14 * 60; // 14 ساعة
-  static const int maxCycleHours = 70; // 70 ساعة في 8 أيام
-  static const int requiredBreakMinutes = 30; // استراحة 30 دقيقة
-  
-  static int _activeMaxCycleHours = 70; // الافتراضي 70 ساعة
-  
-  /// الحصول على حد الدورة النشط
-  static int get activeMaxCycleHours => _activeMaxCycleHours;
+  final HosConfiguration config;
 
-  /// تعيين حد الدورة
-  static void setCycleRule(String rule) {
-    switch (rule) {
-      case 'USA 60/7':
-        _activeMaxCycleHours = 60;
-        break;
-      case 'Canada 70/7':
-        _activeMaxCycleHours = 70;
-        break;
-      case 'Canada 120/14':
-        _activeMaxCycleHours = 120;
-        break;
-      default: // USA 70/8
-        _activeMaxCycleHours = 70;
-    }
-  }
-  static const int driveBeforeBreakMinutes = 8 * 60; // 8 ساعات قيادة متواصلة
-  static const int maxConsecutiveDays = 7;
-  static const int weeklyRestartHours = 34;
+  const HosCalculator(this.config);
 
   /// حساب جميع الحدود
   HosLimits calculateAllLimits({
@@ -41,18 +16,22 @@ class HosCalculator {
 
     // 1. حد القيادة (11 ساعة)
     final drivenMinutes = (drivingHours * 60).toInt();
-    final remainingDriveMinutes = (maxDriveMinutes - drivenMinutes).clamp(0, maxDriveMinutes);
+    final remainingDriveMinutes = (config.drivingLimitMinutes - drivenMinutes)
+        .clamp(0, config.drivingLimitMinutes);
 
     // 2. نافذة العمل (14 ساعة)
     final shiftElapsed = now.difference(shiftStartTime).inMinutes;
-    final remainingShiftMinutes = (maxShiftMinutes - shiftElapsed).clamp(0, maxShiftMinutes);
+    final remainingShiftMinutes = (config.shiftLimitMinutes - shiftElapsed)
+        .clamp(0, config.shiftLimitMinutes);
 
     // 3. الدورة الأسبوعية (60 أو 70 ساعة)
-    final remainingCycleHours = (_activeMaxCycleHours - cycleHours).clamp(0.0, _activeMaxCycleHours.toDouble());
+    final remainingCycleHours = (config.cycleLimitHours - cycleHours)
+        .clamp(0.0, config.cycleLimitHours.toDouble());
 
     // 4. الاستراحة الإلزامية (30 دقيقة بعد 8 ساعات)
-    final breakRequired = drivenMinutes >= driveBeforeBreakMinutes;
-    final breakRemainingMinutes = breakRequired ? requiredBreakMinutes : 0;
+    final breakRequired = drivenMinutes >= config.driveBeforeBreakMinutes;
+    final breakRemainingMinutes =
+        breakRequired ? config.breakDurationMinutes : 0;
 
     return HosLimits(
       remainingDriveMinutes: remainingDriveMinutes,
@@ -66,19 +45,19 @@ class HosCalculator {
   /// حساب حد القيادة فقط
   int calculateDriveLimit(double drivingHours) {
     final drivenMinutes = (drivingHours * 60).toInt();
-    return (maxDriveMinutes - drivenMinutes).clamp(0, maxDriveMinutes);
+    return (config.drivingLimitMinutes - drivenMinutes).clamp(0, config.drivingLimitMinutes);
   }
 
   /// حساب نافذة العمل فقط
   int calculateShiftLimit(DateTime shiftStartTime) {
     final elapsed = DateTime.now().difference(shiftStartTime).inMinutes;
-    return (maxShiftMinutes - elapsed).clamp(0, maxShiftMinutes);
+    return (config.shiftLimitMinutes - elapsed).clamp(0, config.shiftLimitMinutes);
   }
 
   /// حساب الأيام المتتالية
   int calculateConsecutiveDays(List<DateTime> workDays) {
     if (workDays.isEmpty) return 0;
-    
+
     workDays.sort();
     int consecutive = 1;
     for (int i = 1; i < workDays.length; i++) {
@@ -135,7 +114,8 @@ class HosCalculator {
       'local_time': now.toIso8601String(),
       'timezone': now.timeZoneName,
       'offset_hours': now.timeZoneOffset.inHours,
-      'is_dst': now.timeZoneOffset != const Duration(hours: 3), // مثال للمنطقة العربية
+      'is_dst': now.timeZoneOffset !=
+          const Duration(hours: 3), // مثال للمنطقة العربية
     };
   }
 }
@@ -156,5 +136,3 @@ class HosLimits {
     required this.breakRemainingMinutes,
   });
 }
-
-

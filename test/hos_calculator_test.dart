@@ -1,29 +1,41 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/engine/hos_calculator.dart';
+import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 
 void main() {
   group('HOS Calculator Tests', () {
     test('calculateDriveLimit should return remaining minutes', () {
-      final calculator = HosCalculator();
-      final remaining = calculator.calculateDriveLimit(10.0); // 10 hours driven
+      final config = HosConfiguration.usa70_8();
+      final calculator = HosCalculator(config);
+      final remaining = calculator.calculateAllLimits(
+        drivingHours: 10.0,
+        shiftStartTime: DateTime.now(),
+        cycleHours: 0.0,
+      ).remainingDriveMinutes;
       
       // 11 hours max - 10 hours = 1 hour = 60 minutes
       expect(remaining, 60);
     });
 
     test('calculateShiftLimit should return remaining minutes', () {
-      final calculator = HosCalculator();
+      final config = HosConfiguration.usa70_8();
+      final calculator = HosCalculator(config);
       final now = DateTime.now();
       final shiftStart = now.subtract(const Duration(hours: 10)); // 10 hours elapsed
       
-      final remaining = calculator.calculateShiftLimit(shiftStart);
+      final remaining = calculator.calculateAllLimits(
+        drivingHours: 0.0,
+        shiftStartTime: shiftStart,
+        cycleHours: 0.0,
+      ).remainingShiftMinutes;
       
       // 14 hours max - 10 hours = 4 hours = 240 minutes
       expect(remaining, 240);
     });
 
     test('calculateAllLimits should return correct HosLimits', () {
-      final calculator = HosCalculator();
+      final config = HosConfiguration.usa70_8();
+      final calculator = HosCalculator(config);
       final now = DateTime.now();
       final shiftStart = now.subtract(const Duration(hours: 10));
       
@@ -39,12 +51,18 @@ void main() {
       expect(limits.breakRequired, true);        // >= 8 hours
     });
 
-    test('setCycleRule should change max cycle hours', () {
-      HosCalculator.setCycleRule('USA 60/7');
-      expect(HosCalculator.activeMaxCycleHours, 60);
-
-      HosCalculator.setCycleRule('Canada 70/7');
-      expect(HosCalculator.activeMaxCycleHours, 70);
+    test('different config should change cycle limits', () {
+      final config60 = HosConfiguration.usa60_7();
+      final calculator = HosCalculator(config60);
+      
+      final limits = calculator.calculateAllLimits(
+        drivingHours: 0.0,
+        shiftStartTime: DateTime.now(),
+        cycleHours: 50.0,
+      );
+      
+      // 60 - 50 = 10h remaining
+      expect(limits.remainingCycleHours, 10.0);
     });
   });
 }

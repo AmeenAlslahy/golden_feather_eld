@@ -99,6 +99,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         userMetadata: userData,
       );
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw const ServerException(message: 'Invalid email or password', arabicMessage: 'البريد الإلكتروني أو كلمة المرور غير صحيحة', statusCode: 401);
+      }
       throw ServerException(message: 'Network error: ${e.message}', arabicMessage: 'خطأ في الشبكة');
     }
   }
@@ -131,6 +134,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}', arabicMessage: 'خطأ في الخادم', statusCode: response.statusCode);
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 400 || e.response?.statusCode == 403) {
+        throw ServerException(message: 'Registration disabled or invalid data', arabicMessage: 'إنشاء الحساب معطل أو البيانات غير صالحة', statusCode: e.response?.statusCode);
+      }
       throw ServerException(message: 'Network error: ${e.message}', arabicMessage: 'خطأ في الشبكة');
     }
   }
@@ -168,6 +174,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         userMetadata: userData,
       );
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403 || e.response?.statusCode == 404) {
+        throw const ServerException(message: 'Session expired or invalid', arabicMessage: 'الجلسة منتهية أو غير صالحة', statusCode: 401);
+      }
       // نرمي خطأ شبكة للتمييز بين عدم الاتصال وانتهاء الجلسة
       throw ServerException(message: 'Network error during validation: ${e.message}', arabicMessage: 'خطأ شبكي أثناء التحقق من الجلسة');
     }

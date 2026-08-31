@@ -1260,4 +1260,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calculatingLocation => 'Calculating location...';
+
+  @override
+  String get driveLimitTitle => 'DRIVE';
+
+  @override
+  String get driveLimitDesc => '11-Hour Driving Limit';
+
+  @override
+  String get shiftLimitTitle => 'SHIFT';
+
+  @override
+  String get shiftLimitDesc => '14-Hour On Duty Limit';
+
+  @override
+  String get breakLimitTitle => 'BREAK';
+
+  @override
+  String get breakLimitDesc => '30 Minute Rest Break';
+
+  @override
+  String get cycleLimitTitle => 'CYCLE';
+
+  @override
+  String get cycleLimitDesc => 'USA 70/8';
+
+  @override
+  String get hoursOfService => 'HOURS OF SERVICE';
 }

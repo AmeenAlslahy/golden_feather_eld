@@ -6,19 +6,13 @@ import '../providers/hos_provider.dart';
 import '../widgets/main_circular_timer.dart';
 import '../widgets/hos_timer_list.dart';
 import '../pages/change_status_page.dart';
-// import '../../../../core/engine/hos_state_machine.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/extensions/time_extensions.dart';
 import '../../../../core/theme/app_theme_provider.dart';
 import '../widgets/diagnostics_alert_card.dart';
 
 class HosPage extends ConsumerWidget {
   const HosPage({super.key});
-
-  String _formatMinutes(int totalMinutes) {
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,9 +33,9 @@ class HosPage extends ConsumerWidget {
       remainingMinutes = limits.remainingShiftMinutes;
     }
 
-    final timeString = _formatMinutes(remainingMinutes);
-    final progress =
-        remainingMinutes / (11 * 60); // نسبة التقدم بناء على 11 ساعة (أو 14)
+    final timeString = remainingMinutes.toHoursMinutes();
+    final maxMinutes = (hosState.currentStatus == DutyStatus.driving) ? (11 * 60) : (14 * 60);
+    final progress = remainingMinutes / maxMinutes;
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
@@ -114,11 +108,16 @@ class HosPage extends ConsumerWidget {
   }
 
   void _showStatusSelector(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (context) => const ChangeStatusPage(),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const Padding(
+        padding: EdgeInsets.only(top: kToolbarHeight),
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          child: ChangeStatusPage(),
+        ),
       ),
     );
   }

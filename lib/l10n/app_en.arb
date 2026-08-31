@@ -453,5 +453,14 @@
       }
     }
   },
-  "calculatingLocation": "Calculating location..."
+  "calculatingLocation": "Calculating location...",
+  "driveLimitTitle": "DRIVE",
+  "driveLimitDesc": "11-Hour Driving Limit",
+  "shiftLimitTitle": "SHIFT",
+  "shiftLimitDesc": "14-Hour On Duty Limit",
+  "breakLimitTitle": "BREAK",
+  "breakLimitDesc": "30 Minute Rest Break",
+  "cycleLimitTitle": "CYCLE",
+  "cycleLimitDesc": "USA 70/8",
+  "hoursOfService": "HOURS OF SERVICE"
 }

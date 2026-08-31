@@ -1,9 +1,14 @@
 import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/engine/hos_calculator.dart';
+import 'package:golden_feather_eld/core/extensions/time_extensions.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/engine/hos_state_machine.dart';
 
-class HosTimerList extends StatelessWidget {
+class HosTimerList extends ConsumerWidget {
   final HosStatusUpdate status;
 
   const HosTimerList({
@@ -11,15 +16,10 @@ class HosTimerList extends StatelessWidget {
     required this.status,
   });
 
-  String _formatMinutes(int totalMinutes) {
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final limits = status.limits;
+    final config = ref.watch(hosConfigurationProvider);
     final cycleMinutes = (limits.remainingCycleHours * 60).toInt();
 
     return Column(
@@ -46,29 +46,30 @@ class HosTimerList extends StatelessWidget {
           child: Column(
             children: [
               _buildRow(
-                title: 'DRIVE',
-                subtitle: '11-Hour Driving Limit',
-                time: _formatMinutes(limits.remainingDriveMinutes),
+                title: context.loc.driveLimitTitle,
+                subtitle: context.loc.driveLimitDesc,
+                time: limits.remainingDriveMinutes.toHoursMinutes(),
               ),
               const Divider(height: 1, color: AppColors.border),
               _buildRow(
-                title: 'SHIFT',
-                subtitle: '14-Hour On Duty Limit',
-                time: _formatMinutes(limits.remainingShiftMinutes),
+                title: context.loc.shiftLimitTitle,
+                subtitle: context.loc.shiftLimitDesc,
+                time: limits.remainingShiftMinutes.toHoursMinutes(),
               ),
               const Divider(height: 1, color: AppColors.border),
               _buildRow(
-                title: 'BREAK',
-                subtitle: '30 Minute Rest Break',
-                time: _formatMinutes(limits.breakRemainingMinutes > 0
-                    ? limits.breakRemainingMinutes
-                    : 8 * 60), // مؤقت لعرض وقت الاستراحة
+                title: context.loc.breakLimitTitle,
+                subtitle: context.loc.breakLimitDesc,
+                time: (limits.breakRemainingMinutes > 0
+                        ? limits.breakRemainingMinutes
+                        : config.driveBeforeBreakMinutes)
+                    .toHoursMinutes(), // مؤقت لعرض وقت الاستراحة
               ),
               const Divider(height: 1, color: AppColors.border),
               _buildRow(
-                title: 'CYCLE',
-                subtitle: 'USA 70/8',
-                time: _formatMinutes(cycleMinutes),
+                title: context.loc.cycleLimitTitle,
+                subtitle: context.loc.cycleLimitDesc,
+                time: cycleMinutes.toHoursMinutes(),
               ),
             ],
           ),

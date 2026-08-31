@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/app_color_tokens.dart';
 import 'dart:math';
 
 class MainCircularTimer extends StatelessWidget {
@@ -19,6 +20,9 @@ class MainCircularTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final successColor = theme.successColor;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -28,37 +32,37 @@ class MainCircularTimer extends StatelessWidget {
         child: CustomPaint(
           painter: _TimerPainter(
             progress: progress,
-            trackColor: AppColors.border,
-            progressColor: AppColors.successGreen,
+            trackColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+            progressColor: successColor,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
+              Text(
                 'Remaining',
                 style: TextStyle(
                   fontSize: 16,
-                  
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 timeString,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 56,
                   fontWeight: AppTypography.bold,
-                  color: AppColors.successGreen,
+                  color: successColor,
                   letterSpacing: -1,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 statusText.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: AppTypography.regular,
-                  
                   letterSpacing: 1,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),

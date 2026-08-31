@@ -453,5 +453,14 @@
       }
     }
   },
-  "calculatingLocation": "جاري حساب الموقع..."
+  "calculatingLocation": "جاري حساب الموقع...",
+  "driveLimitTitle": "القيادة",
+  "driveLimitDesc": "حد 11 ساعة للقيادة",
+  "shiftLimitTitle": "الوردية",
+  "shiftLimitDesc": "حد 14 ساعة للعمل",
+  "breakLimitTitle": "الاستراحة",
+  "breakLimitDesc": "استراحة 30 دقيقة",
+  "cycleLimitTitle": "الدورة",
+  "cycleLimitDesc": "USA 70/8",
+  "hoursOfService": "ساعات الخدمة"
 }

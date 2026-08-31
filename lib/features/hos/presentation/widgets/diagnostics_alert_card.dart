@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/engine/diagnostics/diagnostics_engine.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_color_tokens.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../providers/diagnostics_state_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -22,24 +22,39 @@ class DiagnosticsAlertCard extends ConsumerWidget {
         final latestAlert = state.activeMalfunctions.last;
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
+        final theme = Theme.of(context);
+
         Color getSeverityColor(MalfunctionSeverity severity) {
           switch (severity) {
             case MalfunctionSeverity.critical:
-              return AppColors.dangerRed;
+              return theme.dangerColor;
             case MalfunctionSeverity.major:
-              return AppColors.warningYellow;
+              return theme.warningColor;
             case MalfunctionSeverity.minor:
-              return AppColors.primaryBlue;
+              return theme.infoColor;
+          }
+        }
+        
+        Color getSeverityBackgroundColor(MalfunctionSeverity severity) {
+          switch (severity) {
+            case MalfunctionSeverity.critical:
+              return theme.errorLightBackground;
+            case MalfunctionSeverity.major:
+              return theme.warningLightBackground;
+            case MalfunctionSeverity.minor:
+              return theme.infoLightBackground;
           }
         }
 
         final color = getSeverityColor(latestAlert.severity);
+        final bgColor = getSeverityBackgroundColor(latestAlert.severity);
 
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: bgColor,
             border: Border.all(color: color.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(12),
           ),

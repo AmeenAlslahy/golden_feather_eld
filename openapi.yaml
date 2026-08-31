@@ -1,0 +1,3330 @@
+openapi: 3.0.1
+info:
+  title: Traccar ELD / HOS Engine REST API
+  description: واجهة برمجة التطبيقات الكاملة لنظام إدارة ساعات الخدمة (HOS) والسجلات
+    الإلكترونية (ELD) المولدة تلقائياً من OpenAPI Annotations في الـ Controllers
+  contact:
+    name: ELD Core Engineering Team
+    email: support@traccar.org
+  version: 1.0.0
+servers:
+- url: /api
+  description: Current Server (Traccar + ELD)
+tags:
+- name: 2. Compliance Engine | محرك الامتثال والقواعد
+  description: حساب الساعات المتبقية، تقييم السائقين، والتحقق من الامتثال لقواعد FMCSA
+- name: 13. System Configuration | الإعدادات العامة والتنظيمية
+  description: إدارة إعدادات HOS والحدود الاستثنائية وتأطير الأنظمة التنظيمية
+- name: 10. Real-Time Dashboard | لوحة المتابعة المباشرة
+  description: ملخص مباشر للأسطول وبث التحديثات اللحظية عبر Server-Sent Events (SSE)
+- name: 8. Diagnostics & Malfunctions | الأعطال والتشخيص
+  description: مراقبة الأعطال التشخيصية في أجهزة ELD وسجلات الحالة وفق FMCSA §395.22
+- name: 5. Documents & Certification | المستندات والوثائق
+  description: إدارة مستندات الامتثال المرتبطة بنشاط السائق (فواتير، تصاريح، شهادات...)
+- name: 14. System Health & Diagnostics | صحة وجاهزية النظام
+  description: فحص سلامة وجاهزية مكونات نظام ELD (قاعدة البيانات، التخزين، المجدول)
+- name: 6. Roadside Inspection | التفتيش الميداني الرقابي
+  description: إدارة جلسات التفتيش الرقابي وتوليد تقارير التفتيش ورموز QR
+- name: 4. ELD Reports | تقارير السجلات الإلكترونية
+  description: توليد وتصدير تقارير ELD اليومية والأسبوعية والتنفيذية بصيغ PDF و CSV
+    و HTML و XML
+- name: 11. Driver Rules | إدارة لوائح السائقين
+  description: تخصيص وإدارة قواعد ولوائح الامتثال والاستثناءات لكل سائق
+- name: 12. Driver Sessions | إدارة جلسات القيادة
+  description: إدارة جلسات السائقين والسائق المساعد (Co-Driver) وتبادل الأدوار
+- name: 7. Signatures & Certificates | التواقيع والمصادقة
+  description: إدارة التواقيع الإلكترونية المعتمدة للسجلات اليومية (RODS)
+- name: 9. Fleet Statistics & Scores | إحصائيات ومؤشرات الأسطول
+  description: إحصائيات الأسطول، نسب الامتثال، وحساب درجات الامتثال بالأوزان النقطية
+    مع دعم الفلاتر
+- name: 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+  description: تسجيل وتحديث حالات السائق اللحظية وقراءات العداد والموقع وساعات المحرك
+- name: 3. Violations | إدارة المخالفات
+  description: سجل المخالفات المكتشفة وتفاصيلها وإدارة دورة حياتها والاعتراض والمعالجة
+paths:
+  /eld/compliance/{driverId}/evaluate:
+    get:
+      tags:
+      - 2. Compliance Engine | محرك الامتثال والقواعد
+      summary: تقييم امتثال السائق (Evaluate Driver Compliance)
+      description: "تقييم سجلات السائق وحساب أي مخالفات نشطة وتعبئة كائنات العلاقا\
+        ت المترابطة الثلاث (Driver, Device, Period)."
+      operationId: evaluateCompliance
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: تم التقييم بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/compliance/{driverId}/remaining:
+    get:
+      tags:
+      - 2. Compliance Engine | محرك الامتثال والقواعد
+      summary: الساعات المتبقية ومؤشر الامتثال للسائق (Get Driver Remaining Hours
+        & Score)
+      description: استرجاع الساعات المتبقية للقيادة والعمل والدورة الأسبوعية ومؤشر
+        الامتثال وتعبئة علاقة السائق غير الفارغة عبر المابر.
+      operationId: getRemainingHours
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: تم جلب البيانات بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceSummaryResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/config:
+    get:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: جلب إعدادات ELD الحالية (Get ELD Configuration)
+      description: استرجاع إعدادات وقواعد ساعات الخدمة الحالية.
+      operationId: getConfiguration
+      responses:
+        "200":
+          description: تم جلب الإعدادات بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+    put:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: تحديث قواعد وإعدادات HOS (Update HOS Config — Admin Only)
+      description: تحديث حدود ساعات القيادة والعمل والاستراحة لجميع السائقين.
+      operationId: updateConfiguration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateHosConfigRequest"
+      responses:
+        "200":
+          description: تم تحديث الإعدادات بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ELDConfiguration"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/config/db-settings:
+    get:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: استرجاع إعدادات قاعدة البيانات (Get DB Settings)
+      description: جلب كافة مفاهيم وإعدادات النظام المسجلة ديناميكياً في جدول eld_settings.
+      operationId: getDatabaseSettings
+      responses:
+        "200":
+          description: تم جلب الإعدادات بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+    put:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: تحديث قيمة إعداد في قاعدة البيانات (Update DB Setting)
+      description: تحديث قيمة إعداد ديناميكي في eld_settings وإعادة تحميل التكوين
+        الفوري.
+      operationId: updateDatabaseSetting
+      parameters:
+      - name: key
+        in: query
+        description: مفتاح الإعداد
+        required: true
+        schema:
+          type: string
+        example: hos.maxDrivingHoursPerDay
+      - name: value
+        in: query
+        description: القيمة الجديدة
+        required: true
+        schema:
+          type: string
+        example: 11.0
+      - name: category
+        in: query
+        description: الفئة
+        schema:
+          type: string
+        example: HOS
+      - name: description
+        in: query
+        description: الوصف
+        schema:
+          type: string
+      responses:
+        "200":
+          description: تم تحديث الإعداد بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/config/regulations:
+    get:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: قائمة الأنظمة التنظيمية المدعومة (List Supported Regulation Profiles)
+      description: استرجاع قائمة الأنظمة المتاحة المسجلة في قاعدة البيانات.
+      operationId: getSupportedRegulations
+      responses:
+        "200":
+          description: قائمة الأنظمة التنظيمية
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/config/regulations/active:
+    put:
+      tags:
+      - 13. System Configuration | الإعدادات العامة والتنظيمية
+      summary: تنسيق النظام التنظيمي المفعّل (Switch Active Regulation Profile — Admin
+        Only)
+      description: تغيير النظام التنظيمي المفعّل عالمياً في المحرك وبثه بقاعدة البيانات
+        بنقرة واحدة.
+      operationId: switchActiveRegulation
+      parameters:
+      - name: profileId
+        in: query
+        description: "معرف النظام المراد تفعيله: FMCSA_US | EU_2006 | CUSTOM"
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: تم تبديل النظام التنظيمي بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/dashboard/summary:
+    get:
+      tags:
+      - 10. Real-Time Dashboard | لوحة المتابعة المباشرة
+      summary: ملخص مؤشرات الأسطول المباشر (Get Live Fleet Summary)
+      description: استرجاع إحصائيات الأسطول التراكمية الحية للسائقين والمركبات المصرح
+        بها.
+      operationId: getFleetSummary
+      parameters:
+      - name: groupId
+        in: query
+        description: معرف المجموعة للتصفية (اختياري)
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: إحصائيات الأسطول المباشرة
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/dashboard/stream:
+    get:
+      tags:
+      - 10. Real-Time Dashboard | لوحة المتابعة المباشرة
+      summary: بث تحديثات الأسطول اللحظية (Stream Live Dashboard Events - SSE)
+      description: قناة بث لحظي مستمر لأحداث وتغييرات حالات السائقين عبر Server-Sent
+        Events.
+      operationId: streamDashboardUpdates
+      responses:
+        "200":
+          description: بث أحداث SSE المباشرة
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/diagnostics/{id}/clear:
+    put:
+      tags:
+      - 8. Diagnostics & Malfunctions | الأعطال والتشخيص
+      summary: إغلاق وتصحيح العطل التشخيصي (Clear Diagnostic Malfunction — Admin Only)
+      description: مسح وإغلاق كود العطل التشخيصي وفق متطلبات الصيانة والمراقبة FMCSA
+        §395.22.
+      operationId: clearDiagnostic
+      parameters:
+      - name: id
+        in: path
+        description: معرف العطل التشخيصي
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 7
+      responses:
+        "200":
+          description: تمت معالجة وإغلاق العطل بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/diagnostics/{driverId}:
+    get:
+      tags:
+      - 8. Diagnostics & Malfunctions | الأعطال والتشخيص
+      summary: التشخيصات الفنية للسائق (Get Driver ELD Diagnostics)
+      description: استرجاع قائمة الأعطال التشخيصية المسجّلة للسائق مع تعبئة علاقتي
+        السائق والجهاز بالكامل.
+      operationId: getDriverDiagnostics
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: severity
+        in: query
+        description: "التصفية حسب درجة الخطورة: CRITICAL | WARNING | INFO"
+        schema:
+          type: string
+      responses:
+        "200":
+          description: قائمة التشخيصات الممتلئة بالعلاقات
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiagnosticResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/diagnostics/fleet:
+    get:
+      tags:
+      - 8. Diagnostics & Malfunctions | الأعطال والتشخيص
+      summary: ملخص الأعطال التشخيصية للأسطول (Fleet Diagnostics Summary)
+      description: إحصائية شاملة للأعطال النشطة على مستوى الأسطول شاملة كائنات العلاقات
+        المترابطة بالكامل.
+      operationId: getFleetDiagnostics
+      responses:
+        "200":
+          description: ملخص تشخيصات الأسطول المشتمل على العلاقات
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/documents/{id}:
+    delete:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: حذف مستند امتثالي (Delete ELD Document)
+      description: حذف مستند — مسموح لصاحب المستند أو المشرف فقط.
+      operationId: deleteDocument
+      parameters:
+      - name: id
+        in: path
+        description: معرف المستند
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 15
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "204":
+          description: تم الحذف بنجاح
+        "404":
+          description: المستند غير موجود
+      security:
+      - BasicAuth: []
+  /eld/documents/download/{docId}:
+    get:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: تنزيل ملف وثيقة ELD (Download Document File)
+      description: تنزيل الملف المُرفق بوثيقة ELD محددة — متاح لصاحب الوثيقة أو المشرف
+        فقط.
+      operationId: downloadDocumentFile
+      parameters:
+      - name: docId
+        in: path
+        description: معرف الوثيقة
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      responses:
+        "200":
+          description: الملف جاهز للتنزيل
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: الوثيقة أو الملف غير موجود
+      security:
+      - BasicAuth: []
+  /eld/documents/{driverId}:
+    get:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: قائمة المستندات الامتثالية للسائق (Get Driver ELD Documents)
+      description: استرجاع قائمة جميع المستندات المرتبطة بالسائق مع دعم التصفية حسب
+        النوع وعلاقات السائق والفترة والموثق المكاملة عبر المابر.
+      operationId: getDocuments
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: type
+        in: query
+        description: نوع المستند للتصفية (اختياري)
+        schema:
+          type: string
+        example: BILL_OF_LADING
+      responses:
+        "200":
+          description: تم استرجاع قائمة المستندات
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+    post:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: رفع مستند امتثالي جديد (Upload ELD Document)
+      description: رفع مستند جديد مرتبط بنشاط السائق الامتثالي وتعبئة علاقة السائق
+        عبر المابر.
+      operationId: uploadDocument
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentRequest"
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم رفع المستند بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        "415":
+          description: نوع الملف غير مدعوم
+      security:
+      - BasicAuth: []
+  /eld/documents/{driverId}/upload-file:
+    post:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: رفع ملف وثيقة ELD (Multipart File Upload)
+      description: |-
+        رفع ملف وثيقة امتثالية (PDF/JPG/PNG/DOC) بصيغة multipart/form-data وحفظه على الخادم.
+
+        **الحد الأقصى للحجم:** 10 MB
+        **الأنواع المسموحة:** PDF, JPG, PNG, DOC, DOCX
+        **متغير البيئة:** ELD_STORAGE_PATH لتخصيص مسار التخزين
+      operationId: uploadDocumentFile
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      - name: Content-Length
+        in: header
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: نوع الملف غير مدعوم أو حجمه يتجاوز الحد
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم رفع الملف وحفظ بيانات الوثيقة بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        "413":
+          description: حجم الملف أكبر من 10 MB
+      security:
+      - BasicAuth: []
+  /eld/documents/{id}/verify:
+    put:
+      tags:
+      - 5. Documents & Certification | المستندات والوثائق
+      summary: توثيق رسمي لمستند (Verify Document — Admin Only)
+      description: يُغيّر حالة المستند إلى VERIFIED وتعبئة كائنات العلاقات المترابطة
+        — متاح للمشرفين فقط.
+      operationId: verifyDocument
+      parameters:
+      - name: id
+        in: path
+        description: معرف المستند
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 15
+      responses:
+        "200":
+          description: تم التوثيق بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: المستند غير موجود
+      security:
+      - BasicAuth: []
+  /eld/health/detailed:
+    get:
+      tags:
+      - 14. System Health & Diagnostics | صحة وجاهزية النظام
+      summary: فحص السلامة الشامل للنظام (Detailed System Health Check)
+      description: فحص تفصيلي للاتصال بقاعدة البيانات، مسار تخزين الملفات، إحصائيات
+        الجداول ومؤشرات الذاكرة.
+      operationId: checkDetailedHealth
+      responses:
+        "200":
+          description: تقرير فحص السلامة المفصل
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/health:
+    get:
+      tags:
+      - 14. System Health & Diagnostics | صحة وجاهزية النظام
+      summary: فحص الحالة السريع (Liveness Check)
+      description: يعيد كود 200 OK لتأكيد استجابة خدمة ELD Engine.
+      operationId: checkHealth
+      responses:
+        "200":
+          description: الخدمة تعمل وجاهزة
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/complete:
+    put:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: إكمال جلسة التفتيش وتسجيل النتيجة (Complete Inspection)
+      description: يُغلق جلسة التفتيش بتسجيل النتيجة والملاحظات وتعبئة العلاقات عبر
+        المابر.
+      operationId: completeInspection
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteInspectionRequest"
+      responses:
+        "200":
+          description: تم إكمال التفتيش بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionDetailsResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/transfer/ble-packets:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: استرجاع حزم BLE GATT للبث الميداني (F-15.1 BLE Packets)
+      description: استرجاع حزم البيانات المقسمة والمحسوبة الـ Checksum للبث عبر Bluetooth
+        LE.
+      operationId: getBlePackets
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: قائمة حزم BLE GATT
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/report:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: تقرير التفتيش الشامل (F-16 Comprehensive Inspection Report)
+      description: استرجاع تقرير التفتيش الشامل متضمناً النتيجة الرسمية، تحليل 8 أيام،
+        المخالفات، التشخيصات، وروابط النقل.
+      operationId: getComprehensiveReport
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: تقرير التفتيش الشامل JSON
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/report/html:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: استعراض تقرير التفتيش HTML للطباعة (F-16 Printable HTML Report)
+      description: توليد صفحة HTML احترافية لتقرير التفتيش مدمج بها رمز QR وأزرار
+        التصدير وجاهزة للطباعة.
+      operationId: getComprehensiveReportHtml
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: تقرير HTML كامل جاهز للعرض
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/driver/{driverId}:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: قائمة جلسات التفتيش للسائق (Get Driver Inspections)
+      description: استرجاع سجل كامل لجلسات التفتيش للسائق ممتلئة بالعلاقات عبر المابر.
+      operationId: getDriverInspections
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: قائمة جلسات التفتيش
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspectionDetailsResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/data-file:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: ملف بيانات التفتيش المعياري FMCSA XSD (F-15 Data File)
+      description: يُنشئ ملف XML معياري متوافق مع FMCSA eRODS XSD Schema يغطي 8 أيام
+        من سجلات ELD وتحليل HOS والتشخيصات.
+      operationId: getFmcsaDataFile
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: ملف بيانات التفتيش المعياري XML
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: تفاصيل جلسة التفتيش (Get Inspection Details)
+      description: استرجاع تفاصيل كاملة لجلسة تفتيش بمعرفها مع تعبئة العلاقات عبر
+        المابر.
+      operationId: getInspection
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: تم استرجاع التفاصيل بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionDetailsResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/qr:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: توليد رمز QR لجلسة التفتيش (Generate QR Code)
+      description: يُولِّد رمز QR يمكن للمفتش مسحه لعرض بيانات ELD فورياً. يُعيد صورة
+        PNG.
+      operationId: getQrCode
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: رمز QR كصورة PNG
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: جلسة التفتيش غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/transfer/usb:
+    get:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: تنزيل ملف USB الميداني (F-15.1 USB Payload Download)
+      description: تنزيل حزمة بيانات ELD القياسية الخام الجاهزة لوحدات تخزين USB.
+      operationId: getUsbPayload
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      responses:
+        "200":
+          description: ملف USB الخام المعياري
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/inspections/{id}/transfer:
+    post:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: بدء نقل بيانات التفتيش الميداني (F-15.1 Initiate Data Transfer)
+      description: "بدء جلسة نقل بيانات التفتيش واختيار البروتوكول (USB, BLE, QR,\
+        \ Email, WebServices) وتجهيز الحزم."
+      operationId: initiateDataTransfer
+      parameters:
+      - name: id
+        in: path
+        description: معرف جلسة التفتيش
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InitiateDataTransferRequest"
+      responses:
+        "200":
+          description: تم تجهيز جلسة النقل والحزم بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/inspections:
+    post:
+      tags:
+      - 6. Roadside Inspection | التفتيش الميداني الرقابي
+      summary: بدء جلسة تفتيش رقابية جديدة (Start Inspection Session)
+      description: يُنشئ سجل جلسة تفتيش جديدة مع تسجيل وقت البداية والموقع وتعبئة
+        العلاقات عبر المابر.
+      operationId: startInspection
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartInspectionRequest"
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم إنشاء جلسة التفتيش بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionDetailsResponse"
+      security:
+      - BasicAuth: []
+  /eld/reports/generate:
+    post:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: توليد تقرير ديناميكي حسب الطلب (Generate Report By Request)
+      description: "توليد تقرير مخصص بصيغة صريحة (PDF, CSV, HTML, JSON, XML) وتحدي\
+        د التاريخ المالي واللغة وتعبئة كائنات العلاقات إن وجدت."
+      operationId: generateReportByRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EldReportRequest"
+      responses:
+        "200":
+          description: تم توليد التقرير بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EldReportResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/csv:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: تقرير CSV للسائق (Export Driver CSV Report)
+      description: توليد وتنزيل تقرير ELD بصيغة CSV وفق FMCSA §395.
+      operationId: getCsvReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: ملف CSV
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/daily:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: التقرير اليومي للسائق (Get Driver Daily Report)
+      description: استرجاع ملخص السجل اليومي والساعات والحالات والمخالفات اليومية
+        للسائق مع كائنات العلاقات الكاملة.
+      operationId: getDailyReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: date
+        in: query
+        description: "تاريخ التقرير بصيغة YYYY-MM-DD (افتراضي: اليوم)"
+        schema:
+          type: string
+        example: 2026-08-21
+      responses:
+        "200":
+          description: التقرير اليومي للسائق
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailySummaryDTO"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/executive:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: التقرير التنفيذي للإدارة (Get Executive Summary Report)
+      description: توليد تقرير تنفيذي يجمع بين الإحصائيات اليومية والأسبوعية ومؤشرات
+        الامتثال.
+      operationId: getExecutiveReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: date
+        in: query
+        description: "التاريخ بصيغة YYYY-MM-DD (افتراضي: اليوم)"
+        schema:
+          type: string
+        example: 2026-08-21
+      responses:
+        "200":
+          description: التقرير التنفيذي الإداري
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/html:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: تقرير HTML للسائق (Export Driver HTML Report)
+      description: توليد وتصفح تقرير ELD التفاعلي بصيغة HTML المنسقة ببطاقات ومؤشرات
+        الامتثال.
+      operationId: getHtmlReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: date
+        in: query
+        description: "تاريخ التقرير بصيغة YYYY-MM-DD (افتراضي: اليوم)"
+        schema:
+          type: string
+        example: 2026-08-21
+      responses:
+        "200":
+          description: تقرير HTML ممتلئ بالبيانات والعلاقات
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/pdf:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: تقرير PDF للسائق (Export Driver PDF Report)
+      description: توليد وتنزيل تقرير ELD رسمي بصيغة PDF.
+      operationId: getPdfReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: ملف PDF
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/weekly:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: التقرير الأسبوعي للسائق (Get Driver Weekly Report)
+      description: استرجاع التقرير الأسبوعي الشامل لدورة العمل (60-Hour / 7-Day أو
+        70-Hour / 8-Day) مع كائنات العلاقات الكاملة.
+      operationId: getWeeklyReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: date
+        in: query
+        description: "تاريخ نهاية الأسبوع بصيغة YYYY-MM-DD (افتراضي: اليوم)"
+        schema:
+          type: string
+        example: 2026-08-21
+      responses:
+        "200":
+          description: التقرير الأسبوعي للسائق
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklySummaryDTO"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/reports/{driverId}/xml:
+    get:
+      tags:
+      - 4. ELD Reports | تقارير السجلات الإلكترونية
+      summary: تقرير XML للسائق (Export Driver XML Report)
+      description: توليد وتنزيل تقرير ELD رسمي بصيغة XML المعتمدة لدى FMCSA لتبادل
+        البيانات.
+      operationId: getXmlReport
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: date
+        in: query
+        description: "تاريخ التقرير بصيغة YYYY-MM-DD (افتراضي: اليوم)"
+        schema:
+          type: string
+        example: 2026-08-25
+      - name: lang
+        in: query
+        description: "لغة التقرير: ar أو en (افتراضي: ar)"
+        schema:
+          type: string
+        example: ar
+      responses:
+        "200":
+          description: ملف XML
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/rules/available:
+    get:
+      tags:
+      - 11. Driver Rules | إدارة لوائح السائقين
+      summary: استرجاع القواعد المتوفرة (Get Available Rules)
+      description: استرجاع قائمة بقواعد الدورة وأنواع الحمولات المتاحة للاختيار في
+        النظام.
+      operationId: getAvailableRules
+      responses:
+        "200":
+          description: القواعد المتوفرة
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/rules/{driverId}:
+    get:
+      tags:
+      - 11. Driver Rules | إدارة لوائح السائقين
+      summary: استرجاع قواعد السائق (Get Driver Rules)
+      description: استرجاع لائحة وقواعد الامتثال المخصصة للسائق المحدد.
+      operationId: getRules
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: قواعد ولائحة السائق
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverRuleModel"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/rules/driver:
+    put:
+      tags:
+      - 11. Driver Rules | إدارة لوائح السائقين
+      summary: تحديث القواعد من قِبل السائق (Update Rules by Driver)
+      description: تحديث قواعد الامتثال المسموح للسائق تعديلها وفق قيود النظام.
+      operationId: updateByDriver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverRuleModel"
+      responses:
+        "200":
+          description: تم تحديث القواعد بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/sessions/{driverId}:
+    get:
+      tags:
+      - 12. Driver Sessions | إدارة جلسات القيادة
+      summary: استرجاع الجلسة النشطة للسائق (Get Active Driver Session)
+      description: استرجاع تفاصيل جلسة القيادة الحالية للسائق بما فيها السائق المساعد
+        والمركبة المرتبطة.
+      operationId: getSession
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: بيانات الجلسة النشطة
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverSessionModel"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/sessions/link:
+    post:
+      tags:
+      - 12. Driver Sessions | إدارة جلسات القيادة
+      summary: ربط سائق مساعد (Link Co-Driver)
+      description: ربط سائق مساعد بالمركبة وجلسة السائق الرئيسي لقيادة الفريق (Team
+        Driving).
+      operationId: linkCoDriver
+      parameters:
+      - name: primaryId
+        in: query
+        description: معرف السائق الرئيسي
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: coDriverId
+        in: query
+        description: معرف السائق المساعد
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 102
+      - name: vehicleId
+        in: query
+        description: معرف المركبة / الجهاز
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1001
+      responses:
+        "200":
+          description: تم ربط السائق المساعد بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/sessions/telemetry:
+    post:
+      tags:
+      - 12. Driver Sessions | إدارة جلسات القيادة
+      summary: معالجة قراءات البلوتوث وكمبيوتر المحرك (Process In-Cab ECM Telemetry)
+      description: بث قراءات كمبيوتر المحرك الحظية عبر البلوتوث وتفعيل الانتقال الآلي
+        لحالة القيادة (Auto-Driving) بمجرد تجاوز السرعة 8 كم/س (5 mph) بدون تدخل السائق
+        وفق اشتراطات FMCSA.
+      operationId: processTelemetry
+      requestBody:
+        description: قراءات كمبيوتر المحرك الحظية عبر البلوتوث
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EcmTelemetryRequest"
+        required: true
+      responses:
+        "200":
+          description: تمت معالجة القراءات الحظية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/sessions/start:
+    post:
+      tags:
+      - 12. Driver Sessions | إدارة جلسات القيادة
+      summary: بدء جلسة قيادة بعد الاقتران بالبلوتوث (Start Bluetooth ELD Session)
+      description: بدء جلسة قيادة للسائق بعد نجاح الاقتران بجهاز ELD عبر البلوتوث
+        وتوثيق قراءات العداد وساعات المحرك آلياً.
+      operationId: startSession
+      requestBody:
+        description: عنوان البلوتوث لجهاز ELD المقترن (MAC Address)
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartDriverSessionRequest"
+        required: true
+      responses:
+        "200":
+          description: تم بدء الجلسة بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverSessionModel"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/sessions/switch:
+    post:
+      tags:
+      - 12. Driver Sessions | إدارة جلسات القيادة
+      summary: تبديل دور السائق المساعد (Switch Co-Driver Role)
+      description: تبديل السائق النشط خلف المقود مع السائق المساعد أثناء التوقف وفق
+        اشتراطات FMCSA.
+      operationId: switchRole
+      parameters:
+      - name: driverId
+        in: query
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: currentSpeed
+        in: query
+        description: السرعة الحالية للمركبة (يجب أن تكون 0 للتبديل)
+        schema:
+          type: number
+          format: double
+        example: 0.0
+      responses:
+        "200":
+          description: تم التبديل بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/signatures/{id}/certificate:
+    get:
+      tags:
+      - 7. Signatures & Certificates | التواقيع والمصادقة
+      summary: شهادة التوقيع الرسمية (Get Signature Certificate)
+      description: يُولِّد شهادة رسمية للتوقيع الإلكتروني تُثبت صحته وتاريخه وصلاحيته
+        القانونية مع تعبئة علاقة السائق.
+      operationId: getCertificate
+      parameters:
+      - name: id
+        in: path
+        description: معرف التوقيع
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 33
+      responses:
+        "200":
+          description: بيانات شهادة التوقيع
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignatureCertificateResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: التوقيع غير موجود
+      security:
+      - BasicAuth: []
+  /eld/signatures/{driverId}:
+    get:
+      tags:
+      - 7. Signatures & Certificates | التواقيع والمصادقة
+      summary: قائمة التواقيع الإلكترونية للسائق (Get Driver Signatures)
+      description: استرجاع قائمة جميع التواقيع الإلكترونية المحفوظة للسائق ممتلئة
+        بعلاقة السائق المكاملة عبر المابر.
+      operationId: getSignatures
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: قائمة التواقيع ممتلئة بالعلاقات
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SignatureResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+    post:
+      tags:
+      - 7. Signatures & Certificates | التواقيع والمصادقة
+      summary: حفظ توقيع إلكتروني (Save Electronic Signature)
+      description: يُحفظ توقيع السائق الإلكتروني على السجل اليومي مع الطابع الزمني
+        والمصادقة وتعبئة علاقة السائق.
+      operationId: saveSignature
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveSignatureRequest"
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم حفظ التوقيع بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignatureCertificateResponse"
+      security:
+      - BasicAuth: []
+  /eld/signatures/{driverId}/upload-file:
+    post:
+      tags:
+      - 7. Signatures & Certificates | التواقيع والمصادقة
+      summary: رفع ملف توقيع السائق (Upload Driver Signature File)
+      description: رفع صورة توقيع أو ملف SVG لاعتماده كسجل للسائق حصراً.
+      operationId: uploadSignatureFile
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم حفظ التوقيع بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignatureCertificateResponse"
+      security:
+      - BasicAuth: []
+  /eld/stats/driver/{driverId}:
+    get:
+      tags:
+      - 9. Fleet Statistics & Scores | إحصائيات ومؤشرات الأسطول
+      summary: درجة امتثال السائق بالأوزان الجزائية (Get Driver Compliance Score)
+      description: "حساب درجة امتثال السائق الفردية وفق الأوزان الجزائية المعتمدة\
+        \ (الملحق د) وتصنيف حالته (COMPLIANT, NEEDS_REVIEW, NON_COMPLIANT)."
+      operationId: getDriverComplianceScore
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: تم حساب درجة الامتثال بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: السائق غير موجود
+      security:
+      - BasicAuth: []
+  /eld/stats:
+    get:
+      tags:
+      - 9. Fleet Statistics & Scores | إحصائيات ومؤشرات الأسطول
+      summary: إحصائيات الأسطول العامة (Get Fleet Overview Stats)
+      description: حساب واسترجاع الإحصائيات العامة المجمعة للأسطول ومعدل الامتثال
+        اللحظي وإجمالي المخالفات والأعطال.
+      operationId: getFleetStats
+      responses:
+        "200":
+          description: تم استرجاع الإحصائيات بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/status/edits/{editId}/approve:
+    put:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: الموافقة على طلب تعديل السجل
+      operationId: approveEdit
+      parameters:
+      - name: editId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: reviewerId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/status:
+    get:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: استرجاع وتصفية حالات الخدمة لجميع السائقين (Get All Driver Duty Statuses
+        — Fleet Manager Only)
+      description: استرجاع قائمة سجلات حالات الخدمة مع الفلترة حسب السائق ونوع الحالة
+        والنطاق الزمني والصفحات (خاص بمدير الأسطول والنظام فقط).
+      operationId: getAllStatuses
+      parameters:
+      - name: driverId
+        in: query
+        description: معرف السائق للتصفية (اختياري)
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: status
+        in: query
+        description: "نوع حالة الخدمة للتصفية: OFF_DUTY | SLEEPER_BERTH | DRIVING\
+          \ | ON_DUTY_NOT_DRIVING (اختياري)"
+        schema:
+          type: string
+        example: DRIVING
+      - name: from
+        in: query
+        description: بداية النطاق الزمني بصيغة ISO (اختياري)
+        schema:
+          type: string
+        example: 2026-08-01T00:00:00
+      - name: to
+        in: query
+        description: نهاية النطاق الزمني بصيغة ISO (اختياري)
+        schema:
+          type: string
+        example: 2026-08-28T23:59:59
+      - name: page
+        in: query
+        description: رقم الصفحة (0-based)
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 0
+      - name: size
+        in: query
+        description: حجم الصفحة (بين 1 و 200)
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 50
+      responses:
+        "200":
+          description: تم استرجاع السجلات بنجاح
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DutyStatusResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول
+        "403":
+          description: محظور — يتطلب صلاحية مدير الأسطول/النظام
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+    post:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: تحديث حالة الخدمة يدوياً للسائق (Create Duty Status - F-01)
+      description: يُسمح للسائق بتغيير حالته يدوياً مع تسجيل التوقيت والموقع في سجل
+        الحالات.
+      operationId: updateStatus
+      requestBody:
+        description: بيانات طلب الحالة الجديدة
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDutyStatusRequest"
+        required: true
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "201":
+          description: تم تحديث الحالة بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DutyStatusResponse"
+      security:
+      - BasicAuth: []
+  /eld/status/edits:
+    get:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: جلب قائمة طلبات التعديل المعلقة لسائق
+      operationId: getPendingEdits
+      parameters:
+      - name: driverId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/status/{driverId}:
+    get:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: جلب آخر حالة خدمة مسجلة للسائق (Latest Driver Duty Status)
+      description: استرجاع الحالة اللحظية للخدمة مع الموقع الجغرافي وساعات المحرك
+        وعلاقات السائق والجهاز المكاملة عبر المابر
+      operationId: getStatus
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق (User ID)
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: تم استرجاع الحالة بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DutyStatusResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: لم يتم العثور على سجلات لهذا السائق
+      security:
+      - BasicAuth: []
+  /eld/status/{driverId}/history:
+    get:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: سجل الفترات وحالات الخدمة السابقة للسائق (Duty Status History)
+      description: استرجاع قائمة الفترات والحالات السابقة للسائق خلال نطاق زمني مع
+        العلاقات المكاملة فورياً عبر المابر.
+      operationId: getStatusHistory
+      parameters:
+      - name: driverId
+        in: path
+        description: معرف السائق
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      responses:
+        "200":
+          description: تم استرجاع السجل بنجاح
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DutyStatusResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/status/edits/{editId}/reject:
+    put:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: رفض طلب تعديل السجل
+      operationId: rejectEdit
+      parameters:
+      - name: editId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: reviewerId
+        in: query
+        schema:
+          type: integer
+          format: int64
+      - name: reason
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: تمت العملية بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/status/{id}:
+    put:
+      tags:
+      - 1. Duty Status (HOS) | إدارة ساعات وحالات الخدمة
+      summary: تعديل سجل حالة خدمة يدوياً (Update Duty Status Record - Immutable Edit)
+      description: تقديم طلب تعديل وقت أو سبب حالة خدمة سابقة وفق معايير FMCSA §395.8
+        (Immutable).
+      operationId: updateStatusRecord
+      parameters:
+      - name: id
+        in: path
+        description: معرف سجل الحالة الأصلي
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDutyStatusRequest"
+      responses:
+        "200":
+          description: تم رفع طلب التعديل بنجاح
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/openapi.yaml:
+    get:
+      operationId: getEldOpenApiYaml
+      responses:
+        default:
+          description: default response
+          content:
+            application/yaml; charset=UTF-8: {}
+  /swagger:
+    get:
+      operationId: getSwaggerUi
+      responses:
+        default:
+          description: default response
+          content:
+            text/html: {}
+  /openapi.yaml:
+    get:
+      operationId: getTraccarOpenApiYaml
+      responses:
+        default:
+          description: default response
+          content:
+            application/yaml; charset=UTF-8: {}
+  /eld/violations/{id}/dispute:
+    put:
+      tags:
+      - 3. Violations | إدارة المخالفات
+      summary: اعتراض على مخالفة (Dispute Violation)
+      description: تقديم اعتراض وتبرير على مخالفة مسجلة لتغيير حالتها إلى DISPUTED
+        للمراجعة.
+      operationId: disputeViolation
+      parameters:
+      - name: id
+        in: path
+        description: معرف المخالفة
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      - name: reason
+        in: query
+        description: سبب الاعتراض والتبرير
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: تم تسجيل الاعتراض بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViolationResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: المخالفة غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/violations/{id}:
+    get:
+      tags:
+      - 3. Violations | إدارة المخالفات
+      summary: تفاصيل مخالفة محددة (Get Violation Details)
+      description: استرجاع تفاصيل مخالفة واحدة بمعرفها وتعبئة كافة علاقاتها.
+      operationId: getViolationById
+      parameters:
+      - name: id
+        in: path
+        description: معرف المخالفة
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      responses:
+        "200":
+          description: تم استرجاع المخالفة بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViolationResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: المخالفة غير موجودة
+      security:
+      - BasicAuth: []
+  /eld/violations:
+    get:
+      tags:
+      - 3. Violations | إدارة المخالفات
+      summary: استرجاع قائمة مخالفات ساعات الخدمة (Get HOS Violations)
+      description: جلب سجل مخالفات القيادة والراحة المكتشفة تلقائياً وتعبئة العلاقات
+        المكاملة عبر المابر مع دعم التصفية والصفحات (page and size).
+      operationId: getViolations
+      parameters:
+      - name: driverId
+        in: query
+        description: معرف السائق للتصفية (اختياري)
+        schema:
+          type: integer
+          format: int64
+        example: 101
+      - name: severity
+        in: query
+        description: "درجة الخطورة للتصفية: CRITICAL | WARNING | INFO (اختياري)"
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: "حالة المخالفة للتصفية: ACTIVE | RESOLVED | DISPUTED (اختياري\
+          )"
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: رقم الصفحة (0-based)
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 0
+      - name: size
+        in: query
+        description: "حجم الصفحة (افتراضي: 50، أقصى: 200)"
+        required: true
+        schema:
+          type: integer
+          format: int32
+        example: 50
+      responses:
+        "200":
+          description: تم استرجاع قائمة المخالفات بنجاح
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ViolationResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+      security:
+      - BasicAuth: []
+  /eld/violations/{id}/resolve:
+    put:
+      tags:
+      - 3. Violations | إدارة المخالفات
+      summary: معالجة وإغلاق مخالفة (Resolve Violation — Admin Only)
+      description: تغيير حالة المخالفة إلى RESOLVED مع تسجيل ملاحظات الإغلاق والمبررات
+        الرسمية.
+      operationId: resolveViolation
+      parameters:
+      - name: id
+        in: path
+        description: معرف المخالفة
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 42
+      - name: notes
+        in: query
+        description: ملاحظات وتبرير معالجة المخالفة
+        schema:
+          type: string
+      responses:
+        "200":
+          description: تمت المعالجة والإغلاق بنجاح
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ViolationResponse"
+        "400":
+          description: طلب غير صالح أو بيانات مدخلة غير صحيحة
+        "401":
+          description: غير مصرح — يلزم تسجيل الدخول والمصادقة
+        "403":
+          description: محظور — ليس لديك صلاحية على هذا المورد
+        "500":
+          description: خطأ داخلي في الخادم أو قاعدة البيانات
+        "404":
+          description: المخالفة غير موجودة
+      security:
+      - BasicAuth: []
+components:
+  schemas:
+    ComplianceSummaryResponse:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق
+          format: int64
+          example: 101
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        complianceScore:
+          type: number
+          description: درجة ومؤشر الامتثال المئوي (0 - 100%)
+          format: double
+          example: 98.5
+        drivingRemainingMinutes:
+          type: integer
+          description: ساعات القيادة المتبقية اليوم (دقائق)
+          format: int32
+          example: 360
+        dutyRemainingMinutes:
+          type: integer
+          description: ساعات الخدمة والعمل المتبقية اليوم (دقائق)
+          format: int32
+          example: 540
+        cycleRemainingMinutes:
+          type: integer
+          description: ساعات الدورة الأسبوعية المتبقية (دقائق)
+          format: int32
+          example: 2400
+        activeViolationsCount:
+          type: integer
+          description: عدد المخالفات النشطة الحالية
+          format: int32
+          example: 0
+        status:
+          type: string
+          description: "حالة الامتثال العامة: COMPLIANT | WARNING | NON_COMPLIANT"
+          example: COMPLIANT
+      description: كائن استجابة ملخص ومؤشر امتثال السائق لقواعد ساعات الخدمة
+    DriverResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        uniqueId:
+          type: string
+        licenseNumber:
+          type: string
+        licenseState:
+          type: string
+        carrierName:
+          type: string
+        carrierUsdot:
+          type: string
+        status:
+          type: string
+    DatabaseConfig:
+      type: object
+      properties:
+        driverClassName:
+          type: string
+        jdbcUrl:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        maximumPoolSize:
+          type: integer
+          format: int32
+        minimumIdle:
+          type: integer
+          format: int32
+        idleTimeout:
+          type: integer
+          format: int64
+        connectionTimeout:
+          type: integer
+          format: int64
+    ELDConfiguration:
+      type: object
+      properties:
+        server:
+          $ref: "#/components/schemas/ServerConfig"
+        database:
+          $ref: "#/components/schemas/DatabaseConfig"
+        hos:
+          $ref: "#/components/schemas/HOSConfig"
+        thresholds:
+          $ref: "#/components/schemas/ThresholdConfig"
+        i18n:
+          $ref: "#/components/schemas/I18nConfig"
+    HOSConfig:
+      type: object
+      properties:
+        maxDrivingHoursPerDay:
+          type: number
+          format: double
+        maxOnDutyHoursPerDay:
+          type: number
+          format: double
+        mandatoryRestHours:
+          type: number
+          format: double
+        maxWeeklyHours7Days:
+          type: number
+          format: double
+        maxWeeklyHours8Days:
+          type: number
+          format: double
+        mandatoryWeeklyRestHours:
+          type: number
+          format: double
+        mandatoryBreakMinutes:
+          type: integer
+          format: int32
+        drivingHoursBeforeBreak:
+          type: number
+          format: double
+    I18nConfig:
+      type: object
+      properties:
+        defaultLocale:
+          type: string
+        supportedLocales:
+          type: array
+          items:
+            type: string
+    ServerConfig:
+      type: object
+      properties:
+        port:
+          type: integer
+          format: int32
+        host:
+          type: string
+    ThresholdConfig:
+      type: object
+      properties:
+        speedForDrivingKmh:
+          type: number
+          format: double
+        idleMinutesForOnDuty:
+          type: integer
+          format: int32
+        dataGapMinutesForDiagnostic:
+          type: integer
+          format: int32
+        gpsSpeedWithoutCoordinatesKmh:
+          type: number
+          format: double
+    UpdateHosConfigRequest:
+      type: object
+      properties:
+        maxDrivingHours:
+          type: number
+          description: الحد الأقصى لساعات القيادة اليومية المسموحة (ساعات)
+          format: double
+          example: 11.0
+        maxDutyHours:
+          type: number
+          description: الحد الأقصى لساعات الخدمة والعمل اليومية المسموحة (ساعات)
+          format: double
+          example: 14.0
+        weeklyHoursLimit:
+          type: number
+          description: الحد الأقصى لساعات الدورة الأسبوعية (60 أو 70 ساعة)
+          format: double
+          example: 70.0
+        restBreakMinutes:
+          type: integer
+          description: مدة الاستراحة الإلزامية المطلوبة (دقائق)
+          format: int32
+          example: 30
+        regulationProfile:
+          type: string
+          description: "معرف ملف النظام التنظيمي المفعّل: FMCSA_US | SA_MOMRA | EU_561"
+          example: FMCSA_US
+      description: كائن طلب تحديث حدود وقواعد HOS وسجلات ELD النظامية
+    DeviceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        uniqueId:
+          type: string
+        vehicleVin:
+          type: string
+        plateNumber:
+          type: string
+        vehicleMakeModel:
+          type: string
+        status:
+          type: string
+    DiagnosticResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        deviceId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        device:
+          $ref: "#/components/schemas/DeviceResponse"
+        positionId:
+          type: integer
+          format: int64
+        position:
+          $ref: "#/components/schemas/PositionResponse"
+        diagnosticType:
+          type: string
+        severity:
+          type: string
+          enum:
+          - MINOR
+          - MODERATE
+          - MAJOR
+          - CRITICAL
+        message:
+          type: string
+        detectedAt:
+          type: string
+        resolved:
+          type: boolean
+    PositionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        deviceId:
+          type: integer
+          format: int64
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        speedKmh:
+          type: number
+          format: double
+        course:
+          type: number
+          format: double
+        address:
+          type: string
+        fixTime:
+          type: string
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: معرف المستند
+          format: int64
+          example: 15
+        driverId:
+          type: integer
+          description: معرف السائق صاحب المستند
+          format: int64
+          example: 101
+        periodId:
+          type: integer
+          description: معرف فترة الخدمة المترابطة
+          format: int64
+          example: 5
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        period:
+          $ref: "#/components/schemas/PeriodResponse"
+        documentType:
+          type: string
+          description: نوع المستند
+          example: BILL_OF_LADING
+        documentName:
+          type: string
+          description: اسم أو رقم المستند
+          example: BOL-2026-8841
+        status:
+          type: string
+          description: "حالة التوثيق: UPLOADED | VERIFIED | REJECTED"
+          example: VERIFIED
+        uploadedAt:
+          type: string
+          description: تاريخ الرفع
+          format: date-time
+        verifiedBy:
+          type: integer
+          description: معرف المشرف الموثق للمستند
+          format: int64
+        verifier:
+          $ref: "#/components/schemas/DriverResponse"
+      description: كائن استجابة بيانات وفهرس المستند الامتثالي شامل جميع العلاقات
+        المترابطة
+    PeriodResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        deviceId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        device:
+          $ref: "#/components/schemas/DeviceResponse"
+        status:
+          type: string
+          enum:
+          - DRIVING
+          - ON_DUTY
+          - OFF_DUTY
+          - SLEEPER
+          - YARD_MOVE
+          - PERSONAL_CONVEYANCE
+        startTime:
+          type: string
+        endTime:
+          type: string
+        totalMinutes:
+          type: integer
+          format: int32
+        distanceKm:
+          type: number
+          format: double
+    UploadDocumentRequest:
+      required:
+      - documentType
+      - driverId
+      - fileContentBase64
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق صاحب المستند
+          format: int64
+          example: 101
+        documentType:
+          type: string
+          description: "نوع المستند: BILL_OF_LADING | FUEL_RECEIPT | DISPATCH_LOG\
+            \ | MEDICAL_CERTIFICATE"
+          example: BILL_OF_LADING
+        documentName:
+          type: string
+          description: اسم أو رقم المستند
+          example: BOL-2026-8841
+        fileContentBase64:
+          type: string
+          description: المحتوى المشفّر بصيغة Base64 للملف
+        notes:
+          type: string
+          description: ملاحظات إضافية على المستند
+      description: كائن طلب رفع ونسب مستند امتثالي جديد للسائق
+    InspectionDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: معرف جلسة التفتيش
+          format: int64
+          example: 10
+        driverId:
+          type: integer
+          description: معرف السائق الخاضع للتفتيش
+          format: int64
+          example: 101
+        deviceId:
+          type: integer
+          description: معرف الجهاز المركب
+          format: int64
+          example: 1
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        device:
+          $ref: "#/components/schemas/DeviceResponse"
+        inspectionDate:
+          type: string
+          description: تاريخ ووقت بدء التفتيش
+          format: date-time
+        inspectorName:
+          type: string
+          description: اسم الضابط المفتش
+          example: الضابط عبد الله
+        inspectionType:
+          type: string
+          description: نوع التفتيش
+          example: ROADSIDE
+        result:
+          type: string
+          description: "نتيجة التفتيش النهائية: PASS | FAIL | OUT_OF_SERVICE | PENDING"
+          example: PASS
+        notes:
+          type: string
+          description: ملاحظات التفتيش
+          example: تمت المراجعة واجتياز الفحص
+        completedAt:
+          type: string
+          description: توقيت الإكمال والإغلاق
+          format: date-time
+      description: كائن استجابة تفاصيل جلسة التفتيش الرقابية التفتيشية
+    CompleteInspectionRequest:
+      required:
+      - inspectionId
+      - result
+      type: object
+      properties:
+        inspectionId:
+          type: integer
+          description: معرف جلسة التفتيش
+          format: int64
+          example: 10
+        result:
+          type: string
+          description: "نتيجة التفتيش النهائية: PASS | FAIL | OUT_OF_SERVICE | CONDITIONAL"
+          example: PASS
+        notes:
+          type: string
+          description: ملاحظات وتوصيات المفتش الميداني
+          example: تم اجتياز التفتيش بدون أي مخالفات حرج
+        violationsFound:
+          type: integer
+          description: عدد المخالفات المكتشفة أثناء الجلسة
+          format: int32
+          example: 0
+      description: كائن طلب إكمال وإغلاق جلسة التفتيش الرقابي
+    InitiateDataTransferRequest:
+      required:
+      - protocol
+      type: object
+      properties:
+        protocol:
+          type: string
+          description: "بروتوكول النقل المطلوب (USB_HOST_MODE, BLUETOOTH_LE, QR_CODE,\
+            \ WEB_SERVICES, EMAIL)"
+          example: BLUETOOTH_LE
+          enum:
+          - USB_HOST_MODE
+          - BLUETOOTH_LE
+          - QR_CODE
+          - WEB_SERVICES
+          - EMAIL
+        recipientEmail:
+          type: string
+          description: عنوان البريد الإلكتروني للمفتش أو الوكالة في حال كان البروتوكول
+            EMAIL
+          example: inspector@dot.gov
+        routingCode:
+          type: string
+          description: رمز التوجيه الميداني المخصص (Routing Code)
+          example: ROUTING-CAL-992
+      description: طلب بدء نقل بيانات التفتيش الميداني
+    StartInspectionRequest:
+      required:
+      - driverId
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق الفعلي الخاضع للتفتيش
+          format: int64
+          example: 101
+        deviceId:
+          type: integer
+          description: معرف الجهاز المركب
+          format: int64
+          example: 1
+        inspectorName:
+          type: string
+          description: اسم المفتش الرقابي أو الضابط
+          example: الضابط عبد الله
+        inspectionType:
+          type: string
+          description: "نوع التفتيش: ROADSIDE | PERIODIC | SPECIAL"
+          example: ROADSIDE
+        location:
+          type: string
+          description: موقع بدء التفتيش الميداني
+          example: الرياض - طريق الملك فهد
+      description: كائن طلب بدء جلسة تفتيش رقابية ميدانية جديدة
+    EldReportResponse:
+      type: object
+      properties:
+        format:
+          type: string
+        contentType:
+          type: string
+        content:
+          type: string
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+    EldReportRequest:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        format:
+          type: string
+        lang:
+          type: string
+    DailySummaryDTO:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        date:
+          type: string
+        drivingMinutes:
+          type: integer
+          format: int32
+        onDutyMinutes:
+          type: integer
+          format: int32
+        offDutyMinutes:
+          type: integer
+          format: int32
+        sleeperMinutes:
+          type: integer
+          format: int32
+        totalDistanceKm:
+          type: number
+          format: double
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/PeriodResponse"
+        violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ViolationResponse"
+    ViolationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        deviceId:
+          type: integer
+          format: int64
+        periodId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        device:
+          $ref: "#/components/schemas/DeviceResponse"
+        period:
+          $ref: "#/components/schemas/PeriodResponse"
+        violationType:
+          type: string
+        severity:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        actualValue:
+          type: number
+          format: double
+        allowedLimit:
+          type: number
+          format: double
+        referenceRule:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        notes:
+          type: string
+    WeeklySummaryDTO:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        startDate:
+          type: string
+        endDate:
+          type: string
+        totalDistanceKm:
+          type: number
+          format: double
+        totalDrivingMinutes:
+          type: integer
+          format: int32
+        totalOnDutyMinutes:
+          type: integer
+          format: int32
+        totalViolationsCount:
+          type: integer
+          format: int32
+        dailySummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailySummaryDTO"
+    DriverRuleModel:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق
+          format: int64
+          example: 101
+        cycleRule:
+          type: string
+          description: قاعدة دورة العمل الأسبوعية
+          example: USA_70_8
+          enum:
+          - USA_70_8
+          - USA_60_7
+          - CANADA_SOUTH_70_7
+          - CANADA_SOUTH_120_14
+        cargoType:
+          type: string
+          description: نوع الحمولة (بضائع أو ركاب)
+          example: PROPERTY
+          enum:
+          - PROPERTY
+          - PASSENGER
+          - OIL_AND_GAS
+        restart:
+          type: string
+          description: قاعدة إعادة تعيين الدورة (34 ساعة)
+          example: RESTART_34H
+        restBreak:
+          type: string
+          description: قاعدة استراحة الـ 30 دقيقة
+          example: REST_30M_AFTER_8H
+        shortHaulException:
+          type: boolean
+          description: استثناء الـ 16 ساعة للرحلات القصيرة (16-Hour Short-Haul Exception
+            — FMCSA §395.1(o))
+          example: false
+        personalConveyance:
+          type: boolean
+          description: السماح بالاستخدام الشخصي للشاحنة (Personal Conveyance)
+          example: false
+        yardMoves:
+          type: boolean
+          description: السماح بحركات الفناء والتحميل داخل المستودع (Yard Moves)
+          example: true
+        trailerNumber:
+          type: string
+          description: رقم المقطورة / التريلا (Trailer Number)
+          example: TR-9821
+        shippingDocNumber:
+          type: string
+          description: رقم بوليصة الشحن / المواد المنقولة (Shipping Document / BOL
+            Number)
+          example: BOL-55420
+        unlimitedTrailers:
+          type: boolean
+          description: السماح بعدد غير محدود من المقطورات
+          example: false
+        unlimitedShippingDocs:
+          type: boolean
+          description: السماح بعدد غير محدود من بوالص الشحن
+          example: false
+      description: نموذج قواعد ولوائح ساعات الخدمة والاستثناءات للسائق
+    DriverSessionModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        coDriverId:
+          type: integer
+          format: int64
+        vehicleId:
+          type: integer
+          format: int64
+        driverRole:
+          type: string
+          enum:
+          - PRIMARY
+          - CO_DRIVER
+          - TRAINEE
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        eldIdentifier:
+          type: string
+        startOdometer:
+          type: number
+          format: double
+        endOdometer:
+          type: number
+          format: double
+        startEngineHours:
+          type: number
+          format: double
+        endEngineHours:
+          type: number
+          format: double
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    EcmTelemetryRequest:
+      required:
+      - driverId
+      - speed
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق
+          format: int64
+          example: 101
+        speed:
+          type: number
+          description: السرعة الحالية من كمبيوتر الشاحنة (MPH أو KM/H)
+          format: double
+          example: 45.0
+        rpm:
+          type: number
+          description: دوران المحرك في الدقيقة (RPM)
+          format: double
+          example: 1500
+        odometer:
+          type: number
+          description: قراءة العداد الحالية (Odometer)
+          format: double
+          example: 154280.0
+        engineHours:
+          type: number
+          description: ساعات تشغيل المحرك (Engine Hours)
+          format: double
+          example: 3212.5
+        engineOn:
+          type: boolean
+          description: "حالة تشغيل المحرك: true للمحرك قيد العمل، false للمحرك متو\
+            قف"
+          example: true
+      description: طلب بث ومعالجة قراءات كمبيوتر المحرك الحظية عبر البلوتوث لتفعيل
+        الانتقال الآلي لحالات HOS
+    StartDriverSessionRequest:
+      required:
+      - eldIdentifier
+      type: object
+      properties:
+        eldIdentifier:
+          type: string
+          description: معرف جهاز ELD أو عنوان البلوتوث (MAC Address أو Serial Number)
+          example: 00:1B:44:11:3A:B7
+      description: طلب بدء جلسة السائق بعد الاقتران بجهاز ELD عبر البلوتوث
+    SignatureCertificateResponse:
+      type: object
+      properties:
+        signatureId:
+          type: integer
+          description: معرف الشهادة والتوقيع
+          format: int64
+          example: 33
+        driverId:
+          type: integer
+          description: معرف السائق صاحب التوقيع
+          format: int64
+          example: 101
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        logDate:
+          type: string
+          description: تاريخ السجل الموقّع
+          example: 2026-08-21
+        signatureHash:
+          type: string
+          description: البصمة المشفّرة للتوقيع (SHA-256 Hash)
+          example: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        signedAt:
+          type: string
+          description: الطابع الزمني اللحظي للتوقيع
+          format: date-time
+        certificateStatus:
+          type: string
+          description: "حالة الصلاحية والتراخيص: VALID | REVOKED"
+          example: VALID
+      description: كائن استجابة شهادة التوقيع الإلكترونية الموثقة قانونياً للسجلات
+        اليومية
+    SignatureResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        signatureData:
+          type: string
+        signatureType:
+          type: string
+        purpose:
+          type: string
+        signedAt:
+          type: string
+        location:
+          type: string
+        certificatePath:
+          type: string
+    SaveSignatureRequest:
+      required:
+      - driverId
+      - logDate
+      - signatureData
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق التابع للتوقيع
+          format: int64
+          example: 101
+        logDate:
+          type: string
+          description: تاريخ السجل الموقّع بصيغة YYYY-MM-DD
+          example: 2026-08-21
+        signatureData:
+          type: string
+          description: بيانات رسم التوقيع بصيغة SVG/PNG Base64
+        signatureType:
+          type: string
+          description: "نوع المصادقة التوقيعية: DRIVER_CERTIFICATION | INSPECTOR_CERTIFICATION"
+          example: DRIVER_CERTIFICATION
+      description: كائن طلب توثيق وحفظ التوقيع الإلكتروني للسائق على سجل RODS اليومي
+    DutyStatusResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        deviceId:
+          type: integer
+          format: int64
+        positionId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+          - DRIVING
+          - ON_DUTY
+          - OFF_DUTY
+          - SLEEPER
+          - YARD_MOVE
+          - PERSONAL_CONVEYANCE
+        driver:
+          $ref: "#/components/schemas/DriverResponse"
+        device:
+          $ref: "#/components/schemas/DeviceResponse"
+        position:
+          $ref: "#/components/schemas/PositionResponse"
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        speed:
+          type: number
+          format: double
+        engineHours:
+          type: number
+          format: double
+        odometer:
+          type: number
+          format: double
+        source:
+          type: string
+        manualReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    CreateDutyStatusRequest:
+      required:
+      - deviceId
+      - driverId
+      - status
+      type: object
+      properties:
+        driverId:
+          type: integer
+          description: معرف السائق
+          format: int64
+          example: 101
+        deviceId:
+          type: integer
+          description: معرف الجهاز / المركبة
+          format: int64
+          example: 1
+        status:
+          type: string
+          description: "حالة الخدمة الجديدة: OFF_DUTY | SLEEPER | DRIVING | ON_DUTY\
+            \ | YARD_MOVE | PERSONAL_CONVEYANCE"
+          example: DRIVING
+          enum:
+          - DRIVING
+          - ON_DUTY
+          - OFF_DUTY
+          - SLEEPER
+          - YARD_MOVE
+          - PERSONAL_CONVEYANCE
+        manualReason:
+          type: string
+          description: سبب أو ملاحظة الحالة (إلزامي عند اختيار PERSONAL_CONVEYANCE
+            أو YARD_MOVE وفق معايير FMCSA)
+          example: "Moving trailer to bay #4"
+        clientEventId:
+          type: string
+          description: معرف الحدث من الجهة العميلة (اختياري) — يُستخدم لمنع تكرار
+            الحدث عند إعادة الإرسال. UUID أو مفتاح فريد.
+          example: 550e8400-e29b-41d4-a716-446655440000
+      description: طلب إنشاء وتغيير حالة خدمة جديدة للسائق
+    UpdateDutyStatusRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: معرف السجل
+          format: int64
+          example: 42
+        driverId:
+          type: integer
+          description: معرف السائق
+          format: int64
+          example: 101
+        status:
+          type: string
+          description: "حالة الخدمة الجديدة: OFF_DUTY | SLEEPER_BERTH | DRIVING |\
+            \ ON_DUTY | PERSONAL_CONVEYANCE | YARD_MOVE"
+          example: OFF_DUTY
+        manualReason:
+          type: string
+          description: سبب التعديل اليدوي وفق اشتراطات FMCSA §395.8
+          example: تعديل وقت الاستراحة بعد توقف المركبة
+        notes:
+          type: string
+          description: ملاحظات إضافية
+      description: كائن طلب تحديث أو تعديل سجل حالة الخدمة
+  securitySchemes:
+    BasicAuth:
+      type: http
+      description: المصادقة الأساسية (البريد الإلكتروني وكلمة المرور)
+      scheme: basic
+    BearerAuth:
+      type: http
+      description: المصادقة باستخدام التوكن (Bearer Token)
+      scheme: bearer
+      bearerFormat: JWT

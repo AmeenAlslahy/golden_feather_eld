@@ -21,21 +21,18 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
-  late final TextEditingController _serverUrlController;
 
   @override
   void initState() {
     super.initState();
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
-    _serverUrlController = TextEditingController();
   }
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
-    _serverUrlController.dispose();
     super.dispose();
   }
 
@@ -48,9 +45,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final success = await notifier.login(
       username: _usernameController.text.trim(),
       password: _passwordController.text,
-      serverUrl: formState.showAdvanced
-          ? _serverUrlController.text.trim()
-          : null,
     );
 
     if (success && mounted) {
@@ -101,38 +95,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           ),
           const SizedBox(height: AppSpacing.sm),
 
-          // إعدادات متقدمة
-          InkWell(
-            onTap: () {
-              ref.read(loginFormProvider.notifier).toggleAdvanced();
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              child: Row(
-                children: [
-                  Icon(
-                  formState.showAdvanced
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(context.loc.advancedLabel),
-                ],
-              ),
-            ),
-          ),
 
-          // حقل الخادم
-          if (formState.showAdvanced) ...[
-            const SizedBox(height: AppSpacing.sm),
-            AppTextField(
-              controller: _serverUrlController,
-              label: context.loc.urlLabel,
-              hint: 'https://your-server.com',
-              prefixIcon: const Icon(Icons.dns_outlined),
-            ),
-          ],
           const SizedBox(height: AppSpacing.lg),
 
           // زر تسجيل الدخول

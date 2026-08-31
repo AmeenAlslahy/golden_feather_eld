@@ -82,9 +82,13 @@ class AuthRepositoryImpl implements AuthRepository {
         if (e.statusCode == 401) {
           return const Left(InvalidCredentialsFailure());
         }
-        return Left(ServerFailure(message: e.message ?? 'فشل الاتصال بالخادم', statusCode: e.statusCode));
+        return Left(ServerFailure(
+          message: e.message ?? 'فشل الاتصال بالخادم',
+          arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',
+          statusCode: e.statusCode,
+        ));
       }
-      return const Left(ServerFailure(message: 'فشل تسجيل الدخول غير معروف'));
+      return const Left(ServerFailure(message: 'فشل تسجيل الدخول غير معروف', arabicMessage: 'فشل تسجيل الدخول غير معروف'));
     }
   }
 
@@ -116,9 +120,13 @@ class AuthRepositoryImpl implements AuthRepository {
       return login(email: email, password: password);
     } catch (e) {
       if (e is ServerException) {
-        return Left(ServerFailure(message: e.arabicMessage ?? e.message ?? 'فشل الاتصال بالخادم', statusCode: e.statusCode));
+        return Left(ServerFailure(
+          message: e.message ?? 'فشل الاتصال بالخادم',
+          arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',
+          statusCode: e.statusCode,
+        ));
       }
-      return const Left(ServerFailure(message: 'فشل إنشاء الحساب غير معروف'));
+      return const Left(ServerFailure(message: 'فشل إنشاء الحساب غير معروف', arabicMessage: 'فشل إنشاء الحساب غير معروف'));
     }
   }
 
@@ -162,12 +170,21 @@ class AuthRepositoryImpl implements AuthRepository {
       await _sessionStore.saveSession(validSession);
       return Right(validSession);
     } catch (e) {
-      if (e is ServerException && e.statusCode == 401) {
-        await _sessionStore.clearSession();
-        return const Left(AuthFailure(message: 'الجلسة انتهت، يرجى تسجيل الدخول'));
+      if (e is ServerException) {
+        if (e.statusCode == 401) {
+          await _sessionStore.clearSession();
+          return const Left(AuthFailure(message: 'الجلسة انتهت، يرجى تسجيل الدخول'));
+        }
+        return Left(ServerFailure(
+          message: e.message ?? 'فشل الخادم أثناء فحص الجلسة',
+          arabicMessage: e.arabicMessage ?? 'فشل الخادم أثناء فحص الجلسة',
+        ));
       }
-      // فشل شبكي أو سيرفر، لا نحذف الجلسة هنا.
-      return const Left(ServerFailure(message: 'فشل الخادم أثناء فحص الجلسة'));
+      // فشل آخر غير متوقع
+      return const Left(ServerFailure(
+        message: 'فشل الخادم أثناء فحص الجلسة',
+        arabicMessage: 'فشل الخادم أثناء فحص الجلسة',
+      ));
     }
   }
 

@@ -151,17 +151,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       },
       (authSession) async {
-        final email = authSession.userMetadata['email'] ??
-            authSession.userMetadata['name'] ??
-            username;
-        final user = User(
-          id: authSession.userMetadata['id']?.toString() ?? '',
-          fullName: authSession.userMetadata['name'] ?? email,
-          email: email,
-          username: email,
-          role: UserRole.fieldWorker,
-          createdAt: DateTime.now(),
-        );
+        final user = User.fromJson(authSession.userMetadata);
 
         // حفظ بيانات المستخدم في التخزين المخصص
         await _userStore.saveUser(user);

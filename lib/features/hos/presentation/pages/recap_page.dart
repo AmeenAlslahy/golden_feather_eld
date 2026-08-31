@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/extensions/time_extensions.dart';
 import '../providers/recap_provider.dart';
 
 class RecapPage extends ConsumerWidget {
@@ -16,44 +17,51 @@ class RecapPage extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surface,
       child: recapAsync.when(
         data: (data) {
-          return ListView(
-            children: [
-              // جدول الأيام السبعة
-              ...data.last7Days.map((dayData) => _buildRow(
-                    title: dayData.dayName,
-                    subtitle: dayData.formattedDate,
-                    value: dayData.hoursWorked.toStringAsFixed(2).padLeft(5, '0'),
-                  )),
-              
-              const Divider(height: 1, color: AppColors.border),
-              _buildRow(
-                title: context.loc.total,
-                subtitle: context.loc.last7Days,
-                value: data.totalLast7Days.toStringAsFixed(2).padLeft(5, '0'),
-                isBold: true,
-              ),
-              
-              const Divider(height: 1, color: AppColors.border),
-              _buildRow(
-                title: context.loc.hoursWorkedToday,
-                value: data.hoursWorkedToday.toStringAsFixed(2).padLeft(5, '0'),
-                isBold: true,
-              ),
-              
-              const Divider(height: 1, color: AppColors.border),
-              _buildRow(
-                title: context.loc.hoursAvailableToday,
-                value: data.hoursAvailableToday.toStringAsFixed(2).padLeft(5, '0'),
-                isBold: true,
-              ),
-              
-              const Divider(height: 1, color: AppColors.border),
-              _buildRow(
-                title: context.loc.hoursAvailableTomorrow,
-                value: data.hoursAvailableTomorrow.toStringAsFixed(2).padLeft(5, '0'),
-                isBold: true,
-              ),
-            ],
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(recapProvider);
+              await ref.read(recapProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                // جدول الأيام السبعة
+                ...data.last7Days.map((dayData) => _buildRow(
+                      title: dayData.dayName,
+                      subtitle: dayData.formattedDate,
+                      value: (dayData.hoursWorked * 60).round().toHoursMinutes(),
+                    )),
+                
+                const Divider(height: 1, color: AppColors.border),
+                _buildRow(
+                  title: context.loc.total,
+                  subtitle: context.loc.last7Days,
+                  value: (data.totalLast7Days * 60).round().toHoursMinutes(),
+                  isBold: true,
+                ),
+                
+                const Divider(height: 1, color: AppColors.border),
+                _buildRow(
+                  title: context.loc.hoursWorkedToday,
+                  value: (data.hoursWorkedToday * 60).round().toHoursMinutes(),
+                  isBold: true,
+                ),
+                
+                const Divider(height: 1, color: AppColors.border),
+                _buildRow(
+                  title: context.loc.hoursAvailableToday,
+                  value: (data.hoursAvailableToday * 60).round().toHoursMinutes(),
+                  isBold: true,
+                ),
+                
+                const Divider(height: 1, color: AppColors.border),
+                _buildRow(
+                  title: context.loc.hoursAvailableTomorrow,
+                  value: (data.hoursAvailableTomorrow * 60).round().toHoursMinutes(),
+                  isBold: true,
+                ),
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

@@ -6,6 +6,8 @@ import 'api_client.dart';
 import 'api_config.dart';
 import 'auth_interceptor.dart';
 import 'request_logger.dart';
+import '../services/local_storage_service.dart' as ls; // 🆕
+final golden_feather_eld_local_storage_provider = ls.localStorageProvider; // 🆕
 
 /// Provider لحالة الاتصال
 final isConnectedProvider = StreamProvider<bool>((ref) {
@@ -35,8 +37,18 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final config = ref.watch(apiConfigProvider);
   final secureStorage = ref.watch(secureStorageProvider);
   
+  // Use the server URL from local storage if available, otherwise fallback to config
+  final serverUrl = ref.watch(golden_feather_eld_local_storage_provider).serverUrl;
+  final effectiveBaseUrl = serverUrl.isNotEmpty ? serverUrl : config.baseUrl;
+
+  final effectiveConfig = ApiConfig(
+    baseUrl: effectiveBaseUrl.endsWith('/') ? effectiveBaseUrl.substring(0, effectiveBaseUrl.length - 1) : effectiveBaseUrl,
+    connectTimeout: config.connectTimeout,
+    receiveTimeout: config.receiveTimeout,
+  );
+
   final client = ApiClient(
-    config: config,
+    config: effectiveConfig,
     dio: Dio(),
   );
   

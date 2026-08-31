@@ -6,7 +6,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/engine/hos_calculator.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 
 /// مزود حالة القواعد
@@ -228,7 +227,6 @@ class RulesPage extends ConsumerWidget {
               label: loc.saveButton.toUpperCase(),
               onPressed: () {
                 final currentRules = ref.read(rulesProvider);
-                HosCalculator.setCycleRule(currentRules.cycleRule);
                 ref.read(rulesProvider.notifier).save();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

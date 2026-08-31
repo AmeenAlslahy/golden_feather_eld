@@ -2569,6 +2569,60 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جاري حساب الموقع...'**
   String get calculatingLocation;
+
+  /// No description provided for @driveLimitTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'القيادة'**
+  String get driveLimitTitle;
+
+  /// No description provided for @driveLimitDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'حد 11 ساعة للقيادة'**
+  String get driveLimitDesc;
+
+  /// No description provided for @shiftLimitTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوردية'**
+  String get shiftLimitTitle;
+
+  /// No description provided for @shiftLimitDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'حد 14 ساعة للعمل'**
+  String get shiftLimitDesc;
+
+  /// No description provided for @breakLimitTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستراحة'**
+  String get breakLimitTitle;
+
+  /// No description provided for @breakLimitDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'استراحة 30 دقيقة'**
+  String get breakLimitDesc;
+
+  /// No description provided for @cycleLimitTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدورة'**
+  String get cycleLimitTitle;
+
+  /// No description provided for @cycleLimitDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'USA 70/8'**
+  String get cycleLimitDesc;
+
+  /// No description provided for @hoursOfService.
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعات الخدمة'**
+  String get hoursOfService;
 }
 
 class _AppLocalizationsDelegate
