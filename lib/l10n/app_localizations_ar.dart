@@ -921,6 +921,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get emailRequired => 'البريد الإلكتروني مطلوب';
 
   @override
+  String get invalidEmailFormat => 'صيغة البريد الإلكتروني غير صحيحة';
+
+  @override
   String get sendResetLink => 'إرسال رابط الاستعادة';
 
   @override

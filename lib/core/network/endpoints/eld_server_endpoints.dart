@@ -1,0 +1,73 @@
+import '../api_endpoints.dart';
+
+class EldServerEndpoints implements ApiEndpoints {
+  @override
+  String get basePath => '/api/v1/tracker/traccar';
+
+  // Auth & Session
+  @override
+  String get session => '$basePath/session';
+  @override
+  String get logIn => '$basePath/session';
+  @override
+  String get logout => '$basePath/logout';
+  @override
+  String get logoutMethod => 'POST';
+
+  // Users
+  @override
+  String get users => '$basePath/users';
+  @override
+  String get register => '$basePath/users';
+
+  // Devices
+  @override
+  String get devices => '/eld/devices';
+
+  // Positions & Tracking
+  @override
+  String get positions => '/eld/tracking/positions';
+  @override
+  String get events => '/eld/tracking/events';
+
+  // Reports
+  @override
+  String get reportSummary => '/eld/reports/summary';
+  @override
+  String get reportRoute => '/eld/reports/route';
+  @override
+  String get reportEvents => '/eld/reports/events';
+  @override
+  String get reportTrips => '/eld/reports/trips';
+  @override
+  String get reportStops => '/eld/reports/stops';
+
+  // ELD Specific (Nano3Tracker)
+  @override
+  String get drivers => '$basePath/drivers';
+  
+  @override
+  String driverDutyStatus(int driverId) => '$basePath/drivers/$driverId/duty-status';
+  
+  @override
+  String get dutyStatusLogs => '$basePath/duty-status-logs';
+  
+  @override
+  String driverInspectionReport(int driverId) => '$basePath/drivers/$driverId/inspection-report';
+  
+  @override
+  String submitInspection() => '$basePath/inspections'; // Assuming this is correct or similar to driverInspectionReport
+
+  // ELD Reports & Export
+  @override
+  String eldComprehensiveReport(int driverId) => '$basePath/drivers/$driverId/comprehensive-eld-report';
+  
+  @override
+  String eldHosReport(int driverId) => '$basePath/drivers/$driverId/hos-report';
+  
+  @override
+  String eldExportReport(int driverId) => '$basePath/eld-report/export/$driverId';
+
+  @override
+  String inspectionExport(int driverId) => '$basePath/drivers/$driverId/inspection-export';
+}

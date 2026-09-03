@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/battery_optimization_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/eld_card.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/tracking_provider.dart';
@@ -97,7 +97,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
               ),
 
             // معلومات إضافية
-            AppCard(
+            EldCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

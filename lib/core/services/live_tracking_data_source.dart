@@ -1,22 +1,18 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // For EldEvent
-import '../engine/tracking/distance_tracker.dart'; // For LocationPoint
+import '../../features/hos/domain/engine/tracking/distance_tracker.dart'; // For LocationPoint
 import '../config/app_environment.dart';
 import '../../features/tracking/data/datasources/traccar_data_source.dart';
 import '../../features/tracking/domain/usecases/tracking_event_processor.dart';
-import '../network/traccar/traccar_api_client_impl.dart';
-import '../network/traccar/traccar_websocket_client_impl.dart';
-import '../network/traccar/traccar_native_client_impl.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_api_client_impl.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_websocket_client_impl.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/domain/entities/connection_status.dart';
-import '../../features/tracking/data/datasources/native_event_channel_client.dart';
-import '../network/network_providers.dart';
 
-final nativeEventChannelClientProvider =
-    Provider<NativeEventChannelClient>((ref) {
-  return NativeEventChannelClient();
-});
+import '../network/network_providers.dart';
+import '../../features/tracking/presentation/providers/tracking_providers.dart';
 
 abstract class LiveTrackingDataSource {
   Stream<EldEvent> get events;
@@ -139,7 +135,10 @@ final liveTrackingDataSourceProvider = Provider<LiveTrackingDataSource>((ref) {
     return dataSource;
   } else {
     final traccarDataSource = TraccarDataSource(
-      apiClient: TraccarApiClientImpl(apiClient: ref.watch(apiClientProvider)),
+      apiClient: TraccarApiClientImpl(
+        apiClient: ref.watch(apiClientProvider),
+        endpoints: ref.watch(endpointsProvider),
+      ),
       webSocketClient: TraccarWebSocketClientImpl(),
       nativeClient: TraccarNativeClientImpl(),
       nativeEventClient: ref.watch(nativeEventChannelClientProvider),

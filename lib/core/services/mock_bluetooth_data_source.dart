@@ -1,9 +1,9 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+﻿import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'bluetooth_service.dart';
 // import EldEvent
 
-/// التنفيذ الوهمي لـ Bluetooth للبيئة التطويرية
+/// ط§ظ„طھظ†ظپظٹط° ط§ظ„ظˆظ‡ظ…ظٹ ظ„ظ€ Bluetooth ظ„ظ„ط¨ظٹط¦ط© ط§ظ„طھط·ظˆظٹط±ظٹط©
 class MockBluetoothDataSource implements BluetoothDataSource {
   final _dataController = StreamController<EldEvent>.broadcast();
   final _statusController =

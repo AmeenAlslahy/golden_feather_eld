@@ -16,7 +16,7 @@ Future<Either<Failure, T>> executeWithHandling<T>(
   
   if (checkNetworkFirst) {
     final checker = networkInfo ?? _defaultNetworkInfo;
-    if (!(await checker.isConnected)) {
+    if (!(checker.isConnected)) {
       AppLogger.error('${tag ?? 'Repository'} NetworkInfo: No Internet Connection');
       return const Left(NetworkFailure());
     }
@@ -27,6 +27,9 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     return Right(result);
   } on ServerException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} ServerException: ${e.message}');
+    if (e.statusCode == 401) {
+      return const Left(InvalidCredentialsFailure());
+    }
     return Left(ServerFailure(
       message: e.message ?? 'فشل الاتصال بالخادم',
       arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',

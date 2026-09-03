@@ -9,6 +9,8 @@ enum AppEnvironment {
   temporaryTraccar,
 }
 
+enum ApiBackendType { traccar, eldServer, mock }
+
 class AppEnvironmentConfig {
   static AppEnvironment _current = AppEnvironment.development;
   static AppEnvironment get current => _current;
@@ -53,6 +55,13 @@ class AppEnvironmentConfig {
   static String? _getEnv(String key) {
     if (_testEnv != null) return _testEnv![key];
     return dotenv.env[key];
+  }
+
+  static ApiBackendType get currentBackend {
+    final type = _getEnv('BACKEND_TYPE');
+    if (type == 'ELD') return ApiBackendType.eldServer;
+    if (type == 'MOCK') return ApiBackendType.mock;
+    return ApiBackendType.traccar;
   }
 
   // Traccar Settings

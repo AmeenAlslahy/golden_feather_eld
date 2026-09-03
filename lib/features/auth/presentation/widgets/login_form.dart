@@ -39,7 +39,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final formState = ref.read(loginFormProvider);
+
     final notifier = ref.read(authStateProvider.notifier);
     
     final success = await notifier.login(
@@ -63,13 +63,26 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // اسم المستخدم
+          // البريد الإلكتروني أو اسم المستخدم
           AppTextField(
             controller: _usernameController,
-            label: context.loc.username,
+            label: context.loc.email,
             prefixIcon: const Icon(Icons.person_outline),
             textInputAction: TextInputAction.next,
-            validator: (v) => v == null || v.trim().isEmpty ? context.loc.usernameRequired : null,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return context.loc.emailRequired;
+              }
+              final val = v.trim();
+              if (val.contains('@')) {
+                // Email format validation
+                final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+                if (!emailRegex.hasMatch(val)) {
+                  return context.loc.invalidEmailFormat;
+                }
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.md),
 

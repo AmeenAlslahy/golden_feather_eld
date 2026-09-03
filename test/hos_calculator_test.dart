@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/core/engine/hos_calculator.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_calculator.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 
 void main() {

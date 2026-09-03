@@ -3,33 +3,25 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
-import '../network/tracking_client_sdk.dart';
 import '../utils/logger.dart';
 
-/// خدمة التخزين المحلي - نسخة محسنة من Preferences الأصلي
-class LocalStorageService {
+import 'auth_storage_service.dart';
+import 'tracking_config_storage_service.dart';
+import '../config/server_config_provider.dart';
+import 'user_preferences_storage_service.dart';
+
+/// خدمة التخزين المحلي - تعمل كواجهة (Facade) للخدمات الجديدة
+class LocalStorageService implements ServerConfigProvider {
   static Future<void>? _initFuture;
   static late SharedPreferencesWithCache _prefs;
-  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   bool _initialized = false;
 
-  // مفاتيح التخزين
-  static const String _deviceIdKey = 'id';
-  static const String _serverUrlKey = 'url';
-  static const String _accuracyKey = 'accuracy';
-  static const String _distanceKey = 'distance';
-  static const String _intervalKey = 'interval';
-  static const String _angleKey = 'angle';
-  static const String _heartbeatKey = 'heartbeat';
-  static const String _bufferKey = 'buffer';
-  static const String _wakelockKey = 'wakelock';
-  static const String _stopDetectionKey = 'stop_detection';
-  static const String _preferPlatformProvidersKey = 'prefer_platform_providers';
-  static const String _languageKey = 'language';
-  static const String _themeKey = 'theme';
-  static const String _selectedVehicleKey = 'selected_vehicle';
+  late final AuthStorageService _authStorage;
+  late final TrackingConfigStorageService _trackingStorage;
+  late final UserPreferencesStorageService _preferencesStorage;
+
+  SharedPreferencesWithCache get prefs => _prefs;
 
   // ========== التهيئة ==========
 
@@ -37,8 +29,13 @@ class LocalStorageService {
     if (_initialized) return;
     _initFuture ??= _createInstance();
     await _initFuture;
+
+    _authStorage = AuthStorageService();
+    _trackingStorage = TrackingConfigStorageService(_prefs);
+    _preferencesStorage = UserPreferencesStorageService(_prefs);
+
     _initialized = true;
-    AppLogger.info('LocalStorageService initialized');
+    AppLogger.info('LocalStorageService initialized (Facade)');
   }
 
   Future<void> _createInstance() async {
@@ -49,20 +46,29 @@ class LocalStorageService {
           : const SharedPreferencesOptions(),
       cacheOptions: const SharedPreferencesWithCacheOptions(
         allowList: {
-          _deviceIdKey,
-          _serverUrlKey,
-          _accuracyKey,
-          _distanceKey,
-          _intervalKey,
-          _angleKey,
-          _heartbeatKey,
-          _bufferKey,
-          _wakelockKey,
-          _stopDetectionKey,
-          _preferPlatformProvidersKey,
-          _languageKey,
-          _themeKey,
-          _selectedVehicleKey,
+          'id',
+          'url',
+          'accuracy',
+          'distance',
+          'interval',
+          'angle',
+          'heartbeat',
+          'buffer',
+          'wakelock',
+          'stop_detection',
+          'prefer_platform_providers',
+          'language',
+          'theme',
+          'selected_vehicle',
+          'current_duty_status',
+          'stationary_since',
+          'backend_type',
+          'cycle_rule',
+          'cargo_type',
+          'enable_30min_break',
+          'enable_short_haul_16h',
+          'enable_pc',
+          'enable_ym',
         },
       ),
     );
@@ -70,10 +76,10 @@ class LocalStorageService {
     // إصلاح Android
     if (Platform.isAndroid) {
       for (final key in {
-        _intervalKey,
-        _distanceKey,
-        _angleKey,
-        _heartbeatKey
+        'interval',
+        'distance',
+        'angle',
+        'heartbeat'
       }) {
         if (_prefs.get(key) is String) {
           await _prefs.setInt(
@@ -87,26 +93,27 @@ class LocalStorageService {
 
   Future<void> _setDefaults() async {
     // معرف جهاز عشوائي إذا لم يكن موجوداً
-    if (_prefs.getString(_deviceIdKey) == null) {
+    if (_prefs.getString('id') == null) {
       final randomId = (Random().nextInt(90000000) + 10000000).toString();
-      await _prefs.setString(_deviceIdKey, randomId);
+      await _prefs.setString('id', randomId);
       AppLogger.info('Generated new device ID: $randomId');
     }
 
-    // مسح Demo fallback - الخادم الافتراضي يجب أن يكون demo.traccar.org
-    final currentUrl = _prefs.getString(_serverUrlKey);
+    // مسح Demo fallback - الخادم الافتراضي يجب أن يكون demo3.traccar.org
+    final currentUrl = _prefs.getString('url');
     if (currentUrl == null ||
         currentUrl.contains('mock-traccar-server') ||
-        currentUrl.contains('api.goldenfeather.com')) {
-      await _prefs.setString(_serverUrlKey, 'https://demo.traccar.org');
+        currentUrl.contains('api.goldenfeather.com') ||
+        currentUrl == 'https://demo.traccar.org') {
+      await _prefs.setString('url', 'https://demo3.traccar.org');
     }
-    await _setIfNull(_accuracyKey, 'medium');
-    await _setIfNull(_intervalKey, AppConstants.defaultIntervalSeconds);
-    await _setIfNull(_distanceKey, AppConstants.defaultDistanceMeters.toInt());
-    await _setIfNull(_bufferKey, true);
-    await _setIfNull(_stopDetectionKey, true);
-    await _setIfNull(_wakelockKey, false);
-    await _setIfNull(_preferPlatformProvidersKey, false);
+    await _setIfNull('accuracy', 'medium');
+    await _setIfNull('interval', AppConstants.defaultIntervalSeconds);
+    await _setIfNull('distance', AppConstants.defaultDistanceMeters.toInt());
+    await _setIfNull('buffer', true);
+    await _setIfNull('stop_detection', true);
+    await _setIfNull('wakelock', false);
+    await _setIfNull('prefer_platform_providers', false);
   }
 
   Future<void> _setIfNull<T>(String key, T value) async {
@@ -123,133 +130,62 @@ class LocalStorageService {
 
   // ========== Getters ==========
 
-  String get deviceId => _prefs.getString(_deviceIdKey) ?? '';
-  String get serverUrl => _prefs.getString(_serverUrlKey) ?? '';
-  String get accuracy => _prefs.getString(_accuracyKey) ?? 'medium';
-  int get distance =>
-      _prefs.getInt(_distanceKey) ?? AppConstants.defaultDistanceMeters.toInt();
-  int get interval =>
-      _prefs.getInt(_intervalKey) ?? AppConstants.defaultIntervalSeconds;
-  int get angle => _prefs.getInt(_angleKey) ?? 0;
-  int get heartbeat => _prefs.getInt(_heartbeatKey) ?? 0;
-  bool get buffer => _prefs.getBool(_bufferKey) ?? true;
-  bool get wakelock => _prefs.getBool(_wakelockKey) ?? false;
-  bool get stopDetection => _prefs.getBool(_stopDetectionKey) ?? true;
-  bool get preferPlatformProviders =>
-      _prefs.getBool(_preferPlatformProvidersKey) ?? false;
-  Future<String?> get password => _secureStorage.read(key: 'password');
-  String get language => _prefs.getString(_languageKey) ?? 'ar';
-  String get theme => _prefs.getString(_themeKey) ?? 'system';
+  @override
+  String get serverUrl => _trackingStorage.serverUrl;
+  @override
+  String get backendType => _trackingStorage.backendType;
 
-  Future<bool> get hasPassword async {
-    final pass = await password;
-    return pass != null && pass.isNotEmpty;
-  }
+  String get deviceId => _trackingStorage.deviceId;
+  String get accuracy => _trackingStorage.accuracy;
+  int get distance => _trackingStorage.distance;
+  int get interval => _trackingStorage.interval;
+  int get angle => _trackingStorage.angle;
+  int get heartbeat => _trackingStorage.heartbeat;
+  bool get buffer => _trackingStorage.buffer;
+  bool get wakelock => _trackingStorage.wakelock;
+  bool get stopDetection => _trackingStorage.stopDetection;
+  bool get preferPlatformProviders => _trackingStorage.preferPlatformProviders;
+  
+  Future<String?> get password => _authStorage.password;
+  Future<bool> get hasPassword => _authStorage.hasPassword;
+  
+  String get language => _preferencesStorage.language;
+  String get theme => _preferencesStorage.theme;
+  String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
+  String? get stationarySince => _preferencesStorage.stationarySince;
+  String? get selectedVehicleId => _preferencesStorage.selectedVehicleId;
 
   // ========== Setters ==========
 
-  Future<void> setDeviceId(String value) =>
-      _prefs.setString(_deviceIdKey, value);
-  Future<void> setServerUrl(String value) =>
-      _prefs.setString(_serverUrlKey, value);
-  Future<void> setAccuracy(String value) =>
-      _prefs.setString(_accuracyKey, value);
-  Future<void> setDistance(int value) => _prefs.setInt(_distanceKey, value);
-  Future<void> setInterval(int value) => _prefs.setInt(_intervalKey, value);
-  Future<void> setAngle(int value) => _prefs.setInt(_angleKey, value);
-  Future<void> setHeartbeat(int value) => _prefs.setInt(_heartbeatKey, value);
-  Future<void> setBuffer(bool value) => _prefs.setBool(_bufferKey, value);
-  Future<void> setWakelock(bool value) => _prefs.setBool(_wakelockKey, value);
-  Future<void> setStopDetection(bool value) =>
-      _prefs.setBool(_stopDetectionKey, value);
-  Future<void> setPreferPlatformProviders(bool value) =>
-      _prefs.setBool(_preferPlatformProvidersKey, value);
-  Future<void> setLanguage(String value) =>
-      _prefs.setString(_languageKey, value);
-  Future<void> setTheme(String value) => _prefs.setString(_themeKey, value);
+  Future<void> setDeviceId(String value) => _trackingStorage.setDeviceId(value);
+  Future<void> setServerUrl(String value) => _trackingStorage.setServerUrl(value);
+  Future<void> setAccuracy(String value) => _trackingStorage.setAccuracy(value);
+  Future<void> setDistance(int value) => _trackingStorage.setDistance(value);
+  Future<void> setInterval(int value) => _trackingStorage.setInterval(value);
+  Future<void> setAngle(int value) => _trackingStorage.setAngle(value);
+  Future<void> setHeartbeat(int value) => _trackingStorage.setHeartbeat(value);
+  Future<void> setBuffer(bool value) => _trackingStorage.setBuffer(value);
+  Future<void> setWakelock(bool value) => _trackingStorage.setWakelock(value);
+  Future<void> setStopDetection(bool value) => _trackingStorage.setStopDetection(value);
+  Future<void> setPreferPlatformProviders(bool value) => _trackingStorage.setPreferPlatformProviders(value);
+  Future<void> setBackendType(String value) => _trackingStorage.setBackendType(value);
 
-  Future<void> setPassword(String value) async {
-    if (value.isNotEmpty) {
-      await _secureStorage.write(key: 'password', value: value);
-    } else {
-      await _secureStorage.delete(key: 'password');
-    }
-  }
+  Future<void> setLanguage(String value) => _preferencesStorage.setLanguage(value);
+  Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);
+  Future<void> setCurrentDutyStatus(String value) => _preferencesStorage.setCurrentDutyStatus(value);
+  Future<void> setStationarySince(String value) => _preferencesStorage.setStationarySince(value);
 
-  Future<void> removePassword() => _secureStorage.delete(key: 'password');
+  Future<void> setPassword(String value) => _authStorage.setPassword(value);
+  Future<void> removePassword() => _authStorage.removePassword();
 
   // ========== إعدادات التتبع ==========
 
-  /// بناء كائن إعدادات التتبع (متوافق مع Traccar)
-  Config buildTrackingConfig() {
-    return Config(
-      serverUrl: serverUrl,
-      deviceId: deviceId,
-      location: LocationConfig(
-        accuracy: switch (accuracy) {
-          'highest' => Accuracy.highest,
-          'high' => Accuracy.high,
-          'low' => Accuracy.low,
-          _ => Accuracy.medium,
-        },
-        distanceMeters: distance,
-        intervalSeconds: interval,
-        angleDegrees: angle,
-        heartbeatIntervalSeconds: heartbeat,
-        stopDetection: stopDetection,
-      ),
-      wakeLock: wakelock,
-      buffer: buffer,
-      preferPlatformProviders: preferPlatformProviders,
-    );
-  }
-
-  /// تطبيق الإعدادات من رابط
-  Future<void> applyFromUri(Uri uri) async {
-    final params = uri.queryParameters;
-
-    if (uri.scheme == 'http' || uri.scheme == 'https') {
-      await setServerUrl('${uri.origin}${uri.path}');
-    } else {
-      final url = params['url'];
-      if (url != null) await setServerUrl(url);
-    }
-
-    // تطبيق المعاملات
-    if (params['id'] != null) await setDeviceId(params['id']!);
-    if (params['accuracy'] != null) await setAccuracy(params['accuracy']!);
-    if (params['interval'] != null)
-      await setInterval(int.tryParse(params['interval']!) ?? interval);
-    if (params['distance'] != null)
-      await setDistance(int.tryParse(params['distance']!) ?? distance);
-    if (params['angle'] != null)
-      await setAngle(int.tryParse(params['angle']!) ?? angle);
-    if (params['heartbeat'] != null)
-      await setHeartbeat(int.tryParse(params['heartbeat']!) ?? heartbeat);
-    if (params['buffer'] != null) await setBuffer(params['buffer'] == 'true');
-    if (params['wakelock'] != null)
-      await setWakelock(params['wakelock'] == 'true');
-    if (params['stopDetection'] != null)
-      await setStopDetection(params['stopDetection'] == 'true');
-    if (params['preferPlatformProviders'] != null) {
-      await setPreferPlatformProviders(
-          params['preferPlatformProviders'] == 'true');
-    }
-  }
+  Future<void> applyFromUri(Uri uri) => _trackingStorage.applyFromUri(uri);
 
   // ========== تخزين المركبة ==========
 
-  String? get selectedVehicleId {
-    return _prefs.getString(_selectedVehicleKey);
-  }
-
-  Future<void> saveSelectedVehicleId(String id) async {
-    await _prefs.setString(_selectedVehicleKey, id);
-  }
-
-  Future<void> clearSelectedVehicle() async {
-    await _prefs.remove(_selectedVehicleKey);
-  }
+  Future<void> saveSelectedVehicleId(String id) => _preferencesStorage.saveSelectedVehicleId(id);
+  Future<void> clearSelectedVehicle() => _preferencesStorage.clearSelectedVehicle();
 
   /// مسح جميع البيانات
   Future<void> clearAll() async {

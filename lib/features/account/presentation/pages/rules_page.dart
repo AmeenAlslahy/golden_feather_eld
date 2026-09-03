@@ -8,9 +8,12 @@ import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 
+import '../../../../core/services/user_preferences_storage_service.dart';
+
 /// مزود حالة القواعد
 final rulesProvider = StateNotifierProvider<RulesNotifier, RulesState>((ref) {
-  return RulesNotifier();
+  final prefs = ref.watch(userPreferencesStorageProvider);
+  return RulesNotifier(prefs);
 });
 
 class RulesState {
@@ -52,7 +55,16 @@ class RulesState {
 }
 
 class RulesNotifier extends StateNotifier<RulesState> {
-  RulesNotifier() : super(const RulesState());
+  final UserPreferencesStorageService _prefs;
+
+  RulesNotifier(this._prefs) : super(RulesState(
+    cycleRule: _prefs.cycleRule,
+    cargoType: _prefs.cargoType,
+    enable30MinBreak: _prefs.enable30MinBreak,
+    enableShortHaul16Hour: _prefs.enableShortHaul16Hour,
+    enablePersonalConveyance: _prefs.enablePersonalConveyance,
+    enableYardMoves: _prefs.enableYardMoves,
+  ));
 
   void setCycleRule(String rule) => state = state.copyWith(cycleRule: rule);
   void setCargoType(String type) => state = state.copyWith(cargoType: type);
@@ -65,8 +77,13 @@ class RulesNotifier extends StateNotifier<RulesState> {
   void toggleYardMoves() =>
       state = state.copyWith(enableYardMoves: !state.enableYardMoves);
 
-  void save() {
-    // حفظ الإعدادات
+  Future<void> save() async {
+    await _prefs.setCycleRule(state.cycleRule);
+    await _prefs.setCargoType(state.cargoType);
+    await _prefs.setEnable30MinBreak(state.enable30MinBreak);
+    await _prefs.setEnableShortHaul16Hour(state.enableShortHaul16Hour);
+    await _prefs.setEnablePersonalConveyance(state.enablePersonalConveyance);
+    await _prefs.setEnableYardMoves(state.enableYardMoves);
   }
 }
 
@@ -226,7 +243,7 @@ class RulesPage extends ConsumerWidget {
             AppButton(
               label: loc.saveButton.toUpperCase(),
               onPressed: () {
-                final currentRules = ref.read(rulesProvider);
+
                 ref.read(rulesProvider.notifier).save();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

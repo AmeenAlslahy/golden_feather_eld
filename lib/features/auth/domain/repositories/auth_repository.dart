@@ -2,59 +2,65 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/services/local_storage_service.dart';
-import '../entities/auth_session.dart';
+import '../../../../core/config/server_config_provider.dart';
+
+import '../entities/user.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
+import '../../data/datasources/user_store.dart';
 import '../../data/datasources/auth_session_store.dart';
+import '../../../../core/utils/repository_helper.dart';
 
 abstract class AuthRepository {
   /// تسجيل الدخول إلى الخادم
-  Future<Either<Failure, AuthSession>> login({
+  Future<Either<Failure, User>> login({
     required String email,
     required String password,
   });
 
   /// إنشاء حساب جديد (وتسجيل الدخول به تلقائياً)
-  Future<Either<Failure, AuthSession>> register({
+  Future<Either<Failure, User>> register({
     required String name,
     required String email,
     required String password,
   });
 
   /// التحقق من صلاحية الجلسة المحفوظة واستعادتها
-  Future<Either<Failure, AuthSession>> checkAndRestoreSession();
+  Future<Either<Failure, User>> checkAndRestoreSession();
 
   /// تسجيل الخروج وحذف الجلسة
   Future<Either<Failure, Unit>> logout();
 
   /// الحصول على الجلسة الحالية (بدون اتصال بالشبكة)
-  Future<Either<Failure, AuthSession>> getCurrentSession();
+  Future<Either<Failure, User>> getCurrentSession();
 }
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final AuthSessionStore _sessionStore;
-  final LocalStorageService _localStorage;
+  final UserStore _userStore;
+  final ServerConfigProvider _configProvider;
   final NetworkInfo _networkInfo;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required AuthSessionStore sessionStore,
-    required LocalStorageService localStorage,
+    required UserStore userStore,
+    required ServerConfigProvider configProvider,
     required NetworkInfo networkInfo,
   })  : _remoteDataSource = remoteDataSource,
         _sessionStore = sessionStore,
-        _localStorage = localStorage,
+        _userStore = userStore,
+        _configProvider = configProvider,
         _networkInfo = networkInfo;
 
   String? _getServerUrl() {
-    final url = _localStorage.serverUrl;
+    final url = _configProvider.serverUrl;
     if (url.isEmpty) return null;
     return url;
   }
 
   @override
-  Future<Either<Failure, AuthSession>> login({
+  Future<Either<Failure, User>> login({
     required String email,
     required String password,
   }) async {
@@ -63,37 +69,27 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(MissingConfigurationFailure());
     }
 
-    final isConnected = await _networkInfo.isConnected;
-    if (!isConnected) {
-      return const Left(NetworkFailure());
-    }
-
-    try {
+    return executeWithHandling(() async {
+      final backendType = _configProvider.backendType;
       final session = await _remoteDataSource.login(
         email: email,
         password: password,
         serverUrl: serverUrl,
+        backendType: backendType,
       );
 
       await _sessionStore.saveSession(session);
-      return Right(session);
-    } catch (e) {
-      if (e is ServerException) {
-        if (e.statusCode == 401) {
-          return const Left(InvalidCredentialsFailure());
-        }
-        return Left(ServerFailure(
-          message: e.message ?? 'فشل الاتصال بالخادم',
-          arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',
-          statusCode: e.statusCode,
-        ));
-      }
-      return const Left(ServerFailure(message: 'فشل تسجيل الدخول غير معروف', arabicMessage: 'فشل تسجيل الدخول غير معروف'));
-    }
+
+      final user =
+          _createUserFromMetadata(session.userMetadata, defaultEmail: email);
+      await _userStore.saveUser(user);
+
+      return user;
+    }, tag: 'Auth.login', checkNetworkFirst: true, networkInfo: _networkInfo);
   }
 
   @override
-  Future<Either<Failure, AuthSession>> register({
+  Future<Either<Failure, User>> register({
     required String name,
     required String email,
     required String password,
@@ -103,35 +99,29 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(MissingConfigurationFailure());
     }
 
-    final isConnected = await _networkInfo.isConnected;
-    if (!isConnected) {
-      return const Left(NetworkFailure());
-    }
-
-    try {
+    return executeWithHandling(() async {
+      final backendType = _configProvider.backendType;
       await _remoteDataSource.register(
         name: name,
         email: email,
         password: password,
         serverUrl: serverUrl,
+        backendType: backendType,
       );
-      
-      // الدخول التلقائي بعد إنشاء الحساب
-      return login(email: email, password: password);
-    } catch (e) {
-      if (e is ServerException) {
-        return Left(ServerFailure(
-          message: e.message ?? 'فشل الاتصال بالخادم',
-          arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',
-          statusCode: e.statusCode,
-        ));
-      }
-      return const Left(ServerFailure(message: 'فشل إنشاء الحساب غير معروف', arabicMessage: 'فشل إنشاء الحساب غير معروف'));
-    }
+
+      final loginResult = await login(email: email, password: password);
+      return loginResult.fold(
+          (failure) => throw ServerException(
+              message: failure.message, arabicMessage: failure.arabicMessage),
+          (user) => user);
+    },
+        tag: 'Auth.register',
+        checkNetworkFirst: true,
+        networkInfo: _networkInfo);
   }
 
   @override
-  Future<Either<Failure, AuthSession>> checkAndRestoreSession() async {
+  Future<Either<Failure, User>> checkAndRestoreSession() async {
     final serverUrl = _getServerUrl();
     if (serverUrl == null) {
       await _sessionStore.clearSession(); // مسح الجلسة إن وجد خادم غير مهيأ
@@ -154,57 +144,74 @@ class AuthRepositoryImpl implements AuthRepository {
     if (!savedSession.belongsTo(currentOrigin)) {
       // الجلسة تخص خادماً آخر، يجب حذفها
       await _sessionStore.clearSession();
-      return const Left(SessionMissingFailure(message: 'تغير الخادم، يرجى تسجيل الدخول مجدداً'));
+      await _userStore.clearUser();
+      return const Left(SessionMissingFailure(
+          message: 'تغير الخادم، يرجى تسجيل الدخول مجدداً'));
     }
 
-    final isConnected = await _networkInfo.isConnected;
+    final isConnected = _networkInfo.isConnected;
     if (!isConnected) {
-      // الشبكة مقطوعة، لا نستطيع التحقق. لكننا نرجع الجلسة كـ Failure محدد لنعرف أنه تعذر الفحص.
-      // أو نرجع NetworkFailure كالمعتاد.
-      return const Left(NetworkFailure(message: 'تعذر التحقق من الجلسة لانقطاع الشبكة'));
+      // الشبكة مقطوعة، لا نستطيع التحقق.
+      final user = await _userStore.getUser();
+      if (user != null) {
+        return Right(user);
+      }
+      return const Left(
+          NetworkFailure(message: 'تعذر التحقق من الجلسة لانقطاع الشبكة'));
     }
 
-    try {
-      final validSession = await _remoteDataSource.validateSession(currentSession: savedSession);
+    final result = await executeWithHandling(() async {
+      final backendType = _configProvider.backendType;
+      final validSession = await _remoteDataSource.validateSession(
+        currentSession: savedSession,
+        backendType: backendType,
+      );
       // تحديث الجلسة ببيانات المستخدم الأحدث
       await _sessionStore.saveSession(validSession);
-      return Right(validSession);
-    } catch (e) {
-      if (e is ServerException) {
-        if (e.statusCode == 401) {
-          await _sessionStore.clearSession();
-          return const Left(AuthFailure(message: 'الجلسة انتهت، يرجى تسجيل الدخول'));
-        }
-        return Left(ServerFailure(
-          message: e.message ?? 'فشل الخادم أثناء فحص الجلسة',
-          arabicMessage: e.arabicMessage ?? 'فشل الخادم أثناء فحص الجلسة',
-        ));
+
+      final user = _createUserFromMetadata(validSession.userMetadata);
+      await _userStore.saveUser(user);
+
+      return user;
+    }, tag: 'Auth.checkSession');
+
+    if (result.isLeft()) {
+      final failure = result.getLeft().toNullable()!;
+      if (failure is InvalidCredentialsFailure || failure is AuthFailure) {
+        await _sessionStore.clearSession();
+        return const Left(
+            AuthFailure(message: 'الجلسة انتهت، يرجى تسجيل الدخول'));
       }
-      // فشل آخر غير متوقع
-      return const Left(ServerFailure(
-        message: 'فشل الخادم أثناء فحص الجلسة',
-        arabicMessage: 'فشل الخادم أثناء فحص الجلسة',
-      ));
+      return Left(failure);
     }
+
+    return Right(result.getRight().toNullable()!);
   }
 
   @override
   Future<Either<Failure, Unit>> logout() async {
     final savedSession = await _sessionStore.getSession();
     if (savedSession != null) {
-      final isConnected = await _networkInfo.isConnected;
-      if (isConnected) {
-        // محاولة إنهاء الجلسة من الخادم
-        await _remoteDataSource.logout(currentSession: savedSession);
-      }
+      await executeWithHandling(() async {
+        final backendType = _configProvider.backendType;
+        await _remoteDataSource.logout(
+          currentSession: savedSession,
+          backendType: backendType,
+        );
+        return unit;
+      },
+          tag: 'Auth.logout',
+          checkNetworkFirst: true,
+          networkInfo: _networkInfo);
     }
     // مسح الجلسة المحلية في كل الأحوال
     await _sessionStore.clearSession();
+    await _userStore.clearUser();
     return const Right(unit);
   }
 
   @override
-  Future<Either<Failure, AuthSession>> getCurrentSession() async {
+  Future<Either<Failure, User>> getCurrentSession() async {
     final savedSession = await _sessionStore.getSession();
     if (savedSession != null) {
       final serverUrl = _getServerUrl();
@@ -212,11 +219,29 @@ class AuthRepositoryImpl implements AuthRepository {
         try {
           final currentOrigin = Uri.parse(serverUrl).origin;
           if (savedSession.belongsTo(currentOrigin)) {
-            return Right(savedSession);
+            final user = await _userStore.getUser();
+            if (user != null) {
+              return Right(user);
+            }
           }
         } catch (_) {}
       }
     }
     return const Left(SessionMissingFailure());
+  }
+
+  ///
+  User _createUserFromMetadata(Map<String, dynamic> metadata,
+      {String? defaultEmail}) {
+    final email =
+        metadata['email'] ?? metadata['name'] ?? defaultEmail ?? 'unknown';
+    return User(
+      id: metadata['id']?.toString() ?? '',
+      fullName: metadata['name'] ?? email,
+      email: email,
+      username: email,
+      role: UserRole.fieldWorker,
+      createdAt: DateTime.now(),
+    );
   }
 }

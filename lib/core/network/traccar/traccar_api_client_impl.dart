@@ -1,19 +1,25 @@
 import 'package:dio/dio.dart';
+import '../../../features/tracking/data/datasources/traccar_sdk/traccar_api_client.dart';
+import '../api_endpoints.dart';
 import '../api_client.dart';
-import 'traccar_api_client.dart';
 
 /// تنفيذ واجهة TraccarApiClient باستخدام مكتبة ApiClient الموحدة.
 /// يتصل بالمسارات (Endpoints) الحقيقية الموثقة لـ Traccar.
 class TraccarApiClientImpl implements TraccarApiClient {
   final ApiClient _apiClient;
+  final ApiEndpoints _endpoints;
 
-  TraccarApiClientImpl({required ApiClient apiClient}) : _apiClient = apiClient;
+  TraccarApiClientImpl(
+      {required ApiClient apiClient, required ApiEndpoints endpoints})
+      : _apiClient = apiClient,
+        _endpoints = endpoints;
 
   @override
-  Future<Map<String, dynamic>> authenticate(String email, String password) async {
+  Future<Map<String, dynamic>> authenticate(
+      String email, String password) async {
     try {
       final response = await _apiClient.post<dynamic>(
-        '/api/session',
+        _endpoints.session,
         data: {
           'email': email,
           'password': password,
@@ -22,7 +28,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
           contentType: Headers.formUrlEncodedContentType,
         ),
       );
-      
+
       if (response.status && response.data != null) {
         return response.data as Map<String, dynamic>;
       } else {
@@ -36,7 +42,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   @override
   Future<List<Map<String, dynamic>>> getDevices() async {
     try {
-      final response = await _apiClient.get<dynamic>('/api/devices');
+      final response = await _apiClient.get<dynamic>(_endpoints.devices);
       if (response.status && response.data != null) {
         return List<Map<String, dynamic>>.from(response.data);
       } else {
@@ -51,7 +57,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   Future<List<Map<String, dynamic>>> getPositions(String deviceId) async {
     try {
       final response = await _apiClient.get<dynamic>(
-        '/api/positions',
+        _endpoints.positions,
         queryParameters: {'deviceId': deviceId},
       );
       if (response.status && response.data != null) {
@@ -65,14 +71,15 @@ class TraccarApiClientImpl implements TraccarApiClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getEvents(String deviceId, {DateTime? from, DateTime? to}) async {
+  Future<List<Map<String, dynamic>>> getEvents(String deviceId,
+      {DateTime? from, DateTime? to}) async {
     try {
       final Map<String, dynamic> queryParams = {'deviceId': deviceId};
       if (from != null) queryParams['from'] = from.toUtc().toIso8601String();
       if (to != null) queryParams['to'] = to.toUtc().toIso8601String();
 
       final response = await _apiClient.get<dynamic>(
-        '/api/events',
+        _endpoints.events,
         queryParameters: queryParams,
       );
       if (response.status && response.data != null) {
@@ -88,7 +95,8 @@ class TraccarApiClientImpl implements TraccarApiClient {
   @override
   Future<void> updatePosition(Map<String, dynamic> positionData) async {
     try {
-      final response = await _apiClient.post<dynamic>('/api/positions', data: positionData);
+      final response = await _apiClient.post<dynamic>(_endpoints.positions,
+          data: positionData);
       if (!response.status && response.code != 202) {
         throw Exception('Failed to update position: ${response.code}');
       }

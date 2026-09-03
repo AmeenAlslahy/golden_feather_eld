@@ -1,12 +1,12 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
-import 'package:golden_feather_eld/core/engine/hos_calculator.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+
 import 'package:golden_feather_eld/core/extensions/time_extensions.dart';
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/hos_state_machine.dart';
+import '../../../../features/hos/domain/engine/hos_state_machine.dart';
 
 class HosTimerList extends ConsumerWidget {
   final HosStatusUpdate status;

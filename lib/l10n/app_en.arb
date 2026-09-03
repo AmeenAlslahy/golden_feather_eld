@@ -315,6 +315,7 @@
   "resetPassword": "Reset Password",
   "email": "Email / Username",
   "emailRequired": "Email is required",
+  "invalidEmailFormat": "Invalid email format",
   "sendResetLink": "Send Reset Link",
   "backToLogin": "Back to Login",
   "notImplemented": "This feature is not implemented yet",

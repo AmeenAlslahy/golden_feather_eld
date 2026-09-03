@@ -1,22 +1,21 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:golden_feather_eld/core/engine/diagnostics/diagnostics_engine.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
-import 'package:golden_feather_eld/core/services/local_database_service.dart';
-import 'package:golden_feather_eld/core/engine/tracking/distance_tracker.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/tracking/distance_tracker.dart';
 
 class MockLiveTrackingDataSource extends Mock
     implements LiveTrackingDataSource {}
 
-class MockLocalDatabaseService extends Mock implements LocalDatabaseService {}
+class MockHosLocalDataSource extends Mock implements HosLocalDataSource {}
 
 void main() {
   late DiagnosticsEngine engine;
   late MockLiveTrackingDataSource mockTracking;
-  late MockLocalDatabaseService mockDb;
+  late MockHosLocalDataSource mockDb;
   late StreamController<LocationPoint> locationController;
   late StreamController<EldEvent> eventController;
 
@@ -26,7 +25,7 @@ void main() {
 
   setUp(() {
     mockTracking = MockLiveTrackingDataSource();
-    mockDb = MockLocalDatabaseService();
+    mockDb = MockHosLocalDataSource();
 
     locationController = StreamController<LocationPoint>.broadcast();
     eventController = StreamController<EldEvent>.broadcast();
@@ -36,7 +35,7 @@ void main() {
     when(() => mockTracking.events).thenAnswer((_) => eventController.stream);
 
     when(() => mockDb.saveDiagnostic(any()))
-        .thenAnswer((_) async => const Right(true));
+        .thenAnswer((_) async => true);
 
     engine = DiagnosticsEngine(mockTracking, mockDb);
   });

@@ -1,188 +1,63 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/diagnostics/diagnostics_engine.dart';
-import '../../data/services/report_generator_service.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../../core/engine/hos_violations_engine.dart';
-import '../../../../core/engine/tracking/duty_status_tracker.dart';
-import '../../../../core/services/event_log_service.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
+import '../../../../core/network/network_providers.dart';
+import '../../domain/repositories/reports_repository.dart';
+import '../../data/repositories/reports_repository_impl.dart';
+import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
+import '../../../../features/vehicle/presentation/providers/vehicle_provider.dart';
 
-class _ReportParams {
-  final String driverName;
-  final String vehicleId;
-  final Map<String, dynamic> todayStats;
-  final Map<String, dynamic> weekStats;
-  final List<Map<String, dynamic>> violations;
-  final List<Map<String, dynamic>> displayEvents;
-  final List<Map<String, dynamic>> diagnostics;
-  final Map<String, dynamic> weeklyStats;
-  final AppLocalizations loc;
+/// Reports Repository Provider
+final reportsRepositoryProvider = Provider<ReportsRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  final endpoints = ref.watch(endpointsProvider);
+  return ReportsRepositoryImpl(apiClient, endpoints);
+});
 
-  _ReportParams({
-    required this.driverName,
-    required this.vehicleId,
-    required this.todayStats,
-    required this.weekStats,
-    required this.violations,
-    required this.displayEvents,
-    required this.diagnostics,
-    required this.weeklyStats,
-    required this.loc,
-  });
-}
-
-class _ReportResult {
-  final String eldJson;
-  final String eldCsv;
-  final String eldHtml;
-  final String hosJson;
-  final String hosCsv;
-  final String hosHtml;
-
-  _ReportResult({
-    required this.eldJson,
-    required this.eldCsv,
-    required this.eldHtml,
-    required this.hosJson,
-    required this.hosCsv,
-    required this.hosHtml,
-  });
-}
-
-@pragma('vm:entry-point')
-_ReportResult _generateReportsInBackground(_ReportParams params) {
-  final date = DateTime.now().toString().substring(0, 10);
-
-  final eldJson = ReportGeneratorService.generateEldReport(
-    driverName: params.driverName,
-    vehicleId: params.vehicleId,
-    date: date,
-    dailyStats: params.todayStats,
-    events: params.displayEvents,
-    diagnostics: params.diagnostics,
-    isCertified: true,
-    loc: params.loc,
-    format: ReportFormat.json,
-  );
-
-  final eldCsv = ReportGeneratorService.generateEldReport(
-    driverName: params.driverName,
-    vehicleId: params.vehicleId,
-    date: date,
-    dailyStats: params.todayStats,
-    events: params.displayEvents,
-    diagnostics: params.diagnostics,
-    isCertified: true,
-    loc: params.loc,
-    format: ReportFormat.csv,
-  );
-
-  final eldHtml = ReportGeneratorService.generateEldReport(
-    driverName: params.driverName,
-    vehicleId: params.vehicleId,
-    date: date,
-    dailyStats: params.todayStats,
-    events: params.displayEvents,
-    diagnostics: params.diagnostics,
-    isCertified: true,
-    loc: params.loc,
-    format: ReportFormat.html,
-  );
-
-  final hosJson = ReportGeneratorService.generateHosReport(
-    driverName: params.driverName,
-    date: date,
-    dailyStats: params.todayStats,
-    weeklyStats: params.weeklyStats,
-    periods: params.displayEvents,
-    violations: params.violations,
-    loc: params.loc,
-    format: ReportFormat.json,
-  );
-
-  final hosCsv = ReportGeneratorService.generateHosReport(
-    driverName: params.driverName,
-    date: date,
-    dailyStats: params.todayStats,
-    weeklyStats: params.weeklyStats,
-    periods: params.displayEvents,
-    violations: params.violations,
-    loc: params.loc,
-    format: ReportFormat.csv,
-  );
-
-  final hosHtml = ReportGeneratorService.generateHosReport(
-    driverName: params.driverName,
-    date: date,
-    dailyStats: params.todayStats,
-    weeklyStats: params.weeklyStats,
-    periods: params.displayEvents,
-    violations: params.violations,
-    loc: params.loc,
-    format: ReportFormat.html,
-  );
-
-  return _ReportResult(
-    eldJson: eldJson,
-    eldCsv: eldCsv,
-    eldHtml: eldHtml,
-    hosJson: hosJson,
-    hosCsv: hosCsv,
-    hosHtml: hosHtml,
-  );
-}
-
-/// حالة شاشة التقارير
+/// State for Reports
 class ReportsState {
-  final String? eldReportJson;
-  final String? eldReportCsv;
-  final String? eldReportHtml;
-  final String? hosReportJson;
-  final String? hosReportCsv;
-  final String? hosReportHtml;
   final bool isLoading;
+  final String? error;
   final DiagnosticsState diagnostics;
 
+  final Map<String, dynamic>? eldReport;
+  final Map<String, dynamic>? hosReport;
+  
+  // Standard Traccar Reports
+  final List<dynamic>? standardSummary;
+  final List<dynamic>? standardRoute;
+
   const ReportsState({
-    this.eldReportJson,
-    this.eldReportCsv,
-    this.eldReportHtml,
-    this.hosReportJson,
-    this.hosReportCsv,
-    this.hosReportHtml,
+    this.eldReport,
+    this.hosReport,
+    this.standardSummary,
+    this.standardRoute,
     this.isLoading = false,
+    this.error,
     this.diagnostics = const DiagnosticsState(),
   });
 
   ReportsState copyWith({
-    String? eldReportJson,
-    String? eldReportCsv,
-    String? eldReportHtml,
-    String? hosReportJson,
-    String? hosReportCsv,
-    String? hosReportHtml,
+    Map<String, dynamic>? eldReport,
+    Map<String, dynamic>? hosReport,
+    List<dynamic>? standardSummary,
+    List<dynamic>? standardRoute,
     bool? isLoading,
+    String? error,
     DiagnosticsState? diagnostics,
   }) {
     return ReportsState(
-      eldReportJson: eldReportJson ?? this.eldReportJson,
-      eldReportCsv: eldReportCsv ?? this.eldReportCsv,
-      eldReportHtml: eldReportHtml ?? this.eldReportHtml,
-      hosReportJson: hosReportJson ?? this.hosReportJson,
-      hosReportCsv: hosReportCsv ?? this.hosReportCsv,
-      hosReportHtml: hosReportHtml ?? this.hosReportHtml,
+      eldReport: eldReport ?? this.eldReport,
+      hosReport: hosReport ?? this.hosReport,
+      standardSummary: standardSummary ?? this.standardSummary,
+      standardRoute: standardRoute ?? this.standardRoute,
       isLoading: isLoading ?? this.isLoading,
+      error: error,
       diagnostics: diagnostics ?? this.diagnostics,
     );
   }
 }
 
-/// مزود التقارير
-final reportsProvider = StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
-  return ReportsNotifier(ref);
-});
-
+/// Reports Notifier
 class ReportsNotifier extends StateNotifier<ReportsState> {
   final Ref _ref;
 
@@ -190,91 +65,112 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     _loadDiagnostics();
   }
 
-  Future<void> generateReports(AppLocalizations loc) async {
-    state = state.copyWith(isLoading: true);
+  Future<void> generateReports() async {
+    state = state.copyWith(isLoading: true, error: null);
 
-    // استخدام البيانات الحقيقية من المتتبعات
-    final dutyTracker = _ref.read(dutyStatusTrackerProvider);
-    final violationsEngine = _ref.read(hosViolationsEngineProvider);
-    final eventLog = _ref.read(eventLogServiceProvider);
-    final dashboard = _ref.read(dashboardDataProvider);
+    try {
+      final repository = _ref.read(reportsRepositoryProvider);
+      final backendType = _ref.read(backendTypeProvider);
+      
+      final authState = _ref.read(authStateProvider);
+      final driverId = int.tryParse(authState.user?.id ?? '100') ?? 100;
+      
+      final vehicleState = _ref.read(vehicleProvider);
+      final deviceIdStr = vehicleState.selectedVehicle?.id ?? '1';
+      final deviceId = int.tryParse(deviceIdStr) ?? 1;
+      final List<int> deviceIds = [deviceId];
+      
+      final now = DateTime.now().toUtc();
+      final from = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+      final to = now.toIso8601String();
 
-    final todayStats = dutyTracker.getTodayStats();
-    final weekStats = dutyTracker.getWeekStats();
+      if (backendType == 'traccar') {
+        // Fetch standard Traccar reports
+        final summaryResult = await repository.getSummaryReport(deviceIds, from, to);
+        final routeResult = await repository.getRouteReport(deviceIds, from, to);
+        
+        List<dynamic>? summary;
+        List<dynamic>? route;
+        
+        summaryResult.fold(
+          (failure) => throw Exception(failure.message), 
+          (data) => summary = data
+        );
+        
+        routeResult.fold(
+          (failure) => throw Exception(failure.message),
+          (data) => route = data
+        );
+        
+        state = state.copyWith(
+          standardSummary: summary,
+          standardRoute: route,
+          isLoading: false,
+        );
+      } else {
+        // Fetch ELD reports
+        final eldResult = await repository.getComprehensiveEldReport(driverId);
+        final hosResult = await repository.getHosReport(driverId);
 
-    // فحص الانتهاكات
-    final violationsList = violationsEngine.checkAll(
-      drivingHoursToday: todayStats['driving'] ?? 0,
-      workHoursToday: (todayStats['driving'] ?? 0) + (todayStats['on_duty'] ?? 0),
-      restHoursToday: (todayStats['off_duty'] ?? 0) + (todayStats['sleeper'] ?? 0),
-      drivingHoursWeek: weekStats['driving'] ?? 0,
-      consecutiveDays: 5, // يجب جلبه من HosCalculator مستقبلاً أو تتبع الأيام
-      hasBreak: (todayStats['on_duty'] ?? 0) > 0,
-      hasWeeklyRestart: (weekStats['rest'] ?? 0) > 34,
-    );
+        Map<String, dynamic>? eldReport;
+        Map<String, dynamic>? hosReport;
 
-    // تحويل الانتهاكات إلى التنسيق المطلوب
-    final violations = violationsList.map((v) => {
-      'type': v.type.name,
-      'severity': v.level.englishName,
-      'message': v.message,
-    }).toList();
+        eldResult.fold(
+          (failure) => throw Exception(failure.message),
+          (data) => eldReport = data
+        );
 
-    // استخدام الأحداث الحقيقية
-    final events = eventLog.getTodayEvents().map((e) => {
-      'time': e.timestamp.toIso8601String(),
-      'status': e.type, // افتراضياً، نوع الحدث هو الحالة
-      'duration': 'N/A', // يمكن حسابه من الفترات
-      'location': 'Unknown', // يمكن استخراجه من data
-    }).toList();
+        hosResult.fold(
+          (failure) => throw Exception(failure.message),
+          (data) => hosReport = data
+        );
 
-    // إذا كانت الأحداث فارغة نعطي حدث افتراضي حتى لا يفشل التقرير تماماً في العرض
-    final displayEvents = events.isNotEmpty ? events : [
-      {'time': DateTime.now().toIso8601String(), 'status': dutyTracker.currentStatus.toString(), 'duration': '0h 0m', 'location': 'N/A'},
-    ];
+        state = state.copyWith(
+          eldReport: eldReport,
+          hosReport: hosReport,
+          isLoading: false,
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+    }
+  }
 
-    // تشخيصات الأجهزة الحقيقية
-    final diagnosticsEngine = _ref.read(diagnosticsEngineProvider);
-    final diagnostics = diagnosticsEngine.state.activeMalfunctions.map((m) => {
-      'type': m.type.name,
-      'severity': m.severity.englishName,
-      'message': m.message,
-    }).toList();
+  Future<String?> exportReport(bool isEld, String format, {String? standardReportType}) async {
+    try {
+      final repository = _ref.read(reportsRepositoryProvider);
+      final backendType = _ref.read(backendTypeProvider);
+      
+      final authState = _ref.read(authStateProvider);
+      final driverId = int.tryParse(authState.user?.id ?? '100') ?? 100;
+      
+      final vehicleState = _ref.read(vehicleProvider);
+      final deviceIdStr = vehicleState.selectedVehicle?.id ?? '1';
+      final deviceId = int.tryParse(deviceIdStr) ?? 1;
+      final List<int> deviceIds = [deviceId];
 
-    // إحصائيات أسبوعية
-    final weeklyStats = <String, dynamic>{
-      'total_driving': weekStats['driving'] ?? 0.0,
-      'total_work': weekStats['work'] ?? 0.0,
-      'total_rest': weekStats['rest'] ?? 0.0,
-      'total_break': 0.0, // لم نتبع الاستراحات بالتفصيل
-      'total_distance': weekStats['distance'] ?? 0.0,
-      'available_today': 11.0 - (todayStats['driving'] ?? 0),
-      'available_tomorrow': 11.0,
-    };
+      final now = DateTime.now().toUtc();
+      final from = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+      final to = now.toIso8601String();
 
-    final params = _ReportParams(
-      driverName: dashboard.driverName,
-      vehicleId: dashboard.vehicleId,
-      todayStats: todayStats,
-      weekStats: weekStats,
-      violations: violations,
-      displayEvents: displayEvents,
-      diagnostics: diagnostics,
-      weeklyStats: weeklyStats,
-      loc: loc,
-    );
-
-    final result = await compute(_generateReportsInBackground, params);
-
-    state = state.copyWith(
-      eldReportJson: result.eldJson,
-      eldReportCsv: result.eldCsv,
-      eldReportHtml: result.eldHtml,
-      hosReportJson: result.hosJson,
-      hosReportCsv: result.hosCsv,
-      hosReportHtml: result.hosHtml,
-      isLoading: false,
-    );
+      if (backendType == 'traccar') {
+        final result = await repository.exportStandardReport(standardReportType ?? 'summary', deviceIds, from, to);
+        return result.fold((l) => null, (r) => r);
+      } else {
+        if (isEld) {
+          final result = await repository.exportEldReport(driverId, format);
+          return result.fold((l) => null, (r) => r);
+        } else {
+          final result = await repository.exportInspection(driverId, format);
+          return result.fold((l) => null, (r) => r);
+        }
+      }
+    } catch (e) {
+      return null;
+    }
   }
 
   void _loadDiagnostics() {
@@ -288,3 +184,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     _loadDiagnostics();
   }
 }
+
+/// Reports Provider
+final reportsProvider = StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
+  return ReportsNotifier(ref);
+});

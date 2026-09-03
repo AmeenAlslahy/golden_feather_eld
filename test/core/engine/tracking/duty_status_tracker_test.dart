@@ -1,11 +1,22 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/core/engine/tracking/duty_status_tracker.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
+
+class MockSyncEngine implements SyncEngine {
+  @override
+  Future<void> submitEvent(PendingEvent event) async {}
+
+  @override
+  Future<void> triggerSync() async {}
+}
 
 class MockLogRepository implements LogRepository {
   List<DutyPeriod> savedPeriods = [];
@@ -51,14 +62,26 @@ class FakeClock {
   }
 }
 
-class FakeDb {
+class FakeLocalStorage implements LocalStorageService {
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
   Map<String, String> data = {};
-  Future<void> saveSetting(String k, String v) async {
-    data[k] = v;
+
+  @override
+  String get currentDutyStatus => data['current_duty_status'] ?? 'off_duty';
+
+  @override
+  Future<void> setCurrentDutyStatus(String value) async {
+    data['current_duty_status'] = value;
   }
 
-  String? getSetting(String k) {
-    return data[k];
+  @override
+  String? get stationarySince => data['stationary_since'];
+
+  @override
+  Future<void> setStationarySince(String value) async {
+    data['stationary_since'] = value;
   }
 }
 
@@ -67,17 +90,17 @@ void main() {
     late DutyStatusTracker tracker;
     late MockLogRepository mockRepo;
     late FakeClock clock;
-    late FakeDb db;
+    late FakeLocalStorage db;
 
     setUp(() {
       mockRepo = MockLogRepository();
       clock = FakeClock(DateTime(2023, 1, 1, 12, 0, 0));
-      db = FakeDb();
+      db = FakeLocalStorage();
       tracker = DutyStatusTracker(
         logRepository: mockRepo,
+        localStorage: db,
+        syncEngine: MockSyncEngine(),
         now: clock.now,
-        saveSetting: db.saveSetting,
-        getSetting: db.getSetting,
       );
     });
 
@@ -189,12 +212,12 @@ void main() {
       clock.advance(const Duration(minutes: 6));
 
       // New app session
-      final newDb = FakeDb()..data = savedData;
+      final newDb = FakeLocalStorage()..data = savedData;
       final newTracker = DutyStatusTracker(
         logRepository: mockRepo,
+        localStorage: newDb,
+        syncEngine: MockSyncEngine(),
         now: clock.now,
-        saveSetting: newDb.saveSetting,
-        getSetting: newDb.getSetting,
       );
       // The status should hydrate to driving, and stationarySince should be intact.
       // Now, an event arrives (which triggers _evaluateStationaryState if speed is 0)
@@ -214,17 +237,17 @@ void main() {
     late DutyStatusTracker tracker;
     late MockLogRepository mockRepo;
     late FakeClock clock;
-    late FakeDb db;
+    late FakeLocalStorage db;
 
     setUp(() {
       mockRepo = MockLogRepository();
       clock = FakeClock(DateTime.now());
-      db = FakeDb();
+      db = FakeLocalStorage();
       tracker = DutyStatusTracker(
         logRepository: mockRepo,
+        localStorage: db,
+        syncEngine: MockSyncEngine(),
         now: clock.now,
-        saveSetting: db.saveSetting,
-        getSetting: db.getSetting,
       );
     });
 

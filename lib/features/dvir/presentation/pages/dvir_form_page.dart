@@ -129,7 +129,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   Widget build(BuildContext context) {
     final dashboard = ref.watch(dashboardDataProvider);
     final brightness = Theme.of(context).brightness;
-    final bgColor = AppColors.backgroundForBrightness(brightness);
     final surfaceColor = AppColors.surfaceForBrightness(brightness);
     final textColor = AppColors.textPrimaryForBrightness(brightness);
     final borderColor = AppColors.borderForBrightness(brightness);

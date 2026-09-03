@@ -256,6 +256,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                     },
                   );
                 } catch (e) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(e.toString()), backgroundColor: AppColors.dangerRed),
                   );

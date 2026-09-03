@@ -1,6 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/datasources/inspection_mock_data.dart';
+import '../../../../core/network/network_providers.dart';
+import '../../data/datasources/inspection_remote_data_source.dart';
+import '../../data/repositories/inspection_repository_impl.dart';
 import '../../domain/entities/inspection_data.dart';
+import '../../domain/repositories/inspection_repository.dart';
+import '../../../../core/services/tracking_config_storage_service.dart';
+
+// --- Dependency Injection Providers ---
+
+final inspectionRemoteDataSourceProvider = Provider<InspectionRemoteDataSource>((ref) {
+  return InspectionRemoteDataSourceImpl(
+    apiClient: ref.watch(apiClientProvider),
+    endpoints: ref.watch(endpointsProvider),
+  );
+});
+
+final inspectionRepositoryProvider = Provider<InspectionRepository>((ref) {
+  return InspectionRepositoryImpl(
+    remoteDataSource: ref.watch(inspectionRemoteDataSourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+// --- State and Notifier ---
 
 /// حالة التفتيش
 class InspectionState {
@@ -41,27 +63,44 @@ class InspectionState {
 
 /// مزود التفتيش
 final inspectionProvider = StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
-  return InspectionNotifier();
+  final repository = ref.watch(inspectionRepositoryProvider);
+  final storageService = ref.watch(trackingConfigStorageProvider);
+  return InspectionNotifier(repository: repository, storageService: storageService);
 });
 
 class InspectionNotifier extends StateNotifier<InspectionState> {
-  InspectionNotifier() : super(const InspectionState());
+  final InspectionRepository _repository;
+  final TrackingConfigStorageService _storageService;
+
+  InspectionNotifier({
+    required InspectionRepository repository,
+    required TrackingConfigStorageService storageService,
+  })  : _repository = repository,
+        _storageService = storageService,
+        super(const InspectionState());
 
   /// بدء وضع التفتيش
   Future<void> startInspection() async {
     state = state.copyWith(isLoading: true, error: null);
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      final mockDays = InspectionMockData.getLast8Days();
-      state = state.copyWith(
-        isLoading: false,
-        days: mockDays,
-        isInspectionMode: true,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to start inspection: ${e.toString()}',
+    
+    // In a real scenario we'd need the logged in driver ID.
+    // For now, assuming a default or extracting it from storage
+    final driverId = int.tryParse(_storageService.deviceId) ?? 0;
+    
+    final result = await _repository.getInspectionReport(driverId);
+    
+    if (mounted) {
+      result.fold(
+        (failure) => state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+        ),
+        (days) => state = state.copyWith(
+          isLoading: false,
+          days: days,
+          isInspectionMode: true,
+          error: null,
+        ),
       );
     }
   }
@@ -92,9 +131,23 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   /// إرسال السجلات
   Future<bool> sendLogs(TransferMethod method, {String? email, bool isErods = false}) async {
-    state = state.copyWith(isLoading: true);
-    await Future.delayed(const Duration(seconds: 2));
-    state = state.copyWith(isLoading: false);
-    return true;
+    state = state.copyWith(isLoading: true, error: null);
+    
+    final driverId = int.tryParse(_storageService.deviceId) ?? 0;
+    final result = await _repository.exportInspectionData(driverId, method, email, isErods);
+    
+    if (mounted) {
+      return result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+          return false;
+        },
+        (_) {
+          state = state.copyWith(isLoading: false, error: null);
+          return true;
+        },
+      );
+    }
+    return false;
   }
 }

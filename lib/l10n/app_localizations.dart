@@ -1904,6 +1904,12 @@ abstract class AppLocalizations {
   /// **'البريد الإلكتروني مطلوب'**
   String get emailRequired;
 
+  /// No description provided for @invalidEmailFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'صيغة البريد الإلكتروني غير صحيحة'**
+  String get invalidEmailFormat;
+
   /// No description provided for @sendResetLink.
   ///
   /// In ar, this message translates to:

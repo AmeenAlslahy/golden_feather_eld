@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:golden_feather_eld/core/network/endpoints/traccar_endpoints.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:golden_feather_eld/core/error/exception.dart';
 
@@ -40,7 +41,7 @@ void main() {
   setUp(() {
     fakeAdapter = FakeDioAdapter();
     dio = Dio()..httpClientAdapter = fakeAdapter;
-    dataSource = AuthRemoteDataSourceImpl(dio);
+    dataSource = AuthRemoteDataSourceImpl(dio, TraccarEndpoints());
   });
 
   group('AuthRemoteDataSource - Login', () {
@@ -57,7 +58,7 @@ void main() {
         'content-type': ['application/json'],
       };
 
-      final result = await dataSource.login(email: email, password: password, serverUrl: serverUrl);
+      final result = await dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar');
 
       expect(result.serverOrigin, expectedOrigin);
       expect(result.sessionCredential, 'node01fakecookieabc');
@@ -70,7 +71,7 @@ void main() {
       fakeAdapter.headers = {'content-type': ['application/json']};
 
       expect(
-        () => dataSource.login(email: email, password: password, serverUrl: serverUrl),
+        () => dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar'),
         throwsA(isA<ServerException>().having((e) => e.statusCode, 'statusCode', 401)),
       );
     });
@@ -81,7 +82,7 @@ void main() {
       fakeAdapter.headers = {'content-type': ['application/json']};
 
       expect(
-        () => dataSource.login(email: email, password: password, serverUrl: serverUrl),
+        () => dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar'),
         throwsA(isA<ServerException>().having((e) => e.message, 'message', 'Missing session cookie from server')),
       );
     });

@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+﻿import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -19,14 +19,14 @@ class HosPage extends ConsumerWidget {
     final hosState = ref.watch(hosStatusProvider);
     final limits = hosState.limits;
 
-    // حساب الوقت المتبقي ليعرض في الدائرة
-    // بالعادة يعرض أقل وقت متبقي يوقف السائق
+    // ط­ط³ط§ط¨ ط§ظ„ظˆظ‚طھ ط§ظ„ظ…طھط¨ظ‚ظٹ ظ„ظٹط¹ط±ط¶ ظپظٹ ط§ظ„ط¯ط§ط¦ط±ط©
+    // ط¨ط§ظ„ط¹ط§ط¯ط© ظٹط¹ط±ط¶ ط£ظ‚ظ„ ظˆظ‚طھ ظ…طھط¨ظ‚ظٹ ظٹظˆظ‚ظپ ط§ظ„ط³ط§ط¦ظ‚
     int remainingMinutes;
     if (hosState.currentStatus == DutyStatus.driving) {
       remainingMinutes = limits.remainingDriveMinutes;
-      // التأكد من استراحة الـ 8 ساعات
+      // ط§ظ„طھط£ظƒط¯ ظ…ظ† ط§ط³طھط±ط§ط­ط© ط§ظ„ظ€ 8 ط³ط§ط¹ط§طھ
       if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
-        // إذا كان يحتاج استراحة الآن
+        // ط¥ط°ط§ ظƒط§ظ† ظٹط­طھط§ط¬ ط§ط³طھط±ط§ط­ط© ط§ظ„ط¢ظ†
         remainingMinutes = 0;
       }
     } else {
@@ -45,13 +45,13 @@ class HosPage extends ConsumerWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // بطاقة التنبيهات والأعطال
+                  // ط¨ط·ط§ظ‚ط© ط§ظ„طھظ†ط¨ظٹظ‡ط§طھ ظˆط§ظ„ط£ط¹ط·ط§ظ„
                   const DiagnosticsAlertCard(),
 
-                  // القسم العلوي
+                  // ط§ظ„ظ‚ط³ظ… ط§ظ„ط¹ظ„ظˆظٹ
                   Stack(
                     children: [
-                      // زر حالة النوم (اللون الأزرق في الصورة)
+                      // ط²ط± ط­ط§ظ„ط© ط§ظ„ظ†ظˆظ… (ط§ظ„ظ„ظˆظ† ط§ظ„ط£ط²ط±ظ‚ ظپظٹ ط§ظ„طµظˆط±ط©)
                       Positioned(
                         top: 16,
                         left: 16,
@@ -78,7 +78,7 @@ class HosPage extends ConsumerWidget {
                         ),
                       ),
 
-                      // الدائرة المركزية
+                      // ط§ظ„ط¯ط§ط¦ط±ط© ط§ظ„ظ…ط±ظƒط²ظٹط©
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 32, bottom: 24),
@@ -96,7 +96,7 @@ class HosPage extends ConsumerWidget {
                     ],
                   ),
 
-                  // قائمة الساعات
+                  // ظ‚ط§ط¦ظ…ط© ط§ظ„ط³ط§ط¹ط§طھ
                   HosTimerList(status: hosState),
                 ],
               ),

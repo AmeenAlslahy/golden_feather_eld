@@ -48,7 +48,7 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<Either<Failure, int>> processQueue() async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = _networkInfo.isConnected;
       if (!isConnected) {
         return const Right(0); // لا يوجد اتصال
       }

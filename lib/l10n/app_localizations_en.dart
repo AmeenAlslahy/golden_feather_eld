@@ -920,6 +920,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emailRequired => 'Email is required';
 
   @override
+  String get invalidEmailFormat => 'Invalid email format';
+
+  @override
   String get sendResetLink => 'Send Reset Link';
 
   @override

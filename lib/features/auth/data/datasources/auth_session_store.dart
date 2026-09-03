@@ -10,12 +10,6 @@ abstract class AuthSessionStore {
   /// استعادة الجلسة
   Future<AuthSession?> getSession();
 
-  /// التحقق من وجود جلسة
-  Future<bool> hasSession();
-
-  /// الحصول على بيانات اعتماد الجلسة (JSESSIONID)
-  Future<String?> getSessionCredential();
-
   /// مسح الجلسة
   Future<void> clearSession();
 }
@@ -52,18 +46,6 @@ class AuthSessionStoreImpl implements AuthSessionStore {
       AppLogger.error('Failed to read or parse session from secure storage', e);
       return null;
     }
-  }
-
-  @override
-  Future<bool> hasSession() async {
-    final session = await getSession();
-    return session != null && session.sessionCredential.isNotEmpty;
-  }
-
-  @override
-  Future<String?> getSessionCredential() async {
-    final session = await getSession();
-    return session?.sessionCredential;
   }
 
   @override

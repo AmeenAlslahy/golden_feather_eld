@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -10,13 +11,10 @@ import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/reports_provider.dart';
-import '../../../../core/engine/diagnostics/diagnostics_engine.dart';
-import '../../data/services/pdf_export_service.dart';
-import '../../../../core/engine/tracking/duty_status_tracker.dart';
+import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
+import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import '../../../../core/utils/logger.dart';
+import '../../../../core/network/network_providers.dart';
 
 /// شاشة التقارير
 class ReportsPage extends ConsumerWidget {
@@ -25,6 +23,7 @@ class ReportsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportsState = ref.watch(reportsProvider);
+    final backendType = ref.watch(backendTypeProvider);
     final diagnostics = reportsState.diagnostics;
     final dashboard = ref.watch(dashboardDataProvider);
     final dutyTracker = ref.watch(dutyStatusTrackerProvider);
@@ -32,10 +31,14 @@ class ReportsPage extends ConsumerWidget {
     final weekStats = dutyTracker.getWeekStats();
     final loc = context.loc;
     
-    if (reportsState.eldReportJson == null && !reportsState.isLoading) {
+    final hasData = backendType == 'traccar' 
+        ? reportsState.standardSummary != null 
+        : reportsState.eldReport != null;
+        
+    if (!hasData && !reportsState.isLoading) {
       Future.microtask(() {
         if (context.mounted) {
-          ref.read(reportsProvider.notifier).generateReports(loc);
+          ref.read(reportsProvider.notifier).generateReports();
         }
       });
     }
@@ -69,35 +72,56 @@ class ReportsPage extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // ========== تقرير ELD ==========
-                  _buildReportCard(
-                    context,
-                    title: loc.eldReport,
-                    icon: Icons.description,
-                    color: AppColors.primaryBlue,
-                    summary: _buildEldSummary(context, dashboard, todayStats),
-                    reports: reportsState,
-                    isEld: true,
-                    dashboard: dashboard,
-                    todayStats: todayStats,
-                    weekStats: weekStats,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+                  if (backendType == 'traccar') ...[
+                    // ========== تقرير الملخص ==========
+                    _buildReportCard(
+                      context,
+                      title: loc.reports, // summary report
+                      icon: Icons.summarize,
+                      color: AppColors.primaryBlue,
+                      summary: _buildStandardSummary(context, reportsState.standardSummary),
+                      isEld: false,
+                      ref: ref,
+                      exportFormat: 'summary',
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    // ========== تقرير الرحلات ==========
+                    _buildReportCard(
+                      context,
+                      title: 'Trips',
+                      icon: Icons.directions_car,
+                      color: AppColors.successGreen,
+                      summary: _buildStandardSummary(context, reportsState.standardRoute), // using route or trips
+                      isEld: false,
+                      ref: ref,
+                      exportFormat: 'trips',
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ] else ...[
+                    // ========== تقرير ELD ==========
+                    _buildReportCard(
+                      context,
+                      title: loc.eldReport,
+                      icon: Icons.description,
+                      color: AppColors.primaryBlue,
+                      summary: _buildEldSummary(context, dashboard, todayStats),
+                      isEld: true,
+                      ref: ref,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
 
-                  // ========== تقرير HOS ==========
-                  _buildReportCard(
-                    context,
-                    title: loc.hosReport,
-                    icon: Icons.analytics,
-                    color: AppColors.successGreen,
-                    summary: _buildHosSummary(context, todayStats, weekStats),
-                    reports: reportsState,
-                    isEld: false,
-                    dashboard: dashboard,
-                    todayStats: todayStats,
-                    weekStats: weekStats,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                    // ========== تقرير HOS ==========
+                    _buildReportCard(
+                      context,
+                      title: loc.hosReport,
+                      icon: Icons.analytics,
+                      color: AppColors.successGreen,
+                      summary: _buildHosSummary(context, todayStats, weekStats),
+                      isEld: false,
+                      ref: ref,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                 ],
               ),
             ),
@@ -163,11 +187,9 @@ class ReportsPage extends ConsumerWidget {
     required IconData icon,
     required Color color,
     required Widget summary,
-    required ReportsState reports,
     required bool isEld,
-    required dynamic dashboard,
-    required Map<String, dynamic> todayStats,
-    required Map<String, dynamic> weekStats,
+    required WidgetRef ref,
+    String? exportFormat,
   }) {
     return EldCard(
       child: Column(
@@ -191,15 +213,13 @@ class ReportsPage extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildExportButton(context, 'JSON', () => _shareReport(context, isEld ? reports.eldReportJson : reports.hosReportJson, 'json')),
-                const SizedBox(width: AppSpacing.sm),
-                _buildExportButton(context, 'CSV', () => _shareReport(context, isEld ? reports.eldReportCsv : reports.hosReportCsv, 'csv')),
-                const SizedBox(width: AppSpacing.sm),
-                _buildExportButton(context, 'HTML', () => _shareReport(context, isEld ? reports.eldReportHtml : reports.hosReportHtml, 'html')),
-                const SizedBox(width: AppSpacing.sm),
-                _buildExportButton(context, 'PDF', () => _exportPdf(context, isEld, dashboard, todayStats, weekStats), isIcon: false, color: AppColors.dangerRed),
-                const SizedBox(width: AppSpacing.sm),
-                _buildExportButton(context, '📤', () => _shareReport(context, isEld ? reports.eldReportJson : reports.hosReportJson, 'txt'), isIcon: true),
+                if (exportFormat != null)
+                  _buildExportButton(context, 'Excel', () => _exportReport(context, ref, isEld, 'excel', standardType: exportFormat))
+                else ...[
+                  _buildExportButton(context, 'CSV', () => _exportReport(context, ref, isEld, 'csv')),
+                  const SizedBox(width: AppSpacing.sm),
+                  _buildExportButton(context, 'PDF', () => _exportReport(context, ref, isEld, 'pdf'), isIcon: false, color: AppColors.dangerRed),
+                ],
               ],
             ),
           ),
@@ -239,6 +259,15 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
+  /// ملخص التقارير القياسية
+  Widget _buildStandardSummary(BuildContext context, List<dynamic>? reportData) {
+    return Column(
+      children: [
+        _summaryRow(context, 'Records', reportData != null ? reportData.length.toString() : '0'),
+      ],
+    );
+  }
+
   Widget _summaryRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -274,81 +303,49 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _exportPdf(BuildContext context, bool isEld, dynamic dashboard, Map<String, dynamic> todayStats, Map<String, dynamic> weekStats) async {
-    final loc = context.loc;
-    File? file;
-    final date = DateTime.now().toString().substring(0, 10);
+  Future<void> _exportReport(BuildContext context, WidgetRef ref, bool isEld, String format, {String? standardType}) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Requesting export...'), duration: Duration(seconds: 1)),
+    );
+
+    final downloadUrl = await ref.read(reportsProvider.notifier).exportReport(isEld, format, standardReportType: standardType);
     
-    if (isEld) {
-      file = await PdfExportService.exportEldReport(
-        driverName: dashboard.driverName,
-        vehicleId: dashboard.vehicleId,
-        date: date,
-        stats: todayStats.map((key, value) => MapEntry(key, (value as num).toDouble())),
-        isCertified: true,
-        loc: loc,
-      );
+    if (downloadUrl != null && context.mounted) {
+      if (downloadUrl.startsWith('http://') || downloadUrl.startsWith('https://')) {
+        final uri = Uri.parse(downloadUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error launching report URL.'), backgroundColor: AppColors.dangerRed),
+            );
+          }
+        }
+      } else {
+        // It is a local file path downloaded by the repository
+        try {
+          await Share.shareXFiles([XFile(downloadUrl)], text: 'Exported Report');
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error sharing local report file.'), backgroundColor: AppColors.dangerRed),
+            );
+          }
+        }
+      }
     } else {
-      file = await PdfExportService.exportHosReport(
-        driverName: dashboard.driverName,
-        date: date,
-        dailyStats: {
-          'driving': (todayStats['driving'] as num?)?.toDouble() ?? 0.0,
-          'work': ((todayStats['driving'] as num? ?? 0) + (todayStats['on_duty'] as num? ?? 0)).toDouble(),
-          'rest': ((todayStats['off_duty'] as num? ?? 0) + (todayStats['sleeper'] as num? ?? 0)).toDouble(),
-          'break': 0.0,
-          'distance': (todayStats['distance'] as num?)?.toDouble() ?? 0.0,
-        },
-        weeklyStats: {
-          'total_driving': (weekStats['driving'] as num?)?.toDouble() ?? 0.0,
-          'total_work': (weekStats['work'] as num?)?.toDouble() ?? 0.0,
-          'total_rest': (weekStats['rest'] as num?)?.toDouble() ?? 0.0,
-          'total_break': 0.0,
-          'total_distance': (weekStats['distance'] as num?)?.toDouble() ?? 0.0,
-          'available_today': 11.0 - ((todayStats['driving'] as num?)?.toDouble() ?? 0.0),
-          'available_tomorrow': 11.0,
-        },
-        isCompliant: true,
-        loc: loc,
-      );
-    }
-
-    if (file != null && context.mounted) {
-      final success = await PdfExportService.sharePdf(file);
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ ${loc.pdfExportedSuccess}'),
-            backgroundColor: AppColors.successGreen,
-          ),
-        );
+      if (context.mounted) {
+        if (standardType != null) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to download standard report.'), backgroundColor: AppColors.dangerRed),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error exporting report.'), backgroundColor: AppColors.dangerRed),
+          );
+        }
       }
-    }
-  }
-
-  Future<void> _shareReport(BuildContext context, String? content, String extension) async {
-    if (content == null) return;
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/ELD_Report.$extension');
-      await file.writeAsString(content);
-      
-      final result = await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'ELD/HOS Report',
-      );
-      
-      if (result.status == ShareResultStatus.success && context.mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isArabic ? '✅ تم التصدير بنجاح' : '✅ Exported successfully'),
-            backgroundColor: AppColors.successGreen,
-          ),
-        );
-      }
-    } catch (e) {
-      AppLogger.error('Failed to share report', e);
     }
   }
 }

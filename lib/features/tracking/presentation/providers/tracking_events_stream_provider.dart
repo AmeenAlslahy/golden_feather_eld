@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/live_tracking_data_source.dart';
 

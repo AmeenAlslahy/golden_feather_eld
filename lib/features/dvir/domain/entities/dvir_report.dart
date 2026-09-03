@@ -110,6 +110,46 @@ class DvirReport extends Equatable {
     this.trailerDefects,
   });
 
+  DvirReport copyWith({
+    String? id,
+    InspectionType? type,
+    DateTime? date,
+    String? driverName,
+    String? vehicleId,
+    String? trailerId,
+    double? odometer,
+    List<ItemInspectionResult>? items,
+    List<String>? dtcCodes,
+    String? notes,
+    String? signature,
+    VehicleCondition? condition,
+    bool? isSubmitted,
+    String? location,
+    String? companyName,
+    String? vehicleDefects,
+    String? trailerDefects,
+  }) {
+    return DvirReport(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      date: date ?? this.date,
+      driverName: driverName ?? this.driverName,
+      vehicleId: vehicleId ?? this.vehicleId,
+      trailerId: trailerId ?? this.trailerId,
+      odometer: odometer ?? this.odometer,
+      items: items ?? this.items,
+      dtcCodes: dtcCodes ?? this.dtcCodes,
+      notes: notes ?? this.notes,
+      signature: signature ?? this.signature,
+      condition: condition ?? this.condition,
+      isSubmitted: isSubmitted ?? this.isSubmitted,
+      location: location ?? this.location,
+      companyName: companyName ?? this.companyName,
+      vehicleDefects: vehicleDefects ?? this.vehicleDefects,
+      trailerDefects: trailerDefects ?? this.trailerDefects,
+    );
+  }
+
   bool get hasDefects => items.any((item) => item.isDefective);
   int get defectCount => items.where((item) => item.isDefective).length;
 

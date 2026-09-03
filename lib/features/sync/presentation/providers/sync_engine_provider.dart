@@ -48,7 +48,8 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
 
   if (env == AppEnvironment.production) {
     final apiClient = ref.watch(apiClientProvider);
-    return TraccarRemoteEventDispatcher(apiClient);
+    final endpoints = ref.watch(endpointsProvider);
+    return TraccarRemoteEventDispatcher(apiClient, endpoints);
   }
 
   // في البيئات الأخرى، نستخدم السلوك الآمن الذي يمنع فقدان البيانات

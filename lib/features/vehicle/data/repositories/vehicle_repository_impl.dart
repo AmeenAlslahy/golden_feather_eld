@@ -22,14 +22,13 @@ class VehicleRepositoryImpl implements VehicleRepository {
 
   @override
   Future<Either<Failure, List<Vehicle>>> getVehicles() async {
-    final isConnected = await _networkInfo.isConnected;
-    if (!isConnected) {
+    if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
 
     try {
       final vehicles = await _remoteDataSource.getVehicles();
-      return Right(vehicles);
+      return Right(vehicles.cast<Vehicle>().toList());
     } catch (e) {
       if (e is ServerException) {
         return Left(ServerFailure(
@@ -63,7 +62,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
       
       // If we have an ID, we should get the full list to return the matching vehicle
       final vehiclesResult = await getVehicles();
-      return vehiclesResult.match(
+      final Either<Failure, Vehicle?> result = vehiclesResult.match(
         (failure) => const Right(null), // If we can't fetch, we can't get the full object. A better offline approach would cache the list.
         (vehicles) {
           try {
@@ -76,6 +75,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
           }
         },
       );
+      return result;
     } catch (e) {
       return const Left(CacheFailure(message: 'فشل في قراءة الشاحنة المحفوظة'));
     }

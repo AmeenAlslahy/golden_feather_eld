@@ -1,8 +1,12 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
-import '../../../../core/services/local_database_service.dart';
+import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/app_date_utils.dart';
+import '../../../../core/constants/storage_constants.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../features/hos/domain/engine/hos_models.dart';
 
 abstract class LogLocalDataSource {
   Future<List<LogEvent>> getEvents(DateTime date);
@@ -15,29 +19,71 @@ abstract class LogLocalDataSource {
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
-  final LocalDatabaseService _localDb;
+  Box<String> get _eventsBox => Hive.box<String>(StorageConstants.eventsBox);
+  Box<String> get _periodsBox => Hive.box<String>(StorageConstants.periodsBox);
+  Box<String> get _auditBox => Hive.box<String>(StorageConstants.auditBox);
 
-  LogLocalDataSourceImpl(this._localDb);
+  // --- Helper Methods ---
+
+  Future<bool> _saveToBox(
+    Box<String> box,
+    Map<String, dynamic> data,
+    String timestampKey,
+    String entityName,
+  ) async {
+    try {
+      final dateStr = AppDateUtils.extractDateStr(data[timestampKey] as String?);
+      final currentList = _getListFromBox(box, dateStr);
+      currentList.add(data);
+
+      await box.put(dateStr, jsonEncode(currentList));
+      return true;
+    } catch (e) {
+      AppLogger.error('Failed to save $entityName', e);
+      throw Exception('Failed to save $entityName: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _getFromBox(
+    Box<String> box,
+    DateTime date,
+    String entityName,
+  ) async {
+    try {
+      final dateStr = AppDateUtils.formatDate(date);
+      return _getListFromBox(box, dateStr);
+    } catch (e) {
+      AppLogger.error('Failed to get $entityName', e);
+      throw Exception('Failed to get $entityName: $e');
+    }
+  }
+
+  List<Map<String, dynamic>> _getListFromBox(Box<String> box, String dateStr) {
+    final data = box.get(dateStr);
+    if (data == null) return [];
+    try {
+      final decoded = jsonDecode(data) as List;
+      return decoded.map((e) => e as Map<String, dynamic>).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // --- Implementations ---
 
   @override
   Future<List<LogEvent>> getEvents(DateTime date) async {
-    final result = await _localDb.getEventsByDate(date);
-    return result.match((failure) => throw Exception(failure.message), (data) {
-      return data
-          .map((e) => LogEvent(
-                id: e['id'] as String? ??
-                    DateTime.now().millisecondsSinceEpoch.toString(),
-                status: e['status'] as String,
-                statusArabic:
-                    e['statusArabic'] as String? ?? e['status'] as String,
-                startTime: DateTime.parse(e['startTime'] as String),
-                duration: Duration(seconds: e['durationSeconds'] as int? ?? 0),
-                location: e['location'] as String? ?? 'Unknown',
-                odometer: (e['odometer'] as num?)?.toDouble(),
-                engineHours: (e['engineHours'] as num?)?.toDouble(),
-              ))
-          .toList();
-    });
+    final data = await _getFromBox(_eventsBox, date, 'events');
+    return data.map((e) => LogEvent(
+          id: e['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          status: e['status'] as String,
+          statusArabic: e['statusArabic'] as String? ?? e['status'] as String,
+          startTime: DateTime.parse(e['startTime'] as String),
+          duration: Duration(seconds: e['durationSeconds'] as int? ?? 0),
+          location: e['location'] as String? ?? 'Unknown',
+          odometer: (e['odometer'] as num?)?.toDouble(),
+          engineHours: (e['engineHours'] as num?)?.toDouble(),
+        )).toList();
   }
 
   @override
@@ -53,8 +99,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'engineHours': event.engineHours,
       'timestamp': event.startTime.toIso8601String(),
     };
-    final result = await _localDb.saveEvent(map);
-    return result.isRight();
+    return _saveToBox(_eventsBox, map, 'timestamp', 'event');
   }
 
   @override
@@ -66,24 +111,18 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<List<DutyPeriod>> getPeriods(DateTime date) async {
-    final result = await _localDb.getPeriodsByDate(date);
-    return result.match((failure) => throw Exception(failure.message), (data) {
-      return data
-          .map((e) => DutyPeriod(
-                status: e['status'] as String? ?? 'off_duty',
-                startTime: DateTime.parse(e['startTime'] as String),
-                endTime: e['endTime'] != null
-                    ? DateTime.parse(e['endTime'] as String)
-                    : DateTime.now(),
-                startOdometer: (e['startOdometer'] as num?)?.toDouble(),
-                endOdometer: (e['endOdometer'] as num?)?.toDouble(),
-                startLat: (e['startLat'] as num?)?.toDouble(),
-                startLon: (e['startLon'] as num?)?.toDouble(),
-                endLat: (e['endLat'] as num?)?.toDouble(),
-                endLon: (e['endLon'] as num?)?.toDouble(),
-              ))
-          .toList();
-    });
+    final data = await _getFromBox(_periodsBox, date, 'periods');
+    return data.map((e) => DutyPeriod(
+          status: e['status'] as String? ?? 'off_duty',
+          startTime: DateTime.parse(e['startTime'] as String),
+          endTime: e['endTime'] != null ? DateTime.parse(e['endTime'] as String) : DateTime.now(),
+          startOdometer: (e['startOdometer'] as num?)?.toDouble(),
+          endOdometer: (e['endOdometer'] as num?)?.toDouble(),
+          startLat: (e['startLat'] as num?)?.toDouble(),
+          startLon: (e['startLon'] as num?)?.toDouble(),
+          endLat: (e['endLat'] as num?)?.toDouble(),
+          endLon: (e['endLon'] as num?)?.toDouble(),
+        )).toList();
   }
 
   @override
@@ -99,26 +138,21 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'endLat': period.endLat,
       'endLon': period.endLon,
     };
-    final result = await _localDb.savePeriod(map);
-    return result.isRight();
+    return _saveToBox(_periodsBox, map, 'startTime', 'period');
   }
 
   @override
   Future<bool> logAudit(AuditEntry entry) async {
-    final result = await _localDb.saveAudit(entry.toMap());
-    return result.isRight();
+    return _saveToBox(_auditBox, entry.toMap(), 'timestamp', 'audit');
   }
 
   @override
   Future<List<AuditEntry>> getAuditEntries(DateTime date) async {
-    final result = await _localDb.getAudit(date);
-    return result.match((failure) => throw Exception(failure.message), (data) {
-      return data.map((e) => AuditEntry.fromMap(e)).toList();
-    });
+    final data = await _getFromBox(_auditBox, date, 'audit');
+    return data.map((e) => AuditEntry.fromMap(e)).toList();
   }
 }
 
 final logLocalDataSourceProvider = Provider<LogLocalDataSource>((ref) {
-  final localDb = ref.watch(localDatabaseServiceProvider);
-  return LogLocalDataSourceImpl(localDb);
+  return LogLocalDataSourceImpl();
 });

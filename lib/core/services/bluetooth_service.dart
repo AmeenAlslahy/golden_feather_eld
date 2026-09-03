@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+﻿import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +7,7 @@ import '../utils/logger.dart';
 import '../constants/channel_constants.dart';
 import 'mock_bluetooth_data_source.dart';
 
-/// جهاز ELD
+/// ط¬ظ‡ط§ط² ELD
 class EldDevice {
   final String name;
   final String macAddress;
@@ -34,7 +34,7 @@ class EldDevice {
   }
 }
 
-/// حالة اتصال Bluetooth
+/// ط­ط§ظ„ط© ط§طھطµط§ظ„ Bluetooth
 enum BluetoothConnectionStatus {
   disconnected,
   scanning,
@@ -43,7 +43,7 @@ enum BluetoothConnectionStatus {
   error,
 }
 
-/// واجهة تجريد اتصال البلوتوث
+/// ظˆط§ط¬ظ‡ط© طھط¬ط±ظٹط¯ ط§طھطµط§ظ„ ط§ظ„ط¨ظ„ظˆطھظˆط«
 abstract class BluetoothDataSource {
   Stream<List<EldDevice>> startScanning();
   Future<void> stopScanning();
@@ -56,7 +56,7 @@ abstract class BluetoothDataSource {
   void dispose();
 }
 
-/// التنفيذ الحقيقي لـ Bluetooth عبر MethodChannel
+/// ط§ظ„طھظ†ظپظٹط° ط§ظ„ط­ظ‚ظٹظ‚ظٹ ظ„ظ€ Bluetooth ط¹ط¨ط± MethodChannel
 class RealBluetoothDataSource implements BluetoothDataSource {
   static const MethodChannel _channel =
       MethodChannel(ChannelConstants.bluetooth);
@@ -137,7 +137,7 @@ class RealBluetoothDataSource implements BluetoothDataSource {
   }
 }
 
-/// خدمة Bluetooth محسنة لإدارة الذاكرة
+/// ط®ط¯ظ…ط© Bluetooth ظ…ط­ط³ظ†ط© ظ„ط¥ط¯ط§ط±ط© ط§ظ„ط°ط§ظƒط±ط©
 class BluetoothService {
   final BluetoothDataSource _dataSource;
 
@@ -170,21 +170,21 @@ class BluetoothService {
   bool get isConnected => _status == BluetoothConnectionStatus.connected;
 
   Stream<List<EldDevice>> startScanning() {
-    AppLogger.info('🔍 BLE Scanning started');
+    AppLogger.info('ًں”چ BLE Scanning started');
     return _dataSource.startScanning();
   }
 
   void stopScanning() {
-    AppLogger.info('🔍 BLE Scanning stopped');
+    AppLogger.info('ًں”چ BLE Scanning stopped');
     _dataSource.stopScanning();
   }
 
   Future<bool> connect(String macAddress) async {
-    AppLogger.info('🔗 Connecting to $macAddress');
+    AppLogger.info('ًں”— Connecting to $macAddress');
     final device = await _dataSource.connect(macAddress);
     if (device != null) {
       _connectedDevice = device;
-      AppLogger.info('✅ Connected to $macAddress');
+      AppLogger.info('âœ… Connected to $macAddress');
       return true;
     }
     return false;
@@ -192,7 +192,7 @@ class BluetoothService {
 
   Future<void> disconnect() async {
     await _dataSource.disconnect();
-    AppLogger.info('🔌 Disconnected');
+    AppLogger.info('ًں”Œ Disconnected');
   }
 
   void onDataReceived(void Function(EldEvent) callback) {
@@ -211,7 +211,7 @@ class BluetoothService {
   }
 }
 
-/// مزود مصدر بيانات البلوتوث
+/// ظ…ط²ظˆط¯ ظ…طµط¯ط± ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¨ظ„ظˆطھظˆط«
 final bluetoothDataSourceProvider = Provider<BluetoothDataSource>((ref) {
   const bool useRealBluetooth =
       bool.fromEnvironment('USE_REAL_BLUETOOTH', defaultValue: false);
@@ -221,7 +221,7 @@ final bluetoothDataSourceProvider = Provider<BluetoothDataSource>((ref) {
   return dataSource;
 });
 
-/// مزود خدمة Bluetooth
+/// ظ…ط²ظˆط¯ ط®ط¯ظ…ط© Bluetooth
 final bluetoothServiceProvider = Provider<BluetoothService>((ref) {
   final dataSource = ref.watch(bluetoothDataSourceProvider);
   return BluetoothService(dataSource: dataSource);

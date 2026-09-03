@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../data/datasources/user_store.dart';
 import 'auth_providers.dart';
 
 /// حالة المصادقة
@@ -48,25 +47,19 @@ class AuthState {
       user != null;
 }
 
-/// مزود حالة المصادقة القديم (للتوافق مع الـ UI)
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(traccarAuthRepositoryProvider);
-  final userStore = ref.watch(userStoreProvider);
   return AuthNotifier(
     repository: repository,
-    userStore: userStore,
   );
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
-  final UserStore _userStore;
 
   AuthNotifier({
     required AuthRepository repository,
-    required UserStore userStore,
   })  : _repository = repository,
-        _userStore = userStore,
         super(const AuthState());
 
   /// التحقق من حالة المصادقة عند بدء التطبيق
@@ -77,26 +70,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       sessionResult.match((failure) {
         state = const AuthState(status: AuthStatus.unauthenticated);
-      }, (session) async {
-        // محاولة استرجاع المستخدم من التخزين الآمن
-        User? user = await _userStore.getUser();
-
-        if (user == null) {
-          // إذا لم يكن موجوداً، نقوم بإنشائه من الميتاداتا وحفظه
-          final email = session.userMetadata['email'] ??
-              session.userMetadata['name'] ??
-              'unknown';
-          user = User(
-            id: session.userMetadata['id']?.toString() ?? '',
-            fullName: session.userMetadata['name'] ?? email,
-            email: email,
-            username: email,
-            role: UserRole.fieldWorker,
-            createdAt: DateTime.now(),
-          );
-          await _userStore.saveUser(user);
-        }
-
+      }, (user) {
         state = AuthState(
           status: AuthStatus.authenticated,
           user: user,
@@ -150,12 +124,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         AppLogger.error('Login failed: ${failure.message}');
         return false;
       },
-      (authSession) async {
-        final user = User.fromJson(authSession.userMetadata);
-
-        // حفظ بيانات المستخدم في التخزين المخصص
-        await _userStore.saveUser(user);
-
+      (user) {
         state = AuthState(
           status: AuthStatus.authenticated,
           user: user,
@@ -190,22 +159,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         AppLogger.error('Registration failed: ${failure.message}');
         return false;
       },
-      (authSession) async {
-        final emailStr = authSession.userMetadata['email'] ??
-            authSession.userMetadata['name'] ??
-            email;
-        final user = User(
-          id: authSession.userMetadata['id']?.toString() ?? '',
-          fullName: authSession.userMetadata['name'] ?? name,
-          email: emailStr,
-          username: emailStr,
-          role: UserRole.fieldWorker,
-          createdAt: DateTime.now(),
-        );
-
-        // حفظ بيانات المستخدم في التخزين المخصص
-        await _userStore.saveUser(user);
-
+      (user) {
         state = AuthState(
           status: AuthStatus.authenticated,
           user: user,
@@ -219,7 +173,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// تسجيل الخروج
   Future<void> logout() async {
     await _repository.logout();
-    await _userStore.clearUser(); // مسح بيانات المستخدم من الـ Secure Storage
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

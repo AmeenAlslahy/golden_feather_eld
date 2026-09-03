@@ -2,33 +2,33 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/features/tracking/data/services/tracking_service.dart';
-import 'package:golden_feather_eld/core/network/tracking_client_sdk.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
 
-class MockTraccarClient implements TrackingClientInterface {
-  Config? lastConfig;
+class MockTraccarClient implements TraccarNativeClient {
+  Map<String, dynamic>? lastConfig;
 
   @override
-  Future<void> setConfig(Config config) async {
+  Future<void> configure(Map<String, dynamic> config) async {
     lastConfig = config;
   }
 
   @override
-  Future<void> start() async {}
+  Future<void> startBackgroundTracking() async {}
 
   @override
-  Future<void> stop() async {}
+  Future<void> stopBackgroundTracking() async {}
 
   @override
-  Future<bool> isTracking() async => false;
+  Future<bool> isTrackingActive() async => false;
 
   @override
-  Future<void> requestPosition({String? alarm}) async {}
+  Future<void> requestImmediatePosition({String? alarm}) async {}
 
   @override
-  Future<List<LogMessage>> getLogs() async => [];
+  Future<List<Map<String, dynamic>>> getNativeLogs() async => [];
 
   @override
-  Future<void> clearLogs() async {}
+  Future<void> clearNativeLogs() async {}
 }
 
 class MockLocalStorageService extends LocalStorageService {
@@ -106,7 +106,7 @@ void main() {
         await trackingService.init();
 
         // It should either fail (throw exception) or use AppEnvironmentConfig.apiBaseUrl instead of mock
-        final usedUrl = mockTracker.lastConfig?.serverUrl;
+        final usedUrl = mockTracker.lastConfig?['serverUrl'];
         expect(usedUrl?.contains('mock-traccar-server.com'), false);
       } catch (e) {
         // Exception is expected if environment has no valid URL

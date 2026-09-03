@@ -7,6 +7,7 @@ import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// شاشة معلومات الحساب
 class AccountPage extends ConsumerWidget {
@@ -15,8 +16,12 @@ class AccountPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardDataProvider);
+    final userState = ref.watch(authStateProvider);
+    final user = userState.user;
+    final attributes = user?.attributes ?? {};
     final loc = context.loc;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -86,55 +91,79 @@ class AccountPage extends ConsumerWidget {
                   _buildInfoRow(
                     context,
                     isArabic ? 'اسم المستخدم' : 'Username',
-                    'amin.alsalhi',
+                    user?.username ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildInfoRow(
                     context,
                     isArabic ? 'البريد الإلكتروني' : 'Email',
-                    'amin@company.com',
+                    user?.email ?? notAvailable,
+                  ),
+                  const Divider(color: AppColors.border),
+                  _buildInfoRow(
+                    context,
+                    isArabic ? 'رقم الهاتف' : 'Phone',
+                    user?.phone ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildInfoRow(
                     context,
                     isArabic ? 'رقم الرخصة' : 'License Number',
-                    'CDL-582491',
+                    attributes['licenseNumber']?.toString() ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildInfoRow(
                     context,
                     isArabic ? 'الناقل' : 'Carrier',
-                    'Golden Feather Transport',
+                    attributes['carrierName']?.toString() ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildInfoRow(
                     context,
                     isArabic ? 'رقم USDOT' : 'USDOT Number',
-                    '1234567',
+                    attributes['usdotNumber']?.toString() ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildInfoRow(
                     context,
                     isArabic ? 'العنوان' : 'Address',
-                    '123 Main St, Riyadh, SA',
+                    attributes['address']?.toString() ?? notAvailable,
+                  ),
+                  const Divider(color: AppColors.border),
+                  _buildInfoRow(
+                    context,
+                    isArabic ? 'القسم' : 'Department',
+                    attributes['department']?.toString() ?? notAvailable,
+                  ),
+                  const Divider(color: AppColors.border),
+                  _buildInfoRow(
+                    context,
+                    isArabic ? 'الرقم الوظيفي' : 'Employee ID',
+                    attributes['employeeId']?.toString() ?? notAvailable,
+                  ),
+                  const Divider(color: AppColors.border),
+                  _buildInfoRow(
+                    context,
+                    isArabic ? 'المسمى الوظيفي' : 'Position',
+                    attributes['position']?.toString() ?? notAvailable,
                   ),
                   const Divider(color: AppColors.border),
                   _buildDropdownRow(
                     context,
                     isArabic ? 'المنطقة الزمنية' : 'Time Zone',
-                    'US/Eastern',
+                    attributes['timezone']?.toString() ?? 'US/Eastern',
                   ),
                   const Divider(color: AppColors.border),
                   _buildDropdownRow(
                     context,
                     isArabic ? 'لغة التطبيق' : 'Language',
-                    isArabic ? 'العربية' : 'English',
+                    attributes['language']?.toString() ?? (isArabic ? 'العربية' : 'English'),
                   ),
                   const Divider(color: AppColors.border),
                   _buildDropdownRow(
                     context,
                     isArabic ? 'وحدة المسافة' : 'Odometer',
-                    'mi',
+                    attributes['odometerUnit']?.toString() ?? 'mi',
                   ),
                 ],
               ),

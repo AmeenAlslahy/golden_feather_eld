@@ -1,20 +1,19 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import '../../domain/entities/auth_session.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../../../../core/services/local_storage_service.dart';
+
 
 class MockAuthRepository implements AuthRepository {
-  final LocalStorageService _localStorage;
-
-  static bool allowMockSuccess = false;
+  final bool allowMockSuccess;
   bool _hasSession = false;
 
-  MockAuthRepository({required LocalStorageService localStorage})
-      : _localStorage = localStorage;
+  MockAuthRepository({
+    this.allowMockSuccess = true,
+  });
 
   @override
-  Future<Either<Failure, AuthSession>> login({
+  Future<Either<Failure, User>> login({
     required String email,
     required String password,
   }) async {
@@ -26,19 +25,16 @@ class MockAuthRepository implements AuthRepository {
 
     if (email == 'admin@demo.com' && password == 'admin123') {
       _hasSession = true;
-      final session = AuthSession(
-        sessionCredential: 'mock_session_cookie',
-        userMetadata: const {
-          'id': 1,
-          'name': 'Ameen Alsalahi',
-          'email': 'admin@demo.com',
-          'administrator': true,
-        },
-        serverOrigin: 'mock_origin',
+      final user = User(
+        id: '1',
+        fullName: 'Ameen Alsalahi',
+        email: 'admin@demo.com',
+        username: 'admin@demo.com',
+        role: UserRole.admin,
         createdAt: DateTime.now(),
       );
 
-      return Right(session);
+      return Right(user);
     }
 
     return const Left(AuthFailure(
@@ -48,7 +44,7 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthSession>> register({
+  Future<Either<Failure, User>> register({
     required String name,
     required String email,
     required String password,
@@ -62,20 +58,17 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthSession>> checkAndRestoreSession() async {
+  Future<Either<Failure, User>> checkAndRestoreSession() async {
     if (allowMockSuccess && _hasSession) {
-      final session = AuthSession(
-        sessionCredential: 'mock_session_cookie',
-        userMetadata: const {
-          'id': 1,
-          'name': 'Ameen Alsalahi',
-          'email': 'admin@demo.com',
-          'administrator': true,
-        },
-        serverOrigin: 'mock_origin',
+      final user = User(
+        id: '1',
+        fullName: 'Ameen Alsalahi',
+        email: 'admin@demo.com',
+        username: 'admin@demo.com',
+        role: UserRole.admin,
         createdAt: DateTime.now(),
       );
-      return Right(session);
+      return Right(user);
     }
     return const Left(SessionMissingFailure());
   }
@@ -88,12 +81,14 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthSession>> getCurrentSession() async {
+  Future<Either<Failure, User>> getCurrentSession() async {
     if (_hasSession) {
-      return Right(AuthSession(
-        sessionCredential: 'mock_session_cookie',
-        userMetadata: const {},
-        serverOrigin: 'mock_origin',
+      return Right(User(
+        id: '1',
+        fullName: 'Mock User',
+        email: 'mock@demo.com',
+        username: 'mock@demo.com',
+        role: UserRole.fieldWorker,
         createdAt: DateTime.now(),
       ));
     }

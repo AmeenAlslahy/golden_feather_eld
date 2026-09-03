@@ -1,18 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/datasources/native_event_channel_client.dart';
+
 import '../../domain/entities/native_location_event.dart';
 
-// Provides the singleton instance of the NativeEventChannelClient
-final nativeEventChannelClientProvider = Provider<NativeEventChannelClient>((ref) {
-  final client = NativeEventChannelClient();
-  
-  // Clean up when the provider is destroyed
-  ref.onDispose(() {
-    client.dispose();
-  });
-  
-  return client;
-});
+import 'tracking_providers.dart';
 
 // A stream provider that exposes ONLY valid/stale/suspicious native locations to the UI.
 // This is intentionally isolated from HOS, Diagnostics, and Distance engines.

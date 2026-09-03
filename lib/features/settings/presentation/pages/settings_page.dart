@@ -14,7 +14,8 @@ import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../tracking/data/services/tracking_service.dart';
 import 'qr_scanner_page.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/services/password_service.dart';
+
+import '../../../../core/presentation/utils/password_prompt_util.dart';
 
 final advancedSettingsProvider = StateProvider<bool>((ref) => false);
 final bufferProvider = StateProvider<bool>((ref) => ref.watch(localStorageProvider).buffer);
@@ -195,7 +196,7 @@ class SettingsPage extends ConsumerWidget {
             title: Text(loc.advancedLabel, style: AppTextStyles(context).bodyBold),
             value: advanced,
             onChanged: (value) async {
-              final authenticated = await ref.read(passwordServiceProvider).authenticate(context);
+              final authenticated = await PasswordPromptUtil.authenticate(context, ref);
               if (authenticated && context.mounted) {
                 ref.read(advancedSettingsProvider.notifier).state = value;
               }
@@ -346,7 +347,7 @@ class SettingsPage extends ConsumerWidget {
       subtitle: Text(displayValue),
       trailing: const Icon(Icons.edit, size: 20),
       onTap: () async {
-        final authenticated = await ref.read(passwordServiceProvider).authenticate(context);
+        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           _showEditDialog(context, label, editValue, onSave, isNumber);
         }
@@ -391,7 +392,7 @@ class SettingsPage extends ConsumerWidget {
       subtitle: Text(labels[current] ?? current),
       trailing: const Icon(Icons.arrow_drop_down, size: 20),
       onTap: () async {
-        final authenticated = await ref.read(passwordServiceProvider).authenticate(context);
+        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           showDialog(
             context: context,
@@ -419,7 +420,7 @@ class SettingsPage extends ConsumerWidget {
       title: Text(label, style: AppTextStyles(context).body),
       value: value,
       onChanged: (val) async {
-        final authenticated = await ref.read(passwordServiceProvider).authenticate(context);
+        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           onChanged(val);
         }

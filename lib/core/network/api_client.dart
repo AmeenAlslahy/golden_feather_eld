@@ -131,11 +131,16 @@ class ApiClient {
       
       final data = e.response!.data;
       String message = 'Unknown server error';
-      String? errorDetails;
-      
       if (data is Map<String, dynamic>) {
         message = data['message']?.toString() ?? data['error']?.toString() ?? message;
-        errorDetails = data['error']?.toString();
+      } else if (data is String) {
+        if (statusCode == 404) {
+          message = 'الخدمة غير متوفرة حالياً (404)';
+        } else if (data.contains('<html') || data.contains('Exception:')) {
+          message = 'حدث خطأ داخلي في الخادم ($statusCode)';
+        } else {
+          message = data.length > 100 ? '${data.substring(0, 100)}...' : data;
+        }
       }
       
       return ServerException(

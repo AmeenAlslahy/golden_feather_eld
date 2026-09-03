@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import 'local_database_service.dart';
 import 'local_storage_service.dart';
@@ -48,7 +49,10 @@ class AppInitializer {
   }
 
   Future<void> _initDependentServices() async {
-    trackingService = TrackingService(storage: localStorageService);
+    trackingService = TrackingService(
+      storage: localStorageService,
+      tracker: TraccarNativeClientImpl(),
+    );
     await trackingService.init();
 
     try {

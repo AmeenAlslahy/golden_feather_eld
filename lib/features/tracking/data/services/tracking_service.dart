@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/tracking_client_sdk.dart';
+import '../datasources/traccar_sdk/traccar_native_client.dart';
+import '../../../../core/network/network_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/config/app_environment.dart';
 import '../../../../core/utils/logger.dart';
 
 /// خدمة التتبع - متكاملة مع Traccar Client SDK
 class TrackingService {
-  final TrackingClientInterface _tracker;
+  final TraccarNativeClient _tracker;
   final LocalStorageService _storage;
   StreamSubscription? _locationSubscription;
   bool _isInitialized = false;
 
   TrackingService({
-    TrackingClientInterface? tracker,
+    required TraccarNativeClient tracker,
     required LocalStorageService storage,
-  })  : _tracker = tracker ?? MockTrackingClient(),
+  })  : _tracker = tracker,
         _storage = storage;
 
   // ========== التهيئة ==========
@@ -29,8 +30,8 @@ class TrackingService {
 
       // لا تسمح ببدء التتبع بعنوان وهمي أو فارغ في بيئة temporaryTraccar
       if (AppEnvironmentConfig.current == AppEnvironment.temporaryTraccar) {
-        if (config.serverUrl.isEmpty ||
-            config.serverUrl.contains('mock-traccar-server')) {
+        if (config['serverUrl'].isEmpty ||
+            config['serverUrl'].contains('mock-traccar-server')) {
           AppLogger.error(
               '❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar');
           throw Exception(
@@ -38,11 +39,11 @@ class TrackingService {
         }
       }
 
-      await _tracker.setConfig(config);
+      await _tracker.configure(config);
       _isInitialized = true;
       AppLogger.info('✅ TrackingService initialized with Traccar SDK');
-      AppLogger.info('   Server: ${config.serverUrl}');
-      AppLogger.info('   Device: ${config.deviceId}');
+      AppLogger.info('   Server: ${config['serverUrl']}');
+      AppLogger.info('   Device: ${config['deviceId']}');
     } catch (e) {
       AppLogger.error('❌ Failed to initialize Traccar SDK', e);
       rethrow;
@@ -50,7 +51,7 @@ class TrackingService {
   }
 
   /// بناء Config من الإعدادات المحلية أو البيئة
-  Config _buildConfig() {
+  Map<String, dynamic> _buildConfig() {
     String serverUrl = _storage.serverUrl;
 
     // في temporaryTraccar نفضل URL البيئة لتجنب mock المخزن محلياً
@@ -68,29 +69,29 @@ class TrackingService {
       }
     } catch (_) {}
 
-    return Config(
-      serverUrl: serverUrl,
-      deviceId: _storage.deviceId,
-      location: LocationConfig(
-        accuracy: _mapAccuracy(_storage.accuracy),
-        distanceMeters: _storage.distance,
-        intervalSeconds: _storage.interval,
-        angleDegrees: _storage.angle,
-        heartbeatIntervalSeconds: _storage.heartbeat,
-        stopDetection: _storage.stopDetection,
-      ),
-      wakeLock: _storage.wakelock,
-      buffer: _storage.buffer,
-      preferPlatformProviders: _storage.preferPlatformProviders,
-    );
+        return {
+      'serverUrl': serverUrl,
+      'deviceId': _storage.deviceId,
+      'location': {
+        'accuracy': _mapAccuracy(_storage.accuracy),
+        'distanceMeters': _storage.distance,
+        'intervalSeconds': _storage.interval,
+        'angleDegrees': _storage.angle,
+        'heartbeatIntervalSeconds': _storage.heartbeat,
+        'stopDetection': _storage.stopDetection,
+      },
+      'wakeLock': _storage.wakelock,
+      'buffer': _storage.buffer,
+      'preferPlatformProviders': _storage.preferPlatformProviders,
+    };
   }
 
-  Accuracy _mapAccuracy(String accuracy) {
+  String _mapAccuracy(String accuracy) {
     return switch (accuracy) {
-      'highest' => Accuracy.highest,
-      'high' => Accuracy.high,
-      'low' => Accuracy.low,
-      _ => Accuracy.medium,
+      'highest' => 'highest',
+      'high' => 'high',
+      'low' => 'low',
+      _ => 'medium',
     };
   }
 
@@ -100,7 +101,7 @@ class TrackingService {
   Future<void> start() async {
     if (!_isInitialized) await init();
     try {
-      await _tracker.start();
+      await _tracker.startBackgroundTracking();
       AppLogger.info('📍 Tracking started');
     } catch (e) {
       AppLogger.error('Failed to start tracking', e);
@@ -111,7 +112,7 @@ class TrackingService {
   /// إيقاف التتبع
   Future<void> stop() async {
     try {
-      await _tracker.stop();
+      await _tracker.stopBackgroundTracking();
       AppLogger.info('⏹️ Tracking stopped');
     } catch (e) {
       AppLogger.error('Failed to stop tracking', e);
@@ -122,7 +123,7 @@ class TrackingService {
   /// هل التتبع نشط
   Future<bool> isTracking() async {
     try {
-      return _tracker.isTracking();
+      return await _tracker.isTrackingActive();
     } catch (e) {
       return false;
     }
@@ -132,7 +133,7 @@ class TrackingService {
   Future<void> requestPosition({String? alarm}) async {
     if (!_isInitialized) await init();
     try {
-      await _tracker.requestPosition(alarm: alarm);
+      await _tracker.requestImmediatePosition(alarm: alarm);
       AppLogger.info(
           '📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}');
     } catch (e) {
@@ -146,7 +147,7 @@ class TrackingService {
     if (!_isInitialized) await init();
     try {
       final config = _buildConfig();
-      await _tracker.setConfig(config);
+      await _tracker.configure(config);
       _isInitialized = true;
       AppLogger.info('⚙️ Tracking config updated');
     } catch (e) {
@@ -160,13 +161,7 @@ class TrackingService {
   /// الحصول على سجلات التتبع
   Future<List<Map<String, dynamic>>> getLogs() async {
     try {
-      final logs = await _tracker.getLogs();
-      return logs
-          .map((log) => {
-                'time': log.time,
-                'message': log.message,
-              })
-          .toList();
+      return await _tracker.getNativeLogs();
     } catch (e) {
       // In production, we don't mock logs anymore
       AppLogger.error('Failed to get logs from native tracker', e);
@@ -177,7 +172,7 @@ class TrackingService {
   /// مسح السجلات
   Future<void> clearLogs() async {
     try {
-      await _tracker.clearLogs();
+      await _tracker.clearNativeLogs();
       AppLogger.info('🗑️ Logs cleared');
     } catch (e) {
       AppLogger.error('Failed to clear logs', e);
@@ -196,6 +191,6 @@ class TrackingService {
 /// مزود خدمة التتبع
 final trackingServiceProvider = Provider<TrackingService>((ref) {
   final storage = ref.watch(localStorageProvider);
-  final tracker = ref.watch(trackingClientProvider);
+  final tracker = ref.watch(traccarNativeClientProvider);
   return TrackingService(storage: storage, tracker: tracker);
 });

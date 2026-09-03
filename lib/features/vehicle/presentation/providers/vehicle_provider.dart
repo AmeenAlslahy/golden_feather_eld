@@ -58,12 +58,16 @@ class VehicleState {
 }
 
 /// مزود مستودع المركبات
-final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
+final vehicleRemoteDataSourceProvider = Provider<VehicleRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
+  final endpoints = ref.watch(endpointsProvider);
+  return VehicleRemoteDataSourceImpl(apiClient, endpoints);
+});
+
+final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
+  final remoteDataSource = ref.watch(vehicleRemoteDataSourceProvider);
   final localStorage = ref.watch(localStorageProvider);
   final networkInfo = ref.watch(networkInfoProvider);
-  
-  final remoteDataSource = VehicleRemoteDataSourceImpl(apiClient);
   
   return VehicleRepositoryImpl(
     remoteDataSource: remoteDataSource,

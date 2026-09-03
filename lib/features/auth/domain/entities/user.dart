@@ -2,15 +2,29 @@ import 'package:equatable/equatable.dart';
 
 /// كيان المستخدم
 class User extends Equatable {
+  /// رقم المستخدم
   final String id;
+
+  /// اسم المستخدم
   final String username;
+
+  /// الايميل
   final String email;
+
+  /// الاسم الكامل
   final String fullName;
+
+  /// رقم الهاتف
   final String? phone;
+
+  /// الدور
   final UserRole role;
+
+  /// نشط
   final bool isActive;
   final DateTime? lastLogin;
   final DateTime createdAt;
+  final Map<String, dynamic> attributes;
 
   const User({
     required this.id,
@@ -22,12 +36,14 @@ class User extends Equatable {
     this.isActive = true,
     this.lastLogin,
     required this.createdAt,
+    this.attributes = const {},
   });
 
   bool get isAdmin => role == UserRole.admin;
   bool get isSupervisor => role == UserRole.supervisor;
   bool get isFieldWorker => role == UserRole.fieldWorker;
 
+  /// جلب بيانات المستخدم
   @override
   List<Object?> get props => [
         id,
@@ -39,6 +55,7 @@ class User extends Equatable {
         isActive,
         lastLogin,
         createdAt,
+        attributes,
       ];
 
   Map<String, dynamic> toJson() {
@@ -52,15 +69,18 @@ class User extends Equatable {
       'isActive': isActive,
       'lastLogin': lastLogin?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
+      'attributes': attributes,
     };
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
     // Traccar API returns id as int, name, email, administrator boolean
     final idValue = json['id']?.toString() ?? '';
-    final nameValue = json['name']?.toString() ?? json['fullName']?.toString() ?? '';
-    final emailValue = json['email']?.toString() ?? json['username']?.toString() ?? nameValue;
-    
+    final nameValue =
+        json['name']?.toString() ?? json['fullName']?.toString() ?? '';
+    final emailValue =
+        json['email']?.toString() ?? json['username']?.toString() ?? nameValue;
+
     // Determine role
     UserRole userRole = UserRole.fieldWorker;
     if (json['administrator'] == true) {
@@ -69,7 +89,9 @@ class User extends Equatable {
       userRole = UserRole.fromCode(json['role'] as String);
     }
 
-    final isActive = json['disabled'] != null ? !(json['disabled'] as bool) : (json['isActive'] as bool? ?? true);
+    final isActive = json['disabled'] != null
+        ? !(json['disabled'] as bool)
+        : (json['isActive'] as bool? ?? true);
 
     return User(
       id: idValue,
@@ -79,8 +101,13 @@ class User extends Equatable {
       phone: json['phone']?.toString(),
       role: userRole,
       isActive: isActive,
-      lastLogin: json['lastLogin'] != null ? DateTime.tryParse(json['lastLogin'].toString()) : null,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now() : DateTime.now(),
+      lastLogin: json['lastLogin'] != null
+          ? DateTime.tryParse(json['lastLogin'].toString())
+          : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      attributes: json['attributes'] as Map<String, dynamic>? ?? {},
     );
   }
 }
@@ -102,6 +129,3 @@ enum UserRole {
     );
   }
 }
-
-
-

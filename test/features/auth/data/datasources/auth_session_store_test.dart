@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/auth/data/datasources/auth_session_store.dart';
+
 import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
 
 void main() {
   group('AuthSessionStore Tests', () {
-    late AuthSessionStore store;
     final session = AuthSession.create(
       serverOrigin: 'https://demo.traccar.org',
       sessionCredential: 'mock_jsessionid_123',

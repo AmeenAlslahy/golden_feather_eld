@@ -1,6 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/datasources/codriver_mock_data.dart';
+import '../../../../core/network/network_providers.dart';
+import '../../data/datasources/codriver_remote_data_source.dart';
+import '../../data/repositories/codriver_repository_impl.dart';
 import '../../domain/entities/codriver.dart';
+import '../../domain/repositories/codriver_repository.dart';
+
+// --- Dependency Injection Providers ---
+
+final coDriverRemoteDataSourceProvider = Provider<CoDriverRemoteDataSource>((ref) {
+  return CoDriverRemoteDataSourceImpl(
+    apiClient: ref.watch(apiClientProvider),
+    endpoints: ref.watch(endpointsProvider),
+  );
+});
+
+final coDriverRepositoryProvider = Provider<CoDriverRepository>((ref) {
+  return CoDriverRepositoryImpl(
+    remoteDataSource: ref.watch(coDriverRemoteDataSourceProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
+
+// --- State and Notifier ---
 
 /// حالة شاشة السائق المساعد
 class CoDriverState {
@@ -37,32 +58,34 @@ class CoDriverState {
 
 /// مزود السائق المساعد
 final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
-  return CoDriverNotifier();
+  return CoDriverNotifier(repository: ref.watch(coDriverRepositoryProvider));
 });
 
 class CoDriverNotifier extends StateNotifier<CoDriverState> {
-  CoDriverNotifier() : super(const CoDriverState()) {
+  final CoDriverRepository _repository;
+
+  CoDriverNotifier({required CoDriverRepository repository})
+      : _repository = repository,
+        super(const CoDriverState()) {
     _loadDrivers();
   }
 
   Future<void> _loadDrivers() async {
     state = state.copyWith(isLoading: true, error: null);
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      final mockDrivers = CoDriverMockData.getCoDrivers();
-      if (mounted) {
-        state = state.copyWith(
+    final result = await _repository.getAvailableDrivers();
+    
+    if (mounted) {
+      result.fold(
+        (failure) => state = state.copyWith(
           isLoading: false,
-          availableDrivers: mockDrivers,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        state = state.copyWith(
+          error: failure.message,
+        ),
+        (drivers) => state = state.copyWith(
           isLoading: false,
-          error: 'Failed to load co-drivers: ${e.toString()}',
-        );
-      }
+          availableDrivers: drivers,
+          error: null,
+        ),
+      );
     }
   }
 

@@ -1,12 +1,12 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/hos_rules_engine.dart';
-import '../../../../core/engine/hos_state_machine.dart';
+import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
+import '../../../../features/hos/domain/engine/hos_state_machine.dart';
 import '../../../../core/utils/logger.dart';
-import '../../../../core/config/hos_configuration.dart';
+
 import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../../../../core/engine/tracking/duty_status_tracker.dart';
+import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 
 /// مزود حالة HOS
 final hosStatusProvider = StateNotifierProvider<HosNotifier, HosStatusUpdate>((ref) {
@@ -51,7 +51,7 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
   }
 
   /// تغيير حالة الخدمة
-  bool changeStatus(DutyStatus newStatus, {String? annotation}) {
+  bool changeStatus(DutyStatus newStatus, {String? annotation, bool isYardMoves = false}) {
     if (state.currentStatus == DutyStatus.driving && newStatus != DutyStatus.driving) {
       final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
       final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
@@ -65,8 +65,23 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
       }
     }
     
-    _engine.manualTransition(newStatus, annotation: annotation);
-    refresh();
+    String finalAnnotation = annotation ?? '';
+    if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
+      finalAnnotation = '[YM] $finalAnnotation'.trim();
+    }
+    
+    // Call the tracker so it gets saved to DB and synced.
+    // The tracker will emit an onTransition event which this Notifier listens to.
+    String statusStr;
+    switch (newStatus) {
+      case DutyStatus.driving: statusStr = 'driving'; break;
+      case DutyStatus.onDutyNotDriving: statusStr = 'on_duty'; break;
+      case DutyStatus.sleeperBerth: statusStr = 'sleeper_berth'; break;
+      case DutyStatus.offDuty: statusStr = 'off_duty'; break;
+      case DutyStatus.personalUse: statusStr = 'personal_use'; break;
+    }
+    
+    _tracker.manualTransition(statusStr, annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
     return true;
   }
   

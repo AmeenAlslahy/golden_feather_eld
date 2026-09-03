@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/engine/diagnostics/diagnostics_engine.dart';
+import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import '../../../../core/theme/app_color_tokens.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../providers/diagnostics_state_provider.dart';

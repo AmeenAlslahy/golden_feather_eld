@@ -1,6 +1,6 @@
-import 'package:intl/intl.dart';
-import '../../../../core/engine/hos_models.dart';
-import '../../../../core/engine/hos_calculator.dart';
+﻿import 'package:intl/intl.dart';
+import '../../../../features/hos/domain/engine/hos_models.dart';
+import '../../../../features/hos/domain/engine/hos_calculator.dart';
 import '../../../logs/domain/repositories/log_repository.dart';
 import '../entities/recap_data.dart';
 import '../../../../core/utils/logger.dart';

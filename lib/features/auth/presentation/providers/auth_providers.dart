@@ -18,7 +18,8 @@ final traccarSessionCredentialProvider = Provider<String?>((ref) {
 final traccarAuthRemoteDataSourceProvider =
     Provider<AuthRemoteDataSource>((ref) {
   final dio = Dio();
-  return AuthRemoteDataSourceImpl(dio);
+  final endpoints = ref.watch(endpointsProvider);
+  return AuthRemoteDataSourceImpl(dio, endpoints);
 });
 
 final authSessionStoreProvider = Provider<AuthSessionStore>((ref) {
@@ -35,20 +36,24 @@ final traccarAuthRepositoryProvider = Provider<AuthRepository>((ref) {
   switch (AppEnvironmentConfig.current) {
     case AppEnvironment.mock:
     case AppEnvironment.staging:
-      MockAuthRepository.allowMockSuccess = true;
-      return MockAuthRepository(localStorage: localStorage);
+      return MockAuthRepository(
+
+        allowMockSuccess: true,
+      );
 
     case AppEnvironment.development:
     case AppEnvironment.production:
     case AppEnvironment.temporaryTraccar:
       final remoteDataSource = ref.watch(traccarAuthRemoteDataSourceProvider);
       final sessionStore = ref.watch(authSessionStoreProvider);
+      final userStore = ref.watch(userStoreProvider);
       final networkInfo = ref.watch(networkInfoProvider);
 
       return AuthRepositoryImpl(
         remoteDataSource: remoteDataSource,
         sessionStore: sessionStore,
-        localStorage: localStorage,
+        userStore: userStore,
+        configProvider: localStorage,
         networkInfo: networkInfo,
       );
   }

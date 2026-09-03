@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/widgets/eld_card.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/tracking_provider.dart';
 
@@ -19,7 +19,7 @@ class TrackingStatusCard extends ConsumerWidget {
     final location = trackingState.currentLocation;
     final loc = AppLocalizations.of(context)!;
 
-    return AppCard(
+    return EldCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

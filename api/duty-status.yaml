@@ -1,0 +1,3867 @@
+1.1. المقدمة
+توفر واجهة برمجة التطبيقات (API) لخادم Traccar مجموعة متكاملة وشاملة من نقاط النهاية للتفاعل مع نظام تتبع المركبات المتقدم. تم تطوير هذه الواجهة باستخدام كلاس TraccarService الذي يتواصل مع خادم Traccar عبر واجهة RESTful API، مع دعم كامل للمصادقة والجلسات، وإدارة الأجهزة، والمواقع، والتقارير، والأوامر، والمناطق الجغرافية، والمستخدمين، والأحداث، والإشعارات، والعديد من الميزات المتقدمة الأخرى.
+
+تم بناء هذا النظام ضمن بيئة NanoSoft APP باستخدام إضافة Nano3\Tracker، ويوفر للمطورين والمؤسسات وسيلة سهلة وآمنة للتفاعل مع خادم التتبع Traccar، مع دعم كامل لميزات ELD (السجلات الإلكترونية) و HOS (ساعات الخدمة) المتوافقة مع معايير FMCSA.
+
+الهدف الرئيسي هو تمكين أنظمة إدارة الأسطول وتطبيقات التتبع من:
+
+إدارة الأجهزة (إنشاء، تحديث، حذف، استعلام).
+تتبع المواقع في الوقت الحقيقي والتاريخي.
+إنشاء وإدارة التقارير المتقدمة (الرحلات، التوقفات، الملخصات، المسارات).
+إرسال الأوامر إلى الأجهزة (إيقاف التشغيل، إعادة التشغيل، تحديث الإعدادات).
+إدارة المناطق الجغرافية (Geofences) والتنبيهات.
+إدارة المستخدمين والصلاحيات والاشتراكات.
+دعم كامل لميزات ELD/HOS (تسجيل الحالات، حساب ساعات الخدمة، التقارير، التفتيش).
+المراقبة في الوقت الحقيقي والاشتراكات.
+إدارة الصيانة والمستندات والملفات.
+ملاحظة هامة
+الجزء الأول من التوثيق يغطي جميع نقاط النهاية الأساسية والمتقدمة لـ TraccarService و TraccarExtendedEndpoints، بما في ذلك إدارة الأجهزة، المواقع، التقارير، الأوامر، الصيانة، النسخ الاحتياطي، الأرشفة، إلخ.
+الجزء الثاني يغطي نقاط النهاية المتعلقة بـ ELD/HOS فقط، وهي مجموعة فرعية متخصصة تهدف إلى الامتثال لمعايير FMCSA.
+1.2. النظرة العامة
+تعتمد واجهة API على ثلاث طبقات رئيسية:
+
+الطبقة	الوصف
+TraccarService	الخدمة الأساسية التي تتواصل مع خادم Traccar عبر GuzzleHTTP. تدير المصادقة، الجلسات، والطلبات (GET، POST، PUT، DELETE).
+TraccarExtendedEndpoints	سمة (Trait) توفر نقاط نهاية متقدمة وإضافية مثل إدارة السائقين، التقارير الممتدة، الأوامر المجدولة، النسخ الاحتياطي، والأرشفة.
+TraccarEldEndpoints	سمة (Trait) توفر نقاط نهاية خاصة بـ ELD/HOS مثل تسجيل حالة الخدمة، حساب ساعات الخدمة، اكتشاف المخالفات، التقارير، والتفتيش.
+1.3. المسار الأساسي (Base URL)
+https://your-domain.com/api/v1/tracker/traccar
+جميع الطلبات تتطلب مصادقة عبر جلسة Traccar، ويتم إدارة الجلسة تلقائياً من خلال TraccarService باستخدام الـ Cookie المخزنة بعد تسجيل الدخول.
+
+1.4. الاستجابة الموحدة
+جميع نقاط النهاية تعيد استجابة موحدة تحتوي على:
+
+الحقل	النوع	الوصف
+code	integer	رمز الحالة (200 للنجاح، 400 للخطأ)
+status	boolean	true للنجاح، false للفشل
+data	mixed	البيانات المطلوبة (مصفوفة أو كائن)
+message	string	رسالة توضيحية (في حالة النجاح أو الخطأ)
+error	string	تفاصيل الخطأ (في حالة الفشل)
+2.1. الميزات الأساسية
+الميزة	الوصف
+إدارة الأجهزة الشاملة	إنشاء، تحديث، حذف، واستعلام الأجهزة مع دعم البحث المتقدم والتصدير والاستيراد.
+تتبع المواقع المتقدم	الحصول على المواقع التاريخية واللحظية مع دعم التصفية حسب الوقت والجهاز.
+التقارير المتنوعة	تقارير المسارات، الرحلات، التوقفات، الأحداث، والملخصات مع نسخ ممتدة.
+المناطق الجغرافية	إنشاء وتحديث وحذف المناطق الجغرافية مع دعم أنواع متعددة (دائرية، مضلعة، خطية).
+إدارة المستخدمين	إدارة المستخدمين والصلاحيات والاشتراكات مع دعم البحث المتقدم.
+الأوامر عن بعد	إرسال أوامر إلى الأجهزة (إيقاف التشغيل، إعادة التشغيل، تحديث الإعدادات، التقاط الصور).
+دعم ELD/HOS كامل	تسجيل حالة الخدمة، حساب ساعات الخدمة، اكتشاف المخالفات، تقارير التفتيش، المستندات الداعمة.
+المراقبة في الوقت الحقيقي	الاشتراك في تحديثات المواقع والأحداث، مراقبة السائقين في الوقت الحقيقي.
+إدارة الملفات والمستندات	رفع وتحميل وحذف الملفات والمستندات الداعمة.
+النسخ الاحتياطي والأرشفة	إنشاء نسخ احتياطية واستعادة البيانات، أرشفة البيانات القديمة.
+المهام المجدولة	إنشاء وتشغيل مهام مجدولة (تقارير دورية، تنبيهات، صيانة).
+التدقيق والمراجعة	سجلات التدقيق الكاملة مع إمكانية التصدير.
+2.2. الفوائد للمطورين والمسؤولين
+جاهز للإنتاج: معالجة استثنائية شاملة مع رسائل خطأ واضحة.
+مرونة عالية: دعم جميع نقاط نهاية Traccar API مع إمكانية التوسع.
+تكامل سلس: يمكن دمجها بسهولة مع أنظمة إدارة الأسطول، تطبيقات الهاتف المحمول، ولوحات التحكم.
+أمان متقدم: جلسات مصادقة مع دعم Cookie وإعادة المصادقة التلقائية.
+توثيق شامل: كل نقطة نهاية موثقة بشكل كامل مع أمثلة دقيقة.
+قابلية التوسع: يمكن إضافة نقاط نهاية جديدة بسهولة عبر السمات (Traits).
+3.1.1. الحصول على معلومات الجلسة الحالية
+GET /session
+الوصف: الحصول على معلومات الجلسة الحالية للمستخدم المسجل دخوله.
+
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف الجلسة
+userId	integer	معرف المستخدم
+createdAt	string	وقت إنشاء الجلسة
+expiresAt	string	وقت انتهاء الجلسة
+ipAddress	string	عنوان IP للجلسة
+userAgent	string	متصفح المستخدم
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/session
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "id": 1,
+        "userId": 5,
+        "createdAt": "2026-01-15T10:00:00Z",
+        "expiresAt": "2026-01-15T22:00:00Z",
+        "ipAddress": "192.168.1.100",
+        "userAgent": "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36"
+    }
+}
+3.1.2. تسجيل الخروج
+POST /logout
+الوصف: تسجيل الخروج من خادم Traccar وإنهاء الجلسة الحالية.
+
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/logout
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم تسجيل الخروج بنجاح"
+}
+3.2.1. الحصول على قائمة الأجهزة
+GET /devices
+الوصف: الحصول على قائمة بجميع الأجهزة المسجلة في النظام مع إمكانية التصفية.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+all	boolean	لا	جلب جميع الأجهزة (بما في ذلك غير النشطة)
+userId	integer	لا	تصفية حسب معرف المستخدم
+groupId	integer	لا	تصفية حسب معرف المجموعة
+search	string	لا	بحث في اسم الجهاز أو المعرف الفريد
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف الجهاز
+name	string	اسم الجهاز
+uniqueId	string	المعرف الفريد للجهاز (IMEI)
+status	string	حالة الجهاز (online, offline, unknown)
+lastUpdate	string	وقت آخر تحديث
+groupId	integer	معرف المجموعة
+phone	string	رقم الهاتف
+model	string	طراز الجهاز
+contact	string	معلومات الاتصال
+category	string	فئة الجهاز
+disabled	boolean	هل الجهاز معطل؟
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/devices?search=TRUCK-001
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 101,
+            "name": "TRUCK-001",
+            "uniqueId": "352284071234567",
+            "status": "online",
+            "lastUpdate": "2026-01-15T14:30:00Z",
+            "groupId": 5,
+            "phone": "+966501234567",
+            "model": "Teltonika FMB920",
+            "contact": "Ahmed Mohamed",
+            "category": "truck",
+            "disabled": false,
+            "attributes": {
+                "batteryLevel": 85,
+                "gsmSignal": 4,
+                "fuelLevel": 65
+            }
+        },
+        {
+            "id": 102,
+            "name": "TRUCK-002",
+            "uniqueId": "352284078765432",
+            "status": "offline",
+            "lastUpdate": "2026-01-15T12:00:00Z",
+            "groupId": 5,
+            "phone": "+966501234568",
+            "model": "Teltonika FMB920",
+            "contact": "Saeed Ali",
+            "category": "truck",
+            "disabled": false,
+            "attributes": {
+                "batteryLevel": 40,
+                "gsmSignal": 2,
+                "fuelLevel": 30
+            }
+        },
+        {
+            "id": 103,
+            "name": "CAR-001",
+            "uniqueId": "352284071234568",
+            "status": "online",
+            "lastUpdate": "2026-01-15T14:28:00Z",
+            "groupId": 6,
+            "phone": "+966501234569",
+            "model": "Garmin GPS",
+            "contact": "Khalid Omar",
+            "category": "car",
+            "disabled": false,
+            "attributes": {
+                "batteryLevel": 92,
+                "gsmSignal": 5,
+                "fuelLevel": 78
+            }
+        }
+    ]
+}
+3.2.2. الحصول على جهاز محدد
+GET /devices/{id}
+الوصف: الحصول على معلومات جهاز محدد بواسطة معرفه.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+id	integer	نعم	معرف الجهاز
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/devices/101
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "id": 101,
+        "name": "TRUCK-001",
+        "uniqueId": "352284071234567",
+        "status": "online",
+        "lastUpdate": "2026-01-15T14:30:00Z",
+        "groupId": 5,
+        "phone": "+966501234567",
+        "model": "Teltonika FMB920",
+        "contact": "Ahmed Mohamed",
+        "category": "truck",
+        "disabled": false,
+        "attributes": {
+            "batteryLevel": 85,
+            "gsmSignal": 4,
+            "fuelLevel": 65,
+            "engineHours": 1245.3,
+            "odometer": 12450.5
+        }
+    }
+}
+3.2.3. إنشاء جهاز جديد
+POST /devices
+الوصف: إنشاء جهاز جديد في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+name	string	نعم	اسم الجهاز	-
+uniqueId	string	نعم	المعرف الفريد (IMEI)	-
+groupId	integer	لا	معرف المجموعة	null
+phone	string	لا	رقم الهاتف	null
+model	string	لا	طراز الجهاز	null
+contact	string	لا	معلومات الاتصال	null
+category	string	لا	فئة الجهاز	null
+disabled	boolean	لا	هل الجهاز معطل؟	false
+attributes	object	لا	سمات إضافية	{}
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/devices
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "TRUCK-003",
+  "uniqueId": "352284071234569",
+  "groupId": 5,
+  "phone": "+966501234570",
+  "model": "Teltonika FMB920",
+  "contact": "Mohammed Ibrahim",
+  "category": "truck",
+  "attributes": {
+    "fuelCapacity": 400,
+    "maxSpeed": 120
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء الجهاز بنجاح",
+    "data": {
+        "id": 104,
+        "name": "TRUCK-003",
+        "uniqueId": "352284071234569",
+        "status": "unknown",
+        "lastUpdate": null,
+        "groupId": 5,
+        "phone": "+966501234570",
+        "model": "Teltonika FMB920",
+        "contact": "Mohammed Ibrahim",
+        "category": "truck",
+        "disabled": false,
+        "attributes": {
+            "fuelCapacity": 400,
+            "maxSpeed": 120
+        }
+    }
+}
+3.2.4. تحديث جهاز
+PUT /devices/{id}
+الوصف: تحديث معلومات جهاز موجود.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+id	integer	نعم	معرف الجهاز
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+name	string	لا	اسم الجهاز
+uniqueId	string	لا	المعرف الفريد (IMEI)
+groupId	integer	لا	معرف المجموعة
+phone	string	لا	رقم الهاتف
+model	string	لا	طراز الجهاز
+contact	string	لا	معلومات الاتصال
+category	string	لا	فئة الجهاز
+disabled	boolean	لا	هل الجهاز معطل؟
+attributes	object	لا	سمات إضافية
+مثال
+الطلب:
+
+PUT /api/v1/tracker/traccar/devices/104
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "TRUCK-003-UPDATED",
+  "contact": "Mohammed Ali",
+  "attributes": {
+    "fuelCapacity": 450,
+    "maxSpeed": 130,
+    "lastMaintenance": "2026-01-10"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم تحديث الجهاز بنجاح",
+    "data": {
+        "id": 104,
+        "name": "TRUCK-003-UPDATED",
+        "uniqueId": "352284071234569",
+        "status": "unknown",
+        "lastUpdate": null,
+        "groupId": 5,
+        "phone": "+966501234570",
+        "model": "Teltonika FMB920",
+        "contact": "Mohammed Ali",
+        "category": "truck",
+        "disabled": false,
+        "attributes": {
+            "fuelCapacity": 450,
+            "maxSpeed": 130,
+            "lastMaintenance": "2026-01-10"
+        }
+    }
+}
+3.2.5. حذف جهاز
+DELETE /devices/{id}
+الوصف: حذف جهاز موجود من النظام.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+id	integer	نعم	معرف الجهاز
+مثال
+الطلب:
+
+DELETE /api/v1/tracker/traccar/devices/104
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم حذف الجهاز بنجاح"
+}
+3.3.1. الحصول على قائمة المجموعات
+GET /groups
+الوصف: الحصول على قائمة بجميع المجموعات المسجلة في النظام.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+search	string	لا	بحث في اسم المجموعة
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف المجموعة
+name	string	اسم المجموعة
+groupId	integer	معرف المجموعة الأم
+attributes	object	سمات المجموعة
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/groups
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "All Devices",
+            "groupId": null,
+            "attributes": []
+        },
+        {
+            "id": 5,
+            "name": "Trucks",
+            "groupId": 1,
+            "attributes": {
+                "color": "#FF0000"
+            }
+        },
+        {
+            "id": 6,
+            "name": "Cars",
+            "groupId": 1,
+            "attributes": {
+                "color": "#00FF00"
+            }
+        },
+        {
+            "id": 7,
+            "name": "Motorcycles",
+            "groupId": 1,
+            "attributes": {
+                "color": "#0000FF"
+            }
+        }
+    ]
+}
+3.3.2. إنشاء مجموعة جديدة
+POST /groups
+الوصف: إنشاء مجموعة جديدة في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+name	string	نعم	اسم المجموعة
+groupId	integer	لا	معرف المجموعة الأم
+attributes	object	لا	سمات المجموعة
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/groups
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "Buses",
+  "groupId": 1,
+  "attributes": {
+    "color": "#FFFF00",
+    "description": "School buses"
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء المجموعة بنجاح",
+    "data": {
+        "id": 8,
+        "name": "Buses",
+        "groupId": 1,
+        "attributes": {
+            "color": "#FFFF00",
+            "description": "School buses"
+        }
+    }
+}
+3.4.1. الحصول على قائمة المواقع
+GET /positions
+الوصف: الحصول على قائمة بمواقع الأجهزة مع إمكانية التصفية حسب الجهاز والفترة الزمنية.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	لا	تصفية حسب معرف الجهاز
+from	string	لا	تاريخ البداية (ISO 8601)
+to	string	لا	تاريخ النهاية (ISO 8601)
+limit	integer	لا	الحد الأقصى لعدد النتائج
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف الموقع
+deviceId	integer	معرف الجهاز
+latitude	float	خط العرض
+longitude	float	خط الطول
+speed	float	السرعة (كم/س)
+course	float	الاتجاه (درجات)
+altitude	float	الارتفاع (متر)
+accuracy	float	دقة الموقع (متر)
+fixTime	string	وقت التحديث من الجهاز
+deviceTime	string	وقت الجهاز
+serverTime	string	وقت الخادم
+attributes	object	سمات إضافية
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/positions?deviceId=101&from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z&limit=10
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1001,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 55.5,
+            "course": 180,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T06:30:00Z",
+            "deviceTime": "2026-01-15T06:30:00Z",
+            "serverTime": "2026-01-15T06:30:05Z",
+            "attributes": {
+                "batteryLevel": 85,
+                "gsmSignal": 4,
+                "fuelLevel": 65,
+                "odometer": 12450.5,
+                "engineHours": 1245.3
+            }
+        },
+        {
+            "id": 1002,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 0,
+            "course": 0,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T10:00:00Z",
+            "deviceTime": "2026-01-15T10:00:00Z",
+            "serverTime": "2026-01-15T10:00:05Z",
+            "attributes": {
+                "batteryLevel": 82,
+                "gsmSignal": 4,
+                "fuelLevel": 60,
+                "odometer": 12455,
+                "engineHours": 1246
+            }
+        },
+        {
+            "id": 1003,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 60,
+            "course": 180,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T10:35:00Z",
+            "deviceTime": "2026-01-15T10:35:00Z",
+            "serverTime": "2026-01-15T10:35:05Z",
+            "attributes": {
+                "batteryLevel": 80,
+                "gsmSignal": 4,
+                "fuelLevel": 55,
+                "odometer": 12460,
+                "engineHours": 1247
+            }
+        },
+        {
+            "id": 1004,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 0,
+            "course": 0,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T17:00:00Z",
+            "deviceTime": "2026-01-15T17:00:00Z",
+            "serverTime": "2026-01-15T17:00:05Z",
+            "attributes": {
+                "batteryLevel": 75,
+                "gsmSignal": 3,
+                "fuelLevel": 40,
+                "odometer": 12475,
+                "engineHours": 1249
+            }
+        }
+    ]
+}
+3.4.2. الحصول على موقع محدد
+GET /positions/{id}
+الوصف: الحصول على موقع محدد بواسطة معرفه.
+
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/positions/1001
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "id": 1001,
+        "deviceId": 101,
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "speed": 55.5,
+        "course": 180,
+        "altitude": 620,
+        "accuracy": 5,
+        "fixTime": "2026-01-15T06:30:00Z",
+        "deviceTime": "2026-01-15T06:30:00Z",
+        "serverTime": "2026-01-15T06:30:05Z",
+        "attributes": {
+            "batteryLevel": 85,
+            "gsmSignal": 4,
+            "fuelLevel": 65,
+            "odometer": 12450.5,
+            "engineHours": 1245.3
+        }
+    }
+}
+3.4.3. الحصول على مواقع جهاز محدد
+GET /devices/{deviceId}/positions
+الوصف: الحصول على قائمة بمواقع جهاز محدد.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	نعم	معرف الجهاز
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+from	string	لا	تاريخ البداية (ISO 8601)
+to	string	لا	تاريخ النهاية (ISO 8601)
+limit	integer	لا	الحد الأقصى لعدد النتائج
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/devices/101/positions?from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z&limit=5
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1001,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 55.5,
+            "course": 180,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T06:30:00Z",
+            "deviceTime": "2026-01-15T06:30:00Z",
+            "serverTime": "2026-01-15T06:30:05Z"
+        },
+        {
+            "id": 1002,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 0,
+            "course": 0,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T10:00:00Z",
+            "deviceTime": "2026-01-15T10:00:00Z",
+            "serverTime": "2026-01-15T10:00:05Z"
+        },
+        {
+            "id": 1003,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 60,
+            "course": 180,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T10:35:00Z",
+            "deviceTime": "2026-01-15T10:35:00Z",
+            "serverTime": "2026-01-15T10:35:05Z"
+        },
+        {
+            "id": 1004,
+            "deviceId": 101,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "speed": 0,
+            "course": 0,
+            "altitude": 620,
+            "accuracy": 5,
+            "fixTime": "2026-01-15T17:00:00Z",
+            "deviceTime": "2026-01-15T17:00:00Z",
+            "serverTime": "2026-01-15T17:00:05Z"
+        }
+    ]
+}
+3.4.4. الحصول على أحدث موقع لجهاز
+GET /devices/{deviceId}/positions/latest
+الوصف: الحصول على أحدث موقع معروف لجهاز محدد.
+
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/devices/101/positions/latest
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "id": 1004,
+        "deviceId": 101,
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "speed": 0,
+        "course": 0,
+        "altitude": 620,
+        "accuracy": 5,
+        "fixTime": "2026-01-15T17:00:00Z",
+        "deviceTime": "2026-01-15T17:00:00Z",
+        "serverTime": "2026-01-15T17:00:05Z",
+        "attributes": {
+            "batteryLevel": 75,
+            "gsmSignal": 3,
+            "fuelLevel": 40,
+            "odometer": 12475,
+            "engineHours": 1249
+        }
+    }
+}
+3.5.1. الحصول على قائمة المناطق الجغرافية
+GET /geofences
+الوصف: الحصول على قائمة بجميع المناطق الجغرافية المسجلة.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+search	string	لا	بحث في اسم المنطقة
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف المنطقة
+name	string	اسم المنطقة
+area	string	بيانات المنطقة الجغرافية (GeoJSON)
+description	string	وصف المنطقة
+attributes	object	سمات إضافية
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/geofences
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "Riyadh Zone",
+            "area": "POLYGON ((46.5 24.5, 46.8 24.5, 46.8 24.8, 46.5 24.8, 46.5 24.5))",
+            "description": "Riyadh city center area",
+            "attributes": {
+                "color": "#FF0000",
+                "radius": 5000
+            }
+        },
+        {
+            "id": 2,
+            "name": "Jeddah Zone",
+            "area": "POLYGON ((39.0 21.0, 39.3 21.0, 39.3 21.3, 39.0 21.3, 39.0 21.0))",
+            "description": "Jeddah city center area",
+            "attributes": {
+                "color": "#00FF00",
+                "radius": 5000
+            }
+        },
+        {
+            "id": 3,
+            "name": "Dammam Zone",
+            "area": "POLYGON ((49.8 26.2, 50.1 26.2, 50.1 26.5, 49.8 26.5, 49.8 26.2))",
+            "description": "Dammam city center area",
+            "attributes": {
+                "color": "#0000FF",
+                "radius": 5000
+            }
+        }
+    ]
+}
+3.5.2. إنشاء منطقة جغرافية جديدة
+POST /geofences
+الوصف: إنشاء منطقة جغرافية جديدة في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+name	string	نعم	اسم المنطقة
+area	string	نعم	بيانات المنطقة الجغرافية (GeoJSON أو WKT)
+description	string	لا	وصف المنطقة
+attributes	object	لا	سمات إضافية
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/geofences
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "Makkah Zone",
+  "area": "POLYGON ((39.7 21.3, 39.9 21.3, 39.9 21.5, 39.7 21.5, 39.7 21.3))",
+  "description": "Makkah city center area",
+  "attributes": {
+    "color": "#FF00FF",
+    "radius": 3000
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء المنطقة الجغرافية بنجاح",
+    "data": {
+        "id": 4,
+        "name": "Makkah Zone",
+        "area": "POLYGON ((39.7 21.3, 39.9 21.3, 39.9 21.5, 39.7 21.5, 39.7 21.3))",
+        "description": "Makkah city center area",
+        "attributes": {
+            "color": "#FF00FF",
+            "radius": 3000
+        }
+    }
+}
+3.6.1. الحصول على قائمة المستخدمين
+GET /users
+الوصف: الحصول على قائمة بجميع المستخدمين المسجلين في النظام.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+search	string	لا	بحث في اسم المستخدم أو البريد الإلكتروني
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف المستخدم
+name	string	اسم المستخدم
+email	string	البريد الإلكتروني
+phone	string	رقم الهاتف
+admin	boolean	هل المستخدم مشرف؟
+map	string	خريطة المستخدم المفضلة
+language	string	لغة المستخدم
+attributes	object	سمات إضافية
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/users
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "Admin User",
+            "email": "admin@example.com",
+            "phone": "+966501234571",
+            "admin": true,
+            "map": "osm",
+            "language": "ar",
+            "attributes": {
+                "theme": "dark"
+            }
+        },
+        {
+            "id": 2,
+            "name": "Ahmed Mohamed",
+            "email": "ahmed@example.com",
+            "phone": "+966501234572",
+            "admin": false,
+            "map": "osm",
+            "language": "ar",
+            "attributes": {
+                "theme": "light"
+            }
+        },
+        {
+            "id": 3,
+            "name": "Saeed Ali",
+            "email": "saeed@example.com",
+            "phone": "+966501234573",
+            "admin": false,
+            "map": "google",
+            "language": "en",
+            "attributes": {
+                "theme": "light"
+            }
+        }
+    ]
+}
+3.6.2. إنشاء مستخدم جديد
+POST /users
+الوصف: إنشاء مستخدم جديد في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+name	string	نعم	اسم المستخدم
+email	string	نعم	البريد الإلكتروني
+phone	string	لا	رقم الهاتف
+admin	boolean	لا	هل المستخدم مشرف؟
+map	string	لا	خريطة المستخدم المفضلة
+language	string	لا	لغة المستخدم
+attributes	object	لا	سمات إضافية
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/users
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "Khalid Omar",
+  "email": "khalid@example.com",
+  "phone": "+966501234574",
+  "admin": false,
+  "map": "osm",
+  "language": "ar",
+  "attributes": {
+    "department": "Logistics"
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء المستخدم بنجاح",
+    "data": {
+        "id": 4,
+        "name": "Khalid Omar",
+        "email": "khalid@example.com",
+        "phone": "+966501234574",
+        "admin": false,
+        "map": "osm",
+        "language": "ar",
+        "attributes": {
+            "department": "Logistics"
+        }
+    }
+}
+3.7.1. الحصول على قائمة الأحداث
+GET /events
+الوصف: الحصول على قائمة بالأحداث المسجلة في النظام.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	لا	تصفية حسب معرف الجهاز
+type	string	لا	تصفية حسب نوع الحدث
+from	string	لا	تاريخ البداية (ISO 8601)
+to	string	لا	تاريخ النهاية (ISO 8601)
+limit	integer	لا	الحد الأقصى لعدد النتائج
+أنواع الأحداث المدعومة
+النوع	الوصف
+deviceOnline	الجهاز متصل
+deviceOffline	الجهاز غير متصل
+deviceUnknown	حالة الجهاز غير معروفة
+geofenceEnter	دخول المنطقة الجغرافية
+geofenceExit	خروج المنطقة الجغرافية
+commandResult	نتيجة الأمر
+driverStatusChange	تغيير حالة السائق
+documentUploaded	رفع مستند
+engineOn	تشغيل المحرك
+engineOff	إطفاء المحرك
+motionStart	بدء الحركة
+motionStop	توقف الحركة
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/events?deviceId=101&type=driverStatusChange&from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 2001,
+            "type": "driverStatusChange",
+            "deviceId": 101,
+            "positionId": 1001,
+            "eventTime": "2026-01-15T06:00:00Z",
+            "serverTime": "2026-01-15T06:00:05Z",
+            "attributes": {
+                "driverId": 100,
+                "dutyStatus": "on_duty",
+                "location": "Riyadh, Saudi Arabia",
+                "odometer": 12445,
+                "engineHours": 1244,
+                "remarks": "Start of shift"
+            }
+        },
+        {
+            "id": 2002,
+            "type": "driverStatusChange",
+            "deviceId": 101,
+            "positionId": 1002,
+            "eventTime": "2026-01-15T10:00:00Z",
+            "serverTime": "2026-01-15T10:00:05Z",
+            "attributes": {
+                "driverId": 100,
+                "dutyStatus": "off_duty",
+                "location": "Riyadh, Saudi Arabia",
+                "odometer": 12455,
+                "engineHours": 1246,
+                "remarks": "Break time"
+            }
+        },
+        {
+            "id": 2003,
+            "type": "driverStatusChange",
+            "deviceId": 101,
+            "positionId": 1003,
+            "eventTime": "2026-01-15T10:35:00Z",
+            "serverTime": "2026-01-15T10:35:05Z",
+            "attributes": {
+                "driverId": 100,
+                "dutyStatus": "driving",
+                "location": "Riyadh, Saudi Arabia",
+                "odometer": 12460,
+                "engineHours": 1247,
+                "remarks": "Continue trip"
+            }
+        },
+        {
+            "id": 2004,
+            "type": "driverStatusChange",
+            "deviceId": 101,
+            "positionId": 1004,
+            "eventTime": "2026-01-15T17:00:00Z",
+            "serverTime": "2026-01-15T17:00:05Z",
+            "attributes": {
+                "driverId": 100,
+                "dutyStatus": "off_duty",
+                "location": "Riyadh, Saudi Arabia",
+                "odometer": 12475,
+                "engineHours": 1249,
+                "remarks": "End of shift"
+            }
+        }
+    ]
+}
+3.7.2. إنشاء حدث جديد
+POST /events
+الوصف: إنشاء حدث جديد في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+type	string	نعم	نوع الحدث
+deviceId	integer	لا	معرف الجهاز
+positionId	integer	لا	معرف الموقع
+attributes	object	لا	سمات إضافية
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/events
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "type": "geofenceEnter",
+  "deviceId": 101,
+  "positionId": 1004,
+  "attributes": {
+    "geofenceId": 1,
+    "geofenceName": "Riyadh Zone"
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء الحدث بنجاح",
+    "data": {
+        "id": 2005,
+        "type": "geofenceEnter",
+        "deviceId": 101,
+        "positionId": 1004,
+        "eventTime": "2026-01-15T17:00:00Z",
+        "serverTime": "2026-01-15T17:00:05Z",
+        "attributes": {
+            "geofenceId": 1,
+            "geofenceName": "Riyadh Zone"
+        }
+    }
+}
+4.1.1. الحصول على قائمة السائقين
+GET /drivers
+الوصف: الحصول على قائمة بجميع السائقين المسجلين في النظام.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+search	string	لا	بحث في اسم السائق
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف السائق
+name	string	اسم السائق
+phone	string	رقم الهاتف
+email	string	البريد الإلكتروني
+licenseNumber	string	رقم الرخصة
+licenseExpiry	string	تاريخ انتهاء الرخصة
+attributes	object	سمات إضافية
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 100,
+            "name": "Ahmed Mohamed",
+            "phone": "+966501234575",
+            "email": "driver1@example.com",
+            "licenseNumber": "SA-123456789",
+            "licenseExpiry": "2027-12-31",
+            "attributes": {
+                "experience": "10 years",
+                "certifications": "Hazmat"
+            }
+        },
+        {
+            "id": 101,
+            "name": "Saeed Ali",
+            "phone": "+966501234576",
+            "email": "driver2@example.com",
+            "licenseNumber": "SA-987654321",
+            "licenseExpiry": "2026-06-30",
+            "attributes": {
+                "experience": "5 years",
+                "certifications": "None"
+            }
+        }
+    ]
+}
+4.1.2. إنشاء سائق جديد
+POST /drivers
+الوصف: إنشاء سائق جديد في النظام.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+name	string	نعم	اسم السائق
+phone	string	لا	رقم الهاتف
+email	string	لا	البريد الإلكتروني
+licenseNumber	string	لا	رقم الرخصة
+licenseExpiry	string	لا	تاريخ انتهاء الرخصة
+attributes	object	لا	سمات إضافية
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/drivers
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "name": "Mohammed Ibrahim",
+  "phone": "+966501234577",
+  "email": "driver3@example.com",
+  "licenseNumber": "SA-112233445",
+  "licenseExpiry": "2028-01-15",
+  "attributes": {
+    "experience": "8 years",
+    "certifications": "Hazmat, Tanker"
+  }
+}
+الاستجابة:
+
+{
+    "code": 201,
+    "status": true,
+    "message": "تم إنشاء السائق بنجاح",
+    "data": {
+        "id": 102,
+        "name": "Mohammed Ibrahim",
+        "phone": "+966501234577",
+        "email": "driver3@example.com",
+        "licenseNumber": "SA-112233445",
+        "licenseExpiry": "2028-01-15",
+        "attributes": {
+            "experience": "8 years",
+            "certifications": "Hazmat, Tanker"
+        }
+    }
+}
+4.2.1. الحصول على بث حي لموقع الجهاز
+GET /devices/{deviceId}/live
+الوصف: الحصول على موقع الجهاز في الوقت الحقيقي.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	نعم	معرف الجهاز
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/devices/101/live
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "id": 1005,
+        "deviceId": 101,
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "speed": 0,
+        "course": 0,
+        "altitude": 620,
+        "accuracy": 5,
+        "fixTime": "2026-01-15T17:05:00Z",
+        "deviceTime": "2026-01-15T17:05:00Z",
+        "serverTime": "2026-01-15T17:05:05Z",
+        "attributes": {
+            "batteryLevel": 74,
+            "gsmSignal": 3,
+            "fuelLevel": 39,
+            "odometer": 12475.5,
+            "engineHours": 1249.5
+        }
+    }
+}
+4.3.1. تقرير الرحلات الممتد
+GET /reports/trips/extended
+الوصف: الحصول على تقرير الرحلات الممتد مع تفاصيل إضافية.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	نعم	معرف الجهاز
+from	string	نعم	تاريخ البداية (ISO 8601)
+to	string	نعم	تاريخ النهاية (ISO 8601)
+minDuration	integer	لا	الحد الأدنى لمدة الرحلة (ثواني)
+minDistance	float	لا	الحد الأدنى لمسافة الرحلة (كم)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/reports/trips/extended?deviceId=101&from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z&minDuration=300
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1,
+            "deviceId": 101,
+            "startTime": "2026-01-15T06:00:00Z",
+            "endTime": "2026-01-15T10:00:00Z",
+            "duration": 14400,
+            "distance": 220.5,
+            "startLatitude": 24.7136,
+            "startLongitude": 46.6753,
+            "endLatitude": 24.7136,
+            "endLongitude": 46.6753,
+            "startAddress": "Riyadh, Saudi Arabia",
+            "endAddress": "Riyadh, Saudi Arabia",
+            "maxSpeed": 80,
+            "averageSpeed": 55,
+            "fuelUsed": 45,
+            "attributes": {
+                "route": "Riyadh - Dammam",
+                "driver": "Ahmed Mohamed"
+            }
+        },
+        {
+            "id": 2,
+            "deviceId": 101,
+            "startTime": "2026-01-15T10:35:00Z",
+            "endTime": "2026-01-15T17:00:00Z",
+            "duration": 23100,
+            "distance": 255.8,
+            "startLatitude": 24.7136,
+            "startLongitude": 46.6753,
+            "endLatitude": 24.7136,
+            "endLongitude": 46.6753,
+            "startAddress": "Riyadh, Saudi Arabia",
+            "endAddress": "Riyadh, Saudi Arabia",
+            "maxSpeed": 85,
+            "averageSpeed": 60,
+            "fuelUsed": 50,
+            "attributes": {
+                "route": "Riyadh - Jeddah",
+                "driver": "Ahmed Mohamed"
+            }
+        }
+    ]
+}
+4.3.2. تقرير التوقفات الممتد
+GET /reports/stops/extended
+الوصف: الحصول على تقرير التوقفات الممتد مع تفاصيل إضافية.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	نعم	معرف الجهاز
+from	string	نعم	تاريخ البداية (ISO 8601)
+to	string	نعم	تاريخ النهاية (ISO 8601)
+minDuration	integer	لا	الحد الأدنى لمدة التوقف (ثواني)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/reports/stops/extended?deviceId=101&from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z&minDuration=600
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 1,
+            "deviceId": 101,
+            "startTime": "2026-01-15T06:00:00Z",
+            "endTime": "2026-01-15T06:30:00Z",
+            "duration": 1800,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "address": "Riyadh, Saudi Arabia",
+            "attributes": {
+                "type": "rest_break",
+                "driverStatus": "on_duty"
+            }
+        },
+        {
+            "id": 2,
+            "deviceId": 101,
+            "startTime": "2026-01-15T10:00:00Z",
+            "endTime": "2026-01-15T10:35:00Z",
+            "duration": 2100,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "address": "Riyadh, Saudi Arabia",
+            "attributes": {
+                "type": "rest_break",
+                "driverStatus": "off_duty"
+            }
+        },
+        {
+            "id": 3,
+            "deviceId": 101,
+            "startTime": "2026-01-15T17:00:00Z",
+            "endTime": "2026-01-15T17:30:00Z",
+            "duration": 1800,
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "address": "Riyadh, Saudi Arabia",
+            "attributes": {
+                "type": "rest_break",
+                "driverStatus": "off_duty"
+            }
+        }
+    ]
+}
+4.4.1. الحصول على الأوامر في قائمة الانتظار
+GET /commands/queued
+الوصف: الحصول على قائمة الأوامر المعلقة في قائمة الانتظار.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	لا	تصفية حسب معرف الجهاز
+status	string	لا	تصفية حسب الحالة (pending, sending, sent, failed)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/commands/queued
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 3001,
+            "deviceId": 101,
+            "type": "position",
+            "status": "pending",
+            "createdAt": "2026-01-15T14:30:00Z",
+            "sentAt": null,
+            "attributes": []
+        },
+        {
+            "id": 3002,
+            "deviceId": 102,
+            "type": "engineStop",
+            "status": "sending",
+            "createdAt": "2026-01-15T14:25:00Z",
+            "sentAt": "2026-01-15T14:26:00Z",
+            "attributes": {
+                "timeout": 30
+            }
+        }
+    ]
+}
+5. نقاط النهاية المتعلقة بـ ELD/HOS
+يتم توثيق نقاط النهاية المتعلقة بـ ELD/HOS بشكل مفصل في الجزء الثاني من هذا التوثيق، والذي يغطي:
+
+تسجيل حالة الخدمة (Duty Status)
+حساب ساعات الخدمة المتاحة (Available Hours)
+اكتشاف مخالفات ساعات الخدمة (HOS Violations)
+إنشاء تقارير HOS
+إدارة المستندات الداعمة
+إنشاء تقارير التفتيش
+تصدير بيانات التفتيش
+التحقق من امتثال ELD
+التقارير الشاملة والتحليلات المتقدمة
+المراقبة في الوقت الحقيقي والتنبيهات
+إدارة الأجهزة والإعدادات المتقدمة
+6.1. تنبيهات هامة
+التنبيه	الوصف
+المصادقة	جميع الطلبات تتطلب جلسة مصادقة صالحة. تأكد من تسجيل الدخول عبر TraccarService قبل إرسال أي طلب.
+المهلة الزمنية	تم تعيين مهلة زمنية للطلبات بـ 30 ثانية. قد تحتاج إلى زيادة هذه المهلة للطلبات الكبيرة أو في شبكات بطيئة.
+حجم البيانات	يوصى بعدم تجاوز 1000 سجل في طلب واحد لتجنب مشاكل الأداء. استخدم التصفية والترقيم للحد من النتائج.
+نطاق التواريخ	عند طلب بيانات تاريخية، حدد نطاقاً زمنياً معقولاً (يفضل أقل من 30 يوماً) لتحسين الأداء.
+أخطاء الاتصال	في حالة فشل الاتصال، يقوم TraccarService بإرجاع رسائل خطأ واضحة. تحقق من إعدادات الاتصال و URL الخادم.
+صحة المعرفات	تأكد من صحة معرفات الأجهزة والمستخدمين والمجموعات قبل إرسال الطلبات.
+الصلاحيات	قد تكون بعض نقاط النهاية مقيدة بصلاحيات المستخدم. تأكد من أن المستخدم لديه الصلاحيات الكافية.
+6.2. التوصيات وأفضل الممارسات
+إعادة استخدام الجلسة: استخدم نفس كائن TraccarService لإعادة استخدام الجلسة بدلاً من إنشاء جلسة جديدة لكل طلب.
+
+التصفية المسبقة: استخدم معاملات التصفية (مثل deviceId, from, to) لتقليل حجم البيانات المسترجعة.
+
+الترقيم (Pagination): استخدم معامل limit مع offset أو page لتصفح مجموعات كبيرة من البيانات.
+
+معالجة الأخطاء: تأكد من التحقق من حقل success في الاستجابة قبل معالجة البيانات.
+
+الاختبار: اختبر نقاط النهاية مع بيانات اختبارية قبل الاستخدام في بيئة الإنتاج.
+
+التوثيق: راجع توثيق Traccar الرسمي للحصول على تفاصيل إضافية حول نقاط النهاية.
+
+المراقبة: راقب أداء النظام ووقت استجابة نقاط النهاية لتحديد أي اختناقات.
+
+النسخ الاحتياطي: قم بإنشاء نسخ احتياطية دورية للبيانات المهمة باستخدام نقاط نهاية النسخ الاحتياطي.
+
+7. الخاتمة
+يمثل توثيق واجهة برمجة التطبيقات (API) لخادم Traccar مرجعاً شاملاً لجميع نقاط النهاية المتاحة في النظام. يغطي هذا التوثيق الجزء الأول من نقاط النهاية الأساسية والمتقدمة، مع توفير أمثلة كاملة ودقيقة لكل نقطة نهاية.
+
+النقاط الرئيسية التي تم تغطيتها في هذا الجزء:
+
+✅ الجلسات: تسجيل الدخول، معلومات الجلسة، تسجيل الخروج.
+✅ الأجهزة: إنشاء، تحديث، حذف، استعلام، بحث متقدم.
+✅ المجموعات: إدارة المجموعات وتنظيم الأجهزة.
+✅ المواقع: الحصول على المواقع التاريخية واللحظية.
+✅ المناطق الجغرافية: إنشاء وإدارة المناطق.
+✅ المستخدمين: إدارة المستخدمين والصلاحيات.
+✅ الأحداث: تتبع الأحداث وإنشاء أحداث جديدة.
+✅ السائقين: إدارة السائقين ومعلوماتهم.
+✅ البث الحي: تتبع المواقع في الوقت الحقيقي.
+✅ التقارير المتقدمة: تقارير الرحلات والتوقفات الممتدة.
+✅ الأوامر: إدارة الأوامر في قائمة الانتظار.
+سيتم تغطية نقاط النهاية المتعلقة بـ ELD/HOS بالتفصيل في الجزء الثاني من هذا التوثيق، والتي تشمل تسجيل حالة الخدمة، وحساب ساعات الخدمة، واكتشاف المخالفات، وتقارير التفتيش، والمستندات الداعمة، والمراقبة في الوقت الحقيقي، والتنبيهات، والإدارة المتقدمة.
+
+1.1. المقدمة
+يوفر نظام ELD (Electronic Logging Device) و HOS (Hours of Service) داخل واجهة برمجة التطبيقات (API) لخادم Traccar مجموعة متكاملة وشاملة من نقاط النهاية لإدارة الامتثال التنظيمي وفقاً لمعايير إدارة السلامة الفيدرالية للنقل (FMCSA) في الولايات المتحدة الأمريكية. تم بناء هذه النقاط باستخدام سمة TraccarEldEndpoints التي توسع TraccarService، مما يوفر للمطورين والمؤسسات أدوات قوية لتسجيل حالة السائق، وحساب ساعات الخدمة، واكتشاف المخالفات، وإنشاء تقارير التفتيش، وإدارة المستندات الداعمة، والمراقبة في الوقت الحقيقي.
+
+الهدف الرئيسي هو تمكين أنظمة إدارة الأسطول من:
+
+تسجيل حالات السائق الأربع (قيادة، خدمة، خارج الخدمة، نوم) تلقائياً ويدوياً.
+حساب ساعات الخدمة المتاحة وفق قواعد FMCSA.
+اكتشاف المخالفات اليومية والأسبوعية والدورية.
+إنشاء تقارير HOS و ELD شاملة للتقديم للجهات التنظيمية.
+إدارة المستندات الداعمة (فواتير، إيصالات، تصاريح).
+تنظيم عمليات التفتيش على الطريق والمحطات.
+المراقبة في الوقت الحقيقي للسائقين والتنبيهات الذكية.
+تحليل أنماط القيادة وكفاءة الوقود.
+إدارة أجهزة ELD وإعداداتها.
+1.2. المعايير المدعومة
+تلتزم نقاط نهاية ELD/HOS بمعايير FMCSA التالية:
+
+المعيار	القيمة	المرجع
+الحد الأقصى لساعات القيادة اليومية	11 ساعة	FMCSA §395.3(a)(1)
+الحد الأقصى لساعات الخدمة اليومية	14 ساعة	FMCSA §395.3(a)(2)
+الحد الأدنى للراحة اليومية	10 ساعات	FMCSA §395.3(a)(3)
+الحد الأقصى لدورة 7 أيام	60 ساعة	FMCSA §395.3(b)(1)
+الحد الأقصى لدورة 8 أيام	70 ساعة	FMCSA §395.3(b)(2)
+استراحة 30 دقيقة بعد 8 ساعات قيادة	30 دقيقة	FMCSA §395.3(a)(3)(ii)
+الراحة الأسبوعية المتتالية	34 ساعة	FMCSA §395.3(c)
+الاحتفاظ بالبيانات للتفتيش	8 أيام	FMCSA §395.15
+2.1. الميزات الأساسية لنظام ELD/HOS
+الميزة	الوصف
+تسجيل الحالات التلقائي	تسجيل حالة السائق تلقائياً بناءً على سرعة المركبة وحالة الإشعال.
+الدعم الكامل لحالات السائق الأربع	قيادة (driving)، خدمة (on_duty)، خارج الخدمة (off_duty)، نوم (sleeper_berth).
+حساب ساعات الخدمة المتاحة	حساب الساعات المتبقية للقيادة والعمل والراحة وفق قواعد FMCSA.
+اكتشاف المخالفات	تحديد 7 أنواع من المخالفات مع مستويات خطورة (بسيط، متوسط، عالي، حرج).
+التقارير الشاملة	تقارير HOS و ELD بصيغ متعددة (PDF، CSV، JSON، XML، HTML).
+إدارة المستندات الداعمة	رفع وتحميل وحذف والتحقق من المستندات (فواتير، إيصالات، تصاريح).
+التفتيش على الطريق	بدء جلسات تفتيش، إنشاء تقارير التفتيش، تصدير بيانات ELD للمفتشين.
+المراقبة في الوقت الحقيقي	الاشتراك في تحديثات حالة السائق والمخالفات، مراقبة السائقين لحظياً.
+التنبيهات الذكية	إعداد تنبيهات مخصصة لتجاوز الحدود، نقص الراحة، والمخالفات المحتملة.
+التحليلات المتقدمة	تحليل أنماط القيادة، كفاءة الوقود، وتوصيات التحسين.
+إدارة الأجهزة والإعدادات	إعداد أجهزة ELD جديدة، تحديث الإعدادات، صيانة النظام.
+التدريب والدعم	إنشاء حزم تدريب للسائقين، تتبع التقدم، وإنشاء أدلة المستخدم.
+2.2. الفوائد للمطورين والمسؤولين
+جاهز للإنتاج: معالجة استثنائية شاملة مع رسائل خطأ واضحة.
+مرونة عالية: دعم جميع نقاط نهاية ELD/HOS مع إمكانية التوسع.
+تكامل سلس: يمكن دمجها بسهولة مع أنظمة إدارة الأسطول، تطبيقات السائقين، ولوحات التحكم.
+أمان متقدم: مصادقة OAuth 2.0 مع صلاحيات دقيقة.
+توثيق شامل: كل نقطة نهاية موثقة بشكل كامل مع أمثلة دقيقة.
+قابلية التوسع: يمكن إضافة نقاط نهاية جديدة بسهولة عبر السمات (Traits).
+3.1.1. تسجيل حالة الخدمة
+POST /drivers/{driverId}/duty-status
+الوصف: تسجيل حالة الخدمة الحالية للسائق (قيادة، خدمة، خارج الخدمة، نوم). يتم إنشاء حدث في Traccar من النوع driverStatusChange مع حفظ البيانات في سمات الحدث.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+status	string	نعم	حالة الخدمة: driving, on_duty, off_duty, sleeper_berth	-
+deviceId	integer	لا	معرف الجهاز المرتبط	null
+positionId	integer	لا	معرف الموقع الحالي	null
+location	string	لا	وصف الموقع النصي	'غير محدد'
+odometer	float	لا	قراءة عداد المسافة (كم)	0
+engineHours	float	لا	ساعات تشغيل المحرك	0
+remarks	string	لا	ملاحظات إضافية	''
+attributes	object	لا	سمات إضافية	{}
+أنواع الحالات المدعومة
+الحالة	الكود	الوصف
+قيادة	driving	المركبة تتحرك والإشعال يعمل
+في الخدمة	on_duty	الإشعال يعمل ولكن المركبة متوقفة (عمل)
+خارج الخدمة	off_duty	الإشعال مطفأ (راحة)
+نوم في المركبة	sleeper_berth	راحة في مقصورة النوم
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/drivers/100/duty-status
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "status": "driving",
+  "deviceId": 101,
+  "location": "Highway 40, Riyadh",
+  "odometer": 12450.5,
+  "engineHours": 1245.3,
+  "remarks": "Start of trip to Dammam",
+  "attributes": {
+    "route": "Riyadh-Dammam",
+    "tripId": "TRIP-2026-001"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم تسجيل حالة الخدمة بنجاح",
+    "data": {
+        "id": 2001,
+        "type": "driverStatusChange",
+        "deviceId": 101,
+        "positionId": null,
+        "eventTime": "2026-01-15T06:30:00Z",
+        "serverTime": "2026-01-15T06:30:05Z",
+        "attributes": {
+            "driverId": 100,
+            "dutyStatus": "driving",
+            "location": "Highway 40, Riyadh",
+            "odometer": 12450.5,
+            "engineHours": 1245.3,
+            "remarks": "Start of trip to Dammam",
+            "route": "Riyadh-Dammam",
+            "tripId": "TRIP-2026-001"
+        }
+    }
+}
+3.1.2. الحصول على سجل حالات الخدمة
+GET /duty-status-logs
+الوصف: الحصول على سجل حالات الخدمة المسجلة مع إمكانية التصفية حسب السائق والجهاز والفترة الزمنية.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	لا	تصفية حسب معرف السائق
+deviceId	integer	لا	تصفية حسب معرف الجهاز
+from	string	لا	تاريخ البداية (ISO 8601)
+to	string	لا	تاريخ النهاية (ISO 8601)
+limit	integer	لا	الحد الأقصى لعدد النتائج
+الاستجابة
+الحقل	النوع	الوصف
+id	integer	معرف السجل
+driverId	integer	معرف السائق
+deviceId	integer	معرف الجهاز
+dutyStatus	string	حالة الخدمة
+timestamp	string	وقت التسجيل
+location	string	الموقع النصي
+odometer	float	قراءة عداد المسافة
+engineHours	float	ساعات تشغيل المحرك
+remarks	string	ملاحظات
+source	string	مصدر السجل (traccar_event)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/duty-status-logs?driverId=100&from=2026-01-15T00:00:00Z&to=2026-01-15T23:59:59Z
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 2001,
+            "driverId": 100,
+            "deviceId": 101,
+            "dutyStatus": "on_duty",
+            "timestamp": "2026-01-15T06:00:00Z",
+            "location": "Riyadh, Saudi Arabia",
+            "odometer": 12445,
+            "engineHours": 1244,
+            "remarks": "Start of shift",
+            "source": "traccar_event"
+        },
+        {
+            "id": 2002,
+            "driverId": 100,
+            "deviceId": 101,
+            "dutyStatus": "driving",
+            "timestamp": "2026-01-15T06:30:00Z",
+            "location": "Highway 40, Riyadh",
+            "odometer": 12450.5,
+            "engineHours": 1245.3,
+            "remarks": "Start of trip to Dammam",
+            "source": "traccar_event"
+        },
+        {
+            "id": 2003,
+            "driverId": 100,
+            "deviceId": 101,
+            "dutyStatus": "off_duty",
+            "timestamp": "2026-01-15T10:00:00Z",
+            "location": "Dammam, Saudi Arabia",
+            "odometer": 12455,
+            "engineHours": 1246,
+            "remarks": "Break time",
+            "source": "traccar_event"
+        },
+        {
+            "id": 2004,
+            "driverId": 100,
+            "deviceId": 101,
+            "dutyStatus": "driving",
+            "timestamp": "2026-01-15T10:35:00Z",
+            "location": "Highway 40, Dammam",
+            "odometer": 12460,
+            "engineHours": 1247,
+            "remarks": "Continue trip",
+            "source": "traccar_event"
+        },
+        {
+            "id": 2005,
+            "driverId": 100,
+            "deviceId": 101,
+            "dutyStatus": "off_duty",
+            "timestamp": "2026-01-15T17:00:00Z",
+            "location": "Dammam, Saudi Arabia",
+            "odometer": 12475,
+            "engineHours": 1249,
+            "remarks": "End of shift",
+            "source": "traccar_event"
+        }
+    ]
+}
+3.2.1. حساب ساعات الخدمة المتاحة
+GET /drivers/{driverId}/available-hours
+الوصف: حساب ساعات الخدمة المستخدمة والمتبقية للسائق في تاريخ محدد وفقاً لقواعد FMCSA.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+date	string	لا	التاريخ المطلوب (Y-m-d)	تاريخ اليوم
+الاستجابة
+الحقل	النوع	الوصف
+driverId	integer	معرف السائق
+date	string	التاريخ المحسوب
+usedHours.driving_hours	float	ساعات القيادة المستخدمة
+usedHours.on_duty_hours	float	ساعات الخدمة المستخدمة
+usedHours.off_duty_hours	float	ساعات خارج الخدمة
+usedHours.sleeper_berth_hours	float	ساعات النوم في المركبة
+usedHours.periods	array	فترات الحالة المفصلة
+availableHours.driving_remaining	float	ساعات القيادة المتبقية
+availableHours.on_duty_remaining	float	ساعات الخدمة المتبقية
+rules	object	قواعد FMCSA المطبقة
+violations	array	قائمة المخالفات المكتشفة
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/available-hours?date=2026-01-15
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driverId": 100,
+        "date": "2026-01-15",
+        "usedHours": {
+            "driving_hours": 8.5,
+            "on_duty_hours": 10,
+            "off_duty_hours": 13,
+            "sleeper_berth_hours": 0,
+            "periods": [
+                {
+                    "status": "on_duty",
+                    "start": "2026-01-15T06:00:00Z",
+                    "end": "2026-01-15T06:30:00Z",
+                    "duration_hours": 0.5
+                },
+                {
+                    "status": "driving",
+                    "start": "2026-01-15T06:30:00Z",
+                    "end": "2026-01-15T10:00:00Z",
+                    "duration_hours": 3.5
+                },
+                {
+                    "status": "off_duty",
+                    "start": "2026-01-15T10:00:00Z",
+                    "end": "2026-01-15T10:35:00Z",
+                    "duration_hours": 0.58
+                },
+                {
+                    "status": "driving",
+                    "start": "2026-01-15T10:35:00Z",
+                    "end": "2026-01-15T17:00:00Z",
+                    "duration_hours": 6.42
+                },
+                {
+                    "status": "off_duty",
+                    "start": "2026-01-15T17:00:00Z",
+                    "end": "2026-01-16T00:00:00Z",
+                    "duration_hours": 7
+                }
+            ]
+        },
+        "availableHours": {
+            "driving_remaining": 2.5,
+            "on_duty_remaining": 4
+        },
+        "rules": {
+            "max_driving_hours": 11,
+            "max_on_duty_hours": 14,
+            "min_rest_hours": 10,
+            "max_cycle_7_days": 60,
+            "max_cycle_8_days": 70,
+            "rest_break_interval": 8,
+            "data_retention_days": 8
+        },
+        "violations": []
+    }
+}
+3.3.1. اكتشاف مخالفات HOS
+GET /drivers/{driverId}/hos-violations
+الوصف: اكتشاف مخالفات ساعات الخدمة للسائق خلال فترة زمنية محددة (افتراضي 30 يوماً).
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+from	string	لا	تاريخ البداية (Y-m-d)	30 يوماً قبل اليوم
+to	string	لا	تاريخ النهاية (Y-m-d)	اليوم
+includeWarnings	boolean	لا	تضمين التحذيرات	true
+أنواع المخالفات المكتشفة
+المخالفة	الكود	المستوى
+تجاوز ساعات القيادة اليومية	exceeded_driving_hours	حرج
+تجاوز ساعات الخدمة اليومية	exceeded_on_duty_hours	حرج
+عدم كفاية الراحة اليومية	insufficient_rest	تحذير
+تجاوز دورة 7 أيام	exceeded_7day_cycle	حرج
+تجاوز دورة 8 أيام	exceeded_8day_cycle	حرج
+عدم أخذ استراحة 30 دقيقة	no_rest_break	تحذير
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/hos-violations?from=2026-01-01&to=2026-01-15&includeWarnings=true
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driverId": 100,
+        "period": {
+            "from": "2026-01-01",
+            "to": "2026-01-15"
+        },
+        "violations": [
+            {
+                "date": "2026-01-10",
+                "type": "exceeded_driving_hours",
+                "actual": 11.8,
+                "limit": 11,
+                "exceeded_by": 0.8,
+                "rule_reference": "FMCSA §395.3(a)(1)"
+            },
+            {
+                "date": "2026-01-10",
+                "type": "exceeded_on_duty_hours",
+                "actual": 14.2,
+                "limit": 14,
+                "exceeded_by": 0.2,
+                "rule_reference": "FMCSA §395.3(a)(2)"
+            }
+        ],
+        "warnings": [
+            {
+                "date": "2026-01-12",
+                "type": "insufficient_rest",
+                "actual": 9.5,
+                "required": 10,
+                "missing": 0.5,
+                "rule_reference": "FMCSA §395.3(a)(3)"
+            }
+        ],
+        "summary": {
+            "total_violations": 2,
+            "critical_violations": 2,
+            "total_warnings": 1,
+            "status": "non_compliant"
+        }
+    }
+}
+3.4.1. إنشاء تقرير HOS
+GET /drivers/{driverId}/hos-report
+الوصف: إنشاء تقرير ساعات الخدمة (HOS) كامل للسائق خلال فترة زمنية محددة.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+from	string	لا	تاريخ البداية (Y-m-d)	7 أيام قبل اليوم
+to	string	لا	تاريخ النهاية (Y-m-d)	اليوم
+الاستجابة
+الحقل	النوع	الوصف
+driverId	integer	معرف السائق
+period	object	الفترة الزمنية للتقرير
+daily_analysis	array	التحليل اليومي لساعات الخدمة
+violations	array	قائمة المخالفات
+summary	object	ملخص التقرير
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/hos-report?from=2026-01-08&to=2026-01-15
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driverId": 100,
+        "period": {
+            "from": "2026-01-08",
+            "to": "2026-01-15"
+        },
+        "daily_analysis": {
+            "2026-01-08": {
+                "date": "2026-01-08",
+                "driving_hours": 8.5,
+                "on_duty_hours": 2.3,
+                "off_duty_hours": 13.2,
+                "sleeper_berth_hours": 0,
+                "work_hours": 10.8,
+                "total_hours": 24,
+                "start_time": "2026-01-08T06:15:00Z",
+                "end_time": "2026-01-08T17:45:00Z",
+                "is_compliant": true
+            },
+            "2026-01-09": {
+                "date": "2026-01-09",
+                "driving_hours": 9.2,
+                "on_duty_hours": 2.4,
+                "off_duty_hours": 12.4,
+                "sleeper_berth_hours": 0,
+                "work_hours": 11.6,
+                "total_hours": 24,
+                "start_time": "2026-01-09T06:00:00Z",
+                "end_time": "2026-01-09T17:30:00Z",
+                "is_compliant": true
+            },
+            "2026-01-10": {
+                "date": "2026-01-10",
+                "driving_hours": 11.8,
+                "on_duty_hours": 2.4,
+                "off_duty_hours": 9.8,
+                "sleeper_berth_hours": 0,
+                "work_hours": 14.2,
+                "total_hours": 24,
+                "start_time": "2026-01-10T05:30:00Z",
+                "end_time": "2026-01-10T19:45:00Z",
+                "is_compliant": false
+            },
+            "2026-01-11": {
+                "date": "2026-01-11",
+                "driving_hours": 7.5,
+                "on_duty_hours": 2.5,
+                "off_duty_hours": 14,
+                "sleeper_berth_hours": 0,
+                "work_hours": 10,
+                "total_hours": 24,
+                "start_time": "2026-01-11T06:00:00Z",
+                "end_time": "2026-01-11T16:00:00Z",
+                "is_compliant": true
+            },
+            "2026-01-12": {
+                "date": "2026-01-12",
+                "driving_hours": 8,
+                "on_duty_hours": 2,
+                "off_duty_hours": 14,
+                "sleeper_berth_hours": 0,
+                "work_hours": 10,
+                "total_hours": 24,
+                "start_time": "2026-01-12T06:00:00Z",
+                "end_time": "2026-01-12T16:00:00Z",
+                "is_compliant": true
+            },
+            "2026-01-13": {
+                "date": "2026-01-13",
+                "driving_hours": 8.5,
+                "on_duty_hours": 2.5,
+                "off_duty_hours": 13,
+                "sleeper_berth_hours": 0,
+                "work_hours": 11,
+                "total_hours": 24,
+                "start_time": "2026-01-13T06:00:00Z",
+                "end_time": "2026-01-13T17:00:00Z",
+                "is_compliant": true
+            },
+            "2026-01-14": {
+                "date": "2026-01-14",
+                "driving_hours": 9,
+                "on_duty_hours": 2,
+                "off_duty_hours": 13,
+                "sleeper_berth_hours": 0,
+                "work_hours": 11,
+                "total_hours": 24,
+                "start_time": "2026-01-14T06:00:00Z",
+                "end_time": "2026-01-14T17:00:00Z",
+                "is_compliant": true
+            },
+            "2026-01-15": {
+                "date": "2026-01-15",
+                "driving_hours": 8.5,
+                "on_duty_hours": 2.5,
+                "off_duty_hours": 13,
+                "sleeper_berth_hours": 0,
+                "work_hours": 11,
+                "total_hours": 24,
+                "start_time": "2026-01-15T06:00:00Z",
+                "end_time": "2026-01-15T17:00:00Z",
+                "is_compliant": true
+            }
+        },
+        "violations": [
+            {
+                "date": "2026-01-10",
+                "type": "exceeded_driving_hours",
+                "actual": 11.8,
+                "limit": 11,
+                "exceeded_by": 0.8,
+                "rule_reference": "FMCSA §395.3(a)(1)"
+            },
+            {
+                "date": "2026-01-10",
+                "type": "exceeded_on_duty_hours",
+                "actual": 14.2,
+                "limit": 14,
+                "exceeded_by": 0.2,
+                "rule_reference": "FMCSA §395.3(a)(2)"
+            }
+        ],
+        "summary": {
+            "total_driving_hours": 61,
+            "total_on_duty_hours": 18.6,
+            "total_off_duty_hours": 102.4,
+            "total_sleeper_berth_hours": 0,
+            "total_work_hours": 79.6,
+            "driving_days": 8,
+            "has_weekly_rest": true,
+            "consecutive_days": 5,
+            "max_consecutive_days": 7,
+            "violations_count": 2,
+            "critical_violations": 2,
+            "status": "non_compliant"
+        }
+    }
+}
+3.5.1. تحميل مستند داعم
+POST /drivers/{driverId}/supporting-documents
+الوصف: تحميل مستند داعم (فواتير، إيصالات، تصاريح) للسائق وتخزينه في نظام الملفات المحلي مع تسجيله كحدث في Traccar.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Form-Data
+المعامل	النوع	الإلزامية	الوصف
+document	file	نعم	ملف المستند (PDF، JPG، PNG، DOC)
+type	string	نعم	نوع المستند (انظر الأنواع المدعومة)
+metadata	object	لا	بيانات وصفية إضافية (JSON)
+أنواع المستندات المدعومة
+النوع	الوصف
+bill_of_lading	بوليصة الشحن
+fuel_receipt	إيصال وقود
+scale_ticket	تذكرة وزن
+border_crossing	عبور حدود
+dispatch_document	مستند الإرسال
+maintenance_record	سجل الصيانة
+inspection_report	تقرير التفتيش
+other	أخرى
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/drivers/100/supporting-documents
+Authorization: Bearer <your_access_token>
+Content-Type: multipart/form-data
+
+{
+  "document": <file_upload>,
+  "type": "fuel_receipt",
+  "metadata": "{\"description\": \"Fuel receipt from Riyadh\", \"amount\": 245.50, \"date\": \"2026-01-15\"}"
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم تحميل المستند بنجاح",
+    "data": {
+        "documentId": 4001,
+        "driverId": 100,
+        "type": "fuel_receipt",
+        "fileName": "fuel_receipt_2026-01-15.pdf",
+        "filePath": "\/var\/www\/html\/storage\/app\/eld\/documents\/100\/fuel_receipt_2026-01-15.pdf",
+        "fileSize": 245760,
+        "uploadDate": "2026-01-15T17:30:00Z",
+        "traccarEventId": 2006
+    }
+}
+3.5.2. الحصول على المستندات الداعمة
+GET /supporting-documents
+الوصف: الحصول على قائمة المستندات الداعمة مع إمكانية التصفية حسب السائق والجهاز والنوع.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	لا	تصفية حسب معرف السائق
+deviceId	integer	لا	تصفية حسب معرف الجهاز
+type	string	لا	تصفية حسب نوع المستند
+from	string	لا	تاريخ البداية (ISO 8601)
+to	string	لا	تاريخ النهاية (ISO 8601)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/supporting-documents?driverId=100&type=fuel_receipt
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": [
+        {
+            "id": 4001,
+            "driverId": 100,
+            "type": "fuel_receipt",
+            "fileName": "fuel_receipt_2026-01-15.pdf",
+            "filePath": "\/var\/www\/html\/storage\/app\/eld\/documents\/100\/fuel_receipt_2026-01-15.pdf",
+            "fileSize": 245760,
+            "uploadDate": "2026-01-15T17:30:00Z",
+            "description": "Fuel receipt from Riyadh",
+            "fileExists": true,
+            "downloadUrl": "https:\/\/your-domain.com\/api\/eld\/documents\/download\/4001",
+            "metadata": {
+                "description": "Fuel receipt from Riyadh",
+                "amount": 245.5,
+                "date": "2026-01-15"
+            }
+        },
+        {
+            "id": 4002,
+            "driverId": 100,
+            "type": "fuel_receipt",
+            "fileName": "fuel_receipt_2026-01-14.pdf",
+            "filePath": "\/var\/www\/html\/storage\/app\/eld\/documents\/100\/fuel_receipt_2026-01-14.pdf",
+            "fileSize": 185600,
+            "uploadDate": "2026-01-14T16:45:00Z",
+            "description": "Fuel receipt from Dammam",
+            "fileExists": true,
+            "downloadUrl": "https:\/\/your-domain.com\/api\/eld\/documents\/download\/4002",
+            "metadata": {
+                "description": "Fuel receipt from Dammam",
+                "amount": 210.3,
+                "date": "2026-01-14"
+            }
+        }
+    ]
+}
+3.6.1. إنشاء تقرير التفتيش
+GET /drivers/{driverId}/inspection-report
+الوصف: إنشاء تقرير تفتيش ELD للسائق يحتوي على بيانات 8 أيام المطلوبة للتفتيش على الطريق.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+inspection_type	string	لا	نوع التفتيش: roadside, terminal, compliance, safety	roadside
+data	object	لا	بيانات إضافية للتفتيش	{}
+أنواع التفتيش المدعومة
+النوع	الوصف
+roadside	تفتيش الطريق
+terminal	تفتيش المحطة
+compliance	تفتيش الامتثال
+safety	تفتيش السلامة
+الاستجابة
+الحقل	النوع	الوصف
+driverId	integer	معرف السائق
+inspectionType	string	نوع التفتيش
+reportDate	string	تاريخ التقرير
+period	object	فترة التقرير (8 أيام)
+positions	array	قائمة المواقع
+events	array	قائمة الأحداث
+trips	array	قائمة الرحلات
+summary	object	ملخص التقرير
+compliance	object	نتائج الامتثال
+eldFile	string	ملف ELD المشفر (Base64)
+eldFileName	string	اسم ملف ELD
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/inspection-report?inspection_type=roadside
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driverId": 100,
+        "inspectionType": "roadside",
+        "reportDate": "2026-01-15T17:30:00Z",
+        "period": {
+            "from": "2026-01-07",
+            "to": "2026-01-15"
+        },
+        "positions": [
+            {
+                "id": 1001,
+                "deviceId": 101,
+                "latitude": 24.7136,
+                "longitude": 46.6753,
+                "speed": 55.5,
+                "fixTime": "2026-01-15T06:30:00Z"
+            },
+            {
+                "id": 1002,
+                "deviceId": 101,
+                "latitude": 24.7136,
+                "longitude": 46.6753,
+                "speed": 0,
+                "fixTime": "2026-01-15T10:00:00Z"
+            },
+            {
+                "id": 1003,
+                "deviceId": 101,
+                "latitude": 24.7136,
+                "longitude": 46.6753,
+                "speed": 60,
+                "fixTime": "2026-01-15T10:35:00Z"
+            },
+            {
+                "id": 1004,
+                "deviceId": 101,
+                "latitude": 24.7136,
+                "longitude": 46.6753,
+                "speed": 0,
+                "fixTime": "2026-01-15T17:00:00Z"
+            }
+        ],
+        "events": [
+            {
+                "id": 2001,
+                "type": "driverStatusChange",
+                "deviceId": 101,
+                "eventTime": "2026-01-15T06:00:00Z",
+                "attributes": {
+                    "driverId": 100,
+                    "dutyStatus": "on_duty",
+                    "location": "Riyadh, Saudi Arabia"
+                }
+            },
+            {
+                "id": 2002,
+                "type": "driverStatusChange",
+                "deviceId": 101,
+                "eventTime": "2026-01-15T06:30:00Z",
+                "attributes": {
+                    "driverId": 100,
+                    "dutyStatus": "driving",
+                    "location": "Highway 40, Riyadh"
+                }
+            },
+            {
+                "id": 2003,
+                "type": "driverStatusChange",
+                "deviceId": 101,
+                "eventTime": "2026-01-15T10:00:00Z",
+                "attributes": {
+                    "driverId": 100,
+                    "dutyStatus": "off_duty",
+                    "location": "Dammam, Saudi Arabia"
+                }
+            },
+            {
+                "id": 2004,
+                "type": "driverStatusChange",
+                "deviceId": 101,
+                "eventTime": "2026-01-15T10:35:00Z",
+                "attributes": {
+                    "driverId": 100,
+                    "dutyStatus": "driving",
+                    "location": "Highway 40, Dammam"
+                }
+            },
+            {
+                "id": 2005,
+                "type": "driverStatusChange",
+                "deviceId": 101,
+                "eventTime": "2026-01-15T17:00:00Z",
+                "attributes": {
+                    "driverId": 100,
+                    "dutyStatus": "off_duty",
+                    "location": "Dammam, Saudi Arabia"
+                }
+            }
+        ],
+        "trips": [
+            {
+                "id": 1,
+                "deviceId": 101,
+                "startTime": "2026-01-15T06:30:00Z",
+                "endTime": "2026-01-15T10:00:00Z",
+                "duration": 12600,
+                "distance": 220.5,
+                "startLatitude": 24.7136,
+                "startLongitude": 46.6753,
+                "endLatitude": 26.3999,
+                "endLongitude": 50.2044,
+                "maxSpeed": 80,
+                "averageSpeed": 55
+            },
+            {
+                "id": 2,
+                "deviceId": 101,
+                "startTime": "2026-01-15T10:35:00Z",
+                "endTime": "2026-01-15T17:00:00Z",
+                "duration": 23100,
+                "distance": 255.8,
+                "startLatitude": 26.3999,
+                "startLongitude": 50.2044,
+                "endLatitude": 24.7136,
+                "endLongitude": 46.6753,
+                "maxSpeed": 85,
+                "averageSpeed": 60
+            }
+        ],
+        "summary": {
+            "total_events": 5,
+            "total_positions": 4,
+            "total_trips": 2,
+            "total_distance": 476.3,
+            "total_duration": 35700,
+            "status": "non_compliant"
+        },
+        "compliance": {
+            "score": 80,
+            "status": "non_compliant",
+            "violations": [
+                {
+                    "date": "2026-01-10",
+                    "type": "exceeded_driving_hours",
+                    "actual": 11.8,
+                    "limit": 11,
+                    "exceeded_by": 0.8
+                }
+            ],
+            "warnings": [],
+            "recommendations": [
+                "مراجعة وتصحيح مخالفات ساعات الخدمة",
+                "توفير المستندات المطلوبة"
+            ]
+        },
+        "eldFile": "eyJmaWxlVHlwZSI6IkVMRF9EQVRBIiwidmVyc2lvbiI6IjEuMCIsImdlbmVyYXRlZEF0IjoiMjAyNi0wMS0xNVQxNzozMDowMFoiLCJkcml2ZXJJZCI6MTAwLCJkZXZpY2VJZCI6MTAxLCJkYXRhIjp7InBvc2l0aW9ucyI6W10sImV2ZW50cyI6W10sInRyaXBzIjpbXSwiY29tcGxpYW5jZSI6e30sInN1bW1hcnkiOnt9fSwiZm9vdGVyIjp7InJlY29yZENvdW50Ijp7InBvc2l0aW9ucyI6MCwiZXZlbnRzIjowLCJ0cmlwcyI6MH0sImhhc2giOiIifX0=",
+        "eldFileName": "ELD_Report_100_2026-01-15_17-30-00.eld"
+    }
+}
+3.7.1. تصدير بيانات التفتيش
+GET /drivers/{driverId}/inspection-export
+الوصف: تصدير بيانات التفتيش بصيغة محددة (PDF، CSV، JSON) للتقديم للمفتشين.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+format	string	لا	صيغة التصدير: pdf, csv, json	pdf
+period	object	لا	الفترة الزمنية (افتراضي 8 أيام)	{}
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/inspection-export?format=pdf
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "fileName": "eld_export_100_2026-01-15_17-30-00.pdf",
+        "filePath": "\/var\/www\/html\/storage\/app\/eld\/exports\/eld_export_100_2026-01-15_17-30-00.pdf",
+        "fileSize": 245760,
+        "downloadUrl": "https:\/\/your-domain.com\/api\/eld\/exports\/download\/eld_export_100_2026-01-15_17-30-00.pdf",
+        "format": "pdf",
+        "period": {
+            "from": "2026-01-07",
+            "to": "2026-01-15"
+        }
+    }
+}
+4.1.1. إنشاء تقرير ELD شامل
+GET /drivers/{driverId}/comprehensive-eld-report
+الوصف: إنشاء تقرير ELD شامل يجمع بيانات من مصادر متعددة (المواقع، الأحداث، التقارير، المستندات) للسائق خلال فترة زمنية محددة.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+period	object	لا	الفترة الزمنية (افتراضي 8 أيام)	{}
+الاستجابة
+الحقل	النوع	الوصف
+header	object	بيانات التقرير الأساسية
+executive_summary	object	ملخص تنفيذي
+hours_of_service	object	تحليل ساعات الخدمة
+compliance_details	object	تفاصيل الامتثال
+documents_section	object	قسم المستندات
+operational_metrics	object	المقاييس التشغيلية
+recommendations	object	التوصيات
+footer	object	بيانات التذييل
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/comprehensive-eld-report?period[from]=2026-01-07&period[to]=2026-01-15
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "header": {
+            "report_type": "ELD_COMPLIANCE_REPORT",
+            "version": "1.0",
+            "generated_at": "2026-01-15T17:30:00Z",
+            "driver_id": 100,
+            "period": {
+                "from": "2026-01-07",
+                "to": "2026-01-15"
+            }
+        },
+        "executive_summary": {
+            "compliance_status": "non_compliant",
+            "compliance_score": 80,
+            "total_violations": 2,
+            "total_warnings": 1,
+            "total_documents": 2,
+            "data_quality_score": 95
+        },
+        "hours_of_service": {
+            "daily_summary": {
+                "2026-01-07": {
+                    "date": "2026-01-07",
+                    "driving_hours": 8.5,
+                    "on_duty_hours": 2.3,
+                    "off_duty_hours": 13.2,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 10.8,
+                    "total_hours": 24,
+                    "start_time": "2026-01-07T06:15:00Z",
+                    "end_time": "2026-01-07T17:45:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-08": {
+                    "date": "2026-01-08",
+                    "driving_hours": 9.2,
+                    "on_duty_hours": 2.4,
+                    "off_duty_hours": 12.4,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 11.6,
+                    "total_hours": 24,
+                    "start_time": "2026-01-08T06:00:00Z",
+                    "end_time": "2026-01-08T17:30:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-09": {
+                    "date": "2026-01-09",
+                    "driving_hours": 11.8,
+                    "on_duty_hours": 2.4,
+                    "off_duty_hours": 9.8,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 14.2,
+                    "total_hours": 24,
+                    "start_time": "2026-01-09T05:30:00Z",
+                    "end_time": "2026-01-09T19:45:00Z",
+                    "is_compliant": false
+                },
+                "2026-01-10": {
+                    "date": "2026-01-10",
+                    "driving_hours": 7.5,
+                    "on_duty_hours": 2.5,
+                    "off_duty_hours": 14,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 10,
+                    "total_hours": 24,
+                    "start_time": "2026-01-10T06:00:00Z",
+                    "end_time": "2026-01-10T16:00:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-11": {
+                    "date": "2026-01-11",
+                    "driving_hours": 8,
+                    "on_duty_hours": 2,
+                    "off_duty_hours": 14,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 10,
+                    "total_hours": 24,
+                    "start_time": "2026-01-11T06:00:00Z",
+                    "end_time": "2026-01-11T16:00:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-12": {
+                    "date": "2026-01-12",
+                    "driving_hours": 8.5,
+                    "on_duty_hours": 2.5,
+                    "off_duty_hours": 13,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 11,
+                    "total_hours": 24,
+                    "start_time": "2026-01-12T06:00:00Z",
+                    "end_time": "2026-01-12T17:00:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-13": {
+                    "date": "2026-01-13",
+                    "driving_hours": 9,
+                    "on_duty_hours": 2,
+                    "off_duty_hours": 13,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 11,
+                    "total_hours": 24,
+                    "start_time": "2026-01-13T06:00:00Z",
+                    "end_time": "2026-01-13T17:00:00Z",
+                    "is_compliant": true
+                },
+                "2026-01-14": {
+                    "date": "2026-01-14",
+                    "driving_hours": 8.5,
+                    "on_duty_hours": 2.5,
+                    "off_duty_hours": 13,
+                    "sleeper_berth_hours": 0,
+                    "work_hours": 11,
+                    "total_hours": 24,
+                    "start_time": "2026-01-14T06:00:00Z",
+                    "end_time": "2026-01-14T17:00:00Z",
+                    "is_compliant": true
+                }
+            },
+            "period_summary": {
+                "7_day_cycle": {
+                    "total_hours": 61,
+                    "period": "2026-01-08 to 2026-01-14"
+                },
+                "8_day_cycle": {
+                    "total_hours": 69.5,
+                    "period": "2026-01-07 to 2026-01-14"
+                }
+            },
+            "violations": [
+                {
+                    "date": "2026-01-09",
+                    "type": "exceeded_driving_hours",
+                    "rule": "FMCSA §395.3(a)(1)",
+                    "actual": 11.8,
+                    "limit": 11,
+                    "exceeded_by": 0.8
+                },
+                {
+                    "date": "2026-01-09",
+                    "type": "exceeded_on_duty_hours",
+                    "rule": "FMCSA §395.3(a)(2)",
+                    "actual": 14.2,
+                    "limit": 14,
+                    "exceeded_by": 0.2
+                }
+            ],
+            "warnings": [
+                {
+                    "date": "2026-01-11",
+                    "type": "insufficient_rest",
+                    "rule": "FMCSA §395.3(a)(3)",
+                    "actual": 9.5,
+                    "required": 10,
+                    "missing": 0.5
+                }
+            ]
+        },
+        "compliance_details": {
+            "status": "non_compliant",
+            "score": 80,
+            "violations": [
+                {
+                    "date": "2026-01-09",
+                    "type": "exceeded_driving_hours",
+                    "rule": "FMCSA §395.3(a)(1)",
+                    "actual": 11.8,
+                    "limit": 11,
+                    "exceeded_by": 0.8
+                },
+                {
+                    "date": "2026-01-09",
+                    "type": "exceeded_on_duty_hours",
+                    "rule": "FMCSA §395.3(a)(2)",
+                    "actual": 14.2,
+                    "limit": 14,
+                    "exceeded_by": 0.2
+                }
+            ],
+            "warnings": [
+                {
+                    "date": "2026-01-11",
+                    "type": "insufficient_rest",
+                    "rule": "FMCSA §395.3(a)(3)",
+                    "actual": 9.5,
+                    "required": 10,
+                    "missing": 0.5
+                }
+            ],
+            "missing_items": [],
+            "recommendations": [
+                {
+                    "type": "immediate",
+                    "priority": "high",
+                    "action": "مراجعة وتصحيح مخالفات ساعات الخدمة"
+                },
+                {
+                    "type": "short_term",
+                    "priority": "medium",
+                    "action": "تحسين التخطيط للرحلات لتجنب تجاوز الحدود"
+                }
+            ]
+        },
+        "documents_section": {
+            "available_documents": [
+                {
+                    "type": "fuel_receipt",
+                    "count": 2,
+                    "verified": true
+                },
+                {
+                    "type": "bill_of_lading",
+                    "count": 1,
+                    "verified": false
+                }
+            ],
+            "missing_documents": [],
+            "verification_status": "partially_verified"
+        },
+        "operational_metrics": {
+            "total_distance": 1245.8,
+            "total_hours": 192,
+            "average_speed": 55,
+            "fuel_efficiency": 8.5,
+            "safety_indicators": {
+                "hard_braking_events": 2,
+                "rapid_acceleration_events": 3,
+                "speeding_events": 1
+            }
+        },
+        "recommendations": {
+            "immediate_actions": [
+                {
+                    "priority": "high",
+                    "action": "مراجعة وتصحيح مخالفات ساعات الخدمة"
+                }
+            ],
+            "short_term_improvements": [
+                {
+                    "priority": "medium",
+                    "action": "تحسين التخطيط للرحلات لتجنب تجاوز الحدود"
+                }
+            ],
+            "long_term_strategies": [
+                {
+                    "priority": "low",
+                    "action": "تدريب السائقين على قواعد ساعات الخدمة"
+                }
+            ]
+        },
+        "footer": {
+            "data_sources_used": [
+                "events",
+                "positions",
+                "reports",
+                "documents"
+            ],
+            "report_validity": "Valid for inspection purposes for 8 days from 2026-01-15",
+            "generated_by": "Traccar ELD System",
+            "contact_info": "support@example.com"
+        }
+    }
+}
+4.2.1. تصدير تقرير ELD
+POST /eld-report/export/{driverId}
+الوصف: تصدير تقرير ELD بتنسيقات مختلفة (PDF، CSV، JSON، XML، HTML) مع إمكانية التحميل.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+format	string	لا	صيغة التصدير: pdf, csv, json, xml, html	pdf
+period	object	لا	الفترة الزمنية	{}
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld-report/export/100
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "format": "pdf",
+  "period": {
+    "from": "2026-01-07",
+    "to": "2026-01-15"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "filename": "eld_report_100_2026-01-15_17-30-00.pdf",
+        "filepath": "\/var\/www\/html\/storage\/app\/eld\/exports\/eld_report_100_2026-01-15_17-30-00.pdf",
+        "filesize": 245760,
+        "format": "pdf",
+        "download_url": "https:\/\/your-domain.com\/api\/eld\/exports\/download\/eld_report_100_2026-01-15_17-30-00.pdf",
+        "expires_at": "2026-01-23T17:30:00Z"
+    }
+}
+4.3.1. بدء جلسة تفتيش
+POST /drivers/{driverId}/inspection-session
+الوصف: بدء جلسة تفتيش جديدة للسائق، وإنشاء معرف جلسة فريد، وتوليد رمز QR للوصول السريع.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+inspection_type	string	لا	نوع التفتيش: roadside, terminal, compliance, safety	roadside
+inspector	object	لا	بيانات المفتش	{}
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/drivers/100/inspection-session
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "inspection_type": "roadside",
+  "inspector": {
+    "name": "Officer Ahmed",
+    "badge": "12345",
+    "agency": "FMCSA"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "session_id": "INSP_ABC123DEF456",
+        "driver_id": 100,
+        "inspection_type": "roadside",
+        "inspector": {
+            "name": "Officer Ahmed",
+            "badge": "12345",
+            "agency": "FMCSA"
+        },
+        "start_time": "2026-01-15T17:30:00Z",
+        "location": {
+            "latitude": 24.7136,
+            "longitude": 46.6753,
+            "address": "Highway 40, Riyadh"
+        },
+        "status": "active",
+        "qr_code": "data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+        "access_url": "https:\/\/your-domain.com\/api\/eld\/inspection\/access\/INSP_ABC123DEF456"
+    }
+}
+4.3.2. تصدير بيانات جلسة التفتيش
+GET /inspection-session/{sessionId}/export
+الوصف: تصدير بيانات جلسة التفتيش بتنسيقات مختلفة (نقل مباشر، بريد إلكتروني، ويب، طباعة) للتقديم للمفتشين.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+sessionId	string	نعم	معرف جلسة التفتيش
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+format	string	لا	تنسيق التصدير: transfer, email, web, print	transfer
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/inspection-session/INSP_ABC123DEF456/export?format=transfer
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "session_id": "INSP_ABC123DEF456",
+        "driver_id": 100,
+        "inspection_type": "roadside",
+        "data_period": {
+            "from": "2026-01-07",
+            "to": "2026-01-15"
+        },
+        "export_data": {
+            "format": "transfer",
+            "content": "base64_encoded_data",
+            "size": 245760
+        },
+        "verification": {
+            "timestamp": "2026-01-15T17:30:00Z",
+            "signature": "base64_encoded_signature"
+        }
+    }
+}
+4.4.1. الاشتراك في تحديثات ELD في الوقت الحقيقي
+POST /eld/realtime/subscribe
+الوصف: الاشتراك في تحديثات ELD في الوقت الحقيقي (حالة السائق، المخالفات، الأحداث) للسائقين المحددين.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+driver_ids	array	لا	قائمة معرفات السائقين للاشتراك	[] (جميع السائقين)
+channels	array	لا	قنوات الاشتراك: duty_status, violations, events	["duty_status", "violations"]
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld/realtime/subscribe
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "driver_ids": [100, 101, 102],
+  "channels": ["duty_status", "violations", "events"]
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "subscription_id": "ELD_SUB_ABC123DEF456",
+        "driver_ids": [
+            100,
+            101,
+            102
+        ],
+        "channels": [
+            "duty_status",
+            "violations",
+            "events"
+        ],
+        "created_at": "2026-01-15T17:30:00Z",
+        "expires_at": "2026-01-16T17:30:00Z",
+        "status": "active",
+        "websocket_url": "wss:\/\/your-domain.com\/eld\/realtime\/ws?subscription=ELD_SUB_ABC123DEF456"
+    }
+}
+4.4.2. مراقبة السائقين في الوقت الحقيقي
+GET /eld/realtime/monitor
+الوصف: مراقبة السائقين المحددين في الوقت الحقيقي والحصول على بياناتهم الحالية والتنبيهات.
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+driver_ids	array	نعم	قائمة معرفات السائقين للمراقبة
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/eld/realtime/monitor?driver_ids[]=100&driver_ids[]=101
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "100": {
+            "current_status": {
+                "duty_status": "driving",
+                "started_at": "2026-01-15T10:35:00Z",
+                "location": "Highway 40, Dammam",
+                "device_id": 101
+            },
+            "realtime_metrics": {
+                "driving_hours_today": 8.5,
+                "on_duty_hours_today": 10,
+                "remaining_driving_hours": 2.5,
+                "remaining_on_duty_hours": 4
+            },
+            "alerts": [],
+            "warnings": [
+                {
+                    "type": "driving_hours_warning",
+                    "message": "متبقي 2.5 ساعة فقط من القيادة لهذا اليوم"
+                }
+            ],
+            "recommendations": [
+                "خطط للراحة قبل الوصول للحد الأقصى للقيادة"
+            ],
+            "last_updated": "2026-01-15T17:30:00Z"
+        },
+        "101": {
+            "current_status": {
+                "duty_status": "off_duty",
+                "started_at": "2026-01-15T17:00:00Z",
+                "location": "Dammam, Saudi Arabia",
+                "device_id": 102
+            },
+            "realtime_metrics": {
+                "driving_hours_today": 6.5,
+                "on_duty_hours_today": 7.5,
+                "remaining_driving_hours": 4.5,
+                "remaining_on_duty_hours": 6.5
+            },
+            "alerts": [],
+            "warnings": [],
+            "recommendations": [],
+            "last_updated": "2026-01-15T17:30:00Z"
+        }
+    },
+    "summary": {
+        "total_drivers": 2,
+        "drivers_on_duty": 1,
+        "active_alerts": 0,
+        "monitoring_since": "2026-01-15T17:30:00Z"
+    }
+}
+4.5.1. إعداد تنبيهات ELD
+POST /eld/alerts/setup
+الوصف: إعداد نظام تنبيهات ELD ذكي مع قواعد مراقبة مخصصة وطرق إشعار محددة.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+config	object	لا	إعدادات التنبيهات	{}
+هيكل إعدادات التنبيهات
+المفتاح	النوع	الوصف	القيمة الافتراضية
+violation_thresholds.driving_hours_warning	float	تحذير عند تجاوز هذه الساعات	10
+violation_thresholds.driving_hours_critical	float	تنبيه عند تجاوز هذه الساعات	11
+violation_thresholds.rest_hours_warning	float	تحذير عند نقص الراحة	9
+violation_thresholds.cycle_hours_warning	float	تحذير عند تجاوز دورة الساعات	55
+notification_methods	array	طرق الإشعار: in_app, email, sms	["in_app", "email"]
+recipients	array	قائمة المستلمين	[]
+schedule	string	جدول المراقبة: realtime, hourly, daily	realtime
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld/alerts/setup
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "config": {
+    "violation_thresholds": {
+      "driving_hours_warning": 9,
+      "driving_hours_critical": 11,
+      "rest_hours_warning": 8,
+      "cycle_hours_warning": 50
+    },
+    "notification_methods": ["in_app", "email", "sms"],
+    "recipients": ["admin@example.com", "+966501234578"],
+    "schedule": "realtime"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "config": {
+            "violation_thresholds": {
+                "driving_hours_warning": 9,
+                "driving_hours_critical": 11,
+                "rest_hours_warning": 8,
+                "cycle_hours_warning": 50
+            },
+            "notification_methods": [
+                "in_app",
+                "email",
+                "sms"
+            ],
+            "recipients": [
+                "admin@example.com",
+                "+966501234578"
+            ],
+            "schedule": "realtime"
+        },
+        "alert_rules": [
+            {
+                "id": 1,
+                "name": "Driving Hours Warning",
+                "condition": "driving_hours >= 9",
+                "severity": "warning",
+                "action": "notify"
+            },
+            {
+                "id": 2,
+                "name": "Driving Hours Critical",
+                "condition": "driving_hours >= 11",
+                "severity": "critical",
+                "action": "notify"
+            },
+            {
+                "id": 3,
+                "name": "Rest Hours Warning",
+                "condition": "rest_hours <= 8",
+                "severity": "warning",
+                "action": "notify"
+            },
+            {
+                "id": 4,
+                "name": "Cycle Hours Warning",
+                "condition": "cycle_hours >= 50",
+                "severity": "warning",
+                "action": "notify"
+            }
+        ],
+        "monitoring_job_id": "JOB_ABC123DEF456",
+        "next_check": "2026-01-15T17:31:00Z",
+        "subscription_url": "https:\/\/your-domain.com\/api\/eld\/alerts\/subscribe"
+    }
+}
+4.5.2. إرسال تنبيه ELD
+POST /eld/alerts/send
+الوصف: إرسال تنبيه ELD فوري مع إشعارات للمستلمين المحددين.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+driver_id	integer	نعم	معرف السائق
+alert_type	string	نعم	نوع التنبيه
+severity	string	نعم	مستوى الخطورة: info, warning, error, critical
+message	string	نعم	رسالة التنبيه
+data	object	لا	بيانات إضافية
+recipients	array	لا	قائمة المستلمين الإضافيين
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld/alerts/send
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "driver_id": 100,
+  "alert_type": "driving_hours_critical",
+  "severity": "critical",
+  "message": "السائق أحمد محمد تجاوز حد القيادة اليومي (11 ساعة). القيادة الحالية: 11.8 ساعة.",
+  "data": {
+    "actual_hours": 11.8,
+    "limit_hours": 11,
+    "exceeded_by": 0.8
+  },
+  "recipients": ["fleet_manager@example.com"]
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "alert_id": "ALERT_ABC123DEF456",
+        "driver_id": 100,
+        "alert_type": "driving_hours_critical",
+        "severity": "critical",
+        "message": "السائق أحمد محمد تجاوز حد القيادة اليومي (11 ساعة). القيادة الحالية: 11.8 ساعة.",
+        "data": {
+            "actual_hours": 11.8,
+            "limit_hours": 11,
+            "exceeded_by": 0.8
+        },
+        "timestamp": "2026-01-15T17:30:00Z",
+        "status": "active",
+        "acknowledged": false,
+        "action_required": true,
+        "notifications_sent": {
+            "email": [
+                "fleet_manager@example.com"
+            ],
+            "in_app": [
+                "100"
+            ],
+            "sms": []
+        },
+        "acknowledge_url": "https:\/\/your-domain.com\/api\/eld\/alerts\/acknowledge\/ALERT_ABC123DEF456",
+        "actions": [
+            {
+                "label": "تأكيد الاستلام",
+                "action": "acknowledge"
+            },
+            {
+                "label": "اتخاذ إجراء",
+                "action": "action_required"
+            }
+        ]
+    }
+}
+4.6.1. تحليل أنماط القيادة
+GET /drivers/{driverId}/driving-patterns
+الوصف: تحليل أنماط القيادة للسائق (الأنماط الزمنية، المسارية، السلوكية، الكفاءة، السلامة) خلال فترة زمنية محددة.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+period	object	لا	الفترة الزمنية	30 يوماً
+الاستجابة
+الحقل	النوع	الوصف
+driver_id	integer	معرف السائق
+period	object	الفترة الزمنية
+patterns.time_patterns	object	الأنماط الزمنية
+patterns.route_patterns	object	الأنماط المسارية
+patterns.behavior_patterns	object	الأنماط السلوكية
+patterns.efficiency_patterns	object	أنماط الكفاءة
+patterns.safety_patterns	object	أنماط السلامة
+scores	object	النتائج
+recommendations	array	التوصيات
+summary	object	ملخص التحليل
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/driving-patterns?period[from]=2026-01-01&period[to]=2026-01-15
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driver_id": 100,
+        "period": {
+            "from": "2026-01-01",
+            "to": "2026-01-15"
+        },
+        "patterns": {
+            "time_patterns": {
+                "peak_driving_hours": "06:00-09:00 and 14:00-17:00",
+                "average_daily_driving": 8.5,
+                "most_common_rest_hours": "12:00-13:00"
+            },
+            "route_patterns": {
+                "preferred_routes": [
+                    "Riyadh-Dammam",
+                    "Riyadh-Jeddah"
+                ],
+                "average_trip_duration": 6.5,
+                "average_trip_distance": 220.5
+            },
+            "behavior_patterns": {
+                "hard_braking_events": 2,
+                "rapid_acceleration_events": 3,
+                "speeding_events": 1,
+                "idling_time_percentage": 15
+            },
+            "efficiency_patterns": {
+                "fuel_efficiency": 8.5,
+                "average_speed": 55,
+                "fuel_cost_per_km": 0.85
+            },
+            "safety_patterns": {
+                "safety_score": 85,
+                "risk_factors": [
+                    "speeding",
+                    "rapid_acceleration"
+                ],
+                "incidents": 0
+            }
+        },
+        "scores": {
+            "safety_score": 85,
+            "efficiency_score": 80,
+            "compliance_score": 75,
+            "overall_score": 80
+        },
+        "recommendations": [
+            {
+                "category": "safety",
+                "priority": "high",
+                "action": "التدريب على تقليل السرعة الزائدة والتسارع المفاجئ"
+            },
+            {
+                "category": "efficiency",
+                "priority": "medium",
+                "action": "تحسين تخطيط الطرق لتقليل وقت التوقف"
+            },
+            {
+                "category": "compliance",
+                "priority": "high",
+                "action": "مراقبة ساعات القيادة لتجنب تجاوز الحدود"
+            }
+        ],
+        "summary": {
+            "total_trips": 12,
+            "total_distance": 1245.8,
+            "total_driving_hours": 85,
+            "average_speed": 55,
+            "fuel_consumed": 350,
+            "status": "needs_improvement"
+        }
+    }
+}
+4.6.2. تحليل كفاءة الوقود
+GET /drivers/{driverId}/fuel-efficiency
+الوصف: تحليل كفاءة استهلاك الوقود للسائق خلال فترة زمنية محددة مع توصيات للتحسين.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+period	object	لا	الفترة الزمنية	الشهر الحالي
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/fuel-efficiency?period[from]=2026-01-01&period[to]=2026-01-31
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driver_id": 100,
+        "period": {
+            "from": "2026-01-01",
+            "to": "2026-01-31"
+        },
+        "fuel_data": {
+            "actual": {
+                "total_fuel_consumed": 850,
+                "total_distance": 1245.8,
+                "average_consumption": 8.5
+            },
+            "estimated": {
+                "total_fuel_consumed": 820,
+                "total_distance": 1245.8,
+                "average_consumption": 8.2
+            }
+        },
+        "efficiency_analysis": {
+            "consumption_rate": 8.5,
+            "cost_analysis": {
+                "total_cost": 1147.5,
+                "cost_per_km": 0.92,
+                "cost_per_hour": 13.5
+            },
+            "comparison": {
+                "industry_average": 9,
+                "best_performance": 7.5,
+                "driver_rating": "good"
+            },
+            "trends": {
+                "improvement_rate": 2.5,
+                "trend_direction": "improving"
+            },
+            "opportunities": [
+                {
+                    "type": "driving_behavior",
+                    "potential_savings": 50,
+                    "percentage": 5
+                },
+                {
+                    "type": "route_optimization",
+                    "potential_savings": 30,
+                    "percentage": 3
+                }
+            ]
+        },
+        "recommendations": [
+            {
+                "category": "driving_behavior",
+                "priority": "high",
+                "action": "تقليل السرعة الزائدة والتسارع المفاجئ",
+                "potential_savings": 50
+            },
+            {
+                "category": "route_optimization",
+                "priority": "medium",
+                "action": "تحسين تخطيط الطرق لتقليل المسافات",
+                "potential_savings": 30
+            },
+            {
+                "category": "maintenance",
+                "priority": "medium",
+                "action": "التحقق من ضغط الإطارات بانتظام",
+                "potential_savings": 20
+            }
+        ],
+        "potential_savings": {
+            "total": 100,
+            "percentage": 10
+        }
+    }
+}
+4.7.1. إعداد جهاز ELD جديد
+POST /eld/devices/setup
+الوصف: إعداد جهاز ELD جديد في النظام مع ربطه بسائق (اختياري) وإعداد التنبيهات والتقارير المجدولة.
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+device	object	نعم	بيانات الجهاز (انظر هيكل الجهاز)
+driver	object	لا	بيانات السائق (اختياري)
+هيكل بيانات الجهاز
+الحقل	النوع	الإلزامية	الوصف
+uniqueId	string	نعم	المعرف الفريد (IMEI)
+name	string	نعم	اسم الجهاز
+category	string	لا	فئة الجهاز
+eld_device_type	string	لا	نوع جهاز ELD: mobile, tablet, dedicated, vehicle_mounted
+eld_certified	boolean	لا	هل الجهاز معتمد ELD؟
+eld_certification_date	string	لا	تاريخ الشهادة
+eld_certification_body	string	لا	جهة الشهادة
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld/devices/setup
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "device": {
+    "uniqueId": "352284071234570",
+    "name": "TRUCK-004-ELD",
+    "category": "truck",
+    "eld_device_type": "vehicle_mounted",
+    "eld_certified": true,
+    "eld_certification_date": "2025-06-01",
+    "eld_certification_body": "FMCSA"
+  },
+  "driver": {
+    "name": "Saeed Ali",
+    "phone": "+966501234579",
+    "email": "driver4@example.com"
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "traccar_device": {
+            "id": 105,
+            "name": "TRUCK-004-ELD",
+            "uniqueId": "352284071234570",
+            "status": "unknown",
+            "lastUpdate": null,
+            "groupId": null,
+            "phone": null,
+            "model": null,
+            "contact": null,
+            "category": "truck",
+            "disabled": false,
+            "attributes": {
+                "eld_enabled": true,
+                "eld_device_type": "vehicle_mounted",
+                "eld_certified": true,
+                "eld_certification_date": "2025-06-01",
+                "eld_certification_body": "FMCSA",
+                "data_retention_days": 8
+            }
+        },
+        "eld_configuration": {
+            "eld_enabled": true,
+            "eld_device_type": "vehicle_mounted",
+            "eld_certified": true,
+            "eld_certification_date": "2025-06-01",
+            "eld_certification_body": "FMCSA",
+            "data_retention_days": 8
+        },
+        "driver_association": {
+            "driver_id": 103,
+            "name": "Saeed Ali",
+            "phone": "+966501234579",
+            "email": "driver4@example.com"
+        },
+        "alerts_setup": {
+            "rules": 4,
+            "status": "active"
+        },
+        "reports_setup": {
+            "scheduled_reports": [
+                {
+                    "type": "daily_hos_report",
+                    "schedule": "0 0 * * *"
+                },
+                {
+                    "type": "weekly_compliance_report",
+                    "schedule": "0 0 * * 1"
+                }
+            ]
+        },
+        "next_steps": {
+            "calibrate_device": "https:\/\/your-domain.com\/api\/eld\/devices\/calibrate\/105",
+            "test_connection": "https:\/\/your-domain.com\/api\/eld\/devices\/test\/105",
+            "training_materials": "https:\/\/your-domain.com\/api\/eld\/training\/vehicle_mounted"
+        }
+    }
+}
+4.7.2. تحديث إعدادات ELD
+PUT /eld/devices/{deviceId}/settings
+الوصف: تحديث إعدادات ELD لجهاز موجود.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+deviceId	integer	نعم	معرف الجهاز
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف
+settings	object	نعم	إعدادات ELD الجديدة
+مثال
+الطلب:
+
+PUT /api/v1/tracker/traccar/eld/devices/105/settings
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "settings": {
+    "data_retention_days": 10,
+    "alert_thresholds": {
+      "driving_hours_warning": 9,
+      "rest_hours_warning": 8
+    },
+    "enable_geofence_alerts": true,
+    "enable_speed_alerts": true
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم تحديث إعدادات ELD بنجاح",
+    "data": {
+        "settings_applied": {
+            "data_retention_days": 10,
+            "alert_thresholds": {
+                "driving_hours_warning": 9,
+                "rest_hours_warning": 8
+            },
+            "enable_geofence_alerts": true,
+            "enable_speed_alerts": true
+        },
+        "applied_at": "2026-01-15T17:30:00Z",
+        "requires_restart": false,
+        "affected_services": [
+            "alert_service",
+            "report_service"
+        ]
+    }
+}
+4.8.1. إجراء صيانة دورية
+POST /eld/maintenance
+الوصف: إجراء صيانة دورية لنظام ELD (تنظيف البيانات القديمة، تحسين قاعدة البيانات، التحقق من التكامل، النسخ الاحتياطي، تحديث التقارير).
+
+معاملات Body (JSON)
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+options	object	لا	خيارات الصيانة	{}
+هيكل خيارات الصيانة
+المفتاح	النوع	الوصف	القيمة الافتراضية
+cleanup_old_data	boolean	تنظيف البيانات القديمة	true
+optimize_database	boolean	تحسين قاعدة البيانات	true
+check_integrity	boolean	التحقق من التكامل	true
+backup_data	boolean	إنشاء نسخة احتياطية	true
+update_reports	boolean	تحديث التقارير	true
+notify_on_complete	boolean	إرسال إشعار عند الانتهاء	false
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/eld/maintenance
+Authorization: Bearer <your_access_token>
+Content-Type: application/json
+
+{
+  "options": {
+    "cleanup_old_data": true,
+    "optimize_database": true,
+    "check_integrity": true,
+    "backup_data": true,
+    "update_reports": true,
+    "notify_on_complete": true
+  }
+}
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "message": "تم إجراء الصيانة بنجاح",
+    "data": {
+        "started_at": "2026-01-15T17:30:00Z",
+        "tasks": {
+            "cleanup": {
+                "status": "success",
+                "records_deleted": 1250,
+                "execution_time": 120
+            },
+            "optimization": {
+                "status": "success",
+                "tables_optimized": 5,
+                "execution_time": 180
+            },
+            "integrity_check": {
+                "status": "success",
+                "issues_found": 0,
+                "execution_time": 90
+            },
+            "backup": {
+                "status": "success",
+                "backup_size": 245760,
+                "backup_path": "\/var\/backups\/eld\/eld_backup_2026-01-15.sql",
+                "execution_time": 60
+            },
+            "reports_update": {
+                "status": "success",
+                "reports_updated": 12,
+                "execution_time": 300
+            }
+        },
+        "completed_at": "2026-01-15T17:38:00Z",
+        "duration": 480,
+        "summary": {
+            "total_tasks": 5,
+            "successful_tasks": 5,
+            "failed_tasks": 0,
+            "status": "completed"
+        }
+    }
+}
+4.9.1. إنشاء حزمة تدريب للسائق
+POST /drivers/{driverId}/training-package
+الوصف: إنشاء حزمة تدريب مخصصة للسائق (أساسي، متقدم، امتثال، سلامة) مع مواد تدريبية واختبارات.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+training_type	string	لا	نوع التدريب: basic, advanced, compliance, safety	basic
+مثال
+الطلب:
+
+POST /api/v1/tracker/traccar/drivers/100/training-package?training_type=advanced
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driver_id": 100,
+        "training_type": "advanced",
+        "created_at": "2026-01-15T17:30:00Z",
+        "estimated_duration": "4 hours",
+        "sections": [
+            {
+                "title": "قواعد ساعات الخدمة المتقدمة",
+                "duration": "60 min",
+                "content": "شرح تفصيلي لقواعد ساعات الخدمة وحالات الاستثناء..."
+            },
+            {
+                "title": "إدارة التفتيش على الطريق",
+                "duration": "45 min",
+                "content": "كيفية التعامل مع عمليات التفتيش والمفتشين..."
+            },
+            {
+                "title": "استكشاف أخطاء أجهزة ELD",
+                "duration": "45 min",
+                "content": "طرق تشخيص وإصلاح الأعطال الشائعة في أجهزة ELD..."
+            },
+            {
+                "title": "الامتثال المتقدم وتحليل البيانات",
+                "duration": "60 min",
+                "content": "تحليل تقارير ELD واكتشاف الأنماط غير المتوافقة..."
+            }
+        ],
+        "materials": {
+            "videos": [
+                {
+                    "title": "مقدمة إلى ELD المتقدم",
+                    "duration": "15 min",
+                    "url": "https:\/\/your-domain.com\/training\/videos\/advanced-intro.mp4"
+                },
+                {
+                    "title": "التعامل مع التفتيش",
+                    "duration": "20 min",
+                    "url": "https:\/\/your-domain.com\/training\/videos\/inspection-handling.mp4"
+                }
+            ],
+            "documents": [
+                {
+                    "title": "دليل قواعد ساعات الخدمة",
+                    "file": "https:\/\/your-domain.com\/training\/documents\/hos-guide.pdf"
+                },
+                {
+                    "title": "دليل استكشاف الأخطاء",
+                    "file": "https:\/\/your-domain.com\/training\/documents\/troubleshooting-guide.pdf"
+                }
+            ],
+            "quizzes": [
+                {
+                    "title": "اختبار القواعد المتقدمة",
+                    "questions": 10,
+                    "duration": "15 min"
+                },
+                {
+                    "title": "اختبار التفتيش",
+                    "questions": 8,
+                    "duration": "12 min"
+                }
+            ],
+            "checklists": [
+                {
+                    "title": "قائمة التفتيش اليومية",
+                    "items": 12
+                },
+                {
+                    "title": "قائمة الصيانة الدورية",
+                    "items": 8
+                }
+            ]
+        },
+        "objectives": [
+            "فهم قواعد ساعات الخدمة المتقدمة",
+            "معرفة كيفية التعامل مع عمليات التفتيش",
+            "قدرة على استكشاف أخطاء أجهزة ELD وإصلاحها",
+            "تحليل تقارير ELD واكتشاف الأنماط غير المتوافقة"
+        ],
+        "completion_criteria": [
+            "إكمال جميع المقاطع التدريبية",
+            "اجتياز الاختبارات بنسبة 80% على الأقل",
+            "توقيع إقرار الإكمال"
+        ],
+        "access": {
+            "online_portal": "https:\/\/your-domain.com\/training\/driver\/100",
+            "mobile_app": "nano3tracker:\/\/training\/100",
+            "offline_materials": "https:\/\/your-domain.com\/training\/offline\/100.zip"
+        }
+    }
+}
+4.9.2. تتبع تقدم التدريب
+GET /drivers/{driverId}/training-progress
+الوصف: تتبع تقدم السائق في التدريب مع إحصائيات مفصلة وتوصيات للتحسين.
+
+معاملات المسار
+المعامل	النوع	الإلزامية	الوصف
+driverId	integer	نعم	معرف السائق
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف
+training_session_id	string	لا	معرف جلسة التدريب (اختياري)
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/drivers/100/training-progress
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "driver_id": 100,
+        "current_progress": {
+            "completed_sections": 3,
+            "total_sections": 4,
+            "percentage": 75,
+            "quiz_scores": {
+                "advanced_rules": 90,
+                "inspection": 85,
+                "troubleshooting": 70
+            }
+        },
+        "statistics": {
+            "total_sessions": 5,
+            "completed_sessions": 3,
+            "average_score": 82,
+            "time_spent": 180,
+            "certifications": [
+                {
+                    "name": "Basic ELD Training",
+                    "date": "2025-12-20",
+                    "valid_until": "2026-12-20",
+                    "status": "active"
+                },
+                {
+                    "name": "Advanced ELD Training",
+                    "date": "2026-01-10",
+                    "valid_until": "2027-01-10",
+                    "status": "in_progress"
+                }
+            ]
+        },
+        "recommendations": [
+            {
+                "type": "improvement",
+                "priority": "high",
+                "action": "إعادة اختبار استكشاف الأخطاء لتحسين النتيجة (70%)"
+            },
+            {
+                "type": "completion",
+                "priority": "medium",
+                "action": "إكمال القسم الرابع من التدريب المتقدم"
+            }
+        ],
+        "upcoming_training": [
+            {
+                "type": "compliance",
+                "scheduled_date": "2026-01-20",
+                "duration": "2 hours"
+            }
+        ],
+        "certification_status": {
+            "basic": "certified",
+            "advanced": "in_progress",
+            "compliance": "not_started"
+        }
+    }
+}
+4.10.1. الحصول على فهرس API
+GET /eld/api-index
+الوصف: الحصول على فهرس بجميع نقاط نهاية ELD المتاحة مع تصنيفها وحالة النظام.
+
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/eld/api-index
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "version": "1.0",
+        "last_updated": "2026-01-15T17:30:00Z",
+        "categories": {
+            "basic_operations": [
+                "recordDutyStatus",
+                "getDutyStatusLogs",
+                "updateDutyStatus",
+                "deleteDutyStatus"
+            ],
+            "hos_analysis": [
+                "calculateAvailableHours",
+                "detectHosViolations",
+                "generateHosReport",
+                "analyzeHoursOfService"
+            ],
+            "document_management": [
+                "uploadSupportingDocument",
+                "getSupportingDocuments",
+                "linkDocumentToEldRecord",
+                "verifyDocumentCompleteness"
+            ],
+            "reports_generation": [
+                "generateComprehensiveEldReport",
+                "exportEldReport",
+                "generateStandardEldFile",
+                "createInspectionPackage"
+            ],
+            "inspection_tools": [
+                "startInspectionSession",
+                "exportInspectionData",
+                "validateEldSystem",
+                "checkEldCompliance"
+            ],
+            "realtime_monitoring": [
+                "subscribeToRealtimeEld",
+                "monitorDriversRealtime",
+                "sendEldAlert",
+                "setupEldAlerts"
+            ],
+            "advanced_analytics": [
+                "analyzeDrivingPatterns",
+                "analyzeFuelEfficiency",
+                "analyzeTrainingNeeds",
+                "trackTrainingProgress"
+            ],
+            "system_management": [
+                "setupNewEldDevice",
+                "updateEldSettings",
+                "performEldMaintenance",
+                "validateEldSystem"
+            ]
+        },
+        "status": "operational",
+        "documentation_url": "https:\/\/your-domain.com\/docs\/eld-api",
+        "support_contact": "support@example.com",
+        "api_health": {
+            "traccar_connection": {
+                "success": true,
+                "status": "connected"
+            },
+            "eld_services": {
+                "success": true,
+                "eld_services": {
+                    "document_storage": true,
+                    "database": true,
+                    "export_generation": true
+                }
+            },
+            "database_connection": true,
+            "storage_writable": true,
+            "timestamp": "2026-01-15T17:30:00Z"
+        }
+    }
+}
+4.10.2. إنشاء دليل مستخدم ELD
+GET /eld/user-guide
+الوصف: إنشاء دليل مستخدم ELD باللغة المحددة والتنسيق المطلوب (HTML، PDF).
+
+معاملات Query
+المعامل	النوع	الإلزامية	الوصف	القيمة الافتراضية
+language	string	لا	اللغة: ar, en	ar
+format	string	لا	التنسيق: html, pdf	html
+مثال
+الطلب:
+
+GET /api/v1/tracker/traccar/eld/user-guide?language=ar&format=html
+Authorization: Bearer <your_access_token>
+الاستجابة:
+
+{
+    "code": 200,
+    "status": true,
+    "data": {
+        "guide": {
+            "title": "دليل استخدام نظام ELD",
+            "sections": {
+                "introduction": {
+                    "title": "مقدمة",
+                    "content": "يوفر هذا الدليل شرحاً شاملاً لاستخدام نظام ELD في إضافة Nano3Tracker..."
+                },
+                "getting_started": {
+                    "title": "بدء الاستخدام",
+                    "content": "لتسجيل دخولك إلى النظام، اتبع الخطوات التالية..."
+                },
+                "daily_operations": {
+                    "title": "العمليات اليومية",
+                    "content": "يقوم النظام بتسجيل حالة السائق تلقائياً..."
+                },
+                "compliance_requirements": {
+                    "title": "متطلبات الامتثال",
+                    "content": "يتوافق النظام مع معايير FMCSA التالية..."
+                },
+                "troubleshooting": {
+                    "title": "استكشاف الأخطاء وإصلاحها",
+                    "content": "في حالة مواجهة أي مشكلة، اتبع الخطوات التالية..."
+                },
+                "faq": {
+                    "title": "الأسئلة الشائعة",
+                    "content": "س: كيف يمكنني تسجيل حالة السائق؟\nج: يمكنك استخدام نقطة النهاية recordDutyStatus..."
+                }
+            }
+        },
+        "language": "ar",
+        "format": "html",
+        "generated_at": "2026-01-15T17:30:00Z",
+        "download_url": "https:\/\/your-domain.com\/api\/eld\/guide\/download\/ar\/html"
+    }
+}
+5.1. تنبيهات هامة لنظام ELD/HOS
+التنبيه	الوصف
+دقة بيانات الإشعال والسرعة	يعتمد التقرير على دقة بيانات الإشعال والسرعة من أجهزة التتبع. بيانات خاطئة قد تؤدي إلى تصنيف غير صحيح للحالات.
+فجوات البيانات	الفجوات الزمنية الكبيرة (أكثر من data_gap_threshold) تُعتبر فترات توقف افتراضية، مما قد يؤثر على دقة التقرير.
+المنطقة الزمنية	يجب ضبط timezone بشكل صحيح لتتناسب مع موقع السائقين والمركبات، وإلا قد تكون التواريخ غير صحيحة.
+الشهادة الإلكترونية	إذا كان certification_required = true، يجب التأكد من وجود شهادة إلكترونية في السجلات، وإلا سيتم تسجيل تشخيص missing_certification.
+التعديل اليدوي	يجب توثيق أي تعديل يدوي للحالة (manual_edit = true) لضمان الشفافية في حالة التدقيق التنظيمي.
+الراحة الأسبوعية	يجب أن تكون 34 ساعة متتالية من الراحة (خارج الخدمة أو نوم في المركبة). الكلاس يتحقق من التتابع فقط.
+مدة الاحتفاظ بالبيانات	يجب الاحتفاظ بالبيانات لمدة 8 أيام على الأقل لتلبية متطلبات التفتيش.
+صلاحيات API	تأكد من منح المستخدمين الصلاحيات المناسبة للوصول إلى نقاط نهاية ELD/HOS.
+5.2. التوصيات وأفضل الممارسات
+تحديث الإعدادات حسب القوانين المحلية: قد تختلف حدود ELD/HOS حسب الدولة أو نوع النشاط؛ استخدم الإعدادات لتخصيص التقرير.
+
+دمج التقارير في نظام إدارة الأسطول: استخدم نقاط نهاية التصدير لدمج التقارير في لوحات التحكم.
+
+جدولة التقارير: يمكن أتمتة توليد التقارير باستخدام نقاط نهاية المهام المجدولة (createScheduledTask) مع تصديرها إلى CSV أو PDF وإرسالها عبر البريد الإلكتروني.
+
+استخدام الترجمة: فعّل خاصية use_lang وقدم ملفات ترجمة كاملة للغات المستخدمين (عربي، إنجليزي، إلخ).
+
+التحقق من جودة البيانات: قم بفلترة السجلات غير الصالحة (سرعة سلبية، إحداثيات خاطئة، إلخ) قبل إرسالها للتقرير.
+
+توثيق التشخيصات: استخدم نقاط نهاية التحقق من الامتثال للحصول على قائمة مفصلة بالتشخيصات مع الرسائل المترجمة.
+
+اختبار السيناريوهات: اختبر التقرير مع بيانات محاكاة لتغطية جميع السيناريوهات (قيادة طبيعية، تجاوزات، فجوات، أعطال تشخيصية).
+
+التحقق من الشهادة الإلكترونية: في بيئات الإنتاج، تأكد من أن جميع السجلات تحتوي على شهادة إلكترونية صالحة قبل توليد التقرير النهائي.
+
+معالجة أعطال ELD: استخدم التشخيصات المقدمة لمراقبة صحة أجهزة ELD واتخاذ الإجراءات التصحيحية عند الحاجة.
+
+الامتثال للوائح: تأكد من مراجعة التقرير بانتظام مع الجهات التنظيمية للتأكد من استيفائه للمتطلبات القانونية.
+
+6. الخاتمة
+يمثل توثيق واجهة برمجة التطبيقات (API) لخادم Traccar - الجزء الثاني: نقاط نهاية ELD/HOS المتقدمة - مرجعاً شاملاً لجميع نقاط النهاية المتعلقة بالسجلات الإلكترونية وساعات الخدمة في النظام. يغطي هذا الجزء جميع الوظائف المتقدمة التي تمكن المؤسسات من الامتثال الكامل لمعايير FMCSA وإدارة الأسطول بكفاءة عالية.
+
+النقاط الرئيسية التي تم تغطيتها في هذا الجزء:
+
+✅ تسجيل حالة الخدمة: تسجيل الحالات الأربع (قيادة، خدمة، خارج الخدمة، نوم).
+✅ حساب ساعات الخدمة: حساب الساعات المستخدمة والمتبقية وفقاً لقواعد FMCSA.
+✅ اكتشاف المخالفات: تحديد 7 أنواع من المخالفات مع مستويات خطورة.
+✅ تقارير HOS: إنشاء تقارير HOS مفصلة مع تحليل يومي وأسبوعي.
+✅ إدارة المستندات الداعمة: رفع وتحميل وحذف المستندات مع أنواع متعددة.
+✅ تقارير التفتيش: إنشاء تقارير تفتيش ELD مع بيانات 8 أيام.
+✅ تصدير بيانات التفتيش: تصدير بيانات التفتيش بصيغ متعددة (PDF، CSV، JSON).
+✅ التقارير الشاملة: إنشاء تقارير ELD شاملة مع تحليلات متقدمة.
+✅ جلسات التفتيش: بدء جلسات تفتيش مع إنشاء رمز QR وتصدير البيانات.
+✅ المراقبة في الوقت الحقيقي: الاشتراك في تحديثات ELD ومراقبة السائقين لحظياً.
+✅ التنبيهات الذكية: إعداد تنبيهات مخصصة مع قواعد مراقبة متقدمة.
+✅ التحليلات المتقدمة: تحليل أنماط القيادة وكفاءة الوقود.
+✅ إدارة الأجهزة والإعدادات: إعداد أجهزة ELD جديدة وتحديث إعداداتها.
+✅ صيانة النظام: إجراء صيانة دورية لنظام ELD.
+✅ التدريب والدعم: إنشاء حزم تدريبية للسائقين وتتبع التقدم.
+✅ الوثائق والدعم: الحصول على فهرس API ودليل المستخدم.
+الاستخدام الموصى به:
+
+دمج نقاط النهاية الأساسية (تسجيل الحالة، حساب الساعات، اكتشاف المخالفات) في تطبيقات السائقين اليومية.
+استخدام نقاط النهاية المتقدمة (التقارير الشاملة، جلسات التفتيش، التحليلات) في لوحات تحكم إدارة الأسطول.
+تفعيل المراقبة في الوقت الحقيقي والتنبيهات لضمان الامتثال الفوري.
+الاستفادة من نقاط نهاية التدريب والدعم لتحسين أداء السائقين باستمرار.
+بهذا نكون قد أكملنا التوثيق الشامل لواجهة برمجة التطبيقات (API) لخادم Traccar، والذي يغطي جميع نقاط النهاية الأساسية والمتقدمة والمتعلقة بـ ELD/HOS، مع توفير أمثلة كاملة ودقيقة لكل نقطة نهاية.

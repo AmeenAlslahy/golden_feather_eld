@@ -5,6 +5,8 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../providers/auth_mode_provider.dart';
+import '../providers/auth_state_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class RegisterFormState {
   final bool isLoading;
@@ -75,12 +77,17 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
     ref.read(registerFormProvider.notifier).setLoading(true);
 
+    final success = await ref.read(authStateProvider.notifier).register(
+      name: _fullNameController.text.trim(),
+      email: _usernameController.text.trim(),
+      password: _passwordController.text,
+    );
+
     if (mounted) {
       ref.read(registerFormProvider.notifier).setLoading(false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Registration is not supported in this version.')),
-      );
+      if (success) {
+        context.goNamed('home');
+      }
     }
   }
 
@@ -154,8 +161,9 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             textInputAction: TextInputAction.done,
             validator: (v) {
               if (v == null || v.isEmpty) return context.loc.passwordRequired;
-              if (v != _passwordController.text)
+              if (v != _passwordController.text) {
                 return context.loc.passwordMismatch;
+              }
               return null;
             },
             onSubmitted: (_) => _handleRegister(),

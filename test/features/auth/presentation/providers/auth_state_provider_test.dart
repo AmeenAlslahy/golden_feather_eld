@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
-import 'package:golden_feather_eld/features/auth/data/repositories/mock_auth_repository.dart';
+
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 
 class FakeLocalStorageService extends LocalStorageService {
@@ -15,7 +15,6 @@ void main() {
     late ProviderContainer container;
 
     setUp(() async {
-      MockAuthRepository.allowMockSuccess = true;
       await AppEnvironmentConfig.init(testEnv: {
         'TRACCAR_ENVIRONMENT':
             'mock', // Use mock for predictable repository behavior
@@ -32,7 +31,6 @@ void main() {
     });
 
     tearDown(() {
-      MockAuthRepository.allowMockSuccess = false;
       container.dispose();
     });
 
@@ -95,7 +93,7 @@ void main() {
 
     test('8. checkAuthStatus with valid session sets authenticated', () async {
       final notifier = container.read(authStateProvider.notifier);
-      final loginSuccess = await notifier.login(
+      await notifier.login(
           username: 'admin@demo.com', password: 'admin123');
 
       await notifier.checkAuthStatus();

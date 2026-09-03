@@ -1,13 +1,19 @@
 import 'dart:async';
+import 'package:golden_feather_eld/core/config/app_environment.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
 import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
 import 'package:golden_feather_eld/core/services/battery_optimization_service.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 
 // Fake Repository
 class FakeTrackingRepository implements TrackingRepository {
@@ -76,7 +82,6 @@ class FakeBatteryOptimizationService implements BatteryOptimizationService {
   @override
   Future<bool> isBatteryOptimizationEnabled() async => false;
 
-  @override
   Future<void> openBatteryOptimizationSettings() async {}
 
   Future<bool> requestIgnoreBatteryOptimizations() async => true;
@@ -85,18 +90,36 @@ class FakeBatteryOptimizationService implements BatteryOptimizationService {
   Future<void> requestDisableBatteryOptimization() async {}
 }
 
+class MockLocalStorageService extends Mock implements LocalStorageService {}
+
+class MockVehicleRepository extends Mock implements VehicleRepository {}
+
 void main() {
   late FakeTrackingRepository fakeRepository;
   late ProviderContainer container;
   late TrackingNotifier notifier;
 
-  setUp(() {
+  setUp(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await AppEnvironmentConfig.init(testEnv: {'API_BASE_URL': 'http://mock.test'});
+    SharedPreferences.setMockInitialValues({});
     fakeRepository = FakeTrackingRepository();
+    final mockLocalStorage = MockLocalStorageService();
+    when(() => mockLocalStorage.currentDutyStatus).thenReturn('off_duty');
+    when(() => mockLocalStorage.serverUrl).thenReturn('http://mock.test');
+    when(() => mockLocalStorage.backendType).thenReturn('traccar');
+
+    final mockVehicleRepo = MockVehicleRepository();
+    when(() => mockVehicleRepo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
+    when(() => mockVehicleRepo.getVehicles()).thenAnswer((_) async => const Right([]));
+
     container = ProviderContainer(
       overrides: [
+        localStorageProvider.overrideWithValue(mockLocalStorage),
         batteryOptimizationServiceProvider
             .overrideWithValue(FakeBatteryOptimizationService()),
         trackingRepositoryProvider.overrideWithValue(fakeRepository),
+        vehicleRepositoryProvider.overrideWithValue(mockVehicleRepo),
       ],
     );
     notifier = container.read(trackingStateProvider.notifier);

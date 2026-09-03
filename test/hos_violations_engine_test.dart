@@ -1,18 +1,20 @@
-import 'package:golden_feather_eld/core/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:golden_feather_eld/core/engine/hos_violations_engine.dart';
-import 'package:golden_feather_eld/core/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/core/services/local_database_service.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_violations_engine.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
+import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
+import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 
 class MockDutyStatusTracker extends Mock implements DutyStatusTracker {}
-class MockLocalDatabaseService extends Mock implements LocalDatabaseService {}
+class MockHosLocalDataSource extends Mock implements HosLocalDataSource {}
+class MockHosConfiguration extends Mock implements HosConfiguration {}
 
 void main() {
   late HosViolationsEngine engine;
   late MockDutyStatusTracker mockTracker;
-  late MockLocalDatabaseService mockDb;
+  late MockHosLocalDataSource mockDb;
+  late MockHosConfiguration mockConfig;
 
   setUpAll(() {
     registerFallbackValue(<String, dynamic>{});
@@ -20,15 +22,17 @@ void main() {
 
   setUp(() {
     mockTracker = MockDutyStatusTracker();
-    mockDb = MockLocalDatabaseService();
+    mockDb = MockHosLocalDataSource();
+    mockConfig = MockHosConfiguration();
     
     when(() => mockTracker.getTodayStats()).thenReturn({'driving': 0.0, 'on_duty': 0.0, 'off_duty': 0.0, 'sleeper': 0.0});
     when(() => mockTracker.getWeekStats()).thenReturn({'driving': 0.0, 'work': 0.0, 'rest': 0.0, 'distance': 0.0});
     when(() => mockTracker.periods).thenReturn([]);
+    when(() => mockConfig.cycleLimitHours).thenReturn(70);
     
-    when(() => mockDb.saveViolation(any())).thenAnswer((_) async => const Right(true));
+    when(() => mockDb.saveViolation(any())).thenAnswer((_) async => true);
     
-    engine = HosViolationsEngine(mockTracker, mockDb);
+    engine = HosViolationsEngine(mockTracker, mockDb, mockConfig);
   });
 
   tearDown(() {

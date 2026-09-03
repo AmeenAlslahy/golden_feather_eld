@@ -1,24 +1,41 @@
-class ApiEndpoints {
+abstract class ApiEndpoints {
+  // Base Path
+  String get basePath;
+
   // Auth & Session
-  static const String session = '/api/session';
-  
+  String get session;
+  String get logIn;
+  String get logout;
+  String get logoutMethod;
+
   // Users
-  static const String users = '/api/users';
-  static const String register = '/api/users';
-  
+  String get users;
+  String get register;
+
   // Devices
-  static const String devices = '/api/devices';
-  
+  String get devices;
+
   // Positions & Tracking
-  static const String positions = '/api/positions';
-  
-  // Events
-  static const String events = '/api/events';
-  
+  String get positions;
+  String get events;
+
   // Reports
-  static const String reportSummary = '/api/reports/summary';
-  static const String reportRoute = '/api/reports/route';
-  static const String reportEvents = '/api/reports/events';
-  static const String reportTrips = '/api/reports/trips';
-  static const String reportStops = '/api/reports/stops';
+  String get reportSummary;
+  String get reportRoute;
+  String get reportEvents;
+  String get reportTrips;
+  String get reportStops;
+
+  // ELD Specific (Nano3Tracker)
+  String get drivers;
+  String driverDutyStatus(int driverId);
+  String get dutyStatusLogs;
+  String driverInspectionReport(int driverId);
+  String submitInspection();
+  
+  // ELD Reports & Export
+  String eldComprehensiveReport(int driverId);
+  String eldHosReport(int driverId);
+  String eldExportReport(int driverId);
+  String inspectionExport(int driverId);
 }

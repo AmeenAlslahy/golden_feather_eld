@@ -1,13 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../../core/engine/hos_models.dart';
+
 
 import '../../../logs/data/repositories/log_repository_impl.dart';
 import '../../domain/entities/recap_data.dart';
 
 import 'hos_provider.dart';
 
-import '../../../../core/engine/hos_state_machine.dart';
+import '../../../../features/hos/domain/engine/hos_state_machine.dart';
 import '../../domain/usecases/get_recap_use_case.dart';
 
 final getRecapUseCaseProvider = Provider<GetRecapUseCase>((ref) {
