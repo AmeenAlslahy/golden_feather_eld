@@ -27,7 +27,8 @@ class AppInitializer {
       await Firebase.initializeApp();
       AppLogger.info('Firebase initialized successfully');
     } catch (e) {
-      AppLogger.warning('Firebase initialization failed (App will continue without Firebase services): $e');
+      AppLogger.warning(
+          'Firebase initialization failed (App will continue without Firebase services): $e');
     }
 
     // 3. تهيئة الخدمات الأساسية
