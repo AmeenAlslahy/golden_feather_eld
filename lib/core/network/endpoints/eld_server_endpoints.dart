@@ -45,29 +45,34 @@ class EldServerEndpoints implements ApiEndpoints {
   // ELD Specific (Nano3Tracker)
   @override
   String get drivers => '$basePath/drivers';
-  
+
   @override
-  String driverDutyStatus(int driverId) => '$basePath/drivers/$driverId/duty-status';
-  
+  String driverDutyStatus(int driverId) => '$drivers/$driverId/duty-status';
+
   @override
   String get dutyStatusLogs => '$basePath/duty-status-logs';
-  
+
   @override
-  String driverInspectionReport(int driverId) => '$basePath/drivers/$driverId/inspection-report';
-  
+  String driverInspectionReport(int driverId) =>
+      '$drivers/$driverId/inspection-report';
+
   @override
-  String submitInspection() => '$basePath/inspections'; // Assuming this is correct or similar to driverInspectionReport
+  String submitInspection() =>
+      '$basePath/inspections'; // Assuming this is correct or similar to driverInspectionReport
 
   // ELD Reports & Export
   @override
-  String eldComprehensiveReport(int driverId) => '$basePath/drivers/$driverId/comprehensive-eld-report';
-  
-  @override
-  String eldHosReport(int driverId) => '$basePath/drivers/$driverId/hos-report';
-  
-  @override
-  String eldExportReport(int driverId) => '$basePath/eld-report/export/$driverId';
+  String eldComprehensiveReport(int driverId) =>
+      '$drivers/$driverId/comprehensive-eld-report';
 
   @override
-  String inspectionExport(int driverId) => '$basePath/drivers/$driverId/inspection-export';
+  String eldHosReport(int driverId) => '$drivers/$driverId/hos-report';
+
+  @override
+  String eldExportReport(int driverId) =>
+      '$drivers/eld-report/export/$driverId';
+
+  @override
+  String inspectionExport(int driverId) =>
+      '$drivers/$driverId/inspection-export';
 }
