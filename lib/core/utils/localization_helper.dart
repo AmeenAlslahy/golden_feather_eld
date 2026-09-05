@@ -6,7 +6,7 @@ extension LocalizationHelper on BuildContext {
   String translateErrorKey(String? key) {
     if (key == null || key.isEmpty) return '';
     final loc = AppLocalizations.of(this)!;
-    
+
     switch (key) {
       case 'emailRequired':
         return loc.emailRequired;
