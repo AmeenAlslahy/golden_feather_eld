@@ -168,7 +168,7 @@ class ReportsPage extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    Localizations.localeOf(context).languageCode == 'ar' ? m.arabicMessage : m.message,
+                    m.message,
                     style: AppTextStyles(context).caption.copyWith(color: AppColors.dangerRed),
                   ),
                 ),

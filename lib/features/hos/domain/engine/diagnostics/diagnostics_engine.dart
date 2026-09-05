@@ -32,7 +32,6 @@ class MalfunctionEvent {
   final MalfunctionType type;
   final MalfunctionSeverity severity;
   final String message;
-  final String arabicMessage;
   final DateTime timestamp;
   final Map<String, dynamic>? details;
 
@@ -40,7 +39,6 @@ class MalfunctionEvent {
     required this.type,
     required this.severity,
     required this.message,
-    required this.arabicMessage,
     required this.timestamp,
     this.details,
   });
@@ -50,7 +48,6 @@ class MalfunctionEvent {
       'type': type.name,
       'severity': severity.name,
       'message': message,
-      'arabicMessage': arabicMessage,
       'timestamp': timestamp.toIso8601String(),
       'details': details,
     };
@@ -154,7 +151,6 @@ class DiagnosticsEngine {
           type: MalfunctionType.dataGap,
           severity: MalfunctionSeverity.major,
           message: 'Data gap detected: $gap seconds',
-          arabicMessage: 'تم اكتشاف فجوة بيانات: $gap ثانية',
           timestamp: currentTime,
           details: {'gap_seconds': gap},
         ));
@@ -169,7 +165,6 @@ class DiagnosticsEngine {
         type: MalfunctionType.positioningMalfunction,
         severity: MalfunctionSeverity.major,
         message: 'Positioning malfunction: zero coordinates at speed $speed km/h',
-        arabicMessage: 'عطل تحديد المواقع: إحداثيات صفرية مع سرعة $speed كم/س',
         timestamp: DateTime.now(),
       ));
       AppLogger.error('🛰️ Positioning malfunction');
@@ -184,7 +179,6 @@ class DiagnosticsEngine {
           type: MalfunctionType.motionSensorMalfunction,
           severity: MalfunctionSeverity.major,
           message: 'Sudden speed change: ${speedChange.toStringAsFixed(0)} km/h',
-          arabicMessage: 'تغير مفاجئ في السرعة: ${speedChange.toStringAsFixed(0)} كم/س',
           timestamp: DateTime.now(),
           details: {'speed_change': speedChange},
         ));
@@ -201,7 +195,6 @@ class DiagnosticsEngine {
           type: MalfunctionType.engineSyncMalfunction,
           severity: MalfunctionSeverity.minor,
           message: 'Engine running without motion for $_engineRunningWithoutMotion minutes',
-          arabicMessage: 'المحرك يعمل بدون حركة لمدة $_engineRunningWithoutMotion دقيقة',
           timestamp: DateTime.now(),
         ));
         AppLogger.warning('🔧 Engine sync malfunction');
@@ -217,7 +210,6 @@ class DiagnosticsEngine {
         type: MalfunctionType.unidentifiedDrive,
         severity: MalfunctionSeverity.major,
         message: 'Unidentified drive: vehicle moving without ignition',
-        arabicMessage: 'قيادة غير محددة: المركبة تتحرك بدون إشعال',
         timestamp: DateTime.now(),
       ));
       AppLogger.error('🚨 Unidentified drive');
@@ -260,7 +252,6 @@ class DiagnosticsEngine {
         type: MalfunctionType.missingCertification,
         severity: MalfunctionSeverity.major,
         message: 'Missing certification for daily log',
-        arabicMessage: 'شهادة إلكترونية مفقودة للسجل اليومي',
         timestamp: DateTime.now(),
       ));
     }

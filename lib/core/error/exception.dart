@@ -1,12 +1,10 @@
 /// استثناء الخادم: يتم رميه عند وجود مشكلة في استجابة الخادم
 class ServerException implements Exception {
   final String? message;
-  final String? arabicMessage;
   final int? statusCode;
 
   const ServerException({
     this.message,
-    this.arabicMessage,
     this.statusCode,
   });
 
@@ -27,12 +25,10 @@ class OfflineException implements Exception {
 /// استثناء عدم التصريح: يتم رميه عند مشاكل الصلاحيات أو انتهاء الجلسة (401/403)
 class UnauthorizedException implements Exception {
   final String? message;
-  final String? arabicMessage;
   final int? statusCode;
 
   const UnauthorizedException({
     this.message = 'Unauthorized',
-    this.arabicMessage = 'انتهت صلاحية الجلسة أو غير مصرح لك',
     this.statusCode = 401,
   });
 

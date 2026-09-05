@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../../data/repositories/log_repository_impl.dart';
+import '../../domain/entities/audit_entry.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failure.dart';
 
 /// حالة شاشة السجلات
 class LogsState {
@@ -167,6 +170,17 @@ class LogsNotifier extends StateNotifier<LogsState> {
     }).toList();
 
     state = state.copyWith(logs: updatedLogs);
+  }
+
+  /// جلب سجل التدقيق ليوم محدد
+  Future<List<AuditEntry>> getAuditEntries(DateTime date) async {
+    final result = await _repository.getAuditEntries(date);
+    return result.match((l) => [], (r) => r);
+  }
+
+  /// حفظ سجل تدقيق جديد
+  Future<Either<Failure, void>> saveAuditEntry(AuditEntry entry) async {
+    return await _repository.logAudit(entry);
   }
 }
 

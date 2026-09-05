@@ -23,9 +23,7 @@ class AccountRepositoryImpl implements AccountRepository {
         final userModel = await remoteDataSource.getUserProfile(userId);
         return Right(userModel);
       } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error', arabicMessage: e.arabicMessage));
-      } catch (e) {
-        return const Left(ServerFailure(message: 'Unexpected error occurred'));
+        return Left(ServerFailure(message: e.message ?? 'Server Error'));
       }
     } else {
       return const Left(NetworkFailure());
@@ -40,7 +38,7 @@ class AccountRepositoryImpl implements AccountRepository {
         final updatedModel = await remoteDataSource.updateUserProfile(userModel);
         return Right(updatedModel);
       } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error', arabicMessage: e.arabicMessage));
+        return Left(ServerFailure(message: e.message ?? 'Server Error', ));
       } catch (e) {
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }

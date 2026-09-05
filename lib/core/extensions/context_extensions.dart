@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../network/network_providers.dart';
 
+import '../theme/eld_theme_extension.dart';
+
 /// امتدادات BuildContext
 extension ContextExtensions on BuildContext {
   // ========== السمات والترجمة ==========
@@ -12,6 +14,8 @@ extension ContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
+  ColorScheme get colors => theme.colorScheme;
+  EldColors get eldColors => theme.extension<EldColors>()!;
   MediaQueryData get mediaQuery => MediaQuery.of(this);
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;

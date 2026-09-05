@@ -463,5 +463,10 @@
   "breakLimitDesc": "استراحة 30 دقيقة",
   "cycleLimitTitle": "الدورة",
   "cycleLimitDesc": "USA 70/8",
-  "hoursOfService": "ساعات الخدمة"
+  "hoursOfService": "ساعات الخدمة",
+  "sessionExpired": "انتهت صلاحية الجلسة",
+  "serverNotConfigured": "إعدادات الخادم مفقودة",
+  "invalidConfiguration": "إعدادات الخادم غير صالحة",
+  "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+  "sessionMissing": "الجلسة غير موجودة، يرجى تسجيل الدخول"
 }

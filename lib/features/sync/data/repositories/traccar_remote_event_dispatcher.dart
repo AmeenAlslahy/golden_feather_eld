@@ -4,18 +4,24 @@ import '../../domain/entities/pending_event.dart';
 import '../../domain/usecases/sync_engine.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
+import '../../../auth/data/datasources/auth_session_store.dart';
 
 class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final ApiClient _apiClient;
   final ApiEndpoints _endpoints;
+  final AuthSessionStore _authSessionStore;
 
-  TraccarRemoteEventDispatcher(this._apiClient, this._endpoints);
+  TraccarRemoteEventDispatcher(this._apiClient, this._endpoints, this._authSessionStore);
 
   @override
   Future<Either<Failure, bool>> dispatch(PendingEvent event) async {
     try {
       if (event.type == 'duty_status') {
-        final driverId = int.tryParse(event.payload['driverId']?.toString() ?? '0') ?? 0;
+        final session = await _authSessionStore.getSession();
+        int driverId = 0;
+        if (session != null) {
+            driverId = int.tryParse(session.userMetadata['id']?.toString() ?? '0') ?? 0;
+        }
         await _apiClient.post(
           _endpoints.driverDutyStatus(driverId),
           data: event.payload,
@@ -31,8 +37,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     } catch (e) {
       return Left(ServerFailure(
         message: 'Failed to dispatch event: $e',
-        arabicMessage: 'فشل إرسال الحدث إلى خادم التتبع',
-      ));
+        ));
     }
   }
 }

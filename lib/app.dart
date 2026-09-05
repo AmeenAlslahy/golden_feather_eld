@@ -8,6 +8,8 @@ import 'core/localization/locale_provider.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/quick_actions_initializer.dart';
 import 'routes.dart';
+import 'features/hos/presentation/providers/hos_provider.dart';
+import 'features/hos/domain/engine/hos_models.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -17,6 +19,20 @@ class GoldenFeatherApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Global listener for automatic tracking UI side-effects
+    ref.listen<HosStatusUpdate>(hosStatusProvider, (previous, next) {
+      if (next.currentStatus == DutyStatus.driving && previous?.currentStatus != DutyStatus.driving) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
 

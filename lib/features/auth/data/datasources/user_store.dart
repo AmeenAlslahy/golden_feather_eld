@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/user.dart';
+import '../models/user_model.dart';
 
 abstract class UserStore {
   /// حفظ بيانات المستخدم بشكل آمن
@@ -25,7 +26,7 @@ class UserStoreImpl implements UserStore {
   @override
   Future<void> saveUser(User user) async {
     try {
-      final jsonString = jsonEncode(user.toJson());
+      final jsonString = jsonEncode(UserModel.fromEntity(user).toJson());
       await _secureStorage.write(key: _userKey, value: jsonString);
       AppLogger.info('User securely stored: ${user.email}');
     } catch (e) {
@@ -41,7 +42,7 @@ class UserStoreImpl implements UserStore {
       if (jsonString == null) return null;
 
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-      return User.fromJson(jsonMap);
+      return UserModel.fromJson(jsonMap);
     } catch (e) {
       AppLogger.error('Failed to read or parse user from secure storage', e);
       return null;

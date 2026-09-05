@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import '../../../../core/theme/app_color_tokens.dart';
@@ -76,9 +76,8 @@ class DiagnosticsAlertCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isArabic ? latestAlert.arabicMessage : latestAlert.message,
+                      latestAlert.message,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                     ),
                   ],

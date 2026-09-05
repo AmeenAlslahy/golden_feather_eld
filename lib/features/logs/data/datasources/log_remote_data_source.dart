@@ -27,8 +27,7 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
       if (!response.status || response.data == null) {
         throw const ServerException(
           message: 'Failed to fetch logs',
-          arabicMessage: 'فشل في جلب السجلات',
-        );
+          );
       }
 
       final data = response.data!.containsKey('data') 
@@ -43,8 +42,7 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
       }
       throw ServerException(
         message: 'Network error: ${e.message}',
-        arabicMessage: 'خطأ في الشبكة',
-      );
+        );
     } catch (e) {
       // If endpoint is unsupported or throws format error
       return []; // Silently fallback to local storage

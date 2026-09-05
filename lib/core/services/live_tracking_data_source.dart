@@ -6,8 +6,8 @@ import '../../features/hos/domain/engine/tracking/distance_tracker.dart'; // For
 import '../config/app_environment.dart';
 import '../../features/tracking/data/datasources/traccar_data_source.dart';
 import '../../features/tracking/domain/usecases/tracking_event_processor.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_api_client_impl.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_websocket_client_impl.dart';
+import '../../core/network/traccar/traccar_api_client_impl.dart';
+import '../../core/network/traccar/traccar_websocket_client_impl.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/domain/entities/connection_status.dart';
 

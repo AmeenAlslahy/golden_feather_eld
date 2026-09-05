@@ -463,5 +463,10 @@
   "breakLimitDesc": "30 Minute Rest Break",
   "cycleLimitTitle": "CYCLE",
   "cycleLimitDesc": "USA 70/8",
-  "hoursOfService": "HOURS OF SERVICE"
+  "hoursOfService": "HOURS OF SERVICE",
+  "sessionExpired": "Session expired, please login again",
+  "serverNotConfigured": "Server Not Configured",
+  "invalidConfiguration": "Invalid server configuration",
+  "invalidCredentials": "Invalid username or password",
+  "sessionMissing": "Session missing, please login again"
 }

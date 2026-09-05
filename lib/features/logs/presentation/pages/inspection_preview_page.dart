@@ -8,13 +8,10 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
-import '../../data/repositories/log_repository_impl.dart';
 import '../../domain/entities/audit_entry.dart';
 
 final auditProvider = FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
-  final repo = ref.read(logRepositoryProvider);
-  final result = await repo.getAuditEntries(date);
-  return result.match((l) => [], (r) => r);
+  return ref.read(logsProvider.notifier).getAuditEntries(date);
 });
 
 /// صفحة معاينة التفتيش الكاملة

@@ -66,11 +66,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 401 || response.statusCode == 400) {
-        throw const ServerException(message: 'Invalid email or password', arabicMessage: 'البريد الإلكتروني أو كلمة المرور غير صحيحة', statusCode: 401);
+        throw const ServerException(message: 'Invalid email or password', statusCode: 401);
       } else if (response.statusCode == 404 || response.statusCode == 405) {
-        throw ServerException(message: 'Invalid API endpoint', arabicMessage: 'نقطة اتصال غير صالحة', statusCode: response.statusCode);
+        throw ServerException(message: 'Invalid API endpoint', statusCode: response.statusCode);
       } else if (response.statusCode != 200 && response.statusCode != 201) {
-        throw ServerException(message: 'Server error: ${response.statusCode}', arabicMessage: 'خطأ في الخادم', statusCode: response.statusCode);
+        throw ServerException(message: 'Server error: ${response.statusCode}', statusCode: response.statusCode);
       }
 
       dynamic parsedData;
@@ -109,11 +109,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       if (credential == null || credential.isEmpty) {
-        throw const ServerException(message: 'Missing session credential from server', arabicMessage: 'بيانات الجلسة مفقودة من الخادم');
+        throw const ServerException(message: 'Missing session credential from server');
       }
 
       dynamic userData = parsedData;
-
       if (userData is Map<String, dynamic> && userData.containsKey('data') && userData['status'] == true) {
         userData = userData['data'];
       }
@@ -125,14 +124,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return AuthSession.create(
         serverOrigin: baseUrl,
         sessionCredential: credential,
-        userMetadata: userData,
+        userMetadata: userData as Map<String, dynamic>,
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 400) {
-        throw const ServerException(message: 'Invalid email or password', arabicMessage: 'البريد الإلكتروني أو كلمة المرور غير صحيحة', statusCode: 401);
+        throw const ServerException(message: 'Invalid email or password', statusCode: 401);
       }
       final errorDetails = e.message ?? e.error?.toString() ?? e.type.toString();
-      throw ServerException(message: 'Network error: $errorDetails', arabicMessage: 'خطأ في الشبكة: $errorDetails');
+      throw ServerException(message: 'Network error: $errorDetails');
     }
   }
 
@@ -145,7 +144,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String backendType,
   }) async {
     final baseUrl = serverUrl.endsWith('/') ? serverUrl.substring(0, serverUrl.length - 1) : serverUrl;
-    final isEld = backendType == 'eld';
 
     try {
       final response = await _dio.post(
@@ -162,15 +160,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 400 || response.statusCode == 403) {
-        throw ServerException(message: 'Registration disabled or invalid data', arabicMessage: 'إنشاء الحساب معطل أو البيانات غير صالحة', statusCode: response.statusCode);
+        throw ServerException(message: 'Registration disabled or invalid data', statusCode: response.statusCode);
       } else if (response.statusCode != 200 && response.statusCode != 201) {
-        throw ServerException(message: 'Server error: ${response.statusCode}', arabicMessage: 'خطأ في الخادم', statusCode: response.statusCode);
+        throw ServerException(message: 'Server error: ${response.statusCode}', statusCode: response.statusCode);
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 400 || e.response?.statusCode == 403) {
-        throw ServerException(message: 'Registration disabled or invalid data', arabicMessage: 'إنشاء الحساب معطل أو البيانات غير صالحة', statusCode: e.response?.statusCode);
+        throw ServerException(message: 'Registration disabled or invalid data', statusCode: e.response?.statusCode);
       }
-      throw ServerException(message: 'Network error: ${e.message}', arabicMessage: 'خطأ في الشبكة');
+      throw ServerException(message: 'Network error: ${e.message}');
     }
   }
 
@@ -192,9 +190,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404) {
-        throw const ServerException(message: 'Session expired or invalid', arabicMessage: 'الجلسة منتهية أو غير صالحة', statusCode: 401);
+        throw const ServerException(message: 'Session expired or invalid', statusCode: 401);
       } else if (response.statusCode != 200) {
-        throw ServerException(message: 'Server error: ${response.statusCode}', arabicMessage: 'خطأ في الخادم', statusCode: response.statusCode);
+        throw ServerException(message: 'Server error: ${response.statusCode}', statusCode: response.statusCode);
       }
 
       dynamic userData = response.data;
@@ -203,20 +201,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       if (userData is! Map<String, dynamic>) {
-        throw const ServerException(message: 'Invalid user payload format', arabicMessage: 'صيغة بيانات المستخدم غير صالحة');
+        throw const ServerException(message: 'Invalid user payload format');
       }
 
       return AuthSession.create(
         serverOrigin: currentSession.serverOrigin,
         sessionCredential: currentSession.sessionCredential,
-        userMetadata: userData,
+        userMetadata: userData as Map<String, dynamic>,
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403 || e.response?.statusCode == 404) {
-        throw const ServerException(message: 'Session expired or invalid', arabicMessage: 'الجلسة منتهية أو غير صالحة', statusCode: 401);
+        throw const ServerException(message: 'Session expired or invalid', statusCode: 401);
       }
       // نرمي خطأ شبكة للتمييز بين عدم الاتصال وانتهاء الجلسة
-      throw ServerException(message: 'Network error during validation: ${e.message}', arabicMessage: 'خطأ شبكي أثناء التحقق من الجلسة');
+      throw ServerException(message: 'Network error during validation: ${e.message}');
     }
   }
 

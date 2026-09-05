@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -8,6 +7,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../providers/auth_state_provider.dart';
 import '../providers/login_form_provider.dart';
 import '../providers/auth_mode_provider.dart';
+import '../../../../core/utils/localization_helper.dart';
+import '../../domain/entities/value_objects/login_identifier.dart';
+import '../../domain/entities/value_objects/password.dart';
 
 /// نموذج تسجيل الدخول
 class LoginForm extends ConsumerStatefulWidget {
@@ -19,15 +21,8 @@ class LoginForm extends ConsumerStatefulWidget {
 
 class _LoginFormState extends ConsumerState<LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _usernameController;
-  late final TextEditingController _passwordController;
-
-  @override
-  void initState() {
-    super.initState();
-    _usernameController = TextEditingController();
-    _passwordController = TextEditingController();
-  }
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -39,17 +34,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-
     final notifier = ref.read(authStateProvider.notifier);
-    
-    final success = await notifier.login(
+
+    await notifier.login(
       username: _usernameController.text.trim(),
       password: _passwordController.text,
     );
-
-    if (success && mounted) {
-      context.goNamed('home');
-    }
+    // Navigation is handled automatically by the router listening to auth state
   }
 
   @override
@@ -69,17 +60,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             label: context.loc.email,
             prefixIcon: const Icon(Icons.person_outline),
             textInputAction: TextInputAction.next,
+            keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.username, AutofillHints.email],
             validator: (v) {
               if (v == null || v.trim().isEmpty) {
                 return context.loc.emailRequired;
               }
-              final val = v.trim();
-              if (val.contains('@')) {
-                // Email format validation
-                final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
-                if (!emailRegex.hasMatch(val)) {
-                  return context.loc.invalidEmailFormat;
-                }
+              final identifierObj = LoginIdentifier(v);
+              if (!identifierObj.isValid) {
+                return context.translateErrorKey(identifierObj.errorMessage);
               }
               return null;
             },
@@ -103,12 +92,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
             obscureText: formState.obscurePassword,
             textInputAction: TextInputAction.done,
-            validator: (v) => v == null || v.isEmpty ? context.loc.passwordRequired : null,
+            autofillHints: const [AutofillHints.password],
+            validator: (v) {
+              if (v == null || v.isEmpty) {
+                return context.loc.passwordRequired;
+              }
+              final passwordObj = Password(v);
+              if (!passwordObj.isValid) {
+                return context.translateErrorKey(passwordObj.errorMessage);
+              }
+              return null;
+            },
             onSubmitted: (_) => _handleLogin(),
           ),
-          const SizedBox(height: AppSpacing.sm),
-
-
           const SizedBox(height: AppSpacing.lg),
 
           // زر تسجيل الدخول
@@ -123,26 +119,32 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: () {
-                  ref.read(authModeProvider.notifier).state = AuthMode.forgotPassword;
-                },
-                child: Text(
-                  context.loc.resetPassword,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+              Flexible(
+                child: TextButton(
+                  onPressed: () {
+                    ref.read(authModeProvider.notifier).state =
+                        AuthMode.forgotPassword;
+                  },
+                  child: Text(
+                    context.loc.resetPassword,
+                    style: TextStyle(
+                      color: context.colors.primary,
+                    ),
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  ref.read(authModeProvider.notifier).state = AuthMode.register;
-                },
-                child: Text(
-                  context.loc.registerAction,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: TextButton(
+                  onPressed: () {
+                    ref.read(authModeProvider.notifier).state =
+                        AuthMode.register;
+                  },
+                  child: Text(
+                    context.loc.registerAction,
+                    style: TextStyle(
+                      color: context.colors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -153,6 +155,3 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     );
   }
 }
-
-
-

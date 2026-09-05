@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../providers/auth_mode_provider.dart';
 import '../providers/auth_state_provider.dart';
-import 'package:go_router/go_router.dart';
+import '../../domain/entities/value_objects/email.dart';
+import '../../domain/entities/value_objects/password.dart';
 
 class RegisterFormState {
   final bool isLoading;
@@ -77,7 +79,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
     ref.read(registerFormProvider.notifier).setLoading(true);
 
-    final success = await ref.read(authStateProvider.notifier).register(
+    await ref.read(authStateProvider.notifier).register(
       name: _fullNameController.text.trim(),
       email: _usernameController.text.trim(),
       password: _passwordController.text,
@@ -85,9 +87,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
 
     if (mounted) {
       ref.read(registerFormProvider.notifier).setLoading(false);
-      if (success) {
-        context.goNamed('home');
-      }
+      // Navigation is handled automatically by the router listening to auth state
     }
   }
 
@@ -118,9 +118,16 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             label: context.loc.username,
             prefixIcon: const Icon(Icons.person_outline),
             textInputAction: TextInputAction.next,
-            validator: (v) => v == null || v.trim().isEmpty
-                ? context.loc.usernameRequired
-                : null,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return context.loc.usernameRequired;
+              }
+              final emailObj = Email(v);
+              if (!emailObj.isValid) {
+                return context.translateErrorKey(emailObj.errorMessage);
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -139,8 +146,12 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             ),
             obscureText: formState.obscurePassword,
             textInputAction: TextInputAction.next,
-            validator: (v) =>
-                v == null || v.isEmpty ? context.loc.passwordRequired : null,
+            validator: (v) {
+              if (v == null || v.isEmpty) return context.loc.passwordRequired;
+              final pwd = Password(v);
+              if (!pwd.isValid) return context.translateErrorKey(pwd.errorMessage);
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.md),
 
@@ -186,7 +197,7 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             child: Text(
               '${context.loc.haveAccount} ${context.loc.loginHere}',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
+                color: context.colors.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),

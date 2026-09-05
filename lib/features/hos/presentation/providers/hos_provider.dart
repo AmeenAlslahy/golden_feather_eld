@@ -52,37 +52,41 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
 
   /// تغيير حالة الخدمة
   bool changeStatus(DutyStatus newStatus, {String? annotation, bool isYardMoves = false}) {
-    if (state.currentStatus == DutyStatus.driving && newStatus != DutyStatus.driving) {
-      final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
-      final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
-      
-      final speedThreshold = _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
-      
-      if (currentSpeedKmh >= speedThreshold) {
-        AppLogger.warning('⚠️ Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)');
-        // تم رفض التغيير
+    final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
+    final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
+    final speedThreshold = _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
+    
+    final validationResult = _engine.validateManualTransition(
+      currentStatus: state.currentStatus,
+      newStatus: newStatus,
+      currentSpeedKmh: currentSpeedKmh,
+      speedThresholdKmh: speedThreshold,
+    );
+    
+    return validationResult.match(
+      (failure) {
+        AppLogger.warning('⚠️ ${failure.message}');
         return false;
-      }
-    }
-    
-    String finalAnnotation = annotation ?? '';
-    if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
-      finalAnnotation = '[YM] $finalAnnotation'.trim();
-    }
-    
-    // Call the tracker so it gets saved to DB and synced.
-    // The tracker will emit an onTransition event which this Notifier listens to.
-    String statusStr;
-    switch (newStatus) {
-      case DutyStatus.driving: statusStr = 'driving'; break;
-      case DutyStatus.onDutyNotDriving: statusStr = 'on_duty'; break;
-      case DutyStatus.sleeperBerth: statusStr = 'sleeper_berth'; break;
-      case DutyStatus.offDuty: statusStr = 'off_duty'; break;
-      case DutyStatus.personalUse: statusStr = 'personal_use'; break;
-    }
-    
-    _tracker.manualTransition(statusStr, annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
-    return true;
+      },
+      (_) {
+        String finalAnnotation = annotation ?? '';
+        if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
+          finalAnnotation = '[YM] $finalAnnotation'.trim();
+        }
+        
+        String statusStr;
+        switch (newStatus) {
+          case DutyStatus.driving: statusStr = 'driving'; break;
+          case DutyStatus.onDutyNotDriving: statusStr = 'on_duty'; break;
+          case DutyStatus.sleeperBerth: statusStr = 'sleeper_berth'; break;
+          case DutyStatus.offDuty: statusStr = 'off_duty'; break;
+          case DutyStatus.personalUse: statusStr = 'personal_use'; break;
+        }
+        
+        _tracker.manualTransition(statusStr, annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
+        return true;
+      },
+    );
   }
   
   /// تحديث الحالة

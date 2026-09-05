@@ -69,6 +69,9 @@ class FakeLocalStorage implements LocalStorageService {
   Map<String, String> data = {};
 
   @override
+  String get deviceId => data['device_id'] ?? '12345';
+
+  @override
   String get currentDutyStatus => data['current_duty_status'] ?? 'off_duty';
 
   @override

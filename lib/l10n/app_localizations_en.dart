@@ -1290,4 +1290,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hoursOfService => 'HOURS OF SERVICE';
+
+  @override
+  String get sessionExpired => 'Session expired, please login again';
+
+  @override
+  String get invalidConfiguration => 'Invalid server configuration';
+
+  @override
+  String get invalidCredentials => 'Invalid username or password';
+
+  @override
+  String get sessionMissing => 'Session missing, please login again';
 }

@@ -146,7 +146,7 @@ class ApiClient {
       return ServerException(
         statusCode: statusCode,
         message: message,
-        arabicMessage: message, // Can be localized later
+        // Can be localized later
       );
     }
     
@@ -157,7 +157,6 @@ class ApiClient {
     
     return ServerException(
       message: message,
-      arabicMessage: message,
-    );
+      );
   }
 }

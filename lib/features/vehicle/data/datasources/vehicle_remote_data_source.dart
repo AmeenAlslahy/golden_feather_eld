@@ -25,8 +25,7 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       if (!response.status || response.data == null) {
         throw const ServerException(
           message: 'Failed to fetch vehicles',
-          arabicMessage: 'فشل في جلب قائمة الشاحنات',
-        );
+          );
       }
 
       final devicesList = response.data as List<dynamic>;
@@ -37,8 +36,7 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
     } on DioException catch (e) {
       throw ServerException(
         message: 'Network error: ${e.message}',
-        arabicMessage: 'خطأ في الشبكة',
-      );
+        );
     }
   }
 }

@@ -6,18 +6,12 @@ import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/datasources/auth_session_store.dart';
 import '../../data/datasources/user_store.dart';
 import '../../data/repositories/mock_auth_repository.dart';
-import 'package:dio/dio.dart';
+import '../../data/repositories/auth_repository_impl.dart';
 import '../../../../core/config/app_environment.dart';
 
-/// موفر يوفر فقط قيمة JSESSIONID بشكل آمن إذا كانت الجلسة صالحة ومطابقة للخادم
-/// هذا العقد سيتم استخدامه لاحقاً من قبل WebSocket لفتح الاتصال
-final traccarSessionCredentialProvider = Provider<String?>((ref) {
-  // في التطبيق الفعلي، سيعتمد على authStateProvider.
-  return null;
-});
 final traccarAuthRemoteDataSourceProvider =
     Provider<AuthRemoteDataSource>((ref) {
-  final dio = Dio();
+  final dio = ref.watch(rawDioProvider);
   final endpoints = ref.watch(endpointsProvider);
   return AuthRemoteDataSourceImpl(dio, endpoints);
 });

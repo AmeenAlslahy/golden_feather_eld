@@ -69,6 +69,23 @@ final backendTypeProvider = Provider<String>((ref) {
   return storage.backendType.isNotEmpty ? storage.backendType : 'traccar';
 });
 
+// Provider لـ Dio خام (بدون Interceptors) للمصادقة وللطلبات الخاصة
+final rawDioProvider = Provider<Dio>((ref) {
+  final config = ref.watch(apiConfigProvider);
+  final serverUrl = ref.watch(serverUrlProvider);
+  
+  final effectiveUrl = serverUrl.isNotEmpty ? serverUrl : config.baseUrl;
+  final baseUrl = effectiveUrl.endsWith('/') 
+      ? effectiveUrl.substring(0, effectiveUrl.length - 1) 
+      : effectiveUrl;
+
+  return Dio(BaseOptions(
+    baseUrl: baseUrl,
+    connectTimeout: config.connectTimeout,
+    receiveTimeout: config.receiveTimeout,
+  ));
+});
+
 // Provider لـ ApiClient (يعيد الإنشاء عند تغير السيرفر)
 final apiClientProvider = Provider<ApiClient>((ref) {
   final config = ref.watch(apiConfigProvider);

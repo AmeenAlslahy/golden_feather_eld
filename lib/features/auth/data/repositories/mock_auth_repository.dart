@@ -39,8 +39,7 @@ class MockAuthRepository implements AuthRepository {
 
     return const Left(AuthFailure(
       message: 'Invalid credentials',
-      arabicMessage: 'بيانات الدخول غير صحيحة',
-    ));
+      ));
   }
 
   @override

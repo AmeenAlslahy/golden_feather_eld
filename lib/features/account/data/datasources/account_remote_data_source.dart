@@ -25,8 +25,7 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
       if (!response.status || response.data == null) {
         throw const ServerException(
           message: 'Failed to load user profile',
-          arabicMessage: 'فشل في جلب بيانات المستخدم',
-        );
+          );
       }
 
       // Traccar standard response usually directly returns the object, or wrapped in data
@@ -38,8 +37,7 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
     } on DioException catch (e) {
       throw ServerException(
         message: 'Network error: ${e.message}',
-        arabicMessage: 'خطأ في الشبكة',
-      );
+        );
     }
   }
 
@@ -54,8 +52,7 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
       if (!response.status || response.data == null) {
         throw const ServerException(
           message: 'Failed to update user profile',
-          arabicMessage: 'فشل في تحديث بيانات المستخدم',
-        );
+          );
       }
 
       final data = response.data!.containsKey('data') 
@@ -66,8 +63,7 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
     } on DioException catch (e) {
       throw ServerException(
         message: 'Network error: ${e.message}',
-        arabicMessage: 'خطأ في الشبكة',
-      );
+        );
     }
   }
 }

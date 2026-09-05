@@ -1,7 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/error/failure.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/repositories/auth_repository.dart';
+import '../../domain/entities/value_objects/email.dart';
+import '../../domain/entities/value_objects/login_identifier.dart';
+import '../../domain/entities/value_objects/password.dart';
+import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/register_usecase.dart';
+import '../../domain/usecases/check_auth_status_usecase.dart';
+import '../../domain/usecases/logout_usecase.dart';
 import 'auth_providers.dart';
 
 /// حالة المصادقة
@@ -32,13 +39,15 @@ class AuthState {
     AuthStatus? status,
     User? user,
     String? errorMessage,
-    String? arabicErrorMessage,
+    bool clearError = false,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
-      errorMessage: errorMessage,
-      arabicErrorMessage: arabicErrorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      arabicErrorMessage: clearError
+          ? null
+          : (arabicErrorMessage ?? this.arabicErrorMessage),
     );
   }
 
@@ -50,23 +59,44 @@ class AuthState {
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(traccarAuthRepositoryProvider);
   return AuthNotifier(
-    repository: repository,
+    loginUseCase: LoginUseCase(repository),
+    registerUseCase: RegisterUseCase(repository),
+    checkAuthStatusUseCase: CheckAuthStatusUseCase(repository),
+    logoutUseCase: LogoutUseCase(repository),
   );
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repository;
+  final LoginUseCase _loginUseCase;
+  final RegisterUseCase _registerUseCase;
+  final CheckAuthStatusUseCase _checkAuthStatusUseCase;
+  final LogoutUseCase _logoutUseCase;
 
   AuthNotifier({
-    required AuthRepository repository,
-  })  : _repository = repository,
+    required LoginUseCase loginUseCase,
+    required RegisterUseCase registerUseCase,
+    required CheckAuthStatusUseCase checkAuthStatusUseCase,
+    required LogoutUseCase logoutUseCase,
+  })  : _loginUseCase = loginUseCase,
+        _registerUseCase = registerUseCase,
+        _checkAuthStatusUseCase = checkAuthStatusUseCase,
+        _logoutUseCase = logoutUseCase,
         super(const AuthState());
+
+  /// استخراج دالة مساعدة لمعالجة الأخطاء وتقليل التكرار
+  void _setErrorState(Failure failure, String logPrefix) {
+    state = state.copyWith(
+      status: AuthStatus.error,
+      errorMessage: failure.message,
+      );
+    AppLogger.error('$logPrefix: ${failure.message}');
+  }
 
   /// التحقق من حالة المصادقة عند بدء التطبيق
   Future<void> checkAuthStatus() async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      final sessionResult = await _repository.checkAndRestoreSession();
+      final sessionResult = await _checkAuthStatusUseCase();
 
       sessionResult.match((failure) {
         state = const AuthState(status: AuthStatus.unauthenticated);
@@ -87,41 +117,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     String? serverUrl,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
 
-    if (username.isEmpty) {
-      state = state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: 'البريد الإلكتروني مطلوب',
-        arabicErrorMessage: 'البريد الإلكتروني مطلوب',
-      );
-      AppLogger.error('Login failed: البريد الإلكتروني مطلوب');
-      return false;
-    }
+    final identifierObj = LoginIdentifier(username);
+    final passwordObj = Password(password);
 
-    if (password.isEmpty) {
-      state = state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: 'كلمة المرور مطلوبة',
-        arabicErrorMessage: 'كلمة المرور مطلوبة',
-      );
-      AppLogger.error('Login failed: كلمة المرور مطلوبة');
-      return false;
-    }
-
-    final result = await _repository.login(
-      email: username,
-      password: password,
+    final result = await _loginUseCase(
+      identifier: identifierObj,
+      password: passwordObj,
     );
 
     return result.match(
       (failure) {
-        state = state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: failure.message,
-          arabicErrorMessage: failure.arabicMessage,
-        );
-        AppLogger.error('Login failed: ${failure.message}');
+        _setErrorState(failure, 'Login failed');
         return false;
       },
       (user) {
@@ -141,22 +149,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
 
-    final result = await _repository.register(
+    final emailObj = Email(email);
+    final passwordObj = Password(password);
+
+    final result = await _registerUseCase(
       name: name,
-      email: email,
-      password: password,
+      email: emailObj,
+      password: passwordObj,
     );
 
     return result.match(
       (failure) {
-        state = state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: failure.message,
-          arabicErrorMessage: failure.arabicMessage,
-        );
-        AppLogger.error('Registration failed: ${failure.message}');
+        _setErrorState(failure, 'Registration failed');
         return false;
       },
       (user) {
@@ -172,20 +178,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// تسجيل الخروج
   Future<void> logout() async {
-    await _repository.logout();
+    await _logoutUseCase();
     state = const AuthState(status: AuthStatus.unauthenticated);
-  }
-
-  /// التحقق من كلمة المرور المحلية (موقوف)
-  Future<bool> verifyLocalPassword(String password) async {
-    return true; // Stub
   }
 
   /// مسح الخطأ
   void clearError() {
-    state = state.copyWith(
-      errorMessage: null,
-      arabicErrorMessage: null,
-    );
+    state = state.copyWith(clearError: true);
   }
 }

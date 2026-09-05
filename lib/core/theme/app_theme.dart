@@ -3,8 +3,10 @@ import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
+import 'eld_theme_extension.dart';
 export 'app_text_styles.dart';
 export 'app_color_tokens.dart';
+export 'eld_theme_extension.dart';
 
 /// ثيم تطبيق ELD
 class AppTheme {
@@ -13,6 +15,7 @@ class AppTheme {
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    extensions: [EldColors.light()],
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryBlue,
       onPrimary: AppColors.surface,
@@ -117,6 +120,7 @@ class AppTheme {
 
   static final ThemeData dark = light.copyWith(
     brightness: Brightness.dark,
+    extensions: [EldColors.dark()],
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryBlue,
       onPrimary: AppColors.surface,

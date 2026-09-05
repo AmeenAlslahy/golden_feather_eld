@@ -11,6 +11,7 @@ import '../../domain/entities/pending_event.dart';
 import '../../../../core/config/app_environment.dart';
 import '../../../../core/network/network_providers.dart';
 import '../../data/repositories/traccar_remote_event_dispatcher.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 class MockRemoteEventDispatcher implements RemoteEventDispatcher {
   @override
@@ -27,8 +28,7 @@ class FailClosedRemoteEventDispatcher implements RemoteEventDispatcher {
     // حماية (Fail-closed): نمنع فقدان البيانات بحظر الحذف الوهمي في الإنتاج
     return const Left(ServerFailure(
       message: 'Production dispatcher not implemented yet. Event retained.',
-      arabicMessage: 'آلية الإرسال للإنتاج غير مكتملة، تم الاحتفاظ بالبيانات',
-    ));
+      ));
   }
 }
 
@@ -49,7 +49,8 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   if (env == AppEnvironment.production) {
     final apiClient = ref.watch(apiClientProvider);
     final endpoints = ref.watch(endpointsProvider);
-    return TraccarRemoteEventDispatcher(apiClient, endpoints);
+    final authSessionStore = ref.watch(authSessionStoreProvider);
+    return TraccarRemoteEventDispatcher(apiClient, endpoints, authSessionStore);
   }
 
   // في البيئات الأخرى، نستخدم السلوك الآمن الذي يمنع فقدان البيانات

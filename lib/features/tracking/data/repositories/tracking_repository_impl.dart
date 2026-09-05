@@ -62,8 +62,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       if (!locationStatus.isGranted) {
         return const Left(PermissionFailure(
           message: 'صلاحية الموقع في الخلفية مطلوبة',
-          arabicMessage: 'التتبع يتطلب السماح بالوصول للموقع "طوال الوقت" (Allow all the time) ليعمل في الخلفية، يرجى تفعيلها من الإعدادات.',
-        ));
+          ));
       }
 
       // ٢. فحص إذا كان GPS مفعلاً
@@ -71,8 +70,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       if (!isLocationServiceEnabled) {
         return const Left(PermissionFailure(
           message: 'خدمة الموقع غير مفعلة',
-          arabicMessage: 'يرجى تفعيل خدمة الموقع (GPS) من إعدادات الهاتف للمتابعة.',
-        ));
+          ));
       }
 
       // ٣. كل شيء جاهز - ابدأ التتبع
@@ -85,8 +83,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       AppLogger.error('Failed to start tracking', e);
       return Left(TrackingFailure(
         message: 'فشل بدء التتبع',
-        arabicMessage: 'فشل بدء التتبع: $e',
-      ));
+        ));
     }
   }
 
@@ -101,8 +98,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       AppLogger.error('Failed to stop tracking', e);
       return Left(TrackingFailure(
         message: 'فشل إيقاف التتبع',
-        arabicMessage: 'فشل إيقاف التتبع: $e',
-      ));
+        ));
     }
   }
 
@@ -140,8 +136,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return Left(TrackingFailure(
         message: 'فشل الحصول على الموقع',
-        arabicMessage: 'فشل الحصول على الموقع الحالي: $e',
-      ));
+        ));
     }
   }
 
@@ -172,8 +167,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return Left(TrackingFailure(
         message: 'فشل طلب الموقع',
-        arabicMessage: 'فشل طلب الموقع: $e',
-      ));
+        ));
     }
   }
 
@@ -191,8 +185,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل جلب السجلات',
-        arabicMessage: 'فشل جلب سجلات التتبع',
-      ));
+        ));
     }
   }
 
@@ -204,8 +197,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل مسح السجلات',
-        arabicMessage: 'فشل مسح السجلات',
-      ));
+        ));
     }
   }
 
@@ -218,8 +210,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل تحديث الإعدادات',
-        arabicMessage: 'فشل تحديث إعدادات التتبع',
-      ));
+        ));
     }
   }
 

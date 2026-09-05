@@ -32,7 +32,6 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     }
     return Left(ServerFailure(
       message: e.message ?? 'فشل الاتصال بالخادم',
-      arabicMessage: e.arabicMessage ?? 'فشل الاتصال بالخادم',
       statusCode: e.statusCode,
     ));
   } on OfflineException catch (e) {
@@ -42,8 +41,7 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     AppLogger.error('${tag ?? 'Repository'} UnauthorizedException: ${e.message}');
     return Left(AuthFailure(
       message: e.message ?? 'انتهت صلاحية الجلسة',
-      arabicMessage: e.arabicMessage ?? 'انتهت صلاحية الجلسة',
-    ));
+      ));
   } on CacheException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} CacheException: ${e.message}');
     return Left(CacheFailure(
@@ -53,7 +51,6 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     AppLogger.error('${tag ?? 'Repository'} Unexpected Exception: $e', e, stackTrace);
     return Left(ServerFailure(
       message: 'An unexpected error occurred: $e',
-      arabicMessage: 'حدث خطأ غير متوقع',
-    ));
+      ));
   }
 }

@@ -10,8 +10,6 @@ import 'tracking_providers.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
-import '../../../../routes.dart'; // 🆕
-import 'package:flutter/material.dart'; // 🆕
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -45,7 +43,6 @@ class TrackingState {
     LocationEntity? currentLocation,
     List<TrackingLogEntity>? logs,
     String? errorMessage,
-    String? arabicErrorMessage,
     TrackingErrorType? errorType,
     bool? isTracking,
     bool? showBatteryDialog,
@@ -55,7 +52,6 @@ class TrackingState {
       currentLocation: currentLocation ?? this.currentLocation,
       logs: logs ?? this.logs,
       errorMessage: errorMessage,
-      arabicErrorMessage: arabicErrorMessage,
       errorType: errorType,
       isTracking: isTracking ?? this.isTracking,
       showBatteryDialog: showBatteryDialog ?? this.showBatteryDialog,
@@ -97,19 +93,6 @@ final trackingStateProvider =
       if (!notifier.isActiveOrLoading) {
         AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
         notifier.startTracking(skipBatteryCheck: true);
-        
-        // 🆕 عرض إشعار مرئي للمستخدم ببدء التتبع التلقائي
-        final context = rootNavigatorKey.currentContext;
-        if (context != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
       }
     }
   });
@@ -173,14 +156,12 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
           state = state.copyWith(
             status: TrackingStatus.error,
             errorMessage: failure.message,
-            arabicErrorMessage: failure.arabicMessage,
             errorType: TrackingErrorType.permission,
           );
         } else {
           state = state.copyWith(
             status: TrackingStatus.error,
             errorMessage: failure.message,
-            arabicErrorMessage: failure.arabicMessage,
             errorType: TrackingErrorType.technical,
           );
         }
@@ -201,8 +182,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       if (!state.isTracking) {
         state = state.copyWith(
           errorMessage: 'No GPS signal received from device',
-          arabicErrorMessage:
-              'جاري انتظار إشارة الـ GPS. لم تصل أي قراءات من النظام حتى الآن.',
+          
           errorType: TrackingErrorType.technical,
         );
       }
@@ -220,7 +200,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
           isTracking: true,
           currentLocation: location,
           errorMessage: null,
-          arabicErrorMessage: null,
+
           errorType: null,
         );
         ref.read(currentVehicleSpeedProvider.notifier).state = location.speed;
@@ -230,7 +210,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
         state = state.copyWith(
           status: TrackingStatus.error,
           errorMessage: 'Stream error',
-          arabicErrorMessage: 'حدث خطأ في تدفق الموقع.',
+          
           errorType: TrackingErrorType.technical,
           isTracking: false,
         );
@@ -245,7 +225,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       if (hosState.currentStatus == DutyStatus.driving) {
         state = state.copyWith(
           errorMessage: 'Cannot stop tracking while driving',
-          arabicErrorMessage: 'لا يمكن إيقاف التتبع أثناء القيادة',
+          
           errorType: TrackingErrorType.technical,
         );
         return;
@@ -285,8 +265,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       (failure) {
         state = state.copyWith(
           errorMessage: failure.message,
-          arabicErrorMessage: failure.arabicMessage,
-        );
+          );
       },
       (location) {
         state = state.copyWith(
@@ -319,7 +298,6 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   void clearError() {
     state = state.copyWith(
       errorMessage: null,
-      arabicErrorMessage: null,
       errorType: null,
     );
   }

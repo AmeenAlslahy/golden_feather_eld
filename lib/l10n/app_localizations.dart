@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverNotConfigured.
   ///
   /// In ar, this message translates to:
-  /// **'الخادم غير مهيأ'**
+  /// **'إعدادات الخادم مفقودة'**
   String get serverNotConfigured;
 
   /// No description provided for @trackingLabel.
@@ -2629,6 +2629,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ساعات الخدمة'**
   String get hoursOfService;
+
+  /// No description provided for @sessionExpired.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت صلاحية الجلسة'**
+  String get sessionExpired;
+
+  /// No description provided for @invalidConfiguration.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات الخادم غير صالحة'**
+  String get invalidConfiguration;
+
+  /// No description provided for @invalidCredentials.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسم المستخدم أو كلمة المرور غير صحيحة'**
+  String get invalidCredentials;
+
+  /// No description provided for @sessionMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجلسة غير موجودة، يرجى تسجيل الدخول'**
+  String get sessionMissing;
 }
 
 class _AppLocalizationsDelegate

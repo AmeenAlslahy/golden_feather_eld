@@ -8,7 +8,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
-import '../../data/repositories/log_repository_impl.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:uuid/uuid.dart';
 
@@ -280,7 +279,7 @@ class EditLogPage extends ConsumerWidget {
               type: EldButtonType.agree,
               onPressed: formState.reason.trim().isEmpty ? null : () async {
                 // حفظ التعديلات وسجل التدقيق
-                final repo = ref.read(logRepositoryProvider);
+                final notifier = ref.read(logsProvider.notifier);
                 final entry = AuditEntry(
                   id: const Uuid().v4(),
                   timestamp: DateTime.now(),
@@ -290,7 +289,7 @@ class EditLogPage extends ConsumerWidget {
                   reason: formState.reason,
                 );
                 
-                await repo.logAudit(entry);
+                await notifier.saveAuditEntry(entry);
                 if (context.mounted) Navigator.pop(context, true);
               },
             ),

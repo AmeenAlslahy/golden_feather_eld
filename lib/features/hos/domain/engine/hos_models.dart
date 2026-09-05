@@ -1,4 +1,4 @@
-﻿import 'package:golden_feather_eld/features/hos/domain/engine/hos_calculator.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_calculator.dart';
 
 // ==========================================
 // 1. Duty Status & Tracking Models
@@ -202,7 +202,6 @@ class HosViolation {
   final HosViolationType type;
   final ViolationLevel level;
   final String message;
-  final String arabicMessage;
   final DateTime timestamp;
   final Map<String, dynamic>? details;
 
@@ -210,7 +209,6 @@ class HosViolation {
     required this.type,
     required this.level,
     required this.message,
-    required this.arabicMessage,
     required this.timestamp,
     this.details,
   });
@@ -220,7 +218,6 @@ class HosViolation {
       'type': type.name,
       'level': level.name,
       'message': message,
-      'arabicMessage': arabicMessage,
       'timestamp': timestamp.toIso8601String(),
       'details': details,
     };

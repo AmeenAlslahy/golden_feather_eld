@@ -66,7 +66,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       
       return const Right(true);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message ?? 'Server Error', arabicMessage: e.arabicMessage));
+      return Left(ServerFailure(message: e.message ?? 'Server Error', ));
     } catch (e) {
       return Left(ServerFailure(message: 'فشل مزامنة الإعدادات: $e'));
     }

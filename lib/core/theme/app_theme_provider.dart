@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/local_storage_service.dart';
 
 /// مزود حالة الثيم
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  return ThemeModeNotifier();
+  final storage = ref.watch(localStorageProvider);
+  return ThemeModeNotifier(storage);
 });
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  final LocalStorageService _storage;
+
+  ThemeModeNotifier(this._storage) : super(ThemeMode.system) {
     _loadThemeMode();
   }
 
-  static const String _themeKey = 'theme_mode';
+  static const String _oldThemeKey = 'theme_mode';
 
   Future<void> _loadThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final themeIndex = prefs.getInt(_themeKey);
-    if (themeIndex != null) {
-      state = ThemeMode.values[themeIndex];
+    // Migration check from old SharedPreferences
+    final oldPrefs = await SharedPreferences.getInstance();
+    if (oldPrefs.containsKey(_oldThemeKey)) {
+      final oldIndex = oldPrefs.getInt(_oldThemeKey);
+      if (oldIndex != null && oldIndex >= 0 && oldIndex < ThemeMode.values.length) {
+        final migratedMode = ThemeMode.values[oldIndex];
+        await _storage.setTheme(migratedMode.name);
+      }
+      await oldPrefs.remove(_oldThemeKey);
     }
+    
+    // Read from unified storage
+    final themeStr = _storage.theme;
+    state = ThemeMode.values.firstWhere(
+      (e) => e.name == themeStr,
+      orElse: () => ThemeMode.system,
+    );
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     state = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_themeKey, mode.index);
+    await _storage.setTheme(mode.name);
   }
 
   Future<void> toggleTheme() async {
@@ -38,5 +53,4 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   bool get isDarkMode => state == ThemeMode.dark;
 }
-
 

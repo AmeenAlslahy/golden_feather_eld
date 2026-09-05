@@ -110,7 +110,6 @@ class HosViolationsEngine {
         type: HosViolationType.dailyDrivingExceeded,
         level: ViolationLevel.high,
         message: 'Daily driving limit exceeded: ${drivingHoursToday.toStringAsFixed(1)}h / 11h',
-        arabicMessage: 'تجاوز حد القيادة اليومي: ${drivingHoursToday.toStringAsFixed(1)} ساعة / 11 ساعة',
         details: {'actual': drivingHoursToday, 'limit': 11},
       );
     }
@@ -120,7 +119,6 @@ class HosViolationsEngine {
         type: HosViolationType.dailyWorkExceeded,
         level: ViolationLevel.high,
         message: 'Daily work limit exceeded: ${workHoursToday.toStringAsFixed(1)}h / 14h',
-        arabicMessage: 'تجاوز حد العمل اليومي: ${workHoursToday.toStringAsFixed(1)} ساعة / 14 ساعة',
         details: {'actual': workHoursToday, 'limit': 14},
       );
     }
@@ -130,7 +128,6 @@ class HosViolationsEngine {
         type: HosViolationType.dailyRestInsufficient,
         level: ViolationLevel.medium,
         message: 'Insufficient daily rest: ${restHoursToday.toStringAsFixed(1)}h / 10h',
-        arabicMessage: 'عدم كفاية الراحة اليومية: ${restHoursToday.toStringAsFixed(1)} ساعة / 10 ساعات',
         details: {'actual': restHoursToday, 'required': 10},
       );
     }
@@ -140,7 +137,6 @@ class HosViolationsEngine {
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
         message: 'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${_config.cycleLimitHours}h',
-        arabicMessage: 'تجاوز حد القيادة الأسبوعي: ${drivingHoursWeek.toStringAsFixed(1)} ساعة / ${_config.cycleLimitHours} ساعة',
         details: {'actual': drivingHoursWeek, 'limit': _config.cycleLimitHours},
       );
     }
@@ -150,7 +146,6 @@ class HosViolationsEngine {
         type: HosViolationType.no30MinBreakAfter8h,
         level: ViolationLevel.medium,
         message: 'No 30-minute break after 8 hours of driving',
-        arabicMessage: 'عدم أخذ استراحة 30 دقيقة بعد 8 ساعات قيادة',
         details: {'driving_hours': drivingHoursToday},
       );
     }
@@ -160,7 +155,6 @@ class HosViolationsEngine {
         type: HosViolationType.consecutiveDaysExceeded,
         level: ViolationLevel.medium,
         message: 'Consecutive work days exceeded: $consecutiveDays days / 7 days',
-        arabicMessage: 'تجاوز الأيام المتتالية: $consecutiveDays أيام / 7 أيام',
         details: {'actual': consecutiveDays, 'limit': 7},
       );
     }
@@ -170,7 +164,6 @@ class HosViolationsEngine {
         type: HosViolationType.weeklyRestInsufficient,
         level: ViolationLevel.critical,
         message: 'Insufficient weekly rest (34-hour restart required)',
-        arabicMessage: 'عدم كفاية الراحة الأسبوعية (يتطلب 34 ساعة راحة متتالية)',
         details: {'required': 34},
       );
     }
@@ -182,7 +175,6 @@ class HosViolationsEngine {
     required HosViolationType type,
     required ViolationLevel level,
     required String message,
-    required String arabicMessage,
     Map<String, dynamic>? details,
   }) {
     // Check if we already added this violation recently to prevent spamming DB
@@ -193,7 +185,6 @@ class HosViolationsEngine {
       type: type,
       level: level,
       message: message,
-      arabicMessage: arabicMessage,
       timestamp: DateTime.now(),
       details: details,
     );

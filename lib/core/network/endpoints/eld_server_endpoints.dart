@@ -22,25 +22,25 @@ class EldServerEndpoints implements ApiEndpoints {
 
   // Devices
   @override
-  String get devices => '/eld/devices';
+  String get devices => '$basePath/devices';
 
   // Positions & Tracking
   @override
-  String get positions => '/eld/tracking/positions';
+  String get positions => '$basePath/positions';
   @override
-  String get events => '/eld/tracking/events';
+  String get events => '$basePath/events';
 
   // Reports
   @override
-  String get reportSummary => '/eld/reports/summary';
+  String get reportSummary => '$basePath/reports/summary';
   @override
-  String get reportRoute => '/eld/reports/route';
+  String get reportRoute => '$basePath/reports/route';
   @override
-  String get reportEvents => '/eld/reports/events';
+  String get reportEvents => '$basePath/reports/events';
   @override
-  String get reportTrips => '/eld/reports/trips';
+  String get reportTrips => '$basePath/reports/trips';
   @override
-  String get reportStops => '/eld/reports/stops';
+  String get reportStops => '$basePath/reports/stops';
 
   // ELD Specific (Nano3Tracker)
   @override

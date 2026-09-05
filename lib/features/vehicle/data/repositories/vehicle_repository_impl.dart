@@ -32,7 +32,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
     } catch (e) {
       if (e is ServerException) {
         return Left(ServerFailure(
-          message: e.arabicMessage ?? e.message ?? 'فشل الاتصال بالخادم',
+          message: e.message ?? 'فشل الاتصال بالخادم',
           statusCode: e.statusCode,
         ));
       }

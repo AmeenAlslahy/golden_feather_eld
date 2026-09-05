@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/auth/presentation/providers/auth_state_provider.dart';
-import 'features/vehicle/presentation/providers/vehicle_provider.dart';
-import 'features/tracking/presentation/providers/tracking_provider.dart';
 
 import 'routes/auth_routes.dart';
 import 'routes/home_routes.dart';
@@ -53,8 +51,6 @@ class RouterNotifier extends ChangeNotifier {
 
   RouterNotifier(this._ref) {
     _ref.listen(authStateProvider, (_, __) => notifyListeners());
-    _ref.listen(vehicleProvider, (_, __) => notifyListeners());
-    _ref.listen(trackingStateProvider, (_, __) => notifyListeners());
   }
 }
 

@@ -183,7 +183,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get preferPlatformProvidersLabel => 'استخدام مزودي الموقع الأصليين';
 
   @override
-  String get serverNotConfigured => 'الخادم غير مهيأ';
+  String get serverNotConfigured => 'إعدادات الخادم مفقودة';
 
   @override
   String get trackingLabel => 'تتبع مستمر';
@@ -1291,4 +1291,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hoursOfService => 'ساعات الخدمة';
+
+  @override
+  String get sessionExpired => 'انتهت صلاحية الجلسة';
+
+  @override
+  String get invalidConfiguration => 'إعدادات الخادم غير صالحة';
+
+  @override
+  String get invalidCredentials => 'اسم المستخدم أو كلمة المرور غير صحيحة';
+
+  @override
+  String get sessionMissing => 'الجلسة غير موجودة، يرجى تسجيل الدخول';
 }

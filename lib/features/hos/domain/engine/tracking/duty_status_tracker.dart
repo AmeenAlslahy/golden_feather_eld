@@ -200,11 +200,12 @@ class DutyStatusTracker {
       payload: {
         'status': newStatus,
         'timestamp': timestamp.toIso8601String(),
-        'latitude': latitude,
-        'longitude': longitude,
-        'odometer': odometer,
-        'engineHours': engineHours,
-        'annotation': annotation,
+        'deviceId': int.tryParse(_localStorage.deviceId) ?? 0,
+        'location': latitude != null && longitude != null ? '$latitude, $longitude' : 'Unknown',
+        'odometer': odometer ?? 0.0,
+        'engineHours': engineHours ?? 0.0,
+        'remarks': annotation ?? '',
+        'attributes': const {},
       },
       createdAt: _now(),
     ));
@@ -229,6 +230,11 @@ class DutyStatusTracker {
     _movingSince = null;
     _consecutiveMovingEvents = 0;
 
+    // TODO(Team): The manual 'Driving' button is kept functional for now.
+    // If pressed but no GPS movement is detected within 5 mins, the watchdog
+    // timer will revert status to 'on_duty' to prevent fake driving hours.
+    // Need to consult with the team if we should disable this button entirely.
+
     _transitionTo(
       newStatus: newStatus,
       timestamp: _now(),
@@ -236,6 +242,13 @@ class DutyStatusTracker {
       longitude: lon,
       annotation: annotation,
     );
+
+    // Watchdog timer: If GPS is completely off or not moving, we start counting 5 mins.
+    if (newStatus == 'driving') {
+      _stationarySince = _now();
+      _localStorage.setStationarySince(_stationarySince!.toIso8601String());
+      _evaluateStationaryState();
+    }
   }
 
   Map<String, double> getTodayStats() {

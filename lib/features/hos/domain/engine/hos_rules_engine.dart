@@ -1,11 +1,9 @@
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import 'hos_calculator.dart';
 import 'hos_state_machine.dart';
-
-/// محرك قواعد ساعات الخدمة (HOS Rules Engine)
-/// معزول تماماً عن واجهة المستخدم لضمان الدقة والاختبار
 import 'hos_models.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failure.dart';
 
 class HosRulesEngine {
   final HosCalculator _calculator;
@@ -49,9 +47,23 @@ class HosRulesEngine {
 
 
 
+  /// يقيّم ما إذا كان الانتقال اليدوي مسموحاً بناءً على القواعد
+  Either<Failure, void> validateManualTransition({
+    required DutyStatus currentStatus,
+    required DutyStatus newStatus,
+    required double currentSpeedKmh,
+    required double speedThresholdKmh,
+  }) {
+    if (currentStatus == DutyStatus.driving && newStatus != DutyStatus.driving) {
+      if (currentSpeedKmh >= speedThresholdKmh) {
+        return Left(ServerFailure(message: 'Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)'));
+      }
+    }
+    return const Right(null);
+  }
+
   /// تبديل يدوي للحالة
   void manualTransition(DutyStatus newStatus, {String? annotation}) {
-
     _stateMachine.transitionTo(newStatus, annotation: annotation);
     AppLogger.info('👤 Manual transition to ${newStatus.name}');
   }
@@ -116,7 +128,6 @@ class HosRulesEngine {
         type: HosViolationType.dailyDrivingExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز حد القيادة 11 ساعة',
-        arabicMessage: '❌ تجاوز حد القيادة 11 ساعة',
         timestamp: DateTime.now(),
       ));
     }
@@ -126,7 +137,6 @@ class HosRulesEngine {
         type: HosViolationType.dailyWorkExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز نافذة العمل 14 ساعة',
-        arabicMessage: '❌ تجاوز نافذة العمل 14 ساعة',
         timestamp: DateTime.now(),
       ));
     }
@@ -136,7 +146,6 @@ class HosRulesEngine {
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز حد الدورة الأسبوعية',
-        arabicMessage: '❌ تجاوز حد الدورة الأسبوعية',
         timestamp: DateTime.now(),
       ));
     }
