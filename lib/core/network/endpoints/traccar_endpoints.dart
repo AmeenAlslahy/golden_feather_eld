@@ -74,4 +74,16 @@ class TraccarEndpoints implements ApiEndpoints {
   String inspectionExport(int driverId) {
     throw UnimplementedError();
   }
+
+  @override
+  String get drivers => throw UnimplementedError();
+
+  @override
+  String driverDutyStatus(int driverId) => throw UnimplementedError();
+
+  @override
+  String get dutyStatusLogs => throw UnimplementedError();
+
+  @override
+  String driverInspectionReport(int driverId) => throw UnimplementedError();
 }
