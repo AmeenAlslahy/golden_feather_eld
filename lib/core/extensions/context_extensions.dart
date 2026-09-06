@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // استيراد network_info هنا لتجنب cyclic dependency
 import '../../l10n/app_localizations.dart';
-import '../network/network_providers.dart';
+import '../network/core_providers.dart';
 
 import '../theme/eld_theme_extension.dart';
 

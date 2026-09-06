@@ -20,7 +20,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
         }
 
         final latestAlert = state.activeMalfunctions.last;
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
 
         final theme = Theme.of(context);
 

@@ -7,6 +7,7 @@ import '../../domain/entities/recap_data.dart';
 import 'hos_provider.dart';
 
 import '../../../../features/hos/domain/engine/hos_state_machine.dart';
+import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 import '../../domain/usecases/get_recap_use_case.dart';
 
 final getRecapUseCaseProvider = Provider<GetRecapUseCase>((ref) {
@@ -19,11 +20,15 @@ final recapProvider = FutureProvider<RecapData>((ref) async {
   ref.keepAlive();
   
   final getRecapUseCase = ref.watch(getRecapUseCaseProvider);
-  final hosStatus = ref.watch(hosStatusProvider);
+  final engineState = ref.watch(hosStatusProvider);
   final config = ref.watch(hosConfigurationProvider);
 
+  if (engineState is! HosEngineReady) {
+    return RecapData.empty();
+  }
+
   return getRecapUseCase.execute(
-    currentLimits: hosStatus.limits,
+    currentLimits: engineState.update.limits,
     cycleLimitHours: config.cycleLimitHours.toDouble(),
   );
 });

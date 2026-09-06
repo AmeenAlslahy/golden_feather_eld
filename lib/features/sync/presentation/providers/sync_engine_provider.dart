@@ -9,7 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../../../core/config/app_environment.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../data/repositories/traccar_remote_event_dispatcher.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 

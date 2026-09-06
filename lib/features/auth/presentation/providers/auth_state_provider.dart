@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/error/failure.dart';
-import '../../domain/entities/user.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 import '../../domain/entities/value_objects/email.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
@@ -47,7 +47,7 @@ class AuthState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       arabicErrorMessage: clearError
           ? null
-          : (arabicErrorMessage ?? this.arabicErrorMessage),
+          : (arabicErrorMessage ?? arabicErrorMessage),
     );
   }
 

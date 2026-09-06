@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/exception.dart';
+import '../../../../core/utils/repository_helper.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/services/user_preferences_storage_service.dart';
@@ -49,7 +49,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       return const Left(NetworkFailure());
     }
 
-    try {
+    return executeWithHandling(() async {
       final userModel = await _accountRemoteDataSource.getUserProfile(userId);
       final attrs = userModel.attributes;
       
@@ -59,16 +59,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
       }
       
       // Sync Language
-      final lang = userModel.language;
+      final lang = attrs['language']?.toString() ?? '';
       if (lang.isNotEmpty) {
         await _preferencesStorage.setLanguage(lang);
       }
       
-      return const Right(true);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message ?? 'Server Error', ));
-    } catch (e) {
-      return Left(ServerFailure(message: 'فشل مزامنة الإعدادات: $e'));
-    }
+      return true;
+    });
   }
 }

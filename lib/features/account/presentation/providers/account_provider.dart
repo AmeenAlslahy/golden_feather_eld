@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../data/datasources/account_remote_data_source.dart';
 import '../../data/repositories/account_repository_impl.dart';
-import '../../domain/entities/user_entity.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
@@ -21,7 +21,7 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
 });
 
 class AccountState {
-  final UserEntity? userProfile;
+  final User? userProfile;
   final bool isLoading;
   final String? error;
 
@@ -32,7 +32,7 @@ class AccountState {
   });
 
   AccountState copyWith({
-    UserEntity? userProfile,
+    User? userProfile,
     bool? isLoading,
     String? error,
   }) {
@@ -69,7 +69,7 @@ class AccountNotifier extends StateNotifier<AccountState> {
     );
   }
 
-  Future<bool> updateUserProfile(UserEntity updatedUser) async {
+  Future<bool> updateUserProfile(User updatedUser) async {
     state = state.copyWith(isLoading: true, error: null);
     
     final result = await _repository.updateUserProfile(updatedUser);

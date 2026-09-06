@@ -4,10 +4,10 @@ import '../../../../core/error/exception.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
-import '../../domain/entities/user.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../models/user_model.dart';
+import 'package:golden_feather_eld/core/models/user_model.dart';
 import '../datasources/auth_remote_data_source.dart';
 import '../datasources/user_store.dart';
 import '../datasources/auth_session_store.dart';

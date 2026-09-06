@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import '../entities/user.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 
 abstract class AuthRepository {
   /// تسجيل الدخول إلى الخادم

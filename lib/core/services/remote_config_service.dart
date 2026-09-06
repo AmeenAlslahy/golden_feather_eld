@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/api_client.dart';
 import '../error/exception.dart';
 import 'local_storage_service.dart';
-import '../network/network_providers.dart';
 import '../utils/logger.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import '../config/app_environment.dart';

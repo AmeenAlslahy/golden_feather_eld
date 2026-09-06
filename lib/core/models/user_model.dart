@@ -1,4 +1,4 @@
-import '../../domain/entities/user.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 
 class UserModel extends User {
   const UserModel({

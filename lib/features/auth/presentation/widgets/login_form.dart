@@ -115,40 +115,21 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // روابط نسيت كلمة المرور وإنشاء حساب
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: TextButton(
-                  onPressed: () {
-                    ref.read(authModeProvider.notifier).state =
-                        AuthMode.forgotPassword;
-                  },
-                  child: Text(
-                    context.loc.resetPassword,
-                    style: TextStyle(
-                      color: context.colors.primary,
-                    ),
-                  ),
+          // رابط إنشاء حساب
+          Center(
+            child: TextButton(
+              onPressed: () {
+                ref.read(authModeProvider.notifier).state =
+                    AuthMode.register;
+              },
+              child: Text(
+                context.loc.registerAction,
+                style: TextStyle(
+                  color: context.colors.primary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Flexible(
-                child: TextButton(
-                  onPressed: () {
-                    ref.read(authModeProvider.notifier).state =
-                        AuthMode.register;
-                  },
-                  child: Text(
-                    context.loc.registerAction,
-                    style: TextStyle(
-                      color: context.colors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

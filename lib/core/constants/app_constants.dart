@@ -35,14 +35,7 @@ class AppConstants {
 
 /// أدوار المستخدمين في النظام
 
-/// حالة التتبع
-enum TrackingStatus {
-  initial,
-  active,
-  paused,
-  stopped,
-  error,
-}
+
 
 /// حالة المزامنة
 enum SyncStatus {

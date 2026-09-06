@@ -6,6 +6,7 @@ import 'package:golden_feather_eld/features/logs/domain/repositories/log_reposit
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
@@ -53,14 +54,7 @@ class MockLogRepository implements LogRepository {
       throw UnimplementedError();
 }
 
-class FakeClock {
-  DateTime currentTime;
-  FakeClock(this.currentTime);
-  DateTime now() => currentTime;
-  void advance(Duration duration) {
-    currentTime = currentTime.add(duration);
-  }
-}
+// Replaced FakeClock with FakeTrustedTimeProvider inline in setUp
 
 class FakeLocalStorage implements LocalStorageService {
   @override
@@ -92,24 +86,26 @@ void main() {
   group('DutyStatusTracker FakeClock Tests', () {
     late DutyStatusTracker tracker;
     late MockLogRepository mockRepo;
-    late FakeClock clock;
+    late FakeTrustedTimeProvider clock;
     late FakeLocalStorage db;
 
     setUp(() {
       mockRepo = MockLogRepository();
-      clock = FakeClock(DateTime(2023, 1, 1, 12, 0, 0));
+      clock = FakeTrustedTimeProvider(initialUtcTime: DateTime.utc(2023, 1, 1, 12, 0, 0));
       db = FakeLocalStorage();
       tracker = DutyStatusTracker(
         logRepository: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
-        now: clock.now,
+        timeProvider: clock,
       );
     });
 
     tearDown(() {
       tracker.dispose();
     });
+
+    DateTime getClockTime() => (clock.currentTime as TrustedTimeAvailable).utc;
 
     test('1. stationary start - does not transition immediately', () {
       tracker.manualTransition('driving');
@@ -119,7 +115,7 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Should remain driving
       expect(tracker.currentStatus, 'driving');
@@ -133,14 +129,14 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       clock.advance(const Duration(minutes: 4));
       tracker.processEldEvent(EldEvent(
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       expect(tracker.currentStatus, 'driving');
     });
@@ -151,14 +147,14 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       clock.advance(const Duration(minutes: 5));
       tracker.processEldEvent(EldEvent(
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       expect(tracker.currentStatus, 'on_duty');
       expect(db.data['stationary_since'], isEmpty); // should clear
@@ -170,7 +166,7 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(db.data['stationary_since'], isNotNull);
 
       clock.advance(const Duration(minutes: 3));
@@ -179,7 +175,7 @@ void main() {
           speedMph: 6.0,
           odometerMiles: 10.5,
           engineHours: 1.1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       // Still driving (since it was driving before), but stationary_since should NOT be cleared yet (wait, yes it is cleared on the FIRST event in my logic or 3rd event? Wait... my logic says "if (consecutive >= 3 && elapsed >= 3) { clear stationary timer }". So stationary_since is NOT cleared on the first spike!)
       // Wait, let's verify my logic: I put clearing stationary_since INSIDE the `if (_consecutiveMovingEvents >= 3)` block. So stationary_since is NOT cleared on a spike!
 
@@ -189,13 +185,13 @@ void main() {
           speedMph: 6.0,
           odometerMiles: 10.5,
           engineHours: 1.1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       clock.advance(const Duration(seconds: 2));
       tracker.processEldEvent(EldEvent(
           speedMph: 6.0,
           odometerMiles: 10.5,
           engineHours: 1.1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       expect(tracker.currentStatus, 'driving');
       expect(db.data['stationary_since'],
@@ -208,7 +204,7 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Simulate app kill and advance clock by 6 minutes
       final savedData = db.data;
@@ -220,7 +216,7 @@ void main() {
         logRepository: mockRepo,
         localStorage: newDb,
         syncEngine: MockSyncEngine(),
-        now: clock.now,
+        timeProvider: clock,
       );
       // The status should hydrate to driving, and stationarySince should be intact.
       // Now, an event arrives (which triggers _evaluateStationaryState if speed is 0)
@@ -228,7 +224,7 @@ void main() {
           speedMph: 0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       expect(newTracker.currentStatus, 'on_duty');
       expect(newDb.data['stationary_since'], isEmpty);
@@ -239,18 +235,18 @@ void main() {
   group('Fake Location Streamer Tests', () {
     late DutyStatusTracker tracker;
     late MockLogRepository mockRepo;
-    late FakeClock clock;
+    late FakeTrustedTimeProvider clock;
     late FakeLocalStorage db;
 
     setUp(() {
       mockRepo = MockLogRepository();
-      clock = FakeClock(DateTime.now());
+      clock = FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc());
       db = FakeLocalStorage();
       tracker = DutyStatusTracker(
         logRepository: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
-        now: clock.now,
+        timeProvider: clock,
       );
     });
 
@@ -258,13 +254,15 @@ void main() {
       tracker.dispose();
     });
 
+    DateTime getClockTime() => (clock.currentTime as TrustedTimeAvailable).utc;
+
     test('below threshold (<= 5) remains current status if not driving', () {
       expect(tracker.currentStatus, 'off_duty');
       tracker.processEldEvent(EldEvent(
           speedMph: 4.9,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'off_duty');
     });
 
@@ -274,7 +272,7 @@ void main() {
           speedMph: 5.0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'off_duty');
     });
 
@@ -285,7 +283,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'off_duty');
     });
 
@@ -299,7 +297,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'off_duty');
 
       // Event 2 (1s)
@@ -308,7 +306,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'off_duty');
 
       // Event 3 (3s)
@@ -317,7 +315,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
       expect(tracker.currentStatus, 'driving');
     });
 
@@ -329,7 +327,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Event 2 (<= 5) - interrupts the streak
       clock.advance(const Duration(seconds: 1));
@@ -337,7 +335,7 @@ void main() {
           speedMph: 4.0,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Event 3 (> 5)
       clock.advance(const Duration(seconds: 1));
@@ -345,7 +343,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Event 4 (> 5)
       clock.advance(const Duration(seconds: 2));
@@ -353,7 +351,7 @@ void main() {
           speedMph: 5.1,
           odometerMiles: 10,
           engineHours: 1,
-          timestamp: clock.now()));
+          timestamp: getClockTime()));
 
       // Still off_duty because the streak was broken and the new streak is only 2 events
       expect(tracker.currentStatus, 'off_duty');

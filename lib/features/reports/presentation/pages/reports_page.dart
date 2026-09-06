@@ -14,7 +14,7 @@ import '../providers/reports_provider.dart';
 import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 
 /// شاشة التقارير
 class ReportsPage extends ConsumerWidget {

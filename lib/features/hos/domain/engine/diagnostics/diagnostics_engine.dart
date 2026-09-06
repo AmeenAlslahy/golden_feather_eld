@@ -5,6 +5,7 @@ import '../../../../../core/utils/logger.dart';
 import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../data/datasources/hos_local_data_source.dart';
 import '../tracking/distance_tracker.dart'; // For LocationPoint
+import '../../../../../core/time/trusted_time_provider.dart';
 
 /// أنواع الأعطال
 enum MalfunctionType {
@@ -83,6 +84,7 @@ class DiagnosticsState {
 class DiagnosticsEngine {
   final LiveTrackingDataSource _trackingDataSource;
   final HosLocalDataSource _localDb;
+  final TrustedTimeProvider _timeProvider;
   final _stateController = StreamController<DiagnosticsState>.broadcast();
   
   StreamSubscription<EldEvent>? _eventSubscription;
@@ -99,8 +101,13 @@ class DiagnosticsEngine {
   double _lastLat = 0.0;
   double _lastLon = 0.0;
 
-  DiagnosticsEngine(this._trackingDataSource, this._localDb) {
+  DiagnosticsEngine(this._trackingDataSource, this._localDb, this._timeProvider) {
     _startListening();
+  }
+
+  DateTime _getCurrentTime() {
+    final timeResult = _timeProvider.currentTime;
+    return timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now().toUtc();
   }
 
   DiagnosticsState get state => _state;
@@ -165,7 +172,7 @@ class DiagnosticsEngine {
         type: MalfunctionType.positioningMalfunction,
         severity: MalfunctionSeverity.major,
         message: 'Positioning malfunction: zero coordinates at speed $speed km/h',
-        timestamp: DateTime.now(),
+        timestamp: _getCurrentTime(),
       ));
       AppLogger.error('🛰️ Positioning malfunction');
     }
@@ -179,7 +186,7 @@ class DiagnosticsEngine {
           type: MalfunctionType.motionSensorMalfunction,
           severity: MalfunctionSeverity.major,
           message: 'Sudden speed change: ${speedChange.toStringAsFixed(0)} km/h',
-          timestamp: DateTime.now(),
+          timestamp: _getCurrentTime(),
           details: {'speed_change': speedChange},
         ));
         AppLogger.error('📊 Motion sensor malfunction');
@@ -195,7 +202,7 @@ class DiagnosticsEngine {
           type: MalfunctionType.engineSyncMalfunction,
           severity: MalfunctionSeverity.minor,
           message: 'Engine running without motion for $_engineRunningWithoutMotion minutes',
-          timestamp: DateTime.now(),
+          timestamp: _getCurrentTime(),
         ));
         AppLogger.warning('🔧 Engine sync malfunction');
       }
@@ -210,7 +217,7 @@ class DiagnosticsEngine {
         type: MalfunctionType.unidentifiedDrive,
         severity: MalfunctionSeverity.major,
         message: 'Unidentified drive: vehicle moving without ignition',
-        timestamp: DateTime.now(),
+        timestamp: _getCurrentTime(),
       ));
       AppLogger.error('🚨 Unidentified drive');
     }
@@ -252,7 +259,7 @@ class DiagnosticsEngine {
         type: MalfunctionType.missingCertification,
         severity: MalfunctionSeverity.major,
         message: 'Missing certification for daily log',
-        timestamp: DateTime.now(),
+        timestamp: _getCurrentTime(),
       ));
     }
   }
@@ -268,7 +275,8 @@ class DiagnosticsEngine {
 final diagnosticsEngineProvider = Provider<DiagnosticsEngine>((ref) {
   final tracking = ref.watch(liveTrackingDataSourceProvider);
   final db = ref.watch(hosLocalDataSourceProvider);
-  final engine = DiagnosticsEngine(tracking, db);
+  final timeProvider = ref.watch(trustedTimeProvider);
+  final engine = DiagnosticsEngine(tracking, db, timeProvider);
   ref.onDispose(() {
     engine.dispose();
   });

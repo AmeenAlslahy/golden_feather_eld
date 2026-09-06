@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../datasources/log_local_data_source.dart';

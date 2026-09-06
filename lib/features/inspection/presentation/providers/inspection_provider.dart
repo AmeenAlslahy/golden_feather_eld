@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../data/datasources/inspection_remote_data_source.dart';
 import '../../data/repositories/inspection_repository_impl.dart';
 import '../../domain/entities/inspection_data.dart';

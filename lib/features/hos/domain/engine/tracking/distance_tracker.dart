@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/utils/distance_calculator.dart';
+import '../../../../../core/time/trusted_time_provider.dart';
 
 /// نقطة موقع
 class LocationPoint {
@@ -17,14 +18,15 @@ class LocationPoint {
 
 /// متتبع المسافات
 class DistanceTracker {
+  final TrustedTimeProvider _timeProvider;
   final List<LocationPoint> _points = [];
   double _totalDistanceKm = 0;
   LocationPoint? _lastPoint;
 
+  DistanceTracker(this._timeProvider);
+
   double get totalDistanceKm => _totalDistanceKm;
   List<LocationPoint> get points => List.unmodifiable(_points);
-
-
 
   /// إضافة نقطة موقع جديدة
   void addPoint(LocationPoint point) {
@@ -52,7 +54,10 @@ class DistanceTracker {
 
   /// الحصول على مسافة اليوم
   double getTodayDistance() {
-    final now = DateTime.now();
+    final timeResult = _timeProvider.currentTime;
+    final now = timeResult is TrustedTimeAvailable
+        ? timeResult.utc
+        : DateTime.now().toUtc();
     final todayStart = DateTime(now.year, now.month, now.day);
 
     double distance = 0;
@@ -72,17 +77,18 @@ class DistanceTracker {
 
 /// مزود متتبع المسافات
 final distanceTrackerProvider = Provider<DistanceTracker>((ref) {
-  final tracker = DistanceTracker();
+  final timeProvider = ref.watch(trustedTimeProvider);
+  final tracker = DistanceTracker(timeProvider);
   final dataSource = ref.watch(liveTrackingDataSourceProvider);
-  
+
   final subscription = dataSource.locations.listen((point) {
     tracker.addPoint(point);
   });
-  
+
   ref.onDispose(() {
     subscription.cancel();
     tracker.clear();
   });
-  
+
   return tracker;
 });

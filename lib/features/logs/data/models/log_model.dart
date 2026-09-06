@@ -1,4 +1,5 @@
 import '../../domain/entities/daily_log.dart';
+import '../../../../features/hos/domain/engine/hos_models.dart';
 
 class LogEventModel extends LogEvent {
   const LogEventModel({
@@ -14,31 +15,17 @@ class LogEventModel extends LogEvent {
   });
 
   factory LogEventModel.fromJson(Map<String, dynamic> json) {
-    final statusCode = json['status']?.toString() ?? 'OFF_DUTY';
+    final statusCode = json['status']?.toString() ?? 'OFF';
     final startTimeStr = json['startTime']?.toString() ?? json['time']?.toString();
     final durationSecs = json['duration'] as int? ?? 0;
     
     // Status mappings
-    String status = 'OFF';
-    String arabic = 'مستراح';
-    switch (statusCode.toUpperCase()) {
-      case 'DRIVING':
-      case 'D':
-        status = 'D'; arabic = 'قيادة'; break;
-      case 'ON_DUTY':
-      case 'ON':
-        status = 'ON'; arabic = 'على رأس العمل'; break;
-      case 'SLEEPER_BERTH':
-      case 'SB':
-        status = 'SB'; arabic = 'مقصورة النوم'; break;
-      default:
-        status = 'OFF'; arabic = 'مستراح';
-    }
+    final dutyStatus = DutyStatus.fromShortCode(statusCode);
 
     return LogEventModel(
       id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      status: status,
-      statusArabic: arabic,
+      status: dutyStatus.toShortCode(),
+      statusArabic: dutyStatus.arabicName,
       startTime: startTimeStr != null ? DateTime.parse(startTimeStr).toLocal() : DateTime.now(),
       duration: Duration(seconds: durationSecs),
       location: json['location']?.toString() ?? 'Unknown Location',

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../data/datasources/auth_remote_data_source.dart';

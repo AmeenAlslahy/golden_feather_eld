@@ -9,13 +9,13 @@ import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 
 /// مزود حالة HOS
-final hosStatusProvider = StateNotifierProvider<HosNotifier, HosStatusUpdate>((ref) {
+final hosStatusProvider = StateNotifierProvider<HosNotifier, HosEngineResult>((ref) {
   final engine = ref.watch(hosEngineProvider);
   final tracker = ref.watch(dutyStatusTrackerProvider);
   return HosNotifier(engine, tracker, ref);
 });
 
-class HosNotifier extends StateNotifier<HosStatusUpdate> {
+class HosNotifier extends StateNotifier<HosEngineResult> {
   final HosRulesEngine _engine;
   final DutyStatusTracker _tracker;
   final Ref _ref;
@@ -26,7 +26,11 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
     _startRefreshTimer();
     _trackerSub = _tracker.onTransition.listen((transition) {
       final status = _mapStatus(transition.newStatus);
-      if (state.currentStatus != status) {
+      final currentStatus = state is HosEngineReady 
+          ? (state as HosEngineReady).update.currentStatus 
+          : DutyStatus.offDuty;
+
+      if (currentStatus != status) {
         AppLogger.info('🔄 Syncing HOS UI with DutyStatusTracker: ${transition.newStatus}');
         _engine.manualTransition(status, annotation: transition.annotation);
         refresh();
@@ -52,12 +56,15 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
 
   /// تغيير حالة الخدمة
   bool changeStatus(DutyStatus newStatus, {String? annotation, bool isYardMoves = false}) {
+    if (state is! HosEngineReady) return false;
+    final currentHosStatus = (state as HosEngineReady).update.currentStatus;
+
     final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
     final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
     final speedThreshold = _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
     
     final validationResult = _engine.validateManualTransition(
-      currentStatus: state.currentStatus,
+      currentStatus: currentHosStatus,
       newStatus: newStatus,
       currentSpeedKmh: currentSpeedKmh,
       speedThresholdKmh: speedThreshold,
@@ -83,7 +90,9 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
           case DutyStatus.personalUse: statusStr = 'personal_use'; break;
         }
         
+        // This relies on tracking provider deciding to return error if time untrusted.
         _tracker.manualTransition(statusStr, annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
+
         return true;
       },
     );
@@ -101,6 +110,3 @@ class HosNotifier extends StateNotifier<HosStatusUpdate> {
     super.dispose();
   }
 }
-
-
-

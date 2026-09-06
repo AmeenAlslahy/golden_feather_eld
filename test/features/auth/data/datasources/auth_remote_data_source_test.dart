@@ -83,7 +83,7 @@ void main() {
 
       expect(
         () => dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar'),
-        throwsA(isA<ServerException>().having((e) => e.message, 'message', 'Missing session cookie from server')),
+        throwsA(isA<ServerException>().having((e) => e.message, 'message', 'Missing session credential from server')),
       );
     });
   });

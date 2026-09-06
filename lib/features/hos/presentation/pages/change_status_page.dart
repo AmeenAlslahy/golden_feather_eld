@@ -11,6 +11,7 @@ import '../widgets/status_option_tiles.dart';
 import '../widgets/location_display_widget.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/engine/hos_state_machine.dart';
+import '../../domain/engine/hos_rules_engine.dart';
 
 class ChangeStatusPage extends ConsumerStatefulWidget {
   const ChangeStatusPage({super.key});
@@ -28,7 +29,10 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
   @override
   void initState() {
     super.initState();
-    _selectedStatus = ref.read(hosStatusProvider).currentStatus;
+    final engineState = ref.read(hosStatusProvider);
+    _selectedStatus = (engineState is HosEngineReady)
+        ? engineState.update.currentStatus
+        : DutyStatus.offDuty;
   }
 
   @override

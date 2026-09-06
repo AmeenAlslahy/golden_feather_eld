@@ -207,7 +207,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return AuthSession.create(
         serverOrigin: currentSession.serverOrigin,
         sessionCredential: currentSession.sessionCredential,
-        userMetadata: userData as Map<String, dynamic>,
+        userMetadata: userData,
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 || e.response?.statusCode == 403 || e.response?.statusCode == 404) {

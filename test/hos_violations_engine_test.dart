@@ -5,6 +5,7 @@ import 'package:golden_feather_eld/features/hos/domain/engine/hos_violations_eng
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 
 class MockDutyStatusTracker extends Mock implements DutyStatusTracker {}
 class MockHosLocalDataSource extends Mock implements HosLocalDataSource {}
@@ -31,8 +32,7 @@ void main() {
     when(() => mockConfig.cycleLimitHours).thenReturn(70);
     
     when(() => mockDb.saveViolation(any())).thenAnswer((_) async => true);
-    
-    engine = HosViolationsEngine(mockTracker, mockDb, mockConfig);
+    engine = HosViolationsEngine(mockTracker, mockDb, mockConfig, FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
   });
 
   tearDown(() {
@@ -49,6 +49,7 @@ void main() {
         consecutiveDays: 5,
         hasBreak: true,
         hasWeeklyRestart: true,
+        now: DateTime.now(),
       );
 
       expect(violations, isEmpty);
@@ -63,6 +64,7 @@ void main() {
         consecutiveDays: 5,
         hasBreak: true,
         hasWeeklyRestart: true,
+        now: DateTime.now(),
       );
 
       expect(violations.isNotEmpty, true);
@@ -78,6 +80,7 @@ void main() {
         consecutiveDays: 5,
         hasBreak: true,
         hasWeeklyRestart: true,
+        now: DateTime.now(),
       );
 
       expect(violations.any((v) => v.type == HosViolationType.dailyWorkExceeded), true);
@@ -92,6 +95,7 @@ void main() {
         consecutiveDays: 8, // > 7
         hasBreak: true,
         hasWeeklyRestart: true,
+        now: DateTime.now(),
       );
 
       expect(violations.any((v) => v.type == HosViolationType.consecutiveDaysExceeded), true);

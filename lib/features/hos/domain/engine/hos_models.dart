@@ -15,6 +15,27 @@ enum DutyStatus {
   final String englishName;
   final String arabicName;
   const DutyStatus(this.englishName, this.arabicName);
+
+  String toShortCode() {
+    switch (this) {
+      case DutyStatus.offDuty: return 'OFF';
+      case DutyStatus.sleeperBerth: return 'SB';
+      case DutyStatus.onDutyNotDriving: return 'ON';
+      case DutyStatus.driving: return 'D';
+      case DutyStatus.personalUse: return 'PC';
+    }
+  }
+
+  static DutyStatus fromShortCode(String code) {
+    switch (code.toUpperCase()) {
+      case 'OFF': return DutyStatus.offDuty;
+      case 'SB': return DutyStatus.sleeperBerth;
+      case 'ON': return DutyStatus.onDutyNotDriving;
+      case 'D': return DutyStatus.driving;
+      case 'PC': return DutyStatus.personalUse;
+      default: return DutyStatus.offDuty;
+    }
+  }
 }
 
 /// ط­ط¯ط« ظ…ظ† ط¬ظ‡ط§ط² ELD

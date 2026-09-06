@@ -2,6 +2,7 @@ import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
@@ -36,8 +37,7 @@ void main() {
 
     when(() => mockDb.saveDiagnostic(any()))
         .thenAnswer((_) async => true);
-
-    engine = DiagnosticsEngine(mockTracking, mockDb);
+    engine = DiagnosticsEngine(mockTracking, mockDb, FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
   });
 
   tearDown(() {

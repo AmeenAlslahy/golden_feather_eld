@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../domain/repositories/reports_repository.dart';
 import '../../data/repositories/reports_repository_impl.dart';
 import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
@@ -158,14 +158,17 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
 
       if (backendType == 'traccar') {
         final result = await repository.exportStandardReport(standardReportType ?? 'summary', deviceIds, from, to);
-        return result.fold((l) => null, (r) => r);
+        final value = result.fold((l) => null, (r) => r);
+        return value;
       } else {
         if (isEld) {
           final result = await repository.exportEldReport(driverId, format);
-          return result.fold((l) => null, (r) => r);
+          final value = result.fold((l) => null, (r) => r);
+          return value;
         } else {
           final result = await repository.exportInspection(driverId, format);
-          return result.fold((l) => null, (r) => r);
+          final value = result.fold((l) => null, (r) => r);
+          return value;
         }
       }
     } catch (e) {

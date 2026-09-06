@@ -4,22 +4,20 @@ import '../../../../core/utils/logger.dart';
 import 'tracking/duty_status_tracker.dart';
 import '../../data/datasources/hos_local_data_source.dart';
 import '../../../../core/config/hos_configuration.dart';
-import 'hos_state_machine.dart';
-
-
-
-/// محرك اكتشاف انتهاكات HOS
 import 'hos_models.dart';
+import '../../../../core/time/trusted_time_provider.dart';
+import 'hos_state_machine.dart';
 
 class HosViolationsEngine {
   final DutyStatusTracker _tracker;
   final HosLocalDataSource _localDb;
   final HosConfiguration _config;
+  final TrustedTimeProvider _timeProvider;
   
   final List<HosViolation> _violations = [];
   Timer? _timer;
 
-  HosViolationsEngine(this._tracker, this._localDb, this._config) {
+  HosViolationsEngine(this._tracker, this._localDb, this._config, this._timeProvider) {
     _startMonitoring();
   }
 
@@ -34,6 +32,13 @@ class HosViolationsEngine {
   }
 
   void _evaluateCurrentState() {
+    final timeResult = _timeProvider.currentTime;
+    if (timeResult is! TrustedTimeAvailable) {
+       // Cannot reliably check violations if time is unavailable
+       return;
+    }
+    final now = timeResult.utc;
+
     final todayStats = _tracker.getTodayStats();
     final weekStats = _tracker.getWeekStats();
 
@@ -43,8 +48,8 @@ class HosViolationsEngine {
     final drivingHoursWeek = weekStats['driving'] ?? 0.0;
 
     final consecutiveDays = _calculateConsecutiveDays();
-    final hasBreak = _has30MinBreak();
-    final hasWeeklyRestart = _has34HourRestart();
+    final hasBreak = _has30MinBreak(now);
+    final hasWeeklyRestart = _has34HourRestart(now);
 
     checkAll(
       drivingHoursToday: drivingHoursToday,
@@ -54,6 +59,7 @@ class HosViolationsEngine {
       consecutiveDays: consecutiveDays,
       hasBreak: hasBreak,
       hasWeeklyRestart: hasWeeklyRestart,
+      now: now,
     );
   }
 
@@ -67,8 +73,7 @@ class HosViolationsEngine {
     return uniqueDays.length;
   }
 
-  bool _has30MinBreak() {
-    final now = DateTime.now();
+  bool _has30MinBreak(DateTime now) {
     final todayStart = DateTime(now.year, now.month, now.day);
     for (final p in _tracker.periods) {
       if (p.startTime.isAfter(todayStart) && (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
@@ -80,8 +85,7 @@ class HosViolationsEngine {
     return false;
   }
 
-  bool _has34HourRestart() {
-    final now = DateTime.now();
+  bool _has34HourRestart(DateTime now) {
     final weekStart = now.subtract(const Duration(days: 7));
     for (final p in _tracker.periods) {
       if (p.startTime.isAfter(weekStart) && (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
@@ -102,6 +106,7 @@ class HosViolationsEngine {
     required int consecutiveDays,
     required bool hasBreak,
     required bool hasWeeklyRestart,
+    required DateTime now,
   }) {
     _violations.clear();
 
@@ -110,6 +115,7 @@ class HosViolationsEngine {
         type: HosViolationType.dailyDrivingExceeded,
         level: ViolationLevel.high,
         message: 'Daily driving limit exceeded: ${drivingHoursToday.toStringAsFixed(1)}h / 11h',
+        now: now,
         details: {'actual': drivingHoursToday, 'limit': 11},
       );
     }
@@ -119,6 +125,7 @@ class HosViolationsEngine {
         type: HosViolationType.dailyWorkExceeded,
         level: ViolationLevel.high,
         message: 'Daily work limit exceeded: ${workHoursToday.toStringAsFixed(1)}h / 14h',
+        now: now,
         details: {'actual': workHoursToday, 'limit': 14},
       );
     }
@@ -128,6 +135,7 @@ class HosViolationsEngine {
         type: HosViolationType.dailyRestInsufficient,
         level: ViolationLevel.medium,
         message: 'Insufficient daily rest: ${restHoursToday.toStringAsFixed(1)}h / 10h',
+        now: now,
         details: {'actual': restHoursToday, 'required': 10},
       );
     }
@@ -137,6 +145,7 @@ class HosViolationsEngine {
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
         message: 'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${_config.cycleLimitHours}h',
+        now: now,
         details: {'actual': drivingHoursWeek, 'limit': _config.cycleLimitHours},
       );
     }
@@ -146,6 +155,7 @@ class HosViolationsEngine {
         type: HosViolationType.no30MinBreakAfter8h,
         level: ViolationLevel.medium,
         message: 'No 30-minute break after 8 hours of driving',
+        now: now,
         details: {'driving_hours': drivingHoursToday},
       );
     }
@@ -155,6 +165,7 @@ class HosViolationsEngine {
         type: HosViolationType.consecutiveDaysExceeded,
         level: ViolationLevel.medium,
         message: 'Consecutive work days exceeded: $consecutiveDays days / 7 days',
+        now: now,
         details: {'actual': consecutiveDays, 'limit': 7},
       );
     }
@@ -164,6 +175,7 @@ class HosViolationsEngine {
         type: HosViolationType.weeklyRestInsufficient,
         level: ViolationLevel.critical,
         message: 'Insufficient weekly rest (34-hour restart required)',
+        now: now,
         details: {'required': 34},
       );
     }
@@ -175,17 +187,18 @@ class HosViolationsEngine {
     required HosViolationType type,
     required ViolationLevel level,
     required String message,
+    required DateTime now,
     Map<String, dynamic>? details,
   }) {
     // Check if we already added this violation recently to prevent spamming DB
-    final isDuplicate = _violations.any((v) => v.type == type && DateTime.now().difference(v.timestamp).inMinutes < 60);
+    final isDuplicate = _violations.any((v) => v.type == type && now.difference(v.timestamp).inMinutes < 60);
     if (isDuplicate) return;
 
     final violation = HosViolation(
       type: type,
       level: level,
       message: message,
-      timestamp: DateTime.now(),
+      timestamp: now,
       details: details,
     );
     
@@ -214,7 +227,8 @@ final hosViolationsEngineProvider = Provider<HosViolationsEngine>((ref) {
   final tracker = ref.watch(dutyStatusTrackerProvider);
   final db = ref.watch(hosLocalDataSourceProvider);
   final config = ref.watch(hosConfigurationProvider);
-  final engine = HosViolationsEngine(tracker, db, config);
+  final timeProvider = ref.watch(trustedTimeProvider);
+  final engine = HosViolationsEngine(tracker, db, config, timeProvider);
   ref.onDispose(() {
     engine.dispose();
   });

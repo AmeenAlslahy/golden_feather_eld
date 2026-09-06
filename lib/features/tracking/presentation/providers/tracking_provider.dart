@@ -10,6 +10,7 @@ import 'tracking_providers.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
+import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -88,11 +89,14 @@ final trackingStateProvider =
   });
 
   // 3) بدء التتبع إجبارياً عند تغيير الحالة إلى Driving يدوياً
-  ref.listen<HosStatusUpdate>(hosStatusProvider, (previous, next) {
-    if (next.currentStatus == DutyStatus.driving && previous?.currentStatus != DutyStatus.driving) {
-      if (!notifier.isActiveOrLoading) {
-        AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
-        notifier.startTracking(skipBatteryCheck: true);
+  ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
+    if (next is HosEngineReady) {
+      final prevStatus = (previous is HosEngineReady) ? previous.update.currentStatus : null;
+      if (next.update.currentStatus == DutyStatus.driving && prevStatus != DutyStatus.driving) {
+        if (!notifier.isActiveOrLoading) {
+          AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
+          notifier.startTracking(skipBatteryCheck: true);
+        }
       }
     }
   });
@@ -222,7 +226,8 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   Future<void> stopTracking({bool force = false}) async {
     if (!force) {
       final hosState = ref.read(hosStatusProvider);
-      if (hosState.currentStatus == DutyStatus.driving) {
+      final isDriving = hosState is HosEngineReady && hosState.update.currentStatus == DutyStatus.driving;
+      if (isDriving) {
         state = state.copyWith(
           errorMessage: 'Cannot stop tracking while driving',
           

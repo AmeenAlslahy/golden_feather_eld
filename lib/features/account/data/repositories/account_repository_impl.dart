@@ -1,11 +1,11 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/exception.dart';
+import '../../../../core/utils/repository_helper.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../domain/entities/user_entity.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../datasources/account_remote_data_source.dart';
-import '../models/user_model.dart';
+import 'package:golden_feather_eld/core/models/user_model.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AccountRemoteDataSource remoteDataSource;
@@ -17,33 +17,19 @@ class AccountRepositoryImpl implements AccountRepository {
   });
 
   @override
-  Future<Either<Failure, UserEntity>> getUserProfile(int userId) async {
-    if (networkInfo.isConnected) {
-      try {
-        final userModel = await remoteDataSource.getUserProfile(userId);
-        return Right(userModel);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error'));
-      }
-    } else {
-      return const Left(NetworkFailure());
-    }
+  Future<Either<Failure, User>> getUserProfile(int userId) async {
+    if (!networkInfo.isConnected) return const Left(NetworkFailure());
+    return executeWithHandling(() async {
+      return await remoteDataSource.getUserProfile(userId);
+    });
   }
 
   @override
-  Future<Either<Failure, UserEntity>> updateUserProfile(UserEntity user) async {
-    if (networkInfo.isConnected) {
-      try {
-        final userModel = UserModel.fromEntity(user);
-        final updatedModel = await remoteDataSource.updateUserProfile(userModel);
-        return Right(updatedModel);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error', ));
-      } catch (e) {
-        return const Left(ServerFailure(message: 'Unexpected error occurred'));
-      }
-    } else {
-      return const Left(NetworkFailure());
-    }
+  Future<Either<Failure, User>> updateUserProfile(User user) async {
+    if (!networkInfo.isConnected) return const Left(NetworkFailure());
+    return executeWithHandling(() async {
+      final userModel = UserModel.fromEntity(user);
+      return await remoteDataSource.updateUserProfile(userModel);
+    });
   }
 }

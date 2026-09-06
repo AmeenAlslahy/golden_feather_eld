@@ -5,16 +5,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import 'hos_rules_engine.dart';
 import 'hos_calculator.dart';
+import '../../../../core/time/trusted_time_provider.dart';
 
 /// آلة حالات ساعات الخدمة
 class HosStateMachine {
   DutyStatus _currentStatus = DutyStatus.offDuty;
-  DateTime _shiftStartTime = DateTime.now();
+  late DateTime _shiftStartTime;
   double _totalDrivingHours = 0.0;
   double _cycleHours = 0.0;
   
   final List<StatusTransition> _transitions = [];
   Timer? _drivingTimer;
+  final TrustedTimeProvider _timeProvider;
+
+  HosStateMachine(this._timeProvider) {
+    _shiftStartTime = _getCurrentTime();
+  }
+
+  DateTime _getCurrentTime() {
+    final timeResult = _timeProvider.currentTime;
+    return timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now().toUtc();
+  }
 
   // ========== Getters ==========
 
@@ -32,7 +43,7 @@ class HosStateMachine {
     final transition = StatusTransition(
       from: _currentStatus,
       to: newStatus,
-      timestamp: DateTime.now(),
+      timestamp: _getCurrentTime(),
       annotation: annotation,
     );
 
@@ -76,7 +87,7 @@ class HosStateMachine {
   void reset() {
     _stopDrivingTimer();
     _currentStatus = DutyStatus.offDuty;
-    _shiftStartTime = DateTime.now();
+    _shiftStartTime = _getCurrentTime();
     _totalDrivingHours = 0.0;
     _cycleHours = 0.0;
     _transitions.clear();
@@ -112,10 +123,13 @@ final hosConfigurationProvider = Provider<HosConfiguration>((ref) {
 /// مزود محرك HOS
 final hosEngineProvider = Provider<HosRulesEngine>((ref) {
   final config = ref.watch(hosConfigurationProvider);
-  final calculator = HosCalculator(config);
-  final stateMachine = HosStateMachine();
+  final timeProvider = ref.watch(trustedTimeProvider);
+  final calculator = HosCalculator(config, timeProvider);
+  final stateMachine = HosStateMachine(timeProvider);
+  
   return HosRulesEngine(
     calculator: calculator,
     stateMachine: stateMachine,
+    timeProvider: timeProvider,
   );
 });

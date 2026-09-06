@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
-import '../models/user_model.dart';
+import 'package:golden_feather_eld/core/models/user_model.dart';
 
 abstract class AccountRemoteDataSource {
   Future<UserModel> getUserProfile(int userId);

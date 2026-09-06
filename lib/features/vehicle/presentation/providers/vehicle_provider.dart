@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../data/datasources/vehicle_remote_data_source.dart';
 import '../../data/repositories/vehicle_repository_impl.dart';
 import '../../domain/repositories/vehicle_repository.dart';

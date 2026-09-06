@@ -10,7 +10,7 @@ import '../../../../core/widgets/connection_status_indicator.dart';
 import '../widgets/eld_drawer.dart';
 import '../widgets/eld_bottom_nav.dart';
 import '../providers/dashboard_provider.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
 

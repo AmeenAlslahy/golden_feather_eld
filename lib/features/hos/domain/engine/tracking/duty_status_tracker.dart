@@ -10,14 +10,16 @@ import '../../../../../core/services/local_storage_service.dart';
 import '../hos_models.dart';
 import '../../../../sync/domain/usecases/sync_engine.dart';
 import '../../../../sync/domain/entities/pending_event.dart';
-import 'package:uuid/uuid.dart';
 import '../../../../sync/presentation/providers/sync_engine_provider.dart';
+import 'package:uuid/uuid.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import '../hos_state_machine.dart'; // for trustedTimeProvider
 
 class DutyStatusTracker {
   final LogRepository _logRepository;
   final LocalStorageService _localStorage;
   final SyncEngine _syncEngine;
-  final DateTime Function() _now;
+  final TrustedTimeProvider _timeProvider;
 
   final _transitionController = StreamController<DutyTransition>.broadcast();
   Stream<DutyTransition> get onTransition => _transitionController.stream;
@@ -37,11 +39,11 @@ class DutyStatusTracker {
     required LogRepository logRepository,
     required LocalStorageService localStorage,
     required SyncEngine syncEngine,
-    required DateTime Function() now,
+    required TrustedTimeProvider timeProvider,
   })  : _logRepository = logRepository,
         _localStorage = localStorage,
         _syncEngine = syncEngine,
-        _now = now {
+        _timeProvider = timeProvider {
     _initStationaryState();
   }
 
@@ -111,11 +113,20 @@ class DutyStatusTracker {
     }
   }
 
+  DateTime _getCurrentTime() {
+    final timeResult = _timeProvider.currentTime;
+    if (timeResult is TrustedTimeAvailable) {
+      return timeResult.utc;
+    }
+    // Explicit fallback for tracking events only (HOS calculations are already suspended)
+    return DateTime.now().toUtc();
+  }
+
   void _evaluateStationaryState(
       {DateTime? eventTimestamp, double? odometer, double? engineHours}) {
     if (_stationarySince == null || _currentStatus != 'driving') return;
 
-    final currentTime = _now();
+    final currentTime = _getCurrentTime();
     final elapsed = currentTime.difference(_stationarySince!);
 
     if (elapsed.inMinutes >= 5) {
@@ -207,7 +218,7 @@ class DutyStatusTracker {
         'remarks': annotation ?? '',
         'attributes': const {},
       },
-      createdAt: _now(),
+      createdAt: _getCurrentTime(),
     ));
 
     _transitionController.add(DutyTransition(
@@ -230,14 +241,9 @@ class DutyStatusTracker {
     _movingSince = null;
     _consecutiveMovingEvents = 0;
 
-    // TODO(Team): The manual 'Driving' button is kept functional for now.
-    // If pressed but no GPS movement is detected within 5 mins, the watchdog
-    // timer will revert status to 'on_duty' to prevent fake driving hours.
-    // Need to consult with the team if we should disable this button entirely.
-
     _transitionTo(
       newStatus: newStatus,
-      timestamp: _now(),
+      timestamp: _getCurrentTime(),
       latitude: lat,
       longitude: lon,
       annotation: annotation,
@@ -245,14 +251,14 @@ class DutyStatusTracker {
 
     // Watchdog timer: If GPS is completely off or not moving, we start counting 5 mins.
     if (newStatus == 'driving') {
-      _stationarySince = _now();
+      _stationarySince = _getCurrentTime();
       _localStorage.setStationarySince(_stationarySince!.toIso8601String());
       _evaluateStationaryState();
     }
   }
 
   Map<String, double> getTodayStats() {
-    final now = _now();
+    final now = _getCurrentTime();
     final todayStart = DateTime(now.year, now.month, now.day);
 
     double driving = 0, onDuty = 0, offDuty = 0, sleeper = 0;
@@ -291,7 +297,7 @@ class DutyStatusTracker {
   }
 
   Map<String, double> getWeekStats() {
-    final now = _now();
+    final now = _getCurrentTime();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
 
     double driving = 0, work = 0, rest = 0;
@@ -352,12 +358,13 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
   final repo = ref.watch(logRepositoryProvider);
   final localStorage = ref.watch(localStorageProvider);
   final syncEngine = ref.watch(syncEngineProvider);
+  final timeProvider = ref.watch(trustedTimeProvider);
   
   final tracker = DutyStatusTracker(
     logRepository: repo,
     localStorage: localStorage,
     syncEngine: syncEngine,
-    now: () => DateTime.now(),
+    timeProvider: timeProvider,
   );
 
   // Wire up the GPS stream to the tracker

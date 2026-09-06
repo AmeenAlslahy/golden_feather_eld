@@ -12,6 +12,7 @@ import 'package:golden_feather_eld/features/tracking/presentation/providers/trac
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
 import 'package:golden_feather_eld/core/services/battery_optimization_service.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 
@@ -92,6 +93,8 @@ class FakeBatteryOptimizationService implements BatteryOptimizationService {
 
 class MockLocalStorageService extends Mock implements LocalStorageService {}
 
+class MockTrackingConfigStorageService extends Mock implements TrackingConfigStorageService {}
+
 class MockVehicleRepository extends Mock implements VehicleRepository {}
 
 void main() {
@@ -113,6 +116,9 @@ void main() {
     when(() => mockVehicleRepo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
     when(() => mockVehicleRepo.getVehicles()).thenAnswer((_) async => const Right([]));
 
+    final mockConfigStorage = MockTrackingConfigStorageService();
+    when(() => mockConfigStorage.deviceId).thenReturn('12345');
+
     container = ProviderContainer(
       overrides: [
         localStorageProvider.overrideWithValue(mockLocalStorage),
@@ -120,6 +126,7 @@ void main() {
             .overrideWithValue(FakeBatteryOptimizationService()),
         trackingRepositoryProvider.overrideWithValue(fakeRepository),
         vehicleRepositoryProvider.overrideWithValue(mockVehicleRepo),
+        trackingConfigStorageProvider.overrideWithValue(mockConfigStorage),
       ],
     );
     notifier = container.read(trackingStateProvider.notifier);

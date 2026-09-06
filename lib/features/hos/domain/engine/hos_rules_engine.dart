@@ -3,36 +3,57 @@ import 'hos_calculator.dart';
 import 'hos_state_machine.dart';
 import 'hos_models.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../core/error/failure.dart';
+
+sealed class HosEngineResult {}
+
+class HosEngineReady extends HosEngineResult {
+  final HosStatusUpdate update;
+  HosEngineReady(this.update);
+}
+
+class HosEngineTimeUnavailable extends HosEngineResult {
+  final TrustedTimeState state;
+  HosEngineTimeUnavailable(this.state);
+}
 
 class HosRulesEngine {
   final HosCalculator _calculator;
   final HosStateMachine _stateMachine;
+  final TrustedTimeProvider _timeProvider;
 
   HosRulesEngine({
     required HosCalculator calculator,
     required HosStateMachine stateMachine,
+    required TrustedTimeProvider timeProvider,
   })  : _calculator = calculator,
-        _stateMachine = stateMachine;
+        _stateMachine = stateMachine,
+        _timeProvider = timeProvider;
 
   /// معالجة حدث جديد من جهاز ELD
-  HosStatusUpdate processEvent(EldEvent event) {
-    // التبديل الآلي محال الآن إلى DutyStatusTracker
-    
+  HosEngineResult processEvent(EldEvent event) {
     // 2. حساب الحدود الأربعة
-    final limits = _calculator.calculateAllLimits(
+    final limitsResult = _calculator.calculateAllLimits(
       drivingHours: _stateMachine.totalDrivingHours,
       shiftStartTime: _stateMachine.shiftStartTime,
       cycleHours: _stateMachine.cycleHours,
     );
 
+    if (limitsResult is CalculationTimeUnavailable) {
+      return HosEngineTimeUnavailable(limitsResult.state);
+    }
+
+    final limits = (limitsResult as CalculationSuccess).limits;
+
     // 3. التحقق من التنبيهات
     final alerts = _generateAlerts(limits);
 
     // 4. التحقق من الانتهاكات
-    final violations = _checkViolations(limits);
+    final timeResult = _timeProvider.currentTime;
+    final violations = _checkViolations(limits, timeResult);
 
-    return HosStatusUpdate(
+    return HosEngineReady(HosStatusUpdate(
       currentStatus: _stateMachine.currentStatus,
       limits: limits,
       alerts: alerts,
@@ -42,10 +63,8 @@ class HosRulesEngine {
       remainingCycleHours: limits.remainingCycleHours,
       breakRequired: limits.breakRequired,
       breakRemainingMinutes: limits.breakRemainingMinutes,
-    );
+    ));
   }
-
-
 
   /// يقيّم ما إذا كان الانتقال اليدوي مسموحاً بناءً على القواعد
   Either<Failure, void> validateManualTransition({
@@ -120,15 +139,20 @@ class HosRulesEngine {
   }
 
   /// التحقق من الانتهاكات
-  List<HosViolation> _checkViolations(HosLimits limits) {
+  List<HosViolation> _checkViolations(HosLimits limits, TrustedTimeResult timeResult) {
     final violations = <HosViolation>[];
+    
+    // We can only stamp violations if time is available.
+    // If it's unavailable, the engine handles it upstream via HosEngineTimeUnavailable,
+    // but processEvent covers this already.
+    final timestamp = timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now();
 
     if (limits.remainingDriveMinutes <= 0) {
       violations.add(HosViolation(
         type: HosViolationType.dailyDrivingExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز حد القيادة 11 ساعة',
-        timestamp: DateTime.now(),
+        timestamp: timestamp,
       ));
     }
 
@@ -137,7 +161,7 @@ class HosRulesEngine {
         type: HosViolationType.dailyWorkExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز نافذة العمل 14 ساعة',
-        timestamp: DateTime.now(),
+        timestamp: timestamp,
       ));
     }
 
@@ -146,7 +170,7 @@ class HosRulesEngine {
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
         message: '❌ تجاوز حد الدورة الأسبوعية',
-        timestamp: DateTime.now(),
+        timestamp: timestamp,
       ));
     }
 
@@ -154,21 +178,33 @@ class HosRulesEngine {
   }
 
   /// الحالة الحالية
-  HosStatusUpdate get currentStatus => HosStatusUpdate(
-        currentStatus: _stateMachine.currentStatus,
-        limits: _calculator.calculateAllLimits(
-          drivingHours: _stateMachine.totalDrivingHours,
-          shiftStartTime: _stateMachine.shiftStartTime,
-          cycleHours: _stateMachine.cycleHours,
-        ),
-        alerts: [],
-        violations: [],
-        remainingDriveMinutes: 0,
-        remainingShiftMinutes: 0,
-        remainingCycleHours: 0,
-        breakRequired: false,
-        breakRemainingMinutes: 0,
-      );
+  HosEngineResult get currentStatus {
+    final limitsResult = _calculator.calculateAllLimits(
+      drivingHours: _stateMachine.totalDrivingHours,
+      shiftStartTime: _stateMachine.shiftStartTime,
+      cycleHours: _stateMachine.cycleHours,
+    );
+
+    if (limitsResult is CalculationTimeUnavailable) {
+      return HosEngineTimeUnavailable(limitsResult.state);
+    }
+    
+    final limits = (limitsResult as CalculationSuccess).limits;
+    final timeResult = _timeProvider.currentTime;
+    final violations = _checkViolations(limits, timeResult);
+
+    return HosEngineReady(HosStatusUpdate(
+      currentStatus: _stateMachine.currentStatus,
+      limits: limits,
+      alerts: _generateAlerts(limits),
+      violations: violations,
+      remainingDriveMinutes: limits.remainingDriveMinutes,
+      remainingShiftMinutes: limits.remainingShiftMinutes,
+      remainingCycleHours: limits.remainingCycleHours,
+      breakRequired: limits.breakRequired,
+      breakRemainingMinutes: limits.breakRemainingMinutes,
+    ));
+  }
 
   /// إعادة تعيين
   void reset() {
@@ -179,14 +215,3 @@ class HosRulesEngine {
     _stateMachine.dispose();
   }
 }
-
-// ========== النماذج ==========
-
-
-
-
-
-
-
-
-

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../data/datasources/sync_local_data_source.dart';
 import '../../data/repositories/sync_repository_impl.dart';
 import '../../domain/entities/sync_item.dart';

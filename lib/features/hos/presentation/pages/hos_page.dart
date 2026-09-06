@@ -10,32 +10,44 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/extensions/time_extensions.dart';
 import '../../../../core/theme/app_theme_provider.dart';
 import '../widgets/diagnostics_alert_card.dart';
+import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 
 class HosPage extends ConsumerWidget {
   const HosPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hosState = ref.watch(hosStatusProvider);
-    final limits = hosState.limits;
+    final hosEngineState = ref.watch(hosStatusProvider);
+    
+    // Default fallback values if time is untrusted
+    DutyStatus currentStatus = DutyStatus.offDuty;
+    int remainingMinutes = 0;
+    String timeString = '--:--';
+    double progress = 0.0;
+    HosStatusUpdate? activeUpdate;
+    bool isUntrusted = false;
 
-    // ط­ط³ط§ط¨ ط§ظ„ظˆظ‚طھ ط§ظ„ظ…طھط¨ظ‚ظٹ ظ„ظٹط¹ط±ط¶ ظپظٹ ط§ظ„ط¯ط§ط¦ط±ط©
-    // ط¨ط§ظ„ط¹ط§ط¯ط© ظٹط¹ط±ط¶ ط£ظ‚ظ„ ظˆظ‚طھ ظ…طھط¨ظ‚ظٹ ظٹظˆظ‚ظپ ط§ظ„ط³ط§ط¦ظ‚
-    int remainingMinutes;
-    if (hosState.currentStatus == DutyStatus.driving) {
-      remainingMinutes = limits.remainingDriveMinutes;
-      // ط§ظ„طھط£ظƒط¯ ظ…ظ† ط§ط³طھط±ط§ط­ط© ط§ظ„ظ€ 8 ط³ط§ط¹ط§طھ
-      if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
-        // ط¥ط°ط§ ظƒط§ظ† ظٹط­طھط§ط¬ ط§ط³طھط±ط§ط­ط© ط§ظ„ط¢ظ†
-        remainingMinutes = 0;
+    if (hosEngineState is HosEngineReady) {
+      activeUpdate = hosEngineState.update;
+      currentStatus = activeUpdate.currentStatus;
+      final limits = activeUpdate.limits;
+
+      if (currentStatus == DutyStatus.driving) {
+        remainingMinutes = limits.remainingDriveMinutes;
+        if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
+          remainingMinutes = 0;
+        }
+      } else {
+        remainingMinutes = limits.remainingShiftMinutes;
       }
-    } else {
-      remainingMinutes = limits.remainingShiftMinutes;
-    }
 
-    final timeString = remainingMinutes.toHoursMinutes();
-    final maxMinutes = (hosState.currentStatus == DutyStatus.driving) ? (11 * 60) : (14 * 60);
-    final progress = remainingMinutes / maxMinutes;
+      timeString = remainingMinutes.toHoursMinutes();
+      final maxMinutes = (currentStatus == DutyStatus.driving) ? (11 * 60) : (14 * 60);
+      progress = remainingMinutes / maxMinutes;
+    } else if (hosEngineState is HosEngineTimeUnavailable) {
+      isUntrusted = true;
+      timeString = 'Error';
+    }
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
@@ -45,13 +57,23 @@ class HosPage extends ConsumerWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // ط¨ط·ط§ظ‚ط© ط§ظ„طھظ†ط¨ظٹظ‡ط§طھ ظˆط§ظ„ط£ط¹ط·ط§ظ„
                   const DiagnosticsAlertCard(),
 
-                  // ط§ظ„ظ‚ط³ظ… ط§ظ„ط¹ظ„ظˆظٹ
+                  if (isUntrusted)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      color: Colors.red.shade100,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.warning, color: Colors.red),
+                          SizedBox(width: 8),
+                          Expanded(child: Text('Trusted time is unavailable. HOS calculations suspended.', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                    ),
+
                   Stack(
                     children: [
-                      // ط²ط± ط­ط§ظ„ط© ط§ظ„ظ†ظˆظ… (ط§ظ„ظ„ظˆظ† ط§ظ„ط£ط²ط±ظ‚ ظپظٹ ط§ظ„طµظˆط±ط©)
                       Positioned(
                         top: 16,
                         left: 16,
@@ -61,9 +83,7 @@ class HosPage extends ConsumerWidget {
                           elevation: 2,
                           child: InkWell(
                             onTap: () {
-                              ref
-                                  .read(themeModeProvider.notifier)
-                                  .toggleTheme();
+                              ref.read(themeModeProvider.notifier).toggleTheme();
                             },
                             customBorder: const CircleBorder(),
                             child: const Padding(
@@ -78,14 +98,12 @@ class HosPage extends ConsumerWidget {
                         ),
                       ),
 
-                      // ط§ظ„ط¯ط§ط¦ط±ط© ط§ظ„ظ…ط±ظƒط²ظٹط©
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 32, bottom: 24),
                           child: MainCircularTimer(
                             timeString: timeString,
-                            statusText:
-                                _getStatusText(hosState.currentStatus, context),
+                            statusText: _getStatusText(currentStatus, context),
                             progress: progress.clamp(0.0, 1.0),
                             onTap: () {
                               _showStatusSelector(context);
@@ -96,8 +114,8 @@ class HosPage extends ConsumerWidget {
                     ],
                   ),
 
-                  // ظ‚ط§ط¦ظ…ط© ط§ظ„ط³ط§ط¹ط§طھ
-                  HosTimerList(status: hosState),
+                  if (activeUpdate != null)
+                    HosTimerList(status: activeUpdate),
                 ],
               ),
             ),

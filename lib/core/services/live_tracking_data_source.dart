@@ -11,7 +11,7 @@ import '../../core/network/traccar/traccar_websocket_client_impl.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/domain/entities/connection_status.dart';
 
-import '../network/network_providers.dart';
+import '../network/core_providers.dart';
 import '../../features/tracking/presentation/providers/tracking_providers.dart';
 
 abstract class LiveTrackingDataSource {

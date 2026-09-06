@@ -3,7 +3,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/api_client.dart';
-import '../network/network_providers.dart';
 import 'package:uuid/uuid.dart';
 
 final fileSharingServiceProvider = Provider<FileSharingService>((ref) {

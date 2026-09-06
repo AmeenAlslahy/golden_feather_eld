@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import '../entities/user.dart';
+import 'package:golden_feather_eld/core/entities/user.dart';
 import '../repositories/auth_repository.dart';
 import '../entities/value_objects/login_identifier.dart';
 import '../entities/value_objects/password.dart';

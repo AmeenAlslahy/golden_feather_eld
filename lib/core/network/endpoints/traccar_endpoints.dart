@@ -42,12 +42,10 @@ class TraccarEndpoints implements ApiEndpoints {
   @override
   String get reportStops => '$basePath/reports/stops';
 
-  // ELD Specific - Traccar doesn't have these, so we mock or return unsupported paths
-  @override
+  // ELD Specific - Traccar doesn't have these, so we return unsupported paths
   String driverCompliance(String driverId) =>
       '$basePath/unsupported/compliance';
 
-  @override
   String driverDiagnostics(String driverId) =>
       '$basePath/unsupported/diagnostics';
 
@@ -55,10 +53,8 @@ class TraccarEndpoints implements ApiEndpoints {
   String submitInspection() => '$basePath/unsupported/inspection';
 
   @override
-  String eldComprehensiveReport(int driverId) {
-    // TODO: implement eldComprehensiveReport
-    throw UnimplementedError();
-  }
+  String eldComprehensiveReport(int driverId) =>
+      '$basePath/unsupported/eld-report/$driverId';
 
   @override
   String eldExportReport(int driverId) {
