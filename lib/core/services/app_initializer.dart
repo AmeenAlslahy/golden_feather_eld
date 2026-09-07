@@ -11,6 +11,7 @@ import '../config/app_environment.dart';
 import '../utils/logger.dart';
 import '../../features/sync/presentation/providers/sync_provider.dart';
 import '../../features/sync/presentation/providers/sync_engine_provider.dart';
+import '../time/trusted_time_provider.dart';
 
 class AppInitializer {
   late final LocalStorageService localStorageService;
@@ -83,6 +84,10 @@ class AppInitializer {
   }
 
   Future<void> initializePostContainer(ProviderContainer container) async {
+    // إرساء التوقيت الموثوق باستخدام خدمة المزامنة
+    final utcSyncService = container.read(utcSyncServiceProvider);
+    container.read(trustedTimeProvider).anchor(utcSyncService.utcNow);
+
     try {
       await RemoteConfigService.fetchOnStartup(container);
     } catch (e) {

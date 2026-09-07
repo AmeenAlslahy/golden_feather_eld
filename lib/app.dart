@@ -10,6 +10,7 @@ import 'core/services/quick_actions_initializer.dart';
 import 'routes.dart';
 import 'features/hos/presentation/providers/hos_provider.dart';
 import 'features/hos/domain/engine/hos_models.dart';
+import 'features/hos/domain/engine/hos_rules_engine.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
