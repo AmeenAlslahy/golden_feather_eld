@@ -9,7 +9,8 @@ import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 
 /// مزود حالة HOS
-final hosStatusProvider = StateNotifierProvider<HosNotifier, HosEngineResult>((ref) {
+final hosStatusProvider =
+    StateNotifierProvider<HosNotifier, HosEngineResult>((ref) {
   final engine = ref.watch(hosEngineProvider);
   final tracker = ref.watch(dutyStatusTrackerProvider);
   return HosNotifier(engine, tracker, ref);
@@ -22,16 +23,18 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   Timer? _refreshTimer;
   StreamSubscription? _trackerSub;
 
-  HosNotifier(this._engine, this._tracker, this._ref) : super(_engine.currentStatus) {
+  HosNotifier(this._engine, this._tracker, this._ref)
+      : super(_engine.currentStatus) {
     _startRefreshTimer();
     _trackerSub = _tracker.onTransition.listen((transition) {
       final status = _mapStatus(transition.newStatus);
-      final currentStatus = state is HosEngineReady 
-          ? (state as HosEngineReady).update.currentStatus 
+      final currentStatus = state is HosEngineReady
+          ? (state as HosEngineReady).update.currentStatus
           : DutyStatus.offDuty;
 
       if (currentStatus != status) {
-        AppLogger.info('🔄 Syncing HOS UI with DutyStatusTracker: ${transition.newStatus}');
+        AppLogger.info(
+            '🔄 Syncing HOS UI with DutyStatusTracker: ${transition.newStatus}');
         _engine.manualTransition(status, annotation: transition.annotation);
         refresh();
       }
@@ -40,10 +43,14 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
   DutyStatus _mapStatus(String s) {
     switch (s) {
-      case 'driving': return DutyStatus.driving;
-      case 'on_duty': return DutyStatus.onDutyNotDriving;
-      case 'sleeper_berth': return DutyStatus.sleeperBerth;
-      default: return DutyStatus.offDuty;
+      case 'driving':
+        return DutyStatus.driving;
+      case 'on_duty':
+        return DutyStatus.onDutyNotDriving;
+      case 'sleeper_berth':
+        return DutyStatus.sleeperBerth;
+      default:
+        return DutyStatus.offDuty;
     }
   }
 
@@ -55,21 +62,23 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   }
 
   /// تغيير حالة الخدمة
-  bool changeStatus(DutyStatus newStatus, {String? annotation, bool isYardMoves = false}) {
+  bool changeStatus(DutyStatus newStatus,
+      {String? annotation, bool isYardMoves = false}) {
     if (state is! HosEngineReady) return false;
     final currentHosStatus = (state as HosEngineReady).update.currentStatus;
 
     final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
     final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
-    final speedThreshold = _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
-    
+    final speedThreshold =
+        _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
+
     final validationResult = _engine.validateManualTransition(
       currentStatus: currentHosStatus,
       newStatus: newStatus,
       currentSpeedKmh: currentSpeedKmh,
       speedThresholdKmh: speedThreshold,
     );
-    
+
     return validationResult.match(
       (failure) {
         AppLogger.warning('⚠️ ${failure.message}');
@@ -80,24 +89,35 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
           finalAnnotation = '[YM] $finalAnnotation'.trim();
         }
-        
+
         String statusStr;
         switch (newStatus) {
-          case DutyStatus.driving: statusStr = 'driving'; break;
-          case DutyStatus.onDutyNotDriving: statusStr = 'on_duty'; break;
-          case DutyStatus.sleeperBerth: statusStr = 'sleeper_berth'; break;
-          case DutyStatus.offDuty: statusStr = 'off_duty'; break;
-          case DutyStatus.personalUse: statusStr = 'personal_use'; break;
+          case DutyStatus.driving:
+            statusStr = 'driving';
+            break;
+          case DutyStatus.onDutyNotDriving:
+            statusStr = 'on_duty';
+            break;
+          case DutyStatus.sleeperBerth:
+            statusStr = 'sleeper_berth';
+            break;
+          case DutyStatus.offDuty:
+            statusStr = 'off_duty';
+            break;
+          case DutyStatus.personalUse:
+            statusStr = 'personal_use';
+            break;
         }
-        
+
         // This relies on tracking provider deciding to return error if time untrusted.
-        _tracker.manualTransition(statusStr, annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
+        _tracker.manualTransition(statusStr,
+            annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
 
         return true;
       },
     );
   }
-  
+
   /// تحديث الحالة
   void refresh() {
     state = _engine.currentStatus;

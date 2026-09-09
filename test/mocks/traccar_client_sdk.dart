@@ -45,4 +45,5 @@ class LocationConfig {
 }
 
 enum Accuracy { highest, high, medium, low }
+
 class LogEntry {}

@@ -1,14 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// يحدد مصدر إحداثيات التتبع
-enum TrackingEventSource {
-  gps,
-  network,
-  mock,
-  obd,
-  traccar,
-  unknown
-}
+enum TrackingEventSource { gps, network, mock, obd, traccar, unknown }
 
 /// الكيان الأساسي (Domain Entity) لبيانات التتبع.
 /// مستقل تماماً عن Traccar أو أي نظام خارجي.

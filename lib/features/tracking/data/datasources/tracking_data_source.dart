@@ -1,7 +1,7 @@
 import '../../domain/entities/tracking_event.dart';
 import '../../domain/entities/connection_status.dart';
 
-/// واجهة موحدة لجميع مصادر التتبع 
+/// واجهة موحدة لجميع مصادر التتبع
 /// (مثل TraccarDataSource أو Backend الشركة مستقبلاً).
 /// تعزل الـ Repository تماماً عن طريقة الاتصال أو التقنية المستخدمة.
 abstract class TrackingDataSource {

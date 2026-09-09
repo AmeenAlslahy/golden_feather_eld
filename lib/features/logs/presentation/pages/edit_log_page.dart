@@ -17,7 +17,7 @@ class EditLogFormState {
   final String duration;
   final String location;
   final String reason;
-  
+
   EditLogFormState({
     required this.selectedStatus,
     required this.startTime,
@@ -46,7 +46,8 @@ class EditLogFormState {
 class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
   EditLogFormNotifier(super.state);
 
-  void setStatus(String status) => state = state.copyWith(selectedStatus: status);
+  void setStatus(String status) =>
+      state = state.copyWith(selectedStatus: status);
   void setStartTime(String time) => state = state.copyWith(startTime: time);
   void setReason(String reason) => state = state.copyWith(reason: reason);
 }
@@ -62,16 +63,15 @@ String _formatCurrentTime() {
   return '$hourStr:$minute:$second $period';
 }
 
-final editLogFormProvider = StateNotifierProvider.autoDispose.family<EditLogFormNotifier, EditLogFormState, dynamic>(
-  (ref, event) {
-    return EditLogFormNotifier(EditLogFormState(
-      selectedStatus: event.status ?? 'SB',
-      startTime: event.formattedStartTime ?? _formatCurrentTime(),
-      duration: event.formattedDuration ?? '00:00',
-      location: event.location ?? '',
-    ));
-  }
-);
+final editLogFormProvider = StateNotifierProvider.autoDispose
+    .family<EditLogFormNotifier, EditLogFormState, dynamic>((ref, event) {
+  return EditLogFormNotifier(EditLogFormState(
+    selectedStatus: event.status ?? 'SB',
+    startTime: event.formattedStartTime ?? _formatCurrentTime(),
+    duration: event.formattedDuration ?? '00:00',
+    location: event.location ?? '',
+  ));
+});
 
 /// شاشة تعديل الحدث
 class EditLogPage extends ConsumerWidget {
@@ -104,7 +104,8 @@ class EditLogPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardDataProvider);
     final formState = ref.watch(editLogFormProvider(event));
-    final selectedLog = ref.watch(logsProvider).selectedLog; // جلب اليوم المختار
+    final selectedLog =
+        ref.watch(logsProvider).selectedLog; // جلب اليوم المختار
 
     final List<Map<String, String>> statuses = [
       {'value': 'Off Duty', 'label': context.loc.offDuty},
@@ -123,33 +124,47 @@ class EditLogPage extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isNewEvent ? context.loc.insertDutyStatus : context.loc.editDutyStatus,
+          isNewEvent
+              ? context.loc.insertDutyStatus
+              : context.loc.editDutyStatus,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppColors.surface,
               ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md), // تم تصغير الـ padding الجانبي
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md), // تم تصغير الـ padding الجانبي
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
             const SizedBox(height: AppSpacing.md),
-            LogGraph(events: selectedLog?.events ?? []), // تمرير الأحداث الحقيقية لليوم
-            
+            LogGraph(
+                events:
+                    selectedLog?.events ?? []), // تمرير الأحداث الحقيقية لليوم
+
             // 2. حقل الوقت والمدة
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                Expanded(child: _buildTimeField(context, context.loc.startTime, formState.startTime, () => _showTimePicker(context, ref))),
-                Expanded(child: _buildTimeField(context, context.loc.duration, formState.duration, () {})),
+                Expanded(
+                    child: _buildTimeField(
+                        context,
+                        context.loc.startTime,
+                        formState.startTime,
+                        () => _showTimePicker(context, ref))),
+                Expanded(
+                    child: _buildTimeField(context, context.loc.duration,
+                        formState.duration, () {})),
               ],
             ),
             // خط متقطع أسفل الوقت (للمطابقة)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: CustomPaint(painter: DashedLinePainter(color: Theme.of(context).dividerColor)),
+              child: CustomPaint(
+                  painter:
+                      DashedLinePainter(color: Theme.of(context).dividerColor)),
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -163,20 +178,29 @@ class EditLogPage extends ConsumerWidget {
                       status['label']!,
                       style: TextStyle(
                         fontSize: AppTypography.bodySize,
-                        fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
-                        color: isSelected ? AppColors.primaryBlue : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: isSelected
+                            ? AppTypography.semiBold
+                            : AppTypography.regular,
+                        color: isSelected
+                            ? AppColors.primaryBlue
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     value: status['value']!,
                     groupValue: formState.selectedStatus,
                     onChanged: (value) {
-                      ref.read(editLogFormProvider(event).notifier).setStatus(value!);
+                      ref
+                          .read(editLogFormProvider(event).notifier)
+                          .setStatus(value!);
                     },
                     activeColor: AppColors.primaryBlue,
                     controlAffinity: ListTileControlAffinity.trailing,
                     contentPadding: EdgeInsets.zero,
                   ),
-                  Divider(color: Theme.of(context).dividerColor.withValues(alpha: 0.5), height: 1),
+                  Divider(
+                      color:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                      height: 1),
                 ],
               );
             }),
@@ -201,7 +225,10 @@ class EditLogPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Divider(color: Theme.of(context).dividerColor.withValues(alpha: 0.5), height: 1),
+                Divider(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                    height: 1),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -225,7 +252,10 @@ class EditLogPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Divider(color: Theme.of(context).dividerColor.withValues(alpha: 0.5), height: 1),
+                Divider(
+                    color:
+                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                    height: 1),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -234,7 +264,8 @@ class EditLogPage extends ConsumerWidget {
             TextField(
               decoration: InputDecoration(
                 hintText: context.loc.manualLocation,
-                hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -244,7 +275,7 @@ class EditLogPage extends ConsumerWidget {
               onChanged: (value) {},
             ),
             const SizedBox(height: AppSpacing.md),
-            
+
             // حقل سبب التعديل (إجباري)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,13 +291,16 @@ class EditLogPage extends ConsumerWidget {
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'Enter reason (Required)',
-                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    hintStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     border: const UnderlineInputBorder(),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                   style: const TextStyle(fontSize: AppTypography.bodySize),
                   onChanged: (value) {
-                    ref.read(editLogFormProvider(event).notifier).setReason(value);
+                    ref
+                        .read(editLogFormProvider(event).notifier)
+                        .setReason(value);
                   },
                 ),
               ],
@@ -275,23 +309,26 @@ class EditLogPage extends ConsumerWidget {
 
             // 7. زر الحفظ
             AppButton(
-              label: isNewEvent ? context.loc.addButton : context.loc.saveButton,
+              label:
+                  isNewEvent ? context.loc.addButton : context.loc.saveButton,
               type: EldButtonType.agree,
-              onPressed: formState.reason.trim().isEmpty ? null : () async {
-                // حفظ التعديلات وسجل التدقيق
-                final notifier = ref.read(logsProvider.notifier);
-                final entry = AuditEntry(
-                  id: const Uuid().v4(),
-                  timestamp: DateTime.now(),
-                  driverId: dashboard.vehicleId,
-                  oldStatus: isNewEvent ? null : event.status,
-                  newStatus: formState.selectedStatus,
-                  reason: formState.reason,
-                );
-                
-                await notifier.saveAuditEntry(entry);
-                if (context.mounted) Navigator.pop(context, true);
-              },
+              onPressed: formState.reason.trim().isEmpty
+                  ? null
+                  : () async {
+                      // حفظ التعديلات وسجل التدقيق
+                      final notifier = ref.read(logsProvider.notifier);
+                      final entry = AuditEntry(
+                        id: const Uuid().v4(),
+                        timestamp: DateTime.now(),
+                        driverId: dashboard.vehicleId,
+                        oldStatus: isNewEvent ? null : event.status,
+                        newStatus: formState.selectedStatus,
+                        reason: formState.reason,
+                      );
+
+                      await notifier.saveAuditEntry(entry);
+                      if (context.mounted) Navigator.pop(context, true);
+                    },
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -300,11 +337,13 @@ class EditLogPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimeField(BuildContext context, String label, String value, VoidCallback onTap) {
+  Widget _buildTimeField(
+      BuildContext context, String label, String value, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -313,7 +352,6 @@ class EditLogPage extends ConsumerWidget {
               style: const TextStyle(
                 fontSize: AppTypography.subtitleSize,
                 fontWeight: AppTypography.semiBold,
-                
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -325,10 +363,11 @@ class EditLogPage extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: AppTypography.bodySize,
                     fontWeight: AppTypography.regular,
-                    
                   ),
                 ),
-                Icon(Icons.access_time, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+                Icon(Icons.access_time,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 20),
               ],
             ),
           ],
@@ -358,7 +397,8 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _selectedHour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+    _selectedHour =
+        now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
     _selectedMinute = now.minute;
     _selectedSecond = now.second;
     _selectedPeriod = now.hour < 12 ? 'AM' : 'PM';
@@ -396,9 +436,12 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           Expanded(
             child: Row(
               children: [
-                _buildWheel(24, _selectedHour, (v) => setState(() => _selectedHour = v)),
-                _buildWheel(60, _selectedMinute, (v) => setState(() => _selectedMinute = v)),
-                _buildWheel(60, _selectedSecond, (v) => setState(() => _selectedSecond = v)),
+                _buildWheel(24, _selectedHour,
+                    (v) => setState(() => _selectedHour = v)),
+                _buildWheel(60, _selectedMinute,
+                    (v) => setState(() => _selectedMinute = v)),
+                _buildWheel(60, _selectedSecond,
+                    (v) => setState(() => _selectedSecond = v)),
                 _buildPeriodWheel(),
               ],
             ),
@@ -420,7 +463,8 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             child: Text(
               index.toString().padLeft(2, '0'),
               style: TextStyle(
-                fontSize: AppTypography.headerSize, // replaced AppTypography.headerSize directly? Wait, AppTypography.headerSize is 28.0, so this is fine.
+                fontSize: AppTypography
+                    .headerSize, // replaced AppTypography.headerSize directly? Wait, AppTypography.headerSize is 28.0, so this is fine.
                 fontWeight: index == selected
                     ? AppTypography.bold
                     : AppTypography.regular,
@@ -471,7 +515,9 @@ class DashedLinePainter extends CustomPainter {
   DashedLinePainter({required this.color});
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()..color = color..strokeWidth = 1;
+    var paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
     var max = size.width;
     var dashWidth = 5;
     var dashSpace = 3;
@@ -481,9 +527,7 @@ class DashedLinePainter extends CustomPainter {
       startX += dashWidth + dashSpace;
     }
   }
+
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
-
-

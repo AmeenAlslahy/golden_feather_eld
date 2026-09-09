@@ -18,10 +18,14 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../core/presentation/utils/password_prompt_util.dart';
 
 final advancedSettingsProvider = StateProvider<bool>((ref) => false);
-final bufferProvider = StateProvider<bool>((ref) => ref.watch(localStorageProvider).buffer);
-final wakelockProvider = StateProvider<bool>((ref) => ref.watch(localStorageProvider).wakelock);
-final stopDetectionProvider = StateProvider<bool>((ref) => ref.watch(localStorageProvider).stopDetection);
-final preferPlatformProvidersProvider = StateProvider<bool>((ref) => ref.watch(localStorageProvider).preferPlatformProviders);
+final bufferProvider =
+    StateProvider<bool>((ref) => ref.watch(localStorageProvider).buffer);
+final wakelockProvider =
+    StateProvider<bool>((ref) => ref.watch(localStorageProvider).wakelock);
+final stopDetectionProvider =
+    StateProvider<bool>((ref) => ref.watch(localStorageProvider).stopDetection);
+final preferPlatformProvidersProvider = StateProvider<bool>(
+    (ref) => ref.watch(localStorageProvider).preferPlatformProviders);
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -32,7 +36,7 @@ class SettingsPage extends ConsumerWidget {
     final isAr = ref.watch(localeProvider).languageCode == 'ar';
     final loc = AppLocalizations.of(context)!;
     final advanced = ref.watch(advancedSettingsProvider);
-    
+
     final isHighestAccuracy = storage.accuracy == 'highest';
     final distance = storage.distance;
 
@@ -74,7 +78,7 @@ class SettingsPage extends ConsumerWidget {
           // المظهر
           ListTile(
             title: Text(loc.themeLabel),
-            subtitle: Text(ref.watch(themeModeProvider) == ThemeMode.light 
+            subtitle: Text(ref.watch(themeModeProvider) == ThemeMode.light
                 ? loc.lightMode
                 : loc.darkMode),
             trailing: const Icon(Icons.brightness_6, size: 20),
@@ -93,7 +97,9 @@ class SettingsPage extends ConsumerWidget {
             storage.serverUrl,
             (value) async {
               final uri = Uri.tryParse(value);
-              if (uri == null || uri.host.isEmpty || !(uri.scheme == 'http' || uri.scheme == 'https')) {
+              if (uri == null ||
+                  uri.host.isEmpty ||
+                  !(uri.scheme == 'http' || uri.scheme == 'https')) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(loc.invalidValue)),
                 );
@@ -149,7 +155,7 @@ class SettingsPage extends ConsumerWidget {
             ),
             Divider(color: Theme.of(context).dividerColor),
           ],
-          
+
           // 6. زاوية الاتجاه (يظهر بشروط)
           if (isHighestAccuracy) ...[
             _buildEditableRow(
@@ -193,10 +199,12 @@ class SettingsPage extends ConsumerWidget {
 
           // 8. إعدادات متقدمة
           SwitchListTile(
-            title: Text(loc.advancedLabel, style: AppTextStyles(context).bodyBold),
+            title:
+                Text(loc.advancedLabel, style: AppTextStyles(context).bodyBold),
             value: advanced,
             onChanged: (value) async {
-              final authenticated = await PasswordPromptUtil.authenticate(context, ref);
+              final authenticated =
+                  await PasswordPromptUtil.authenticate(context, ref);
               if (authenticated && context.mounted) {
                 ref.read(advancedSettingsProvider.notifier).state = value;
               }
@@ -221,7 +229,7 @@ class SettingsPage extends ConsumerWidget {
                     },
                   ),
                   Divider(color: Theme.of(context).dividerColor),
-                  
+
                   // 10. قفل التنبيه (Android only)
                   if (Platform.isAndroid) ...[
                     _buildSwitchRow(
@@ -251,7 +259,7 @@ class SettingsPage extends ConsumerWidget {
                     },
                   ),
                   Divider(color: Theme.of(context).dividerColor),
-                  
+
                   // 12. استخدام مزودي الموقع الأصليين (Android only)
                   if (Platform.isAndroid) ...[
                     _buildSwitchRow(
@@ -261,7 +269,9 @@ class SettingsPage extends ConsumerWidget {
                       ref.watch(preferPlatformProvidersProvider),
                       (value) async {
                         await storage.setPreferPlatformProviders(value);
-                        ref.read(preferPlatformProvidersProvider.notifier).state = value;
+                        ref
+                            .read(preferPlatformProvidersProvider.notifier)
+                            .state = value;
                         await ref.read(trackingServiceProvider).updateConfig();
                       },
                     ),
@@ -274,7 +284,7 @@ class SettingsPage extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right, size: 20),
                     onTap: () => _changePassword(context, storage, loc),
                   ),
-                  
+
                   // 14. رسالة تحسين البطارية
                   if (Platform.isAndroid) ...[
                     Divider(color: Theme.of(context).dividerColor),
@@ -283,14 +293,18 @@ class SettingsPage extends ConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.battery_alert, color: AppColors.warningYellow, size: 24),
+                          const Icon(Icons.battery_alert,
+                              color: AppColors.warningYellow, size: 24),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               loc.optimizationMessage,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.warningYellow,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.warningYellow,
+                                  ),
                             ),
                           ),
                         ],
@@ -306,12 +320,13 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _changePassword(BuildContext context, LocalStorageService storage, AppLocalizations loc) async {
+  Future<void> _changePassword(BuildContext context,
+      LocalStorageService storage, AppLocalizations loc) async {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => _ChangePasswordDialog(loc: loc),
     );
-    
+
     if (result != null) {
       await storage.setPassword(result);
     }
@@ -347,7 +362,8 @@ class SettingsPage extends ConsumerWidget {
       subtitle: Text(displayValue),
       trailing: const Icon(Icons.edit, size: 20),
       onTap: () async {
-        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
+        final authenticated =
+            await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           _showEditDialog(context, label, editValue, onSave, isNumber);
         }
@@ -363,7 +379,7 @@ class SettingsPage extends ConsumerWidget {
     bool isNumber,
   ) {
     final loc = AppLocalizations.of(context)!;
-    
+
     showDialog(
       context: context,
       builder: (context) => _EditDialog(
@@ -376,10 +392,11 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAccuracySelector(BuildContext context, WidgetRef ref, String current, Function(String) onSelect) {
+  Widget _buildAccuracySelector(BuildContext context, WidgetRef ref,
+      String current, Function(String) onSelect) {
     final options = ['highest', 'high', 'medium', 'low'];
     final loc = AppLocalizations.of(context)!;
-    
+
     final labels = {
       'highest': loc.highestAccuracyLabel,
       'high': loc.highAccuracyLabel,
@@ -392,7 +409,8 @@ class SettingsPage extends ConsumerWidget {
       subtitle: Text(labels[current] ?? current),
       trailing: const Icon(Icons.arrow_drop_down, size: 20),
       onTap: () async {
-        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
+        final authenticated =
+            await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           showDialog(
             context: context,
@@ -414,13 +432,14 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSwitchRow(
-      BuildContext context, WidgetRef ref, String label, bool value, Function(bool) onChanged) {
+  Widget _buildSwitchRow(BuildContext context, WidgetRef ref, String label,
+      bool value, Function(bool) onChanged) {
     return SwitchListTile(
       title: Text(label, style: AppTextStyles(context).body),
       value: value,
       onChanged: (val) async {
-        final authenticated = await PasswordPromptUtil.authenticate(context, ref);
+        final authenticated =
+            await PasswordPromptUtil.authenticate(context, ref);
         if (authenticated && context.mounted) {
           onChanged(val);
         }
@@ -516,8 +535,10 @@ class _EditDialogState extends State<_EditDialog> {
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
-        keyboardType: widget.isNumber ? TextInputType.number : TextInputType.text,
-        inputFormatters: widget.isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
+        keyboardType:
+            widget.isNumber ? TextInputType.number : TextInputType.text,
+        inputFormatters:
+            widget.isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
       ),
       actions: [
         TextButton(

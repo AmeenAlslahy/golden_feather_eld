@@ -7,7 +7,8 @@ import '../../domain/repositories/codriver_repository.dart';
 
 // --- Dependency Injection Providers ---
 
-final coDriverRemoteDataSourceProvider = Provider<CoDriverRemoteDataSource>((ref) {
+final coDriverRemoteDataSourceProvider =
+    Provider<CoDriverRemoteDataSource>((ref) {
   return CoDriverRemoteDataSourceImpl(
     apiClient: ref.watch(apiClientProvider),
     endpoints: ref.watch(endpointsProvider),
@@ -57,7 +58,8 @@ class CoDriverState {
 }
 
 /// مزود السائق المساعد
-final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
+final codriverProvider =
+    StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
   return CoDriverNotifier(repository: ref.watch(coDriverRepositoryProvider));
 });
 
@@ -73,7 +75,7 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
   Future<void> _loadDrivers() async {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _repository.getAvailableDrivers();
-    
+
     if (mounted) {
       result.fold(
         (failure) => state = state.copyWith(

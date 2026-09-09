@@ -75,7 +75,8 @@ class DiagnosticsState {
     return DiagnosticsState(
       activeMalfunctions: activeMalfunctions ?? this.activeMalfunctions,
       history: history ?? this.history,
-      hasActiveMalfunctions: hasActiveMalfunctions ?? this.hasActiveMalfunctions,
+      hasActiveMalfunctions:
+          hasActiveMalfunctions ?? this.hasActiveMalfunctions,
     );
   }
 }
@@ -86,7 +87,7 @@ class DiagnosticsEngine {
   final HosLocalDataSource _localDb;
   final TrustedTimeProvider _timeProvider;
   final _stateController = StreamController<DiagnosticsState>.broadcast();
-  
+
   StreamSubscription<EldEvent>? _eventSubscription;
   StreamSubscription<LocationPoint>? _locationSubscription;
 
@@ -97,17 +98,20 @@ class DiagnosticsEngine {
   static const int dataGapThreshold = 300; // 5 دقائق
   static const int engineSyncThreshold = 60; // 60 دقيقة
   static const int motionSensorThreshold = 80; // 80 كم/س تغير مفاجئ
-  
+
   double _lastLat = 0.0;
   double _lastLon = 0.0;
 
-  DiagnosticsEngine(this._trackingDataSource, this._localDb, this._timeProvider) {
+  DiagnosticsEngine(
+      this._trackingDataSource, this._localDb, this._timeProvider) {
     _startListening();
   }
 
   DateTime _getCurrentTime() {
     final timeResult = _timeProvider.currentTime;
-    return timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now().toUtc();
+    return timeResult is TrustedTimeAvailable
+        ? timeResult.utc
+        : DateTime.now().toUtc();
   }
 
   DiagnosticsState get state => _state;
@@ -171,7 +175,8 @@ class DiagnosticsEngine {
       _addMalfunction(MalfunctionEvent(
         type: MalfunctionType.positioningMalfunction,
         severity: MalfunctionSeverity.major,
-        message: 'Positioning malfunction: zero coordinates at speed $speed km/h',
+        message:
+            'Positioning malfunction: zero coordinates at speed $speed km/h',
         timestamp: _getCurrentTime(),
       ));
       AppLogger.error('🛰️ Positioning malfunction');
@@ -185,7 +190,8 @@ class DiagnosticsEngine {
         _addMalfunction(MalfunctionEvent(
           type: MalfunctionType.motionSensorMalfunction,
           severity: MalfunctionSeverity.major,
-          message: 'Sudden speed change: ${speedChange.toStringAsFixed(0)} km/h',
+          message:
+              'Sudden speed change: ${speedChange.toStringAsFixed(0)} km/h',
           timestamp: _getCurrentTime(),
           details: {'speed_change': speedChange},
         ));
@@ -201,7 +207,8 @@ class DiagnosticsEngine {
         _addMalfunction(MalfunctionEvent(
           type: MalfunctionType.engineSyncMalfunction,
           severity: MalfunctionSeverity.minor,
-          message: 'Engine running without motion for $_engineRunningWithoutMotion minutes',
+          message:
+              'Engine running without motion for $_engineRunningWithoutMotion minutes',
           timestamp: _getCurrentTime(),
         ));
         AppLogger.warning('🔧 Engine sync malfunction');
@@ -232,7 +239,7 @@ class DiagnosticsEngine {
       hasActiveMalfunctions: true,
     );
     _stateController.add(_state);
-    
+
     // حفظ العطل محلياً
     _localDb.saveDiagnostic(event.toJson()).then((success) {
       if (success) {
@@ -263,7 +270,7 @@ class DiagnosticsEngine {
       ));
     }
   }
-  
+
   void dispose() {
     _eventSubscription?.cancel();
     _locationSubscription?.cancel();

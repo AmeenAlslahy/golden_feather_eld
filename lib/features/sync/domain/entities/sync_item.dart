@@ -90,5 +90,6 @@ class SyncState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [pendingItems, isSyncing, lastSyncTime, totalPending, totalFailed];
+  List<Object?> get props =>
+      [pendingItems, isSyncing, lastSyncTime, totalPending, totalFailed];
 }

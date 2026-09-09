@@ -58,7 +58,8 @@ class VehicleState {
 }
 
 /// مزود مستودع المركبات
-final vehicleRemoteDataSourceProvider = Provider<VehicleRemoteDataSource>((ref) {
+final vehicleRemoteDataSourceProvider =
+    Provider<VehicleRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   final endpoints = ref.watch(endpointsProvider);
   return VehicleRemoteDataSourceImpl(apiClient, endpoints);
@@ -68,7 +69,7 @@ final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
   final remoteDataSource = ref.watch(vehicleRemoteDataSourceProvider);
   final localStorage = ref.watch(localStorageProvider);
   final networkInfo = ref.watch(networkInfoProvider);
-  
+
   return VehicleRepositoryImpl(
     remoteDataSource: remoteDataSource,
     localDataSource: localStorage,
@@ -100,36 +101,30 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     if (state.isInitialized && !forceRefresh) return;
 
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
-    
+
     final result = await _repository.getVehicles();
-    
-    result.match(
-      (failure) {
-        state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        );
-      },
-      (vehicles) {
-        state = state.copyWith(
-          vehicles: vehicles,
-          isLoading: false,
-          isInitialized: true,
-        );
-      }
-    );
+
+    result.match((failure) {
+      state = state.copyWith(
+        isLoading: false,
+        error: failure.message,
+      );
+    }, (vehicles) {
+      state = state.copyWith(
+        vehicles: vehicles,
+        isLoading: false,
+        isInitialized: true,
+      );
+    });
   }
 
   Future<void> _loadSelectedVehicle() async {
     final result = await _repository.getSelectedVehicle();
-    result.match(
-      (failure) {},
-      (vehicle) {
-        if (vehicle != null) {
-          state = state.copyWith(selectedVehicle: vehicle);
-        }
+    result.match((failure) {}, (vehicle) {
+      if (vehicle != null) {
+        state = state.copyWith(selectedVehicle: vehicle);
       }
-    );
+    });
   }
 
   /// البحث عن مركبة
@@ -140,20 +135,17 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   /// اختيار مركبة
   Future<void> selectVehicle(Vehicle vehicle) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
-    
+
     final result = await _repository.selectVehicle(vehicle.id);
-    
-    result.match(
-      (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
-      },
-      (_) {
-        state = state.copyWith(
-          isLoading: false,
-          selectedVehicle: vehicle,
-          isSuccess: true,
-        );
-      }
-    );
+
+    result.match((failure) {
+      state = state.copyWith(isLoading: false, error: failure.message);
+    }, (_) {
+      state = state.copyWith(
+        isLoading: false,
+        selectedVehicle: vehicle,
+        isSuccess: true,
+      );
+    });
   }
 }

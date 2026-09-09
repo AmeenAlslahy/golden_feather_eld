@@ -28,7 +28,7 @@ class FailClosedRemoteEventDispatcher implements RemoteEventDispatcher {
     // حماية (Fail-closed): نمنع فقدان البيانات بحظر الحذف الوهمي في الإنتاج
     return const Left(ServerFailure(
       message: 'Production dispatcher not implemented yet. Event retained.',
-      ));
+    ));
   }
 }
 
@@ -60,12 +60,12 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final queue = ref.watch(offlineQueueProvider);
   final dispatcher = ref.watch(remoteEventDispatcherProvider);
-  
+
   final engine = SyncEngine(queue: queue, dispatcher: dispatcher);
 
   // استماع لحالة الاتصال من نظام التتبع
   final liveTracking = ref.watch(liveTrackingDataSourceProvider);
-  
+
   final subscription = liveTracking.connectionStatus.listen((status) {
     if (status == ConnectionStatus.connected) {
       // عند عودة الاتصال، نقوم بمحاولة المزامنة

@@ -15,7 +15,8 @@ class CoDriverPickerDialog extends ConsumerStatefulWidget {
   const CoDriverPickerDialog({super.key, this.currentCoDriverId});
 
   @override
-  ConsumerState<CoDriverPickerDialog> createState() => _CoDriverPickerDialogState();
+  ConsumerState<CoDriverPickerDialog> createState() =>
+      _CoDriverPickerDialogState();
 }
 
 class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
@@ -36,11 +37,9 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
       title: Text(context.loc.coDriver),
       content: SizedBox(
         width: double.maxFinite,
-        child: codriverState.isLoading 
+        child: codriverState.isLoading
             ? const SizedBox(
-                height: 100, 
-                child: Center(child: CircularProgressIndicator())
-              )
+                height: 100, child: Center(child: CircularProgressIndicator()))
             : codriverState.error != null
                 ? Text(
                     'Error: ${codriverState.error}',
@@ -55,7 +54,9 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
                           title: Text(
                             driver.name,
                             style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           value: driver.id,

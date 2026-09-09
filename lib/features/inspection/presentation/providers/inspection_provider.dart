@@ -8,7 +8,8 @@ import '../../../../core/services/tracking_config_storage_service.dart';
 
 // --- Dependency Injection Providers ---
 
-final inspectionRemoteDataSourceProvider = Provider<InspectionRemoteDataSource>((ref) {
+final inspectionRemoteDataSourceProvider =
+    Provider<InspectionRemoteDataSource>((ref) {
   return InspectionRemoteDataSourceImpl(
     apiClient: ref.watch(apiClientProvider),
     endpoints: ref.watch(endpointsProvider),
@@ -62,10 +63,12 @@ class InspectionState {
 }
 
 /// مزود التفتيش
-final inspectionProvider = StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
+final inspectionProvider =
+    StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
   final repository = ref.watch(inspectionRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
-  return InspectionNotifier(repository: repository, storageService: storageService);
+  return InspectionNotifier(
+      repository: repository, storageService: storageService);
 });
 
 class InspectionNotifier extends StateNotifier<InspectionState> {
@@ -82,13 +85,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   /// بدء وضع التفتيش
   Future<void> startInspection() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     // In a real scenario we'd need the logged in driver ID.
     // For now, assuming a default or extracting it from storage
     final driverId = int.tryParse(_storageService.deviceId) ?? 0;
-    
+
     final result = await _repository.getInspectionReport(driverId);
-    
+
     if (mounted) {
       result.fold(
         (failure) => state = state.copyWith(
@@ -130,12 +133,14 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   }
 
   /// إرسال السجلات
-  Future<bool> sendLogs(TransferMethod method, {String? email, bool isErods = false}) async {
+  Future<bool> sendLogs(TransferMethod method,
+      {String? email, bool isErods = false}) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     final driverId = int.tryParse(_storageService.deviceId) ?? 0;
-    final result = await _repository.exportInspectionData(driverId, method, email, isErods);
-    
+    final result = await _repository.exportInspectionData(
+        driverId, method, email, isErods);
+
     if (mounted) {
       return result.fold(
         (failure) {

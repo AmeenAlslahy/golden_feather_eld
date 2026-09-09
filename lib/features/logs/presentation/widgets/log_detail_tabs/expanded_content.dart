@@ -24,7 +24,8 @@ class ExpandedContent extends StatelessWidget {
         children: [
           const Divider(color: AppColors.border),
           const SizedBox(height: AppSpacing.sm),
-          _expandedRow(context, context.loc.startTime, event.formattedStartTime),
+          _expandedRow(
+              context, context.loc.startTime, event.formattedStartTime),
           _expandedRow(context, context.loc.duration, event.formattedDuration),
           _expandedRow(context, context.loc.location, event.location),
           if (event.odometer != null)
@@ -52,8 +53,8 @@ class ExpandedContent extends StatelessWidget {
             child: Text(
               value,
               style: AppTextStyles(context).caption.copyWith(
-                fontWeight: AppTypography.semiBold,
-              ),
+                    fontWeight: AppTypography.semiBold,
+                  ),
             ),
           ),
         ],

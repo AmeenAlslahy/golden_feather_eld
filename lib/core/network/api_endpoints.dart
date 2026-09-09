@@ -32,7 +32,7 @@ abstract class ApiEndpoints {
   String get dutyStatusLogs;
   String driverInspectionReport(int driverId);
   String submitInspection();
-  
+
   // ELD Reports & Export
   String eldComprehensiveReport(int driverId);
   String eldHosReport(int driverId);

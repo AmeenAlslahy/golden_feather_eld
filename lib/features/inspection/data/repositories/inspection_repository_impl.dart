@@ -16,11 +16,12 @@ class InspectionRepositoryImpl implements InspectionRepository {
   });
 
   @override
-  Future<Either<Failure, List<InspectionDayData>>> getInspectionReport(int driverId) async {
+  Future<Either<Failure, List<InspectionDayData>>> getInspectionReport(
+      int driverId) async {
     if (networkInfo.isConnected) {
       try {
         final rawData = await remoteDataSource.getInspectionReport(driverId);
-        
+
         final days = rawData.map((json) {
           return InspectionDayData(
             date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
@@ -44,10 +45,12 @@ class InspectionRepositoryImpl implements InspectionRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> exportInspectionData(int driverId, TransferMethod method, String? email, bool isErods) async {
+  Future<Either<Failure, bool>> exportInspectionData(
+      int driverId, TransferMethod method, String? email, bool isErods) async {
     if (networkInfo.isConnected) {
       try {
-        await remoteDataSource.exportInspectionData(driverId, method, email, isErods);
+        await remoteDataSource.exportInspectionData(
+            driverId, method, email, isErods);
         return const Right(true);
       } on ServerException catch (e) {
         return Left(ServerFailure(message: e.message ?? 'Server Error'));

@@ -20,12 +20,14 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
     if (networkInfo.isConnected) {
       try {
         final rawDrivers = await remoteDataSource.getAvailableDrivers();
-        
-        final drivers = rawDrivers.map((json) => CoDriver(
-          id: json['id']?.toString() ?? '',
-          name: json['name'] ?? 'Unknown',
-          licenseNumber: json['attributes']?['licenseNumber'],
-        )).toList();
+
+        final drivers = rawDrivers
+            .map((json) => CoDriver(
+                  id: json['id']?.toString() ?? '',
+                  name: json['name'] ?? 'Unknown',
+                  licenseNumber: json['attributes']?['licenseNumber'],
+                ))
+            .toList();
 
         return Right(drivers);
       } on ServerException catch (e) {

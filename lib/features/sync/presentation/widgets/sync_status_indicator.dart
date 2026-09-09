@@ -14,7 +14,8 @@ class SyncStatusIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final syncState = ref.watch(syncStateProvider);
 
-    if (syncState.totalPending == 0 && !syncState.isSyncing) return const SizedBox.shrink();
+    if (syncState.totalPending == 0 && !syncState.isSyncing)
+      return const SizedBox.shrink();
 
     return InkWell(
       onTap: () {
@@ -26,7 +27,9 @@ class SyncStatusIndicator extends ConsumerWidget {
           label: syncState.isSyncing
               ? context.loc.syncing
               : context.loc.syncPending(syncState.totalPending.toString()),
-          type: syncState.isSyncing ? AppStatusBadgeType.info : AppStatusBadgeType.warning,
+          type: syncState.isSyncing
+              ? AppStatusBadgeType.info
+              : AppStatusBadgeType.warning,
           icon: syncState.isSyncing ? Icons.sync : Icons.sync_problem,
           trailing: syncState.totalFailed > 0
               ? Text(

@@ -87,7 +87,6 @@ class EldDrawer extends ConsumerWidget {
                   return ListTile(
                     leading: Icon(
                       item.icon,
-                      
                       size: 24,
                     ),
                     title: Text(
@@ -95,19 +94,18 @@ class EldDrawer extends ConsumerWidget {
                       style: const TextStyle(
                         fontSize: AppTypography.bodySize,
                         fontWeight: AppTypography.regular,
-                        
                       ),
                     ),
                     trailing: const Icon(
                       Icons.chevron_right,
-                      
                       size: 20,
                     ),
                     onTap: () {
                       Navigator.pop(context); // إغلاق الدرج
-                      final currentRoute = GoRouterState.of(context).matchedLocation;
+                      final currentRoute =
+                          GoRouterState.of(context).matchedLocation;
                       if (item.route == currentRoute) return;
-                      
+
                       if (item.route == AppRoutes.home) {
                         context.go(item.route);
                       } else {
@@ -166,7 +164,7 @@ class EldDrawer extends ConsumerWidget {
               Navigator.pop(context); // إغلاق الدرج الجانبي
 
               await ref.read(authStateProvider.notifier).logout();
-              
+
               router.go(AppRoutes.login);
             },
             child: Text(
@@ -179,6 +177,3 @@ class EldDrawer extends ConsumerWidget {
     );
   }
 }
-
-
-

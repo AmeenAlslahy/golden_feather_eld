@@ -8,7 +8,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
 /// مزود قائمة وثائق الشحن
-final shippingDocsProvider = StateNotifierProvider<ShippingDocsNotifier, List<String>>((ref) {
+final shippingDocsProvider =
+    StateNotifierProvider<ShippingDocsNotifier, List<String>>((ref) {
   return ShippingDocsNotifier();
 });
 
@@ -31,7 +32,8 @@ class ShippingDocumentsPage extends ConsumerStatefulWidget {
   const ShippingDocumentsPage({super.key});
 
   @override
-  ConsumerState<ShippingDocumentsPage> createState() => _ShippingDocumentsPageState();
+  ConsumerState<ShippingDocumentsPage> createState() =>
+      _ShippingDocumentsPageState();
 }
 
 class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
@@ -111,9 +113,11 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.add, size: 18, color: AppColors.surface),
+                        const Icon(Icons.add,
+                            size: 18, color: AppColors.surface),
                         const SizedBox(width: 4),
-                        Text(context.loc.addButton, style: const TextStyle(color: AppColors.surface)),
+                        Text(context.loc.addButton,
+                            style: const TextStyle(color: AppColors.surface)),
                       ],
                     ),
                   ),
@@ -128,7 +132,8 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                 ? Center(
                     child: Text(
                       'No documents added',
-                      style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.outline),
                     ),
                   )
                 : ListView.separated(
@@ -159,7 +164,8 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.dangerRed,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.button),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.button),
                             ),
                           ),
                           child: const Text(

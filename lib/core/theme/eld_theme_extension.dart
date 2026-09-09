@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// امتداد للثيم لتعريف الألوان المخصصة لتطبيق ELD التي لا تندرج 
+/// امتداد للثيم لتعريف الألوان المخصصة لتطبيق ELD التي لا تندرج
 /// تحت تصنيفات ColorScheme القياسية.
 class EldColors extends ThemeExtension<EldColors> {
   final Color success;

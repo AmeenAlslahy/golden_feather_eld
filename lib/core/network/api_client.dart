@@ -11,7 +11,7 @@ class ApiClient {
     _dio.options.baseUrl = config.baseUrl;
     _dio.options.connectTimeout = config.connectTimeout;
     _dio.options.receiveTimeout = config.receiveTimeout;
-    
+
     // Default headers
     _dio.options.headers = {
       'Accept': 'application/json',
@@ -23,52 +23,74 @@ class ApiClient {
     _dio.interceptors.add(interceptor);
   }
 
-  Future<ApiResponse<T>> get<T>(String path, {Map<String, dynamic>? queryParameters, Options? options, T Function(dynamic)? fromJsonT}) async {
+  Future<ApiResponse<T>> get<T>(String path,
+      {Map<String, dynamic>? queryParameters,
+      Options? options,
+      T Function(dynamic)? fromJsonT}) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters, options: options);
+      final response = await _dio.get(path,
+          queryParameters: queryParameters, options: options);
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
-  Future<ApiResponse<T>> post<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, T Function(dynamic)? fromJsonT}) async {
+  Future<ApiResponse<T>> post<T>(String path,
+      {dynamic data,
+      Map<String, dynamic>? queryParameters,
+      Options? options,
+      T Function(dynamic)? fromJsonT}) async {
     try {
-      final response = await _dio.post(path, data: data, queryParameters: queryParameters, options: options);
+      final response = await _dio.post(path,
+          data: data, queryParameters: queryParameters, options: options);
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
-  Future<ApiResponse<T>> put<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, T Function(dynamic)? fromJsonT}) async {
+  Future<ApiResponse<T>> put<T>(String path,
+      {dynamic data,
+      Map<String, dynamic>? queryParameters,
+      Options? options,
+      T Function(dynamic)? fromJsonT}) async {
     try {
-      final response = await _dio.put(path, data: data, queryParameters: queryParameters, options: options);
+      final response = await _dio.put(path,
+          data: data, queryParameters: queryParameters, options: options);
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
-  Future<ApiResponse<T>> delete<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, T Function(dynamic)? fromJsonT}) async {
+  Future<ApiResponse<T>> delete<T>(String path,
+      {dynamic data,
+      Map<String, dynamic>? queryParameters,
+      Options? options,
+      T Function(dynamic)? fromJsonT}) async {
     try {
-      final response = await _dio.delete(path, data: data, queryParameters: queryParameters, options: options);
+      final response = await _dio.delete(path,
+          data: data, queryParameters: queryParameters, options: options);
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
-  Future<String> downloadFile(String path, String savePath, {Map<String, dynamic>? queryParameters, Options? options}) async {
+  Future<String> downloadFile(String path, String savePath,
+      {Map<String, dynamic>? queryParameters, Options? options}) async {
     try {
-      await _dio.download(path, savePath, queryParameters: queryParameters, options: options);
+      await _dio.download(path, savePath,
+          queryParameters: queryParameters, options: options);
       return savePath;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
-  ApiResponse<T> _processResponse<T>(Response response, T Function(dynamic)? fromJsonT) {
+  ApiResponse<T> _processResponse<T>(
+      Response response, T Function(dynamic)? fromJsonT) {
     var rawData = response.data;
 
     // Decode String to JSON if possible
@@ -94,7 +116,7 @@ class ApiClient {
         );
       }
     }
-    
+
     // Safely cast to T
     T? finalData;
     if (fromJsonT != null) {
@@ -110,29 +132,31 @@ class ApiClient {
     // Wrap raw response
     return ApiResponse<T>(
       code: response.statusCode ?? 200,
-      status: (response.statusCode ?? 200) >= 200 && (response.statusCode ?? 200) < 300,
+      status: (response.statusCode ?? 200) >= 200 &&
+          (response.statusCode ?? 200) < 300,
       data: finalData,
       headers: response.headers,
     );
   }
 
   Exception _handleDioError(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout || 
+    if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
       return const OfflineException();
     }
-    
+
     if (e.response != null) {
       final statusCode = e.response!.statusCode;
       if (statusCode == 401 || statusCode == 403) {
         return UnauthorizedException(statusCode: statusCode);
       }
-      
+
       final data = e.response!.data;
       String message = 'Unknown server error';
       if (data is Map<String, dynamic>) {
-        message = data['message']?.toString() ?? data['error']?.toString() ?? message;
+        message =
+            data['message']?.toString() ?? data['error']?.toString() ?? message;
       } else if (data is String) {
         if (statusCode == 404) {
           message = 'الخدمة غير متوفرة حالياً (404)';
@@ -142,21 +166,21 @@ class ApiClient {
           message = data.length > 100 ? '${data.substring(0, 100)}...' : data;
         }
       }
-      
+
       return ServerException(
         statusCode: statusCode,
         message: message,
         // Can be localized later
       );
     }
-    
+
     String message = 'فشل الاتصال بالخادم';
     if (e.type == DioExceptionType.cancel) {
       message = 'تم إلغاء الطلب';
     }
-    
+
     return ServerException(
       message: message,
-      );
+    );
   }
 }

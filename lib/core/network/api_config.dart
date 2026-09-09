@@ -12,7 +12,8 @@ class ApiConfig {
   });
 
   factory ApiConfig.fromEnvironment() {
-    String baseUrl = const String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    String baseUrl =
+        const String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (baseUrl.isEmpty) {
       baseUrl = AppEnvironmentConfig.apiBaseUrl;
     }

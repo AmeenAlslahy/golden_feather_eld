@@ -90,7 +90,8 @@ void main() {
         qualityStatus: LocationQualityStatus.valid,
       );
 
-      final lastRecordedAt = now.subtract(const Duration(seconds: 5)); // Newer than event
+      final lastRecordedAt =
+          now.subtract(const Duration(seconds: 5)); // Newer than event
 
       final validated = validator.validate(event, lastRecordedAt);
       expect(validated.qualityStatus, LocationQualityStatus.outOfOrder);

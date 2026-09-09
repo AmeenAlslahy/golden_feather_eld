@@ -36,7 +36,8 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   }
 }
 
-final eldConnectionProvider = StateNotifierProvider.autoDispose<EldConnectionNotifier, EldConnectionState>((ref) {
+final eldConnectionProvider = StateNotifierProvider.autoDispose<
+    EldConnectionNotifier, EldConnectionState>((ref) {
   return EldConnectionNotifier();
 });
 
@@ -123,7 +124,6 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       context.loc.verifyFollowingItems,
                       style: const TextStyle(
                         fontSize: AppTypography.bodySize,
-                        
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -144,7 +144,6 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     context.loc.enterMacAddress,
                     style: const TextStyle(
                       fontSize: AppTypography.bodySize,
-                      
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -164,7 +163,9 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     label: context.loc.connect,
                     type: EldButtonType.connect,
                     isLoading: connectionState.isConnecting,
-                    onPressed: connectionState.isConnecting ? null : _attemptConnection,
+                    onPressed: connectionState.isConnecting
+                        ? null
+                        : _attemptConnection,
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -172,8 +173,9 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                   AppButton(
                     label: context.loc.continueDisconnected,
                     type: EldButtonType.continueDisconnected,
-                    onPressed:
-                        connectionState.isConnecting ? null : () => context.go(AppRoutes.home),
+                    onPressed: connectionState.isConnecting
+                        ? null
+                        : () => context.go(AppRoutes.home),
                   ),
                 ],
               ),
@@ -197,14 +199,17 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           // ✅ نقطة بسيطة بدلاً من CircleAvatar
           const Padding(
             padding: EdgeInsets.only(top: 8.0, right: AppSpacing.sm),
-            child: Icon(Icons.circle, size: 6, ),
+            child: Icon(
+              Icons.circle,
+              size: 6,
+            ),
           ),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
                 fontSize: AppTypography.subtitleSize, // 14pt - موحد
-                
+
                 height: 1.4,
               ),
             ),
@@ -214,6 +219,3 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
     );
   }
 }
-
-
-

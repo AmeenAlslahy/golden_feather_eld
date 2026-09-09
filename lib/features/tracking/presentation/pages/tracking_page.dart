@@ -92,7 +92,8 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                   trackingState.arabicErrorMessage ??
                       trackingState.errorMessage ??
                       '',
-                  style: AppTextStyles(context).body.copyWith(color: Theme.of(context).colorScheme.onErrorContainer),
+                  style: AppTextStyles(context).body.copyWith(
+                      color: Theme.of(context).colorScheme.onErrorContainer),
                 ),
               ),
 
@@ -108,7 +109,8 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                   const SizedBox(height: AppSpacing.sm),
                   _buildInfoItem(context, loc.idLabel, 'DEV-001'),
                   _buildInfoItem(context, loc.urlLabel, 'demo.traccar.org'),
-                  _buildInfoItem(context, loc.accuracyLabel, loc.mediumAccuracyLabel),
+                  _buildInfoItem(
+                      context, loc.accuracyLabel, loc.mediumAccuracyLabel),
                   _buildInfoItem(context, loc.intervalLabel, '300'),
                 ],
               ),
@@ -142,13 +144,14 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     if (mounted) {
       // إذا وافق المستخدم، نطلب تعطيل التحسين
       if (result == true) {
-        await ref.read(batteryOptimizationServiceProvider).requestDisableBatteryOptimization();
+        await ref
+            .read(batteryOptimizationServiceProvider)
+            .requestDisableBatteryOptimization();
       }
       // نبدأ التتبع في كل الأحوال، ونتخطى الفحص لمنع التكرار
-      ref.read(trackingStateProvider.notifier).startTracking(skipBatteryCheck: true);
+      ref
+          .read(trackingStateProvider.notifier)
+          .startTracking(skipBatteryCheck: true);
     }
   }
 }
-
-
-

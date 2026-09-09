@@ -5,7 +5,8 @@ import '../entities/sync_item.dart';
 /// واجهة مستودع المزامنة
 abstract class SyncRepository {
   /// إضافة حدث للطابور
-  Future<Either<Failure, bool>> enqueue(SyncEventType type, Map<String, dynamic> data);
+  Future<Either<Failure, bool>> enqueue(
+      SyncEventType type, Map<String, dynamic> data);
 
   /// معالجة الطابور (محاولة إرسال جميع الأحداث)
   Future<Either<Failure, int>> processQueue();

@@ -10,7 +10,8 @@ import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
 import '../../domain/entities/audit_entry.dart';
 
-final auditProvider = FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
+final auditProvider =
+    FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
   return ref.read(logsProvider.notifier).getAuditEntries(date);
 });
 
@@ -19,7 +20,8 @@ class InspectionPreviewPage extends ConsumerStatefulWidget {
   const InspectionPreviewPage({super.key});
 
   @override
-  ConsumerState<InspectionPreviewPage> createState() => _InspectionPreviewPageState();
+  ConsumerState<InspectionPreviewPage> createState() =>
+      _InspectionPreviewPageState();
 }
 
 class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
@@ -111,7 +113,8 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+          border:
+              Border(top: BorderSide(color: Theme.of(context).dividerColor)),
         ),
         child: BottomNavigationBar(
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -120,9 +123,13 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
           currentIndex: 0,
           type: BottomNavigationBarType.fixed,
           items: [
-            BottomNavigationBarItem(icon: const Icon(Icons.access_time), label: loc.events),
-            BottomNavigationBarItem(icon: const Icon(Icons.assignment), label: loc.form),
-            BottomNavigationBarItem(icon: const Icon(Icons.check_circle_outline), label: loc.certify),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.access_time), label: loc.events),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.assignment), label: loc.form),
+            BottomNavigationBarItem(
+                icon: const Icon(Icons.check_circle_outline),
+                label: loc.certify),
           ],
           onTap: (_) {},
         ),
@@ -158,7 +165,8 @@ class _DateHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left, color: Theme.of(context).colorScheme.onSurface),
+            icon: Icon(Icons.chevron_left,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: hasPrevious ? onPrevious : null,
           ),
           Text(
@@ -170,7 +178,8 @@ class _DateHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface),
+            icon: Icon(Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: hasNext ? onNext : null,
           ),
         ],
@@ -194,7 +203,8 @@ class _EventsTable extends StatelessWidget {
         child: Center(
           child: Text(
             AppLocalizations.of(context)!.noData,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       );
@@ -204,7 +214,8 @@ class _EventsTable extends StatelessWidget {
       children: [
         // رأس الجدول
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: Row(
             children: [
@@ -260,9 +271,12 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5))),
+        border: Border(
+            bottom: BorderSide(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.5))),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,14 +310,18 @@ class _EventRow extends StatelessWidget {
           SizedBox(
             width: 60,
             child: Text(
-              event.odometer != null ? '${event.odometer!.toStringAsFixed(0)}' : '-',
+              event.odometer != null
+                  ? '${event.odometer!.toStringAsFixed(0)}'
+                  : '-',
               style: _valueStyle(context),
             ),
           ),
           SizedBox(
             width: 55,
             child: Text(
-              event.engineHours != null ? '${event.engineHours!.toStringAsFixed(1)}' : '-',
+              event.engineHours != null
+                  ? '${event.engineHours!.toStringAsFixed(1)}'
+                  : '-',
               style: _valueStyle(context),
             ),
           ),
@@ -311,7 +329,8 @@ class _EventRow extends StatelessWidget {
             width: 40,
             child: Text(
               'Auto',
-              style: _valueStyle(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: _valueStyle(context).copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ],
@@ -360,9 +379,11 @@ class _InspectionSummary extends StatelessWidget {
         children: [
           // السطر 1: السائق
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.driverName, value: dashboard.driverName, flex: 3),
+            _SummaryCell(
+                label: loc.driverName, value: dashboard.driverName, flex: 3),
             _SummaryCell(label: loc.driverId, value: dashboard.vehicleId),
-            _SummaryCell(label: loc.license, value: dashboard.driverLicense ?? '-'),
+            _SummaryCell(
+                label: loc.license, value: dashboard.driverLicense ?? '-'),
             _SummaryCell(label: loc.licenseState, value: 'SA'),
           ]),
           const SizedBox(height: AppSpacing.sm),
@@ -370,14 +391,20 @@ class _InspectionSummary extends StatelessWidget {
           _SummaryRow(cells: [
             _SummaryCell(label: loc.exemptDriver, value: 'No'),
             _SummaryCell(label: loc.unidentifiedDriving, value: '0'),
-            _SummaryCell(label: loc.coDriver, value: dashboard.coDriverName ?? 'None'),
-            _SummaryCell(label: loc.coDriverId, value: dashboard.coDriverId ?? '-'),
+            _SummaryCell(
+                label: loc.coDriver, value: dashboard.coDriverName ?? 'None'),
+            _SummaryCell(
+                label: loc.coDriverId, value: dashboard.coDriverId ?? '-'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 3: التاريخ والتصديق
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.logDate, value: DateTime.now().toString().substring(0, 10)),
-            _SummaryCell(label: loc.displayDate, value: DateTime.now().toString().substring(0, 10)),
+            _SummaryCell(
+                label: loc.logDate,
+                value: DateTime.now().toString().substring(0, 10)),
+            _SummaryCell(
+                label: loc.displayDate,
+                value: DateTime.now().toString().substring(0, 10)),
             _SummaryCell(label: loc.displayLocation, value: 'Riyadh, SA'),
             _SummaryCell(label: loc.certified, value: 'Yes'),
           ]),
@@ -386,7 +413,8 @@ class _InspectionSummary extends StatelessWidget {
           _SummaryRow(cells: [
             _SummaryCell(label: loc.eldRegId, value: 'GF-ELD-001'),
             _SummaryCell(label: loc.eldIdentifier, value: 'GF10000001'),
-            _SummaryCell(label: loc.provider, value: 'Golden Feather ELD', flex: 2),
+            _SummaryCell(
+                label: loc.provider, value: 'Golden Feather ELD', flex: 2),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 5: المؤشرات
@@ -407,11 +435,19 @@ class _InspectionSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           // السطر 7: الناقل
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.trailers, value: dashboard.trailerId ?? '-'),
-            _SummaryCell(label: loc.shippingDocuments, value: dashboard.shippingDocuments ?? '-'),
-            _SummaryCell(label: loc.carrier, value: 'Golden Feather Transport', flex: 2),
-            _SummaryCell(label: loc.mainOffice, value: '123 Main St, Riyadh', flex: 2),
-            _SummaryCell(label: loc.homeTerminal, value: '456 Terminal Rd, Dammam', flex: 2),
+            _SummaryCell(
+                label: loc.trailers, value: dashboard.trailerId ?? '-'),
+            _SummaryCell(
+                label: loc.shippingDocuments,
+                value: dashboard.shippingDocuments ?? '-'),
+            _SummaryCell(
+                label: loc.carrier, value: 'Golden Feather Transport', flex: 2),
+            _SummaryCell(
+                label: loc.mainOffice, value: '123 Main St, Riyadh', flex: 2),
+            _SummaryCell(
+                label: loc.homeTerminal,
+                value: '456 Terminal Rd, Dammam',
+                flex: 2),
           ]),
         ],
       ),
@@ -506,34 +542,54 @@ class _AuditTrail extends ConsumerWidget {
             data: (audits) {
               if (audits.isEmpty) {
                 return Text(context.loc.noManualModifications,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant));
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant));
               }
               return Column(
-                children: audits.map((audit) => Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(audit.timestamp.toString().substring(0, 16),
-                              style: const TextStyle(fontWeight: AppTypography.semiBold, fontSize: 12)),
-                          Text(context.loc.auditStatusChange(audit.oldStatus ?? "New", audit.newStatus),
-                              style: const TextStyle(color: AppColors.primaryBlue, fontWeight: AppTypography.bold, fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(context.loc.auditReason(audit.reason), style: const TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                )).toList(),
+                children: audits
+                    .map((audit) => Container(
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: Theme.of(context).dividerColor),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                      audit.timestamp
+                                          .toString()
+                                          .substring(0, 16),
+                                      style: const TextStyle(
+                                          fontWeight: AppTypography.semiBold,
+                                          fontSize: 12)),
+                                  Text(
+                                      context.loc.auditStatusChange(
+                                          audit.oldStatus ?? "New",
+                                          audit.newStatus),
+                                      style: const TextStyle(
+                                          color: AppColors.primaryBlue,
+                                          fontWeight: AppTypography.bold,
+                                          fontSize: 12)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(context.loc.auditReason(audit.reason),
+                                  style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               );
             },
             loading: () => const CircularProgressIndicator(),

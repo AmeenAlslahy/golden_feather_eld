@@ -9,7 +9,8 @@ import 'endpoints/eld_server_endpoints.dart';
 import '../services/local_storage_service.dart' as ls;
 
 // Re-export apiClientProvider so files only need to import core_providers.dart
-export 'network_providers.dart' show apiClientProvider, traccarNativeClientProvider;
+export 'network_providers.dart'
+    show apiClientProvider, traccarNativeClientProvider;
 
 final goldenFeatherEldLocalStorageProvider = ls.localStorageProvider;
 
@@ -38,20 +39,20 @@ final serverUrlProvider = StateProvider<String>((ref) {
 final backendTypeProvider = Provider<String>((ref) {
   final storage = ref.watch(goldenFeatherEldLocalStorageProvider);
   final serverUrl = ref.watch(serverUrlProvider);
-  
-  if (serverUrl.contains('/api/v1/tracker/traccar') || 
+
+  if (serverUrl.contains('/api/v1/tracker/traccar') ||
       serverUrl.contains('api.goldenfeather.com')) {
     return 'eld';
   } else if (serverUrl.contains('traccar.org') || serverUrl.contains('demo')) {
     return 'traccar';
   }
-  
+
   return storage.backendType.isNotEmpty ? storage.backendType : 'traccar';
 });
 
 final endpointsProvider = Provider<ApiEndpoints>((ref) {
   final backendType = ref.watch(backendTypeProvider);
-  
+
   if (backendType == 'eld') {
     return EldServerEndpoints();
   }
@@ -61,10 +62,10 @@ final endpointsProvider = Provider<ApiEndpoints>((ref) {
 final rawDioProvider = Provider<Dio>((ref) {
   final config = ref.watch(apiConfigProvider);
   final serverUrl = ref.watch(serverUrlProvider);
-  
+
   final effectiveUrl = serverUrl.isNotEmpty ? serverUrl : config.baseUrl;
-  final baseUrl = effectiveUrl.endsWith('/') 
-      ? effectiveUrl.substring(0, effectiveUrl.length - 1) 
+  final baseUrl = effectiveUrl.endsWith('/')
+      ? effectiveUrl.substring(0, effectiveUrl.length - 1)
       : effectiveUrl;
 
   return Dio(BaseOptions(

@@ -36,7 +36,8 @@ class BatteryOptimizationService {
 }
 
 /// مزود خدمة البطارية
-final batteryOptimizationServiceProvider = Provider<BatteryOptimizationService>((ref) {
+final batteryOptimizationServiceProvider =
+    Provider<BatteryOptimizationService>((ref) {
   return BatteryOptimizationService();
 });
 
@@ -47,7 +48,8 @@ class BatteryOptimizationDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
-      icon: const Icon(Icons.battery_alert, color: AppColors.warningYellow, size: 48),
+      icon: const Icon(Icons.battery_alert,
+          color: AppColors.warningYellow, size: 48),
       title: const Text('تحسين البطارية'),
       content: const Text(
         'لضمان تتبع موثوق للمركبة، يرجى تعطيل تحسين البطارية لهذا التطبيق.\n\n'
@@ -61,7 +63,9 @@ class BatteryOptimizationDialog extends ConsumerWidget {
         FilledButton(
           onPressed: () {
             Navigator.pop(context, true);
-            ref.read(batteryOptimizationServiceProvider).requestDisableBatteryOptimization();
+            ref
+                .read(batteryOptimizationServiceProvider)
+                .requestDisableBatteryOptimization();
           },
           child: const Text('فتح الإعدادات'),
         ),
@@ -71,7 +75,8 @@ class BatteryOptimizationDialog extends ConsumerWidget {
 }
 
 /// دالة مساعدة لإظهار الحوار عند بدء التتبع
-Future<bool> showBatteryOptimizationDialogIfNeeded(BuildContext context, WidgetRef ref) async {
+Future<bool> showBatteryOptimizationDialogIfNeeded(
+    BuildContext context, WidgetRef ref) async {
   final service = ref.read(batteryOptimizationServiceProvider);
   final isEnabled = await service.isBatteryOptimizationEnabled();
 

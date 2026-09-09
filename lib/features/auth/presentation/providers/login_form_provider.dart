@@ -22,7 +22,8 @@ class LoginFormState {
 }
 
 /// مزود حالة نموذج تسجيل الدخول
-final loginFormProvider = StateNotifierProvider<LoginFormNotifier, LoginFormState>((ref) {
+final loginFormProvider =
+    StateNotifierProvider<LoginFormNotifier, LoginFormState>((ref) {
   return LoginFormNotifier();
 });
 
@@ -37,6 +38,3 @@ class LoginFormNotifier extends StateNotifier<LoginFormState> {
     state = state.copyWith(showAdvanced: !state.showAdvanced);
   }
 }
-
-
-

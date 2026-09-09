@@ -15,7 +15,7 @@ class StatusColorHelper {
         return AppColors.warningYellow;
       case 'YM':
       case 'PC':
-        return AppColors.primaryBlue; 
+        return AppColors.primaryBlue;
       default:
         return AppColors.textSecondary;
     }

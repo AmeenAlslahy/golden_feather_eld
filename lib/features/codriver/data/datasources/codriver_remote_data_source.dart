@@ -19,7 +19,7 @@ class CoDriverRemoteDataSourceImpl implements CoDriverRemoteDataSource {
   Future<List<Map<String, dynamic>>> getAvailableDrivers() async {
     try {
       final response = await apiClient.get<List<dynamic>>(endpoints.drivers);
-      
+
       if (response.status && response.data != null) {
         return List<Map<String, dynamic>>.from(response.data!);
       } else {

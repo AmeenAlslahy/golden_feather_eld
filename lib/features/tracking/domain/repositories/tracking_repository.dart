@@ -34,6 +34,3 @@ abstract class TrackingRepository {
   /// مجرى المواقع المباشر
   Stream<LocationEntity> get locationStream;
 }
-
-
-

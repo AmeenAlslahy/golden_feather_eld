@@ -127,7 +127,9 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  ...DutyStatus.values.where((s) => s != DutyStatus.driving).map((status) {
+                  ...DutyStatus.values
+                      .where((s) => s != DutyStatus.driving)
+                      .map((status) {
                     final isLast = status == DutyStatus.values.last;
                     // If moving, we can't select other statuses.
                     // To keep UI responsive, we disable tiles if isMoving is true and it's not the current status.

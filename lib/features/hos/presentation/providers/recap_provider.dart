@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../../../logs/data/repositories/log_repository_impl.dart';
 import '../../domain/entities/recap_data.dart';
 
@@ -18,7 +17,7 @@ final getRecapUseCaseProvider = Provider<GetRecapUseCase>((ref) {
 final recapProvider = FutureProvider<RecapData>((ref) async {
   // Add keepAlive to cache the recap calculation unless invalidated
   ref.keepAlive();
-  
+
   final getRecapUseCase = ref.watch(getRecapUseCaseProvider);
   final engineState = ref.watch(hosStatusProvider);
   final config = ref.watch(hosConfigurationProvider);

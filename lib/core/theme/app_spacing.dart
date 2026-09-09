@@ -16,5 +16,3 @@ class AppSpacing {
   static const double dividerHeight = 1.0; // سمك الفاصل
   static const double iconSize = 24.0;
 }
-
-

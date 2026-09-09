@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:golden_feather_eld/core/network/endpoints/traccar_endpoints.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:golden_feather_eld/core/error/exception.dart';
+import 'package:golden_feather_eld/core/network/api_client.dart';
+import 'package:golden_feather_eld/core/network/api_config.dart';
 
 class FakeDioAdapter implements HttpClientAdapter {
   int statusCode = 200;
@@ -36,12 +38,14 @@ class FakeDioAdapter implements HttpClientAdapter {
 void main() {
   late Dio dio;
   late FakeDioAdapter fakeAdapter;
+  late ApiClient apiClient;
   late AuthRemoteDataSourceImpl dataSource;
 
   setUp(() {
     fakeAdapter = FakeDioAdapter();
     dio = Dio()..httpClientAdapter = fakeAdapter;
-    dataSource = AuthRemoteDataSourceImpl(dio, TraccarEndpoints());
+    apiClient = ApiClient(config: ApiConfig.fromEnvironment(), dio: dio);
+    dataSource = AuthRemoteDataSourceImpl(apiClient, TraccarEndpoints());
   });
 
   group('AuthRemoteDataSource - Login', () {
@@ -50,7 +54,9 @@ void main() {
     const password = 'password123';
     const expectedOrigin = 'https://traccar.invalid:5055';
 
-    test('should return AuthSession when login is successful and JSESSIONID is present', () async {
+    test(
+        'should return AuthSessionDto when login is successful and JSESSIONID is present',
+        () async {
       fakeAdapter.statusCode = 200;
       fakeAdapter.responseData = {'id': 1, 'name': 'Test User'};
       fakeAdapter.headers = {
@@ -58,32 +64,50 @@ void main() {
         'content-type': ['application/json'],
       };
 
-      final result = await dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar');
+      final result = await dataSource.login(
+          email: email,
+          password: password,
+          serverUrl: serverUrl,
+          backendType: 'traccar');
 
       expect(result.serverOrigin, expectedOrigin);
       expect(result.sessionCredential, 'node01fakecookieabc');
-      expect(result.userMetadata['name'], 'Test User');
+      expect(result.userModel.fullName, 'Test User');
     });
 
     test('should throw ServerException when status is 401', () async {
       fakeAdapter.statusCode = 401;
       fakeAdapter.responseData = {};
-      fakeAdapter.headers = {'content-type': ['application/json']};
+      fakeAdapter.headers = {
+        'content-type': ['application/json']
+      };
 
       expect(
-        () => dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar'),
-        throwsA(isA<ServerException>().having((e) => e.statusCode, 'statusCode', 401)),
+        () => dataSource.login(
+            email: email,
+            password: password,
+            serverUrl: serverUrl,
+            backendType: 'traccar'),
+        throwsA(isA<ServerException>()
+            .having((e) => e.statusCode, 'statusCode', 401)),
       );
     });
 
     test('should throw ServerException when Set-Cookie is missing', () async {
       fakeAdapter.statusCode = 200;
       fakeAdapter.responseData = {'id': 1};
-      fakeAdapter.headers = {'content-type': ['application/json']};
+      fakeAdapter.headers = {
+        'content-type': ['application/json']
+      };
 
       expect(
-        () => dataSource.login(email: email, password: password, serverUrl: serverUrl, backendType: 'traccar'),
-        throwsA(isA<ServerException>().having((e) => e.message, 'message', 'Missing session credential from server')),
+        () => dataSource.login(
+            email: email,
+            password: password,
+            serverUrl: serverUrl,
+            backendType: 'traccar'),
+        throwsA(isA<ServerException>().having((e) => e.message, 'message',
+            'Missing session credential from server')),
       );
     });
   });

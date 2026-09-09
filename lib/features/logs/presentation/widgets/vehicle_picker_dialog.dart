@@ -31,11 +31,11 @@ class VehiclePickerDialog extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final vehicle = vehicles[index];
 
-
                   return RadioListTile<String>(
                     title: Text(vehicle.displayName),
                     subtitle: vehicle.vin != null
-                        ? Text('${context.loc.vin}: ${vehicle.vin!.substring(vehicle.vin!.length - 8)}',
+                        ? Text(
+                            '${context.loc.vin}: ${vehicle.vin!.substring(vehicle.vin!.length - 8)}',
                             style: const TextStyle(fontSize: 12))
                         : null,
                     value: vehicle.id,

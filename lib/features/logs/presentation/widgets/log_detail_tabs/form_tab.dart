@@ -94,7 +94,8 @@ class FormTab extends ConsumerWidget {
               // Check if form is complete (e.g. at least driver and vehicle are present)
               final isComplete = dashboard.vehicleId.isNotEmpty;
 
-              final updatedLog = selectedLog.copyWith(isFormComplete: isComplete);
+              final updatedLog =
+                  selectedLog.copyWith(isFormComplete: isComplete);
               ref.read(logsProvider.notifier).updateLog(updatedLog);
 
               if (context.mounted) {
@@ -116,7 +117,9 @@ class FormTab extends ConsumerWidget {
             ),
             child: Text(
               context.loc.saveButton,
-              style: AppTextStyles(context).buttonText.copyWith(color: AppColors.surface),
+              style: AppTextStyles(context)
+                  .buttonText
+                  .copyWith(color: AppColors.surface),
             ),
           ),
         ],
@@ -124,7 +127,8 @@ class FormTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildFormRow(BuildContext context, String title, String value, {VoidCallback? onEdit}) {
+  Widget _buildFormRow(BuildContext context, String title, String value,
+      {VoidCallback? onEdit}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(

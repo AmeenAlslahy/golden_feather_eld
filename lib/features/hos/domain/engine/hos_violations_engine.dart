@@ -13,11 +13,12 @@ class HosViolationsEngine {
   final HosLocalDataSource _localDb;
   final HosConfiguration _config;
   final TrustedTimeProvider _timeProvider;
-  
+
   final List<HosViolation> _violations = [];
   Timer? _timer;
 
-  HosViolationsEngine(this._tracker, this._localDb, this._config, this._timeProvider) {
+  HosViolationsEngine(
+      this._tracker, this._localDb, this._config, this._timeProvider) {
     _startMonitoring();
   }
 
@@ -34,8 +35,8 @@ class HosViolationsEngine {
   void _evaluateCurrentState() {
     final timeResult = _timeProvider.currentTime;
     if (timeResult is! TrustedTimeAvailable) {
-       // Cannot reliably check violations if time is unavailable
-       return;
+      // Cannot reliably check violations if time is unavailable
+      return;
     }
     final now = timeResult.utc;
 
@@ -43,8 +44,10 @@ class HosViolationsEngine {
     final weekStats = _tracker.getWeekStats();
 
     final drivingHoursToday = todayStats['driving'] ?? 0.0;
-    final workHoursToday = (todayStats['driving'] ?? 0.0) + (todayStats['on_duty'] ?? 0.0);
-    final restHoursToday = (todayStats['off_duty'] ?? 0.0) + (todayStats['sleeper'] ?? 0.0);
+    final workHoursToday =
+        (todayStats['driving'] ?? 0.0) + (todayStats['on_duty'] ?? 0.0);
+    final restHoursToday =
+        (todayStats['off_duty'] ?? 0.0) + (todayStats['sleeper'] ?? 0.0);
     final drivingHoursWeek = weekStats['driving'] ?? 0.0;
 
     final consecutiveDays = _calculateConsecutiveDays();
@@ -67,7 +70,8 @@ class HosViolationsEngine {
     final uniqueDays = <String>{};
     for (final p in _tracker.periods) {
       if (p.status == 'driving' || p.status == 'on_duty') {
-        uniqueDays.add('${p.startTime.year}-${p.startTime.month}-${p.startTime.day}');
+        uniqueDays
+            .add('${p.startTime.year}-${p.startTime.month}-${p.startTime.day}');
       }
     }
     return uniqueDays.length;
@@ -76,7 +80,8 @@ class HosViolationsEngine {
   bool _has30MinBreak(DateTime now) {
     final todayStart = DateTime(now.year, now.month, now.day);
     for (final p in _tracker.periods) {
-      if (p.startTime.isAfter(todayStart) && (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
+      if (p.startTime.isAfter(todayStart) &&
+          (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
         if (p.duration.inMinutes >= 30) {
           return true;
         }
@@ -88,7 +93,8 @@ class HosViolationsEngine {
   bool _has34HourRestart(DateTime now) {
     final weekStart = now.subtract(const Duration(days: 7));
     for (final p in _tracker.periods) {
-      if (p.startTime.isAfter(weekStart) && (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
+      if (p.startTime.isAfter(weekStart) &&
+          (p.status == 'off_duty' || p.status == 'sleeper_berth')) {
         if (p.duration.inHours >= 34) {
           return true;
         }
@@ -114,7 +120,8 @@ class HosViolationsEngine {
       _addViolation(
         type: HosViolationType.dailyDrivingExceeded,
         level: ViolationLevel.high,
-        message: 'Daily driving limit exceeded: ${drivingHoursToday.toStringAsFixed(1)}h / 11h',
+        message:
+            'Daily driving limit exceeded: ${drivingHoursToday.toStringAsFixed(1)}h / 11h',
         now: now,
         details: {'actual': drivingHoursToday, 'limit': 11},
       );
@@ -124,7 +131,8 @@ class HosViolationsEngine {
       _addViolation(
         type: HosViolationType.dailyWorkExceeded,
         level: ViolationLevel.high,
-        message: 'Daily work limit exceeded: ${workHoursToday.toStringAsFixed(1)}h / 14h',
+        message:
+            'Daily work limit exceeded: ${workHoursToday.toStringAsFixed(1)}h / 14h',
         now: now,
         details: {'actual': workHoursToday, 'limit': 14},
       );
@@ -134,7 +142,8 @@ class HosViolationsEngine {
       _addViolation(
         type: HosViolationType.dailyRestInsufficient,
         level: ViolationLevel.medium,
-        message: 'Insufficient daily rest: ${restHoursToday.toStringAsFixed(1)}h / 10h',
+        message:
+            'Insufficient daily rest: ${restHoursToday.toStringAsFixed(1)}h / 10h',
         now: now,
         details: {'actual': restHoursToday, 'required': 10},
       );
@@ -144,7 +153,8 @@ class HosViolationsEngine {
       _addViolation(
         type: HosViolationType.weeklyDrivingExceeded,
         level: ViolationLevel.critical,
-        message: 'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${_config.cycleLimitHours}h',
+        message:
+            'Weekly driving limit exceeded: ${drivingHoursWeek.toStringAsFixed(1)}h / ${_config.cycleLimitHours}h',
         now: now,
         details: {'actual': drivingHoursWeek, 'limit': _config.cycleLimitHours},
       );
@@ -164,7 +174,8 @@ class HosViolationsEngine {
       _addViolation(
         type: HosViolationType.consecutiveDaysExceeded,
         level: ViolationLevel.medium,
-        message: 'Consecutive work days exceeded: $consecutiveDays days / 7 days',
+        message:
+            'Consecutive work days exceeded: $consecutiveDays days / 7 days',
         now: now,
         details: {'actual': consecutiveDays, 'limit': 7},
       );
@@ -191,7 +202,8 @@ class HosViolationsEngine {
     Map<String, dynamic>? details,
   }) {
     // Check if we already added this violation recently to prevent spamming DB
-    final isDuplicate = _violations.any((v) => v.type == type && now.difference(v.timestamp).inMinutes < 60);
+    final isDuplicate = _violations.any(
+        (v) => v.type == type && now.difference(v.timestamp).inMinutes < 60);
     if (isDuplicate) return;
 
     final violation = HosViolation(
@@ -201,10 +213,10 @@ class HosViolationsEngine {
       timestamp: now,
       details: details,
     );
-    
+
     _violations.add(violation);
     AppLogger.warning('⚠️ HOS Violation: $message');
-    
+
     // حفظ في قاعدة البيانات المحلية
     _localDb.saveViolation(violation.toJson()).then((success) {
       if (success) {

@@ -11,7 +11,7 @@ class LocationDisplayWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final loc = context.loc;
-    
+
     final trackingState = ref.watch(trackingStateProvider);
     final locString = trackingState.currentLocation != null
         ? '${trackingState.currentLocation!.latitude.toStringAsFixed(4)}, ${trackingState.currentLocation!.longitude.toStringAsFixed(4)}'

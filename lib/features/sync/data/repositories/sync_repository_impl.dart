@@ -26,7 +26,8 @@ class SyncRepositoryImpl implements SyncRepository {
         _dispatcher = dispatcher;
 
   @override
-  Future<Either<Failure, bool>> enqueue(SyncEventType type, Map<String, dynamic> data) async {
+  Future<Either<Failure, bool>> enqueue(
+      SyncEventType type, Map<String, dynamic> data) async {
     try {
       final items = await _localDataSource.getPendingItems();
       final newItem = SyncItem(
@@ -87,7 +88,8 @@ class SyncRepositoryImpl implements SyncRepository {
         await _localDataSource.saveLastSyncTime(DateTime.now());
       }
 
-      AppLogger.info('📊 Queue processed: $successCount succeeded, ${updatedItems.length} pending');
+      AppLogger.info(
+          '📊 Queue processed: $successCount succeeded, ${updatedItems.length} pending');
       return Right(successCount);
     } catch (e) {
       AppLogger.error('Failed to process queue', e);

@@ -32,7 +32,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     String entityName,
   ) async {
     try {
-      final dateStr = AppDateUtils.extractDateStr(data[timestampKey] as String?);
+      final dateStr =
+          AppDateUtils.extractDateStr(data[timestampKey] as String?);
       final currentList = _getListFromBox(box, dateStr);
       currentList.add(data);
 
@@ -74,16 +75,20 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<List<LogEvent>> getEvents(DateTime date) async {
     final data = await _getFromBox(_eventsBox, date, 'events');
-    return data.map((e) => LogEvent(
-          id: e['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          status: e['status'] as String,
-          statusArabic: e['statusArabic'] as String? ?? e['status'] as String,
-          startTime: DateTime.parse(e['startTime'] as String),
-          duration: Duration(seconds: e['durationSeconds'] as int? ?? 0),
-          location: e['location'] as String? ?? 'Unknown',
-          odometer: (e['odometer'] as num?)?.toDouble(),
-          engineHours: (e['engineHours'] as num?)?.toDouble(),
-        )).toList();
+    return data
+        .map((e) => LogEvent(
+              id: e['id'] as String? ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
+              status: e['status'] as String,
+              statusArabic:
+                  e['statusArabic'] as String? ?? e['status'] as String,
+              startTime: DateTime.parse(e['startTime'] as String),
+              duration: Duration(seconds: e['durationSeconds'] as int? ?? 0),
+              location: e['location'] as String? ?? 'Unknown',
+              odometer: (e['odometer'] as num?)?.toDouble(),
+              engineHours: (e['engineHours'] as num?)?.toDouble(),
+            ))
+        .toList();
   }
 
   @override
@@ -112,17 +117,21 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<List<DutyPeriod>> getPeriods(DateTime date) async {
     final data = await _getFromBox(_periodsBox, date, 'periods');
-    return data.map((e) => DutyPeriod(
-          status: e['status'] as String? ?? 'off_duty',
-          startTime: DateTime.parse(e['startTime'] as String),
-          endTime: e['endTime'] != null ? DateTime.parse(e['endTime'] as String) : DateTime.now(),
-          startOdometer: (e['startOdometer'] as num?)?.toDouble(),
-          endOdometer: (e['endOdometer'] as num?)?.toDouble(),
-          startLat: (e['startLat'] as num?)?.toDouble(),
-          startLon: (e['startLon'] as num?)?.toDouble(),
-          endLat: (e['endLat'] as num?)?.toDouble(),
-          endLon: (e['endLon'] as num?)?.toDouble(),
-        )).toList();
+    return data
+        .map((e) => DutyPeriod(
+              status: e['status'] as String? ?? 'off_duty',
+              startTime: DateTime.parse(e['startTime'] as String),
+              endTime: e['endTime'] != null
+                  ? DateTime.parse(e['endTime'] as String)
+                  : DateTime.now(),
+              startOdometer: (e['startOdometer'] as num?)?.toDouble(),
+              endOdometer: (e['endOdometer'] as num?)?.toDouble(),
+              startLat: (e['startLat'] as num?)?.toDouble(),
+              startLon: (e['startLon'] as num?)?.toDouble(),
+              endLat: (e['endLat'] as num?)?.toDouble(),
+              endLon: (e['endLon'] as num?)?.toDouble(),
+            ))
+        .toList();
   }
 
   @override

@@ -1,4 +1,4 @@
-﻿import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,7 +18,7 @@ class HosPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hosEngineState = ref.watch(hosStatusProvider);
-    
+
     // Default fallback values if time is untrusted
     DutyStatus currentStatus = DutyStatus.offDuty;
     int remainingMinutes = 0;
@@ -42,7 +42,8 @@ class HosPage extends ConsumerWidget {
       }
 
       timeString = remainingMinutes.toHoursMinutes();
-      final maxMinutes = (currentStatus == DutyStatus.driving) ? (11 * 60) : (14 * 60);
+      final maxMinutes =
+          (currentStatus == DutyStatus.driving) ? (11 * 60) : (14 * 60);
       progress = remainingMinutes / maxMinutes;
     } else if (hosEngineState is HosEngineTimeUnavailable) {
       isUntrusted = true;
@@ -58,7 +59,6 @@ class HosPage extends ConsumerWidget {
               child: Column(
                 children: [
                   const DiagnosticsAlertCard(),
-
                   if (isUntrusted)
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -67,11 +67,15 @@ class HosPage extends ConsumerWidget {
                         children: [
                           Icon(Icons.warning, color: Colors.red),
                           SizedBox(width: 8),
-                          Expanded(child: Text('Trusted time is unavailable. HOS calculations suspended.', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
+                          Expanded(
+                              child: Text(
+                                  'Trusted time is unavailable. HOS calculations suspended.',
+                                  style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold))),
                         ],
                       ),
                     ),
-
                   Stack(
                     children: [
                       Positioned(
@@ -83,7 +87,9 @@ class HosPage extends ConsumerWidget {
                           elevation: 2,
                           child: InkWell(
                             onTap: () {
-                              ref.read(themeModeProvider.notifier).toggleTheme();
+                              ref
+                                  .read(themeModeProvider.notifier)
+                                  .toggleTheme();
                             },
                             customBorder: const CircleBorder(),
                             child: const Padding(
@@ -97,7 +103,6 @@ class HosPage extends ConsumerWidget {
                           ),
                         ),
                       ),
-
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 32, bottom: 24),
@@ -113,9 +118,7 @@ class HosPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-
-                  if (activeUpdate != null)
-                    HosTimerList(status: activeUpdate),
+                  if (activeUpdate != null) HosTimerList(status: activeUpdate),
                 ],
               ),
             ),

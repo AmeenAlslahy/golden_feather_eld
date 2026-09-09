@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../repositories/auth_repository.dart';
 import '../entities/value_objects/email.dart';
 import '../entities/value_objects/password.dart';
@@ -20,19 +20,19 @@ class RegisterUseCase {
     if (name.trim().isEmpty) {
       return Left(ValidationFailure(
         message: 'Name is required',
-        ));
+      ));
     }
 
     if (!email.isValid) {
       return Left(ValidationFailure(
         message: 'Invalid email format',
-        ));
+      ));
     }
 
     if (!password.isValid) {
       return Left(ValidationFailure(
         message: 'Invalid password',
-        ));
+      ));
     }
 
     // استدعاء المستودع

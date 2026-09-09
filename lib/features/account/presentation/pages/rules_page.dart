@@ -57,14 +57,15 @@ class RulesState {
 class RulesNotifier extends StateNotifier<RulesState> {
   final UserPreferencesStorageService _prefs;
 
-  RulesNotifier(this._prefs) : super(RulesState(
-    cycleRule: _prefs.cycleRule,
-    cargoType: _prefs.cargoType,
-    enable30MinBreak: _prefs.enable30MinBreak,
-    enableShortHaul16Hour: _prefs.enableShortHaul16Hour,
-    enablePersonalConveyance: _prefs.enablePersonalConveyance,
-    enableYardMoves: _prefs.enableYardMoves,
-  ));
+  RulesNotifier(this._prefs)
+      : super(RulesState(
+          cycleRule: _prefs.cycleRule,
+          cargoType: _prefs.cargoType,
+          enable30MinBreak: _prefs.enable30MinBreak,
+          enableShortHaul16Hour: _prefs.enableShortHaul16Hour,
+          enablePersonalConveyance: _prefs.enablePersonalConveyance,
+          enableYardMoves: _prefs.enableYardMoves,
+        ));
 
   void setCycleRule(String rule) => state = state.copyWith(cycleRule: rule);
   void setCargoType(String type) => state = state.copyWith(cargoType: type);
@@ -243,7 +244,6 @@ class RulesPage extends ConsumerWidget {
             AppButton(
               label: loc.saveButton.toUpperCase(),
               onPressed: () {
-
                 ref.read(rulesProvider.notifier).save();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

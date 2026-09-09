@@ -73,9 +73,12 @@ class HosRulesEngine {
     required double currentSpeedKmh,
     required double speedThresholdKmh,
   }) {
-    if (currentStatus == DutyStatus.driving && newStatus != DutyStatus.driving) {
+    if (currentStatus == DutyStatus.driving &&
+        newStatus != DutyStatus.driving) {
       if (currentSpeedKmh >= speedThresholdKmh) {
-        return Left(ServerFailure(message: 'Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)'));
+        return Left(ServerFailure(
+            message:
+                'Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)'));
       }
     }
     return const Right(null);
@@ -92,21 +95,24 @@ class HosRulesEngine {
     final alerts = <HosAlert>[];
 
     // تنبيهات القيادة
-    if (limits.remainingDriveMinutes <= 15 && limits.remainingDriveMinutes > 0) {
+    if (limits.remainingDriveMinutes <= 15 &&
+        limits.remainingDriveMinutes > 0) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
         message: '⚠️ 15 دقيقة متبقية للقيادة',
         severity: AlertSeverity.critical,
         remainingMinutes: limits.remainingDriveMinutes,
       ));
-    } else if (limits.remainingDriveMinutes <= 30 && limits.remainingDriveMinutes > 15) {
+    } else if (limits.remainingDriveMinutes <= 30 &&
+        limits.remainingDriveMinutes > 15) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
         message: '⚠️ 30 دقيقة متبقية للقيادة',
         severity: AlertSeverity.warning,
         remainingMinutes: limits.remainingDriveMinutes,
       ));
-    } else if (limits.remainingDriveMinutes <= 60 && limits.remainingDriveMinutes > 30) {
+    } else if (limits.remainingDriveMinutes <= 60 &&
+        limits.remainingDriveMinutes > 30) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
         message: 'تنبيه: 60 دقيقة متبقية للقيادة',
@@ -126,7 +132,8 @@ class HosRulesEngine {
     }
 
     // تنبيه نافذة العمل
-    if (limits.remainingShiftMinutes <= 60 && limits.remainingShiftMinutes > 0) {
+    if (limits.remainingShiftMinutes <= 60 &&
+        limits.remainingShiftMinutes > 0) {
       alerts.add(HosAlert(
         type: HosAlertType.shiftExpiring,
         message: 'نافذة العمل على وشك الانتهاء',
@@ -139,13 +146,15 @@ class HosRulesEngine {
   }
 
   /// التحقق من الانتهاكات
-  List<HosViolation> _checkViolations(HosLimits limits, TrustedTimeResult timeResult) {
+  List<HosViolation> _checkViolations(
+      HosLimits limits, TrustedTimeResult timeResult) {
     final violations = <HosViolation>[];
-    
+
     // We can only stamp violations if time is available.
     // If it's unavailable, the engine handles it upstream via HosEngineTimeUnavailable,
     // but processEvent covers this already.
-    final timestamp = timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now();
+    final timestamp =
+        timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now();
 
     if (limits.remainingDriveMinutes <= 0) {
       violations.add(HosViolation(
@@ -188,7 +197,7 @@ class HosRulesEngine {
     if (limitsResult is CalculationTimeUnavailable) {
       return HosEngineTimeUnavailable(limitsResult.state);
     }
-    
+
     final limits = (limitsResult as CalculationSuccess).limits;
     final timeResult = _timeProvider.currentTime;
     final violations = _checkViolations(limits, timeResult);

@@ -59,11 +59,12 @@ class VehicleRepositoryImpl implements VehicleRepository {
       if (savedId == null) {
         return const Right(null);
       }
-      
+
       // If we have an ID, we should get the full list to return the matching vehicle
       final vehiclesResult = await getVehicles();
       final Either<Failure, Vehicle?> result = vehiclesResult.match(
-        (failure) => const Right(null), // If we can't fetch, we can't get the full object. A better offline approach would cache the list.
+        (failure) => const Right(
+            null), // If we can't fetch, we can't get the full object. A better offline approach would cache the list.
         (vehicles) {
           try {
             final vehicle = vehicles.firstWhere((v) => v.id == savedId);

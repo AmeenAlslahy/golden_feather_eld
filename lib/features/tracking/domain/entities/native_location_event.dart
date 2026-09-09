@@ -1,18 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-enum LocationQualityStatus {
-  valid,
-  suspicious,
-  invalid,
-  stale,
-  outOfOrder
-}
+enum LocationQualityStatus { valid, suspicious, invalid, stale, outOfOrder }
 
-enum LocationSource {
-  localNative,
-  remoteTraccar,
-  uiFallback
-}
+enum LocationSource { localNative, remoteTraccar, uiFallback }
 
 class NativeLocationEvent extends Equatable {
   final double latitude;

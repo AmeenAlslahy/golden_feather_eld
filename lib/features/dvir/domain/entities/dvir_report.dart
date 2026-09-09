@@ -83,7 +83,7 @@ class DvirReport extends Equatable {
   final String? signature;
   final VehicleCondition condition;
   final bool isSubmitted;
-  
+
   // New fields for simplified UI
   final String? location;
   final String? companyName;
@@ -155,8 +155,22 @@ class DvirReport extends Equatable {
 
   @override
   List<Object?> get props => [
-        id, type, date, driverName, vehicleId, trailerId,
-        odometer, items, dtcCodes, notes, signature, condition, isSubmitted,
-        location, companyName, vehicleDefects, trailerDefects,
+        id,
+        type,
+        date,
+        driverName,
+        vehicleId,
+        trailerId,
+        odometer,
+        items,
+        dtcCodes,
+        notes,
+        signature,
+        condition,
+        isSubmitted,
+        location,
+        companyName,
+        vehicleDefects,
+        trailerDefects,
       ];
 }

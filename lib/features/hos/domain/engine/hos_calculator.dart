@@ -14,8 +14,16 @@ class CalculationTimeUnavailable extends CalculationResult {
 }
 
 sealed class ShiftLimitResult {}
-class ShiftLimitSuccess extends ShiftLimitResult { final int remainingMinutes; ShiftLimitSuccess(this.remainingMinutes); }
-class ShiftLimitUnavailable extends ShiftLimitResult { final TrustedTimeState state; ShiftLimitUnavailable(this.state); }
+
+class ShiftLimitSuccess extends ShiftLimitResult {
+  final int remainingMinutes;
+  ShiftLimitSuccess(this.remainingMinutes);
+}
+
+class ShiftLimitUnavailable extends ShiftLimitResult {
+  final TrustedTimeState state;
+  ShiftLimitUnavailable(this.state);
+}
 
 /// حاسب ساعات الخدمة (HOS Calculator)
 class HosCalculator {
@@ -35,7 +43,7 @@ class HosCalculator {
     if (timeResult is TrustedTimeUnavailable) {
       return CalculationTimeUnavailable(timeResult.state);
     }
-    
+
     final now = (timeResult as TrustedTimeAvailable).utc;
 
     // 1. حد القيادة (11 ساعة) - Needs nothing (monotonic pure input)
@@ -70,7 +78,8 @@ class HosCalculator {
   /// Needs: nothing (monotonic pure input)
   int calculateDriveLimit(double drivingHours) {
     final drivenMinutes = (drivingHours * 60).toInt();
-    return (config.drivingLimitMinutes - drivenMinutes).clamp(0, config.drivingLimitMinutes);
+    return (config.drivingLimitMinutes - drivenMinutes)
+        .clamp(0, config.drivingLimitMinutes);
   }
 
   /// حساب نافذة العمل فقط
@@ -82,7 +91,8 @@ class HosCalculator {
     }
     final now = (timeResult as TrustedTimeAvailable).utc;
     final elapsed = now.difference(shiftStartTime.toUtc()).inMinutes;
-    return ShiftLimitSuccess((config.shiftLimitMinutes - elapsed).clamp(0, config.shiftLimitMinutes));
+    return ShiftLimitSuccess((config.shiftLimitMinutes - elapsed)
+        .clamp(0, config.shiftLimitMinutes));
   }
 
   /// حساب الأيام المتتالية

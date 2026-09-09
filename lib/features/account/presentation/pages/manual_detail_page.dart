@@ -9,7 +9,8 @@ class ManualDetailPage extends StatelessWidget {
   final String title;
   final List<ManualSection> content;
 
-  const ManualDetailPage({super.key, required this.title, required this.content});
+  const ManualDetailPage(
+      {super.key, required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +24,10 @@ class ManualDetailPage extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontSize: AppTypography.bodySize, fontWeight: AppTypography.bold, color: AppColors.surface),
+          style: const TextStyle(
+              fontSize: AppTypography.bodySize,
+              fontWeight: AppTypography.bold,
+              color: AppColors.surface),
         ),
       ),
       body: ListView.builder(
@@ -68,7 +72,8 @@ class ManualDetailPage extends StatelessWidget {
                             height: 28,
                             margin: const EdgeInsets.only(right: AppSpacing.sm),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                              color:
+                                  AppColors.primaryBlue.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -100,5 +105,6 @@ class ManualSection {
   final List<String> steps;
   final bool isNumbered;
 
-  const ManualSection({this.title, required this.steps, this.isNumbered = true});
+  const ManualSection(
+      {this.title, required this.steps, this.isNumbered = true});
 }

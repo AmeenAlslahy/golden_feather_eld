@@ -1,4 +1,4 @@
-﻿import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';
 import '../../../../features/hos/domain/engine/hos_models.dart';
 import '../../../../features/hos/domain/engine/hos_calculator.dart';
 import '../../../logs/domain/repositories/log_repository.dart';
@@ -30,16 +30,18 @@ class GetRecapUseCase {
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final periodsResult = results[6 - i];
-      
+
       double hoursWorked = 0.0;
-      
+
       periodsResult.match(
         (failure) {
-          AppLogger.error('Failed to fetch recap for $date: ${failure.message}');
+          AppLogger.error(
+              'Failed to fetch recap for $date: ${failure.message}');
         },
         (periods) {
           for (var period in periods) {
-            if (period.status == DutyStatus.driving.name || period.status == DutyStatus.onDutyNotDriving.name) {
+            if (period.status == DutyStatus.driving.name ||
+                period.status == DutyStatus.onDutyNotDriving.name) {
               hoursWorked += period.duration.inMinutes / 60.0;
             }
           }
@@ -60,12 +62,14 @@ class GetRecapUseCase {
     final hoursWorkedToday = last7Days.last.hoursWorked;
 
     // Available today comes from the engine's limits
-    final availableToday = currentLimits.remainingCycleHours; 
+    final availableToday = currentLimits.remainingCycleHours;
 
     // Available tomorrow = CycleLimit - (total of last 6 days) - today - tomorrow's worked (0 so far)
     final oldestDayHours = last7Days.first.hoursWorked;
-    
-    final hoursAvailableTomorrow = (cycleLimitHours - (totalLast7Days - oldestDayHours)).clamp(0.0, cycleLimitHours);
+
+    final hoursAvailableTomorrow =
+        (cycleLimitHours - (totalLast7Days - oldestDayHours))
+            .clamp(0.0, cycleLimitHours);
 
     return RecapData(
       last7Days: last7Days,

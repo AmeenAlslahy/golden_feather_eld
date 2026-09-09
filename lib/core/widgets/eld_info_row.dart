@@ -56,5 +56,3 @@ class EldInfoRow extends StatelessWidget {
     );
   }
 }
-
-

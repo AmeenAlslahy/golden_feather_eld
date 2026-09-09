@@ -41,7 +41,8 @@ class LogRepositoryImpl implements LogRepository {
     if (_networkInfo.isConnected) {
       try {
         final driverId = int.tryParse(_storageService.deviceId) ?? 100;
-        final remoteLogs = await _remoteDataSource.getDutyStatusLogs(driverId, date);
+        final remoteLogs =
+            await _remoteDataSource.getDutyStatusLogs(driverId, date);
         if (remoteLogs.isNotEmpty) {
           // In a real scenario, we would merge these or update the local DB
           // For now, we prefer remote if available and not empty
@@ -51,7 +52,7 @@ class LogRepositoryImpl implements LogRepository {
         // Fallback to local on any error
       }
     }
-    
+
     return executeWithHandling(
       () => _localDataSource.getEvents(date),
       tag: 'LogRepositoryImpl.getEvents',

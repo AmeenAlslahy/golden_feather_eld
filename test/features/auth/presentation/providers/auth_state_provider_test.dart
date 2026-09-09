@@ -93,13 +93,71 @@ void main() {
 
     test('8. checkAuthStatus with valid session sets authenticated', () async {
       final notifier = container.read(authStateProvider.notifier);
-      await notifier.login(
-          username: 'admin@demo.com', password: 'admin123');
+      await notifier.login(username: 'admin@demo.com', password: 'admin123');
 
       await notifier.checkAuthStatus();
 
       final state = container.read(authStateProvider);
       expect(state.status, equals(AuthStatus.authenticated));
+    });
+    test('9. Concurrency: login B called before login A completes is ignored',
+        () async {
+      final notifier = container.read(authStateProvider.notifier);
+
+      // Fire first login without waiting
+      final futureA =
+          notifier.login(username: 'admin@demo.com', password: 'admin123');
+
+      // Fire second login immediately
+      final futureB =
+          notifier.login(username: 'other@demo.com', password: 'password123');
+
+      final resultA = await futureA;
+      final resultB = await futureB;
+
+      expect(resultA, isTrue); // A should succeed
+      expect(resultB,
+          isFalse); // B should be rejected immediately due to busy flag
+    });
+
+    test('10. TARGET BUG TEST: login A completes AFTER logout is called',
+        () async {
+      // This test documents a current flaw where logout doesn't increment operationId.
+      final notifier = container.read(authStateProvider.notifier);
+
+      // Start login
+      final loginFuture =
+          notifier.login(username: 'admin@demo.com', password: 'admin123');
+
+      // Immediately call logout (this sets state to unauthenticated)
+      await notifier.logout();
+
+      // Wait for login to finish
+      await loginFuture;
+
+      // Since logout doesn't use the generation counter or busy flag, the delayed login
+      // will overwrite the state to authenticated.
+      final state = container.read(authStateProvider);
+      expect(
+          state.status,
+          equals(AuthStatus
+              .authenticated)); // BUG: Should ideally be unauthenticated.
+    });
+
+    test('11. TARGET BUG TEST: checkAuthStatus concurrent with login',
+        () async {
+      final notifier = container.read(authStateProvider.notifier);
+
+      final checkFuture = notifier.checkAuthStatus();
+      final loginFuture =
+          notifier.login(username: 'admin@demo.com', password: 'admin123');
+
+      await Future.wait([checkFuture, loginFuture]);
+
+      // State is unpredictable depending on which finished last, but since checkAuthStatus
+      // doesn't use the lock, they run in parallel.
+      // We just ensure it doesn't crash for this characterization.
+      expect(container.read(authStateProvider).status, isNotNull);
     });
   });
 }

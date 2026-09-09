@@ -8,7 +8,8 @@ void main() {
         'TRACCAR_ENVIRONMENT': 'mock',
       });
       expect(AppEnvironmentConfig.current, AppEnvironment.mock);
-      expect(AppEnvironmentConfig.isValidTemporaryTraccarConfig, isTrue); // Not temporaryTraccar, so true
+      expect(AppEnvironmentConfig.isValidTemporaryTraccarConfig,
+          isTrue); // Not temporaryTraccar, so true
     });
 
     test('should parse temporaryTraccar environment correctly', () async {
@@ -21,13 +22,13 @@ void main() {
         'TRACCAR_DEVICE_UNIQUE_ID': '1234567890',
       });
       expect(AppEnvironmentConfig.current, AppEnvironment.temporaryTraccar);
-      
+
       expect(AppEnvironmentConfig.apiBaseUrl, 'https://test.traccar.com');
       expect(AppEnvironmentConfig.traccarUsername, 'testuser');
       expect(AppEnvironmentConfig.traccarPassword, 'testpass');
       expect(AppEnvironmentConfig.traccarDeviceId, '1');
       expect(AppEnvironmentConfig.traccarDeviceUniqueId, '1234567890');
-      
+
       expect(AppEnvironmentConfig.isValidTemporaryTraccarConfig, isTrue);
     });
 
@@ -47,4 +48,3 @@ void main() {
     });
   });
 }
-

@@ -29,15 +29,16 @@ class DvirMockData {
         vehicleId: '646',
         odometer: 124500.0,
         items: InspectionItem.values.map((item) {
-          final isDefective = item == InspectionItem.tires ||
-              item == InspectionItem.lights;
+          final isDefective =
+              item == InspectionItem.tires || item == InspectionItem.lights;
           return ItemInspectionResult(
             item: item,
             isDefective: isDefective,
             defectDescription: isDefective ? 'يحتاج صيانة' : null,
           );
         }).toList(),
-        notes: 'الإطار الخلفي الأيسر بحاجة لتغيير. المصباح الأمامي الأيمن خافت.',
+        notes:
+            'الإطار الخلفي الأيسر بحاجة لتغيير. المصباح الأمامي الأيمن خافت.',
         condition: VehicleCondition.needsRepair,
         isSubmitted: true,
       ),

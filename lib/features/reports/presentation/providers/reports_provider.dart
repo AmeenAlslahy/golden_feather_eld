@@ -21,7 +21,7 @@ class ReportsState {
 
   final Map<String, dynamic>? eldReport;
   final Map<String, dynamic>? hosReport;
-  
+
   // Standard Traccar Reports
   final List<dynamic>? standardSummary;
   final List<dynamic>? standardRoute;
@@ -71,37 +71,35 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     try {
       final repository = _ref.read(reportsRepositoryProvider);
       final backendType = _ref.read(backendTypeProvider);
-      
+
       final authState = _ref.read(authStateProvider);
       final driverId = int.tryParse(authState.user?.id ?? '100') ?? 100;
-      
+
       final vehicleState = _ref.read(vehicleProvider);
       final deviceIdStr = vehicleState.selectedVehicle?.id ?? '1';
       final deviceId = int.tryParse(deviceIdStr) ?? 1;
       final List<int> deviceIds = [deviceId];
-      
+
       final now = DateTime.now().toUtc();
       final from = DateTime.utc(now.year, now.month, now.day).toIso8601String();
       final to = now.toIso8601String();
 
       if (backendType == 'traccar') {
         // Fetch standard Traccar reports
-        final summaryResult = await repository.getSummaryReport(deviceIds, from, to);
-        final routeResult = await repository.getRouteReport(deviceIds, from, to);
-        
+        final summaryResult =
+            await repository.getSummaryReport(deviceIds, from, to);
+        final routeResult =
+            await repository.getRouteReport(deviceIds, from, to);
+
         List<dynamic>? summary;
         List<dynamic>? route;
-        
-        summaryResult.fold(
-          (failure) => throw Exception(failure.message), 
-          (data) => summary = data
-        );
-        
-        routeResult.fold(
-          (failure) => throw Exception(failure.message),
-          (data) => route = data
-        );
-        
+
+        summaryResult.fold((failure) => throw Exception(failure.message),
+            (data) => summary = data);
+
+        routeResult.fold((failure) => throw Exception(failure.message),
+            (data) => route = data);
+
         state = state.copyWith(
           standardSummary: summary,
           standardRoute: route,
@@ -115,15 +113,11 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
         Map<String, dynamic>? eldReport;
         Map<String, dynamic>? hosReport;
 
-        eldResult.fold(
-          (failure) => throw Exception(failure.message),
-          (data) => eldReport = data
-        );
+        eldResult.fold((failure) => throw Exception(failure.message),
+            (data) => eldReport = data);
 
-        hosResult.fold(
-          (failure) => throw Exception(failure.message),
-          (data) => hosReport = data
-        );
+        hosResult.fold((failure) => throw Exception(failure.message),
+            (data) => hosReport = data);
 
         state = state.copyWith(
           eldReport: eldReport,
@@ -139,14 +133,15 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     }
   }
 
-  Future<String?> exportReport(bool isEld, String format, {String? standardReportType}) async {
+  Future<String?> exportReport(bool isEld, String format,
+      {String? standardReportType}) async {
     try {
       final repository = _ref.read(reportsRepositoryProvider);
       final backendType = _ref.read(backendTypeProvider);
-      
+
       final authState = _ref.read(authStateProvider);
       final driverId = int.tryParse(authState.user?.id ?? '100') ?? 100;
-      
+
       final vehicleState = _ref.read(vehicleProvider);
       final deviceIdStr = vehicleState.selectedVehicle?.id ?? '1';
       final deviceId = int.tryParse(deviceIdStr) ?? 1;
@@ -157,7 +152,8 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
       final to = now.toIso8601String();
 
       if (backendType == 'traccar') {
-        final result = await repository.exportStandardReport(standardReportType ?? 'summary', deviceIds, from, to);
+        final result = await repository.exportStandardReport(
+            standardReportType ?? 'summary', deviceIds, from, to);
         final value = result.fold((l) => null, (r) => r);
         return value;
       } else {
@@ -189,6 +185,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
 }
 
 /// Reports Provider
-final reportsProvider = StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
+final reportsProvider =
+    StateNotifierProvider<ReportsNotifier, ReportsState>((ref) {
   return ReportsNotifier(ref);
 });

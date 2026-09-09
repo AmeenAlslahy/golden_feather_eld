@@ -1,16 +1,17 @@
 import 'package:equatable/equatable.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 
 /// يمثل جلسة اتصال آمنة ومصادق عليها مع خادم Traccar.
 /// هذا النموذج لا يحفظ أي كلمات مرور، ويقوم بتنقيح بيانات الاعتماد عند الطباعة للحماية.
 class AuthSession extends Equatable {
   /// أصل الخادم (Origin) بصيغة scheme://host:port لضمان عدم تسريب الجلسة لخادم آخر
   final String serverOrigin;
-  
+
   /// القيمة السرية لملف تعريف الارتباط (JSESSIONID) أو الرمز
   final String sessionCredential;
-  
-  /// بيانات المستخدم المستردة من الخادم (User Model JSON)
-  final Map<String, dynamic> userMetadata;
+
+  /// كيان المستخدم
+  final User user;
 
   /// وقت إنشاء الجلسة محلياً
   final DateTime createdAt;
@@ -18,7 +19,7 @@ class AuthSession extends Equatable {
   const AuthSession({
     required this.serverOrigin,
     required this.sessionCredential,
-    required this.userMetadata,
+    required this.user,
     required this.createdAt,
   });
 
@@ -26,12 +27,12 @@ class AuthSession extends Equatable {
   factory AuthSession.create({
     required String serverOrigin,
     required String sessionCredential,
-    required Map<String, dynamic> userMetadata,
+    required User user,
   }) {
     return AuthSession(
       serverOrigin: serverOrigin,
       sessionCredential: sessionCredential,
-      userMetadata: userMetadata,
+      user: user,
       createdAt: DateTime.now().toUtc(),
     );
   }
@@ -42,30 +43,11 @@ class AuthSession extends Equatable {
   }
 
   @override
-  List<Object?> get props => [serverOrigin, userMetadata, createdAt];
+  List<Object?> get props => [serverOrigin, user, createdAt];
 
   /// نمنع طباعة `sessionCredential` لحماية الخصوصية والأمان في Logs
   @override
   String toString() {
-    return 'AuthSession(serverOrigin: $serverOrigin, credential: [REDACTED], createdAt: $createdAt, userMetadata: $userMetadata)';
-  }
-
-  // دعم التحويل لـ JSON والحفظ الآمن
-  Map<String, dynamic> toJson() {
-    return {
-      'serverOrigin': serverOrigin,
-      'sessionCredential': sessionCredential,
-      'userMetadata': userMetadata,
-      'createdAt': createdAt.toIso8601String(),
-    };
-  }
-
-  factory AuthSession.fromJson(Map<String, dynamic> json) {
-    return AuthSession(
-      serverOrigin: json['serverOrigin'] as String,
-      sessionCredential: json['sessionCredential'] as String,
-      userMetadata: Map<String, dynamic>.from(json['userMetadata'] as Map),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-    );
+    return 'AuthSession(serverOrigin: $serverOrigin, credential: [REDACTED], createdAt: $createdAt, user: $user)';
   }
 }

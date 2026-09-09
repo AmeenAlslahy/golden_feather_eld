@@ -22,7 +22,7 @@ class SyncRemoteDataSourceImpl implements SyncRemoteDataSource {
         endpoints.dutyStatusLogs,
         queryParameters: {'driverId': driverId},
       );
-      
+
       if (response.status && response.data != null) {
         final data = response.data;
         if (data is List) {

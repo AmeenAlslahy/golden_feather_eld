@@ -41,5 +41,6 @@ class AuditEntry extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, timestamp, driverId, oldStatus, newStatus, reason];
+  List<Object?> get props =>
+      [id, timestamp, driverId, oldStatus, newStatus, reason];
 }

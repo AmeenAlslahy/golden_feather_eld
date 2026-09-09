@@ -59,7 +59,8 @@ class InfoPacketPage extends ConsumerWidget {
                           color: AppColors.primaryBlue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.menu_book, color: AppColors.primaryBlue, size: 24),
+                        child: const Icon(Icons.menu_book,
+                            color: AppColors.primaryBlue, size: 24),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -73,7 +74,9 @@ class InfoPacketPage extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               loc.userManual, // Fallback for secondary text or adjust if there is a specific one
-                              style: const TextStyle(fontSize: AppTypography.smallSize, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: AppTypography.smallSize,
+                                  color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -92,7 +95,8 @@ class InfoPacketPage extends ConsumerWidget {
                           ),
                         );
                       },
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.darkButton),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.darkButton),
                       child: Text(loc.viewUserManual),
                     ),
                   ),
@@ -115,7 +119,8 @@ class InfoPacketPage extends ConsumerWidget {
                           color: AppColors.warningYellow.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.assignment, color: AppColors.warningYellow, size: 24),
+                        child: const Icon(Icons.assignment,
+                            color: AppColors.warningYellow, size: 24),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -129,7 +134,9 @@ class InfoPacketPage extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               loc.instructions,
-                              style: const TextStyle(fontSize: AppTypography.smallSize, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: AppTypography.smallSize,
+                                  color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -148,7 +155,8 @@ class InfoPacketPage extends ConsumerWidget {
                           ),
                         );
                       },
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.darkButton),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.darkButton),
                       child: Text(loc.viewInstructions),
                     ),
                   ),
@@ -171,7 +179,8 @@ class InfoPacketPage extends ConsumerWidget {
                           color: AppColors.dangerRed.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.warning_amber, color: AppColors.dangerRed, size: 24),
+                        child: const Icon(Icons.warning_amber,
+                            color: AppColors.dangerRed, size: 24),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -185,7 +194,9 @@ class InfoPacketPage extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               loc.malfunctionManual,
-                              style: const TextStyle(fontSize: AppTypography.smallSize, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                  fontSize: AppTypography.smallSize,
+                                  color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -207,7 +218,8 @@ class InfoPacketPage extends ConsumerWidget {
                           ),
                         );
                       },
-                      style: FilledButton.styleFrom(backgroundColor: AppColors.darkButton),
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.darkButton),
                       child: Text(loc.viewMalfunctionManual),
                     ),
                   ),
@@ -225,7 +237,9 @@ class InfoPacketPage extends ConsumerWidget {
               ),
               child: Text(
                 loc.legalNotice,
-                style: const TextStyle(fontSize: AppTypography.captionSize, color: AppColors.textSecondary),
+                style: const TextStyle(
+                    fontSize: AppTypography.captionSize,
+                    color: AppColors.textSecondary),
               ),
             ),
           ],
@@ -235,37 +249,64 @@ class InfoPacketPage extends ConsumerWidget {
   }
 }
 
-
 // ========== محتوى دليل الأعطال ==========
 List<ManualSection> _getMalfunctionManualContent(bool isArabic) {
   return [
     ManualSection(
       title: isArabic ? 'أنواع الأعطال' : 'Malfunction Types',
       steps: [
-        isArabic ? 'فجوة بيانات (Data Gap): انقطاع في تسجيل البيانات لأكثر من 5 دقائق.' : 'Data Gap: Recording interruption for more than 5 minutes.',
-        isArabic ? 'عطل تحديد المواقع (Positioning Malfunction): إحداثيات صفرية مع سرعة عالية.' : 'Positioning Malfunction: Zero coordinates at high speed.',
-        isArabic ? 'عطل استشعار الحركة (Motion Sensor): تغير مفاجئ في السرعة > 80 كم/س.' : 'Motion Sensor Malfunction: Sudden speed change > 80 km/h.',
-        isArabic ? 'عطل مزامنة المحرك (Engine Sync): المحرك يعمل > 60 دقيقة بدون حركة.' : 'Engine Sync Malfunction: Engine running > 60 min without motion.',
-        isArabic ? 'قيادة غير محددة (Unidentified Drive): المركبة تتحرك بدون إشعال.' : 'Unidentified Drive: Vehicle moving without ignition.',
+        isArabic
+            ? 'فجوة بيانات (Data Gap): انقطاع في تسجيل البيانات لأكثر من 5 دقائق.'
+            : 'Data Gap: Recording interruption for more than 5 minutes.',
+        isArabic
+            ? 'عطل تحديد المواقع (Positioning Malfunction): إحداثيات صفرية مع سرعة عالية.'
+            : 'Positioning Malfunction: Zero coordinates at high speed.',
+        isArabic
+            ? 'عطل استشعار الحركة (Motion Sensor): تغير مفاجئ في السرعة > 80 كم/س.'
+            : 'Motion Sensor Malfunction: Sudden speed change > 80 km/h.',
+        isArabic
+            ? 'عطل مزامنة المحرك (Engine Sync): المحرك يعمل > 60 دقيقة بدون حركة.'
+            : 'Engine Sync Malfunction: Engine running > 60 min without motion.',
+        isArabic
+            ? 'قيادة غير محددة (Unidentified Drive): المركبة تتحرك بدون إشعال.'
+            : 'Unidentified Drive: Vehicle moving without ignition.',
       ],
     ),
     ManualSection(
       title: isArabic ? 'خطوات استكشاف الأعطال' : 'Troubleshooting Steps',
       steps: [
-        isArabic ? '١. تحقق من توصيل جهاز ELD بمنفذ التشخيص.' : '1. Check ELD device connection to diagnostic port.',
-        isArabic ? '٢. أعد تشغيل المركبة وانتظر 30 ثانية.' : '2. Restart the vehicle and wait 30 seconds.',
-        isArabic ? '٣. تحقق من تفعيل البلوتوث والـ GPS على هاتفك.' : '3. Check that Bluetooth and GPS are enabled on your phone.',
-        isArabic ? '٤. حاول إعادة الاتصال من شاشة الاتصال.' : '4. Try reconnecting from the Connection screen.',
-        isArabic ? '٥. إذا استمر العطل، انتقل إلى السجلات الورقية.' : '5. If malfunction persists, switch to paper logs.',
-        isArabic ? '٦. اتصل بمدير الأسطول للإبلاغ عن العطل.' : '6. Contact your fleet manager to report the malfunction.',
+        isArabic
+            ? '١. تحقق من توصيل جهاز ELD بمنفذ التشخيص.'
+            : '1. Check ELD device connection to diagnostic port.',
+        isArabic
+            ? '٢. أعد تشغيل المركبة وانتظر 30 ثانية.'
+            : '2. Restart the vehicle and wait 30 seconds.',
+        isArabic
+            ? '٣. تحقق من تفعيل البلوتوث والـ GPS على هاتفك.'
+            : '3. Check that Bluetooth and GPS are enabled on your phone.',
+        isArabic
+            ? '٤. حاول إعادة الاتصال من شاشة الاتصال.'
+            : '4. Try reconnecting from the Connection screen.',
+        isArabic
+            ? '٥. إذا استمر العطل، انتقل إلى السجلات الورقية.'
+            : '5. If malfunction persists, switch to paper logs.',
+        isArabic
+            ? '٦. اتصل بمدير الأسطول للإبلاغ عن العطل.'
+            : '6. Contact your fleet manager to report the malfunction.',
       ],
     ),
     ManualSection(
       title: isArabic ? 'حدود زمنية مهمة' : 'Important Deadlines',
       steps: [
-        isArabic ? 'يجب إصلاح الجهاز خلال 8 أيام من حدوث العطل.' : 'Device must be repaired within 8 days of malfunction.',
-        isArabic ? 'لا يمكن القيادة بدون جهاز ELD عامل لأكثر من 8 أيام.' : 'Cannot drive without a working ELD for more than 8 days.',
-        isArabic ? 'يجب توثيق جميع الأعطال في السجلات.' : 'All malfunctions must be documented in logs.',
+        isArabic
+            ? 'يجب إصلاح الجهاز خلال 8 أيام من حدوث العطل.'
+            : 'Device must be repaired within 8 days of malfunction.',
+        isArabic
+            ? 'لا يمكن القيادة بدون جهاز ELD عامل لأكثر من 8 أيام.'
+            : 'Cannot drive without a working ELD for more than 8 days.',
+        isArabic
+            ? 'يجب توثيق جميع الأعطال في السجلات.'
+            : 'All malfunctions must be documented in logs.',
       ],
     ),
   ];

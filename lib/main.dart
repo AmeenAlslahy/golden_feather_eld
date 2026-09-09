@@ -9,13 +9,13 @@ import 'core/widgets/critical_error_app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // تثبيت اتجاه التطبيق عمودي
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   // إعداد شريط الحالة
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -23,7 +23,7 @@ void main() async {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   // تسجيل أخطاء Flutter الحرجة
   FlutterError.onError = (details) {
     if (_isExpectedError(details.exception)) {
@@ -31,19 +31,19 @@ void main() async {
     }
     AppLogger.error('Critical Flutter Error', details.exception, details.stack);
   };
-  
+
   final initializer = AppInitializer();
-  
+
   try {
     // 1. تهيئة النظام والخدمات
     await initializer.initialize();
-    
+
     // 2. إنشاء الحاوية (ProviderContainer)
     final container = initializer.createProviderContainer();
-    
+
     // 3. مهام ما بعد الإنشاء
     await initializer.initializePostContainer(container);
-    
+
     // 4. تشغيل التطبيق
     runApp(
       UncontrolledProviderScope(
@@ -55,7 +55,8 @@ void main() async {
     AppLogger.error('Fatal initialization error', e, stack);
     runApp(
       CriticalErrorApp(
-        message: 'تعذر تهيئة الخدمات الأساسية للتطبيق.\nيرجى التحقق من اتصالك وإعادة التشغيل.',
+        message:
+            'تعذر تهيئة الخدمات الأساسية للتطبيق.\nيرجى التحقق من اتصالك وإعادة التشغيل.',
         exception: e,
       ),
     );
@@ -65,7 +66,7 @@ void main() async {
 bool _isExpectedError(Object error) {
   if (error is FlutterError) {
     final msg = error.message;
-    if (msg.contains('setState() called after dispose') || 
+    if (msg.contains('setState() called after dispose') ||
         msg.contains('RenderBox was not laid out')) {
       AppLogger.debug('Expected Flutter error (ignored): $msg');
       return true;
@@ -73,5 +74,3 @@ bool _isExpectedError(Object error) {
   }
   return false;
 }
-
-

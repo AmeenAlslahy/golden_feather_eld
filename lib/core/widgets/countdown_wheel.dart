@@ -111,5 +111,3 @@ class _CountdownPainter extends CustomPainter {
     return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }
-
-

@@ -46,14 +46,14 @@ class TrackingRepositoryImpl implements TrackingRepository {
     try {
       // ١. فحص صلاحية الموقع دائماً (الخلفية) - مطلوبة لعمل Traccar
       var locationStatus = await Permission.locationAlways.status;
-      
+
       if (!locationStatus.isGranted) {
         // في أندرويد 10+ يجب طلب الصلاحية العادية أولاً ثم الخلفية
         var inUseStatus = await Permission.locationWhenInUse.status;
         if (!inUseStatus.isGranted) {
           inUseStatus = await Permission.locationWhenInUse.request();
         }
-        
+
         if (inUseStatus.isGranted) {
           locationStatus = await Permission.locationAlways.request();
         }
@@ -62,28 +62,31 @@ class TrackingRepositoryImpl implements TrackingRepository {
       if (!locationStatus.isGranted) {
         return const Left(PermissionFailure(
           message: 'صلاحية الموقع في الخلفية مطلوبة',
-          ));
+        ));
       }
 
       // ٢. فحص إذا كان GPS مفعلاً
-      final isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      final isLocationServiceEnabled =
+          await Geolocator.isLocationServiceEnabled();
       if (!isLocationServiceEnabled) {
         return const Left(PermissionFailure(
           message: 'خدمة الموقع غير مفعلة',
-          ));
+        ));
       }
 
       // ٣. كل شيء جاهز - ابدأ التتبع
-      _nativeClient.startListening(); // Subscribe first to establish EventSink in Android
-      await _service.start(); // Start service which triggers immediate location emission
-      AppLogger.info('Tracking service started, waiting for location stream...');
+      _nativeClient
+          .startListening(); // Subscribe first to establish EventSink in Android
+      await _service
+          .start(); // Start service which triggers immediate location emission
+      AppLogger.info(
+          'Tracking service started, waiting for location stream...');
       return const Right(true);
-      
     } catch (e) {
       AppLogger.error('Failed to start tracking', e);
       return Left(TrackingFailure(
         message: 'فشل بدء التتبع',
-        ));
+      ));
     }
   }
 
@@ -98,7 +101,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       AppLogger.error('Failed to stop tracking', e);
       return Left(TrackingFailure(
         message: 'فشل إيقاف التتبع',
-        ));
+      ));
     }
   }
 
@@ -112,13 +115,13 @@ class TrackingRepositoryImpl implements TrackingRepository {
     try {
       // نطلب من Traccar تحديث الموقع (إن أمكن)
       await _service.requestPosition();
-      
+
       // نسترجع آخر موقع مسجل لدينا
       final lastLocation = await _localDataSource.getLastLocation();
       if (lastLocation != null) {
         return Right(lastLocation);
       }
-      
+
       // Fallback to Geolocator
       final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
@@ -136,20 +139,21 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return Left(TrackingFailure(
         message: 'فشل الحصول على الموقع',
-        ));
+      ));
     }
   }
 
   @override
-  Future<Either<Failure, LocationEntity>> requestPosition({String? alarm}) async {
+  Future<Either<Failure, LocationEntity>> requestPosition(
+      {String? alarm}) async {
     try {
       await _service.requestPosition(alarm: alarm);
-      
+
       final lastLocation = await _localDataSource.getLastLocation();
       if (lastLocation != null) {
         return Right(lastLocation);
       }
-      
+
       // Fallback to Geolocator
       final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
@@ -167,7 +171,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return Left(TrackingFailure(
         message: 'فشل طلب الموقع',
-        ));
+      ));
     }
   }
 
@@ -185,7 +189,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل جلب السجلات',
-        ));
+      ));
     }
   }
 
@@ -197,12 +201,13 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل مسح السجلات',
-        ));
+      ));
     }
   }
 
   @override
-  Future<Either<Failure, bool>> updateConfig(TrackingConfigEntity config) async {
+  Future<Either<Failure, bool>> updateConfig(
+      TrackingConfigEntity config) async {
     try {
       await _service.updateConfig();
       AppLogger.info('Tracking config updated');
@@ -210,7 +215,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
     } catch (e) {
       return const Left(TrackingFailure(
         message: 'فشل تحديث الإعدادات',
-        ));
+      ));
     }
   }
 
@@ -232,6 +237,3 @@ class TrackingRepositoryImpl implements TrackingRepository {
     );
   }
 }
-
-
-

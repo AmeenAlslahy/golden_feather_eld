@@ -35,8 +35,6 @@ class AppConstants {
 
 /// أدوار المستخدمين في النظام
 
-
-
 /// حالة المزامنة
 enum SyncStatus {
   synced,

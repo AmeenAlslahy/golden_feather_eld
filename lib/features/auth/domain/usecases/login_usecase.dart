@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../repositories/auth_repository.dart';
 import '../entities/value_objects/login_identifier.dart';
 import '../entities/value_objects/password.dart';
@@ -19,18 +19,19 @@ class LoginUseCase {
     if (!identifier.isValid) {
       return Left(ValidationFailure(
         message: 'Invalid identifier format',
-        ));
+      ));
     }
 
     if (!password.isValid) {
       return Left(ValidationFailure(
         message: 'Invalid password',
-        ));
+      ));
     }
 
     // استدعاء المستودع
     return await repository.login(
-      email: identifier.value, // المستودع حالياً يقبل البريد/اسم المستخدم تحت مسمى email
+      email: identifier
+          .value, // المستودع حالياً يقبل البريد/اسم المستخدم تحت مسمى email
       password: password.value,
     );
   }

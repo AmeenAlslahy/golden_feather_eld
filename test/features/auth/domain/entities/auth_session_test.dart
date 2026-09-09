@@ -1,13 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
 
 void main() {
   group('AuthSession', () {
     test('should not expose JSESSIONID in toString for security', () {
+      final user = User(
+        id: '1',
+        username: 'test',
+        email: 'test@demo.com',
+        fullName: 'Test',
+        role: UserRole.fieldWorker,
+        createdAt: DateTime.now(),
+      );
+
       final session = AuthSession.create(
         serverOrigin: 'https://test.invalid',
         sessionCredential: 'secret_cookie_value',
-        userMetadata: const {'id': 1},
+        user: user,
       );
 
       final stringRepresentation = session.toString();
@@ -19,10 +29,19 @@ void main() {
     });
 
     test('should correctly identify if it belongs to an origin', () {
+      final user = User(
+        id: '1',
+        username: 'test',
+        email: 'test@demo.com',
+        fullName: 'Test',
+        role: UserRole.fieldWorker,
+        createdAt: DateTime.now(),
+      );
+
       final session = AuthSession.create(
         serverOrigin: 'https://test.invalid:5055',
         sessionCredential: 'token',
-        userMetadata: const {},
+        user: user,
       );
 
       expect(session.belongsTo('https://test.invalid:5055'), isTrue);

@@ -32,17 +32,17 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     if (!locationGranted || !bluetoothGranted) {
       // أول مرة أو صلاحيات مفقودة
       // ignore: use_build_context_synchronously
-context.goNamed('permissions');
+      context.goNamed('permissions');
     } else {
       // الصلاحيات موجودة، تحقق من تسجيل الدخول
       await ref.read(authStateProvider.notifier).checkAuthStatus();
       final isLoggedIn = ref.read(authStateProvider).isAuthenticated;
       if (isLoggedIn) {
         // ignore: use_build_context_synchronously
-context.goNamed('connection');
+        context.goNamed('connection');
       } else {
         // ignore: use_build_context_synchronously
-context.goNamed('login');
+        context.goNamed('login');
       }
     }
   }
@@ -75,6 +75,3 @@ context.goNamed('login');
     );
   }
 }
-
-
-

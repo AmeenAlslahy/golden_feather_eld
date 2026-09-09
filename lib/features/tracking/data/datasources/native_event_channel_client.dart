@@ -5,15 +5,20 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entities/native_location_event.dart';
 
 class NativeLocationQualityValidator {
-  NativeLocationEvent validate(NativeLocationEvent event, DateTime? lastRecordedAt) {
+  NativeLocationEvent validate(
+      NativeLocationEvent event, DateTime? lastRecordedAt) {
     // Basic coordinate bounds
-    if (event.latitude < -90 || event.latitude > 90 || 
-        event.longitude < -180 || event.longitude > 180) {
+    if (event.latitude < -90 ||
+        event.latitude > 90 ||
+        event.longitude < -180 ||
+        event.longitude > 180) {
       return event.copyWith(qualityStatus: LocationQualityStatus.invalid);
     }
 
-    if (event.latitude.isNaN || event.longitude.isNaN || 
-        event.latitude.isInfinite || event.longitude.isInfinite) {
+    if (event.latitude.isNaN ||
+        event.longitude.isNaN ||
+        event.latitude.isInfinite ||
+        event.longitude.isInfinite) {
       return event.copyWith(qualityStatus: LocationQualityStatus.invalid);
     }
 
@@ -28,7 +33,7 @@ class NativeLocationQualityValidator {
       // Future timestamp (suspicious)
       return event.copyWith(qualityStatus: LocationQualityStatus.suspicious);
     }
-    
+
     if (now.difference(event.recordedAt).inMinutes > 60) {
       // Very old (stale)
       return event.copyWith(qualityStatus: LocationQualityStatus.stale);
@@ -44,14 +49,16 @@ class NativeLocationQualityValidator {
 }
 
 class NativeEventChannelClient {
-  static const EventChannel _eventChannel = EventChannel('com.goldenfeather.eld/traccar/events');
-  
+  static const EventChannel _eventChannel =
+      EventChannel('com.goldenfeather.eld/traccar/events');
+
   StreamSubscription? _subscription;
-  final StreamController<NativeLocationEvent> _locationController = StreamController<NativeLocationEvent>.broadcast();
+  final StreamController<NativeLocationEvent> _locationController =
+      StreamController<NativeLocationEvent>.broadcast();
   final NativeLocationQualityValidator _validator;
   DateTime? _lastRecordedAt;
 
-  NativeEventChannelClient({NativeLocationQualityValidator? validator}) 
+  NativeEventChannelClient({NativeLocationQualityValidator? validator})
       : _validator = validator ?? NativeLocationQualityValidator();
 
   Stream<NativeLocationEvent> get locationStream => _locationController.stream;
@@ -69,28 +76,36 @@ class NativeEventChannelClient {
           try {
             final parsedEvent = _parseEvent(Map<String, dynamic>.from(event));
             if (parsedEvent != null) {
-               AppLogger.info('NativeEventChannelClient: Event parsed successfully');
-               final validatedEvent = _validator.validate(parsedEvent, _lastRecordedAt);
-               if (validatedEvent.qualityStatus == LocationQualityStatus.valid || 
-                   validatedEvent.qualityStatus == LocationQualityStatus.suspicious ||
-                   validatedEvent.qualityStatus == LocationQualityStatus.stale) {
-                 _lastRecordedAt = validatedEvent.recordedAt;
-               }
-               _locationController.add(validatedEvent);
+              AppLogger.info(
+                  'NativeEventChannelClient: Event parsed successfully');
+              final validatedEvent =
+                  _validator.validate(parsedEvent, _lastRecordedAt);
+              if (validatedEvent.qualityStatus == LocationQualityStatus.valid ||
+                  validatedEvent.qualityStatus ==
+                      LocationQualityStatus.suspicious ||
+                  validatedEvent.qualityStatus == LocationQualityStatus.stale) {
+                _lastRecordedAt = validatedEvent.recordedAt;
+              }
+              _locationController.add(validatedEvent);
             } else {
-               AppLogger.info('NativeEventChannelClient: Event parsing failed (returned null)');
+              AppLogger.info(
+                  'NativeEventChannelClient: Event parsing failed (returned null)');
             }
           } catch (e) {
-            AppLogger.error('NativeEventChannelClient: Malformed event caught in try-catch', e);
+            AppLogger.error(
+                'NativeEventChannelClient: Malformed event caught in try-catch',
+                e);
           }
         } else {
           AppLogger.info('NativeEventChannelClient: Event is not a Map');
         }
       },
       onError: (dynamic error) {
-        AppLogger.error('NativeEventChannelClient: Stream error from native', error);
+        AppLogger.error(
+            'NativeEventChannelClient: Stream error from native', error);
       },
-      cancelOnError: false, // Ensure stream survives malformed events or temporary errors
+      cancelOnError:
+          false, // Ensure stream survives malformed events or temporary errors
     );
   }
 
@@ -106,7 +121,8 @@ class NativeEventChannelClient {
 
       if (lat == null || lon == null || timestampMs == null) return null;
 
-      final recordedAt = DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true);
+      final recordedAt =
+          DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true);
       final receivedAt = DateTime.now().toUtc(); // Time of receipt in Flutter
 
       return NativeLocationEvent(

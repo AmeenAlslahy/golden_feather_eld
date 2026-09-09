@@ -203,7 +203,7 @@ class DutyStatusTracker {
     _localStorage.setCurrentDutyStatus(newStatus);
     _lastEvent = event;
     AppLogger.info('📊 Duty Status: $currentStatus');
-    
+
     // Queue the transition to be synced with the backend
     _syncEngine.submitEvent(PendingEvent(
       id: const Uuid().v4(),
@@ -212,7 +212,9 @@ class DutyStatusTracker {
         'status': newStatus,
         'timestamp': timestamp.toIso8601String(),
         'deviceId': int.tryParse(_localStorage.deviceId) ?? 0,
-        'location': latitude != null && longitude != null ? '$latitude, $longitude' : 'Unknown',
+        'location': latitude != null && longitude != null
+            ? '$latitude, $longitude'
+            : 'Unknown',
         'odometer': odometer ?? 0.0,
         'engineHours': engineHours ?? 0.0,
         'remarks': annotation ?? '',
@@ -227,7 +229,8 @@ class DutyStatusTracker {
     ));
   }
 
-  void manualTransition(String newStatus, {double? lat, double? lon, String? annotation}) {
+  void manualTransition(String newStatus,
+      {double? lat, double? lon, String? annotation}) {
     if (_currentStatus == 'driving' && newStatus != 'driving') {
       AppLogger.warning(
           'Cannot manually transition from driving while moving.');
@@ -359,7 +362,7 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
   final localStorage = ref.watch(localStorageProvider);
   final syncEngine = ref.watch(syncEngineProvider);
   final timeProvider = ref.watch(trustedTimeProvider);
-  
+
   final tracker = DutyStatusTracker(
     logRepository: repo,
     localStorage: localStorage,

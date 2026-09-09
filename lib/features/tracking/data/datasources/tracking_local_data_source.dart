@@ -67,6 +67,3 @@ class TrackingLocalDataSourceImpl implements TrackingLocalDataSource {
     await prefs.remove(_trackingLogsKey);
   }
 }
-
-
-

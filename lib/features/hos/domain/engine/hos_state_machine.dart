@@ -13,7 +13,7 @@ class HosStateMachine {
   late DateTime _shiftStartTime;
   double _totalDrivingHours = 0.0;
   double _cycleHours = 0.0;
-  
+
   final List<StatusTransition> _transitions = [];
   Timer? _drivingTimer;
   final TrustedTimeProvider _timeProvider;
@@ -24,7 +24,9 @@ class HosStateMachine {
 
   DateTime _getCurrentTime() {
     final timeResult = _timeProvider.currentTime;
-    return timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now().toUtc();
+    return timeResult is TrustedTimeAvailable
+        ? timeResult.utc
+        : DateTime.now().toUtc();
   }
 
   // ========== Getters ==========
@@ -58,11 +60,13 @@ class HosStateMachine {
     }
 
     // إعادة تعيين نافذة العمل إذا كانت خارج الخدمة
-    if (newStatus == DutyStatus.offDuty || newStatus == DutyStatus.sleeperBerth) {
+    if (newStatus == DutyStatus.offDuty ||
+        newStatus == DutyStatus.sleeperBerth) {
       // لا نعيد التعيين تلقائياً، يعتمد على مدة الراحة
     }
 
-    AppLogger.info('State transition: ${transition.from.name} → ${transition.to.name}');
+    AppLogger.info(
+        'State transition: ${transition.from.name} → ${transition.to.name}');
   }
 
   /// بدء مؤقت القيادة
@@ -113,8 +117,6 @@ class StatusTransition {
   });
 }
 
-
-
 /// مزود الإعدادات (يمكن تغييره لاحقاً ليكون ديناميكياً يقرأ من DB أو SharedPreferences)
 final hosConfigurationProvider = Provider<HosConfiguration>((ref) {
   return HosConfiguration.usa70_8();
@@ -126,7 +128,7 @@ final hosEngineProvider = Provider<HosRulesEngine>((ref) {
   final timeProvider = ref.watch(trustedTimeProvider);
   final calculator = HosCalculator(config, timeProvider);
   final stateMachine = HosStateMachine(timeProvider);
-  
+
   return HosRulesEngine(
     calculator: calculator,
     stateMachine: stateMachine,

@@ -23,8 +23,10 @@ class GoldenFeatherApp extends ConsumerWidget {
     // Global listener for automatic tracking UI side-effects
     ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
       if (next is HosEngineReady) {
-        final prevStatus = (previous is HosEngineReady) ? previous.update.currentStatus : null;
-        if (next.update.currentStatus == DutyStatus.driving && prevStatus != DutyStatus.driving) {
+        final prevStatus =
+            (previous is HosEngineReady) ? previous.update.currentStatus : null;
+        if (next.update.currentStatus == DutyStatus.driving &&
+            prevStatus != DutyStatus.driving) {
           scaffoldMessengerKey.currentState?.showSnackBar(
             const SnackBar(
               content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
@@ -72,7 +74,7 @@ class GoldenFeatherApp extends ConsumerWidget {
 
           // التوجيه
           routerConfig: ref.watch(routerProvider),
-          
+
           builder: (context, child) {
             return Stack(
               children: [
@@ -86,5 +88,3 @@ class GoldenFeatherApp extends ConsumerWidget {
     );
   }
 }
-
-

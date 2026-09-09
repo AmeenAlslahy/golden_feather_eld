@@ -72,10 +72,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplashRoute = state.matchedLocation == AppRoutes.splash;
 
       // السماح بمسار splash و permissions دائماً حتى نتحقق
-      if (isSplashRoute || state.matchedLocation == AppRoutes.permissions) return null;
+      if (isSplashRoute || state.matchedLocation == AppRoutes.permissions)
+        return null;
 
       // إذا لم يسجل الدخول، توجيه إلى صفحة الدخول (إلا إذا كان في صفحة التسجيل)
-      if (!isLoggedIn && !isLoginRoute && !isRegisterRoute) return AppRoutes.login;
+      if (!isLoggedIn && !isLoginRoute && !isRegisterRoute)
+        return AppRoutes.login;
 
       // إذا سجل الدخول ويحاول الوصول لصفحة الدخول، توجيه لصفحة الاتصال
       if (isLoggedIn && isLoginRoute) return AppRoutes.connection;
@@ -92,4 +94,3 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-

@@ -2,10 +2,10 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/utils/repository_helper.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../datasources/account_remote_data_source.dart';
-import 'package:golden_feather_eld/core/models/user_model.dart';
+import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AccountRemoteDataSource remoteDataSource;

@@ -80,10 +80,10 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
     ref.read(registerFormProvider.notifier).setLoading(true);
 
     await ref.read(authStateProvider.notifier).register(
-      name: _fullNameController.text.trim(),
-      email: _usernameController.text.trim(),
-      password: _passwordController.text,
-    );
+          name: _fullNameController.text.trim(),
+          email: _usernameController.text.trim(),
+          password: _passwordController.text,
+        );
 
     if (mounted) {
       ref.read(registerFormProvider.notifier).setLoading(false);
@@ -149,7 +149,8 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             validator: (v) {
               if (v == null || v.isEmpty) return context.loc.passwordRequired;
               final pwd = Password(v);
-              if (!pwd.isValid) return context.translateErrorKey(pwd.errorMessage);
+              if (!pwd.isValid)
+                return context.translateErrorKey(pwd.errorMessage);
               return null;
             },
           ),

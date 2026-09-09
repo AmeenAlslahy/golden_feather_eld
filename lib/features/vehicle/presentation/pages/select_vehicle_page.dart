@@ -38,14 +38,15 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   /// إظهار Dialog المركبات غير المسندة
   void _showUnassignedVehicleDialog() {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber, color: AppColors.warningYellow, size: 28),
+            const Icon(Icons.warning_amber,
+                color: AppColors.warningYellow, size: 28),
             const SizedBox(width: AppSpacing.sm),
             Text(
               isArabic ? 'مركبات غير معينة' : 'Unassigned Vehicles',
@@ -57,21 +58,27 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           isArabic
               ? 'المركبات غير المسندة لا يمكن اختيارها مباشرة. يتم تعيين المركبات للسائقين عبر البوابة الإلكترونية من قبل مدير الأسطول.\n\nيرجى الاتصال بمدير الأسطول لتعيين المركبة.'
               : 'Unassigned vehicles cannot be selected directly. Vehicles are assigned to drivers through the web portal by the fleet manager.\n\nPlease contact your fleet manager to assign the vehicle.',
-          style: isArabic ? AppTextStyles(context).arabicBody : AppTextStyles(context).body,
+          style: isArabic
+              ? AppTextStyles(context).arabicBody
+              : AppTextStyles(context).body,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               isArabic ? 'موافق' : 'OK',
-              style: AppTextStyles(context).buttonText.copyWith(color: AppColors.primaryBlue),
+              style: AppTextStyles(context)
+                  .buttonText
+                  .copyWith(color: AppColors.primaryBlue),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               isArabic ? 'اتصل بالمدير' : 'Contact Manager',
-              style: AppTextStyles(context).buttonText.copyWith(color: AppColors.dangerRed),
+              style: AppTextStyles(context)
+                  .buttonText
+                  .copyWith(color: AppColors.dangerRed),
             ),
           ),
         ],
@@ -91,11 +98,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           ),
         );
       }
-      
+
       if (current.isSuccess && !(previous?.isSuccess ?? false)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${context.loc.vehicleSelected}: ${current.selectedVehicle?.displayName ?? ""}'),
+            content: Text(
+                '${context.loc.vehicleSelected}: ${current.selectedVehicle?.displayName ?? ""}'),
             backgroundColor: AppColors.successGreen,
           ),
         );
@@ -112,7 +120,9 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         backgroundColor: AppColors.primaryBlue,
         title: Text(
           context.loc.selectVehicle,
-          style: AppTextStyles(context).pageTitle.copyWith(color: AppColors.surface),
+          style: AppTextStyles(context)
+              .pageTitle
+              .copyWith(color: AppColors.surface),
         ),
         leading: Builder(
           builder: (context) => IconButton(
@@ -147,7 +157,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.local_shipping,
-                                size: 64, color: Theme.of(context).colorScheme.outline),
+                                size: 64,
+                                color: Theme.of(context).colorScheme.outline),
                             const SizedBox(height: AppSpacing.md),
                             Text(context.loc.noVehiclesFound),
                           ],
@@ -236,7 +247,9 @@ class _VehicleCard extends StatelessWidget {
                     if (vehicle.vin != null)
                       Text(
                         'VIN: ${vehicle.vin!.length > 8 ? vehicle.vin!.substring(vehicle.vin!.length - 8) : vehicle.vin}',
-                        style: AppTextStyles(context).caption.copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles(context)
+                            .caption
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                     if (!vehicle.isAssigned) ...[
                       const SizedBox(height: 4),

@@ -21,7 +21,6 @@ class DiagnosticsAlertCard extends ConsumerWidget {
 
         final latestAlert = state.activeMalfunctions.last;
 
-
         final theme = Theme.of(context);
 
         Color getSeverityColor(MalfunctionSeverity severity) {
@@ -34,7 +33,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
               return theme.infoColor;
           }
         }
-        
+
         Color getSeverityBackgroundColor(MalfunctionSeverity severity) {
           switch (severity) {
             case MalfunctionSeverity.critical:
@@ -51,7 +50,8 @@ class DiagnosticsAlertCard extends ConsumerWidget {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          margin: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: bgColor,
@@ -77,8 +77,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       latestAlert.message,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(),
                     ),
                   ],
                 ),
@@ -92,7 +91,10 @@ class DiagnosticsAlertCard extends ConsumerWidget {
                   ),
                   child: Text(
                     '+${state.activeMalfunctions.length - 1}',
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
             ],

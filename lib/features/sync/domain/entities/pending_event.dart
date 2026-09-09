@@ -37,7 +37,8 @@ class PendingEvent extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, type, createdAt, priority, retryCount, nextRetryAt];
+  List<Object?> get props =>
+      [id, type, createdAt, priority, retryCount, nextRetryAt];
 }
 
 class RetryPolicy {
@@ -54,12 +55,14 @@ class RetryPolicy {
   DateTime? calculateNextRetry(int currentRetries) {
     if (currentRetries >= maxRetries) {
       // بدلاً من إيقاف الإعادة وحذف الحدث، نثبت التأخير عند الحد الأقصى للمحاولات
-      final maxDelaySeconds = baseDelay.inSeconds * (backoffFactor * maxRetries);
+      final maxDelaySeconds =
+          baseDelay.inSeconds * (backoffFactor * maxRetries);
       return DateTime.now().add(Duration(seconds: maxDelaySeconds.toInt()));
     }
-    
+
     // Exponential backoff
-    final delaySeconds = baseDelay.inSeconds * (backoffFactor * (currentRetries + 1));
+    final delaySeconds =
+        baseDelay.inSeconds * (backoffFactor * (currentRetries + 1));
     return DateTime.now().add(Duration(seconds: delaySeconds.toInt()));
   }
 }

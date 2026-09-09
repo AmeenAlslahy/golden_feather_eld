@@ -24,7 +24,8 @@ class _TrackingLogsPageState extends ConsumerState<TrackingLogsPage> {
     super.initState();
     _refreshLogs();
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (mounted && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      if (mounted &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
         _refreshLogs();
       }
     });
@@ -111,10 +112,13 @@ class _TrackingLogsPageState extends ConsumerState<TrackingLogsPage> {
           break;
         case TrackingStatus.error:
           final errorMsg = trackingState.errorMessage?.toLowerCase() ?? '';
-          if (trackingState.errorType == TrackingErrorType.permission || errorMsg.contains('gps')) {
+          if (trackingState.errorType == TrackingErrorType.permission ||
+              errorMsg.contains('gps')) {
             icon = Icons.location_off;
             message = loc.gpsDisabled;
-          } else if (errorMsg.contains('network') || errorMsg.contains('server') || errorMsg.contains('connection')) {
+          } else if (errorMsg.contains('network') ||
+              errorMsg.contains('server') ||
+              errorMsg.contains('connection')) {
             icon = Icons.wifi_off;
             message = loc.notConnectedToServer;
           } else {
@@ -133,7 +137,9 @@ class _TrackingLogsPageState extends ConsumerState<TrackingLogsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(icon,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: AppSpacing.md),
             Text(
               message,
@@ -208,6 +214,3 @@ class _TrackingLogsPageState extends ConsumerState<TrackingLogsPage> {
     );
   }
 }
-
-
-

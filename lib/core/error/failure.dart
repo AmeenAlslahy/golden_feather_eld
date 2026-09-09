@@ -26,66 +26,66 @@ class ServerFailure extends Failure {
 class NetworkFailure extends Failure {
   const NetworkFailure({
     super.message = 'noInternet',
-    });
+  });
 }
 
 /// فشل المصادقة
 class AuthFailure extends Failure {
   const AuthFailure({
     super.message = 'sessionExpired',
-    });
+  });
 }
 
 class MissingConfigurationFailure extends Failure {
   const MissingConfigurationFailure({
     super.message = 'serverNotConfigured',
-    });
+  });
 }
 
 class InvalidConfigurationFailure extends Failure {
   const InvalidConfigurationFailure({
     super.message = 'invalidConfiguration',
-    });
+  });
 }
 
 class InvalidCredentialsFailure extends Failure {
   const InvalidCredentialsFailure({
     super.message = 'invalidCredentials',
-    });
+  });
 }
 
 class SessionMissingFailure extends Failure {
   const SessionMissingFailure({
     super.message = 'sessionMissing',
-    });
+  });
 }
 
 /// فشل التخزين المؤقت
 class CacheFailure extends Failure {
   const CacheFailure({
     required super.message,
-    });
+  });
 }
 
 /// فشل الصلاحيات
 class PermissionFailure extends Failure {
   const PermissionFailure({
     required super.message,
-    });
+  });
 }
 
 /// فشل التتبع
 class TrackingFailure extends Failure {
   const TrackingFailure({
     required super.message,
-    });
+  });
 }
 
 /// فشل المزامنة
 class SyncFailure extends Failure {
   const SyncFailure({
     required super.message,
-    });
+  });
 }
 
 /// فشل التحقق من البيانات
@@ -97,5 +97,3 @@ class ValidationFailure extends Failure {
     this.fieldErrors,
   });
 }
-
-

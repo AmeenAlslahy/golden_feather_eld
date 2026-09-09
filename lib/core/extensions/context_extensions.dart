@@ -89,5 +89,3 @@ extension ContextExtensions on BuildContext {
 extension RefExtensions on WidgetRef {
   bool get isConnected => watch(isConnectedProvider).value ?? false;
 }
-
-

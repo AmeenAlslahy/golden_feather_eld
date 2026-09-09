@@ -95,9 +95,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           if (authState.errorMessage != null)
                             Expanded(
                               child: Text(
-                                context.translateErrorKey(authState.errorMessage!),
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.error,
+                                context
+                                    .translateErrorKey(authState.errorMessage!),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.error,
                                       height: 1.3,
                                     ),
                               ),

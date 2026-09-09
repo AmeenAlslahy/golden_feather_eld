@@ -10,15 +10,15 @@ class LocalDatabaseService {
   Future<void> init() async {
     try {
       await Hive.initFlutter();
-      
+
       await Hive.openBox<String>(StorageConstants.eventsBox);
       await Hive.openBox<String>(StorageConstants.periodsBox);
       await Hive.openBox<String>(StorageConstants.diagnosticsBox);
       await Hive.openBox<String>(StorageConstants.violationsBox);
       await Hive.openBox<String>(StorageConstants.auditBox);
-      
+
       _prefs = await SharedPreferences.getInstance();
-      
+
       AppLogger.info('✅ LocalDatabaseService initialized successfully');
     } catch (e, stack) {
       AppLogger.error('❌ Failed to initialize LocalDatabaseService', e, stack);
@@ -26,7 +26,7 @@ class LocalDatabaseService {
     }
   }
 
-  // All database CRUD operations have been moved to their respective 
+  // All database CRUD operations have been moved to their respective
   // LocalDataSource implementations to adhere to the Single Responsibility Principle.
   // This class now acts purely as a DatabaseManager that initializes Hive boxes at startup.
 
@@ -41,5 +41,6 @@ class LocalDatabaseService {
 }
 
 final localDatabaseServiceProvider = Provider<LocalDatabaseService>((ref) {
-  throw UnimplementedError('Initialize localDatabaseServiceProvider in main.dart');
+  throw UnimplementedError(
+      'Initialize localDatabaseServiceProvider in main.dart');
 });

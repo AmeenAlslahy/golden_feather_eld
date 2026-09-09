@@ -13,7 +13,7 @@ class SyncEngine {
   final OfflineQueue _queue;
   final RemoteEventDispatcher _dispatcher;
   final RetryPolicy _retryPolicy;
-  
+
   bool _isSyncing = false;
 
   SyncEngine({
@@ -39,7 +39,7 @@ class SyncEngine {
       bool hasMore = true;
       while (hasMore) {
         final readyEvents = await _queue.getReadyEvents(limit: 10);
-        
+
         if (readyEvents.isEmpty) {
           hasMore = false;
           break;
@@ -47,11 +47,12 @@ class SyncEngine {
 
         for (final event in readyEvents) {
           final result = await _dispatcher.dispatch(event);
-          
+
           await result.match(
             (failure) async {
               // Failure State: فشل الإرسال
-              final nextRetry = _retryPolicy.calculateNextRetry(event.retryCount);
+              final nextRetry =
+                  _retryPolicy.calculateNextRetry(event.retryCount);
               if (nextRetry != null) {
                 // جدولة المحاولة القادمة (Exponential Backoff)
                 final updatedEvent = event.copyWith(

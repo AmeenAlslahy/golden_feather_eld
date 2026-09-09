@@ -114,6 +114,3 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
     );
   }
 }
-
-
-

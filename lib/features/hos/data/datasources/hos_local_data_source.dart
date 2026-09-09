@@ -14,8 +14,10 @@ abstract class HosLocalDataSource {
 }
 
 class HosLocalDataSourceImpl implements HosLocalDataSource {
-  Box<String> get _diagnosticsBox => Hive.box<String>(StorageConstants.diagnosticsBox);
-  Box<String> get _violationsBox => Hive.box<String>(StorageConstants.violationsBox);
+  Box<String> get _diagnosticsBox =>
+      Hive.box<String>(StorageConstants.diagnosticsBox);
+  Box<String> get _violationsBox =>
+      Hive.box<String>(StorageConstants.violationsBox);
 
   // --- Helper Methods ---
 
@@ -26,7 +28,8 @@ class HosLocalDataSourceImpl implements HosLocalDataSource {
     String entityName,
   ) async {
     try {
-      final dateStr = AppDateUtils.extractDateStr(data[timestampKey] as String?);
+      final dateStr =
+          AppDateUtils.extractDateStr(data[timestampKey] as String?);
       final currentList = _getListFromBox(box, dateStr);
       currentList.add(data);
 

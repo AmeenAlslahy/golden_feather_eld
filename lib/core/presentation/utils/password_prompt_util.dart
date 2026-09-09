@@ -8,7 +8,7 @@ import '../../../l10n/app_localizations.dart';
 class PasswordPromptUtil {
   static Future<bool> authenticate(BuildContext context, WidgetRef ref) async {
     final passwordService = ref.read(passwordServiceProvider);
-    
+
     if (!await passwordService.hasPassword) {
       return true;
     }

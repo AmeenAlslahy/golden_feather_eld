@@ -18,12 +18,13 @@ class QuickActions extends ConsumerWidget {
     final isLoading = trackingState.status == TrackingStatus.loading;
 
     ref.listen<TrackingState>(trackingStateProvider, (previous, next) {
-      if (next.errorType == TrackingErrorType.permission && 
+      if (next.errorType == TrackingErrorType.permission &&
           (previous?.errorType != TrackingErrorType.permission)) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            icon: const Icon(Icons.location_off, color: AppColors.dangerRed, size: 48),
+            icon: const Icon(Icons.location_off,
+                color: AppColors.dangerRed, size: 48),
             title: Text(context.loc.locationDisabled),
             content: Text(next.arabicErrorMessage ?? next.errorMessage ?? ''),
             actions: [
@@ -49,8 +50,11 @@ class QuickActions extends ConsumerWidget {
       children: [
         // زر بدء/إيقاف التتبع
         AppButton(
-          label: trackingState.isTracking ? context.loc.stopAction : context.loc.startAction,
-          icon: trackingState.isTracking ? Icons.stop_circle : Icons.play_circle,
+          label: trackingState.isTracking
+              ? context.loc.stopAction
+              : context.loc.startAction,
+          icon:
+              trackingState.isTracking ? Icons.stop_circle : Icons.play_circle,
           type: trackingState.isTracking
               ? EldButtonType.danger
               : EldButtonType.connect,
@@ -86,7 +90,9 @@ class QuickActions extends ConsumerWidget {
                 icon: Icons.warning_amber,
                 type: EldButtonType.danger,
                 onPressed: () {
-                  ref.read(trackingStateProvider.notifier).requestPosition(alarm: 'sos');
+                  ref
+                      .read(trackingStateProvider.notifier)
+                      .requestPosition(alarm: 'sos');
                 },
               ),
             ),
@@ -96,6 +102,3 @@ class QuickActions extends ConsumerWidget {
     );
   }
 }
-
-
-

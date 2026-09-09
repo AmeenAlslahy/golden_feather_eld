@@ -35,9 +35,9 @@ void main() {
         .thenAnswer((_) => locationController.stream);
     when(() => mockTracking.events).thenAnswer((_) => eventController.stream);
 
-    when(() => mockDb.saveDiagnostic(any()))
-        .thenAnswer((_) async => true);
-    engine = DiagnosticsEngine(mockTracking, mockDb, FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
+    when(() => mockDb.saveDiagnostic(any())).thenAnswer((_) async => true);
+    engine = DiagnosticsEngine(mockTracking, mockDb,
+        FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
   });
 
   tearDown(() {

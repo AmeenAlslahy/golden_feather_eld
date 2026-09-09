@@ -29,7 +29,8 @@ class PushNotificationService {
     required LocalStorageService storage,
   }) async {
     if (Firebase.apps.isEmpty) {
-      AppLogger.warning('Firebase is not initialized. PushNotificationService is disabled.');
+      AppLogger.warning(
+          'Firebase is not initialized. PushNotificationService is disabled.');
       return;
     }
 
@@ -44,7 +45,8 @@ class PushNotificationService {
       FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
       FirebaseMessaging.onMessage.listen(service._onMessage);
       FirebaseMessaging.onMessageOpenedApp.listen(service._onMessageOpenedApp);
-      FirebaseMessaging.instance.onTokenRefresh.listen((token) => service._uploadToken(token));
+      FirebaseMessaging.instance.onTokenRefresh
+          .listen((token) => service._uploadToken(token));
 
       unawaited(service._uploadInitialToken());
       AppLogger.info('📨 PushNotificationService initialized');
@@ -60,11 +62,11 @@ class PushNotificationService {
     }
     final storage = LocalStorageService();
     await storage.init();
-    
+
     // معالجة الأمر في الخلفية
     final command = message.data['command'];
     FirebaseCrashlytics.instance.log('push_background: $command');
-    
+
     if (command == 'positionSingle') {
       // لا يمكن بدء التتبع من الخلفية بدون تهيئة كاملة
       AppLogger.info('📨 Background push ignored: $command');
@@ -74,7 +76,7 @@ class PushNotificationService {
   Future<void> _onMessage(RemoteMessage message) async {
     final command = message.data['command'];
     final eventId = message.data['eventId'];
-    
+
     if (command != null) {
       FirebaseCrashlytics.instance.log('push_command: $command');
       AppLogger.info('📨 Push command received: $command');
@@ -100,7 +102,8 @@ class PushNotificationService {
       AppLogger.info('📨 Push event received: $eventId');
       final notification = message.notification;
       if (notification != null) {
-        _showInAppNotification(notification.title ?? 'تنبيه', notification.body ?? 'حدث جديد من Traccar');
+        _showInAppNotification(notification.title ?? 'تنبيه',
+            notification.body ?? 'حدث جديد من Traccar');
       }
     }
   }
@@ -138,8 +141,10 @@ class PushNotificationService {
 
     try {
       final request = await HttpClient().postUrl(Uri.parse(url));
-      request.headers.contentType = ContentType.parse('application/x-www-form-urlencoded');
-      request.write('id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}');
+      request.headers.contentType =
+          ContentType.parse('application/x-www-form-urlencoded');
+      request.write(
+          'id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}');
       await request.close();
       AppLogger.info('📤 Token uploaded to server');
     } catch (e) {

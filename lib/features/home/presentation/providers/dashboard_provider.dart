@@ -80,7 +80,7 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       );
       return;
     }
-    
+
     state = state.copyWith(
       vehicleId: vehicle.id?.toString() ?? '',
       vehicleDisplayName: vehicle.name ?? vehicle.year ?? '',
@@ -96,9 +96,10 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
   }
 }
 
-final dashboardDataProvider = StateNotifierProvider<DashboardNotifier, DashboardData>((ref) {
+final dashboardDataProvider =
+    StateNotifierProvider<DashboardNotifier, DashboardData>((ref) {
   final notifier = DashboardNotifier();
-  
+
   // Listen to Auth State
   ref.listen(
     authStateProvider,

@@ -69,7 +69,7 @@ class TrackingService {
       }
     } catch (_) {}
 
-        return {
+    return {
       'serverUrl': serverUrl,
       'deviceId': _storage.deviceId,
       'location': {

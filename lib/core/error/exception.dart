@@ -39,7 +39,7 @@ class UnauthorizedException implements Exception {
 /// استثناء الذاكرة المحلية: يتم رميه عند فشل حفظ أو قراءة البيانات من الجهاز
 class CacheException implements Exception {
   final String? message;
-  
+
   const CacheException([this.message]);
 
   @override

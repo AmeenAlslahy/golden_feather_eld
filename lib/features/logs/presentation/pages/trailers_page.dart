@@ -9,7 +9,8 @@ import '../../../../core/widgets/app_text_field.dart';
 // import '../../../../l10n/app_localizations.dart';
 
 /// مزود قائمة المقطورات
-final trailersProvider = StateNotifierProvider<TrailersNotifier, List<String>>((ref) {
+final trailersProvider =
+    StateNotifierProvider<TrailersNotifier, List<String>>((ref) {
   return TrailersNotifier();
 });
 
@@ -112,9 +113,11 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.add, size: 18, color: AppColors.surface),
+                        const Icon(Icons.add,
+                            size: 18, color: AppColors.surface),
                         const SizedBox(width: 4),
-                        Text(context.loc.addButton, style: const TextStyle(color: AppColors.surface)),
+                        Text(context.loc.addButton,
+                            style: const TextStyle(color: AppColors.surface)),
                       ],
                     ),
                   ),
@@ -129,7 +132,8 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                 ? Center(
                     child: Text(
                       'No trailers added',
-                      style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.outline),
                     ),
                   )
                 : ListView.separated(
@@ -160,7 +164,8 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.dangerRed,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.button),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.button),
                             ),
                           ),
                           child: const Text(

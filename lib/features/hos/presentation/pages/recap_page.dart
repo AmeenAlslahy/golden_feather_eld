@@ -29,9 +29,10 @@ class RecapPage extends ConsumerWidget {
                 ...data.last7Days.map((dayData) => _buildRow(
                       title: dayData.dayName,
                       subtitle: dayData.formattedDate,
-                      value: (dayData.hoursWorked * 60).round().toHoursMinutes(),
+                      value:
+                          (dayData.hoursWorked * 60).round().toHoursMinutes(),
                     )),
-                
+
                 const Divider(height: 1, color: AppColors.border),
                 _buildRow(
                   title: context.loc.total,
@@ -39,25 +40,28 @@ class RecapPage extends ConsumerWidget {
                   value: (data.totalLast7Days * 60).round().toHoursMinutes(),
                   isBold: true,
                 ),
-                
+
                 const Divider(height: 1, color: AppColors.border),
                 _buildRow(
                   title: context.loc.hoursWorkedToday,
                   value: (data.hoursWorkedToday * 60).round().toHoursMinutes(),
                   isBold: true,
                 ),
-                
+
                 const Divider(height: 1, color: AppColors.border),
                 _buildRow(
                   title: context.loc.hoursAvailableToday,
-                  value: (data.hoursAvailableToday * 60).round().toHoursMinutes(),
+                  value:
+                      (data.hoursAvailableToday * 60).round().toHoursMinutes(),
                   isBold: true,
                 ),
-                
+
                 const Divider(height: 1, color: AppColors.border),
                 _buildRow(
                   title: context.loc.hoursAvailableTomorrow,
-                  value: (data.hoursAvailableTomorrow * 60).round().toHoursMinutes(),
+                  value: (data.hoursAvailableTomorrow * 60)
+                      .round()
+                      .toHoursMinutes(),
                   isBold: true,
                 ),
               ],
@@ -91,7 +95,8 @@ class RecapPage extends ConsumerWidget {
               title,
               style: TextStyle(
                 fontSize: 15,
-                fontWeight: isBold ? AppTypography.bold : AppTypography.semiBold,
+                fontWeight:
+                    isBold ? AppTypography.bold : AppTypography.semiBold,
               ),
             ),
           ),
@@ -122,4 +127,3 @@ class RecapPage extends ConsumerWidget {
     );
   }
 }
-

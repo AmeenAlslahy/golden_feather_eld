@@ -28,7 +28,9 @@ class TrackingStatusCard extends ConsumerWidget {
             children: [
               Icon(
                 Icons.location_on,
-                color: isTracking ? AppColors.success : AppColors.textSecondaryLight,
+                color: isTracking
+                    ? AppColors.success
+                    : AppColors.textSecondaryLight,
                 size: 28,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -41,7 +43,9 @@ class TrackingStatusCard extends ConsumerWidget {
               // مؤشر الحالة
               AppStatusBadge(
                 label: isTracking ? loc.activeStatus : loc.stoppedStatus,
-                type: isTracking ? AppStatusBadgeType.success : AppStatusBadgeType.error,
+                type: isTracking
+                    ? AppStatusBadgeType.success
+                    : AppStatusBadgeType.error,
               ),
             ],
           ),
@@ -99,6 +103,3 @@ class TrackingStatusCard extends ConsumerWidget {
     );
   }
 }
-
-
-

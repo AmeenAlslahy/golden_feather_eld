@@ -91,10 +91,13 @@ final trackingStateProvider =
   // 3) بدء التتبع إجبارياً عند تغيير الحالة إلى Driving يدوياً
   ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
     if (next is HosEngineReady) {
-      final prevStatus = (previous is HosEngineReady) ? previous.update.currentStatus : null;
-      if (next.update.currentStatus == DutyStatus.driving && prevStatus != DutyStatus.driving) {
+      final prevStatus =
+          (previous is HosEngineReady) ? previous.update.currentStatus : null;
+      if (next.update.currentStatus == DutyStatus.driving &&
+          prevStatus != DutyStatus.driving) {
         if (!notifier.isActiveOrLoading) {
-          AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
+          AppLogger.info(
+              '🚀 Auto-starting tracking because status changed to DRIVING');
           notifier.startTracking(skipBatteryCheck: true);
         }
       }
@@ -186,7 +189,6 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       if (!state.isTracking) {
         state = state.copyWith(
           errorMessage: 'No GPS signal received from device',
-          
           errorType: TrackingErrorType.technical,
         );
       }
@@ -204,7 +206,6 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
           isTracking: true,
           currentLocation: location,
           errorMessage: null,
-
           errorType: null,
         );
         ref.read(currentVehicleSpeedProvider.notifier).state = location.speed;
@@ -214,7 +215,6 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
         state = state.copyWith(
           status: TrackingStatus.error,
           errorMessage: 'Stream error',
-          
           errorType: TrackingErrorType.technical,
           isTracking: false,
         );
@@ -226,11 +226,11 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   Future<void> stopTracking({bool force = false}) async {
     if (!force) {
       final hosState = ref.read(hosStatusProvider);
-      final isDriving = hosState is HosEngineReady && hosState.update.currentStatus == DutyStatus.driving;
+      final isDriving = hosState is HosEngineReady &&
+          hosState.update.currentStatus == DutyStatus.driving;
       if (isDriving) {
         state = state.copyWith(
           errorMessage: 'Cannot stop tracking while driving',
-          
           errorType: TrackingErrorType.technical,
         );
         return;
@@ -270,7 +270,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       (failure) {
         state = state.copyWith(
           errorMessage: failure.message,
-          );
+        );
       },
       (location) {
         state = state.copyWith(

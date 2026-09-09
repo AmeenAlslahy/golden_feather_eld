@@ -16,11 +16,12 @@ class DvirRepositoryImpl implements DvirRepository {
   });
 
   @override
-  Future<Either<Failure, List<DvirReport>>> getDvirReports(String vehicleId) async {
+  Future<Either<Failure, List<DvirReport>>> getDvirReports(
+      String vehicleId) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
     return executeWithHandling(() async {
       final rawReports = await remoteDataSource.getDvirReports(vehicleId);
-      
+
       final reports = rawReports.map((json) {
         return DvirReport(
           id: json['id']?.toString() ?? '',
@@ -35,12 +36,13 @@ class DvirRepositoryImpl implements DvirRepository {
           notes: json['notes'],
           isSubmitted: true,
           items: (json['items'] as List<dynamic>?)?.map((item) {
-            return ItemInspectionResult(
-              item: _parseInspectionItem(item['name']),
-              isDefective: item['isDefective'] ?? false,
-              defectDescription: item['defectDescription'],
-            );
-          }).toList() ?? [],
+                return ItemInspectionResult(
+                  item: _parseInspectionItem(item['name']),
+                  isDefective: item['isDefective'] ?? false,
+                  defectDescription: item['defectDescription'],
+                );
+              }).toList() ??
+              [],
         );
       }).toList();
 
@@ -63,8 +65,10 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   VehicleCondition _parseVehicleCondition(String? condition) {
-    if (condition == VehicleCondition.needsRepair.name) return VehicleCondition.needsRepair;
-    if (condition == VehicleCondition.unsafe.name) return VehicleCondition.unsafe;
+    if (condition == VehicleCondition.needsRepair.name)
+      return VehicleCondition.needsRepair;
+    if (condition == VehicleCondition.unsafe.name)
+      return VehicleCondition.unsafe;
     return VehicleCondition.safe;
   }
 

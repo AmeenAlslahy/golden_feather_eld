@@ -18,9 +18,11 @@ class EldCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
+      color: Theme.of(context).cardTheme.color ??
+          Theme.of(context).colorScheme.surface,
       elevation: 0.5,
-      shadowColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+      shadowColor:
+          Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
@@ -36,5 +38,3 @@ class EldCard extends StatelessWidget {
     );
   }
 }
-
-

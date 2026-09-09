@@ -18,22 +18,33 @@ enum DutyStatus {
 
   String toShortCode() {
     switch (this) {
-      case DutyStatus.offDuty: return 'OFF';
-      case DutyStatus.sleeperBerth: return 'SB';
-      case DutyStatus.onDutyNotDriving: return 'ON';
-      case DutyStatus.driving: return 'D';
-      case DutyStatus.personalUse: return 'PC';
+      case DutyStatus.offDuty:
+        return 'OFF';
+      case DutyStatus.sleeperBerth:
+        return 'SB';
+      case DutyStatus.onDutyNotDriving:
+        return 'ON';
+      case DutyStatus.driving:
+        return 'D';
+      case DutyStatus.personalUse:
+        return 'PC';
     }
   }
 
   static DutyStatus fromShortCode(String code) {
     switch (code.toUpperCase()) {
-      case 'OFF': return DutyStatus.offDuty;
-      case 'SB': return DutyStatus.sleeperBerth;
-      case 'ON': return DutyStatus.onDutyNotDriving;
-      case 'D': return DutyStatus.driving;
-      case 'PC': return DutyStatus.personalUse;
-      default: return DutyStatus.offDuty;
+      case 'OFF':
+        return DutyStatus.offDuty;
+      case 'SB':
+        return DutyStatus.sleeperBerth;
+      case 'ON':
+        return DutyStatus.onDutyNotDriving;
+      case 'D':
+        return DutyStatus.driving;
+      case 'PC':
+        return DutyStatus.personalUse;
+      default:
+        return DutyStatus.offDuty;
     }
   }
 }
@@ -114,7 +125,10 @@ class DutyPeriod {
 
   Duration get duration => endTime.difference(startTime);
   double? get distanceKm {
-    if (startLat != null && startLon != null && endLat != null && endLon != null) {
+    if (startLat != null &&
+        startLon != null &&
+        endLat != null &&
+        endLon != null) {
       return null; // ط³ظٹطھظ… ط§ط³طھط®ط¯ط§ظ…ظ‡ ظ„ط§ط­ظ‚ط§ ظ…ط¹ Haversine
     }
     return null;
@@ -188,7 +202,8 @@ class HosStatusUpdate {
   });
 
   bool get hasViolations => violations.isNotEmpty;
-  bool get hasCriticalAlerts => alerts.any((a) => a.severity == AlertSeverity.critical);
+  bool get hasCriticalAlerts =>
+      alerts.any((a) => a.severity == AlertSeverity.critical);
 }
 
 // ==========================================

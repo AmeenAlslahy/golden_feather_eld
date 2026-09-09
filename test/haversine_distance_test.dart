@@ -25,11 +25,14 @@ void main() {
     test('calculateDistance for same point should be 0', () {
       const lat1 = 24.7136;
       const lon1 = 46.6753;
-      
+
       final distance = DistanceCalculator.haversine(
-        lat1: lat1, lon1: lon1, lat2: lat1, lon2: lon1,
+        lat1: lat1,
+        lon1: lon1,
+        lat2: lat1,
+        lon2: lon1,
       );
-      
+
       expect(distance, 0.0);
     });
   });

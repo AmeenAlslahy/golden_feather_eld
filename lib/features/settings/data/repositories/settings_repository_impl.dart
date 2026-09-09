@@ -52,18 +52,18 @@ class SettingsRepositoryImpl implements SettingsRepository {
     return executeWithHandling(() async {
       final userModel = await _accountRemoteDataSource.getUserProfile(userId);
       final attrs = userModel.attributes;
-      
+
       // Sync Theme
       if (attrs.containsKey('theme') && attrs['theme'] != null) {
         await _preferencesStorage.setTheme(attrs['theme'].toString());
       }
-      
+
       // Sync Language
       final lang = attrs['language']?.toString() ?? '';
       if (lang.isNotEmpty) {
         await _preferencesStorage.setLanguage(lang);
       }
-      
+
       return true;
     });
   }

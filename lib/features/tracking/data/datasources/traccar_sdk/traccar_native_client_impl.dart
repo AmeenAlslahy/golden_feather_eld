@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'traccar_native_client.dart';
 
 class TraccarNativeClientImpl implements TraccarNativeClient {
-  static const MethodChannel _channel = MethodChannel('com.goldenfeather.eld/traccar');
+  static const MethodChannel _channel =
+      MethodChannel('com.goldenfeather.eld/traccar');
 
   @override
   Future<void> configure(Map<String, dynamic> config) async {
@@ -58,7 +59,8 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
   @override
   Future<List<Map<String, dynamic>>> getNativeLogs() async {
     try {
-      final List<dynamic>? result = await _channel.invokeMethod<List<dynamic>>('getLogs');
+      final List<dynamic>? result =
+          await _channel.invokeMethod<List<dynamic>>('getLogs');
       if (result == null) return [];
       return result.map((e) => Map<String, dynamic>.from(e as Map)).toList();
     } on PlatformException {

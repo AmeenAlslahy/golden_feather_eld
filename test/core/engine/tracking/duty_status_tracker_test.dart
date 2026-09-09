@@ -91,7 +91,8 @@ void main() {
 
     setUp(() {
       mockRepo = MockLogRepository();
-      clock = FakeTrustedTimeProvider(initialUtcTime: DateTime.utc(2023, 1, 1, 12, 0, 0));
+      clock = FakeTrustedTimeProvider(
+          initialUtcTime: DateTime.utc(2023, 1, 1, 12, 0, 0));
       db = FakeLocalStorage();
       tracker = DutyStatusTracker(
         logRepository: mockRepo,

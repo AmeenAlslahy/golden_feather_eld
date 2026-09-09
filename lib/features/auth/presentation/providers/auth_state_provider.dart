@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/error/failure.dart';
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../../domain/entities/value_objects/email.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
@@ -10,6 +10,7 @@ import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/check_auth_status_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import 'auth_providers.dart';
+import '../../../../core/network/network_providers.dart';
 
 /// حالة المصادقة
 enum AuthStatus {
@@ -45,9 +46,8 @@ class AuthState {
       status: status ?? this.status,
       user: user ?? this.user,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      arabicErrorMessage: clearError
-          ? null
-          : (arabicErrorMessage ?? arabicErrorMessage),
+      arabicErrorMessage:
+          clearError ? null : (arabicErrorMessage ?? arabicErrorMessage),
     );
   }
 
@@ -58,12 +58,23 @@ class AuthState {
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(traccarAuthRepositoryProvider);
-  return AuthNotifier(
+  final notifier = AuthNotifier(
     loginUseCase: LoginUseCase(repository),
     registerUseCase: RegisterUseCase(repository),
     checkAuthStatusUseCase: CheckAuthStatusUseCase(repository),
     logoutUseCase: LogoutUseCase(repository),
   );
+
+  final unauthEventStream = ref.watch(unauthenticatedEventProvider).stream;
+  final subscription = unauthEventStream.listen((_) {
+    notifier.forceLogout();
+  });
+  
+  ref.onDispose(() {
+    subscription.cancel();
+  });
+
+  return notifier;
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -71,6 +82,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final RegisterUseCase _registerUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final LogoutUseCase _logoutUseCase;
+
+  int _operationId = 0;
+  bool _isOperationInProgress = false;
 
   AuthNotifier({
     required LoginUseCase loginUseCase,
@@ -88,15 +102,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(
       status: AuthStatus.error,
       errorMessage: failure.message,
-      );
+    );
     AppLogger.error('$logPrefix: ${failure.message}');
   }
 
   /// التحقق من حالة المصادقة عند بدء التطبيق
   Future<void> checkAuthStatus() async {
+    if (_isOperationInProgress) return;
+
+    final currentOpId = ++_operationId;
+    _isOperationInProgress = true;
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
+
     try {
       final sessionResult = await _checkAuthStatusUseCase();
+      if (currentOpId != _operationId) return;
 
       sessionResult.match((failure) {
         state = const AuthState(status: AuthStatus.unauthenticated);
@@ -107,7 +127,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       });
     } catch (e) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
+      if (currentOpId == _operationId) {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      }
+    } finally {
+      if (currentOpId == _operationId) {
+        _isOperationInProgress = false;
+      }
     }
   }
 
@@ -117,30 +143,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     String? serverUrl,
   }) async {
+    if (_isOperationInProgress) return false;
+
+    final currentOpId = ++_operationId;
+    _isOperationInProgress = true;
+
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
 
-    final identifierObj = LoginIdentifier(username);
-    final passwordObj = Password(password);
+    try {
+      final identifierObj = LoginIdentifier(username);
+      final passwordObj = Password(password);
 
-    final result = await _loginUseCase(
-      identifier: identifierObj,
-      password: passwordObj,
-    );
+      final result = await _loginUseCase(
+        identifier: identifierObj,
+        password: passwordObj,
+      );
 
-    return result.match(
-      (failure) {
-        _setErrorState(failure, 'Login failed');
-        return false;
-      },
-      (user) {
-        state = AuthState(
-          status: AuthStatus.authenticated,
-          user: user,
-        );
-        AppLogger.info('Login successful: ${user.fullName}');
-        return true;
-      },
-    );
+      if (currentOpId != _operationId) return false;
+
+      return result.match(
+        (failure) {
+          _setErrorState(failure, 'Login failed');
+          return false;
+        },
+        (user) {
+          state = AuthState(
+            status: AuthStatus.authenticated,
+            user: user,
+          );
+          AppLogger.info('Login successful: ${user.fullName}');
+          return true;
+        },
+      );
+    } finally {
+      if (currentOpId == _operationId) {
+        _isOperationInProgress = false;
+      }
+    }
   }
 
   /// إنشاء حساب جديد
@@ -149,37 +188,70 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
+    if (_isOperationInProgress) return false;
+
+    final currentOpId = ++_operationId;
+    _isOperationInProgress = true;
+
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
 
-    final emailObj = Email(email);
-    final passwordObj = Password(password);
+    try {
+      final emailObj = Email(email);
+      final passwordObj = Password(password);
 
-    final result = await _registerUseCase(
-      name: name,
-      email: emailObj,
-      password: passwordObj,
-    );
+      final result = await _registerUseCase(
+        name: name,
+        email: emailObj,
+        password: passwordObj,
+      );
 
-    return result.match(
-      (failure) {
-        _setErrorState(failure, 'Registration failed');
-        return false;
-      },
-      (user) {
-        state = AuthState(
-          status: AuthStatus.authenticated,
-          user: user,
-        );
-        AppLogger.info('Registration successful: ${user.fullName}');
-        return true;
-      },
-    );
+      if (currentOpId != _operationId) return false;
+
+      return result.match(
+        (failure) {
+          _setErrorState(failure, 'Registration failed');
+          return false;
+        },
+        (user) {
+          state = AuthState(
+            status: AuthStatus.authenticated,
+            user: user,
+          );
+          AppLogger.info('Registration successful: ${user.fullName}');
+          return true;
+        },
+      );
+    } finally {
+      if (currentOpId == _operationId) {
+        _isOperationInProgress = false;
+      }
+    }
   }
 
-  /// تسجيل الخروج
-  Future<void> logout() async {
-    await _logoutUseCase();
+  /// تسجيل الخروج الإجباري (يطرد المستخدم فوراً ويمسح الجلسة)
+  void forceLogout() {
+    ++_operationId; // إلغاء أي عمليات معلقة
+    _isOperationInProgress = false;
     state = const AuthState(status: AuthStatus.unauthenticated);
+    _logoutUseCase(); // Fire and forget
+  }
+
+  /// تسجيل الخروج العادي
+  Future<void> logout() async {
+    if (_isOperationInProgress) return;
+
+    final currentOpId = ++_operationId;
+    _isOperationInProgress = true;
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+
+    try {
+      await _logoutUseCase();
+    } finally {
+      if (currentOpId == _operationId) {
+        _isOperationInProgress = false;
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      }
+    }
   }
 
   /// مسح الخطأ

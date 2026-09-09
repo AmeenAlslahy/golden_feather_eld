@@ -1,7 +1,7 @@
 import '../../domain/entities/tracking_event.dart';
 
-/// محول (Mapper) يقوم بتحويل استجابات Traccar (JSON Maps) 
-/// إلى كيانات Domain (TrackingEvent) لضمان عدم تسرب نماذج Traccar 
+/// محول (Mapper) يقوم بتحويل استجابات Traccar (JSON Maps)
+/// إلى كيانات Domain (TrackingEvent) لضمان عدم تسرب نماذج Traccar
 /// إلى طبقة الـ Domain أو الـ Business Logic.
 class TraccarMapper {
   /// تحويل Traccar Position Map إلى TrackingEvent
@@ -11,7 +11,7 @@ class TraccarMapper {
     String? driverId,
   }) {
     final attributes = position['attributes'] as Map<String, dynamic>? ?? {};
-    
+
     return TrackingEvent(
       id: position['id']?.toString() ?? '',
       deviceId: position['deviceId']?.toString() ?? '',
@@ -30,8 +30,8 @@ class TraccarMapper {
       metadata: attributes,
     );
   }
-  
-  /// تحويل Traccar Event Map إلى TrackingEvent 
+
+  /// تحويل Traccar Event Map إلى TrackingEvent
   /// (إذا كان الحدث يحتوي على إحداثيات أو معلومات ذات صلة)
   static TrackingEvent fromTraccarEvent(
     Map<String, dynamic> event,
@@ -41,7 +41,7 @@ class TraccarMapper {
   }) {
     // Traccar Events لا تحتوي دائماً على الإحداثيات مباشرة، لذا ندمجها مع آخر موقع معروف.
     final attributes = event['attributes'] as Map<String, dynamic>? ?? {};
-    
+
     return TrackingEvent(
       id: event['id']?.toString() ?? '',
       deviceId: event['deviceId']?.toString() ?? '',
@@ -63,7 +63,7 @@ class TraccarMapper {
       },
     );
   }
-  
+
   /// التأكد من أن الوقت المأخوذ هو UTC
   static DateTime _parseUtcDate(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) {
@@ -71,7 +71,7 @@ class TraccarMapper {
     }
     try {
       final parsed = DateTime.parse(dateStr);
-      // إذا كان النص لا يحتوي على حرف Z أو توقيت، فقد يتم تفسيره محلياً. 
+      // إذا كان النص لا يحتوي على حرف Z أو توقيت، فقد يتم تفسيره محلياً.
       // للتأكيد، نجبره على التحول إلى UTC.
       return parsed.toUtc();
     } catch (_) {

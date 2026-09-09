@@ -75,10 +75,11 @@ class DvirNotifier extends StateNotifier<DvirState> {
 
   Future<void> _loadDvirs() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     final vehicleId = _storageService.deviceId;
-    final result = await _repository.getDvirReports(vehicleId.isEmpty ? 'unknown_vehicle' : vehicleId);
-    
+    final result = await _repository
+        .getDvirReports(vehicleId.isEmpty ? 'unknown_vehicle' : vehicleId);
+
     if (mounted) {
       result.fold(
         (failure) => state = state.copyWith(
@@ -98,7 +99,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
   Future<void> createReport(DvirReport report) async {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _repository.submitDvirReport(report);
-    
+
     if (mounted) {
       result.fold(
         (failure) => state = state.copyWith(
@@ -106,7 +107,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
           error: failure.message,
         ),
         (_) {
-          final updatedReports = [report.copyWith(isSubmitted: true), ...state.reports];
+          final updatedReports = [
+            report.copyWith(isSubmitted: true),
+            ...state.reports
+          ];
           state = state.copyWith(
             isLoading: false,
             reports: updatedReports,

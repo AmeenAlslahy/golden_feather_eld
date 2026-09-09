@@ -5,56 +5,56 @@ class AppColors {
   AppColors._();
 
   // ========== الألوان الأساسية ==========
-  
+
   /// الأزرق الأساسي - شريط العنوان والأزرار النشطة
   static const Color primaryBlue = Color(0xFF0072CE);
-  
+
   /// الأخضر - الحالة الجيدة، زر الاتصال، حالة القيادة
   static const Color successGreen = Color(0xFF34C759);
-  
+
   /// الأحمر - التحذير، رسائل الخطأ، الحالة الناقصة
   static const Color dangerRed = Color(0xFFFF3B30);
-  
+
   /// الأصفر/البرتقالي - أيقونة التحذير في شريط العنوان
   static const Color warningYellow = Color(0xFFFFCC00);
 
   // ========== الألوان المحايدة ==========
-  
+
   /// خلفية الصفحة
   static const Color background = Color(0xFFF2F2F7);
-  
+
   /// حدود الحقول والفواصل
   static const Color border = Color(0xFFE5E5EA);
-  
+
   /// النص الثانوي والتعليمات
-  static const Color textSecondary = Color(0xFF6E6E73); 
-  
+  static const Color textSecondary = Color(0xFF6E6E73);
+
   /// النص الأساسي
   static const Color textPrimary = Color(0xFF000000);
-  
+
   /// خلفية البطاقات (Light)
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surface = surfaceLight; // For backward compatibility
-  
+
   /// زر متابعة بدون اتصال
   static const Color darkButton = Color(0xFF2C2C2E);
-  
+
   /// زر إرسال باهت
   static const Color paleGreen = Color(0xFFB5EAD7);
 
   // ========== ألوان شريط التنقل السفلي ==========
-  
+
   /// خلفية شريط التنقل
   static const Color navBarBackground = Color(0xFFF2F2F7);
-  
+
   /// أيقونة نشطة
   static const Color navBarActive = Color(0xFF000000);
-  
+
   /// أيقونة غير نشطة
   static const Color navBarInactive = Color(0xFF8E8E93);
 
   // ========== ألوان داكنة (اختياري) ==========
-  
+
   static const Color darkBackground = Color(0xFF1C1C1E);
   static const Color surfaceDark = Color(0xFF2C2C2E);
   static const Color darkSurface = surfaceDark; // For backward compatibility
@@ -77,7 +77,7 @@ class AppColors {
   static const Color transparent = Colors.transparent;
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
-  
+
   static const Color textPrimaryLight = textPrimary;
   static const Color textSecondaryLight = textSecondary;
   static const Color disabledLight = Color(0xFFE0E0E0);
@@ -105,5 +105,3 @@ class AppColors {
     return brightness == Brightness.light ? border : const Color(0xFF48484A);
   }
 }
-
-

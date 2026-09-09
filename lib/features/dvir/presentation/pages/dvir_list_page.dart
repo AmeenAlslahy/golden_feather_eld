@@ -53,7 +53,8 @@ class DvirListPage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.assignment,
-                          size: 64, color: Theme.of(context).colorScheme.outline),
+                          size: 64,
+                          color: Theme.of(context).colorScheme.outline),
                       const SizedBox(height: AppSpacing.md),
                       Text(context.loc.noDvirReports),
                       const SizedBox(height: AppSpacing.lg),
@@ -135,7 +136,9 @@ class _DvirCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    report.isSubmitted ? context.loc.submitted : context.loc.draft,
+                    report.isSubmitted
+                        ? context.loc.submitted
+                        : context.loc.draft,
                     style: TextStyle(
                       fontSize: 12,
                       color: report.isSubmitted
@@ -148,11 +151,13 @@ class _DvirCard extends StatelessWidget {
             ),
             const Divider(height: 24),
             // معلومات التقرير
-            _infoRow(context, context.loc.dateLabel, report.date.toString().substring(0, 10)),
+            _infoRow(context, context.loc.dateLabel,
+                report.date.toString().substring(0, 10)),
             _infoRow(context, context.loc.vehicle, report.vehicleId),
             if (report.trailerId != null)
               _infoRow(context, context.loc.trailer, report.trailerId!),
-            _infoRow(context, context.loc.odometerReading, '${report.odometer?.toStringAsFixed(0) ?? "-"} mi'),
+            _infoRow(context, context.loc.odometerReading,
+                '${report.odometer?.toStringAsFixed(0) ?? "-"} mi'),
             // عدد الأعطال
             if (report.hasDefects)
               Container(
@@ -164,11 +169,13 @@ class _DvirCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning, color: AppColors.dangerRed, size: 16),
+                    const Icon(Icons.warning,
+                        color: AppColors.dangerRed, size: 16),
                     const SizedBox(width: 8),
                     Text(
                       '${report.defectCount} ${context.loc.defectsFound}',
-                      style: const TextStyle(color: AppColors.dangerRed, fontSize: 13),
+                      style: const TextStyle(
+                          color: AppColors.dangerRed, fontSize: 13),
                     ),
                   ],
                 ),

@@ -15,7 +15,8 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
   LogRemoteDataSourceImpl(this._apiClient, this._endpoints);
 
   @override
-  Future<List<LogEventModel>> getDutyStatusLogs(int driverId, DateTime date) async {
+  Future<List<LogEventModel>> getDutyStatusLogs(
+      int driverId, DateTime date) async {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         _endpoints.driverDutyStatus(driverId),
@@ -27,14 +28,16 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
       if (!response.status || response.data == null) {
         throw const ServerException(
           message: 'Failed to fetch logs',
-          );
+        );
       }
 
-      final data = response.data!.containsKey('data') 
+      final data = response.data!.containsKey('data')
           ? response.data!['data'] as List<dynamic>
           : (response.data!['events'] as List<dynamic>? ?? []);
 
-      return data.map((json) => LogEventModel.fromJson(json as Map<String, dynamic>)).toList();
+      return data
+          .map((json) => LogEventModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         // No logs for this day on server, return empty
@@ -42,7 +45,7 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
       }
       throw ServerException(
         message: 'Network error: ${e.message}',
-        );
+      );
     } catch (e) {
       // If endpoint is unsupported or throws format error
       return []; // Silently fallback to local storage

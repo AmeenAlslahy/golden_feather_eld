@@ -68,7 +68,6 @@ class MainCircularTimer extends StatelessWidget {
               const SizedBox(height: 8),
               const Icon(
                 Icons.keyboard_arrow_down,
-                
                 size: 28,
               ),
             ],
@@ -131,6 +130,3 @@ class _TimerPainter extends CustomPainter {
         oldDelegate.progressColor != progressColor;
   }
 }
-
-
-

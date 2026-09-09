@@ -4,14 +4,15 @@ import '../../../../core/error/exception.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
-import 'package:golden_feather_eld/core/models/user_model.dart';
+import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
 import '../datasources/auth_remote_data_source.dart';
 import '../datasources/user_store.dart';
 import '../datasources/auth_session_store.dart';
 import '../../../../core/utils/repository_helper.dart';
+import '../models/auth_session_dto.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -50,17 +51,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
     return executeWithHandling(() async {
       final backendType = _configProvider.backendType;
-      final session = await _remoteDataSource.login(
+      final sessionDto = await _remoteDataSource.login(
         email: email,
         password: password,
         serverUrl: serverUrl,
         backendType: backendType,
       );
 
+      final session = sessionDto.toEntity();
       await _sessionStore.saveSession(session);
 
-      final userModel = UserModel.fromMetadata(session.userMetadata, defaultEmail: email);
-      await _userStore.saveUser(userModel); // UserStore must accept User or UserModel
+      final userModel = sessionDto.userModel;
+      await _userStore
+          .saveUser(userModel); // UserStore must accept User or UserModel
 
       return userModel;
     }, tag: 'Auth.login', checkNetworkFirst: true, networkInfo: _networkInfo);
@@ -89,8 +92,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final loginResult = await login(email: email, password: password);
       return loginResult.fold(
-          (failure) => throw ServerException(message: failure.message),
-          (user) => user,
+        (failure) => throw ServerException(message: failure.message),
+        (user) => user,
       );
     },
         tag: 'Auth.register',
@@ -146,16 +149,17 @@ class AuthRepositoryImpl implements AuthRepository {
     return const Left(NetworkFailure());
   }
 
-  Future<Either<Failure, User>> _validateRemoteSession(AuthSession savedSession) async {
+  Future<Either<Failure, User>> _validateRemoteSession(
+      AuthSession savedSession) async {
     final result = await executeWithHandling(() async {
       final backendType = _configProvider.backendType;
-      final validSession = await _remoteDataSource.validateSession(
-        currentSession: savedSession,
+      final validSessionDto = await _remoteDataSource.validateSession(
+        currentSession: AuthSessionDto.fromEntity(savedSession),
         backendType: backendType,
       );
-      await _sessionStore.saveSession(validSession);
+      await _sessionStore.saveSession(validSessionDto.toEntity());
 
-      final userModel = UserModel.fromMetadata(validSession.userMetadata);
+      final userModel = validSessionDto.userModel;
       await _userStore.saveUser(userModel);
 
       return userModel;
@@ -180,7 +184,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await executeWithHandling(() async {
         final backendType = _configProvider.backendType;
         await _remoteDataSource.logout(
-          currentSession: savedSession,
+          currentSession: AuthSessionDto.fromEntity(savedSession),
           backendType: backendType,
         );
         return unit;

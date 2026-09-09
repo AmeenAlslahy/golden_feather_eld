@@ -34,11 +34,14 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final drivers = [CoDriver.none, ...codriverState.availableDrivers];
 
     // Get current selection name
-    final currentSelectedId = _selectedId ?? codriverState.selectedCoDriver?.id ?? 'none';
-    final selectedDriverName = drivers.firstWhere(
-      (d) => d.id == currentSelectedId,
-      orElse: () => CoDriver.none,
-    ).name;
+    final currentSelectedId =
+        _selectedId ?? codriverState.selectedCoDriver?.id ?? 'none';
+    final selectedDriverName = drivers
+        .firstWhere(
+          (d) => d.id == currentSelectedId,
+          orElse: () => CoDriver.none,
+        )
+        .name;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -64,7 +67,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
       body: codriverState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 48.0),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg, vertical: 48.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -78,21 +82,28 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    isArabic ? 'الرجاء اختيار مساعد السائق الخاص بك' : 'Select your co-driver',
+                    isArabic
+                        ? 'الرجاء اختيار مساعد السائق الخاص بك'
+                        : 'Select your co-driver',
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondaryColor,
                     ),
                   ),
                   const SizedBox(height: 32.0),
-                  
+
                   // Selector Row
                   InkWell(
-                    onTap: () => _showDriverSelectionDialog(context, drivers, currentSelectedId, isArabic, textColor, surfaceColor),
+                    onTap: () => _showDriverSelectionDialog(context, drivers,
+                        currentSelectedId, isArabic, textColor, surfaceColor),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
                       decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: AppColors.borderForBrightness(brightness))),
+                        border: Border(
+                            bottom: BorderSide(
+                                color:
+                                    AppColors.borderForBrightness(brightness))),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,7 +144,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       color: textSecondaryColor,
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppSpacing.xl),
 
                   // Switch Button
@@ -141,13 +152,16 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     label: isArabic ? 'تبديل' : 'SWITCH',
                     type: EldButtonType.agree,
                     isLoading: codriverState.isSwitching,
-                    onPressed: (codriverState.isSwitching || codriverState.selectedCoDriver == null)
+                    onPressed: (codriverState.isSwitching ||
+                            codriverState.selectedCoDriver == null)
                         ? null
                         : () async {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: Text(isArabic ? 'تأكيد التبديل' : 'Confirm Switch'),
+                                title: Text(isArabic
+                                    ? 'تأكيد التبديل'
+                                    : 'Confirm Switch'),
                                 content: Text(
                                   isArabic
                                       ? 'هل أنت متأكد من تبديل الأدوار؟'
@@ -155,19 +169,27 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: Text(
+                                        MaterialLocalizations.of(context)
+                                            .cancelButtonLabel),
                                   ),
                                   FilledButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: Text(MaterialLocalizations.of(context).okButtonLabel),
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: Text(
+                                        MaterialLocalizations.of(context)
+                                            .okButtonLabel),
                                   ),
                                 ],
                               ),
                             );
 
                             if (confirm == true && mounted) {
-                              await ref.read(codriverProvider.notifier).switchDrivers();
+                              await ref
+                                  .read(codriverProvider.notifier)
+                                  .switchDrivers();
                               if (mounted) {
                                 // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -192,7 +214,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     );
   }
 
-  void _showDriverSelectionDialog(BuildContext context, List<CoDriver> drivers, String currentId, bool isArabic, Color textColor, Color surfaceColor) {
+  void _showDriverSelectionDialog(BuildContext context, List<CoDriver> drivers,
+      String currentId, bool isArabic, Color textColor, Color surfaceColor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -205,7 +228,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               backgroundColor: surfaceColor,
               title: Text(
                 isArabic ? 'مساعد السائق' : 'Co-driver',
-                style: TextStyle(color: textColor, fontWeight: FontWeight.normal),
+                style:
+                    TextStyle(color: textColor, fontWeight: FontWeight.normal),
               ),
               contentPadding: const EdgeInsets.only(top: 16),
               content: SizedBox(
@@ -219,7 +243,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       title: Text(
                         driver.name.toUpperCase(),
                         style: TextStyle(
-                          color: dialogSelectedId == driver.id ? AppColors.primaryBlue : textColor,
+                          color: dialogSelectedId == driver.id
+                              ? AppColors.primaryBlue
+                              : textColor,
                           fontSize: 14,
                         ),
                       ),
@@ -251,8 +277,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     setState(() {
                       _selectedId = dialogSelectedId;
                     });
-                    final selected = drivers.firstWhere((d) => d.id == dialogSelectedId);
-                    ref.read(codriverProvider.notifier).selectCoDriver(selected);
+                    final selected =
+                        drivers.firstWhere((d) => d.id == dialogSelectedId);
+                    ref
+                        .read(codriverProvider.notifier)
+                        .selectCoDriver(selected);
                     Navigator.of(context).pop();
                   },
                   child: Text(

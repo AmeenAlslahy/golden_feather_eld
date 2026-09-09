@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 
 /// مزود حالة الثيم
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   final storage = ref.watch(localStorageProvider);
   return ThemeModeNotifier(storage);
 });
@@ -23,13 +24,15 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     final oldPrefs = await SharedPreferences.getInstance();
     if (oldPrefs.containsKey(_oldThemeKey)) {
       final oldIndex = oldPrefs.getInt(_oldThemeKey);
-      if (oldIndex != null && oldIndex >= 0 && oldIndex < ThemeMode.values.length) {
+      if (oldIndex != null &&
+          oldIndex >= 0 &&
+          oldIndex < ThemeMode.values.length) {
         final migratedMode = ThemeMode.values[oldIndex];
         await _storage.setTheme(migratedMode.name);
       }
       await oldPrefs.remove(_oldThemeKey);
     }
-    
+
     // Read from unified storage
     final themeStr = _storage.theme;
     state = ThemeMode.values.firstWhere(
@@ -53,4 +56,3 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   bool get isDarkMode => state == ThemeMode.dark;
 }
-

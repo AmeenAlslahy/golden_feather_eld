@@ -13,20 +13,23 @@ final fileSharingServiceProvider = Provider<FileSharingService>((ref) {
 
 class FileSharingService {
   final ApiClient _apiClient;
-  
+
   FileSharingService(this._apiClient);
 
   /// يقوم بتنزيل ملف من خادم Traccar (مثل التقارير) ومشاركته فوراً
-  Future<void> downloadAndShare(String endpoint, {String? filename, Map<String, dynamic>? queryParameters}) async {
+  Future<void> downloadAndShare(String endpoint,
+      {String? filename, Map<String, dynamic>? queryParameters}) async {
     try {
       final tempDir = await getTemporaryDirectory();
-      
+
       // إنشاء اسم ملف فريد لتجنب التعارض
-      final safeFilename = filename ?? 'report_${const Uuid().v4().substring(0, 8)}.xlsx';
+      final safeFilename =
+          filename ?? 'report_${const Uuid().v4().substring(0, 8)}.xlsx';
       final savePath = '${tempDir.path}/$safeFilename';
 
       // تنزيل الملف عبر ApiClient (الذي يحتوي أصلاً على Auth Token)
-      await _apiClient.downloadFile(endpoint, savePath, queryParameters: queryParameters);
+      await _apiClient.downloadFile(endpoint, savePath,
+          queryParameters: queryParameters);
 
       // التأكد من وجود الملف ثم مشاركته
       final file = File(savePath);

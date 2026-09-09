@@ -8,7 +8,9 @@ import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 
 class MockDutyStatusTracker extends Mock implements DutyStatusTracker {}
+
 class MockHosLocalDataSource extends Mock implements HosLocalDataSource {}
+
 class MockHosConfiguration extends Mock implements HosConfiguration {}
 
 void main() {
@@ -25,14 +27,17 @@ void main() {
     mockTracker = MockDutyStatusTracker();
     mockDb = MockHosLocalDataSource();
     mockConfig = MockHosConfiguration();
-    
-    when(() => mockTracker.getTodayStats()).thenReturn({'driving': 0.0, 'on_duty': 0.0, 'off_duty': 0.0, 'sleeper': 0.0});
-    when(() => mockTracker.getWeekStats()).thenReturn({'driving': 0.0, 'work': 0.0, 'rest': 0.0, 'distance': 0.0});
+
+    when(() => mockTracker.getTodayStats()).thenReturn(
+        {'driving': 0.0, 'on_duty': 0.0, 'off_duty': 0.0, 'sleeper': 0.0});
+    when(() => mockTracker.getWeekStats()).thenReturn(
+        {'driving': 0.0, 'work': 0.0, 'rest': 0.0, 'distance': 0.0});
     when(() => mockTracker.periods).thenReturn([]);
     when(() => mockConfig.cycleLimitHours).thenReturn(70);
-    
+
     when(() => mockDb.saveViolation(any())).thenAnswer((_) async => true);
-    engine = HosViolationsEngine(mockTracker, mockDb, mockConfig, FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
+    engine = HosViolationsEngine(mockTracker, mockDb, mockConfig,
+        FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc()));
   });
 
   tearDown(() {
@@ -73,7 +78,7 @@ void main() {
 
     test('checkAll should detect 14-hour work limit exceeded', () {
       final violations = engine.checkAll(
-        drivingHoursToday: 10.0, 
+        drivingHoursToday: 10.0,
         workHoursToday: 15.0, // > 14
         restHoursToday: 9.0,
         drivingHoursWeek: 40.0,
@@ -83,12 +88,14 @@ void main() {
         now: DateTime.now(),
       );
 
-      expect(violations.any((v) => v.type == HosViolationType.dailyWorkExceeded), true);
+      expect(
+          violations.any((v) => v.type == HosViolationType.dailyWorkExceeded),
+          true);
     });
 
     test('checkAll should detect consecutive days exceeded', () {
       final violations = engine.checkAll(
-        drivingHoursToday: 5.0, 
+        drivingHoursToday: 5.0,
         workHoursToday: 8.0,
         restHoursToday: 16.0,
         drivingHoursWeek: 65.0,
@@ -98,7 +105,10 @@ void main() {
         now: DateTime.now(),
       );
 
-      expect(violations.any((v) => v.type == HosViolationType.consecutiveDaysExceeded), true);
+      expect(
+          violations
+              .any((v) => v.type == HosViolationType.consecutiveDaysExceeded),
+          true);
     });
   });
 }

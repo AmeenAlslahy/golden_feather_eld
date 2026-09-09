@@ -39,4 +39,3 @@ class LocaleNotifier extends StateNotifier<Locale> {
     await _storage.setLanguage(languageCode);
   }
 }
-

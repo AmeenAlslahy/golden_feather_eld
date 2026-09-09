@@ -57,7 +57,6 @@ class User extends Equatable {
         createdAt,
         attributes,
       ];
-
 }
 
 /// أدوار المستخدمين

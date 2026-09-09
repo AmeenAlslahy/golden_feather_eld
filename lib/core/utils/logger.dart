@@ -33,5 +33,3 @@ class AppLogger {
     _logger.f(message, error: error, stackTrace: stackTrace);
   }
 }
-
-

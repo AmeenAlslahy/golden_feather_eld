@@ -18,9 +18,11 @@ class TraccarDataSource implements TrackingDataSource {
   final TraccarNativeClient _nativeClient;
   final NativeEventChannelClient _nativeEventClient;
   StreamSubscription? _nativeEventSubscription;
-  
-  final StreamController<TrackingEvent> _eventsController = StreamController<TrackingEvent>.broadcast();
-  final StreamController<ConnectionStatus> _connectionStatusController = StreamController<ConnectionStatus>.broadcast();
+
+  final StreamController<TrackingEvent> _eventsController =
+      StreamController<TrackingEvent>.broadcast();
+  final StreamController<ConnectionStatus> _connectionStatusController =
+      StreamController<ConnectionStatus>.broadcast();
   StreamSubscription? _wsConnectionSubscription;
 
   TraccarDataSource({
@@ -33,18 +35,25 @@ class TraccarDataSource implements TrackingDataSource {
         _nativeClient = nativeClient,
         _nativeEventClient = nativeEventClient {
     // ملاحظة: سيتم ربط Stream الخاص بـ WebSocket وتمريره عبر Mapper مستقبلاً هنا
-    
+
     // نرسل حالة مبدئية "غير متصل" أو "غير مهيأ"
     final baseUrl = AppEnvironmentConfig.apiBaseUrl;
-    final isConfigured = baseUrl.isNotEmpty && !baseUrl.contains('mock-traccar-server');
-    
-    final initialStatus = isConfigured ? ConnectionStatus.disconnected : ConnectionStatus.unconfigured;
-    
-    AppLogger.info('TraccarDataSource: Emitting initial ConnectionStatus.$initialStatus');
+    final isConfigured =
+        baseUrl.isNotEmpty && !baseUrl.contains('mock-traccar-server');
+
+    final initialStatus = isConfigured
+        ? ConnectionStatus.disconnected
+        : ConnectionStatus.unconfigured;
+
+    AppLogger.info(
+        'TraccarDataSource: Emitting initial ConnectionStatus.$initialStatus');
     _connectionStatusController.add(initialStatus);
-    
-    _wsConnectionSubscription = _webSocketClient.connectionStateStream.listen((isConnected) {
-      final status = isConnected ? ConnectionStatus.connected : ConnectionStatus.disconnected;
+
+    _wsConnectionSubscription =
+        _webSocketClient.connectionStateStream.listen((isConnected) {
+      final status = isConnected
+          ? ConnectionStatus.connected
+          : ConnectionStatus.disconnected;
       AppLogger.info('TraccarDataSource: ConnectionStatus updated to $status');
       _connectionStatusController.add(status);
     });
@@ -54,21 +63,23 @@ class TraccarDataSource implements TrackingDataSource {
   Stream<TrackingEvent> get events => _eventsController.stream;
 
   @override
-  Stream<ConnectionStatus> get connectionStatusStream => _connectionStatusController.stream;
+  Stream<ConnectionStatus> get connectionStatusStream =>
+      _connectionStatusController.stream;
 
   @override
   Future<void> start() async {
     AppLogger.info('TraccarDataSource: Starting native background tracking');
     // بدء التتبع على مستوى الـ Native Background
     await _nativeClient.startBackgroundTracking();
-    
+
     // الاستماع للقناة وتمرير الإحداثيات
     _nativeEventClient.startListening();
-    _nativeEventSubscription ??= _nativeEventClient.locationStream.listen((nativeEvent) {
+    _nativeEventSubscription ??=
+        _nativeEventClient.locationStream.listen((nativeEvent) {
       final trackingEvent = TrackingEvent(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        deviceId: AppEnvironmentConfig.traccarDeviceId.isNotEmpty 
-            ? AppEnvironmentConfig.traccarDeviceId 
+        deviceId: AppEnvironmentConfig.traccarDeviceId.isNotEmpty
+            ? AppEnvironmentConfig.traccarDeviceId
             : 'native_device',
         latitude: nativeEvent.latitude,
         longitude: nativeEvent.longitude,
@@ -81,8 +92,8 @@ class TraccarDataSource implements TrackingDataSource {
       );
       _eventsController.add(trackingEvent);
     });
-    
-    // ملاحظة: الاتصال بـ WebSocket قد يتم هنا أو من خلال إدارة خارجية متخصصة 
+
+    // ملاحظة: الاتصال بـ WebSocket قد يتم هنا أو من خلال إدارة خارجية متخصصة
     // بالاعتماد على توفر الـ serverUrl و token
   }
 
@@ -90,11 +101,11 @@ class TraccarDataSource implements TrackingDataSource {
   Future<void> stop() async {
     // إيقاف التتبع في الخلفية
     await _nativeClient.stopBackgroundTracking();
-    
+
     _nativeEventClient.stopListening();
     _nativeEventSubscription?.cancel();
     _nativeEventSubscription = null;
-    
+
     // فصل الاتصال الحي
     await disconnectWebSocket();
   }

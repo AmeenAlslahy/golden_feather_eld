@@ -63,8 +63,10 @@ class _CertifyTabState extends State<CertifyTab> {
                           context.loc.drawSignatureHere,
                           textAlign: TextAlign.center,
                           style: AppTextStyles(context).pageTitle.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -87,7 +89,9 @@ class _CertifyTabState extends State<CertifyTab> {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 context.loc.clearSignature,
-                style: AppTextStyles(context).body.copyWith(decoration: TextDecoration.underline),
+                style: AppTextStyles(context)
+                    .body
+                    .copyWith(decoration: TextDecoration.underline),
               ),
             ),
           ),
@@ -107,7 +111,6 @@ class _CertifyTabState extends State<CertifyTab> {
                 style: AppTextStyles(context).errorText,
               ),
             ),
-
           ListenableBuilder(
             listenable: _signatureController,
             builder: (context, _) {
@@ -131,7 +134,9 @@ class _CertifyTabState extends State<CertifyTab> {
                   ),
                   child: Text(
                     context.loc.agree,
-                    style: AppTextStyles(context).buttonText.copyWith(color: AppColors.surface),
+                    style: AppTextStyles(context)
+                        .buttonText
+                        .copyWith(color: AppColors.surface),
                   ),
                 ),
               );

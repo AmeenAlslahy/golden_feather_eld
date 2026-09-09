@@ -53,21 +53,39 @@ class DailyLog extends Equatable {
   }
 
   String get formattedDate {
-    return '$dayName - ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][date.month-1]} ${date.day}${_ordinal(date.day)}';
+    return '$dayName - ${[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ][date.month - 1]} ${date.day}${_ordinal(date.day)}';
   }
 
   String _ordinal(int day) {
     if (day >= 11 && day <= 13) return 'th';
     switch (day % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
     }
   }
 
   @override
-  List<Object?> get props => [id, date, totalDrivingHours, isFormComplete, isCertified, events];
+  List<Object?> get props =>
+      [id, date, totalDrivingHours, isFormComplete, isCertified, events];
 }
 
 /// كيان حدث في السجل
@@ -121,8 +139,6 @@ class LogEvent extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, status, startTime, duration, location, isExpanded];
+  List<Object?> get props =>
+      [id, status, startTime, duration, location, isExpanded];
 }
-
-
-

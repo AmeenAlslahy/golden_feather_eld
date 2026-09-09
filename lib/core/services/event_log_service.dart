@@ -18,18 +18,18 @@ class LoggedEvent {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type,
-    'timestamp': timestamp.toIso8601String(),
-    'data': data,
-  };
+        'id': id,
+        'type': type,
+        'timestamp': timestamp.toIso8601String(),
+        'data': data,
+      };
 
   factory LoggedEvent.fromJson(Map<String, dynamic> json) => LoggedEvent(
-    id: json['id'] ?? '',
-    type: json['type'] ?? '',
-    timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
-    data: Map<String, dynamic>.from(json['data'] ?? {}),
-  );
+        id: json['id'] ?? '',
+        type: json['type'] ?? '',
+        timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
+        data: Map<String, dynamic>.from(json['data'] ?? {}),
+      );
 }
 
 /// خدمة سجل الأحداث المحلي
@@ -40,7 +40,8 @@ class EventLogService {
   /// تهيئة السجل
   Future<void> init() async {
     await _loadFromStorage();
-    AppLogger.info('📋 EventLogService initialized with ${_cache.length} events');
+    AppLogger.info(
+        '📋 EventLogService initialized with ${_cache.length} events');
   }
 
   /// تسجيل حدث

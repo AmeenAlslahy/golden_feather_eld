@@ -11,10 +11,12 @@ class QuickActionsInitializer extends ConsumerStatefulWidget {
   const QuickActionsInitializer({super.key});
 
   @override
-  ConsumerState<QuickActionsInitializer> createState() => _QuickActionsInitializerState();
+  ConsumerState<QuickActionsInitializer> createState() =>
+      _QuickActionsInitializerState();
 }
 
-class _QuickActionsInitializerState extends ConsumerState<QuickActionsInitializer> {
+class _QuickActionsInitializerState
+    extends ConsumerState<QuickActionsInitializer> {
   final QuickActions _quickActions = const QuickActions();
 
   @override
@@ -22,10 +24,10 @@ class _QuickActionsInitializerState extends ConsumerState<QuickActionsInitialize
     super.initState();
     _quickActions.initialize((shortcutType) async {
       FirebaseCrashlytics.instance.log('quick_action: $shortcutType');
-      
+
       try {
         final trackingService = ref.read(trackingServiceProvider);
-        
+
         switch (shortcutType) {
           case 'start':
             await trackingService.start();
@@ -37,7 +39,7 @@ class _QuickActionsInitializerState extends ConsumerState<QuickActionsInitialize
       } on PlatformException {
         // permission denied or startup error
       }
-      
+
       if (mounted) {
         FirebaseCrashlytics.instance.log('quick_action_exit');
         SystemNavigator.pop();

@@ -21,7 +21,7 @@ class Vehicle extends Equatable {
   });
 
   String get displayName => '$id | $year $name';
-  
+
   String get shortDisplayName => '$id - $name';
 
   @override

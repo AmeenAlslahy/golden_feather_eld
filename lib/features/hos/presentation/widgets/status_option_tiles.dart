@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../features/hos/domain/engine/hos_models.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -29,12 +29,17 @@ class StatusOptionTile extends StatelessWidget {
         InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               children: [
                 Icon(
-                  isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                  color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
                   size: 24,
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -42,7 +47,8 @@ class StatusOptionTile extends StatelessWidget {
                   child: Text(
                     label,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isDriving && !isSelected
                           ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                           : theme.colorScheme.onSurface,
@@ -54,7 +60,11 @@ class StatusOptionTile extends StatelessWidget {
           ),
         ),
         if (!isLast)
-          Divider(height: 1, indent: 48, endIndent: AppSpacing.lg, color: theme.dividerColor.withValues(alpha: 0.3)),
+          Divider(
+              height: 1,
+              indent: 48,
+              endIndent: AppSpacing.lg,
+              color: theme.dividerColor.withValues(alpha: 0.3)),
       ],
     );
   }
@@ -74,20 +84,27 @@ class YardMovesOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = context.loc;
-    
+
     return Column(
       children: [
-        Divider(height: 1, indent: 48, endIndent: AppSpacing.lg, color: theme.dividerColor.withValues(alpha: 0.3)),
+        Divider(
+            height: 1,
+            indent: 48,
+            endIndent: AppSpacing.lg,
+            color: theme.dividerColor.withValues(alpha: 0.3)),
         InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               children: [
                 const SizedBox(width: 36), // Indent to show it's a sub-option
                 Icon(
                   isYardMoves ? Icons.check_box : Icons.check_box_outline_blank,
-                  color: isYardMoves ? theme.colorScheme.primary : theme.dividerColor,
+                  color: isYardMoves
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
                   size: 24,
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -95,7 +112,8 @@ class YardMovesOptionTile extends StatelessWidget {
                   child: Text(
                     loc.yardMoves,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: isYardMoves ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isYardMoves ? FontWeight.bold : FontWeight.normal,
                       color: theme.colorScheme.onSurface,
                     ),
                   ),

@@ -11,7 +11,8 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final ApiEndpoints _endpoints;
   final AuthSessionStore _authSessionStore;
 
-  TraccarRemoteEventDispatcher(this._apiClient, this._endpoints, this._authSessionStore);
+  TraccarRemoteEventDispatcher(
+      this._apiClient, this._endpoints, this._authSessionStore);
 
   @override
   Future<Either<Failure, bool>> dispatch(PendingEvent event) async {
@@ -20,7 +21,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         final session = await _authSessionStore.getSession();
         int driverId = 0;
         if (session != null) {
-            driverId = int.tryParse(session.userMetadata['id']?.toString() ?? '0') ?? 0;
+          driverId = int.tryParse(session.user.id) ?? 0;
         }
         await _apiClient.post(
           _endpoints.driverDutyStatus(driverId),
@@ -37,7 +38,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     } catch (e) {
       return Left(ServerFailure(
         message: 'Failed to dispatch event: $e',
-        ));
+      ));
     }
   }
 }

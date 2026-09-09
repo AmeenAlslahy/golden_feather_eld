@@ -44,10 +44,10 @@ class MonotonicTrustedTimeProvider implements TrustedTimeProvider {
   @override
   TrustedTimeState get state {
     if (_trustedServerUtcAtSync == null) return TrustedTimeState.uninitialized;
-    
+
     // For now, if offline for more than 7 days, consider stale.
     if (_stopwatch.elapsed.inDays >= 7) return TrustedTimeState.stale;
-    
+
     return TrustedTimeState.trusted;
   }
 
@@ -64,10 +64,11 @@ class MonotonicTrustedTimeProvider implements TrustedTimeProvider {
     if (currentState != TrustedTimeState.trusted) {
       return TrustedTimeUnavailable(currentState);
     }
-    
-    return TrustedTimeAvailable(_trustedServerUtcAtSync!.add(_stopwatch.elapsed));
+
+    return TrustedTimeAvailable(
+        _trustedServerUtcAtSync!.add(_stopwatch.elapsed));
   }
-  
+
   @override
   Duration get monotonicElapsed => _stopwatch.elapsed;
 }
@@ -84,7 +85,9 @@ class FakeTrustedTimeProvider implements TrustedTimeProvider {
   }) {
     if (initialUtcTime != null) {
       _mockUtcTime = initialUtcTime.toUtc();
-      _state = initialState == TrustedTimeState.uninitialized ? TrustedTimeState.trusted : initialState;
+      _state = initialState == TrustedTimeState.uninitialized
+          ? TrustedTimeState.trusted
+          : initialState;
     } else {
       _state = initialState;
     }

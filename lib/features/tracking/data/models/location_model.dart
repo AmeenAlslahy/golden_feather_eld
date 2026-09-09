@@ -57,6 +57,3 @@ class LocationModel extends LocationEntity {
     );
   }
 }
-
-
-

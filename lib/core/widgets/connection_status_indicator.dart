@@ -8,7 +8,8 @@ import '../utils/logger.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes.dart';
 
-final connectionStatusStreamProvider = StreamProvider.autoDispose<ConnectionStatus>((ref) async* {
+final connectionStatusStreamProvider =
+    StreamProvider.autoDispose<ConnectionStatus>((ref) async* {
   final liveTracking = ref.watch(liveTrackingDataSourceProvider);
   // إرسال حالة ابتدائية "غير متصل" لضمان عدم تعليق الواجهة في حالة التحميل (Loading)
   // لأن الـ Stream قد يكون Broadcast Event انطلق قبل الاستماع
@@ -22,11 +23,11 @@ class ConnectionStatusIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statusAsyncValue = ref.watch(connectionStatusStreamProvider);
-    
+
     AppLogger.info('ConnectionStatusIndicator UI State: $statusAsyncValue');
 
     final status = statusAsyncValue.value ?? ConnectionStatus.disconnected;
-    
+
     // تسجيل حالة تحميل صريحة إذا كانت موجودة (لأغراض التصحيح)
     if (statusAsyncValue.isLoading && !statusAsyncValue.hasValue) {
       AppLogger.info('ConnectionStatusIndicator is strictly in Loading state');
@@ -36,9 +37,12 @@ class ConnectionStatusIndicator extends ConsumerWidget {
   }
 
   Widget _buildIndicator(BuildContext context, ConnectionStatus status) {
-    if (status == ConnectionStatus.disconnected || status == ConnectionStatus.error || status == ConnectionStatus.unconfigured) {
+    if (status == ConnectionStatus.disconnected ||
+        status == ConnectionStatus.error ||
+        status == ConnectionStatus.unconfigured) {
       return IconButton(
-        icon: const Icon(Icons.warning_amber, color: AppColors.warningYellow, size: 28),
+        icon: const Icon(Icons.warning_amber,
+            color: AppColors.warningYellow, size: 28),
         onPressed: () {
           context.push(AppRoutes.connection);
         },
@@ -56,7 +60,7 @@ class ConnectionStatusIndicator extends ConsumerWidget {
       icon = Icons.wifi;
     } else {
       color = AppColors.warningYellow;
-      text = context.loc.connecting; 
+      text = context.loc.connecting;
       icon = Icons.wifi_protected_setup;
       isSyncingOrConnecting = true;
     }
@@ -87,7 +91,9 @@ class ConnectionStatusIndicator extends ConsumerWidget {
             const SizedBox(width: 6),
             Text(
               text,
-              style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
+              style:
+                  (Theme.of(context).textTheme.labelSmall ?? const TextStyle())
+                      .copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
               ),

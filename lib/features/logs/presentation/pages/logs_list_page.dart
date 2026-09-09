@@ -38,7 +38,9 @@ class LogsListPage extends ConsumerWidget {
         ),
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.file_copy, color: AppColors.surface), // أيقونة القائمة العلوية اليمنى كما في التصميم
+            icon: const Icon(Icons.file_copy,
+                color: AppColors
+                    .surface), // أيقونة القائمة العلوية اليمنى كما في التصميم
             onSelected: (value) {
               if (value == 'suggested') {
                 context.push(AppRoutes.suggestedEvents);
@@ -66,12 +68,17 @@ class LogsListPage extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.list_alt, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      Icon(Icons.list_alt,
+                          size: 64,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text(
                         context.loc.noData,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                       ),
                     ],
@@ -79,20 +86,21 @@ class LogsListPage extends ConsumerWidget {
                 )
               : ListView.separated(
                   padding: EdgeInsets.zero,
-              itemCount: logsState.logs.length,
-              separatorBuilder: (_, __) =>
-                  Divider(color: Theme.of(context).dividerColor, height: 1),
-              itemBuilder: (context, index) {
-                final log = logsState.logs[index];
-                return _LogListItem(
-                  log: log,
-                  onTap: () {
-                    ref.read(logsProvider.notifier).selectLog(log);
-                    context.push(AppRoutes.logDetail.replaceAll(':id', log.id));
+                  itemCount: logsState.logs.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(color: Theme.of(context).dividerColor, height: 1),
+                  itemBuilder: (context, index) {
+                    final log = logsState.logs[index];
+                    return _LogListItem(
+                      log: log,
+                      onTap: () {
+                        ref.read(logsProvider.notifier).selectLog(log);
+                        context.push(
+                            AppRoutes.logDetail.replaceAll(':id', log.id));
+                      },
+                    );
                   },
-                );
-              },
-            ),
+                ),
     );
   }
 }
@@ -107,82 +115,89 @@ class _LogListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-  onTap: onTap,
-  child: Container(
-    color: Theme.of(context).colorScheme.surface,
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: AppSpacing.md,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // السطر الأول: التاريخ + السهم
-        Row(
-          children: [
-            Text(
-              log.formattedDate,
-              style: const TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.semiBold,
-              ),
-            ),
-            const Spacer(), // يدفع السهم إلى أقصى اليمين
-            const Icon(
-              Icons.chevron_right,
-              size: 24,
-            ),
-          ],
+      onTap: onTap,
+      child: Container(
+        color: Theme.of(context).colorScheme.surface,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
         ),
-        
-        const SizedBox(height: 12), // مسافة بين السطر الأول والثاني
-
-        // السطر الثاني: الوقت + الحالات
-        Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. عدد الساعات
+            // السطر الأول: التاريخ + السهم
             Row(
               children: [
-                Icon(
-                  Icons.check_circle,
-                  color: log.totalDrivingHours > 0 ? AppColors.successGreen : AppColors.textSecondary,
-                  size: 16,
-                ),
-                const SizedBox(width: 6),
                 Text(
-                  log.totalDrivingHours < 1 ? '< 1m' : '${log.totalDrivingHours.toStringAsFixed(0)}h ${(log.totalDrivingHours % 1 * 60).toStringAsFixed(0)}m',
-                  style: TextStyle(
-                    fontSize: AppTypography.subtitleSize,
-                    fontWeight: AppTypography.bold,
-                    color: log.totalDrivingHours > 0 ? AppColors.successGreen : AppColors.textSecondary,
+                  log.formattedDate,
+                  style: const TextStyle(
+                    fontSize: AppTypography.bodySize,
+                    fontWeight: AppTypography.semiBold,
                   ),
+                ),
+                const Spacer(), // يدفع السهم إلى أقصى اليمين
+                const Icon(
+                  Icons.chevron_right,
+                  size: 24,
                 ),
               ],
             ),
-            
-            const SizedBox(width: 32), // مسافة ثابتة تفصل بين الوقت والحالة الأولى
 
-            // 2. حالة النموذج (Form)
-            _StatusChip(
-              label: context.loc.formLabel,
-              isComplete: log.isFormComplete,
+            const SizedBox(height: 12), // مسافة بين السطر الأول والثاني
+
+            // السطر الثاني: الوقت + الحالات
+            Row(
+              children: [
+                // 1. عدد الساعات
+                Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: log.totalDrivingHours > 0
+                          ? AppColors.successGreen
+                          : AppColors.textSecondary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      log.totalDrivingHours < 1
+                          ? '< 1m'
+                          : '${log.totalDrivingHours.toStringAsFixed(0)}h ${(log.totalDrivingHours % 1 * 60).toStringAsFixed(0)}m',
+                      style: TextStyle(
+                        fontSize: AppTypography.subtitleSize,
+                        fontWeight: AppTypography.bold,
+                        color: log.totalDrivingHours > 0
+                            ? AppColors.successGreen
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(
+                    width: 32), // مسافة ثابتة تفصل بين الوقت والحالة الأولى
+
+                // 2. حالة النموذج (Form)
+                _StatusChip(
+                  label: context.loc.formLabel,
+                  isComplete: log.isFormComplete,
+                ),
+
+                const SizedBox(width: 24), // مسافة ثابتة تفصل بين الحالتين
+
+                // 3. حالة التوثيق (Certify)
+                _StatusChip(
+                  label: context.loc.certifyLabel,
+                  isComplete: log.isCertified,
+                ),
+
+                // لا حاجة لـ Spacer هنا لأن السهم موجود بالفعل في السطر الأول
+              ],
             ),
-
-            const SizedBox(width: 24), // مسافة ثابتة تفصل بين الحالتين
-
-            // 3. حالة التوثيق (Certify)
-            _StatusChip(
-              label: context.loc.certifyLabel,
-              isComplete: log.isCertified,
-            ),
-            
-            // لا حاجة لـ Spacer هنا لأن السهم موجود بالفعل في السطر الأول
           ],
         ),
-      ],
-    ),
-  ),
-);
+      ),
+    );
   }
 }
 
@@ -207,7 +222,8 @@ class _StatusChip extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: AppTypography.subtitleSize, // changed from smallSize to match design scale better
+            fontSize: AppTypography
+                .subtitleSize, // changed from smallSize to match design scale better
             fontWeight: AppTypography.semiBold,
             color: isComplete ? AppColors.successGreen : AppColors.dangerRed,
           ),
@@ -216,6 +232,3 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
-
-
-

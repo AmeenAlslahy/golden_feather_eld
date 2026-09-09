@@ -5,7 +5,8 @@ import '../../domain/entities/inspection_data.dart';
 
 abstract class InspectionRemoteDataSource {
   Future<List<Map<String, dynamic>>> getInspectionReport(int driverId);
-  Future<void> exportInspectionData(int driverId, TransferMethod method, String? email, bool isErods);
+  Future<void> exportInspectionData(
+      int driverId, TransferMethod method, String? email, bool isErods);
 }
 
 class InspectionRemoteDataSourceImpl implements InspectionRemoteDataSource {
@@ -23,7 +24,7 @@ class InspectionRemoteDataSourceImpl implements InspectionRemoteDataSource {
       final response = await apiClient.get<dynamic>(
         endpoints.driverInspectionReport(driverId),
       );
-      
+
       if (response.status && response.data != null) {
         // Assume backend returns { "days": [...] } or just [...]
         final data = response.data;
@@ -45,7 +46,8 @@ class InspectionRemoteDataSourceImpl implements InspectionRemoteDataSource {
   }
 
   @override
-  Future<void> exportInspectionData(int driverId, TransferMethod method, String? email, bool isErods) async {
+  Future<void> exportInspectionData(
+      int driverId, TransferMethod method, String? email, bool isErods) async {
     try {
       final response = await apiClient.post<dynamic>(
         endpoints.inspectionExport(driverId),

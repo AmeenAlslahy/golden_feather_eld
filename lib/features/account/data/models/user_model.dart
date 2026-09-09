@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/core/entities/user.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 
 class UserModel extends User {
   const UserModel({
@@ -29,11 +29,14 @@ class UserModel extends User {
     );
   }
 
-  factory UserModel.fromJson(Map<String, dynamic> json, {String? defaultEmail}) {
+  factory UserModel.fromJson(Map<String, dynamic> json,
+      {String? defaultEmail}) {
     // Traccar API returns id as int, name, email, administrator boolean
     final idValue = json['id']?.toString() ?? '';
-    final nameValue = json['name']?.toString() ?? json['fullName']?.toString() ?? '';
-    final emailValue = json['email']?.toString() ?? json['username']?.toString() ?? nameValue;
+    final nameValue =
+        json['name']?.toString() ?? json['fullName']?.toString() ?? '';
+    final emailValue =
+        json['email']?.toString() ?? json['username']?.toString() ?? nameValue;
 
     // Determine role
     UserRole userRole = UserRole.fieldWorker;
@@ -65,8 +68,10 @@ class UserModel extends User {
     );
   }
 
-  factory UserModel.fromMetadata(Map<String, dynamic> metadata, {String? defaultEmail}) {
-    final email = metadata['email'] ?? metadata['name'] ?? defaultEmail ?? 'unknown';
+  factory UserModel.fromMetadata(Map<String, dynamic> metadata,
+      {String? defaultEmail}) {
+    final email =
+        metadata['email'] ?? metadata['name'] ?? defaultEmail ?? 'unknown';
     return UserModel(
       id: metadata['id']?.toString() ?? '',
       fullName: metadata['name'] ?? email,

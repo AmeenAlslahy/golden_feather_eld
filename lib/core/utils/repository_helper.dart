@@ -13,11 +13,11 @@ Future<Either<Failure, T>> executeWithHandling<T>(
   bool checkNetworkFirst = false,
   NetworkInfo? networkInfo,
 }) async {
-  
   if (checkNetworkFirst) {
     final checker = networkInfo ?? _defaultNetworkInfo;
     if (!(checker.isConnected)) {
-      AppLogger.error('${tag ?? 'Repository'} NetworkInfo: No Internet Connection');
+      AppLogger.error(
+          '${tag ?? 'Repository'} NetworkInfo: No Internet Connection');
       return const Left(NetworkFailure());
     }
   }
@@ -38,19 +38,21 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     AppLogger.error('${tag ?? 'Repository'} OfflineException: ${e.message}');
     return const Left(NetworkFailure());
   } on UnauthorizedException catch (e) {
-    AppLogger.error('${tag ?? 'Repository'} UnauthorizedException: ${e.message}');
+    AppLogger.error(
+        '${tag ?? 'Repository'} UnauthorizedException: ${e.message}');
     return Left(AuthFailure(
       message: e.message ?? 'انتهت صلاحية الجلسة',
-      ));
+    ));
   } on CacheException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} CacheException: ${e.message}');
     return Left(CacheFailure(
       message: e.message ?? 'خطأ في التخزين المؤقت',
     ));
   } catch (e, stackTrace) {
-    AppLogger.error('${tag ?? 'Repository'} Unexpected Exception: $e', e, stackTrace);
+    AppLogger.error(
+        '${tag ?? 'Repository'} Unexpected Exception: $e', e, stackTrace);
     return Left(ServerFailure(
       message: 'An unexpected error occurred: $e',
-      ));
+    ));
   }
 }

@@ -1,37 +1,36 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
+import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/features/auth/data/models/auth_session_dto.dart';
 
 void main() {
   group('AuthSessionStore Tests', () {
-    final session = AuthSession.create(
-      serverOrigin: 'https://demo.traccar.org',
-      sessionCredential: 'mock_jsessionid_123',
-      userMetadata: const {
-        'id': 1,
-        'email': 'test@demo.com',
-        'name': 'Test User'
-      },
+    final userModel = UserModel(
+      id: '1',
+      username: 'test@demo.com',
+      email: 'test@demo.com',
+      fullName: 'Test User',
+      role: UserRole.fieldWorker,
+      createdAt: DateTime.now(),
     );
 
-    setUp(() {
-      // Since FlutterSecureStorage doesn't work easily in basic unit tests without mock,
-      // we mock its behavior or we just assume we are running widget tests where flutter bindings are initialized.
-      // But for this test, we can use a basic Map based fake if we want, or just test the interface.
+    final sessionDto = AuthSessionDto.create(
+      serverOrigin: 'https://demo.traccar.org',
+      sessionCredential: 'mock_jsessionid_123',
+      userModel: userModel,
+    );
 
-      // We will skip actual FlutterSecureStorage calls for standard dart test unless mocked.
-      // Assuming a mock or fake implementation is needed if run outside flutter.
-    });
+    setUp(() {});
 
     test('Session model serialization', () {
-      final json = session.toJson();
+      final json = sessionDto.toJson();
       expect(json['serverOrigin'], equals('https://demo.traccar.org'));
       expect(json['sessionCredential'], equals('mock_jsessionid_123'));
 
-      final deserialized = AuthSession.fromJson(json);
-      expect(deserialized.serverOrigin, equals(session.serverOrigin));
-      expect(deserialized.sessionCredential, equals(session.sessionCredential));
-      expect(deserialized.userMetadata['name'], equals('Test User'));
+      final deserialized = AuthSessionDto.fromJson(json);
+      expect(deserialized.serverOrigin, equals(sessionDto.serverOrigin));
+      expect(deserialized.sessionCredential, equals(sessionDto.sessionCredential));
+      expect(deserialized.userModel.fullName, equals('Test User'));
     });
   });
 }

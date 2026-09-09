@@ -49,7 +49,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
     try {
       final futures = List.generate(8, (i) async {
         final date = DateTime.now().subtract(Duration(days: i));
-        
+
         final result = await _repository.getEvents(date);
         final events = result.match((l) => <LogEvent>[], (r) => r);
 
@@ -64,8 +64,8 @@ class LogsNotifier extends StateNotifier<LogsState> {
           id: 'log_$i',
           date: date,
           totalDrivingHours: totalDrivingHours,
-          isFormComplete: i > 1, 
-          isCertified: i > 2,    
+          isFormComplete: i > 1,
+          isCertified: i > 2,
           events: events,
         );
       });
@@ -134,7 +134,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
     if (state.selectedLog == null) return;
 
     final updatedEvents = <LogEvent>[...state.selectedLog!.events, event];
-    
+
     final updatedLog = DailyLog(
       id: state.selectedLog!.id,
       date: state.selectedLog!.date,
@@ -183,6 +183,3 @@ class LogsNotifier extends StateNotifier<LogsState> {
     return await _repository.logAudit(entry);
   }
 }
-
-
-

@@ -75,12 +75,7 @@ class LocalStorageService implements ServerConfigProvider {
 
     // إصلاح Android
     if (Platform.isAndroid) {
-      for (final key in {
-        'interval',
-        'distance',
-        'angle',
-        'heartbeat'
-      }) {
+      for (final key in {'interval', 'distance', 'angle', 'heartbeat'}) {
         if (_prefs.get(key) is String) {
           await _prefs.setInt(
               key, int.tryParse(_prefs.getString(key) ?? '') ?? 0);
@@ -145,10 +140,10 @@ class LocalStorageService implements ServerConfigProvider {
   bool get wakelock => _trackingStorage.wakelock;
   bool get stopDetection => _trackingStorage.stopDetection;
   bool get preferPlatformProviders => _trackingStorage.preferPlatformProviders;
-  
+
   Future<String?> get password => _authStorage.password;
   Future<bool> get hasPassword => _authStorage.hasPassword;
-  
+
   String get language => _preferencesStorage.language;
   String get theme => _preferencesStorage.theme;
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
@@ -158,7 +153,8 @@ class LocalStorageService implements ServerConfigProvider {
   // ========== Setters ==========
 
   Future<void> setDeviceId(String value) => _trackingStorage.setDeviceId(value);
-  Future<void> setServerUrl(String value) => _trackingStorage.setServerUrl(value);
+  Future<void> setServerUrl(String value) =>
+      _trackingStorage.setServerUrl(value);
   Future<void> setAccuracy(String value) => _trackingStorage.setAccuracy(value);
   Future<void> setDistance(int value) => _trackingStorage.setDistance(value);
   Future<void> setInterval(int value) => _trackingStorage.setInterval(value);
@@ -166,14 +162,20 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> setHeartbeat(int value) => _trackingStorage.setHeartbeat(value);
   Future<void> setBuffer(bool value) => _trackingStorage.setBuffer(value);
   Future<void> setWakelock(bool value) => _trackingStorage.setWakelock(value);
-  Future<void> setStopDetection(bool value) => _trackingStorage.setStopDetection(value);
-  Future<void> setPreferPlatformProviders(bool value) => _trackingStorage.setPreferPlatformProviders(value);
-  Future<void> setBackendType(String value) => _trackingStorage.setBackendType(value);
+  Future<void> setStopDetection(bool value) =>
+      _trackingStorage.setStopDetection(value);
+  Future<void> setPreferPlatformProviders(bool value) =>
+      _trackingStorage.setPreferPlatformProviders(value);
+  Future<void> setBackendType(String value) =>
+      _trackingStorage.setBackendType(value);
 
-  Future<void> setLanguage(String value) => _preferencesStorage.setLanguage(value);
+  Future<void> setLanguage(String value) =>
+      _preferencesStorage.setLanguage(value);
   Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);
-  Future<void> setCurrentDutyStatus(String value) => _preferencesStorage.setCurrentDutyStatus(value);
-  Future<void> setStationarySince(String value) => _preferencesStorage.setStationarySince(value);
+  Future<void> setCurrentDutyStatus(String value) =>
+      _preferencesStorage.setCurrentDutyStatus(value);
+  Future<void> setStationarySince(String value) =>
+      _preferencesStorage.setStationarySince(value);
 
   Future<void> setPassword(String value) => _authStorage.setPassword(value);
   Future<void> removePassword() => _authStorage.removePassword();
@@ -184,8 +186,10 @@ class LocalStorageService implements ServerConfigProvider {
 
   // ========== تخزين المركبة ==========
 
-  Future<void> saveSelectedVehicleId(String id) => _preferencesStorage.saveSelectedVehicleId(id);
-  Future<void> clearSelectedVehicle() => _preferencesStorage.clearSelectedVehicle();
+  Future<void> saveSelectedVehicleId(String id) =>
+      _preferencesStorage.saveSelectedVehicleId(id);
+  Future<void> clearSelectedVehicle() =>
+      _preferencesStorage.clearSelectedVehicle();
 
   /// مسح جميع البيانات
   Future<void> clearAll() async {

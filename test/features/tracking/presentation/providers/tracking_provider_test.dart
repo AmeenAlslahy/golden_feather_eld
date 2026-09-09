@@ -93,7 +93,8 @@ class FakeBatteryOptimizationService implements BatteryOptimizationService {
 
 class MockLocalStorageService extends Mock implements LocalStorageService {}
 
-class MockTrackingConfigStorageService extends Mock implements TrackingConfigStorageService {}
+class MockTrackingConfigStorageService extends Mock
+    implements TrackingConfigStorageService {}
 
 class MockVehicleRepository extends Mock implements VehicleRepository {}
 
@@ -104,7 +105,8 @@ void main() {
 
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    await AppEnvironmentConfig.init(testEnv: {'API_BASE_URL': 'http://mock.test'});
+    await AppEnvironmentConfig.init(
+        testEnv: {'API_BASE_URL': 'http://mock.test'});
     SharedPreferences.setMockInitialValues({});
     fakeRepository = FakeTrackingRepository();
     final mockLocalStorage = MockLocalStorageService();
@@ -113,8 +115,10 @@ void main() {
     when(() => mockLocalStorage.backendType).thenReturn('traccar');
 
     final mockVehicleRepo = MockVehicleRepository();
-    when(() => mockVehicleRepo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
-    when(() => mockVehicleRepo.getVehicles()).thenAnswer((_) async => const Right([]));
+    when(() => mockVehicleRepo.getSelectedVehicle())
+        .thenAnswer((_) async => const Right(null));
+    when(() => mockVehicleRepo.getVehicles())
+        .thenAnswer((_) async => const Right([]));
 
     final mockConfigStorage = MockTrackingConfigStorageService();
     when(() => mockConfigStorage.deviceId).thenReturn('12345');

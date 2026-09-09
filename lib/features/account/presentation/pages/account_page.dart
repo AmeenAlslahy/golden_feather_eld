@@ -157,7 +157,8 @@ class AccountPage extends ConsumerWidget {
                   _buildDropdownRow(
                     context,
                     isArabic ? 'لغة التطبيق' : 'Language',
-                    attributes['language']?.toString() ?? (isArabic ? 'العربية' : 'English'),
+                    attributes['language']?.toString() ??
+                        (isArabic ? 'العربية' : 'English'),
                   ),
                   const Divider(color: AppColors.border),
                   _buildDropdownRow(
@@ -179,7 +180,8 @@ class AccountPage extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppColors.warningYellow, size: 20),
+                  const Icon(Icons.info_outline,
+                      color: AppColors.warningYellow, size: 20),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -255,7 +257,8 @@ class AccountPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryBlue),
+              const Icon(Icons.keyboard_arrow_down,
+                  color: AppColors.primaryBlue),
             ],
           ),
         ],

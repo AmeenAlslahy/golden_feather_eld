@@ -21,10 +21,11 @@ class DvirRemoteDataSourceImpl implements DvirRemoteDataSource {
   Future<List<Map<String, dynamic>>> getDvirReports(String vehicleId) async {
     try {
       final response = await apiClient.get<List<dynamic>>(
-        endpoints.submitInspection(), // Using submitInspection endpoint for DVIR
+        endpoints
+            .submitInspection(), // Using submitInspection endpoint for DVIR
         queryParameters: {'vehicleId': vehicleId},
       );
-      
+
       if (response.status && response.data != null) {
         return List<Map<String, dynamic>>.from(response.data!);
       } else {
@@ -52,11 +53,13 @@ class DvirRemoteDataSourceImpl implements DvirRemoteDataSource {
         'condition': report.condition.name,
         'signature': report.signature,
         'notes': report.notes,
-        'items': report.items.map((item) => {
-          'name': item.item.name,
-          'isDefective': item.isDefective,
-          'defectDescription': item.defectDescription,
-        }).toList(),
+        'items': report.items
+            .map((item) => {
+                  'name': item.item.name,
+                  'isDefective': item.isDefective,
+                  'defectDescription': item.defectDescription,
+                })
+            .toList(),
       };
 
       final response = await apiClient.post<dynamic>(

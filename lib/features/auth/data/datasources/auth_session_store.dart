@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/auth_session.dart';
+import '../models/auth_session_dto.dart';
 
 abstract class AuthSessionStore {
   /// حفظ الجلسة بأمان
@@ -25,9 +26,11 @@ class AuthSessionStoreImpl implements AuthSessionStore {
   @override
   Future<void> saveSession(AuthSession session) async {
     try {
-      final jsonString = jsonEncode(session.toJson());
+      final dto = AuthSessionDto.fromEntity(session);
+      final jsonString = jsonEncode(dto.toJson());
       await _secureStorage.write(key: _sessionKey, value: jsonString);
-      AppLogger.info('Session securely stored for origin: ${session.serverOrigin}');
+      AppLogger.info(
+          'Session securely stored for origin: ${session.serverOrigin}');
     } catch (e) {
       AppLogger.error('Failed to securely store session', e);
       throw Exception('Secure storage write failed');
@@ -41,7 +44,8 @@ class AuthSessionStoreImpl implements AuthSessionStore {
       if (jsonString == null) return null;
 
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-      return AuthSession.fromJson(jsonMap);
+      final dto = AuthSessionDto.fromJson(jsonMap);
+      return dto.toEntity();
     } catch (e) {
       AppLogger.error('Failed to read or parse session from secure storage', e);
       return null;

@@ -40,7 +40,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
   @override
   Future<void> enqueue(PendingEvent event) async {
     final db = await database;
-    
+
     final data = {
       'id': event.id,
       'type': event.type,

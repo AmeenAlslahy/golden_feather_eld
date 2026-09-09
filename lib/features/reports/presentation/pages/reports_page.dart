@@ -30,11 +30,11 @@ class ReportsPage extends ConsumerWidget {
     final todayStats = dutyTracker.getTodayStats();
     final weekStats = dutyTracker.getWeekStats();
     final loc = context.loc;
-    
-    final hasData = backendType == 'traccar' 
-        ? reportsState.standardSummary != null 
+
+    final hasData = backendType == 'traccar'
+        ? reportsState.standardSummary != null
         : reportsState.eldReport != null;
-        
+
     if (!hasData && !reportsState.isLoading) {
       Future.microtask(() {
         if (context.mounted) {
@@ -49,7 +49,9 @@ class ReportsPage extends ConsumerWidget {
         backgroundColor: AppColors.primaryBlue,
         title: Text(
           loc.reports,
-          style: AppTextStyles(context).pageTitle.copyWith(color: AppColors.surface),
+          style: AppTextStyles(context)
+              .pageTitle
+              .copyWith(color: AppColors.surface),
         ),
         leading: Builder(
           builder: (context) => IconButton(
@@ -79,7 +81,8 @@ class ReportsPage extends ConsumerWidget {
                       title: loc.reports, // summary report
                       icon: Icons.summarize,
                       color: AppColors.primaryBlue,
-                      summary: _buildStandardSummary(context, reportsState.standardSummary),
+                      summary: _buildStandardSummary(
+                          context, reportsState.standardSummary),
                       isEld: false,
                       ref: ref,
                       exportFormat: 'summary',
@@ -91,7 +94,8 @@ class ReportsPage extends ConsumerWidget {
                       title: 'Trips',
                       icon: Icons.directions_car,
                       color: AppColors.successGreen,
-                      summary: _buildStandardSummary(context, reportsState.standardRoute), // using route or trips
+                      summary: _buildStandardSummary(context,
+                          reportsState.standardRoute), // using route or trips
                       isEld: false,
                       ref: ref,
                       exportFormat: 'trips',
@@ -129,7 +133,8 @@ class ReportsPage extends ConsumerWidget {
   }
 
   /// بطاقة الأعطال
-  Widget _buildDiagnosticsCard(BuildContext context, DiagnosticsState diagnostics, WidgetRef ref) {
+  Widget _buildDiagnosticsCard(
+      BuildContext context, DiagnosticsState diagnostics, WidgetRef ref) {
     final loc = context.loc;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -143,38 +148,47 @@ class ReportsPage extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber, color: AppColors.dangerRed, size: 24),
+              const Icon(Icons.warning_amber,
+                  color: AppColors.dangerRed, size: 24),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 loc.malfunctionAlerts,
-                style: AppTextStyles(context).bodyBold.copyWith(color: AppColors.dangerRed),
+                style: AppTextStyles(context)
+                    .bodyBold
+                    .copyWith(color: AppColors.dangerRed),
               ),
               const Spacer(),
               TextButton(
-                onPressed: () => ref.read(reportsProvider.notifier).clearDiagnostics(),
+                onPressed: () =>
+                    ref.read(reportsProvider.notifier).clearDiagnostics(),
                 child: Text(
                   loc.clearAll,
-                  style: AppTextStyles(context).caption.copyWith(color: AppColors.dangerRed),
+                  style: AppTextStyles(context)
+                      .caption
+                      .copyWith(color: AppColors.dangerRed),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           ...diagnostics.activeMalfunctions.map((m) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                const Icon(Icons.error, size: 14, color: AppColors.dangerRed),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    m.message,
-                    style: AppTextStyles(context).caption.copyWith(color: AppColors.dangerRed),
-                  ),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error,
+                        size: 14, color: AppColors.dangerRed),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        m.message,
+                        style: AppTextStyles(context)
+                            .caption
+                            .copyWith(color: AppColors.dangerRed),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
@@ -199,7 +213,9 @@ class ReportsPage extends ConsumerWidget {
             children: [
               Icon(icon, color: color, size: 24),
               const SizedBox(width: AppSpacing.sm),
-              Text(title, style: AppTextStyles(context).bodyBold.copyWith(color: color)),
+              Text(title,
+                  style:
+                      AppTextStyles(context).bodyBold.copyWith(color: color)),
               const Spacer(),
               _buildStatusBadge(context),
             ],
@@ -214,11 +230,18 @@ class ReportsPage extends ConsumerWidget {
             child: Row(
               children: [
                 if (exportFormat != null)
-                  _buildExportButton(context, 'Excel', () => _exportReport(context, ref, isEld, 'excel', standardType: exportFormat))
+                  _buildExportButton(
+                      context,
+                      'Excel',
+                      () => _exportReport(context, ref, isEld, 'excel',
+                          standardType: exportFormat))
                 else ...[
-                  _buildExportButton(context, 'CSV', () => _exportReport(context, ref, isEld, 'csv')),
+                  _buildExportButton(context, 'CSV',
+                      () => _exportReport(context, ref, isEld, 'csv')),
                   const SizedBox(width: AppSpacing.sm),
-                  _buildExportButton(context, 'PDF', () => _exportReport(context, ref, isEld, 'pdf'), isIcon: false, color: AppColors.dangerRed),
+                  _buildExportButton(context, 'PDF',
+                      () => _exportReport(context, ref, isEld, 'pdf'),
+                      isIcon: false, color: AppColors.dangerRed),
                 ],
               ],
             ),
@@ -229,29 +252,38 @@ class ReportsPage extends ConsumerWidget {
   }
 
   /// ملخص ELD
-  Widget _buildEldSummary(BuildContext context, dynamic dashboard, Map<String, dynamic> todayStats) {
+  Widget _buildEldSummary(BuildContext context, dynamic dashboard,
+      Map<String, dynamic> todayStats) {
     final loc = context.loc;
     return Column(
       children: [
         _summaryRow(context, loc.driver, dashboard.driverName),
         _summaryRow(context, loc.vehicle, dashboard.vehicleId),
-        _summaryRow(context, loc.drivingStatus, '${(todayStats['driving'] ?? 0).toStringAsFixed(2)}h'),
-        _summaryRow(context, loc.onDuty, '${(todayStats['on_duty'] ?? 0).toStringAsFixed(2)}h'),
-        _summaryRow(context, loc.offDuty, '${(todayStats['off_duty'] ?? 0).toStringAsFixed(2)}h'),
-        _summaryRow(context, loc.sleeperBerth, '${(todayStats['sleeper'] ?? 0).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.drivingStatus,
+            '${(todayStats['driving'] ?? 0).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.onDuty,
+            '${(todayStats['on_duty'] ?? 0).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.offDuty,
+            '${(todayStats['off_duty'] ?? 0).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.sleeperBerth,
+            '${(todayStats['sleeper'] ?? 0).toStringAsFixed(2)}h'),
         _summaryRow(context, loc.certified, loc.yes),
       ],
     );
   }
 
   /// ملخص HOS
-  Widget _buildHosSummary(BuildContext context, Map<String, dynamic> todayStats, Map<String, dynamic> weekStats) {
+  Widget _buildHosSummary(BuildContext context, Map<String, dynamic> todayStats,
+      Map<String, dynamic> weekStats) {
     final loc = context.loc;
     return Column(
       children: [
-        _summaryRow(context, loc.drivingStatus, '${(todayStats['driving'] ?? 0).toStringAsFixed(2)}h'),
-        _summaryRow(context, loc.work, '${((todayStats['driving'] ?? 0) + (todayStats['on_duty'] ?? 0)).toStringAsFixed(2)}h'),
-        _summaryRow(context, loc.rest, '${((todayStats['off_duty'] ?? 0) + (todayStats['sleeper'] ?? 0)).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.drivingStatus,
+            '${(todayStats['driving'] ?? 0).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.work,
+            '${((todayStats['driving'] ?? 0) + (todayStats['on_duty'] ?? 0)).toStringAsFixed(2)}h'),
+        _summaryRow(context, loc.rest,
+            '${((todayStats['off_duty'] ?? 0) + (todayStats['sleeper'] ?? 0)).toStringAsFixed(2)}h'),
         _summaryRow(context, loc.break_, '0.00h'),
         _summaryRow(context, loc.distance, '${weekStats['distance'] ?? 0} km'),
         _summaryRow(context, loc.status, '✅ ${loc.compliant}'),
@@ -260,10 +292,12 @@ class ReportsPage extends ConsumerWidget {
   }
 
   /// ملخص التقارير القياسية
-  Widget _buildStandardSummary(BuildContext context, List<dynamic>? reportData) {
+  Widget _buildStandardSummary(
+      BuildContext context, List<dynamic>? reportData) {
     return Column(
       children: [
-        _summaryRow(context, 'Records', reportData != null ? reportData.length.toString() : '0'),
+        _summaryRow(context, 'Records',
+            reportData != null ? reportData.length.toString() : '0'),
       ],
     );
   }
@@ -274,8 +308,14 @@ class ReportsPage extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles(context).caption.copyWith(color: AppColors.textSecondary)),
-          Text(value, style: AppTextStyles(context).caption.copyWith(fontWeight: AppTypography.semiBold)),
+          Text(label,
+              style: AppTextStyles(context)
+                  .caption
+                  .copyWith(color: AppColors.textSecondary)),
+          Text(value,
+              style: AppTextStyles(context)
+                  .caption
+                  .copyWith(fontWeight: AppTypography.semiBold)),
         ],
       ),
     );
@@ -288,48 +328,69 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildExportButton(BuildContext context, String label, VoidCallback onTap, {bool isIcon = false, Color? color}) {
+  Widget _buildExportButton(
+      BuildContext context, String label, VoidCallback onTap,
+      {bool isIcon = false, Color? color}) {
     return SizedBox(
       height: 36,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          side: BorderSide(color: (color ?? (isIcon ? AppColors.successGreen : AppColors.primaryBlue)).withValues(alpha: 0.3)),
+          side: BorderSide(
+              color: (color ??
+                      (isIcon ? AppColors.successGreen : AppColors.primaryBlue))
+                  .withValues(alpha: 0.3)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        child: Text(label, style: AppTextStyles(context).caption.copyWith(color: color ?? (isIcon ? AppColors.successGreen : AppColors.primaryBlue), fontWeight: AppTypography.semiBold)),
+        child: Text(label,
+            style: AppTextStyles(context).caption.copyWith(
+                color: color ??
+                    (isIcon ? AppColors.successGreen : AppColors.primaryBlue),
+                fontWeight: AppTypography.semiBold)),
       ),
     );
   }
 
-  Future<void> _exportReport(BuildContext context, WidgetRef ref, bool isEld, String format, {String? standardType}) async {
+  Future<void> _exportReport(
+      BuildContext context, WidgetRef ref, bool isEld, String format,
+      {String? standardType}) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Requesting export...'), duration: Duration(seconds: 1)),
+      const SnackBar(
+          content: Text('Requesting export...'),
+          duration: Duration(seconds: 1)),
     );
 
-    final downloadUrl = await ref.read(reportsProvider.notifier).exportReport(isEld, format, standardReportType: standardType);
-    
+    final downloadUrl = await ref
+        .read(reportsProvider.notifier)
+        .exportReport(isEld, format, standardReportType: standardType);
+
     if (downloadUrl != null && context.mounted) {
-      if (downloadUrl.startsWith('http://') || downloadUrl.startsWith('https://')) {
+      if (downloadUrl.startsWith('http://') ||
+          downloadUrl.startsWith('https://')) {
         final uri = Uri.parse(downloadUrl);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error launching report URL.'), backgroundColor: AppColors.dangerRed),
+              const SnackBar(
+                  content: Text('Error launching report URL.'),
+                  backgroundColor: AppColors.dangerRed),
             );
           }
         }
       } else {
         // It is a local file path downloaded by the repository
         try {
-          await Share.shareXFiles([XFile(downloadUrl)], text: 'Exported Report');
+          await Share.shareXFiles([XFile(downloadUrl)],
+              text: 'Exported Report');
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error sharing local report file.'), backgroundColor: AppColors.dangerRed),
+              const SnackBar(
+                  content: Text('Error sharing local report file.'),
+                  backgroundColor: AppColors.dangerRed),
             );
           }
         }
@@ -337,12 +398,16 @@ class ReportsPage extends ConsumerWidget {
     } else {
       if (context.mounted) {
         if (standardType != null) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to download standard report.'), backgroundColor: AppColors.dangerRed),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Failed to download standard report.'),
+                backgroundColor: AppColors.dangerRed),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error exporting report.'), backgroundColor: AppColors.dangerRed),
+            const SnackBar(
+                content: Text('Error exporting report.'),
+                backgroundColor: AppColors.dangerRed),
           );
         }
       }
