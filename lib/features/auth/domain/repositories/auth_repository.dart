@@ -9,13 +9,6 @@ abstract class AuthRepository {
     required String password,
   });
 
-  /// إنشاء حساب جديد (وتسجيل الدخول به تلقائياً)
-  Future<Either<Failure, User>> register({
-    required String name,
-    required String email,
-    required String password,
-  });
-
   /// التحقق من صلاحية الجلسة المحفوظة واستعادتها
   Future<Either<Failure, User>> checkAndRestoreSession();
 

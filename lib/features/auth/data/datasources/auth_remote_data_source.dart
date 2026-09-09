@@ -15,15 +15,6 @@ abstract class AuthRemoteDataSource {
     required String backendType,
   });
 
-  /// إنشاء حساب مستخدم جديد في الخادم
-  Future<void> register({
-    required String name,
-    required String email,
-    required String password,
-    required String serverUrl,
-    required String backendType,
-  });
-
   /// يتحقق من صحة الجلسة الحالية
   Future<AuthSessionDto> validateSession({
     required AuthSessionDto currentSession,
@@ -131,41 +122,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       sessionCredential: credential,
       userModel: userModel,
     );
-  }
-
-  @override
-  Future<void> register({
-    required String name,
-    required String email,
-    required String password,
-    required String serverUrl,
-    required String backendType,
-  }) async {
-    final baseUrl = serverUrl.endsWith('/')
-        ? serverUrl.substring(0, serverUrl.length - 1)
-        : serverUrl;
-
-    final response = await _apiClient.post(
-      '$baseUrl${_endpoints.register}',
-      data: {
-        'name': name,
-        'email': email,
-        'password': password,
-      },
-      options: Options(
-        contentType: Headers.jsonContentType,
-        validateStatus: (status) => status != null && status < 500,
-      ),
-    );
-
-    if (response.code == 400 || response.code == 403) {
-      throw ServerException(
-          message: 'Registration disabled or invalid data',
-          statusCode: response.code);
-    } else if (response.code != 200 && response.code != 201) {
-      throw ServerException(
-          message: 'Server error: ${response.code}', statusCode: response.code);
-    }
   }
 
   @override

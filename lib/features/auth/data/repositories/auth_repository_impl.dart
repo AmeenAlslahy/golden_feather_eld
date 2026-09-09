@@ -1,6 +1,5 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import '../../../../core/error/exception.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
@@ -67,38 +66,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return userModel;
     }, tag: 'Auth.login', checkNetworkFirst: true, networkInfo: _networkInfo);
-  }
-
-  @override
-  Future<Either<Failure, User>> register({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    final serverUrl = _getServerUrl();
-    if (serverUrl == null) {
-      return const Left(MissingConfigurationFailure());
-    }
-
-    return executeWithHandling(() async {
-      final backendType = _configProvider.backendType;
-      await _remoteDataSource.register(
-        name: name,
-        email: email,
-        password: password,
-        serverUrl: serverUrl,
-        backendType: backendType,
-      );
-
-      final loginResult = await login(email: email, password: password);
-      return loginResult.fold(
-        (failure) => throw ServerException(message: failure.message),
-        (user) => user,
-      );
-    },
-        tag: 'Auth.register',
-        checkNetworkFirst: true,
-        networkInfo: _networkInfo);
   }
 
   // NOTE: This will be moved to CheckAuthStatusUseCase, but keeping it here temporarily to not break things until Step 1 is fully executed.
