@@ -24,11 +24,6 @@ class AuthRoutes {
           name: 'login',
           builder: (context, state) => const AuthPage(),
         ),
-        // GoRoute(
-        //   path: AppRoutes.register,
-        //   name: 'register',
-        //   builder: (context, state) => const RegisterPage(),
-        // ),
         GoRoute(
           path: AppRoutes.connection,
           name: 'connection',

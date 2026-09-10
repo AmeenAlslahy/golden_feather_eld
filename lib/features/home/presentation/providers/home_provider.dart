@@ -17,7 +17,9 @@ class MenuItem {
   });
 }
 
-/// قائمة ELD الرئيسية
+/// قائمة ELD الرئيسية (مطابقة لـ SRS §4 + §17)
+///
+/// تسجيل الخروج إجراء مستقل في الدرج الجانبي وليس مساراً.
 class EldMenu {
   static const List<MenuItem> items = [
     MenuItem(
@@ -36,60 +38,40 @@ class EldMenu {
         icon: Icons.engineering,
         route: AppRoutes.dvir),
     MenuItem(
-        title: 'Vehicles',
-        arabicTitle: 'المركبات',
-        icon: Icons.local_shipping,
-        route: AppRoutes.selectVehicle),
-    MenuItem(
         title: 'Inspection',
         arabicTitle: 'التفتيش',
         icon: Icons.assignment_turned_in,
         route: AppRoutes.inspection),
-    MenuItem(
-        title: 'Co-Driver',
-        arabicTitle: 'سائق مساعد',
-        icon: Icons.people,
-        route: AppRoutes.codriver),
-    MenuItem(
-        title: 'Account',
-        arabicTitle: 'الحساب',
-        icon: Icons.person,
-        route: AppRoutes.account),
     MenuItem(
         title: 'Rules',
         arabicTitle: 'القواعد',
         icon: Icons.gavel,
         route: AppRoutes.rules),
     MenuItem(
+        title: 'Co-Driver',
+        arabicTitle: 'سائق مساعد',
+        icon: Icons.people,
+        route: AppRoutes.codriver),
+    MenuItem(
+        title: 'Select Vehicle',
+        arabicTitle: 'اختيار المركبة',
+        icon: Icons.local_shipping,
+        route: AppRoutes.selectVehicle),
+    MenuItem(
+        title: 'Account',
+        arabicTitle: 'الحساب',
+        icon: Icons.person,
+        route: AppRoutes.account),
+    MenuItem(
         title: 'Info Packet',
-        arabicTitle: 'الوثائق',
+        arabicTitle: 'حزمة المعلومات',
         icon: Icons.description,
         route: AppRoutes.infoPacket),
     MenuItem(
-        title: 'Settings',
-        arabicTitle: 'الإعدادات',
-        icon: Icons.settings,
-        route: AppRoutes.settings),
-    MenuItem(
-        title: 'Reports',
-        arabicTitle: 'التقارير',
-        icon: Icons.assessment,
-        route: AppRoutes.reports),
-    MenuItem(
-        title: 'Tracking',
-        arabicTitle: 'تتبع الموقع',
-        icon: Icons.location_on,
-        route: AppRoutes.tracking),
-    MenuItem(
-        title: 'Tracking Logs',
-        arabicTitle: 'سجلات التتبع',
-        icon: Icons.history,
-        route: AppRoutes.trackingLogs),
-    MenuItem(
-        title: 'Developer Options',
-        arabicTitle: 'خيارات المطور',
-        icon: Icons.code,
-        route: AppRoutes.developerOptions),
+        title: 'About',
+        arabicTitle: 'حول التطبيق',
+        icon: Icons.info_outline,
+        route: AppRoutes.about),
   ];
 }
 
