@@ -60,15 +60,22 @@ class AppEnvironmentConfig {
   }
 
   static ApiBackendType get currentBackend {
-    final type = _getEnv('BACKEND_TYPE');
+    final type = _getEnv('BACKEND_TYPE')?.toUpperCase();
     if (type == 'ELD') return ApiBackendType.eldServer;
     if (type == 'MOCK') return ApiBackendType.mock;
     return ApiBackendType.traccar;
   }
 
-  // Traccar Settings
-  static String get apiBaseUrl =>
-      _getEnv('API_BASE_URL') ?? _getEnv('API_BASE_URL') ?? '';
+  /// Backend type explicitly configured via BACKEND_TYPE ('eld' | 'traccar').
+  /// Returns null when not configured so callers can fall back to stored value.
+  static String? get configuredBackendType {
+    final type = _getEnv('BACKEND_TYPE')?.toLowerCase();
+    if (type == 'eld' || type == 'traccar') return type;
+    return null;
+  }
+
+  // Server Settings
+  static String get apiBaseUrl => _getEnv('API_BASE_URL') ?? '';
   static String get traccarUsername => _getEnv('TRACCAR_USERNAME') ?? '';
   static String get traccarPassword => _getEnv('TRACCAR_PASSWORD') ?? '';
   static String get traccarDeviceId => _getEnv('TRACCAR_DEVICE_ID') ?? '';
