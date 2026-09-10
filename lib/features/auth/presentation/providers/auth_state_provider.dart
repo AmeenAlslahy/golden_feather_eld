@@ -2,11 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/error/failure.dart';
 import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
-import '../../domain/entities/value_objects/email.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
 import '../../domain/usecases/login_usecase.dart';
-import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/check_auth_status_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import 'auth_providers.dart';
@@ -60,7 +58,6 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(traccarAuthRepositoryProvider);
   final notifier = AuthNotifier(
     loginUseCase: LoginUseCase(repository),
-    registerUseCase: RegisterUseCase(repository),
     checkAuthStatusUseCase: CheckAuthStatusUseCase(repository),
     logoutUseCase: LogoutUseCase(repository),
   );
@@ -79,7 +76,6 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase _loginUseCase;
-  final RegisterUseCase _registerUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final LogoutUseCase _logoutUseCase;
 
@@ -88,11 +84,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier({
     required LoginUseCase loginUseCase,
-    required RegisterUseCase registerUseCase,
     required CheckAuthStatusUseCase checkAuthStatusUseCase,
     required LogoutUseCase logoutUseCase,
   })  : _loginUseCase = loginUseCase,
-        _registerUseCase = registerUseCase,
         _checkAuthStatusUseCase = checkAuthStatusUseCase,
         _logoutUseCase = logoutUseCase,
         super(const AuthState());
@@ -172,52 +166,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
             user: user,
           );
           AppLogger.info('Login successful: ${user.fullName}');
-          return true;
-        },
-      );
-    } finally {
-      if (currentOpId == _operationId) {
-        _isOperationInProgress = false;
-      }
-    }
-  }
-
-  /// إنشاء حساب جديد
-  Future<bool> register({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    if (_isOperationInProgress) return false;
-
-    final currentOpId = ++_operationId;
-    _isOperationInProgress = true;
-
-    state = state.copyWith(status: AuthStatus.loading, clearError: true);
-
-    try {
-      final emailObj = Email(email);
-      final passwordObj = Password(password);
-
-      final result = await _registerUseCase(
-        name: name,
-        email: emailObj,
-        password: passwordObj,
-      );
-
-      if (currentOpId != _operationId) return false;
-
-      return result.match(
-        (failure) {
-          _setErrorState(failure, 'Registration failed');
-          return false;
-        },
-        (user) {
-          state = AuthState(
-            status: AuthStatus.authenticated,
-            user: user,
-          );
-          AppLogger.info('Registration successful: ${user.fullName}');
           return true;
         },
       );

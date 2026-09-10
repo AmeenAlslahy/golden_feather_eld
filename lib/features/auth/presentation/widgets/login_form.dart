@@ -106,20 +106,18 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             onSubmitted: (_) => _handleLogin(),
           ),
           
-          // نسيت كلمة المرور؟
+          // نسيت كلمة المرور؟ (إرشاد فقط: الاستعادة تتم عبر المنصة المركزية)
           Align(
             alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: () {
-                // TODO: توجيه المستخدم لخدمة استعادة كلمة المرور
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('خدمة استعادة كلمة المرور غير متوفرة حالياً')),
-                );
+                ref.read(authModeProvider.notifier).state =
+                    AuthMode.forgotPassword;
               },
-              child: const Text('نسيت كلمة المرور؟'),
+              child: Text(context.loc.resetPassword),
             ),
           ),
-          
+
           const SizedBox(height: AppSpacing.sm),
 
           // زر تسجيل الدخول
@@ -127,23 +125,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             label: context.loc.login,
             isLoading: isLoading,
             onPressed: isLoading ? null : _handleLogin,
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // رابط إنشاء حساب
-          Center(
-            child: TextButton(
-              onPressed: () {
-                ref.read(authModeProvider.notifier).state = AuthMode.register;
-              },
-              child: Text(
-                context.loc.registerAction,
-                style: TextStyle(
-                  color: context.colors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
           ),
         ],
       ),

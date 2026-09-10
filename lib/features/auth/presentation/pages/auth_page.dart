@@ -6,7 +6,6 @@ import '../../../../core/utils/localization_helper.dart';
 import '../providers/auth_state_provider.dart';
 import '../providers/auth_mode_provider.dart';
 import '../widgets/login_form.dart';
-import '../widgets/register_form.dart';
 import '../widgets/forgot_password_form.dart';
 
 /// صفحة المصادقة الموحدة
@@ -155,8 +154,6 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     switch (authMode) {
       case AuthMode.login:
         return const LoginForm();
-      case AuthMode.register:
-        return const RegisterForm();
       case AuthMode.forgotPassword:
         return const ForgotPasswordForm();
     }
