@@ -6,7 +6,6 @@ import '../../../../core/config/server_config_provider.dart';
 import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
-import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
 import '../datasources/auth_remote_data_source.dart';
 import '../datasources/user_store.dart';
 import '../datasources/auth_session_store.dart';

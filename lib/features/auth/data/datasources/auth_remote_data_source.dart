@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/network/api_endpoints.dart';
-import '../../domain/entities/auth_session.dart';
 import '../models/auth_session_dto.dart';
 import '../../../../features/account/data/models/user_model.dart';
 
