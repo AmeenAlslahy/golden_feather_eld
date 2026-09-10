@@ -6,7 +6,6 @@ import 'package:shared_preferences_android/shared_preferences_android.dart';
 import '../constants/app_constants.dart';
 import '../utils/logger.dart';
 
-import 'auth_storage_service.dart';
 import 'tracking_config_storage_service.dart';
 import '../config/server_config_provider.dart';
 import 'user_preferences_storage_service.dart';
@@ -17,7 +16,6 @@ class LocalStorageService implements ServerConfigProvider {
   static late SharedPreferencesWithCache _prefs;
   bool _initialized = false;
 
-  late final AuthStorageService _authStorage;
   late final TrackingConfigStorageService _trackingStorage;
   late final UserPreferencesStorageService _preferencesStorage;
 
@@ -30,7 +28,6 @@ class LocalStorageService implements ServerConfigProvider {
     _initFuture ??= _createInstance();
     await _initFuture;
 
-    _authStorage = AuthStorageService();
     _trackingStorage = TrackingConfigStorageService(_prefs);
     _preferencesStorage = UserPreferencesStorageService(_prefs);
 
@@ -63,12 +60,6 @@ class LocalStorageService implements ServerConfigProvider {
           'current_duty_status',
           'stationary_since',
           'backend_type',
-          'cycle_rule',
-          'cargo_type',
-          'enable_30min_break',
-          'enable_short_haul_16h',
-          'enable_pc',
-          'enable_ym',
         },
       ),
     );
@@ -141,9 +132,6 @@ class LocalStorageService implements ServerConfigProvider {
   bool get stopDetection => _trackingStorage.stopDetection;
   bool get preferPlatformProviders => _trackingStorage.preferPlatformProviders;
 
-  Future<String?> get password => _authStorage.password;
-  Future<bool> get hasPassword => _authStorage.hasPassword;
-
   String get language => _preferencesStorage.language;
   String get theme => _preferencesStorage.theme;
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
@@ -176,9 +164,6 @@ class LocalStorageService implements ServerConfigProvider {
       _preferencesStorage.setCurrentDutyStatus(value);
   Future<void> setStationarySince(String value) =>
       _preferencesStorage.setStationarySince(value);
-
-  Future<void> setPassword(String value) => _authStorage.setPassword(value);
-  Future<void> removePassword() => _authStorage.removePassword();
 
   // ========== إعدادات التتبع ==========
 
