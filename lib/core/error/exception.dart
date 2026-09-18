@@ -45,3 +45,33 @@ class CacheException implements Exception {
   @override
   String toString() => 'CacheException: $message';
 }
+
+/// استثناء المزامنة
+class SyncException implements Exception {
+  final String? message;
+
+  const SyncException([this.message]);
+
+  @override
+  String toString() => 'SyncException: $message';
+}
+
+/// استثناء التتبع
+class TrackingException implements Exception {
+  final String? message;
+
+  const TrackingException([this.message]);
+
+  @override
+  String toString() => 'TrackingException: $message';
+}
+
+/// استثناء الصلاحيات
+class PermissionException implements Exception {
+  final String? message;
+
+  const PermissionException([this.message]);
+
+  @override
+  String toString() => 'PermissionException: $message';
+}
