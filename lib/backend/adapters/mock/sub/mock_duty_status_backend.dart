@@ -1,0 +1,32 @@
+import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../contracts/duty_status_backend.dart';
+import '../../../contracts/raw_json.dart';
+
+/// In-memory mock for [DutyStatusBackend].
+/// **Status:** Skeleton — implemented in Phase 2.
+class MockDutyStatusBackend implements DutyStatusBackend {
+  const MockDutyStatusBackend();
+
+  @override
+  Future<Result<RawJson>> record(RawJson event) =>
+      throw UnimplementedError('MockDutyStatusBackend.record — Phase 2');
+
+  @override
+  Future<Result<RawJson>> update({
+    required DutyStatusId statusId,
+    required RawJson update,
+  }) =>
+      throw UnimplementedError('MockDutyStatusBackend.update — Phase 2');
+
+  @override
+  Future<Result<RawJson>> getEditForm(DutyStatusId statusId) =>
+      throw UnimplementedError('MockDutyStatusBackend.getEditForm — Phase 2');
+
+  @override
+  Future<Result<RawJson>> getGraphGrid({
+    DriverId? driverId,
+    required DateTime logDate,
+  }) =>
+      throw UnimplementedError('MockDutyStatusBackend.getGraphGrid — Phase 2');
+}

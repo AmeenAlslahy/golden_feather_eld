@@ -53,9 +53,6 @@ class EldEngineAdapter implements BackendAdapter {
   @override
   final BackendIdentity identity;
 
-  @override
-  bool get isMock => identity.isMock;
-
   final ApiClient _apiClient;
 
   // ==========================================================================
