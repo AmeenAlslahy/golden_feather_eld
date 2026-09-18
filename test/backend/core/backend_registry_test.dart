@@ -19,6 +19,9 @@ class _FakeAdapter implements BackendAdapter {
   Future<void> dispose() async {
     disposed = true;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// Fake that fails on dispose.
@@ -35,6 +38,9 @@ class _FailingAdapter implements BackendAdapter {
   Future<void> dispose() async {
     throw StateError('Dispose failed');
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
