@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_status_dashboard_backend.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 

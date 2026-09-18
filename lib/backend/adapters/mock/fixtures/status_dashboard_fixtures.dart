@@ -55,8 +55,53 @@ const statusDashboardFixture = <String, dynamic>{
 };
 
 const statusDashboardDrivingFixture = <String, dynamic>{
-  ...statusDashboardFixture,
+  'driver': {
+    'name': 'سعد بن محمد العتيبي',
+    'id': 101,
+    'displayText': 'سعد بن محمد العتيبي - 101',
+  },
+  'operationalAlerts': {
+    'toolIcon': false,
+    'warningTriangleIcon': false,
+    'connectionStatus': 'OK',
+  },
   'currentDutyStatus': 'DRIVING',
+  'remainingCircle': {
+    'time': '08:37',
+    'label': 'Remaining',
+    'progress': 0.62,
+  },
+  'hosIndicators': {
+    'drive': {
+      'label': 'DRIVE',
+      'value': '02:23',
+      'type': 'USED',
+    },
+    'shift': {
+      'label': 'SHIFT',
+      'value': '05:23',
+      'type': 'USED',
+    },
+    'breakTime': {
+      'label': 'BREAK',
+      'value': '00:30',
+      'type': 'REMAINING',
+    },
+    'cycle': {
+      'label': 'CYCLE',
+      'value': '61:23',
+      'type': 'USED',
+    },
+  },
+  'regulatoryConstraints': {
+    'ruleSet': 'USA 70/8',
+    'limits': [
+      'maxDrivingHours: 11',
+      'maxShiftHours: 14',
+      'mandatoryRestHours: 10',
+      'cycleHours: 70',
+    ],
+  },
 };
 
 const weeklyRecapFixture = <String, dynamic>{

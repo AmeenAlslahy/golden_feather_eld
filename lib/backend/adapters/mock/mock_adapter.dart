@@ -52,6 +52,10 @@ class MockAdapter implements BackendAdapter {
   @override
   final BackendIdentity identity;
 
+  @override
+  bool get isMock => identity.isMock;
+
+
   MockAdapter._({required this.identity});
 
   /// Creates a mock adapter with a fixed identity.
