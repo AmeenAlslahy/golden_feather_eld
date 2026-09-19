@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/features/hos/presentation/widgets/status_dashboard/main_circular_timer.dart';
 
-import '../../../../helpers/pump_page.dart';
+import '../../helpers/pump_page.dart';
 
 void main() {
   RemainingCircle circle({
