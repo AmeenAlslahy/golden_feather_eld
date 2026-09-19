@@ -18,6 +18,11 @@ Future<void> pumpPage(
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
 }) {
+  tester.view.physicalSize = const Size(1080, 2340);
+  tester.view.devicePixelRatio = 3.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
   return tester.pumpWidget(
     ProviderScope(
       overrides: [
