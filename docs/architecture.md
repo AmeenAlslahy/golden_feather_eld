@@ -1,70 +1,133 @@
 # Architecture Overview
 
-## Layered Design
-┌─────────────────────────────────────────┐
-│ UI (features/*/presentation) │
-│ — Flutter widgets, Riverpod providers │
-│ — No HTTP, no Dio, no JSON │
-└──────────────┬──────────────────────────┘
-│ uses
-▼
-┌─────────────────────────────────────────┐
-│ Domain (lib/domain/) │
-│ — Canonical models (Freezed) │
-│ — Value objects (UserId, DriverId...) │
-│ — No external deps │
-└──────────────▲──────────────────────────┘
-│ contracts
+## 5 Layers + 1 Rule
+┌──────────────────────────────────────────┐
+│ app/ │ ← Composition Root
+│ main.dart, app.dart, router.dart │ (يستورد من الكل)
+└────────────────┬─────────────────────────┘
 │
-┌──────────────┴──────────────────────────┐
-│ Backend (lib/backend/) │
-│ — 20 contracts │
-│ — EldEngineAdapter + MockAdapter │
-│ — HTTP layer (ApiClient) │
-└──────────────┬──────────────────────────┘
-│ uses
-▼
-┌─────────────────────────────────────────┐
-│ Core (lib/core/) │
-│ — AppError + Result │
-│ — TimeAuthority, Storage ports │
-│ — No feature imports │
-└─────────────────────────────────────────┘
+┌────────────────▼─────────────────────────┐
+│ features/<name>/ │ ← UI + Feature Logic
+│ presentation/, data/ (opt), domain/ (opt)│
+└────────────────┬─────────────────────────┘
+│
+┌────────────────▼─────────────────────────┐
+│ backend/ │ ← الاتصال بالخادم
+│ contracts/, adapters/, http/, core/ │
+└────────────────┬─────────────────────────┘
+│
+┌────────────────▼─────────────────────────┐
+│ domain/ │ ← نماذج العمل
+│ user/, driver/, duty_status/, vehicle/ │
+└────────────────┬─────────────────────────┘
+│
+┌────────────────▼─────────────────────────┐
+│ core/ │ ← الأساسيات
+│ error/, result/, time/, storage/ │
+└──────────────────────────────────────────┘
 
-## Rules
+## The Single Rule
 
-1. **No feature → feature imports.** Via barrel files only.
-2. **No core → features imports.**
-3. **Backend is the only layer that knows Dio/JSON.**
-4. **Domain has no external imports (besides Freezed).**
-5. **Every method that can fail returns `Result<T>`.**
+> **الاستيراد ينزل فقط. لا يصعد. لا يمشي جانبيًا.**
 
-## Structure
+### Allowed Matrix
 
-| Path | Purpose |
-|------|---------|
-| `lib/core/` | Shared utilities (error, result, time, storage). |
-| `lib/domain/` | Canonical domain models. |
-| `lib/backend/` | Backend abstraction (contracts + adapters + HTTP). |
-| `lib/features/` | Feature modules (isolated, barrel-exported). |
-| `lib/app/` | Composition root (main, routing). |
+| من | إلى | مسموح |
+|---|---|---|
+| `app/` | أي مكان | ✅ |
+| `features/X/` | `backend/`, `domain/`, `core/` | ✅ |
+| `backend/` | `domain/`, `core/` | ✅ |
+| `domain/` | `core/` | ✅ |
+| `core/` | — | ❌ |
+| `domain/` | `backend/`, `features/` | ❌ |
+| `backend/` | `features/` | ❌ |
+| `features/X/` | `features/Y/` | ❌ |
 
-## Backend Abstraction
+## Layer Responsibilities
 
-- **Contracts**: 20 interfaces in `lib/backend/contracts/`.
-- **Adapters**:
-  - `EldEngineAdapter` — real HTTP calls to `/api/eld/*`.
-  - `MockAdapter` — in-memory (development + tests).
-- **Registry**: manages adapter switching at runtime.
-- **HTTP**: `ApiClient` with envelope unwrap + error mapping.
+### `core/` — Foundation
+- **يملك:** `AppError`, `Result`, `TimeAuthority`, Storage ports.
+- **لا يعرف:** features, backend, domain.
+- **Rule:** لا external imports عدا Flutter/Dart.
 
-## Testing
+### `domain/` — Business Models
+- **يملك:** Entities, Value Objects, domain enums.
+- **يعرف:** `core/` فقط.
+- **Rule:** Freezed + Equatable. لا JSON. لا Dio. لا Flutter widgets.
 
-- **Unit tests** (domain, backend mappers): `test/backend/`, `test/core/`, `test/domain/`.
-- **Widget tests**: `test/features/`.
-- **Test helpers**: `test/helpers/test_helpers.dart`.
+### `backend/` — Server Communication
+- **يملك:** Contracts, Adapters, Mappers, HTTP.
+- **يعرف:** `core/`, `domain/`.
+- **Rule:** لا يعرف `features/`. لا يعرف UI.
+
+### `features/<name>/` — Isolated Modules
+- **يملك:** Presentation (pages, widgets, providers).
+- **قد يملك:** Data (repositories) — **فقط عند وجود logic** (caching, offline queue).
+- **قد يملك:** Domain (feature-specific entities) — فقط عند عدم الاستخدام عبر features.
+- **Rule:** لا يرى features أخرى.
+
+### `app/` — Composition Root
+- يبني الـ ProviderContainer.
+- يسجّل الـ routes.
+- **لا يحوي logic.**
+
+## When to Add a Feature Repository?
+
+**Add a Repository only when:**
+- Caching logic.
+- Offline queue.
+- Retry with backoff.
+- Data transformation across multiple backends.
+
+**Otherwise:** Provider → Backend directly.
+
+## Enforcement
+
+### Automated Check
+
+```bash
+bash scripts/check_architecture.sh
+```
+
+Checks for:
+- `package:dio` imports outside `lib/backend/`.
+- Upward imports (`core/` → anything, `domain/` → backend, etc.).
+- Cross-feature imports.
+
+Runs at:
+- Pre-commit (local).
+- CI (on PR).
+
+## Rules Summary
+1. Never import `package:dio` outside `lib/backend/`.
+2. Never import `../features/` in `lib/core/`, `lib/domain/`, `lib/backend/`.
+3. Never import `features/X/...` from `features/Y/...`.
+
+## Directory Structure
+```text
+lib/
+├── app/                       # Composition root
+├── core/                      # Foundation
+├── domain/                    # Business models
+│   ├── shared/                # Value objects shared across domains
+│   ├── user/
+│   ├── driver/
+│   ├── duty_status/
+│   └── vehicle/
+├── backend/                   # Server communication
+│   ├── core/                  # Identity, Adapter, Registry
+│   ├── contracts/             # 20 backend interfaces
+│   ├── adapters/              # EldEngine + Mock implementations
+│   ├── http/                  # ApiClient, interceptors
+│   └── providers/             # Riverpod providers
+└── features/                  # Isolated feature modules
+    ├── hos/
+    ├── logs/
+    ├── dvir/
+    └── ...
+```
 
 ## References
-
-- ADRs: `docs/adr/` (to be added in Phase 2).
-- Swagger: `/api/eld/openapi.yaml` (source of truth for backend).
+- Backend contracts: `lib/backend/contracts/`.
+- Backend Swagger: `/api/eld/openapi.yaml`.
+- ADRs: `docs/adr/` (added per decision).
