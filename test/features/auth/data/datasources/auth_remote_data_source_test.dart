@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
@@ -36,6 +37,11 @@ class FakeDioAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await dotenv.load(fileName: '.env.test');
+  });
+
   late Dio dio;
   late FakeDioAdapter fakeAdapter;
   late ApiClient apiClient;
