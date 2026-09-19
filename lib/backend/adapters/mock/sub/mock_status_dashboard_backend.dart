@@ -1,39 +1,33 @@
 import '../../../../core/result/result.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../contracts/raw_json.dart';
 import '../../../contracts/status_dashboard_backend.dart';
-import '../fixtures/status_dashboard_fixtures.dart';
 
 /// In-memory mock for [StatusDashboardBackend].
-///
-/// **Rule:** Deterministic. Duty status changes persist in-memory.
+/// **Status:** Skeleton — typed implementation in T2.3.
 class MockStatusDashboardBackend implements StatusDashboardBackend {
-  MockStatusDashboardBackend();
-
-  String _currentDutyStatus = 'ON_DUTY';
+  const MockStatusDashboardBackend();
 
   @override
-  Future<Result<RawJson>> getDashboard({DriverId? driverId}) async {
-    return ok({
-      ...statusDashboardFixture,
-      'currentDutyStatus': _currentDutyStatus,
-    });
-  }
+  Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) =>
+      throw UnimplementedError(
+        'MockStatusDashboardBackend.getDashboard — T2.3',
+      );
 
   @override
-  Future<Result<RawJson>> updateDutyStatus({
-    required String dutyStatus,
+  Future<Result<StatusDashboard>> updateDutyStatus({
+    required DutyStatusCode status,
     String? notes,
-  }) async {
-    _currentDutyStatus = dutyStatus;
-    return ok({
-      ...statusDashboardFixture,
-      'currentDutyStatus': _currentDutyStatus,
-    });
-  }
+  }) =>
+      throw UnimplementedError(
+        'MockStatusDashboardBackend.updateDutyStatus — T2.3',
+      );
 
   @override
-  Future<Result<RawJson>> getWeeklyRecap({DriverId? driverId}) async {
-    return ok(Map<String, dynamic>.from(weeklyRecapFixture));
-  }
+  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) =>
+      throw UnimplementedError(
+        'MockStatusDashboardBackend.getWeeklyRecap — T2.3',
+      );
 }

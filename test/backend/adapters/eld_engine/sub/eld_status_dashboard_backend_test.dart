@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_status_dashboard_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_config.dart';
-import 'package:golden_feather_eld/core/result/result.dart';
+import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
@@ -24,12 +26,12 @@ void main() {
   });
 
   group('EldStatusDashboardBackend.getDashboard', () {
-    test('returns dashboard data', () async {
+    test('returns dashboard data typed as StatusDashboard', () async {
       adapter.onGet(
         '/eld/status',
         (server) => server.reply(200, {
           'currentDutyStatus': 'ON_DUTY',
-          'driver': {'id': 101, 'name': 'Ahmed'},
+          'driver': {'id': 101, 'name': 'Ahmed', 'displayText': 'A.'},
         }),
         queryParameters: {'driverId': 101},
       );
@@ -38,14 +40,16 @@ void main() {
         driverId: const DriverId(101),
       );
 
-      result.tap(onSuccess: (data) {
-        expect(data['currentDutyStatus'], 'ON_DUTY');
+      result.tap(onSuccess: (StatusDashboard data) {
+        expect(data.currentDutyStatus, equals(DutyStatusCode.onDuty));
+        expect(data.driver.id, equals(const DriverId(101)));
       });
+      expect(result.isSuccess, isTrue);
     });
   });
 
   group('EldStatusDashboardBackend.updateDutyStatus', () {
-    test('sends POST with status and notes', () async {
+    test('sends POST with dutyStatus wire value and notes', () async {
       adapter.onPost(
         '/eld/status/duty-status',
         (server) => server.reply(200, {'currentDutyStatus': 'DRIVING'}),
@@ -53,13 +57,14 @@ void main() {
       );
 
       final result = await backend.updateDutyStatus(
-        dutyStatus: 'DRIVING',
+        status: DutyStatusCode.driving,
         notes: 'Trip started',
       );
 
-      result.tap(onSuccess: (data) {
-        expect(data['currentDutyStatus'], 'DRIVING');
+      result.tap(onSuccess: (StatusDashboard data) {
+        expect(data.currentDutyStatus, equals(DutyStatusCode.driving));
       });
+      expect(result.isSuccess, isTrue);
     });
 
     test('works without notes', () async {
@@ -70,28 +75,43 @@ void main() {
       );
 
       final result = await backend.updateDutyStatus(
-        dutyStatus: 'OFF_DUTY',
+        status: DutyStatusCode.offDuty,
       );
 
+      result.tap(onSuccess: (StatusDashboard data) {
+        expect(data.currentDutyStatus, equals(DutyStatusCode.offDuty));
+      });
       expect(result.isSuccess, isTrue);
     });
   });
 
   group('EldStatusDashboardBackend.getWeeklyRecap', () {
-    test('returns recap data', () async {
+    test('returns recap data typed as WeeklyRecap', () async {
       adapter.onGet(
         '/eld/status/recap',
         (server) => server.reply(200, {
           'cycleUsed': '61:23',
           'cycleRemaining': '08:37',
+          'days': [
+            {
+              'date': '2026-09-18T10:00:00Z',
+              'dayOfWeek': 'Friday',
+            }
+          ]
         }),
       );
 
       final result = await backend.getWeeklyRecap();
 
-      result.tap(onSuccess: (data) {
-        expect(data['cycleUsed'], '61:23');
+      result.tap(onSuccess: (WeeklyRecap data) {
+        expect(
+          data.cycleUsed,
+          equals(const Duration(hours: 61, minutes: 23)),
+        );
+        expect(data.days.length, 1);
+        expect(data.days.first.dayOfWeek, 'Friday');
       });
+      expect(result.isSuccess, isTrue);
     });
   });
 }

@@ -1,20 +1,20 @@
 import '../../core/result/result.dart';
+import '../../domain/duty_status/duty_status_code.dart';
+import '../../domain/duty_status/status_dashboard.dart';
+import '../../domain/duty_status/weekly_recap.dart';
 import '../../domain/shared/value_objects.dart';
-import 'raw_json.dart';
 
+/// Contract for the status dashboard (main driver screen).
 abstract interface class StatusDashboardBackend {
   /// GET /eld/status
-  // TODO(P2): replace with StatusDashboard
-  Future<Result<RawJson>> getDashboard({DriverId? driverId});
+  Future<Result<StatusDashboard>> getDashboard({DriverId? driverId});
 
   /// POST /eld/status/duty-status
-  // TODO(P2): replace with StatusDashboard
-  Future<Result<RawJson>> updateDutyStatus({
-    required String dutyStatus,
+  Future<Result<StatusDashboard>> updateDutyStatus({
+    required DutyStatusCode status,
     String? notes,
   });
 
   /// GET /eld/status/recap
-  // TODO(P2): replace with WeeklyRecap
-  Future<Result<RawJson>> getWeeklyRecap({DriverId? driverId});
+  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId});
 }
