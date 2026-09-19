@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_status_dashboard_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_config.dart';

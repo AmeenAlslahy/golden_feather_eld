@@ -22,11 +22,11 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
               driverId != null ? {'driverId': driverId.value} : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .mapValue(
+        .then((result) => result.mapValue(
           (response) => StatusDashboardMapper.fromDashboardJson(
             response.data ?? const {},
           ),
-        );
+        ));
   }
 
   @override
@@ -43,11 +43,11 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
           },
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .mapValue(
+        .then((result) => result.mapValue(
           (response) => StatusDashboardMapper.fromDashboardJson(
             response.data ?? const {},
           ),
-        );
+        ));
   }
 
   @override
@@ -59,10 +59,10 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
               driverId != null ? {'driverId': driverId.value} : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .mapValue(
+        .then((result) => result.mapValue(
           (response) => StatusDashboardMapper.fromRecapJson(
             response.data ?? const {},
           ),
-        );
+        ));
   }
 }
