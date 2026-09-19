@@ -7,6 +7,7 @@ import 'api_endpoints.dart';
 import 'endpoints/traccar_endpoints.dart';
 import 'endpoints/eld_server_endpoints.dart';
 import '../services/local_storage_service.dart' as ls;
+import '../../features/settings/presentation/providers/server_config_providers.dart';
 
 // Re-export apiClientProvider so files only need to import core_providers.dart
 export 'network_providers.dart'
@@ -32,11 +33,21 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 });
 
 final serverUrlProvider = StateProvider<String>((ref) {
+  final config = ref.watch(serverConfigProvider);
+  if (config != null && config.baseUrl.isNotEmpty) {
+    return config.baseUrl;
+  }
+
   final storage = ref.watch(goldenFeatherEldLocalStorageProvider);
   return storage.serverUrl;
 });
 
 final backendTypeProvider = Provider<String>((ref) {
+  final config = ref.watch(serverConfigProvider);
+  if (config != null) {
+    return config.backendType.wire;
+  }
+
   final storage = ref.watch(goldenFeatherEldLocalStorageProvider);
   final serverUrl = ref.watch(serverUrlProvider);
 

@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../domain/config/server_config.dart';
+import '../../../../backend/providers/backend_providers.dart';
 import '../providers/server_config_providers.dart';
 
 /// Settings screen where the user enters the backend URL.
@@ -23,6 +24,7 @@ class ServerConfigPage extends ConsumerStatefulWidget {
 
 class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
   late final TextEditingController _urlController;
+  bool _isTesting = false;
 
   @override
   void initState() {
@@ -56,6 +58,36 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
     _urlController.clear();
     if (!mounted) return;
     _showSuccess('Server config cleared. Using Mock backend.');
+  }
+
+  Future<void> _onTestConnection() async {
+    final config = ref.read(serverConfigProvider);
+    if (config == null || config.baseUrl.isEmpty) {
+      _showError('Please save a server URL first.');
+      return;
+    }
+
+    setState(() => _isTesting = true);
+
+    try {
+      final healthBackend = ref.read(healthBackendProvider);
+      final result = await healthBackend.checkLiveness();
+      
+      if (!mounted) return;
+
+      if (result.isRight()) {
+        await ref.read(serverConfigProvider.notifier).markVerified();
+        _showSuccess('Connection successful! Backend is ready.');
+      } else {
+        final error = result.getLeft().toNullable();
+        _showError('Connection failed: ${error ?? "Unknown error"}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Connection error: $e');
+    } finally {
+      if (mounted) setState(() => _isTesting = false);
+    }
   }
 
   void _showError(String message) {
@@ -134,6 +166,14 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               label: 'Save',
               type: EldButtonType.agree,
               onPressed: _onSave,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // Test Connection button
+            AppButton(
+              label: _isTesting ? 'Testing...' : 'Test Connection',
+              type: EldButtonType.agree,
+              onPressed: _isTesting ? null : _onTestConnection,
             ),
             const SizedBox(height: AppSpacing.sm),
 

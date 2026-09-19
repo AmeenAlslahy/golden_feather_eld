@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
 import '../providers/auth_state_provider.dart';
@@ -27,8 +29,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     return Scaffold(
       // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.xl,
@@ -144,7 +148,18 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 ],
               ),
             ),
-          ),
+              ),
+            ),
+            Positioned(
+              top: AppSpacing.md,
+              right: AppSpacing.md,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Server Configuration',
+                onPressed: () => context.push(AppRoutes.serverConfig),
+              ),
+            ),
+          ],
         ),
       ),
     );

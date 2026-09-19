@@ -37,6 +37,7 @@ class AppRoutes {
   static const String about = '/about';
   static const String suggestedEvents = '/logs/suggested-events';
   static const String unidentifiedEvents = '/logs/unidentified-events';
+  static const String serverConfig = '/server-config';
 
   /// مسارات متاحة بدون تسجيل دخول
   static const Set<String> publicRoutes = {
@@ -44,6 +45,7 @@ class AppRoutes {
     permissions,
     login,
     about, // SRS §17: حول التطبيق والتشخيص متاحة بدون مصادقة
+    serverConfig,
   };
 }
 

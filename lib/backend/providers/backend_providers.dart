@@ -54,12 +54,16 @@ final backendRegistryProvider = Provider<BackendRegistry>((ref) {
 /// By default, we use the Mock adapter for isolated development.
 /// This can be overridden in `ProviderScope` for production.
 final activeBackendProvider = Provider<BackendAdapter>((ref) {
-  // T4.0a: config is read but always returns MockAdapter.
-  // T4.0b: will return EldEngineAdapter when config is usable.
   final config = ref.watch(serverConfigProvider);
   
-  // Even if config is set, use MockAdapter until T4.0b.
-  // This keeps the app functional while we build auth.
+  if (config != null && config.baseUrl.isNotEmpty) {
+    return EldEngineAdapter.create(
+      baseUrl: config.baseUrl,
+      apiClient: ApiClient(
+        config: ApiConfig(baseUrl: config.baseUrl),
+      ),
+    );
+  }
   return MockAdapter();
 });
 
