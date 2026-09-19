@@ -103,7 +103,7 @@ class MockAdapter implements BackendAdapter {
   late final DvirBackend dvir = const MockDvirBackend();
 
   @override
-  late final InspectionBackend inspection = const MockInspectionBackend();
+  late final InspectionBackend inspection = MockInspectionBackend();
 
   @override
   late final UnidentifiedEventsBackend unidentifiedEvents =

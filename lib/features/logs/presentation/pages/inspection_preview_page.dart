@@ -5,10 +5,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
 import '../../domain/entities/audit_entry.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
 
 final auditProvider =
     FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
@@ -30,110 +31,116 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dashboard = ref.watch(dashboardDataProvider);
+    final screenAsync = ref.watch(dotInspectionScreenProvider);
     final logsState = ref.watch(logsProvider);
     final logs = logsState.logs;
     final loc = AppLocalizations.of(context)!;
 
-    // تهيئة المؤشر لليوم المحدد حالياً عند فتح الشاشة
-    if (!_isInitialized && logsState.selectedLog != null && logs.isNotEmpty) {
-      final index = logs.indexWhere((l) => l.id == logsState.selectedLog!.id);
-      if (index != -1) {
-        _currentDayIndex = index;
-      }
-      _isInitialized = true;
-    }
+    return screenAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      data: (screen) {
+        // تهيئة المؤشر لليوم المحدد حالياً عند فتح الشاشة
+        if (!_isInitialized && logsState.selectedLog != null && logs.isNotEmpty) {
+          final index = logs.indexWhere((l) => l.id == logsState.selectedLog!.id);
+          if (index != -1) {
+            _currentDayIndex = index;
+          }
+          _isInitialized = true;
+        }
 
-    final selectedLog = logs.isNotEmpty ? logs[_currentDayIndex] : null;
+        final selectedLog = logs.isNotEmpty ? logs[_currentDayIndex] : null;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          selectedLog?.formattedDate ?? '',
-          style: const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.surface),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('خيارات التصفية قيد التطوير')),
-              );
-            },
-          ),
-        ],
-      ),
-      body: selectedLog == null
-          ? Center(child: Text(loc.noData))
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // ========== شريط التاريخ ==========
-                  _DateHeader(
-                    selectedLog: selectedLog,
-                    hasPrevious: _currentDayIndex < logs.length - 1,
-                    hasNext: _currentDayIndex > 0,
-                    onPrevious: () {
-                      if (_currentDayIndex < logs.length - 1) {
-                        setState(() => _currentDayIndex++);
-                      }
-                    },
-                    onNext: () {
-                      if (_currentDayIndex > 0) {
-                        setState(() => _currentDayIndex--);
-                      }
-                    },
-                  ),
-                  // ========== القسم ١: الرسم البياني ==========
-                  LogGraph(events: selectedLog.events),
-                  const Divider(height: 1),
-                  // ========== القسم ٢: جدول الأحداث ==========
-                  _EventsTable(events: selectedLog.events),
-                  const Divider(height: 1),
-                  // ========== القسم ٣: ملخص التفتيش ==========
-                  _InspectionSummary(dashboard: dashboard),
-                  const Divider(height: 1),
-                  // ========== القسم ٤: سجل التدقيق ==========
-                  _AuditTrail(selectedLog: selectedLog),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: AppColors.primaryBlue,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              selectedLog?.formattedDate ?? '',
+              style: const TextStyle(
+                fontSize: AppTypography.bodySize,
+                fontWeight: AppTypography.bold,
+                color: AppColors.surface,
               ),
             ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border:
-              Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          selectedItemColor: Theme.of(context).colorScheme.onSurface,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-          currentIndex: 0,
-          type: BottomNavigationBarType.fixed,
-          items: [
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.access_time), label: loc.events),
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.assignment), label: loc.form),
-            BottomNavigationBarItem(
-                icon: const Icon(Icons.check_circle_outline),
-                label: loc.certify),
-          ],
-          onTap: (_) {},
-        ),
-      ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.tune, color: AppColors.surface),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('خيارات التصفية قيد التطوير')),
+                  );
+                },
+              ),
+            ],
+          ),
+          body: selectedLog == null
+              ? Center(child: Text(loc.noData))
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // ========== شريط التاريخ ==========
+                      _DateHeader(
+                        selectedLog: selectedLog,
+                        hasPrevious: _currentDayIndex < logs.length - 1,
+                        hasNext: _currentDayIndex > 0,
+                        onPrevious: () {
+                          if (_currentDayIndex < logs.length - 1) {
+                            setState(() => _currentDayIndex++);
+                          }
+                        },
+                        onNext: () {
+                          if (_currentDayIndex > 0) {
+                            setState(() => _currentDayIndex--);
+                          }
+                        },
+                      ),
+                      // ========== القسم ١: الرسم البياني ==========
+                      LogGraph(events: selectedLog.events),
+                      const Divider(height: 1),
+                      // ========== القسم ٢: جدول الأحداث ==========
+                      _EventsTable(events: selectedLog.events),
+                      const Divider(height: 1),
+                      // ========== القسم ٣: ملخص التفتيش ==========
+                      _InspectionSummary(screen: screen, selectedLog: selectedLog),
+                      const Divider(height: 1),
+                      // ========== القسم ٤: سجل التدقيق ==========
+                      _AuditTrail(selectedLog: selectedLog),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                  ),
+                ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border:
+                  Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+            ),
+            child: BottomNavigationBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              selectedItemColor: Theme.of(context).colorScheme.onSurface,
+              unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              currentIndex: 0,
+              type: BottomNavigationBarType.fixed,
+              items: [
+                BottomNavigationBarItem(
+                    icon: const Icon(Icons.access_time), label: loc.events),
+                BottomNavigationBarItem(
+                    icon: const Icon(Icons.assignment), label: loc.form),
+                BottomNavigationBarItem(
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: loc.certify),
+              ],
+              onTap: (_) {},
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -364,13 +371,29 @@ class _EventRow extends StatelessWidget {
 // ============================================================
 // ملخص التفتيش
 // ============================================================
-class _InspectionSummary extends StatelessWidget {
-  final dynamic dashboard;
-  const _InspectionSummary({required this.dashboard});
+class _InspectionSummary extends ConsumerWidget {
+  final DotInspectionScreen screen;
+  final dynamic selectedLog;
+  const _InspectionSummary({required this.screen, required this.selectedLog});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
+    final cycleAsync = ref.watch(dotInspectionCycleProvider);
+    
+    DotInspectionCycleDay? currentDay;
+    cycleAsync.whenData((cycle) {
+      try {
+        currentDay = cycle.firstWhere(
+          (d) => d.logDate.year == selectedLog.date.year && 
+                 d.logDate.month == selectedLog.date.month && 
+                 d.logDate.day == selectedLog.date.day,
+          orElse: () => cycle.first,
+        );
+      } catch (_) {
+        if (cycle.isNotEmpty) currentDay = cycle.first;
+      }
+    });
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -380,73 +403,73 @@ class _InspectionSummary extends StatelessWidget {
           // السطر 1: السائق
           _SummaryRow(cells: [
             _SummaryCell(
-                label: loc.driverName, value: dashboard.driverName, flex: 3),
-            _SummaryCell(label: loc.driverId, value: dashboard.vehicleId),
+                label: loc.driverName, value: screen.driverName, flex: 3),
+            _SummaryCell(label: loc.driverId, value: screen.driverId.value.toString()),
             _SummaryCell(
-                label: loc.license, value: dashboard.driverLicense ?? '-'),
-            _SummaryCell(label: loc.licenseState, value: 'SA'),
+                label: loc.license, value: '-'),
+            _SummaryCell(label: loc.licenseState, value: '-'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 2: مساعد
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.exemptDriver, value: 'No'),
-            _SummaryCell(label: loc.unidentifiedDriving, value: '0'),
+            _SummaryCell(label: loc.exemptDriver, value: currentDay?.exemptDriver == true ? 'Yes' : 'No'),
+            _SummaryCell(label: loc.unidentifiedDriving, value: currentDay?.unidentifiedDrivingCount.toString() ?? '0'),
             _SummaryCell(
-                label: loc.coDriver, value: dashboard.coDriverName ?? 'None'),
+                label: loc.coDriver, value: 'None'),
             _SummaryCell(
-                label: loc.coDriverId, value: dashboard.coDriverId ?? '-'),
+                label: loc.coDriverId, value: '-'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 3: التاريخ والتصديق
           _SummaryRow(cells: [
             _SummaryCell(
                 label: loc.logDate,
-                value: DateTime.now().toString().substring(0, 10)),
+                value: currentDay?.displayDate ?? screen.inspectionDate.toString().substring(0, 10)),
             _SummaryCell(
                 label: loc.displayDate,
-                value: DateTime.now().toString().substring(0, 10)),
-            _SummaryCell(label: loc.displayLocation, value: 'Riyadh, SA'),
-            _SummaryCell(label: loc.certified, value: 'Yes'),
+                value: currentDay?.displayDate ?? screen.inspectionDate.toString().substring(0, 10)),
+            _SummaryCell(label: loc.displayLocation, value: currentDay?.displayLocation ?? '-'),
+            _SummaryCell(label: loc.certified, value: currentDay?.certified == true ? 'Yes' : 'No'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 4: ELD
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.eldRegId, value: 'GF-ELD-001'),
-            _SummaryCell(label: loc.eldIdentifier, value: 'GF10000001'),
+            _SummaryCell(label: loc.eldRegId, value: screen.eldRegistrationId),
+            _SummaryCell(label: loc.eldIdentifier, value: screen.eldIdentifier),
             _SummaryCell(
-                label: loc.provider, value: 'Golden Feather ELD', flex: 2),
+                label: loc.provider, value: currentDay?.eldProvider ?? '-', flex: 2),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 5: المؤشرات
           _SummaryRow(cells: [
             _SummaryCell(label: loc.periodStart, value: '00:00'),
-            _SummaryCell(label: loc.dataDiag, value: '0'),
-            _SummaryCell(label: loc.deviceMalf, value: '0'),
+            _SummaryCell(label: loc.dataDiag, value: currentDay?.activeDataDiagnostics.length.toString() ?? '0'),
+            _SummaryCell(label: loc.deviceMalf, value: currentDay?.activeDeviceMalfunctions.length.toString() ?? '0'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 6: المركبة
           _SummaryRow(cells: [
-            _SummaryCell(label: loc.vehicle, value: dashboard.vehicleId),
-            _SummaryCell(label: loc.vin, value: '1FUJGLDR5CSBJ0527', flex: 2),
-            _SummaryCell(label: loc.odometer, value: '125,000'),
-            _SummaryCell(label: loc.distance, value: '450 km'),
-            _SummaryCell(label: loc.engineHours, value: '3,500'),
+            _SummaryCell(label: loc.vehicle, value: currentDay?.vehicleNumber ?? '-'),
+            _SummaryCell(label: loc.vin, value: currentDay?.vin ?? '-', flex: 2),
+            _SummaryCell(label: loc.odometer, value: currentDay?.startOdometerKm.toStringAsFixed(0) ?? '-'),
+            _SummaryCell(label: loc.distance, value: currentDay?.totalDistanceKm != null ? '${currentDay!.totalDistanceKm.toStringAsFixed(0)} km' : '-'),
+            _SummaryCell(label: loc.engineHours, value: currentDay?.engineHours.toStringAsFixed(1) ?? '-'),
           ]),
           const SizedBox(height: AppSpacing.sm),
           // السطر 7: الناقل
           _SummaryRow(cells: [
             _SummaryCell(
-                label: loc.trailers, value: dashboard.trailerId ?? '-'),
+                label: loc.trailers, value: currentDay?.trailers.isNotEmpty == true ? currentDay!.trailers : '-'),
             _SummaryCell(
                 label: loc.shippingDocuments,
-                value: dashboard.shippingDocuments ?? '-'),
+                value: currentDay?.shippingDocuments.isNotEmpty == true ? currentDay!.shippingDocuments : '-'),
             _SummaryCell(
-                label: loc.carrier, value: 'Golden Feather Transport', flex: 2),
+                label: loc.carrier, value: screen.carrierName, flex: 2),
             _SummaryCell(
-                label: loc.mainOffice, value: '123 Main St, Riyadh', flex: 2),
+                label: loc.mainOffice, value: currentDay?.mainOfficeAddress ?? '-', flex: 2),
             _SummaryCell(
                 label: loc.homeTerminal,
-                value: '456 Terminal Rd, Dammam',
+                value: currentDay?.homeTerminalAddress ?? '-',
                 flex: 2),
           ]),
         ],

@@ -1,30 +1,81 @@
-// ignore_for_file: unused_field, unused_import
-
 import '../../../../core/result/result.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/inspection_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
+import '../mappers/dot_inspection_mapper.dart';
 
-/// ELD Engine implementation of [InspectionBackend].
-/// **Status:** Skeleton — implemented in Phase 2.
 class EldInspectionBackend implements InspectionBackend {
   final ApiClient _apiClient;
 
   const EldInspectionBackend(this._apiClient);
 
   @override
-  Future<Result<RawJson>> getScreen({DriverId? driverId}) =>
-      throw UnimplementedError('EldInspectionBackend.getScreen — Phase 2');
+  Future<Result<DotInspectionScreen>> getScreen({DriverId? driverId}) {
+    return _apiClient
+        .get<Map<String, dynamic>>(
+          '/eld/dot-inspection',
+          queryParameters:
+              driverId != null ? {'driverId': driverId.value} : null,
+          parser: (data) => data is Map<String, dynamic> ? data : {},
+        )
+        .then(
+          (r) => r.mapValue(
+            (response) =>
+                DotInspectionMapper.fromScreenJson(response.data ?? const {}),
+          ),
+        );
+  }
 
   @override
-  Future<Result<RawJson>> getCycle({
+  Future<Result<List<DotInspectionCycleDay>>> getCycle({
     DriverId? driverId,
     int days = 8,
     DateTime? endDate,
-  }) =>
-      throw UnimplementedError('EldInspectionBackend.getCycle — Phase 2');
+  }) {
+    return _apiClient
+        .get<List<dynamic>>(
+          '/eld/dot-inspection/cycle',
+          queryParameters: {
+            if (driverId != null) 'driverId': driverId.value,
+            'days': days,
+            if (endDate != null)
+              'endDate': endDate.toIso8601String().split('T').first,
+          },
+          parser: (data) => data is List ? data : <dynamic>[],
+        )
+        .then(
+          (r) => r.mapValue(
+            (response) =>
+                DotInspectionMapper.fromCycleJson(response.data ?? const []),
+          ),
+        );
+  }
+
+  @override
+  Future<Result<DotInspectionLog>> getLogs({
+    DriverId? driverId,
+    DateTime? date,
+  }) {
+    return _apiClient
+        .get<Map<String, dynamic>>(
+          '/eld/dot-inspection/logs',
+          queryParameters: {
+            if (driverId != null) 'driverId': driverId.value,
+            if (date != null)
+              'date': date.toIso8601String().split('T').first,
+          },
+          parser: (data) => data is Map<String, dynamic> ? data : {},
+        )
+        .then(
+          (r) => r.mapValue(
+            (response) =>
+                DotInspectionMapper.fromLogJson(response.data ?? const {}),
+          ),
+        );
+  }
 
   @override
   Future<Result<RawJson>> emailLogs({
@@ -40,13 +91,6 @@ class EldInspectionBackend implements InspectionBackend {
   @override
   Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) =>
       throw UnimplementedError('EldInspectionBackend.getInformationPacket — Phase 2');
-
-  @override
-  Future<Result<RawJson>> getLogs({
-    DriverId? driverId,
-    DateTime? date,
-  }) =>
-      throw UnimplementedError('EldInspectionBackend.getLogs — Phase 2');
 
   @override
   Future<Result<RawJson>> sendLogs({
