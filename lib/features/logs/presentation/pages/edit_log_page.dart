@@ -10,6 +10,14 @@ import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/time/time_authority_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import 'package:flutter/foundation.dart';
+
+@visibleForTesting
+String? resolveDriverIdForAudit(WidgetRef ref) {
+  return ref.read(authStateProvider).user?.id;
+}
 
 class EditLogFormState {
   final String selectedStatus;
@@ -317,10 +325,27 @@ class EditLogPage extends ConsumerWidget {
                   : () async {
                       // حفظ التعديلات وسجل التدقيق
                       final notifier = ref.read(logsProvider.notifier);
+                      
+                      final driverId = resolveDriverIdForAudit(ref);
+
+                      if (driverId == null || driverId.isEmpty) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Cannot save: driver session not found.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
+                      final timeAuthority = ref.read(timeAuthorityProvider);
+
                       final entry = AuditEntry(
                         id: const Uuid().v4(),
-                        timestamp: DateTime.now(),
-                        driverId: dashboard.vehicleId,
+                        timestamp: timeAuthority.nowUtc(),
+                        driverId: driverId,
                         oldStatus: isNewEvent ? null : event.status,
                         newStatus: formState.selectedStatus,
                         reason: formState.reason,
