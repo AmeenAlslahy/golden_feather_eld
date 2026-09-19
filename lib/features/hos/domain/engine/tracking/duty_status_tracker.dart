@@ -13,7 +13,7 @@ import '../../../../sync/domain/entities/pending_event.dart';
 import '../../../../sync/presentation/providers/sync_engine_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
-import '../hos_state_machine.dart'; // for trustedTimeProvider
+
 
 class DutyStatusTracker {
   final LogRepository _logRepository;

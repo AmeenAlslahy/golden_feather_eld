@@ -90,7 +90,7 @@ class PushNotificationService {
           case 'positionStop':
             await _trackingService.stop();
           case 'factoryReset':
-            await _storage.removePassword();
+            // TODO(Phase5): reimplement password management.
             AppLogger.info('🏭 Factory reset: password cleared');
         }
       } on PlatformException {

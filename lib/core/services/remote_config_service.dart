@@ -102,9 +102,7 @@ class RemoteConfigService {
     if (config['stop_detection'] != null) {
       await _storage.setStopDetection(config['stop_detection']);
     }
-    if (config['password'] != null) {
-      await _storage.setPassword(config['password']);
-    }
+    // TODO(Phase5): reimplement password management.
 
     // تحديث المتتبع مباشرة
     await _trackingService.updateConfig();

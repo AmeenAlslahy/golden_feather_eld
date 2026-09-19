@@ -128,25 +128,28 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 children: [
-                  for (final status in DutyStatusCode.values)
-                    RadioListTile<DutyStatusCode>(
-                      value: status,
-                      groupValue: _selected,
-                      onChanged: _submitting
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _selected = value);
-                              }
-                            },
-                      title: Text(
-                        status.displayName(context),
-                        style: const TextStyle(
-                          fontSize: AppTypography.bodySize,
-                        ),
-                      ),
-                      activeColor: AppColors.primaryBlue,
+                  RadioGroup<DutyStatusCode>(
+                    groupValue: _selected,
+                    onChanged: (value) {
+                      if (_submitting || value == null) return;
+                      setState(() => _selected = value);
+                    },
+                    child: Column(
+                      children: [
+                        for (final status in DutyStatusCode.values)
+                          RadioListTile<DutyStatusCode>(
+                            value: status,
+                            title: Text(
+                              status.displayName(context),
+                              style: const TextStyle(
+                                fontSize: AppTypography.bodySize,
+                              ),
+                            ),
+                            activeColor: AppColors.primaryBlue,
+                          ),
+                      ],
                     ),
+                  ),
                   const Divider(height: 1, color: AppColors.border),
                   Padding(
                     padding: const EdgeInsets.all(AppSpacing.md),

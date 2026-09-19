@@ -44,7 +44,7 @@ void main() {
       // Assert
       expect(nextRetry, isNotNull);
       // 5 * (2.0 * 5) = 50 seconds delay
-      final difference = nextRetry!.difference(DateTime.now()).inSeconds;
+      final difference = nextRetry!.difference(DateTime.utc(2026, 1, 15, 10)).inSeconds;
       expect(difference, closeTo(50, 1));
     });
   });

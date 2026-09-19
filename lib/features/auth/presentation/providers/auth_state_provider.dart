@@ -155,7 +155,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       if (currentOpId != _operationId) return false;
 
-      return result.match(
+      return await result.match(
         (failure) {
           _setErrorState(failure, 'Login failed');
           return false;
