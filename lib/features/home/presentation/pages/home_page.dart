@@ -13,6 +13,8 @@ import '../providers/dashboard_provider.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../core/config/feature_flags.dart';
+import '../../../hos/presentation/pages/status_dashboard_page.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -20,11 +22,15 @@ final homeNavIndexProvider = StateProvider<int>((ref) => 0);
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
-  // قائمة الصفحات التي تظهر في المحتوى الرئيسي
-  static const List<Widget> _pages = [
-    StatusDashboard(), // الشاشة الرئيسية - حالة السائق
-    RecapPage(), // ملخص أسبوعي
-  ];
+  List<Widget> _pagesFor(WidgetRef ref) {
+    final flags = ref.watch(featureFlagsProvider);
+    return [
+      flags.useNewStatusDashboard
+          ? const StatusDashboardPage()
+          : const StatusDashboard(), // legacy wrapper below
+      const RecapPage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -102,6 +108,7 @@ class HomePage extends ConsumerWidget {
       body: Consumer(
         builder: (context, ref, child) {
           final isOnline = ref.watch(isConnectedProvider).value ?? true;
+          final pages = _pagesFor(ref);
           return Column(
             children: [
               if (!isOnline)
@@ -115,7 +122,7 @@ class HomePage extends ConsumerWidget {
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ),
-              Expanded(child: _pages[currentNavIndex]),
+              Expanded(child: pages[currentNavIndex]),
             ],
           );
         },
