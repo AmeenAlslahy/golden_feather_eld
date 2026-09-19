@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
+import '../../features/settings/presentation/providers/server_config_providers.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/compliance_backend.dart';
 import '../contracts/config_backend.dart';
@@ -53,8 +54,13 @@ final backendRegistryProvider = Provider<BackendRegistry>((ref) {
 /// By default, we use the Mock adapter for isolated development.
 /// This can be overridden in `ProviderScope` for production.
 final activeBackendProvider = Provider<BackendAdapter>((ref) {
-  final registry = ref.watch(backendRegistryProvider);
-  return registry.active;
+  // T4.0a: config is read but always returns MockAdapter.
+  // T4.0b: will return EldEngineAdapter when config is usable.
+  final config = ref.watch(serverConfigProvider);
+  
+  // Even if config is set, use MockAdapter until T4.0b.
+  // This keeps the app functional while we build auth.
+  return MockAdapter();
 });
 
 // ==========================================================================
