@@ -6,7 +6,7 @@ import '../../data/datasources/native_event_channel_client.dart';
 import '../../data/repositories/tracking_repository_impl.dart';
 import '../../data/services/tracking_service.dart';
 import '../../domain/repositories/tracking_repository.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// مزود حالة خدمة الـ GPS
@@ -44,10 +44,12 @@ final trackingRepositoryProvider = Provider<TrackingRepository>((ref) {
   final service = ref.watch(trackingServiceFullProvider);
   final localDataSource = ref.watch(trackingLocalDataSourceProvider);
   final nativeClient = ref.watch(nativeEventChannelClientProvider);
+  final storage = ref.watch(localStorageProvider);
   return TrackingRepositoryImpl(
     service: service,
     localDataSource: localDataSource,
     nativeClient: nativeClient,
+    storage: storage,
   );
 });
 

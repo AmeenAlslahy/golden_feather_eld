@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/core/network/request_logger.dart';
+import 'package:golden_feather_eld/backend/http/interceptors/request_logger.dart';
 
 void main() {
   group('RequestLogger Redaction Tests', () {

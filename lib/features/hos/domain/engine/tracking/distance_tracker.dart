@@ -3,18 +3,7 @@ import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/utils/distance_calculator.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
 
-/// نقطة موقع
-class LocationPoint {
-  final double latitude;
-  final double longitude;
-  final DateTime timestamp;
-
-  const LocationPoint({
-    required this.latitude,
-    required this.longitude,
-    required this.timestamp,
-  });
-}
+import '../../../../../core/domain/entities/location_point.dart';
 
 /// متتبع المسافات
 class DistanceTracker {

@@ -88,4 +88,15 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   @override
   Future<Result<RawJson>> getReadiness(DailyLogId logId) =>
       throw UnimplementedError('MockDailyLogsBackend.getReadiness — Phase 2');
+
+  @override
+  Future<Result<List<dynamic>>> getLegacyDutyStatusLogs(
+      int driverId, DateTime date) async {
+    return ok([]);
+  }
+
+  @override
+  Future<Result<List<dynamic>>> getLegacySyncLogs(int driverId) async {
+    return ok([]);
+  }
 }

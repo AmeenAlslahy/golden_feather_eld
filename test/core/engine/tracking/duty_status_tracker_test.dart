@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';

@@ -10,14 +10,14 @@ class InstructionsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final brightness = Theme.of(context).brightness;
-    final bgColor = AppColors.backgroundForBrightness(brightness);
+    final bgColor = AppColors.backgroundFor(brightness);
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surfaceLight),
+          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -25,7 +25,7 @@ class InstructionsPage extends StatelessWidget {
           style: const TextStyle(
             fontSize: AppTypography.headerSize,
             fontWeight: AppTypography.bold,
-            color: AppColors.surfaceLight,
+            color: AppColors.surface,
           ),
         ),
         centerTitle: true,
@@ -129,9 +129,9 @@ class InstructionsPage extends StatelessWidget {
   }
 
   Widget _buildSendLogsSection(bool isArabic, Brightness brightness) {
-    final sectionColor = AppColors.surfaceForBrightness(brightness);
-    final textColor = AppColors.textPrimaryForBrightness(brightness);
-    final textSecondaryColor = AppColors.textSecondaryForBrightness(brightness);
+    final sectionColor = AppColors.surfaceFor(brightness);
+    final textColor = AppColors.textPrimaryFor(brightness);
+    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
 
     return Container(
       color: sectionColor,
@@ -177,8 +177,8 @@ class InstructionsPage extends StatelessWidget {
     final sectionColor = brightness == Brightness.light
         ? const Color(0xFFF7F7F7)
         : const Color(0xFF1C1C1E);
-    final textColor = AppColors.textPrimaryForBrightness(brightness);
-    final textSecondaryColor = AppColors.textSecondaryForBrightness(brightness);
+    final textColor = AppColors.textPrimaryFor(brightness);
+    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
 
     return Container(
       color: sectionColor,

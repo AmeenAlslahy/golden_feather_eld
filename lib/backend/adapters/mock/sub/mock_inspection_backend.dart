@@ -187,4 +187,15 @@ class MockInspectionBackend implements InspectionBackend {
   @override
   Future<Result<RawJson>> getTransfers({DriverId? driverId}) =>
       throw UnimplementedError('MockInspectionBackend.getTransfers — Phase 2');
+
+  @override
+  Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId) async {
+    return ok([]);
+  }
+
+  @override
+  Future<Result<void>> exportLegacyInspectionData(
+      int driverId, String method, String? email, bool isErods) async {
+    return ok(null);
+  }
 }

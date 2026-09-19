@@ -6,28 +6,24 @@ import '../../../../core/config/server_config_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_remote_data_source.dart';
-import '../datasources/user_store.dart';
-import '../datasources/auth_session_store.dart';
-import '../../../../core/utils/repository_helper.dart';
+import '../../../../backend/contracts/auth_backend.dart';
+import '../datasources/auth_local_data_source.dart';
 import '../models/auth_session_dto.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource _remoteDataSource;
-  final AuthSessionStore _sessionStore;
-  final UserStore _userStore;
+  final AuthBackend _authBackend;
+  final AuthLocalDataSource _localDataSource;
   final ServerConfigProvider _configProvider;
   final NetworkInfo _networkInfo;
 
   AuthRepositoryImpl({
-    required AuthRemoteDataSource remoteDataSource,
-    required AuthSessionStore sessionStore,
-    required UserStore userStore,
+    required AuthBackend authBackend,
+    required AuthLocalDataSource localDataSource,
     required ServerConfigProvider configProvider,
     required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
-        _sessionStore = sessionStore,
-        _userStore = userStore,
+  })  : _authBackend = authBackend,
+        _localDataSource = localDataSource,
         _configProvider = configProvider,
         _networkInfo = networkInfo;
 
@@ -39,35 +35,40 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     final serverUrl = _getServerUrl();
-    if (serverUrl == null) {
-      return const Left(MissingConfigurationFailure());
-    }
+    if (serverUrl == null) return const Left(MissingConfigurationFailure());
+    if (!_networkInfo.isConnected) return const Left(NetworkFailure());
 
-    return executeWithHandling(() async {
-      final backendType = _configProvider.backendType;
-      final sessionDto = await _remoteDataSource.login(
-        email: email,
-        password: password,
-        serverUrl: serverUrl,
-        backendType: backendType,
-      );
+    final backendType = _configProvider.backendType;
+    final result = await _authBackend.login(
+      identifier: identifier,
+      password: password,
+      serverUrl: serverUrl,
+      backendType: backendType,
+    );
 
-      final session = sessionDto.toEntity();
-      await _sessionStore.saveSession(session);
+    return result.fold(
+      (error) {
+        if (error.code == 'unauthorized') return const Left(InvalidCredentialsFailure());
+        return Left(ServerFailure(message: error.code));
+      },
+      (rawJson) async {
+        final sessionDto = AuthSessionDto.create(
+          serverOrigin: rawJson['serverOrigin'],
+          sessionCredential: rawJson['credential'],
+          userModel: UserModel.fromMetadata(rawJson['user'], defaultEmail: identifier),
+        );
 
-      final userModel = sessionDto.userModel;
-      await _userStore
-          .saveUser(userModel); // UserStore must accept User or UserModel
-
-      return userModel;
-    }, tag: 'Auth.login', checkNetworkFirst: true, networkInfo: _networkInfo);
+        await _localDataSource.saveSession(sessionDto.toEntity());
+        await _localDataSource.saveUser(sessionDto.userModel);
+        return Right(sessionDto.userModel);
+      }
+    );
   }
 
-  // NOTE: This will be moved to CheckAuthStatusUseCase, but keeping it here temporarily to not break things until Step 1 is fully executed.
   @override
   Future<Either<Failure, User>> checkAndRestoreSession() async {
     final serverUrl = _getServerUrl();
@@ -76,10 +77,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(MissingConfigurationFailure());
     }
 
-    final savedSession = await _sessionStore.getSession();
-    if (savedSession == null) {
-      return const Left(SessionMissingFailure());
-    }
+    final savedSession = await _localDataSource.getSession();
+    if (savedSession == null) return const Left(SessionMissingFailure());
 
     if (!_isValidOrigin(serverUrl, savedSession)) {
       await _clearLocalData();
@@ -94,8 +93,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<void> _clearLocalData() async {
-    await _sessionStore.clearSession();
-    await _userStore.clearUser();
+    await _localDataSource.clearSession();
+    await _localDataSource.clearUser();
   }
 
   bool _isValidOrigin(String serverUrl, AuthSession session) {
@@ -108,72 +107,70 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<Either<Failure, User>> _handleOfflineSession() async {
-    final user = await _userStore.getUser();
-    if (user != null) {
-      return Right(user);
-    }
+    final user = await _localDataSource.getUser();
+    if (user != null) return Right(user);
     return const Left(NetworkFailure());
   }
 
-  Future<Either<Failure, User>> _validateRemoteSession(
-      AuthSession savedSession) async {
-    final result = await executeWithHandling(() async {
-      final backendType = _configProvider.backendType;
-      final validSessionDto = await _remoteDataSource.validateSession(
-        currentSession: AuthSessionDto.fromEntity(savedSession),
-        backendType: backendType,
-      );
-      await _sessionStore.saveSession(validSessionDto.toEntity());
+  Future<Either<Failure, User>> _validateRemoteSession(AuthSession savedSession) async {
+    final backendType = _configProvider.backendType;
+    final sessionDto = AuthSessionDto.fromEntity(savedSession);
+    
+    final result = await _authBackend.validateSession(
+      serverOrigin: sessionDto.serverOrigin,
+      sessionCredential: sessionDto.sessionCredential,
+      backendType: backendType,
+    );
 
-      final userModel = validSessionDto.userModel;
-      await _userStore.saveUser(userModel);
-
-      return userModel;
-    }, tag: 'Auth.checkSession');
-
-    if (result.isLeft()) {
-      final failure = result.getLeft().toNullable()!;
-      if (failure is InvalidCredentialsFailure || failure is AuthFailure) {
-        await _clearLocalData();
-        return const Left(AuthFailure());
+    return result.fold(
+      (error) async {
+        if (error.code == 'unauthorized') {
+          await _clearLocalData();
+          return const Left(AuthFailure());
+        }
+        return Left(ServerFailure(message: error.code));
+      },
+      (rawJson) async {
+        final validSessionDto = AuthSessionDto.create(
+          serverOrigin: rawJson['serverOrigin'],
+          sessionCredential: rawJson['credential'],
+          userModel: UserModel.fromMetadata(rawJson['user']),
+        );
+        
+        await _localDataSource.saveSession(validSessionDto.toEntity());
+        await _localDataSource.saveUser(validSessionDto.userModel);
+        return Right(validSessionDto.userModel);
       }
-      return Left(failure);
-    }
-
-    return Right(result.getRight().toNullable()!);
+    );
   }
 
   @override
   Future<Either<Failure, Unit>> logout() async {
-    final savedSession = await _sessionStore.getSession();
+    final savedSession = await _localDataSource.getSession();
     if (savedSession != null) {
-      await executeWithHandling(() async {
-        final backendType = _configProvider.backendType;
-        await _remoteDataSource.logout(
-          currentSession: AuthSessionDto.fromEntity(savedSession),
-          backendType: backendType,
+      if (_networkInfo.isConnected) {
+        final sessionDto = AuthSessionDto.fromEntity(savedSession);
+        await _authBackend.logout(
+          serverOrigin: sessionDto.serverOrigin,
+          sessionCredential: sessionDto.sessionCredential,
+          backendType: _configProvider.backendType,
         );
-        return unit;
-      },
-          tag: 'Auth.logout',
-          checkNetworkFirst: true,
-          networkInfo: _networkInfo);
+      }
     }
-    await _sessionStore.clearSession();
-    await _userStore.clearUser();
+    await _clearLocalData();
     return const Right(unit);
   }
 
   @override
   Future<Either<Failure, User>> getCurrentSession() async {
-    final savedSession = await _sessionStore.getSession();
+    final savedSession = await _localDataSource.getSession();
     if (savedSession != null) {
       final serverUrl = _getServerUrl();
       if (serverUrl != null) {
         try {
           final currentOrigin = Uri.parse(serverUrl).origin;
           if (savedSession.belongsTo(currentOrigin)) {
-            final user = await _userStore.getUser();
+            final user = await _localDataSource.getUser();
             if (user != null) {
               return Right(user);
             }

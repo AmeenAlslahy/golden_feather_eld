@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import '../../../../core/utils/logger.dart';
 
@@ -6,7 +6,7 @@ import '../entities/tracking_event.dart';
 import '../entities/connection_status.dart';
 import '../../data/datasources/tracking_data_source.dart';
 // For EldEvent
-import '../../../../features/hos/domain/engine/tracking/distance_tracker.dart'; // For LocationPoint
+import '../../../../core/domain/entities/location_point.dart';
 
 /// المحرك المركزي الذي يستقبل أحداث التتبع (TrackingEvent) من المصدر
 /// ويقوم بتوزيعها على محركات التطبيق (HOS, Diagnostics, Distance)

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 
-/// مزود حالة الثيم
+/// مزود حالة الثيم.
 final themeModeProvider =
     StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   final storage = ref.watch(localStorageProvider);
@@ -20,20 +20,18 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const String _oldThemeKey = 'theme_mode';
 
   Future<void> _loadThemeMode() async {
-    // Migration check from old SharedPreferences
+    // ترحيل من SharedPreferences القديم.
     final oldPrefs = await SharedPreferences.getInstance();
     if (oldPrefs.containsKey(_oldThemeKey)) {
       final oldIndex = oldPrefs.getInt(_oldThemeKey);
       if (oldIndex != null &&
           oldIndex >= 0 &&
           oldIndex < ThemeMode.values.length) {
-        final migratedMode = ThemeMode.values[oldIndex];
-        await _storage.setTheme(migratedMode.name);
+        await _storage.setTheme(ThemeMode.values[oldIndex].name);
       }
       await oldPrefs.remove(_oldThemeKey);
     }
 
-    // Read from unified storage
     final themeStr = _storage.theme;
     state = ThemeMode.values.firstWhere(
       (e) => e.name == themeStr,

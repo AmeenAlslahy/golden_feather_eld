@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/app_error.dart';
+import '../../../../core/error/failure.dart' as f;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -55,6 +56,19 @@ class _DashboardView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Column(
                 children: [
+                  const SizedBox(height: AppSpacing.md),
+                  if (dashboard.regulatoryConstraints != null &&
+                      dashboard.regulatoryConstraints!.ruleSet !=
+                          CycleRule.unknown)
+                    Chip(
+                      label: Text(
+                        dashboard.regulatoryConstraints!.ruleSet.wire.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      backgroundColor: AppColors.background,
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                  const SizedBox(height: AppSpacing.md),
                   MainCircularTimer(
                     circle: dashboard.remainingCircle,
                     statusLabel: dashboard.currentDutyStatus.displayName(context),
@@ -112,9 +126,21 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = error is AppError
-        ? (error as AppError).l10nKey
-        : 'Unexpected error';
+    String message = 'حدث خطأ غير متوقع'; // Fallback user message
+
+    if (error is f.Failure) {
+      final fail = error as f.Failure;
+      if (fail is f.NetworkFailure) {
+        message = 'لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.';
+      } else if (fail is f.ServerFailure) {
+        message = 'حدثت مشكلة في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+      } else {
+        // We avoid printing raw developer messages here
+        message = 'فشل في العملية. الرجاء المحاولة مرة أخرى.';
+      }
+    } else if (error is AppError) {
+      message = (error as AppError).l10nKey;
+    }
 
     return Center(
       child: Padding(

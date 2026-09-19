@@ -9,7 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../../../core/config/app_environment.dart';
-import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
 import '../../data/repositories/traccar_remote_event_dispatcher.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
@@ -48,10 +48,9 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   }
 
   if (env == AppEnvironment.production) {
-    final apiClient = ref.watch(apiClientProvider);
-    final endpoints = ref.watch(endpointsProvider);
-    final authSessionStore = ref.watch(authSessionStoreProvider);
-    return TraccarRemoteEventDispatcher(apiClient, endpoints, authSessionStore);
+    final dutyStatusBackend = ref.watch(dutyStatusBackendProvider);
+    final localDataSource = ref.watch(authLocalDataSourceProvider);
+    return TraccarRemoteEventDispatcher(dutyStatusBackend, localDataSource);
   }
 
   // في البيئات الأخرى، نستخدم السلوك الآمن الذي يمنع فقدان البيانات

@@ -16,14 +16,17 @@ class TrackingRepositoryImpl implements TrackingRepository {
   final TrackingService _service;
   final TrackingLocalDataSource _localDataSource;
   final NativeEventChannelClient _nativeClient;
+  final LocalStorageService _storage;
 
   TrackingRepositoryImpl({
     required TrackingService service,
     required TrackingLocalDataSource localDataSource,
     required NativeEventChannelClient nativeClient,
+    required LocalStorageService storage,
   })  : _service = service,
         _localDataSource = localDataSource,
-        _nativeClient = nativeClient;
+        _nativeClient = nativeClient,
+        _storage = storage;
 
   @override
   Stream<LocationEntity> get locationStream {
@@ -67,7 +70,9 @@ class TrackingRepositoryImpl implements TrackingRepository {
 
       // ٢. فحص إذا كان GPS مفعلاً
       final isLocationServiceEnabled =
-          await Geolocator.isLocationServiceEnabled();
+          await Geolocator.isLocationServiceEnabled().catchError(
+        (error) => throw Exception('Error updating position: $error'),
+      );
       if (!isLocationServiceEnabled) {
         return const Left(PermissionFailure(
           message: 'خدمة الموقع غير مفعلة',
@@ -221,19 +226,18 @@ class TrackingRepositoryImpl implements TrackingRepository {
 
   @override
   Future<TrackingConfigEntity> getCurrentConfig() async {
-    final storage = LocalStorageService();
     return TrackingConfigEntity(
-      serverUrl: storage.serverUrl,
-      deviceId: storage.deviceId,
-      accuracy: storage.accuracy,
-      distanceMeters: storage.distance,
-      intervalSeconds: storage.interval,
-      angleDegrees: storage.angle,
-      heartbeatSeconds: storage.heartbeat,
-      buffer: storage.buffer,
-      wakeLock: storage.wakelock,
-      stopDetection: storage.stopDetection,
-      preferPlatformProviders: storage.preferPlatformProviders,
+      serverUrl: _storage.serverUrl,
+      deviceId: _storage.deviceId,
+      accuracy: _storage.accuracy,
+      distanceMeters: _storage.distance,
+      intervalSeconds: _storage.interval,
+      angleDegrees: _storage.angle,
+      heartbeatSeconds: _storage.heartbeat,
+      buffer: _storage.buffer,
+      wakeLock: _storage.wakelock,
+      stopDetection: _storage.stopDetection,
+      preferPlatformProviders: _storage.preferPlatformProviders,
     );
   }
 }

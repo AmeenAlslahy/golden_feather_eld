@@ -6,6 +6,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
+import '../../../http/eld_endpoints.dart';
 import '../mappers/hardware_mapper.dart';
 
 /// ELD Engine implementation of [HardwareBackend].
@@ -45,7 +46,7 @@ class EldHardwareBackend implements HardwareBackend {
   Future<Result<void>> sendTelemetry(TelemetryReading reading) {
     return _apiClient
         .post<dynamic>(
-          '/eld/hardware/telemetry',
+          EldEndpoints.hardwareTelemetry,
           data: HardwareMapper.telemetryToJson(reading),
         )
         .then(

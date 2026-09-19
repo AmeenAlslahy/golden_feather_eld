@@ -26,10 +26,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final loc = context.loc;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final brightness = Theme.of(context).brightness;
-    final bgColor = AppColors.backgroundForBrightness(brightness);
-    final surfaceColor = AppColors.surfaceForBrightness(brightness);
-    final textColor = AppColors.textPrimaryForBrightness(brightness);
-    final textSecondaryColor = AppColors.textSecondaryForBrightness(brightness);
+    final bgColor = AppColors.backgroundFor(brightness);
+    final surfaceColor = AppColors.surfaceFor(brightness);
+    final textColor = AppColors.textPrimaryFor(brightness);
+    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
 
     final drivers = [CoDriver.none, ...codriverState.availableDrivers];
 
@@ -52,13 +52,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
           style: const TextStyle(
             fontSize: AppTypography.bodySize,
             fontWeight: AppTypography.bold,
-            color: AppColors.surfaceLight,
+            color: AppColors.surface,
           ),
         ),
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.surfaceLight),
+            icon: const Icon(Icons.menu, color: AppColors.surface),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -103,7 +103,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         border: Border(
                             bottom: BorderSide(
                                 color:
-                                    AppColors.borderForBrightness(brightness))),
+                                    AppColors.borderFor(brightness))),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,7 +1,7 @@
 import '../../../../core/utils/logger.dart';
 import 'hos_calculator.dart';
 import 'hos_state_machine.dart';
-import 'hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../core/error/failure.dart';

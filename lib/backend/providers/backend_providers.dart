@@ -3,10 +3,14 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/app_environment.dart';
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
-import '../../features/settings/presentation/providers/server_config_providers.dart';
+import '../../core/services/local_storage_service.dart';
+import '../../core/network/interceptors/time_drift_interceptor.dart';
+import '../../core/time/trusted_time_provider.dart';
 import '../contracts/account_backend.dart';
+import '../contracts/auth_backend.dart';
 import '../contracts/compliance_backend.dart';
 import '../contracts/config_backend.dart';
 import '../contracts/daily_logs_backend.dart';
@@ -30,6 +34,7 @@ import '../core/backend_adapter.dart';
 import '../core/backend_registry.dart';
 import '../http/api_client.dart';
 import '../http/api_config.dart';
+import 'backend_network_providers.dart';
 
 /// Provides the global [BackendRegistry].
 ///
@@ -37,9 +42,9 @@ import '../http/api_config.dart';
 final backendRegistryProvider = Provider<BackendRegistry>((ref) {
   final mockAdapter = MockAdapter();
   final realAdapter = EldEngineAdapter.create(
-    baseUrl: 'https://staging.goldenfeathereld.com',
+    baseUrl: 'https://snsoft.cloud',
     apiClient: ApiClient(
-      config: const ApiConfig(baseUrl: 'https://staging.goldenfeathereld.com/api'),
+      config: const ApiConfig(baseUrl: 'https://snsoft.cloud/api'),
     ),
   );
 
@@ -51,25 +56,41 @@ final backendRegistryProvider = Provider<BackendRegistry>((ref) {
 
 /// Provides the active [BackendAdapter].
 ///
-/// By default, we use the Mock adapter for isolated development.
-/// This can be overridden in `ProviderScope` for production.
+/// يستخدم [apiClientProvider] الموحّد الذي يحتوي على AuthInterceptor
+/// لضمان إرسال التوكن مع كل الطلبات.
+/// يُعاد الرجوع إلى [MockAdapter] فقط عند ضبط البيئة صراحةً على `mock`.
 final activeBackendProvider = Provider<BackendAdapter>((ref) {
-  final config = ref.watch(serverConfigProvider);
+  final prefs = ref.watch(localStorageProvider);
   
-  if (config != null && config.baseUrl.isNotEmpty) {
-    return EldEngineAdapter.create(
-      baseUrl: config.baseUrl,
-      apiClient: ApiClient(
-        config: ApiConfig(baseUrl: config.baseUrl),
-      ),
-    );
+  // الوضع الوهمي (Mock)
+  if (prefs.backendType == 'mock' || AppEnvironmentConfig.current == AppEnvironment.mock) {
+    return MockAdapter();
   }
-  return MockAdapter();
+
+  // استخدام apiClientProvider الموحّد (يحتوي على AuthInterceptor + RequestLogger)
+  final apiClient = ref.watch(apiClientProvider);
+
+  // حقن متلقف حساب التوقيت (Time Drift)
+  apiClient.dio.interceptors.add(
+    TimeDriftInterceptor(timeProvider: ref.read(trustedTimeProvider)),
+  );
+
+  final baseUrl = prefs.serverUrl.isNotEmpty ? prefs.serverUrl : 'https://snsoft.cloud';
+
+  return EldEngineAdapter.create(
+    baseUrl: baseUrl,
+    apiClient: apiClient,
+  );
 });
 
 // ==========================================================================
-// Contract Providers (20)
+// Contract Providers
 // ==========================================================================
+
+final authBackendProvider = Provider<AuthBackend>((ref) {
+  final adapter = ref.watch(activeBackendProvider);
+  return adapter.auth ?? (throw StateError('AuthBackend not supported by active adapter'));
+});
 
 final accountBackendProvider = Provider<AccountBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);

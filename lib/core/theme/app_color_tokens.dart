@@ -1,37 +1,29 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'eld_colors.dart';
 
-/// امتداد للوصول إلى ألوان الحالات (Status Backgrounds) وغيرها من Tokens
+/// امتداد للوصول إلى ألوان الحالات بأمان من `ThemeData`.
 extension AppColorTokensExt on ThemeData {
   bool get _isDark => brightness == Brightness.dark;
+  EldColors get _eld => extension<EldColors>()!;
 
-  // Semantic foreground colors
-  Color get successColor => _isDark
-      ? AppColors.successGreen.withValues(alpha: 0.9)
-      : AppColors.successGreen;
-  Color get warningColor => _isDark
-      ? AppColors.warningYellow.withValues(alpha: 0.9)
-      : AppColors.warningYellow;
-  Color get infoColor => colorScheme.primary;
-  Color get dangerColor => colorScheme.error;
+  // ---- الذهبي ----
+  Color get goldColor => _isDark ? AppColors.primaryBlue : AppColors.goldDeep;
+  Color get goldLightBackground =>
+      _isDark ? const Color(0xFF2A2410) : const Color(0xFFFDF8E7);
+  Color get onGoldColor => AppColors.black;
+  Color get onBlackColor => AppColors.primaryBlue;
 
-  /// خلفية زرقاء خفيفة للحالات النشطة أو المعلومات
-  Color get infoLightBackground => _isDark
-      ? infoColor.withValues(alpha: 0.2)
-      : infoColor.withValues(alpha: 0.1);
+  // ---- الحالات ----
+  Color get successColor => _eld.successFg;
+  Color get successLightBackground => _eld.successBg;
+  Color get warningColor => _eld.warningFg;
+  Color get warningLightBackground => _eld.warningBg;
+  Color get dangerColor => _eld.dangerFg;
+  Color get errorLightBackground => _eld.dangerBg;
+  Color get infoColor => _eld.infoFg;
+  Color get infoLightBackground => _eld.infoBg;
 
-  /// خلفية خضراء خفيفة لحالات النجاح
-  Color get successLightBackground => _isDark
-      ? successColor.withValues(alpha: 0.2)
-      : successColor.withValues(alpha: 0.1);
-
-  /// خلفية حمراء خفيفة لحالات الخطأ
-  Color get errorLightBackground => _isDark
-      ? dangerColor.withValues(alpha: 0.2)
-      : dangerColor.withValues(alpha: 0.1);
-
-  /// خلفية صفراء خفيفة لحالات التحذير
-  Color get warningLightBackground => _isDark
-      ? warningColor.withValues(alpha: 0.2)
-      : warningColor.withValues(alpha: 0.1);
+  // ---- ألوان إضافية ----
+  Color get borderColor => _isDark ? const Color(0xFF3A3A3C) : AppColors.border;
 }

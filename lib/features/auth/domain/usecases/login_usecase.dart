@@ -30,8 +30,7 @@ class LoginUseCase {
 
     // استدعاء المستودع
     return await repository.login(
-      email: identifier
-          .value, // المستودع حالياً يقبل البريد/اسم المستخدم تحت مسمى email
+      identifier: identifier.value,
       password: password.value,
     );
   }

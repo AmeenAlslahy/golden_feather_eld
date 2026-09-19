@@ -1,17 +1,16 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/utils/repository_helper.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
-import '../datasources/dvir_remote_data_source.dart';
+import '../../../../backend/contracts/dvir_backend.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
-  final DvirRemoteDataSource remoteDataSource;
+  final DvirBackend dvirBackend;
   final NetworkInfo networkInfo;
 
   DvirRepositoryImpl({
-    required this.remoteDataSource,
+    required this.dvirBackend,
     required this.networkInfo,
   });
 
@@ -19,10 +18,13 @@ class DvirRepositoryImpl implements DvirRepository {
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
       String vehicleId) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    return executeWithHandling(() async {
-      final rawReports = await remoteDataSource.getDvirReports(vehicleId);
-
-      final reports = rawReports.map((json) {
+    final result = await dvirBackend.list(uniqueId: vehicleId);
+    
+    return result.fold(
+      (error) => Left(ServerFailure(message: error.code)),
+      (rawJson) {
+        final rawReports = (rawJson['reports'] as List<dynamic>?) ?? [];
+        final reports = rawReports.map((json) {
         return DvirReport(
           id: json['id']?.toString() ?? '',
           type: _parseInspectionType(json['type']),
@@ -46,17 +48,39 @@ class DvirRepositoryImpl implements DvirRepository {
         );
       }).toList();
 
-      return reports;
-    });
+        return Right(reports);
+      }
+    );
   }
 
   @override
   Future<Either<Failure, bool>> submitDvirReport(DvirReport report) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    return executeWithHandling(() async {
-      await remoteDataSource.submitDvirReport(report);
-      return true;
-    });
+    final data = {
+      'id': report.id,
+      'type': report.type.name,
+      'date': report.date.toIso8601String(),
+      'driverName': report.driverName,
+      'vehicleId': report.vehicleId,
+      'trailerId': report.trailerId,
+      'odometer': report.odometer,
+      'condition': report.condition.name,
+      'signature': report.signature,
+      'notes': report.notes,
+      'items': report.items
+          .map((item) => {
+                'name': item.item.name,
+                'isDefective': item.isDefective,
+                'defectDescription': item.defectDescription,
+              })
+          .toList(),
+    };
+
+    final result = await dvirBackend.create(data);
+    return result.fold(
+      (error) => Left(ServerFailure(message: error.code)),
+      (_) => const Right(true),
+    );
   }
 
   InspectionType _parseInspectionType(String? type) {

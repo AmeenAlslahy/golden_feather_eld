@@ -1,20 +1,42 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../data/repositories/status_dashboard_repository_impl.dart';
+import '../../domain/repositories/status_dashboard_repository.dart';
+import '../../domain/usecases/get_status_dashboard_use_case.dart';
+import '../../domain/usecases/update_duty_status_use_case.dart';
+
+// --- Clean Architecture Providers ---
+
+final statusDashboardRepositoryProvider = Provider<StatusDashboardRepository>((ref) {
+  return StatusDashboardRepositoryImpl(
+    ref.watch(statusDashboardBackendProvider),
+    ref.watch(networkInfoProvider),
+  );
+});
+
+final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((ref) {
+  return GetStatusDashboardUseCase(ref.watch(statusDashboardRepositoryProvider));
+});
+
+final updateDutyStatusUseCaseProvider = Provider<UpdateDutyStatusUseCase>((ref) {
+  return UpdateDutyStatusUseCase(ref.watch(statusDashboardRepositoryProvider));
+});
+
+// --- State Providers ---
 
 /// Manages the status dashboard state.
 ///
 /// **Lifecycle:**
 /// - Loads initial dashboard on first watch.
-/// - Rebuilds when [statusDashboardBackendProvider] changes
-///   (e.g., swapping Mock ↔ Real adapter).
+/// - Rebuilds when [getStatusDashboardUseCaseProvider] changes.
 /// - Mutations via [changeStatus] update state in place.
 ///
 /// **Error handling:**
-/// - Errors are surfaced as [AsyncError] with the underlying [AppError].
-/// - UI resolves `error.l10nKey` for display.
+/// - Errors are surfaced as [AsyncError] with the underlying [Failure].
 final statusDashboardProvider =
     AsyncNotifierProvider<StatusDashboardNotifier, StatusDashboard>(
   StatusDashboardNotifier.new,
@@ -23,21 +45,18 @@ final statusDashboardProvider =
 class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   @override
   Future<StatusDashboard> build() async {
-    final backend = ref.watch(statusDashboardBackendProvider);
-    final result = await backend.getDashboard();
+    final useCase = ref.watch(getStatusDashboardUseCaseProvider);
+    final result = await useCase.execute();
     return result.fold(
-      (error) => throw error,
+      (failure) => throw failure,
       (dashboard) => dashboard,
     );
   }
 
-  /// Changes duty status via the backend.
+  /// Changes duty status via the use case.
   ///
   /// **Optimization:** Skips the network call if the requested
   /// status equals the current one.
-  ///
-  /// **Error handling:** Failures move state to [AsyncError]; the
-  /// previous value is lost (intentional — UI shows retry).
   Future<void> changeStatus(DutyStatusCode status, {String? notes}) async {
     final current = state.valueOrNull;
     if (current != null && current.currentDutyStatus == status) {
@@ -46,37 +65,32 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
 
     state = const AsyncValue<StatusDashboard>.loading();
 
-    final backend = ref.read(statusDashboardBackendProvider);
-    final result = await backend.updateDutyStatus(
+    final useCase = ref.read(updateDutyStatusUseCaseProvider);
+    final result = await useCase.execute(
       status: status,
       notes: notes,
     );
 
     state = result.fold(
-      (error) => AsyncValue.error(error, StackTrace.current),
+      (failure) => AsyncValue.error(failure, StackTrace.current),
       (dashboard) => AsyncValue.data(dashboard),
     );
   }
 
-  /// Manually reloads the dashboard from the backend.
-  ///
-  /// Useful when the user pulls-to-refresh, or after a session
-  /// restoration.
+  /// Manually reloads the dashboard.
   Future<void> refresh() async {
     state = const AsyncValue<StatusDashboard>.loading();
 
     state = await AsyncValue.guard(() async {
-      final backend = ref.read(statusDashboardBackendProvider);
-      final result = await backend.getDashboard();
+      final useCase = ref.read(getStatusDashboardUseCaseProvider);
+      final result = await useCase.execute();
       return result.fold(
-        (error) => throw error,
+        (failure) => throw failure,
         (dashboard) => dashboard,
       );
     });
   }
 
   /// Clears any error state and reloads.
-  ///
-  /// Useful when the UI wants to dismiss an error banner and retry.
   Future<void> clearErrorAndReload() => refresh();
 }

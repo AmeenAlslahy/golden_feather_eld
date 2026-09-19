@@ -3,10 +3,10 @@ import 'app_colors.dart';
 import 'app_typography.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
-import 'eld_theme_extension.dart';
+import 'eld_colors.dart';
 export 'app_text_styles.dart';
 export 'app_color_tokens.dart';
-export 'eld_theme_extension.dart';
+export 'eld_colors.dart';
 
 /// ثيم تطبيق ELD
 class AppTheme {
@@ -123,21 +123,21 @@ class AppTheme {
     extensions: [EldColors.dark()],
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryBlue,
-      onPrimary: AppColors.surface,
-      secondary: AppColors.successGreen,
-      onSecondary: AppColors.surface,
-      error: AppColors.dangerRed,
-      onError: AppColors.surface,
-      surface: AppColors.darkSurface,
+      onPrimary: AppColors.black,
+      secondary: AppColors.darkTextPrimary,
+      onSecondary: AppColors.primaryBlue,
+      error: AppColors.dangerOnDark,
+      onError: AppColors.surfaceDark,
+      surface: AppColors.surfaceDark,
       onSurface: AppColors.darkTextPrimary,
     ),
     scaffoldBackgroundColor: AppColors.darkBackground,
     textTheme: AppTypography.darkTextTheme,
     cardTheme: light.cardTheme.copyWith(
-      color: AppColors.darkSurface,
+      color: AppColors.surfaceDark,
     ),
     inputDecorationTheme: light.inputDecorationTheme.copyWith(
-      fillColor: AppColors.darkSurface,
+      fillColor: AppColors.surfaceDark,
     ),
     dividerTheme: light.dividerTheme.copyWith(
       color: const Color(0xFF48484A),

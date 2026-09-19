@@ -8,6 +8,9 @@ abstract interface class DriverSessionBackend {
   // TODO(P2): replace with DriverSession
   Future<Result<RawJson>> getActiveSession(DriverId driverId);
 
+  /// GET /api/drivers
+  Future<Result<List<dynamic>>> getAvailableDrivers();
+
   /// GET /eld/sessions/{sessionId}/members
   Future<Result<RawJson>> getMembers(int sessionId);
 

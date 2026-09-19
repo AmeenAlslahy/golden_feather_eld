@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/vehicle_remote_data_source.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../data/repositories/vehicle_repository_impl.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/vehicle.dart';
@@ -58,20 +59,17 @@ class VehicleState {
 }
 
 /// مزود مستودع المركبات
-final vehicleRemoteDataSourceProvider =
-    Provider<VehicleRemoteDataSource>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  final endpoints = ref.watch(endpointsProvider);
-  return VehicleRemoteDataSourceImpl(apiClient, endpoints);
+final vehicleBackendProviderAlias = Provider<VehicleBackend>((ref) {
+  return ref.watch(vehicleBackendProvider);
 });
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
-  final remoteDataSource = ref.watch(vehicleRemoteDataSourceProvider);
+  final vehicleBackend = ref.watch(vehicleBackendProviderAlias);
   final localStorage = ref.watch(localStorageProvider);
   final networkInfo = ref.watch(networkInfoProvider);
 
   return VehicleRepositoryImpl(
-    remoteDataSource: remoteDataSource,
+    vehicleBackend: vehicleBackend,
     localDataSource: localStorage,
     networkInfo: networkInfo,
   );

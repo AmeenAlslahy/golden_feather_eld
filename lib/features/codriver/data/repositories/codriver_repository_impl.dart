@@ -1,17 +1,16 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/exception.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
-import '../datasources/codriver_remote_data_source.dart';
+import '../../../../backend/contracts/driver_session_backend.dart';
 
 class CoDriverRepositoryImpl implements CoDriverRepository {
-  final CoDriverRemoteDataSource remoteDataSource;
+  final DriverSessionBackend driverSessionBackend;
   final NetworkInfo networkInfo;
 
   CoDriverRepositoryImpl({
-    required this.remoteDataSource,
+    required this.driverSessionBackend,
     required this.networkInfo,
   });
 
@@ -19,9 +18,11 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
   Future<Either<Failure, List<CoDriver>>> getAvailableDrivers() async {
     if (networkInfo.isConnected) {
       try {
-        final rawDrivers = await remoteDataSource.getAvailableDrivers();
-
-        final drivers = rawDrivers
+        final result = await driverSessionBackend.getAvailableDrivers();
+        return result.fold(
+          (error) => Left(ServerFailure(message: error.code)),
+          (rawDrivers) {
+            final drivers = rawDrivers
             .map((json) => CoDriver(
                   id: json['id']?.toString() ?? '',
                   name: json['name'] ?? 'Unknown',
@@ -29,9 +30,9 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
                 ))
             .toList();
 
-        return Right(drivers);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error'));
+            return Right(drivers);
+          }
+        );
       } catch (e) {
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }

@@ -10,4 +10,7 @@ abstract interface class ConfigBackend {
 
   /// GET /eld/config/settings
   Future<Result<RawJson>> getSettings();
+
+  // --- Legacy methods for P5.5 ---
+  Future<Result<RawJson>> getLegacyServerConfig();
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../datasources/traccar_sdk/traccar_native_client.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/config/app_environment.dart';
 import '../../../../core/utils/logger.dart';

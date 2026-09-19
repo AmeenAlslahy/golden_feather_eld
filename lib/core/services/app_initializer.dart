@@ -11,6 +11,7 @@ import '../config/app_environment.dart';
 import '../utils/logger.dart';
 import '../../features/sync/presentation/providers/sync_provider.dart';
 import '../../features/sync/presentation/providers/sync_engine_provider.dart';
+import '../../app/orchestrators/tracking_orchestrator.dart';
 import '../time/trusted_time_provider.dart';
 
 class AppInitializer {
@@ -97,6 +98,7 @@ class AppInitializer {
     Future.microtask(() {
       container.read(syncStateProvider.notifier);
       container.read(syncEngineProvider);
+      container.read(trackingOrchestratorProvider);
     });
   }
 }

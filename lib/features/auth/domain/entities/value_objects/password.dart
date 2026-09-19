@@ -5,20 +5,16 @@ class Password {
 
   const Password._(this.value, this.isValid);
 
-  /// إنشاء كائن كلمة مرور مع التحقق من صحتها
+  /// إنشاء كائن كلمة مرور — يقبل أي قيمة غير فارغة بأي طول
   factory Password(String input) {
-    // التحقق المبدئي لطول كلمة المرور
-    final isValid = input.length >= 6;
+    final isValid = input.isNotEmpty;
     return Password._(input, isValid);
   }
 
-  /// إرجاع رسالة الخطأ إذا كانت كلمة المرور غير صالحة
+  /// إرجاع رسالة الخطأ إذا كانت كلمة المرور فارغة
   String? get errorMessage {
     if (value.isEmpty) {
       return 'passwordRequired';
-    }
-    if (!isValid) {
-      return 'invalidValue';
     }
     return null;
   }

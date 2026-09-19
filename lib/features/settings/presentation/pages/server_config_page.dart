@@ -9,7 +9,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../domain/config/server_config.dart';
 import '../../../../backend/providers/backend_providers.dart';
-import '../providers/server_config_providers.dart';
+import '../../../../core/services/local_storage_service.dart';
 
 /// Settings screen where the user enters the backend URL.
 ///
@@ -29,8 +29,8 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
   @override
   void initState() {
     super.initState();
-    final current = ref.read(serverConfigProvider);
-    _urlController = TextEditingController(text: current?.baseUrl ?? '');
+    final prefs = ref.read(localStorageProvider);
+    _urlController = TextEditingController(text: prefs.serverUrl);
   }
 
   @override
@@ -46,23 +46,26 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
       return;
     }
 
-    final config = ServerConfig.unverified(baseUrl: raw);
-    await ref.read(serverConfigProvider.notifier).save(config);
+    final prefs = ref.read(localStorageProvider);
+    await prefs.setServerUrl(raw);
+    await prefs.setBackendType('eld');
 
     if (!mounted) return;
     _showSuccess('Server config saved (not yet verified).');
   }
 
   Future<void> _onClear() async {
-    await ref.read(serverConfigProvider.notifier).clear();
+    final prefs = ref.read(localStorageProvider);
+    await prefs.setServerUrl('');
+    await prefs.setBackendType('mock');
     _urlController.clear();
     if (!mounted) return;
     _showSuccess('Server config cleared. Using Mock backend.');
   }
 
   Future<void> _onTestConnection() async {
-    final config = ref.read(serverConfigProvider);
-    if (config == null || config.baseUrl.isEmpty) {
+    final prefs = ref.read(localStorageProvider);
+    if (prefs.serverUrl.isEmpty) {
       _showError('Please save a server URL first.');
       return;
     }
@@ -76,7 +79,6 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
       if (!mounted) return;
 
       if (result.isRight()) {
-        await ref.read(serverConfigProvider.notifier).markVerified();
         _showSuccess('Connection successful! Backend is ready.');
       } else {
         final error = result.getLeft().toNullable();
@@ -112,7 +114,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
 
   @override
   Widget build(BuildContext context) {
-    final config = ref.watch(serverConfigProvider);
+    final prefs = ref.watch(localStorageProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -137,10 +139,9 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    config == null
+                    prefs.backendType == 'mock'
                         ? 'No server configured. Using Mock backend.'
-                        : 'URL: ${config.baseUrl}\n'
-                            'Verified: ${config.isVerified ? "Yes" : "No"}',
+                        : 'URL: ${prefs.serverUrl}',
                     style: const TextStyle(
                       fontSize: AppTypography.bodySize,
                       color: AppColors.textSecondary,

@@ -84,34 +84,37 @@ class EldDrawer extends ConsumerWidget {
                   final item = menuItems[index];
                   final title = isArabic ? item.arabicTitle : item.title;
 
-                  return ListTile(
-                    leading: Icon(
-                      item.icon,
-                      size: 24,
-                    ),
-                    title: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: AppTypography.bodySize,
-                        fontWeight: AppTypography.regular,
+                  return Material(
+                    type: MaterialType.transparency,
+                    child: ListTile(
+                      leading: Icon(
+                        item.icon,
+                        size: 24,
                       ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context); // إغلاق الدرج
-                      final currentRoute =
-                          GoRouterState.of(context).matchedLocation;
-                      if (item.route == currentRoute) return;
+                      title: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: AppTypography.bodySize,
+                          fontWeight: AppTypography.regular,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context); // إغلاق الدرج
+                        final currentRoute =
+                            GoRouterState.of(context).matchedLocation;
+                        if (item.route == currentRoute) return;
 
-                      if (item.route == AppRoutes.home) {
-                        context.go(item.route);
-                      } else {
-                        context.push(item.route);
-                      }
-                    },
+                        if (item.route == AppRoutes.home) {
+                          context.go(item.route);
+                        } else {
+                          context.push(item.route);
+                        }
+                      },
+                    ),
                   );
                 },
               ),
@@ -119,23 +122,26 @@ class EldDrawer extends ConsumerWidget {
 
             // ========== زر تسجيل الخروج ==========
             const Divider(color: AppColors.border, height: 1),
-            ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: AppColors.dangerRed,
-                size: 24,
-              ),
-              title: Text(
-                context.loc.logout,
-                style: const TextStyle(
-                  fontSize: AppTypography.bodySize,
-                  fontWeight: AppTypography.regular,
+            Material(
+              type: MaterialType.transparency,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.logout,
                   color: AppColors.dangerRed,
+                  size: 24,
                 ),
+                title: Text(
+                  context.loc.logout,
+                  style: const TextStyle(
+                    fontSize: AppTypography.bodySize,
+                    fontWeight: AppTypography.regular,
+                    color: AppColors.dangerRed,
+                  ),
+                ),
+                onTap: () {
+                  _showLogoutDialog(context, ref);
+                },
               ),
-              onTap: () {
-                _showLogoutDialog(context, ref);
-              },
             ),
             const SizedBox(height: AppSpacing.sm),
           ],

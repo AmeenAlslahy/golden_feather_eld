@@ -1,17 +1,16 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/exception.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/repositories/inspection_repository.dart';
-import '../datasources/inspection_remote_data_source.dart';
+import '../../../../backend/contracts/inspection_backend.dart';
 
 class InspectionRepositoryImpl implements InspectionRepository {
-  final InspectionRemoteDataSource remoteDataSource;
+  final InspectionBackend inspectionBackend;
   final NetworkInfo networkInfo;
 
   InspectionRepositoryImpl({
-    required this.remoteDataSource,
+    required this.inspectionBackend,
     required this.networkInfo,
   });
 
@@ -20,22 +19,25 @@ class InspectionRepositoryImpl implements InspectionRepository {
       int driverId) async {
     if (networkInfo.isConnected) {
       try {
-        final rawData = await remoteDataSource.getInspectionReport(driverId);
+        final result = await inspectionBackend.getLegacyInspectionReport(driverId);
+        
+        return result.fold(
+          (error) => Left(ServerFailure(message: error.code)),
+          (rawData) {
+            final days = rawData.map((json) {
+              return InspectionDayData(
+                date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
+                drivingHours: (json['drivingHours'] as num?)?.toDouble() ?? 0.0,
+                onDutyHours: (json['onDutyHours'] as num?)?.toDouble() ?? 0.0,
+                offDutyHours: (json['offDutyHours'] as num?)?.toDouble() ?? 0.0,
+                sleeperHours: (json['sleeperHours'] as num?)?.toDouble() ?? 0.0,
+                isCertified: json['isCertified'] ?? false,
+              );
+            }).toList();
 
-        final days = rawData.map((json) {
-          return InspectionDayData(
-            date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
-            drivingHours: (json['drivingHours'] as num?)?.toDouble() ?? 0.0,
-            onDutyHours: (json['onDutyHours'] as num?)?.toDouble() ?? 0.0,
-            offDutyHours: (json['offDutyHours'] as num?)?.toDouble() ?? 0.0,
-            sleeperHours: (json['sleeperHours'] as num?)?.toDouble() ?? 0.0,
-            isCertified: json['isCertified'] ?? false,
-          );
-        }).toList();
-
-        return Right(days);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error'));
+            return Right(days);
+          }
+        );
       } catch (e) {
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }
@@ -49,11 +51,12 @@ class InspectionRepositoryImpl implements InspectionRepository {
       int driverId, TransferMethod method, String? email, bool isErods) async {
     if (networkInfo.isConnected) {
       try {
-        await remoteDataSource.exportInspectionData(
-            driverId, method, email, isErods);
-        return const Right(true);
-      } on ServerException catch (e) {
-        return Left(ServerFailure(message: e.message ?? 'Server Error'));
+        final result = await inspectionBackend.exportLegacyInspectionData(
+            driverId, method.name, email, isErods);
+        return result.fold(
+          (error) => Left(ServerFailure(message: error.code)),
+          (_) => const Right(true),
+        );
       } catch (e) {
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }

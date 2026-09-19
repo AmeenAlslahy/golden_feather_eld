@@ -8,7 +8,7 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/check_auth_status_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import 'auth_providers.dart';
-import '../../../../core/network/network_providers.dart';
+import '../../../../backend/providers/backend_network_providers.dart';
 
 /// حالة المصادقة
 enum AuthStatus {

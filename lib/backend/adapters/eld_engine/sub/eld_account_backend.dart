@@ -3,6 +3,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/account_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
+import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [AccountBackend].
 class EldAccountBackend implements AccountBackend {
@@ -13,7 +14,7 @@ class EldAccountBackend implements AccountBackend {
   @override
   Future<Result<RawJson>> getProfile(DriverId driverId) async {
     final res = await _apiClient.get<RawJson>(
-      '/eld/profile/${driverId.value}',
+      EldEndpoints.profile(driverId.value),
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
@@ -25,7 +26,7 @@ class EldAccountBackend implements AccountBackend {
     required RawJson update,
   }) async {
     final res = await _apiClient.put<RawJson>(
-      '/eld/profile/${driverId.value}',
+      EldEndpoints.profile(driverId.value),
       data: update,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
@@ -35,7 +36,7 @@ class EldAccountBackend implements AccountBackend {
   @override
   Future<Result<RawJson>> getMyAccount({DriverId? driverId}) async {
     final res = await _apiClient.get<RawJson>(
-      '/eld/account',
+      EldEndpoints.account,
       queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
@@ -48,7 +49,7 @@ class EldAccountBackend implements AccountBackend {
     required String odometerUnit,
   }) async {
     final res = await _apiClient.put<RawJson>(
-      '/eld/account/preferences',
+      EldEndpoints.accountPreferences,
       data: {
         'language': language,
         'odometer': odometerUnit,

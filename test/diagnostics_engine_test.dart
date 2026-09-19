@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/features/hos/domain/engine/diagnostics/diagno
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/distance_tracker.dart';
+import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 
 class MockLiveTrackingDataSource extends Mock
     implements LiveTrackingDataSource {}

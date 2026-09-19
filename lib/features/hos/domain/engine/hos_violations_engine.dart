@@ -4,7 +4,7 @@ import '../../../../core/utils/logger.dart';
 import 'tracking/duty_status_tracker.dart';
 import '../../data/datasources/hos_local_data_source.dart';
 import '../../../../core/config/hos_configuration.dart';
-import 'hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import 'hos_state_machine.dart';
 

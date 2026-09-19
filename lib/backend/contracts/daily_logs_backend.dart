@@ -74,4 +74,9 @@ abstract interface class DailyLogsBackend {
   /// GET /eld/daily-logs/{id}/readiness
   // TODO(P2): replace with CertificationReadiness
   Future<Result<RawJson>> getReadiness(DailyLogId logId);
+
+  // --- Legacy methods for P5.5 ---
+  Future<Result<List<dynamic>>> getLegacyDutyStatusLogs(
+      int driverId, DateTime date);
+  Future<Result<List<dynamic>>> getLegacySyncLogs(int driverId);
 }

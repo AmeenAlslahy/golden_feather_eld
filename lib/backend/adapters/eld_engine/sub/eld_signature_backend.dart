@@ -3,6 +3,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../../domain/signature/signature.dart';
 import '../../../contracts/signature_backend.dart';
 import '../../../http/api_client.dart';
+import '../../../http/eld_endpoints.dart';
 import '../mappers/signature_mapper.dart';
 
 class EldSignatureBackend implements SignatureBackend {
@@ -19,7 +20,7 @@ class EldSignatureBackend implements SignatureBackend {
   }) {
     return _apiClient
         .post<Map<String, dynamic>>(
-          '/eld/signatures/${driverId.value}',
+          EldEndpoints.signatures(driverId.value),
           data: {
             'driverId': driverId.value,
             'logDate': logDate,

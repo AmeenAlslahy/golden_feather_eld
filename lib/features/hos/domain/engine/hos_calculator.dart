@@ -1,5 +1,6 @@
 import '../../../../core/config/hos_configuration.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/domain/entities/hos_models.dart';
 
 sealed class CalculationResult {}
 
@@ -126,19 +127,3 @@ class HosCalculator {
   }
 }
 
-/// حدود ساعات الخدمة
-class HosLimits {
-  final int remainingDriveMinutes;
-  final int remainingShiftMinutes;
-  final double remainingCycleHours;
-  final bool breakRequired;
-  final int breakRemainingMinutes;
-
-  const HosLimits({
-    required this.remainingDriveMinutes,
-    required this.remainingShiftMinutes,
-    required this.remainingCycleHours,
-    required this.breakRequired,
-    required this.breakRemainingMinutes,
-  });
-}

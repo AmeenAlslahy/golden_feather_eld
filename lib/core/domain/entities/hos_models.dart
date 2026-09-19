@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_calculator.dart';
+
 
 // ==========================================
 // 1. Duty Status & Tracking Models
@@ -269,4 +269,21 @@ class HosViolation {
       'details': details,
     };
   }
+}
+
+/// حدود ساعات الخدمة
+class HosLimits {
+  final int remainingDriveMinutes;
+  final int remainingShiftMinutes;
+  final double remainingCycleHours;
+  final bool breakRequired;
+  final int breakRemainingMinutes;
+
+  const HosLimits({
+    required this.remainingDriveMinutes,
+    required this.remainingShiftMinutes,
+    required this.remainingCycleHours,
+    required this.breakRequired,
+    required this.breakRemainingMinutes,
+  });
 }

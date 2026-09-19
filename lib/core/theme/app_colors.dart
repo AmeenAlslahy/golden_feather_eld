@@ -1,107 +1,124 @@
 import 'package:flutter/material.dart';
 
-/// ألوان تطبيق ELD حسب دليل التصميم
+/// القيم الخام للهوية الذهبية/السوداء.
+///
+/// **قاعدة الاستخدام:**
+/// - لا تستخدم هذا الملف مباشرة في الواجهات.
+/// - استخدم `context.eld.successFg` أو `context.textStyles.errorText`.
+/// - هذا الملف مرجعي فقط — يُعدَّل هنا وتتبع التغييرات تلقائيًا.
 class AppColors {
   AppColors._();
 
-  // ========== الألوان الأساسية ==========
+  // ========== الهوية الأساسية ==========
 
-  /// الأزرق الأساسي - شريط العنوان والأزرار النشطة
-  static const Color primaryBlue = Color(0xFF0072CE);
+  /// الذهبي — لون الهوية الأساسي.
+  static const Color primaryBlue = Color(0xFFD4AF37);
 
-  /// الأخضر - الحالة الجيدة، زر الاتصال، حالة القيادة
+  /// أسود الهوية — الخلفية الفاخرة.
+  static const Color secondary = Color(0xFF0D0D0D);
+
+  // ========== عائلة الذهبي ==========
+
+  static const Color goldLight = Color(0xFFF4E5B1);
+  static const Color goldDark = Color(0xFFA88A1F);
+  static const Color goldAccent = Color(0xFFFFD700);
+
+  /// ذهبي عميق — النص الذهبي الآمن على خلفيات فاتحة (6.94:1).
+  static const Color goldDeep = Color(0xFF6E5612);
+
+  // ========== الحالات — قيم خام ==========
+
   static const Color successGreen = Color(0xFF34C759);
-
-  /// الأحمر - التحذير، رسائل الخطأ، الحالة الناقصة
   static const Color dangerRed = Color(0xFFFF3B30);
+  static const Color warningYellow = Color(0xFFFF9500);
+  static const Color infoBlue = Color(0xFF1565C0);
 
-  /// الأصفر/البرتقالي - أيقونة التحذير في شريط العنوان
-  static const Color warningYellow = Color(0xFFFFCC00);
+  // ========== الحالات — نص على خلفية فاتحة ==========
 
-  // ========== الألوان المحايدة ==========
+  static const Color successText = Color(0xFF157A33);  // 5.47:1
+  static const Color dangerText = Color(0xFFC5221F);   // 5.91:1
+  static const Color warningText = Color(0xFFB45309);  // 4.62:1
+  static const Color infoText = Color(0xFF0D47A1);     // 8.59:1
 
-  /// خلفية الصفحة
-  static const Color background = Color(0xFFF2F2F7);
+  // ========== الحالات — نص على خلفية داكنة ==========
 
-  /// حدود الحقول والفواصل
+  static const Color successOnDark = Color(0xFF4ADE80); // 8.62:1
+  static const Color dangerOnDark = Color(0xFFFF6B6B);  // 6.15:1
+  static const Color warningOnDark = Color(0xFFFFB020); // 9.87:1
+  static const Color infoOnDark = Color(0xFF64D2FF);    // 9.45:1
+
+  // ========== الحالات — خلفيات خفيفة ==========
+
+  static const Color successBg = Color(0xFFE8F5E9);
+  static const Color dangerBg = Color(0xFFFFEBEE);
+  static const Color warningBg = Color(0xFFFFF3E0);
+  static const Color infoBg = Color(0xFFE3F2FD);
+
+  // ========== المحايدات ==========
+
+  static const Color background = Color(0xFFFAFAFA);
+  static const Color surface = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFE5E5EA);
 
-  /// النص الثانوي والتعليمات
-  static const Color textSecondary = Color(0xFF6E6E73);
+  /// النص الأساسي — 19.8:1 مع الأبيض.
+  static const Color textPrimary = Color(0xFF0D0D0D);
 
-  /// النص الأساسي
-  static const Color textPrimary = Color(0xFF000000);
+  /// النص الثانوي — 6.65:1 مع الأبيض.
+  static const Color textSecondary = Color(0xFF5C5C5C);
 
-  /// خلفية البطاقات (Light)
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surface = surfaceLight; // For backward compatibility
+  // ========== الوضع الداكن ==========
 
-  /// زر متابعة بدون اتصال
-  static const Color darkButton = Color(0xFF2C2C2E);
+  static const Color darkBackground = Color(0xFF0D0D0D);
+  static const Color surfaceDark = Color(0xFF1A1A1A);
 
-  /// زر إرسال باهت
-  static const Color paleGreen = Color(0xFFB5EAD7);
+  /// أبيض — 19.8:1 مع `darkBackground`.
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
 
-  // ========== ألوان شريط التنقل السفلي ==========
+  /// رمادي فاتح — 8.98:1 مع `darkBackground`.
+  static const Color darkTextSecondary = Color(0xFFB0B0B0);
 
-  /// خلفية شريط التنقل
-  static const Color navBarBackground = Color(0xFFF2F2F7);
+  // ========== عناصر خاصة ==========
 
-  /// أيقونة نشطة
-  static const Color navBarActive = Color(0xFF000000);
+  /// زر "متابعة بدون اتصال".
+  static const Color darkButton = Color(0xFF0D0D0D);
 
-  /// أيقونة غير نشطة
+  /// لون خفيف مكمل.
+  static const Color paleGreen = Color(0xFFE8DFC0);
+
+  // ========== شريط التنقل السفلي ==========
+
+  static const Color navBarBackground = Color(0xFFFFFFFF);
+
+  /// أيقونة نشطة — ذهبي عميق (4.76:1 على الأبيض).
+  static const Color navBarActive = Color(0xFF6E5612);
+
+  /// أيقونة غير نشطة.
   static const Color navBarInactive = Color(0xFF8E8E93);
 
-  // ========== ألوان داكنة (اختياري) ==========
+  // ========== مساعدات متكررة ==========
 
-  static const Color darkBackground = Color(0xFF1C1C1E);
-  static const Color surfaceDark = Color(0xFF2C2C2E);
-  static const Color darkSurface = surfaceDark; // For backward compatibility
-  static const Color darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFAEAEB2);
-
-  // ========== التوافقية مع الكود القديم (لضمان عدم حدوث أخطاء) ==========
-  static const Color primary = primaryBlue;
-  static const Color primaryLight = Color(0xFFF0D675);
-  static const Color onPrimary = surface;
-  static const Color secondary = Color(0xFF1A1A2E);
-  static const Color success = successGreen;
-  static const Color successLight = Color(0xFFE8F5E9);
-  static const Color warning = warningYellow;
-  static const Color warningLight = Color(0xFFFFF8E1);
-  static const Color error = dangerRed;
-  static const Color errorLight = Color(0xFFFFEBEE);
-  static const Color info = Color(0xFF1565C0);
-  static const Color infoLight = Color(0xFFE3F2FD);
   static const Color transparent = Colors.transparent;
   static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF000000);
-
-  static const Color textPrimaryLight = textPrimary;
-  static const Color textSecondaryLight = textSecondary;
-  static const Color disabledLight = Color(0xFFE0E0E0);
-  static const Color textHintLight = Color(0xFFBDBDBD);
+  static const Color black = Color(0xFF0D0D0D);
 
   // ========== دوال مساعدة ==========
 
-  static Color textPrimaryForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? textPrimary : darkTextPrimary;
-  }
+  static Color textPrimaryFor(Brightness b) =>
+      b == Brightness.light ? textPrimary : darkTextPrimary;
 
-  static Color textSecondaryForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? textSecondary : darkTextSecondary;
-  }
+  static Color textSecondaryFor(Brightness b) =>
+      b == Brightness.light ? textSecondary : darkTextSecondary;
 
-  static Color backgroundForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? background : darkBackground;
-  }
+  static Color backgroundFor(Brightness b) =>
+      b == Brightness.light ? background : darkBackground;
 
-  static Color surfaceForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? surface : darkSurface;
-  }
+  static Color surfaceFor(Brightness b) =>
+      b == Brightness.light ? surface : surfaceDark;
 
-  static Color borderForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? border : const Color(0xFF48484A);
-  }
+  static Color borderFor(Brightness b) =>
+      b == Brightness.light ? border : const Color(0xFF3A3A3C);
+
+  /// النص الذهبي الآمن حسب الخلفية.
+  static Color goldFor(Brightness b) =>
+      b == Brightness.light ? goldDeep : primaryBlue;
 }

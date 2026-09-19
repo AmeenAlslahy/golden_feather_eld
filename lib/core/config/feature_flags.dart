@@ -15,7 +15,7 @@ class FeatureFlags {
   final bool useNewStatusDashboard;
 
   const FeatureFlags({
-    this.useNewStatusDashboard = false,
+    this.useNewStatusDashboard = true,
   });
 
   /// Reads flags from `--dart-define`.
@@ -23,7 +23,7 @@ class FeatureFlags {
     return const FeatureFlags(
       useNewStatusDashboard: bool.fromEnvironment(
         'USE_NEW_STATUS_DASHBOARD',
-        defaultValue: false,
+        defaultValue: true,
       ),
     );
   }

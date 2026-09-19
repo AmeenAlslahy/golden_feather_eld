@@ -1,5 +1,5 @@
 import '../../domain/entities/daily_log.dart';
-import '../../../../features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 class LogEventModel extends LogEvent {
   const LogEventModel({

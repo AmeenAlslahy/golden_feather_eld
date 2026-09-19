@@ -15,11 +15,14 @@ import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/tracking/distance_tracker.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
+import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
+import 'package:golden_feather_eld/core/theme/app_colors.dart';
+import 'package:golden_feather_eld/core/theme/eld_theme_extension.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
@@ -128,11 +131,14 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          locale: Locale('en'),
+        child: MaterialApp(
+          locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: HomePage(),
+          theme: ThemeData.light().copyWith(
+            extensions: [EldColors.light()],
+          ),
+          home: const HomePage(),
         ),
       ),
     );
@@ -142,7 +148,7 @@ void main() {
 
   group('HomePage — feature flag OFF', () {
     testWidgets('does NOT show new StatusDashboardPage', (tester) async {
-      final container = await pumpHomePage(
+      await pumpHomePage(
         tester,
         flags: const FeatureFlags(useNewStatusDashboard: false),
       );
@@ -154,7 +160,7 @@ void main() {
 
   group('HomePage — feature flag ON', () {
     testWidgets('shows new StatusDashboardPage', (tester) async {
-      final container = await pumpHomePage(
+      await pumpHomePage(
         tester,
         flags: const FeatureFlags(useNewStatusDashboard: true),
       );

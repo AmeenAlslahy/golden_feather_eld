@@ -16,6 +16,11 @@ class MockDriverSessionBackend implements DriverSessionBackend {
       );
 
   @override
+  Future<Result<List<dynamic>>> getAvailableDrivers() async {
+    return ok([]);
+  }
+
+  @override
   Future<Result<RawJson>> getMembers(int sessionId) =>
       throw UnimplementedError('MockDriverSessionBackend.getMembers — Phase 2');
 

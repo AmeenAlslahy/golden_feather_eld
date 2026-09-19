@@ -56,14 +56,15 @@ class StatusDashboardMapper {
       return const OperationalAlerts(
         toolIcon: false,
         warningTriangleIcon: false,
-        connectionStatus: ConnectionStatus.unknown,
+        connectionStatus: ConnectionStatus.ok,
       );
     }
     return OperationalAlerts(
       toolIcon: _asBool(raw['toolIcon']),
       warningTriangleIcon: _asBool(raw['warningTriangleIcon']),
-      connectionStatus:
-          ConnectionStatus.fromWire(raw['connectionStatus'] as String?),
+      connectionStatus: raw['connectionStatus'] != null
+          ? ConnectionStatus.fromWire(raw['connectionStatus'] as String?)
+          : ConnectionStatus.ok,
     );
   }
 

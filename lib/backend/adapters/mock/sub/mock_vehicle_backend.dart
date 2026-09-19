@@ -15,4 +15,9 @@ class MockVehicleBackend implements VehicleBackend {
   @override
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) =>
       throw UnimplementedError('MockVehicleBackend.getMyVehicles — Phase 2');
+
+  @override
+  Future<Result<List<dynamic>>> getLegacyVehicles() async {
+    return ok([]);
+  }
 }

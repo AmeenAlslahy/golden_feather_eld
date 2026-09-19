@@ -7,7 +7,7 @@ import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/services/local_storage_service.dart';
 
 /// متتبع حالة السائق (Domain Pure)
-import '../hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../sync/domain/usecases/sync_engine.dart';
 import '../../../../sync/domain/entities/pending_event.dart';
 import '../../../../sync/presentation/providers/sync_engine_provider.dart';

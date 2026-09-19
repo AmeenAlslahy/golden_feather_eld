@@ -1,4 +1,5 @@
 import '../../contracts/account_backend.dart';
+import '../../contracts/auth_backend.dart';
 import '../../contracts/compliance_backend.dart';
 import '../../contracts/config_backend.dart';
 import '../../contracts/daily_logs_backend.dart';
@@ -22,6 +23,7 @@ import '../../contracts/vehicle_backend.dart';
 import '../../core/backend_adapter.dart';
 import '../../core/backend_identity.dart';
 import 'sub/mock_account_backend.dart';
+import 'sub/mock_auth_backend.dart';
 import 'sub/mock_compliance_backend.dart';
 import 'sub/mock_config_backend.dart';
 import 'sub/mock_daily_logs_backend.dart';
@@ -68,6 +70,9 @@ class MockAdapter implements BackendAdapter {
   // ==========================================================================
   // Fully-mocked contracts (T1.8)
   // ==========================================================================
+
+  @override
+  late final AuthBackend auth = const MockAuthBackend();
 
   @override
   late final HealthBackend health = const MockHealthBackend();

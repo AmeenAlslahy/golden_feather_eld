@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'api_client.dart';
+import '../../backend/http/interceptors/auth_interceptor.dart';
+import '../../backend/http/interceptors/request_logger.dart';
+import '../../backend/http/api_client.dart';
+import '../../backend/providers/backend_network_providers.dart'; // For endpointsProvider
 import 'api_config.dart';
-import 'auth_interceptor.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import 'request_logger.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
@@ -35,23 +36,21 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final dio = Dio();
   final client = ApiClient(config: effectiveConfig, dio: dio);
 
-  final sessionStore = ref.watch(authSessionStoreProvider);
-  final endpoints = ref.watch(endpointsProvider);
+  final localDataSource = ref.watch(authLocalDataSourceProvider);
   final backendType = ref.watch(backendTypeProvider);
-  
+
   final unauthController = ref.watch(unauthenticatedEventProvider);
-  
-  client.addInterceptor(AuthInterceptor(
-    sessionStore: sessionStore,
-    endpoints: endpoints,
+
+  client.dio.interceptors.add(AuthInterceptor(
+    localDataSource: localDataSource,
     backendType: backendType,
     onUnauthenticated: () {
       // Trigger event instead of directly depending on AuthStateProvider
       unauthController.add(null);
     },
   ));
-  
-  client.addInterceptor(RequestLogger());
+
+  client.dio.interceptors.add(RequestLogger());
 
   return client;
 });

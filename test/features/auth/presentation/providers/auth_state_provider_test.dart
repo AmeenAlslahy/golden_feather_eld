@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 
-import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fpdart/fpdart.dart';
@@ -26,8 +25,6 @@ void main() {
   });
   group('AuthState Centralization Tests', () {
     late ProviderContainer container;
-    late var notifier;
-
     setUp(() async {
       await AppEnvironmentConfig.init(testEnv: {
         'TRACCAR_ENVIRONMENT': 'mock', 
@@ -37,19 +34,18 @@ void main() {
           traccarAuthRepositoryProvider.overrideWithValue(mockAuthRepo),
         ],
       );
-      notifier = container.read(authStateProvider.notifier);
 
       bool hasSession = false;
 
       when(() => mockAuthRepo.login(
-              email: any(named: 'email'), password: any(named: 'password')))
+              identifier: any(named: 'identifier'), password: any(named: 'password')))
           .thenAnswer((invocation) async {
-        if (invocation.namedArguments[#email] == 'admin@demo.com') {
+        if (invocation.namedArguments[#identifier] == 'admin@demo.com') {
           hasSession = true;
           return Right(User(
               id: '1', fullName: 'Test User', email: 'test@example.com', username: 'admin', role: UserRole.fieldWorker, createdAt: DateTime.now()));
         }
-        return Left(ServerFailure(message: 'Unauthorized'));
+        return const Left(ServerFailure(message: 'Unauthorized'));
       });
       
       when(() => mockAuthRepo.checkAndRestoreSession())
@@ -58,7 +54,7 @@ void main() {
           return Right(User(
               id: '1', fullName: 'Test User', email: 'test@example.com', username: 'admin', role: UserRole.fieldWorker, createdAt: DateTime.now()));
         }
-        return Left(ServerFailure(message: 'No session'));
+        return const Left(ServerFailure(message: 'No session'));
       });
               
       when(() => mockAuthRepo.logout())

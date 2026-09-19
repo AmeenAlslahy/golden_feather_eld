@@ -2,108 +2,112 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// أنماط الخطوط حسب دليل التصميم
+/// أنماط الخطوط حسب دليل التصميم.
 class AppTypography {
   AppTypography._();
 
-  /// العائلة الخطية
-  static const String fontFamily = 'Roboto'; // Android
-  static const String fontFamilyIOS = 'SF Pro Text'; // iOS
+  static const String fontFamily = 'Roboto';
+  static const String fontFamilyIOS = 'SF Pro Text';
 
-  /// أحجام الخطوط
-  static const double headerSize = 28.0; // عناوين رئيسية
-  static const double largeButtonSize = 17.0; // أزرار كبيرة
-  static const double bodySize = 16.0; // نصوص أساسية
-  static const double subtitleSize = 14.0; // نصوص فرعية
-  static const double captionSize = 13.0; // تعليمات صغيرة
-  static const double smallSize = 12.0; // نصوص صغيرة جداً
-  static const double timerSize = 40.0; // عداد الوقت في الحلقة
+  static const double headerSize = 28.0;
+  static const double largeButtonSize = 17.0;
+  static const double bodySize = 16.0;
+  static const double subtitleSize = 14.0;
+  static const double captionSize = 13.0;
+  static const double smallSize = 12.0;
+  static const double timerSize = 40.0;
 
-  /// سمك الخطوط
   static const FontWeight bold = FontWeight.w700;
   static const FontWeight semiBold = FontWeight.w600;
   static const FontWeight regular = FontWeight.w400;
   static const FontWeight light = FontWeight.w300;
 
-  static TextTheme get lightTextTheme {
-    return GoogleFonts.robotoTextTheme().copyWith(
-      // عنوان رئيسي - 28pt Bold
-      headlineLarge: const TextStyle(
-        fontSize: headerSize,
-        fontWeight: bold,
-        color: AppColors.textPrimary,
-      ),
-      // عنوان ثانوي - 20pt Bold
-      headlineMedium: const TextStyle(
-        fontSize: 20,
-        fontWeight: bold,
-        color: AppColors.textPrimary,
-      ),
-      // عنوان شريط / Dialog Title - 16pt Bold
-      headlineSmall: const TextStyle(
-        fontSize: bodySize,
-        fontWeight: bold,
-        color: AppColors.textPrimary,
-      ),
-      // أزرار كبيرة - 17pt Bold
-      titleLarge: const TextStyle(
-        fontSize: largeButtonSize,
-        fontWeight: bold,
-        color: AppColors.textPrimary,
-      ),
-      // نصوص أساسية - 16pt Regular
-      bodyLarge: const TextStyle(
-        fontSize: bodySize,
-        fontWeight: regular,
-        color: AppColors.textPrimary,
-      ),
-      // نصوص فرعية - 14pt Regular
-      bodyMedium: const TextStyle(
-        fontSize: subtitleSize,
-        fontWeight: regular,
-        color: AppColors.textSecondary,
-      ),
-      // تعليمات - 13pt Light
-      bodySmall: const TextStyle(
-        fontSize: captionSize,
-        fontWeight: light,
-        color: AppColors.textSecondary,
-      ),
-      // تسميات - 12pt
-      labelSmall: const TextStyle(
-        fontSize: smallSize,
-        fontWeight: regular,
-        color: AppColors.textSecondary,
-      ),
-      // عداد الوقت - 40pt Bold أخضر
-      displayMedium: const TextStyle(
-        fontSize: timerSize,
-        fontWeight: bold,
-        color: AppColors.successGreen,
-      ),
-    );
-  }
+  /// نخزّن الأساس مرة واحدة — أداء أفضل بكثير من getter.
+  static final TextTheme _base = GoogleFonts.robotoTextTheme();
 
-  static TextTheme get darkTextTheme {
-    return lightTextTheme.copyWith(
-      headlineLarge: lightTextTheme.headlineLarge!.copyWith(
-        color: AppColors.darkTextPrimary,
-      ),
-      headlineMedium: lightTextTheme.headlineMedium!.copyWith(
-        color: AppColors.darkTextPrimary,
-      ),
-      headlineSmall: lightTextTheme.headlineSmall!.copyWith(
-        color: AppColors.darkTextPrimary,
-      ),
-      bodyLarge: lightTextTheme.bodyLarge!.copyWith(
-        color: AppColors.darkTextPrimary,
-      ),
-      bodyMedium: lightTextTheme.bodyMedium!.copyWith(
-        color: AppColors.darkTextSecondary,
-      ),
-      bodySmall: lightTextTheme.bodySmall!.copyWith(
-        color: AppColors.darkTextSecondary,
-      ),
-    );
-  }
+  static final TextTheme lightTextTheme = _base.copyWith(
+    headlineLarge: const TextStyle(
+      fontSize: headerSize,
+      fontWeight: bold,
+      color: AppColors.textPrimary,
+      letterSpacing: -0.5,
+      height: 1.2,
+    ),
+    headlineMedium: const TextStyle(
+      fontSize: 20,
+      fontWeight: bold,
+      color: AppColors.textPrimary,
+      letterSpacing: -0.3,
+      height: 1.25,
+    ),
+    headlineSmall: const TextStyle(
+      fontSize: bodySize,
+      fontWeight: bold,
+      color: AppColors.textPrimary,
+      height: 1.3,
+    ),
+    titleLarge: const TextStyle(
+      fontSize: largeButtonSize,
+      fontWeight: bold,
+      color: AppColors.textPrimary,
+      height: 1.3,
+    ),
+    bodyLarge: const TextStyle(
+      fontSize: bodySize,
+      fontWeight: regular,
+      color: AppColors.textPrimary,
+      height: 1.5,
+    ),
+    bodyMedium: const TextStyle(
+      fontSize: subtitleSize,
+      fontWeight: regular,
+      color: AppColors.textSecondary,
+      height: 1.4,
+    ),
+    bodySmall: const TextStyle(
+      fontSize: captionSize,
+      fontWeight: light,
+      color: AppColors.textSecondary,
+      height: 1.4,
+    ),
+    labelSmall: const TextStyle(
+      fontSize: smallSize,
+      fontWeight: regular,
+      color: AppColors.textSecondary,
+      letterSpacing: 0.2,
+      height: 1.3,
+    ),
+    // عداد الوقت — ذهبي عميق لضمان التباين على خلفية فاتحة (6.94:1)
+    displayMedium: const TextStyle(
+      fontSize: timerSize,
+      fontWeight: bold,
+      color: AppColors.goldDeep,
+      letterSpacing: 1.0,
+      fontFeatures: [FontFeature.tabularFigures()],
+      height: 1.1,
+    ),
+  );
+
+  /// الوضع الداكن — يغطي كل الأنماط.
+  static final TextTheme darkTextTheme = lightTextTheme.copyWith(
+    headlineLarge: lightTextTheme.headlineLarge!
+        .copyWith(color: AppColors.darkTextPrimary),
+    headlineMedium: lightTextTheme.headlineMedium!
+        .copyWith(color: AppColors.darkTextPrimary),
+    headlineSmall: lightTextTheme.headlineSmall!
+        .copyWith(color: AppColors.darkTextPrimary),
+    titleLarge:
+        lightTextTheme.titleLarge!.copyWith(color: AppColors.darkTextPrimary),
+    bodyLarge:
+        lightTextTheme.bodyLarge!.copyWith(color: AppColors.darkTextPrimary),
+    bodyMedium:
+        lightTextTheme.bodyMedium!.copyWith(color: AppColors.darkTextSecondary),
+    bodySmall:
+        lightTextTheme.bodySmall!.copyWith(color: AppColors.darkTextSecondary),
+    labelSmall:
+        lightTextTheme.labelSmall!.copyWith(color: AppColors.darkTextSecondary),
+    // عداد الوقت — ذهبي لامع على أسود (9.24:1)
+    displayMedium:
+        lightTextTheme.displayMedium!.copyWith(color: AppColors.primaryBlue),
+  );
 }

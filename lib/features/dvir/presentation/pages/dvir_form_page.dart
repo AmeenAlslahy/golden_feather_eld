@@ -129,9 +129,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   Widget build(BuildContext context) {
     final dashboard = ref.watch(dashboardDataProvider);
     final brightness = Theme.of(context).brightness;
-    final surfaceColor = AppColors.surfaceForBrightness(brightness);
-    final textColor = AppColors.textPrimaryForBrightness(brightness);
-    final borderColor = AppColors.borderForBrightness(brightness);
+    final surfaceColor = AppColors.surfaceFor(brightness);
+    final textColor = AppColors.textPrimaryFor(brightness);
+    final borderColor = AppColors.borderFor(brightness);
 
     final String currentTime =
         DateFormat('d MMM yy, hh:mm a').format(DateTime.now());
@@ -141,7 +141,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.surfaceLight),
+          icon: const Icon(Icons.close, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -149,7 +149,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           style: TextStyle(
             fontSize: AppTypography.bodySize,
             fontWeight: AppTypography.bold,
-            color: AppColors.surfaceLight,
+            color: AppColors.surface,
           ),
         ),
         centerTitle: true,
@@ -211,7 +211,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                         const SizedBox(height: 4),
                         Text(dashboard.trailerId ?? context.loc.trailers,
                             style: TextStyle(
-                                color: AppColors.textSecondaryForBrightness(
+                                color: AppColors.textSecondaryFor(
                                     brightness),
                                 fontSize: 14)),
                       ],

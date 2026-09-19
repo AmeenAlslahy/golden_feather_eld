@@ -4,7 +4,7 @@ import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/data/models/auth_session_dto.dart';
 
 void main() {
-  group('AuthSessionStore Tests', () {
+  group('AuthLocalDataSource Tests', () {
     final userModel = UserModel(
       id: '1',
       username: 'test@demo.com',

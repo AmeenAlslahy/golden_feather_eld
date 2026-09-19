@@ -19,6 +19,7 @@ import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
+import '../contracts/auth_backend.dart';
 import 'backend_identity.dart';
 
 /// Aggregator for all backend contracts.
@@ -35,6 +36,8 @@ abstract class BackendAdapter {
   // ==========================================================================
   // Contracts — all nullable (a backend may not support all features)
   // ==========================================================================
+
+  AuthBackend? get auth;
 
   AccountBackend? get account;
 

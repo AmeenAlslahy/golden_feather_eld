@@ -1,13 +1,11 @@
-// ignore_for_file: unused_field, unused_import
-
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/dvir_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
+import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [DvirBackend].
-/// **Status:** Skeleton — implemented in Phase 2.
 class EldDvirBackend implements DvirBackend {
   final ApiClient _apiClient;
 
@@ -21,30 +19,63 @@ class EldDvirBackend implements DvirBackend {
     String? status,
     int limit = 50,
     int offset = 0,
-  }) =>
-      throw UnimplementedError('EldDvirBackend.list — Phase 2');
+  }) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dvir,
+      queryParameters: {
+        if (driverId != null) 'driverId': driverId.value,
+        if (uniqueId != null) 'uniqueId': uniqueId,
+        if (date != null) 'date': date.toIso8601String().split('T').first,
+        if (status != null) 'status': status,
+        'limit': limit,
+        'offset': offset,
+      },
+      parser: (data) => data is List ? {'data': data} : (data is Map<String, dynamic> ? data : {}),
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
-  Future<Result<void>> create(RawJson report) =>
-      throw UnimplementedError('EldDvirBackend.create — Phase 2');
+  Future<Result<void>> create(RawJson report) async {
+    final res = await _apiClient.post<dynamic>(
+      EldEndpoints.dvir,
+      data: report,
+    );
+    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
+  }
 
   @override
-  Future<Result<RawJson>> getById(DvirId dvirId) =>
-      throw UnimplementedError('EldDvirBackend.getById — Phase 2');
+  Future<Result<RawJson>> getById(DvirId dvirId) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dvirDetails(dvirId.value),
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<void>> certifyRepair({
     required DvirId dvirId,
     required RawJson repair,
-  }) =>
-      throw UnimplementedError('EldDvirBackend.certifyRepair — Phase 2');
+  }) async {
+    final res = await _apiClient.post<dynamic>(
+      EldEndpoints.certifyDvirRepair(dvirId.value),
+      data: repair,
+    );
+    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
+  }
 
   @override
   Future<Result<void>> review({
     required DvirId dvirId,
     required RawJson review,
-  }) =>
-      throw UnimplementedError('EldDvirBackend.review — Phase 2');
+  }) async {
+    final res = await _apiClient.post<dynamic>(
+      EldEndpoints.dvirNextDriverReview(dvirId.value),
+      data: review,
+    );
+    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
+  }
 
   @override
   Future<Result<RawJson>> getDefectsCatalog() =>

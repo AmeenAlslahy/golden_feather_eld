@@ -1,8 +1,8 @@
-﻿import 'package:fpdart/fpdart.dart';
+import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../entities/daily_log.dart';
 import '../entities/audit_entry.dart';
-import '../../../../features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 abstract class LogRepository {
   Future<Either<Failure, List<LogEvent>>> getEvents(DateTime date);

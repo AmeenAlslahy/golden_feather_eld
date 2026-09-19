@@ -1,23 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/codriver_remote_data_source.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../data/repositories/codriver_repository_impl.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
 
 // --- Dependency Injection Providers ---
 
-final coDriverRemoteDataSourceProvider =
-    Provider<CoDriverRemoteDataSource>((ref) {
-  return CoDriverRemoteDataSourceImpl(
-    apiClient: ref.watch(apiClientProvider),
-    endpoints: ref.watch(endpointsProvider),
-  );
+final driverSessionBackendProviderAlias = Provider<DriverSessionBackend>((ref) {
+  return ref.watch(driverSessionBackendProvider);
 });
 
 final coDriverRepositoryProvider = Provider<CoDriverRepository>((ref) {
   return CoDriverRepositoryImpl(
-    remoteDataSource: ref.watch(coDriverRemoteDataSourceProvider),
+    driverSessionBackend: ref.watch(driverSessionBackendProviderAlias),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });

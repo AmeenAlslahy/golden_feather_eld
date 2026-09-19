@@ -18,4 +18,9 @@ class MockConfigBackend implements ConfigBackend {
   @override
   Future<Result<RawJson>> getSettings() =>
       throw UnimplementedError('MockConfigBackend.getSettings — Phase 2');
+
+  @override
+  Future<Result<RawJson>> getLegacyServerConfig() async {
+    return ok({});
+  }
 }

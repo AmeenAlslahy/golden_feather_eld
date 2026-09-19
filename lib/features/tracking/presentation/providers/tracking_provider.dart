@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/battery_optimization_service.dart';
@@ -7,10 +7,6 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entities/location_entity.dart';
 import '../../domain/repositories/tracking_repository.dart';
 import 'tracking_providers.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../vehicle/presentation/providers/vehicle_provider.dart';
-import '../../../hos/presentation/providers/hos_provider.dart';
-import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -69,47 +65,13 @@ final trackingStateProvider =
   final repository = ref.watch(trackingRepositoryProvider);
   final notifier = TrackingNotifier(repository, ref);
 
-  // 1) إيقاف التتبع عند تسجيل الخروج
-  ref.listen<AuthState>(authStateProvider, (previous, next) {
-    if (next.status == AuthStatus.unauthenticated &&
-        previous?.status == AuthStatus.authenticated) {
-      notifier.stopTracking(force: true);
-    }
-  });
-
-  // 2) بدء التتبع عند اختيار مركبة
-  ref.listen<VehicleState>(vehicleProvider, (previous, next) {
-    if (next.selectedVehicle != null &&
-        previous?.selectedVehicle != next.selectedVehicle) {
-      if (!notifier.isActiveOrLoading) {
-        AppLogger.info('🚀 Auto-starting tracking due to vehicle selection');
-        notifier.startTracking(skipBatteryCheck: true);
-      }
-    }
-  });
-
-  // 3) بدء التتبع إجبارياً عند تغيير الحالة إلى Driving يدوياً
-  ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
-    if (next is HosEngineReady) {
-      final prevStatus =
-          (previous is HosEngineReady) ? previous.update.currentStatus : null;
-      if (next.update.currentStatus == DutyStatus.driving &&
-          prevStatus != DutyStatus.driving) {
-        if (!notifier.isActiveOrLoading) {
-          AppLogger.info(
-              '🚀 Auto-starting tracking because status changed to DRIVING');
-          notifier.startTracking(skipBatteryCheck: true);
-        }
-      }
-    }
-  });
-
   return notifier;
 });
 
 class TrackingNotifier extends StateNotifier<TrackingState> {
   final TrackingRepository _repository;
   final Ref ref;
+  bool Function()? isDrivingChecker;
   StreamSubscription<LocationEntity>? _locationSubscription;
   Timer? _gpsTimeoutTimer;
 
@@ -225,9 +187,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   /// إيقاف التتبع
   Future<void> stopTracking({bool force = false}) async {
     if (!force) {
-      final hosState = ref.read(hosStatusProvider);
-      final isDriving = hosState is HosEngineReady &&
-          hosState.update.currentStatus == DutyStatus.driving;
+      final isDriving = isDrivingChecker?.call() ?? false;
       if (isDriving) {
         state = state.copyWith(
           errorMessage: 'Cannot stop tracking while driving',

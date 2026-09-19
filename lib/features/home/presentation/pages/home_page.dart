@@ -15,6 +15,8 @@ import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/config/feature_flags.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
+import '../../../hos/presentation/providers/status_dashboard_providers.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -36,6 +38,15 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardDataProvider);
     final currentNavIndex = ref.watch(homeNavIndexProvider);
+    final statusDashboardState = ref.watch(statusDashboardProvider);
+
+    // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
+    final driverText = statusDashboardState.valueOrNull?.driver.displayText ??
+        (dashboard.driverName != 'Unknown'
+            ? '${dashboard.driverName} - ${dashboard.vehicleDisplayName}'
+            : null) ??
+        ref.watch(authStateProvider).user?.fullName ??
+        '';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -43,7 +54,7 @@ class HomePage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           currentNavIndex == 0
-              ? '${dashboard.driverName} - ${dashboard.vehicleId}'
+              ? driverText
               : context.loc.hoursRecap,
           style: const TextStyle(
             fontSize: AppTypography.bodySize,

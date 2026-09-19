@@ -52,4 +52,8 @@ abstract interface class ReportsBackend {
     DateTime? endDate,
     String? lang,
   });
+
+  // --- Legacy methods for P5.5 ---
+  Future<Result<Uint8List>> downloadLegacyReport(
+      String endpoint, Map<String, dynamic>? queryParameters);
 }

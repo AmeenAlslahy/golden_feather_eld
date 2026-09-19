@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/inspection_remote_data_source.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/inspection_backend.dart';
 import '../../data/repositories/inspection_repository_impl.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/repositories/inspection_repository.dart';
@@ -8,17 +9,13 @@ import '../../../../core/services/tracking_config_storage_service.dart';
 
 // --- Dependency Injection Providers ---
 
-final inspectionRemoteDataSourceProvider =
-    Provider<InspectionRemoteDataSource>((ref) {
-  return InspectionRemoteDataSourceImpl(
-    apiClient: ref.watch(apiClientProvider),
-    endpoints: ref.watch(endpointsProvider),
-  );
+final inspectionBackendProviderAlias = Provider<InspectionBackend>((ref) {
+  return ref.watch(inspectionBackendProvider);
 });
 
 final inspectionRepositoryProvider = Provider<InspectionRepository>((ref) {
   return InspectionRepositoryImpl(
-    remoteDataSource: ref.watch(inspectionRemoteDataSourceProvider),
+    inspectionBackend: ref.watch(inspectionBackendProviderAlias),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });

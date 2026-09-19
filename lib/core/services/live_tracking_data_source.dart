@@ -1,8 +1,7 @@
-import '../../features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// For EldEvent
-import '../../features/hos/domain/engine/tracking/distance_tracker.dart'; // For LocationPoint
+import '../domain/entities/location_point.dart'; // For LocationPoint
 import '../config/app_environment.dart';
 import '../../features/tracking/data/datasources/traccar_data_source.dart';
 import '../../features/tracking/domain/usecases/tracking_event_processor.dart';
@@ -137,7 +136,6 @@ final liveTrackingDataSourceProvider = Provider<LiveTrackingDataSource>((ref) {
     final traccarDataSource = TraccarDataSource(
       apiClient: TraccarApiClientImpl(
         apiClient: ref.watch(apiClientProvider),
-        endpoints: ref.watch(endpointsProvider),
       ),
       webSocketClient: TraccarWebSocketClientImpl(),
       nativeClient: TraccarNativeClientImpl(),

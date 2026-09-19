@@ -65,4 +65,10 @@ class MockReportsBackend implements ReportsBackend {
     String? lang,
   }) =>
       throw UnimplementedError('MockReportsBackend.generate — Phase 2');
+
+  @override
+  Future<Result<Uint8List>> downloadLegacyReport(
+      String endpoint, Map<String, dynamic>? queryParameters) async {
+    return ok(Uint8List(0));
+  }
 }

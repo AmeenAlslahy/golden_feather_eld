@@ -21,8 +21,7 @@ class DvirRemoteDataSourceImpl implements DvirRemoteDataSource {
   Future<List<Map<String, dynamic>>> getDvirReports(String vehicleId) async {
     try {
       final response = await apiClient.get<List<dynamic>>(
-        endpoints
-            .submitInspection(), // Using submitInspection endpoint for DVIR
+        endpoints.submitInspection(0),
         queryParameters: {'vehicleId': vehicleId},
       );
 
@@ -30,7 +29,9 @@ class DvirRemoteDataSourceImpl implements DvirRemoteDataSource {
         return List<Map<String, dynamic>>.from(response.data!);
       } else {
         throw ServerException(
-          message: response.message ?? 'Failed to fetch DVIR reports',
+          message: response.message ??
+              response.error ??
+              'Failed to fetch DVIR reports',
         );
       }
     } catch (e) {
@@ -63,13 +64,15 @@ class DvirRemoteDataSourceImpl implements DvirRemoteDataSource {
       };
 
       final response = await apiClient.post<dynamic>(
-        endpoints.submitInspection(),
+        endpoints.submitInspection(0),
         data: data,
       );
 
       if (!response.status) {
         throw ServerException(
-          message: response.message ?? 'Failed to submit DVIR report',
+          message: response.message ??
+              response.error ??
+              'Failed to submit DVIR report',
         );
       }
     } catch (e) {

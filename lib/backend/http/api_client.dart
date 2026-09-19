@@ -15,6 +15,7 @@ library;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart' as fp;
 
 import '../../core/error/app_error.dart';
@@ -37,6 +38,17 @@ class ApiClient {
       ..sendTimeout = _config.sendTimeout
       ..headers = Map.of(_config.defaultHeaders)
       ..responseType = ResponseType.json;
+
+    if (kDebugMode) {
+      _dio.interceptors.add(LogInterceptor(
+        request: true,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: false,
+        responseBody: true,
+        error: true,
+      ));
+    }
   }
 
   /// Exposes the raw [Dio] instance for advanced use cases

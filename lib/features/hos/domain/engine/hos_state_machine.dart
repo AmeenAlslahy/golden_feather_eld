@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import '../../../../core/config/hos_configuration.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

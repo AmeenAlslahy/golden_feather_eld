@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/tracking/domain/usecases/tracking_event_processor.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/tracking_event.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:golden_feather_eld/features/tracking/data/datasources/tracking_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';

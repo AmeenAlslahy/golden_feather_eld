@@ -1,25 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/account_remote_data_source.dart';
-import '../../data/repositories/account_repository_impl.dart';
+
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/network/network_providers.dart'; // Keep for networkInfoProvider until completely removed
 
-final accountRemoteDataSourceProvider =
-    Provider<AccountRemoteDataSource>((ref) {
-  return AccountRemoteDataSourceImpl(
-    ref.watch(apiClientProvider),
-    ref.watch(endpointsProvider),
-  );
-});
-
-final accountRepositoryProvider = Provider<AccountRepository>((ref) {
-  return AccountRepositoryImpl(
-    remoteDataSource: ref.watch(accountRemoteDataSourceProvider),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
+import '../../../../core/di/app_providers.dart';
 
 class AccountState {
   final User? userProfile;

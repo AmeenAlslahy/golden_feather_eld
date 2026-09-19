@@ -29,4 +29,15 @@ class MockDutyStatusBackend implements DutyStatusBackend {
     required DateTime logDate,
   }) =>
       throw UnimplementedError('MockDutyStatusBackend.getGraphGrid — Phase 2');
+
+  @override
+  Future<Result<void>> submitLegacyDutyStatusEvent(
+      int driverId, RawJson payload) async {
+    return ok(null);
+  }
+
+  @override
+  Future<Result<void>> submitLegacyGenericEvent(RawJson payload) async {
+    return ok(null);
+  }
 }

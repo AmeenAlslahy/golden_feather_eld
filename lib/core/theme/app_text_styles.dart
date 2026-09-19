@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_typography.dart';
 import 'app_colors.dart';
+import 'eld_colors.dart';
 
 /// الأنماط الدلالية للنصوص حسب دليل التصميم
 class AppTextStyles {
@@ -12,6 +13,7 @@ class AppTextStyles {
   bool get _isLight => _brightness == Brightness.light;
   TextTheme get _textTheme =>
       _isLight ? AppTypography.lightTextTheme : AppTypography.darkTextTheme;
+  EldColors get _eld => Theme.of(context).extension<EldColors>()!;
 
   // ========== العناوين ==========
 
@@ -59,20 +61,33 @@ class AppTextStyles {
         fontWeight: AppTypography.bold,
       );
 
+  // ========== النص الذهبي ==========
+
+  /// نص ذهبي — يتبدّل تلقائيًا حسب الوضع.
+  TextStyle get goldText =>
+      body.copyWith(color: AppColors.goldFor(_brightness));
+
   // ========== الحالات ==========
 
   /// نص الخطأ (errorText = 14 / w500 + danger)
   TextStyle get errorText =>
       (_textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
         fontWeight: FontWeight.w500,
-        color: AppColors.dangerRed,
+        color: _eld.dangerFg,
       );
 
   /// نص النجاح (successText = 14 / w500 + success)
   TextStyle get successText =>
       (_textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
         fontWeight: FontWeight.w500,
-        color: AppColors.successGreen,
+        color: _eld.successFg,
+      );
+
+  /// نص التحذير (warningText = 14 / w500 + warning)
+  TextStyle get warningText =>
+      (_textTheme.bodyMedium ?? const TextStyle(fontSize: 14)).copyWith(
+        fontWeight: FontWeight.w500,
+        color: _eld.warningFg,
       );
 
   // ========== الأرقام ==========
@@ -83,7 +98,7 @@ class AppTextStyles {
         fontWeight: AppTypography.bold,
         fontFeatures: [FontFeature.tabularFigures()],
       ).copyWith(
-        color: AppColors.textPrimaryForBrightness(_brightness),
+        color: AppColors.textPrimaryFor(_brightness),
       );
 }
 
@@ -91,4 +106,10 @@ class AppTextStyles {
 extension AppThemeTextStylesExt on ThemeData {
   /// الأنماط الدلالية (Semantic Styles)
   AppTextStyles textStyles(BuildContext context) => AppTextStyles(context);
+}
+
+/// امتداد BuildContext للوصول المباشر
+extension AppTextStylesX on BuildContext {
+  AppTextStyles get textStyles => AppTextStyles(this);
+  EldColors get eld => Theme.of(this).extension<EldColors>()!;
 }

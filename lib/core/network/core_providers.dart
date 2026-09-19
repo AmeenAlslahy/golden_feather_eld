@@ -1,16 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'network_info.dart';
 import 'api_config.dart';
-import 'api_endpoints.dart';
-import 'endpoints/traccar_endpoints.dart';
-import 'endpoints/eld_server_endpoints.dart';
 import '../services/local_storage_service.dart' as ls;
 import '../../features/settings/presentation/providers/server_config_providers.dart';
 
 // Re-export apiClientProvider so files only need to import core_providers.dart
-export 'network_providers.dart'
+export '../../backend/providers/backend_network_providers.dart'
     show apiClientProvider, traccarNativeClientProvider;
 
 final goldenFeatherEldLocalStorageProvider = ls.localStorageProvider;
@@ -59,29 +56,4 @@ final backendTypeProvider = Provider<String>((ref) {
   }
 
   return storage.backendType.isNotEmpty ? storage.backendType : 'traccar';
-});
-
-final endpointsProvider = Provider<ApiEndpoints>((ref) {
-  final backendType = ref.watch(backendTypeProvider);
-
-  if (backendType == 'eld') {
-    return EldServerEndpoints();
-  }
-  return TraccarEndpoints();
-});
-
-final rawDioProvider = Provider<Dio>((ref) {
-  final config = ref.watch(apiConfigProvider);
-  final serverUrl = ref.watch(serverUrlProvider);
-
-  final effectiveUrl = serverUrl.isNotEmpty ? serverUrl : config.baseUrl;
-  final baseUrl = effectiveUrl.endsWith('/')
-      ? effectiveUrl.substring(0, effectiveUrl.length - 1)
-      : effectiveUrl;
-
-  return Dio(BaseOptions(
-    baseUrl: baseUrl,
-    connectTimeout: config.connectTimeout,
-    receiveTimeout: config.receiveTimeout,
-  ));
 });

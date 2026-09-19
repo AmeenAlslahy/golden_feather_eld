@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/dvir_remote_data_source.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/dvir_backend.dart';
 import '../../data/repositories/dvir_repository_impl.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
@@ -8,16 +9,13 @@ import '../../../../core/services/tracking_config_storage_service.dart';
 
 // --- Dependency Injection Providers ---
 
-final dvirRemoteDataSourceProvider = Provider<DvirRemoteDataSource>((ref) {
-  return DvirRemoteDataSourceImpl(
-    apiClient: ref.watch(apiClientProvider),
-    endpoints: ref.watch(endpointsProvider),
-  );
+final dvirBackendProviderAlias = Provider<DvirBackend>((ref) {
+  return ref.watch(dvirBackendProvider);
 });
 
 final dvirRepositoryProvider = Provider<DvirRepository>((ref) {
   return DvirRepositoryImpl(
-    remoteDataSource: ref.watch(dvirRemoteDataSourceProvider),
+    dvirBackend: ref.watch(dvirBackendProviderAlias),
     networkInfo: ref.watch(networkInfoProvider),
   );
 });

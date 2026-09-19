@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 import 'package:golden_feather_eld/core/extensions/time_extensions.dart';
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';

@@ -5,7 +5,7 @@ import 'package:golden_feather_eld/core/domain/entities/user.dart';
 abstract class AuthRepository {
   /// تسجيل الدخول إلى الخادم
   Future<Either<Failure, User>> login({
-    required String email,
+    required String identifier,
     required String password,
   });
 

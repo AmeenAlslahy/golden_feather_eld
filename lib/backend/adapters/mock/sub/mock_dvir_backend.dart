@@ -16,12 +16,14 @@ class MockDvirBackend implements DvirBackend {
     String? status,
     int limit = 50,
     int offset = 0,
-  }) =>
-      throw UnimplementedError('MockDvirBackend.list — Phase 2');
+  }) async {
+    return ok({'reports': []});
+  }
 
   @override
-  Future<Result<void>> create(RawJson report) =>
-      throw UnimplementedError('MockDvirBackend.create — Phase 2');
+  Future<Result<void>> create(RawJson report) async {
+    return ok(null);
+  }
 
   @override
   Future<Result<RawJson>> getById(DvirId dvirId) =>

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../network/api_client.dart';
-import '../network/network_providers.dart';
+import '../../backend/contracts/config_backend.dart';
+import '../../backend/providers/backend_providers.dart';
 import '../error/exception.dart';
 import 'local_storage_service.dart';
 import '../utils/logger.dart';
@@ -9,15 +9,15 @@ import '../config/app_environment.dart';
 
 /// خدمة جلب الإعدادات عن بعد
 class RemoteConfigService {
-  final ApiClient _client;
+  final ConfigBackend _configBackend;
   final LocalStorageService _storage;
   final TrackingService _trackingService;
 
   RemoteConfigService({
-    required ApiClient client,
+    required ConfigBackend configBackend,
     required LocalStorageService storage,
     required TrackingService trackingService,
-  })  : _client = client,
+  })  : _configBackend = configBackend,
         _storage = storage,
         _trackingService = trackingService;
 
@@ -43,19 +43,20 @@ class RemoteConfigService {
       const String endpoint = '/api/server';
 
       try {
-        final response = await _client.get<Map<String, dynamic>>(endpoint);
+        final result = await _configBackend.getLegacyServerConfig();
 
-        if (response.status && response.data != null) {
-          final config = response.data as Map<String, dynamic>;
-
-          // تطبيق الإعدادات
-          await _applyConfig(config);
-          AppLogger.info('✅ Remote config applied successfully');
-          return true;
-        }
-
-        AppLogger.warning('Failed to fetch remote config: ${response.code}');
-        return false;
+        return await result.match(
+          (failure) async {
+            AppLogger.warning('Failed to fetch remote config: $failure');
+            return false;
+          },
+          (config) async {
+            // تطبيق الإعدادات
+            await _applyConfig(config);
+            AppLogger.info('✅ Remote config applied successfully');
+            return true;
+          },
+        );
       } on ServerException catch (e) {
         if (e.statusCode == 404) {
           AppLogger.info(
@@ -111,7 +112,7 @@ class RemoteConfigService {
   /// جلب التكوين عند بدء التطبيق
   static Future<void> fetchOnStartup(ProviderContainer container) async {
     final service = RemoteConfigService(
-      client: container.read(apiClientProvider),
+      configBackend: container.read(configBackendProvider),
       storage: container.read(localStorageProvider),
       trackingService: container.read(trackingServiceProvider),
     );
@@ -129,7 +130,7 @@ class RemoteConfigService {
 /// مزود خدمة التكوين عن بعد
 final remoteConfigServiceProvider = Provider<RemoteConfigService>((ref) {
   return RemoteConfigService(
-    client: ref.read(apiClientProvider),
+    configBackend: ref.read(configBackendProvider),
     storage: ref.read(localStorageProvider),
     trackingService: ref.read(trackingServiceProvider),
   );

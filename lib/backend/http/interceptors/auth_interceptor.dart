@@ -1,17 +1,14 @@
 import 'package:dio/dio.dart';
-import '../../features/auth/data/datasources/auth_session_store.dart';
-import '../utils/logger.dart';
-import 'api_endpoints.dart';
+import '../../../features/auth/data/datasources/auth_local_data_source.dart';
+import '../../../core/utils/logger.dart';
 
 class AuthInterceptor extends Interceptor {
-  final AuthSessionStore sessionStore;
-  final ApiEndpoints endpoints;
+  final AuthLocalDataSource localDataSource;
   final String backendType;
   final void Function()? onUnauthenticated;
 
   AuthInterceptor({
-    required this.sessionStore,
-    required this.endpoints,
+    required this.localDataSource,
     required this.backendType,
     this.onUnauthenticated,
   });
@@ -20,13 +17,13 @@ class AuthInterceptor extends Interceptor {
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     // Ignore login and register endpoints
-    if (options.path.contains(endpoints.logIn) ||
-        options.path.contains(endpoints.register)) {
+    if (options.path.contains('/session') ||
+        options.path.contains('/users') && options.method.toUpperCase() == 'POST') {
       return super.onRequest(options, handler);
     }
 
     try {
-      final session = await sessionStore.getSession();
+      final session = await localDataSource.getSession();
 
       if (session != null && session.sessionCredential.isNotEmpty) {
         if (backendType == 'eld') {

@@ -1,33 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../logs/data/repositories/log_repository_impl.dart';
-import '../../domain/entities/recap_data.dart';
+import '../../../../domain/duty_status/weekly_recap.dart';
+import '../../domain/usecases/get_weekly_recap_use_case.dart';
+import 'status_dashboard_providers.dart';
 
-import 'hos_provider.dart';
-
-import '../../../../features/hos/domain/engine/hos_state_machine.dart';
-import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
-import '../../domain/usecases/get_recap_use_case.dart';
-
-final getRecapUseCaseProvider = Provider<GetRecapUseCase>((ref) {
-  final logRepo = ref.watch(logRepositoryProvider);
-  return GetRecapUseCase(logRepo);
+final getWeeklyRecapUseCaseProvider = Provider<GetWeeklyRecapUseCase>((ref) {
+  return GetWeeklyRecapUseCase(ref.watch(statusDashboardRepositoryProvider));
 });
 
-final recapProvider = FutureProvider<RecapData>((ref) async {
+final recapProvider = FutureProvider<WeeklyRecap>((ref) async {
   // Add keepAlive to cache the recap calculation unless invalidated
   ref.keepAlive();
 
-  final getRecapUseCase = ref.watch(getRecapUseCaseProvider);
-  final engineState = ref.watch(hosStatusProvider);
-  final config = ref.watch(hosConfigurationProvider);
+  final getWeeklyRecapUseCase = ref.watch(getWeeklyRecapUseCaseProvider);
 
-  if (engineState is! HosEngineReady) {
-    return RecapData.empty();
-  }
-
-  return getRecapUseCase.execute(
-    currentLimits: engineState.update.limits,
-    cycleLimitHours: config.cycleLimitHours.toDouble(),
+  final result = await getWeeklyRecapUseCase.execute();
+  return result.fold(
+    (failure) => throw failure,
+    (recap) => recap,
   );
 });

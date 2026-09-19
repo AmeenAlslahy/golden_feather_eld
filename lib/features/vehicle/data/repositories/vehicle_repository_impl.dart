@@ -5,18 +5,19 @@ import '../../../../core/network/network_info.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
-import '../datasources/vehicle_remote_data_source.dart';
+import '../../../../backend/contracts/vehicle_backend.dart';
+import '../models/vehicle_model.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
-  final VehicleRemoteDataSource _remoteDataSource;
+  final VehicleBackend _vehicleBackend;
   final LocalStorageService _localDataSource;
   final NetworkInfo _networkInfo;
 
   VehicleRepositoryImpl({
-    required VehicleRemoteDataSource remoteDataSource,
+    required VehicleBackend vehicleBackend,
     required LocalStorageService localDataSource,
     required NetworkInfo networkInfo,
-  })  : _remoteDataSource = remoteDataSource,
+  })  : _vehicleBackend = vehicleBackend,
         _localDataSource = localDataSource,
         _networkInfo = networkInfo;
 
@@ -27,15 +28,15 @@ class VehicleRepositoryImpl implements VehicleRepository {
     }
 
     try {
-      final vehicles = await _remoteDataSource.getVehicles();
-      return Right(vehicles.cast<Vehicle>().toList());
+      final result = await _vehicleBackend.getLegacyVehicles();
+      return result.fold(
+        (error) => Left(ServerFailure(message: 'فشل: ${error.code}')),
+        (data) {
+          final vehicles = data.map((json) => VehicleModel.fromJson(json as Map<String, dynamic>)).toList();
+          return Right(vehicles.cast<Vehicle>().toList());
+        }
+      );
     } catch (e) {
-      if (e is ServerException) {
-        return Left(ServerFailure(
-          message: e.message ?? 'فشل الاتصال بالخادم',
-          statusCode: e.statusCode,
-        ));
-      }
       return Left(ServerFailure(message: 'فشل جلب قائمة الشاحنات: $e'));
     }
   }

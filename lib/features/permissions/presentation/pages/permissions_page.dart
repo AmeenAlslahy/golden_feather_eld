@@ -108,7 +108,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
           children: [
             Icon(
               isRequired ? Icons.error : Icons.warning_amber,
-              color: isRequired ? AppColors.error : AppColors.warning,
+              color: isRequired ? AppColors.dangerRed : AppColors.warningYellow,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(child: Text(title)),
@@ -260,7 +260,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isGranted ? AppColors.success : AppColors.textSecondaryLight,
+          color: isGranted ? AppColors.successGreen : AppColors.textSecondary,
           size: 32,
         ),
         title: Row(
@@ -275,7 +275,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
         ),
         subtitle: Text(subtitle),
         trailing: isGranted
-            ? const Icon(Icons.check_circle, color: AppColors.success)
+            ? const Icon(Icons.check_circle, color: AppColors.successGreen)
             : TextButton(
                 onPressed: onRequest,
                 child: Text(context.loc.grant),

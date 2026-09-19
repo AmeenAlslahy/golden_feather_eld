@@ -85,13 +85,14 @@ class LocalStorageService implements ServerConfigProvider {
       AppLogger.info('Generated new device ID: $randomId');
     }
 
-    // مسح Demo fallback - الخادم الافتراضي يجب أن يكون demo3.traccar.org
+    // وضع الإعدادات الافتراضية إذا لم تكن موجودة
+    const String defaultServer = 'https://snsoft.cloud';
     final currentUrl = _prefs.getString('url');
-    if (currentUrl == null ||
-        currentUrl.contains('mock-traccar-server') ||
-        currentUrl.contains('api.goldenfeather.com') ||
-        currentUrl == 'https://demo.traccar.org') {
-      await _prefs.setString('url', 'https://demo3.traccar.org');
+        
+    if (currentUrl == null || currentUrl.isEmpty) {
+      await _prefs.setString('url', defaultServer);
+      await _prefs.setString('backend_type', 'eld');
+      AppLogger.info('Server URL and Backend Type set to default settings');
     }
     await _setIfNull('accuracy', 'medium');
     await _setIfNull('interval', AppConstants.defaultIntervalSeconds);
