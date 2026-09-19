@@ -3,7 +3,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';

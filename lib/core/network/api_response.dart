@@ -1,12 +1,10 @@
-import 'package:dio/dio.dart';
-
 class ApiResponse<T> {
   final int code;
   final bool status;
   final T? data;
   final String? message;
   final String? error;
-  final Headers? headers;
+  final Map<String, List<String>>? headers;
 
   ApiResponse({
     required this.code,

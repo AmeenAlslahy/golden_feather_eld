@@ -8,7 +8,7 @@ import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';

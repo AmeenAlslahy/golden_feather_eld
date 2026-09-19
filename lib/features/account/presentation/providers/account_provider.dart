@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../data/datasources/account_remote_data_source.dart';
 import '../../data/repositories/account_repository_impl.dart';
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/repositories/account_repository.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 

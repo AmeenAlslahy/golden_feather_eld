@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/error/exception.dart';
@@ -38,13 +37,13 @@ class LogRemoteDataSourceImpl implements LogRemoteDataSource {
       return data
           .map((json) => LogEventModel.fromJson(json as Map<String, dynamic>))
           .toList();
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
+    } catch (e) {
+      if (e is ServerException && e.statusCode == 404) {
         // No logs for this day on server, return empty
         return [];
       }
       throw ServerException(
-        message: 'Network error: ${e.message}',
+        message: 'Network error: $e',
       );
     } catch (e) {
       // If endpoint is unsupported or throws format error

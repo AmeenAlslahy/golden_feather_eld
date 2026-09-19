@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import '../../../features/tracking/data/datasources/traccar_sdk/traccar_api_client.dart';
+import '../api_options.dart';
 import '../api_endpoints.dart';
 import '../api_client.dart';
 
@@ -24,8 +24,8 @@ class TraccarApiClientImpl implements TraccarApiClient {
           'email': email,
           'password': password,
         },
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType,
+        options: ApiOptions(
+          contentType: 'application/x-www-form-urlencoded',
         ),
       );
 

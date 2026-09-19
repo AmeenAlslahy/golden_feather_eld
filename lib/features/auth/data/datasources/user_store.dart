@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/utils/logger.dart';
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
-import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 abstract class UserStore {
   /// حفظ بيانات المستخدم بشكل آمن

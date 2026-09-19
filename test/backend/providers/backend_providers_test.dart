@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/core/backend_registry.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
+import 'package:golden_feather_eld/core/storage/ports/secure_storage_port.dart';
+import 'package:golden_feather_eld/core/storage/storage_providers.dart';
+
+class FakeSecureStorage implements SecureStoragePort {
+  @override
+  Future<String?> read(String key) async => null;
+  @override
+  Future<void> write(String key, String value) async {}
+  @override
+  Future<void> delete(String key) async {}
+  @override
+  Future<void> deleteAll() async {}
+  @override
+  Future<bool> containsKey(String key) async => false;
+}
 
 void main() {
   group('BackendProviders', () {
@@ -20,7 +35,11 @@ void main() {
     });
 
     test('activeBackendProvider defaults to mock', () {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [
+          secureStorageProvider.overrideWithValue(FakeSecureStorage()),
+        ],
+      );
       final active = container.read(activeBackendProvider);
 
       expect(active, isA<MockAdapter>());
@@ -29,7 +48,11 @@ void main() {
     });
 
     test('contract providers expose correct contracts', () {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [
+          secureStorageProvider.overrideWithValue(FakeSecureStorage()),
+        ],
+      );
 
       // We know MockAdapter provides all contracts, so none of these should throw.
       expect(container.read(accountBackendProvider), isNotNull);

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/error/exception.dart';
@@ -33,9 +32,9 @@ class VehicleRemoteDataSourceImpl implements VehicleRemoteDataSource {
       return devicesList.map((deviceMap) {
         return VehicleModel.fromJson(deviceMap as Map<String, dynamic>);
       }).toList();
-    } on DioException catch (e) {
+    } catch (e) {
       throw ServerException(
-        message: 'Network error: ${e.message}',
+        message: 'Network error: $e',
       );
     }
   }

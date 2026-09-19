@@ -1,9 +1,9 @@
-import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_options.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../models/auth_session_dto.dart';
-import '../../../../features/account/data/models/user_model.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   /// يقوم بتسجيل الدخول وإنشاء جلسة
@@ -50,11 +50,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: isEld
           ? {'email': email, 'password': password}
           : {'email': email, 'password': password},
-      options: Options(
+      options: ApiOptions(
         contentType: isEld
-            ? Headers.jsonContentType
-            : Headers.formUrlEncodedContentType,
-        responseType: ResponseType.plain,
+            ? 'application/json'
+            : 'application/x-www-form-urlencoded',
+        responseType: 'plain',
         followRedirects: false,
         validateStatus: (status) => status != null && status < 500,
       ),
@@ -81,7 +81,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             data['token'] ?? data['access_token'] ?? data['session_token'];
       }
     } else {
-      final headersMap = response.headers?.map;
+      final headersMap = response.headers;
       if (headersMap != null) {
         final setCookieHeaders = headersMap['set-cookie'] ?? [];
         for (var cookie in setCookieHeaders) {
@@ -130,7 +130,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     final response = await _apiClient.get(
       '${currentSession.serverOrigin}${_endpoints.session}',
-      options: Options(
+      options: ApiOptions(
         headers: backendType == 'eld'
             ? {'Authorization': 'Bearer ${currentSession.sessionCredential}'}
             : {'Cookie': 'JSESSIONID=${currentSession.sessionCredential}'},
@@ -175,8 +175,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     final isEld = backendType == 'eld';
     try {
-      final options = Options(
-        method: _endpoints.logoutMethod,
+      final options = ApiOptions(
         headers: isEld
             ? {'Authorization': 'Bearer ${currentSession.sessionCredential}'}
             : {'Cookie': 'JSESSIONID=${currentSession.sessionCredential}'},

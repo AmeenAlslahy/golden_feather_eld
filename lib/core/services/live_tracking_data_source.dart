@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_models.dart';
+import '../../features/hos/domain/engine/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // For EldEvent

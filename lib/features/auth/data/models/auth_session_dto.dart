@@ -1,5 +1,5 @@
 import '../../domain/entities/auth_session.dart';
-import '../../../../features/account/data/models/user_model.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 class AuthSessionDto {
   final String serverOrigin;

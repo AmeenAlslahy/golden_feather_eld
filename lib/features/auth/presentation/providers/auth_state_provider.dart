@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/error/failure.dart';
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
 import '../../domain/usecases/login_usecase.dart';

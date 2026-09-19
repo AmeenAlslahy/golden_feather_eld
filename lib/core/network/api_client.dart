@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../error/exception.dart';
 import 'api_config.dart';
 import 'api_response.dart';
+import 'api_options.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -23,13 +24,28 @@ class ApiClient {
     _dio.interceptors.add(interceptor);
   }
 
+  Options? _mapOptions(ApiOptions? options) {
+    if (options == null) return null;
+    ResponseType? rType;
+    if (options.responseType == 'plain') rType = ResponseType.plain;
+    else if (options.responseType == 'bytes') rType = ResponseType.bytes;
+    
+    return Options(
+      headers: options.headers,
+      contentType: options.contentType,
+      responseType: rType,
+      followRedirects: options.followRedirects,
+      validateStatus: options.validateStatus,
+    );
+  }
+
   Future<ApiResponse<T>> get<T>(String path,
       {Map<String, dynamic>? queryParameters,
-      Options? options,
+      ApiOptions? options,
       T Function(dynamic)? fromJsonT}) async {
     try {
       final response = await _dio.get(path,
-          queryParameters: queryParameters, options: options);
+          queryParameters: queryParameters, options: _mapOptions(options));
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -39,11 +55,11 @@ class ApiClient {
   Future<ApiResponse<T>> post<T>(String path,
       {dynamic data,
       Map<String, dynamic>? queryParameters,
-      Options? options,
+      ApiOptions? options,
       T Function(dynamic)? fromJsonT}) async {
     try {
       final response = await _dio.post(path,
-          data: data, queryParameters: queryParameters, options: options);
+          data: data, queryParameters: queryParameters, options: _mapOptions(options));
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -53,11 +69,11 @@ class ApiClient {
   Future<ApiResponse<T>> put<T>(String path,
       {dynamic data,
       Map<String, dynamic>? queryParameters,
-      Options? options,
+      ApiOptions? options,
       T Function(dynamic)? fromJsonT}) async {
     try {
       final response = await _dio.put(path,
-          data: data, queryParameters: queryParameters, options: options);
+          data: data, queryParameters: queryParameters, options: _mapOptions(options));
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -67,11 +83,11 @@ class ApiClient {
   Future<ApiResponse<T>> delete<T>(String path,
       {dynamic data,
       Map<String, dynamic>? queryParameters,
-      Options? options,
+      ApiOptions? options,
       T Function(dynamic)? fromJsonT}) async {
     try {
       final response = await _dio.delete(path,
-          data: data, queryParameters: queryParameters, options: options);
+          data: data, queryParameters: queryParameters, options: _mapOptions(options));
       return _processResponse<T>(response, fromJsonT);
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -79,10 +95,10 @@ class ApiClient {
   }
 
   Future<String> downloadFile(String path, String savePath,
-      {Map<String, dynamic>? queryParameters, Options? options}) async {
+      {Map<String, dynamic>? queryParameters, ApiOptions? options}) async {
     try {
       await _dio.download(path, savePath,
-          queryParameters: queryParameters, options: options);
+          queryParameters: queryParameters, options: _mapOptions(options));
       return savePath;
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -112,7 +128,7 @@ class ApiClient {
           data: apiResp.data,
           message: apiResp.message,
           error: apiResp.error,
-          headers: response.headers,
+          headers: response.headers.map,
         );
       }
     }
@@ -135,7 +151,7 @@ class ApiClient {
       status: (response.statusCode ?? 200) >= 200 &&
           (response.statusCode ?? 200) < 300,
       data: finalData,
-      headers: response.headers,
+      headers: response.headers.map,
     );
   }
 

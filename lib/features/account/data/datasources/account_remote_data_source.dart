@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_endpoints.dart';
-import 'package:golden_feather_eld/features/account/data/models/user_model.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 abstract class AccountRemoteDataSource {
   Future<UserModel> getUserProfile(int userId);
@@ -34,9 +33,9 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
           : response.data!;
 
       return UserModel.fromJson(data);
-    } on DioException catch (e) {
+    } catch (e) {
       throw ServerException(
-        message: 'Network error: ${e.message}',
+        message: 'Network error: $e',
       );
     }
   }
@@ -60,9 +59,9 @@ class AccountRemoteDataSourceImpl implements AccountRemoteDataSource {
           : response.data!;
 
       return UserModel.fromJson(data);
-    } on DioException catch (e) {
+    } catch (e) {
       throw ServerException(
-        message: 'Network error: ${e.message}',
+        message: 'Network error: $e',
       );
     }
   }

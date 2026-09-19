@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 
 /// يمثل جلسة اتصال آمنة ومصادق عليها مع خادم Traccar.
 /// هذا النموذج لا يحفظ أي كلمات مرور، ويقوم بتنقيح بيانات الاعتماد عند الطباعة للحماية.
