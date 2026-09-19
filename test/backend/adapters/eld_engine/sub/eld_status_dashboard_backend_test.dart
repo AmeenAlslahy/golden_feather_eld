@@ -42,7 +42,7 @@ void main() {
       );
 
       result.tap(onSuccess: (StatusDashboard data) {
-        expect(data.currentDutyStatus, equals(DutyStatusCode.onDuty));
+        expect(data.currentDutyStatus, equals(DutyStatusCode.onDutyNotDriving));
         expect(data.driver.id, equals(const DriverId(101)));
       });
       expect(result.isSuccess, isTrue);

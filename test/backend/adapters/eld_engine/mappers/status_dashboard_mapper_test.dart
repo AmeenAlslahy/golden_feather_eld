@@ -43,7 +43,7 @@ void main() {
       expect(dashboard.operationalAlerts.connectionStatus,
           equals(ConnectionStatus.ok));
 
-      expect(dashboard.currentDutyStatus, equals(DutyStatusCode.onDuty));
+      expect(dashboard.currentDutyStatus, equals(DutyStatusCode.onDutyNotDriving));
 
       expect(
           dashboard.remainingCircle.remaining,
