@@ -50,6 +50,7 @@ class HomePage extends ConsumerWidget {
             fontWeight: AppTypography.bold,
             color: AppColors.surface,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
         centerTitle: currentNavIndex == 1, // توسيط العنوان في شاشة Recap
         leading: Builder(
@@ -59,7 +60,7 @@ class HomePage extends ConsumerWidget {
           ),
         ),
         actions: currentNavIndex == 0
-            ? [
+              ? [
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4.0),
                   child: ConnectionStatusIndicator(),

@@ -1,33 +1,71 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/features/account/domain/entities/user.dart';
+import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 
-class FakeLocalStorageService extends LocalStorageService {
-  @override
-  Future<void> init() async {}
-}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
+  final mockAuthRepo = MockAuthRepository();
+
+  setUpAll(() async {
+    FlutterSecureStorage.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({});
+  });
   group('AuthState Centralization Tests', () {
     late ProviderContainer container;
+    late var notifier;
 
     setUp(() async {
       await AppEnvironmentConfig.init(testEnv: {
-        'TRACCAR_ENVIRONMENT':
-            'mock', // Use mock for predictable repository behavior
+        'TRACCAR_ENVIRONMENT': 'mock', 
       });
       container = ProviderContainer(
         overrides: [
-          localStorageProvider.overrideWithValue(FakeLocalStorageService()),
-          // Fake UserStore for testing
-          // Since it uses FlutterSecureStorage, in tests we can override userStoreProvider if needed,
-          // but for basic AuthState testing we can just let it run if it doesn't crash,
-          // or we can provide a mock.
+          traccarAuthRepositoryProvider.overrideWithValue(mockAuthRepo),
         ],
       );
+      notifier = container.read(authStateProvider.notifier);
+
+      bool hasSession = false;
+
+      when(() => mockAuthRepo.login(
+              email: any(named: 'email'), password: any(named: 'password')))
+          .thenAnswer((invocation) async {
+        if (invocation.namedArguments[#email] == 'admin@demo.com') {
+          hasSession = true;
+          return Right(User(
+              id: '1', fullName: 'Test User', email: 'test@example.com', username: 'admin', role: UserRole.fieldWorker, createdAt: DateTime.now()));
+        }
+        return Left(ServerFailure(message: 'Unauthorized'));
+      });
+      
+      when(() => mockAuthRepo.checkAndRestoreSession())
+          .thenAnswer((_) async {
+        if (hasSession) {
+          return Right(User(
+              id: '1', fullName: 'Test User', email: 'test@example.com', username: 'admin', role: UserRole.fieldWorker, createdAt: DateTime.now()));
+        }
+        return Left(ServerFailure(message: 'No session'));
+      });
+              
+      when(() => mockAuthRepo.logout())
+          .thenAnswer((_) async {
+        hasSession = false;
+        return const Right(unit);
+      });
     });
 
     tearDown(() {

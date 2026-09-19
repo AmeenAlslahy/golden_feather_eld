@@ -65,10 +65,12 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   VehicleCondition _parseVehicleCondition(String? condition) {
-    if (condition == VehicleCondition.needsRepair.name)
+    if (condition == VehicleCondition.needsRepair.name) {
       return VehicleCondition.needsRepair;
-    if (condition == VehicleCondition.unsafe.name)
+    }
+    if (condition == VehicleCondition.unsafe.name) {
       return VehicleCondition.unsafe;
+    }
     return VehicleCondition.safe;
   }
 

@@ -14,6 +14,7 @@ import '../../contracts/log_transfer_backend.dart';
 import '../../contracts/reports_backend.dart';
 import '../../contracts/rules_engine_backend.dart';
 import '../../contracts/rules_screen_backend.dart';
+import '../../contracts/signature_backend.dart';
 import '../../contracts/stats_backend.dart';
 import '../../contracts/status_dashboard_backend.dart';
 import '../../contracts/unidentified_events_backend.dart';
@@ -36,6 +37,7 @@ import 'sub/mock_log_transfer_backend.dart';
 import 'sub/mock_reports_backend.dart';
 import 'sub/mock_rules_engine_backend.dart';
 import 'sub/mock_rules_screen_backend.dart';
+import 'sub/mock_signature_backend.dart';
 import 'sub/mock_stats_backend.dart';
 import 'sub/mock_status_dashboard_backend.dart';
 import 'sub/mock_unidentified_events_backend.dart';
@@ -74,6 +76,9 @@ class MockAdapter implements BackendAdapter {
   late final AccountBackend account = MockAccountBackend();
 
   @override
+  late final SignatureBackend signature = MockSignatureBackend();
+
+  @override
   late final StatusDashboardBackend statusDashboard =
       MockStatusDashboardBackend();
 
@@ -108,7 +113,7 @@ class MockAdapter implements BackendAdapter {
   late final VehicleBackend vehicle = const MockVehicleBackend();
 
   @override
-  late final HardwareBackend hardware = const MockHardwareBackend();
+  late final HardwareBackend hardware = MockHardwareBackend();
 
   @override
   late final RulesEngineBackend rulesEngine = const MockRulesEngineBackend();

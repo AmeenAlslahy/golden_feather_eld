@@ -14,6 +14,7 @@ import '../contracts/log_transfer_backend.dart';
 import '../contracts/reports_backend.dart';
 import '../contracts/rules_engine_backend.dart';
 import '../contracts/rules_screen_backend.dart';
+import '../contracts/signature_backend.dart';
 import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
@@ -74,6 +75,8 @@ abstract class BackendAdapter {
   ConfigBackend? get config;
 
   FleetDashboardBackend? get fleetDashboard;
+
+  SignatureBackend? get signature;
 
   // ==========================================================================
 

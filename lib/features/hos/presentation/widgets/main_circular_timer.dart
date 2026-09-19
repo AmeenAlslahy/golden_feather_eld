@@ -35,42 +35,45 @@ class MainCircularTimer extends StatelessWidget {
             trackColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
             progressColor: successColor,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Remaining',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Remaining',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                timeString,
-                style: TextStyle(
-                  fontSize: 56,
-                  fontWeight: AppTypography.bold,
-                  color: successColor,
-                  letterSpacing: -1,
+                const SizedBox(height: 4),
+                Text(
+                  timeString,
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: AppTypography.bold,
+                    color: successColor,
+                    letterSpacing: -1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                statusText.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: AppTypography.regular,
-                  letterSpacing: 1,
-                  color: theme.colorScheme.onSurface,
+                const SizedBox(height: 4),
+                Text(
+                  statusText.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: AppTypography.regular,
+                    letterSpacing: 1,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                size: 28,
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 28,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,9 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:golden_feather_eld/core/network/endpoints/traccar_endpoints.dart';
+import 'package:golden_feather_eld/core/utils/logger.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:golden_feather_eld/core/error/exception.dart';
 import 'package:golden_feather_eld/core/network/api_client.dart';
@@ -39,7 +41,7 @@ class FakeDioAdapter implements HttpClientAdapter {
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    await dotenv.load(fileName: '.env.test');
+    await AppEnvironmentConfig.init(testEnv: {'API_BASE_URL': 'http://localhost'});
   });
 
   late Dio dio;
@@ -81,7 +83,7 @@ void main() {
       expect(result.userModel.fullName, 'Test User');
     });
 
-    test('should throw ServerException when status is 401', () async {
+    test('should throw UnauthorizedException when status is 401', () async {
       fakeAdapter.statusCode = 401;
       fakeAdapter.responseData = {};
       fakeAdapter.headers = {
@@ -94,7 +96,7 @@ void main() {
             password: password,
             serverUrl: serverUrl,
             backendType: 'traccar'),
-        throwsA(isA<ServerException>()
+        throwsA(isA<UnauthorizedException>()
             .having((e) => e.statusCode, 'statusCode', 401)),
       );
     });

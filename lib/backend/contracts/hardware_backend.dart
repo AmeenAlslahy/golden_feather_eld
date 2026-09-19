@@ -1,4 +1,5 @@
 import '../../core/result/result.dart';
+import '../../domain/hardware/telemetry_reading.dart';
 import '../../domain/shared/value_objects.dart';
 import 'raw_json.dart';
 
@@ -26,12 +27,8 @@ abstract interface class HardwareBackend {
   });
 
   /// POST /eld/hardware/telemetry
-  Future<Result<void>> sendTelemetry({
-    required DriverId driverId,
-    required double speed,
-    double? rpm,
-    double? odometer,
-    double? engineHours,
-    bool? engineOn,
-  });
+  ///
+  /// Sends a real telemetry reading. **Never fabricate values.**
+  /// Nullable fields are omitted from the request.
+  Future<Result<void>> sendTelemetry(TelemetryReading reading);
 }

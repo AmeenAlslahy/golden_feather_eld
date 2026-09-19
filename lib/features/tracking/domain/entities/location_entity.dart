@@ -10,6 +10,8 @@ class LocationEntity extends Equatable {
   final double? accuracy;
   final DateTime timestamp;
   final String? provider;
+  final double? odometerMiles;
+  final double? engineHours;
 
   const LocationEntity({
     required this.latitude,
@@ -20,6 +22,8 @@ class LocationEntity extends Equatable {
     this.accuracy,
     required this.timestamp,
     this.provider,
+    this.odometerMiles,
+    this.engineHours,
   });
 
   /// موقع افتراضي (للتطوير)
@@ -41,6 +45,8 @@ class LocationEntity extends Equatable {
     double? accuracy,
     DateTime? timestamp,
     String? provider,
+    double? odometerMiles,
+    double? engineHours,
   }) {
     return LocationEntity(
       latitude: latitude ?? this.latitude,
@@ -51,6 +57,8 @@ class LocationEntity extends Equatable {
       accuracy: accuracy ?? this.accuracy,
       timestamp: timestamp ?? this.timestamp,
       provider: provider ?? this.provider,
+      odometerMiles: odometerMiles ?? this.odometerMiles,
+      engineHours: engineHours ?? this.engineHours,
     );
   }
 
@@ -67,6 +75,8 @@ class LocationEntity extends Equatable {
         accuracy,
         timestamp,
         provider,
+        odometerMiles,
+        engineHours,
       ];
 }
 

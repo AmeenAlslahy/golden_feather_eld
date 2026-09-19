@@ -53,16 +53,27 @@ enum DutyStatus {
 class EldEvent {
   final double speedMph;
   final int speedDurationSeconds;
-  final double odometerMiles;
-  final double engineHours;
+
+  /// Cumulative odometer in miles.
+  ///
+  /// `null` when the vehicle does not report it.
+  /// **Never fabricated** — see LEGAL-002.
+  final double? odometerMiles;
+
+  /// Cumulative engine hours.
+  ///
+  /// `null` when the vehicle does not report it.
+  /// **Never fabricated** — see LEGAL-002.
+  final double? engineHours;
+
   final DateTime timestamp;
   final int engineRpm;
 
   const EldEvent({
     required this.speedMph,
     this.speedDurationSeconds = 0,
-    required this.odometerMiles,
-    required this.engineHours,
+    this.odometerMiles,
+    this.engineHours,
     required this.timestamp,
     this.engineRpm = 0,
   });
@@ -71,8 +82,8 @@ class EldEvent {
     return EldEvent(
       speedMph: (map['speedMph'] as num?)?.toDouble() ?? 0.0,
       engineRpm: map['engineRpm'] as int? ?? 0,
-      odometerMiles: (map['odometerMiles'] as num?)?.toDouble() ?? 0.0,
-      engineHours: (map['engineHours'] as num?)?.toDouble() ?? 0.0,
+      odometerMiles: (map['odometerMiles'] as num?)?.toDouble(),
+      engineHours: (map['engineHours'] as num?)?.toDouble(),
       timestamp: map['timestamp'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int)
           : DateTime.now(),

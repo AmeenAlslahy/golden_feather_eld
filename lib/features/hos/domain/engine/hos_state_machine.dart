@@ -129,6 +129,10 @@ final hosEngineProvider = Provider<HosRulesEngine>((ref) {
   final calculator = HosCalculator(config, timeProvider);
   final stateMachine = HosStateMachine(timeProvider);
 
+  ref.onDispose(() {
+    stateMachine.dispose();
+  });
+
   return HosRulesEngine(
     calculator: calculator,
     stateMachine: stateMachine,

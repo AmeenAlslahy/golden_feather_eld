@@ -14,6 +14,7 @@ import '../../contracts/log_transfer_backend.dart';
 import '../../contracts/reports_backend.dart';
 import '../../contracts/rules_engine_backend.dart';
 import '../../contracts/rules_screen_backend.dart';
+import '../../contracts/signature_backend.dart';
 import '../../contracts/stats_backend.dart';
 import '../../contracts/status_dashboard_backend.dart';
 import '../../contracts/unidentified_events_backend.dart';
@@ -37,6 +38,7 @@ import 'sub/eld_log_transfer_backend.dart';
 import 'sub/eld_reports_backend.dart';
 import 'sub/eld_rules_engine_backend.dart';
 import 'sub/eld_rules_screen_backend.dart';
+import 'sub/eld_signature_backend.dart';
 import 'sub/eld_stats_backend.dart';
 import 'sub/eld_status_dashboard_backend.dart';
 import 'sub/eld_unidentified_events_backend.dart';
@@ -65,6 +67,9 @@ class EldEngineAdapter implements BackendAdapter {
 
   @override
   late final AccountBackend account = EldAccountBackend(_apiClient);
+
+  @override
+  late final SignatureBackend signature = EldSignatureBackend(_apiClient);
 
   @override
   late final StatusDashboardBackend statusDashboard =

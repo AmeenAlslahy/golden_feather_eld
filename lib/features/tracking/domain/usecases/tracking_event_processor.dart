@@ -50,15 +50,11 @@ class TrackingEventProcessor {
     _connectionStatusController.add(ConnectionStatus.connected);
 
     double mockSpeed = 0.0;
-    double mockOdometer = 150000.0;
-    double mockEngineHours = 3500.0;
     double mockLat = 24.7136;
     double mockLon = 46.6753;
 
     _mockTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       mockSpeed = (mockSpeed < 60.0) ? mockSpeed + 5.0 : 60.0;
-      mockOdometer += (mockSpeed / 3600.0) * 5;
-      mockEngineHours += (5.0 / 3600.0);
       mockLat += 0.0001;
       mockLon += 0.0001;
 
@@ -68,8 +64,8 @@ class TrackingEventProcessor {
         timestamp: now,
         speedMph: mockSpeed,
         speedDurationSeconds: 5,
-        odometerMiles: mockOdometer,
-        engineHours: mockEngineHours,
+        odometerMiles: null,
+        engineHours: null,
       ));
 
       _locationEventsController.add(LocationPoint(
@@ -98,8 +94,8 @@ class TrackingEventProcessor {
           event.timestampUtc, // يتم تحويله إلى التوقيت المناسب لاحقاً إذا لزم
       speedMph: event.speed,
       speedDurationSeconds: 0,
-      odometerMiles: event.odometer ?? 0.0,
-      engineHours: event.engineHours ?? 0.0,
+      odometerMiles: event.odometer,
+      engineHours: event.engineHours,
     );
   }
 
