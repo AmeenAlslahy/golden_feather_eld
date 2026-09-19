@@ -12,6 +12,7 @@ import '../../../../core/config/app_environment.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../data/repositories/traccar_remote_event_dispatcher.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/time/time_authority_provider.dart';
 
 class MockRemoteEventDispatcher implements RemoteEventDispatcher {
   @override
@@ -60,8 +61,13 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final queue = ref.watch(offlineQueueProvider);
   final dispatcher = ref.watch(remoteEventDispatcherProvider);
+  final timeAuthority = ref.watch(timeAuthorityProvider);
 
-  final engine = SyncEngine(queue: queue, dispatcher: dispatcher);
+  final engine = SyncEngine(
+    queue: queue,
+    dispatcher: dispatcher,
+    timeAuthority: timeAuthority,
+  );
 
   // استماع لحالة الاتصال من نظام التتبع
   final liveTracking = ref.watch(liveTrackingDataSourceProvider);

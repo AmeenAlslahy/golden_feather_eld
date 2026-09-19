@@ -4,7 +4,7 @@ import 'package:golden_feather_eld/features/hos/presentation/pages/status_dashbo
 import 'package:golden_feather_eld/features/hos/presentation/widgets/status_dashboard/hos_indicators_card.dart';
 import 'package:golden_feather_eld/features/hos/presentation/widgets/status_dashboard/main_circular_timer.dart';
 
-import '../../helpers/pump_page.dart';
+import '../helpers/pump_page.dart';
 
 void main() {
   group('StatusDashboardPage', () {

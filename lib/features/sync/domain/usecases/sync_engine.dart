@@ -3,6 +3,8 @@ import '../../../../core/error/failure.dart';
 import '../entities/pending_event.dart';
 import '../repositories/offline_queue.dart';
 
+import '../../../../core/time/time_authority.dart';
+
 /// واجهة الإرسال الفعلي للبيانات لضمان عزل الـ Sync عن Traccar
 abstract class RemoteEventDispatcher {
   /// إرسال الحدث إلى الخادم (بدون المعرفة بتفاصيل الاتصال)
@@ -13,15 +15,18 @@ class SyncEngine {
   final OfflineQueue _queue;
   final RemoteEventDispatcher _dispatcher;
   final RetryPolicy _retryPolicy;
+  final TimeAuthority _timeAuthority;
 
   bool _isSyncing = false;
 
   SyncEngine({
     required OfflineQueue queue,
     required RemoteEventDispatcher dispatcher,
+    required TimeAuthority timeAuthority,
     RetryPolicy? retryPolicy,
   })  : _queue = queue,
         _dispatcher = dispatcher,
+        _timeAuthority = timeAuthority,
         _retryPolicy = retryPolicy ?? const RetryPolicy();
 
   /// إرسال حدث جديد
@@ -52,7 +57,7 @@ class SyncEngine {
             (failure) async {
               // Failure State: فشل الإرسال
               final nextRetry =
-                  _retryPolicy.calculateNextRetry(event.retryCount);
+                  _retryPolicy.calculateNextRetry(event.retryCount, nowUtc: _timeAuthority.nowUtc());
               if (nextRetry != null) {
                 // جدولة المحاولة القادمة (Exponential Backoff)
                 final updatedEvent = event.copyWith(

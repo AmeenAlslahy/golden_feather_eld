@@ -52,17 +52,25 @@ class RetryPolicy {
     this.backoffFactor = 2.0,
   });
 
-  DateTime? calculateNextRetry(int currentRetries) {
+  /// Calculates the next retry timestamp.
+  ///
+  /// **Requires** an explicit `nowUtc` — no implicit `DateTime.now()`.
+  /// The caller (SyncEngine) provides this from `TimeAuthority` to
+  /// ensure retries are not affected by device clock changes.
+  DateTime? calculateNextRetry(
+    int currentRetries, {
+    required DateTime nowUtc,
+  }) {
     if (currentRetries >= maxRetries) {
       // بدلاً من إيقاف الإعادة وحذف الحدث، نثبت التأخير عند الحد الأقصى للمحاولات
       final maxDelaySeconds =
           baseDelay.inSeconds * (backoffFactor * maxRetries);
-      return DateTime.now().add(Duration(seconds: maxDelaySeconds.toInt()));
+      return nowUtc.add(Duration(seconds: maxDelaySeconds.toInt()));
     }
 
     // Exponential backoff
     final delaySeconds =
         baseDelay.inSeconds * (backoffFactor * (currentRetries + 1));
-    return DateTime.now().add(Duration(seconds: delaySeconds.toInt()));
+    return nowUtc.add(Duration(seconds: delaySeconds.toInt()));
   }
 }

@@ -39,7 +39,7 @@ void main() {
           maxRetries: 5, baseDelay: Duration(seconds: 5), backoffFactor: 2.0);
 
       // Act
-      final nextRetry = policy.calculateNextRetry(5);
+      final nextRetry = policy.calculateNextRetry(5, nowUtc: DateTime.utc(2026, 1, 15, 10));
 
       // Assert
       expect(nextRetry, isNotNull);

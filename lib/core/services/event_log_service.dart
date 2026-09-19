@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/logger.dart';
+import '../time/time_authority.dart';
+import '../time/time_authority_provider.dart';
 
 /// نموذج حدث مسجل
 class LoggedEvent {
@@ -35,7 +37,11 @@ class LoggedEvent {
 /// خدمة سجل الأحداث المحلي
 class EventLogService {
   static const String _eventsKey = 'event_logs';
+  final TimeAuthority _timeAuthority;
   List<LoggedEvent> _cache = [];
+
+  EventLogService({required TimeAuthority timeAuthority})
+      : _timeAuthority = timeAuthority;
 
   /// تهيئة السجل
   Future<void> init() async {
@@ -46,10 +52,11 @@ class EventLogService {
 
   /// تسجيل حدث
   Future<void> logEvent(String type, Map<String, dynamic> data) async {
+    final now = _timeAuthority.nowUtc();
     final event = LoggedEvent(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: now.millisecondsSinceEpoch.toString(),
       type: type,
-      timestamp: DateTime.now(),
+      timestamp: now,
       data: data,
     );
     _cache.add(event);
@@ -58,10 +65,15 @@ class EventLogService {
   }
 
   /// الحصول على أحداث اليوم
+  /// Returns events whose timestamp is on or after UTC midnight of the
+  /// current day.
+  ///
+  /// **Note:** "Today" is currently UTC-based. If a driver's log uses
+  /// a different time zone (home terminal), this will need refinement.
   List<LoggedEvent> getTodayEvents() {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    return _cache.where((e) => e.timestamp.isAfter(todayStart)).toList();
+    final now = _timeAuthority.nowUtc();
+    final todayStart = DateTime.utc(now.year, now.month, now.day);
+    return _cache.where((e) => !e.timestamp.isBefore(todayStart)).toList();
   }
 
   /// الحصول على أحداث حسب النوع
@@ -102,5 +114,5 @@ class EventLogService {
 
 /// مزود خدمة سجل الأحداث
 final eventLogServiceProvider = Provider<EventLogService>((ref) {
-  return EventLogService();
+  return EventLogService(timeAuthority: ref.watch(timeAuthorityProvider));
 });
