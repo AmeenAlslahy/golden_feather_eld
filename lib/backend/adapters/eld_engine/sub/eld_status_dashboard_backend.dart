@@ -1,3 +1,5 @@
+import 'dart:convert' as dart_convert;
+import 'package:dio/dio.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
@@ -42,7 +44,24 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
             'dutyStatus': status.wire,
             if (notes != null) 'notes': notes,
           },
-          parser: (data) => data is Map<String, dynamic> ? data : {},
+          responseType: ResponseType.plain,
+          parser: (data) {
+            if (data is String) {
+              if (data.trim().isEmpty) return <String, dynamic>{};
+              try {
+                final parsed = dart_convert.jsonDecode(data);
+                if (parsed is Map<String, dynamic>) {
+                  // If the backend wraps the data in a "data" object, unwrap it if needed,
+                  // but StatusDashboardMapper handles that or expects the raw data.
+                  // Wait, ApiResponse.fromBody already unwraps `data` or `body`?
+                  // No, ApiResponse just takes the parsed body.
+                  return parsed;
+                }
+              } catch (_) {}
+            }
+            if (data is Map<String, dynamic>) return data;
+            return <String, dynamic>{};
+          },
         )
         .then((result) => result.mapValue(
           (response) => StatusDashboardMapper.fromDashboardJson(

@@ -1,5 +1,6 @@
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
+import '../../../../domain/account/driver_account.dart';
 import '../../../contracts/account_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../fixtures/account_fixtures.dart';
@@ -39,19 +40,19 @@ class MockAccountBackend implements AccountBackend {
   }
 
   @override
-  Future<Result<RawJson>> getMyAccount({DriverId? driverId}) async {
-    return ok(Map<String, dynamic>.from(accountMyAccountFixture));
+  Future<Result<DriverAccount>> getMyAccount({DriverId? driverId}) async {
+    return ok(DriverAccount.fromJson(accountMyAccountFixture));
   }
 
   @override
-  Future<Result<RawJson>> updatePreferences({
+  Future<Result<DriverAccount>> updatePreferences({
     required String language,
     required String odometerUnit,
   }) async {
-    return ok({
+    return ok(DriverAccount.fromJson({
       ...accountMyAccountFixture,
       'language': language,
       'odometer': odometerUnit,
-    });
+    }));
   }
 }

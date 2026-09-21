@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import '../../time/trusted_time_provider.dart';
-import '../../utils/logger.dart';
+import '../../../core/time/trusted_time_provider.dart';
+import '../../../core/utils/logger.dart';
 
 /// Intercepts successful HTTP responses and updates the TrustedTimeProvider
 /// with the server's time (from the Date header).

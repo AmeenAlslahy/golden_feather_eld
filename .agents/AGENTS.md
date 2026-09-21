@@ -21,3 +21,23 @@
 - أرسل الخطأ.
 - لا تُعدِّل production code.
 - انتظر قرار المالك.
+
+## DRIVER APP SCOPE RULE
+
+This Flutter application is a **DRIVER application**. It MUST implement only functionality that the authenticated DRIVER is allowed to view or perform.
+
+Do NOT implement Carrier, Fleet Manager, Administrator, Mechanic, Dispatcher, or back-office management functionality inside the driver application.
+
+For every requirement and endpoint, classify it first as:
+- `DRIVER_VIEW`
+- `DRIVER_ACTION`
+- `DRIVER_RESPONSE_TO_EXTERNAL_ACTION`
+- `CARRIER_ACTION` (Out of Scope)
+- `ADMIN_ACTION` (Out of Scope)
+- `BACKEND_ONLY` (Out of Scope)
+- `SHARED` (Only the driver side of the workflow is in scope)
+
+When auditing requirements:
+- Do not mark a Carrier/Admin/Backend requirement as "Missing". Mark it as **OUT OF DRIVER APP SCOPE**.
+- Backend authorization remains authoritative for security. Hiding a carrier action in Flutter is not sufficient; do not build the action at all.
+- Do not integrate management endpoints unless the driver's workflow explicitly requires them.

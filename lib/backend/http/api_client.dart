@@ -12,7 +12,6 @@
 ///   - Response caching.
 library;
 
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -80,6 +79,7 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    ResponseType? responseType,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -87,7 +87,7 @@ class ApiClient {
         path,
         data: data,
         queryParameters: queryParameters,
-        options: _buildOptions(headers: headers),
+        options: _buildOptions(headers: headers, responseType: responseType),
       ),
       parser: parser,
     );

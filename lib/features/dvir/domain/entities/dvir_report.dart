@@ -84,11 +84,21 @@ class DvirReport extends Equatable {
   final VehicleCondition condition;
   final bool isSubmitted;
 
-  // New fields for simplified UI
+  // Additional fields from API
   final String? location;
   final String? companyName;
   final String? vehicleDefects;
   final String? trailerDefects;
+  final bool hasDefects;
+  final int defectsCount;
+  final String? defectsSummary;
+  final bool outOfService;
+  final bool certified;
+  final String? mechanicName;
+  final String? repairStatus;
+  final String? repairNotes;
+  final String? reviewingDriverName;
+  final bool nextDriverReviewed;
 
   const DvirReport({
     required this.id,
@@ -108,6 +118,16 @@ class DvirReport extends Equatable {
     this.companyName,
     this.vehicleDefects,
     this.trailerDefects,
+    this.hasDefects = false,
+    this.defectsCount = 0,
+    this.defectsSummary,
+    this.outOfService = false,
+    this.certified = false,
+    this.mechanicName,
+    this.repairStatus,
+    this.repairNotes,
+    this.reviewingDriverName,
+    this.nextDriverReviewed = false,
   });
 
   DvirReport copyWith({
@@ -128,6 +148,16 @@ class DvirReport extends Equatable {
     String? companyName,
     String? vehicleDefects,
     String? trailerDefects,
+    bool? hasDefects,
+    int? defectsCount,
+    String? defectsSummary,
+    bool? outOfService,
+    bool? certified,
+    String? mechanicName,
+    String? repairStatus,
+    String? repairNotes,
+    String? reviewingDriverName,
+    bool? nextDriverReviewed,
   }) {
     return DvirReport(
       id: id ?? this.id,
@@ -147,11 +177,18 @@ class DvirReport extends Equatable {
       companyName: companyName ?? this.companyName,
       vehicleDefects: vehicleDefects ?? this.vehicleDefects,
       trailerDefects: trailerDefects ?? this.trailerDefects,
+      hasDefects: hasDefects ?? this.hasDefects,
+      defectsCount: defectsCount ?? this.defectsCount,
+      defectsSummary: defectsSummary ?? this.defectsSummary,
+      outOfService: outOfService ?? this.outOfService,
+      certified: certified ?? this.certified,
+      mechanicName: mechanicName ?? this.mechanicName,
+      repairStatus: repairStatus ?? this.repairStatus,
+      repairNotes: repairNotes ?? this.repairNotes,
+      reviewingDriverName: reviewingDriverName ?? this.reviewingDriverName,
+      nextDriverReviewed: nextDriverReviewed ?? this.nextDriverReviewed,
     );
   }
-
-  bool get hasDefects => items.any((item) => item.isDefective);
-  int get defectCount => items.where((item) => item.isDefective).length;
 
   @override
   List<Object?> get props => [
@@ -172,5 +209,15 @@ class DvirReport extends Equatable {
         companyName,
         vehicleDefects,
         trailerDefects,
+        hasDefects,
+        defectsCount,
+        defectsSummary,
+        outOfService,
+        certified,
+        mechanicName,
+        repairStatus,
+        repairNotes,
+        reviewingDriverName,
+        nextDriverReviewed,
       ];
 }

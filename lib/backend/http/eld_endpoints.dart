@@ -118,5 +118,9 @@ class EldEndpoints {
   static String signatures(int driverId) => '/eld/signatures/$driverId';
 
   // 17. Hardware
+  static const String hardwareAlerts = '/eld/hardware/alerts';
+  static const String hardwareManualMode = '/eld/hardware/manual-mode';
+  static const String hardwareReadiness = '/eld/hardware/readiness';
+  static const String hardwareStatus = '/eld/hardware/status';
   static const String hardwareTelemetry = '/eld/hardware/telemetry';
 }

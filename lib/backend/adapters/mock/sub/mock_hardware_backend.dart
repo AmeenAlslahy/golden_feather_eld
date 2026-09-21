@@ -44,6 +44,14 @@ class MockHardwareBackend implements HardwareBackend {
   }
 
   @override
+  Future<Result<RawJson>> connectSession({
+    String? uniqueId,
+    bool disconnected = false,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Result<RawJson>> getStatus({
     String? uniqueId,
     DriverId? driverId,

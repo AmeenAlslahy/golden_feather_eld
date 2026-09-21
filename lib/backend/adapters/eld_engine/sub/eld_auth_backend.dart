@@ -54,7 +54,7 @@ class EldAuthBackend implements AuthBackend {
         parsedData = response.data;
       }
       
-      if (parsedData == null) parsedData = {};
+      parsedData ??= {};
 
       String? credential;
       if (isEld) {

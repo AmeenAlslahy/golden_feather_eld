@@ -39,6 +39,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   bool _isSubmitting = false;
 
+  String _selectedStatus = 'Safe to Drive';
+  final List<String> _statusOptions = [
+    'Safe to Drive',
+    'Needs Repair',
+    'Unsafe'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -53,8 +60,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         TextEditingController(text: r?.trailerDefects ?? '');
     _companyController = TextEditingController(
         text:
-            r?.companyName ?? 'GOLDEN GATE TRANSPORT LLC - 3433 MELWOOD DR...');
+            r?.companyName ?? 'GOLDEN GATE TRANSPORT LLC');
     _remarksController = TextEditingController(text: r?.notes ?? '');
+    if (r != null) {
+      _selectedStatus = r.condition.englishName;
+    }
   }
 
   @override
@@ -79,23 +89,27 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final dashboard = ref.read(dashboardDataProvider);
     final signatureData = await _signatureController.toPngBytes();
 
+    VehicleCondition condition = VehicleCondition.safe;
+    if (_selectedStatus == 'Needs Repair') condition = VehicleCondition.needsRepair;
+    if (_selectedStatus == 'Unsafe') condition = VehicleCondition.unsafe;
+
+    bool hasDefects = _vehicleDefectsController.text.isNotEmpty || _trailerDefectsController.text.isNotEmpty;
+
     final report = DvirReport(
       id: widget.existingReport?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
-      type: InspectionType.preTrip, // Defaulted for this layout
+      type: InspectionType.preTrip,
       date: widget.existingReport?.date ?? DateTime.now(),
       driverName: dashboard.driverName,
       vehicleId: dashboard.vehicleId,
       trailerId: dashboard.trailerId,
       odometer: double.tryParse(_odometerController.text),
-      items: const [], // No longer using the detailed checklist
-      notes:
-          _remarksController.text.isNotEmpty ? _remarksController.text : null,
+      items: const [], // Detailed items not used in this flat layout, but we pass defects strings
+      notes: _remarksController.text.isNotEmpty ? _remarksController.text : null,
       signature: signatureData != null
           ? 'signature_${DateTime.now().millisecondsSinceEpoch}'
           : null,
-      condition:
-          VehicleCondition.safe, // Defaulted based on "Satisfactory" text
+      condition: condition,
       isSubmitted: true,
 
       // New fields
@@ -103,6 +117,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       companyName: _companyController.text,
       vehicleDefects: _vehicleDefectsController.text,
       trailerDefects: _trailerDefectsController.text,
+      hasDefects: hasDefects,
+      defectsCount: hasDefects ? 1 : 0, // Simplified for this layout
+      defectsSummary: hasDefects ? '${_vehicleDefectsController.text} | ${_trailerDefectsController.text}' : null,
     );
 
     if (widget.existingReport != null) {
@@ -259,8 +276,29 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ),
             _buildFieldGroup(
               title: 'Status',
-              child: Text(context.loc.vehicleConditionSatisfactory,
-                  style: TextStyle(color: textColor, fontSize: 14)),
+              child: DropdownButtonFormField<String>(
+                initialValue: _selectedStatus,
+                dropdownColor: surfaceColor,
+                items: _statusOptions
+                    .map((status) => DropdownMenuItem(
+                          value: status,
+                          child: Text(status, style: TextStyle(color: textColor, fontSize: 14)),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedStatus = value;
+                    });
+                  }
+                },
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                icon: Icon(Icons.arrow_drop_down, color: textColor),
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),

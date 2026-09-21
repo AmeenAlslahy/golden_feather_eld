@@ -61,46 +61,64 @@ class LogsListPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: logsState.isLoading
+      body: (logsState.isLoading && logsState.logs.isEmpty)
           ? const Center(child: CircularProgressIndicator())
-          : logsState.logs.isEmpty
+          : (logsState.error != null && logsState.logs.isEmpty)
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.list_alt,
-                          size: 64,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant),
+                      Text(logsState.error!, style: const TextStyle(color: AppColors.dangerRed)),
                       const SizedBox(height: 16),
-                      Text(
-                        context.loc.noData,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
+                      ElevatedButton(
+                        onPressed: () => ref.read(logsProvider.notifier).loadLogs(refresh: true),
+                        child: const Text('Retry'), // Or context.loc.retry if available
                       ),
                     ],
                   ),
                 )
-              : ListView.separated(
-                  padding: EdgeInsets.zero,
-                  itemCount: logsState.logs.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(color: Theme.of(context).dividerColor, height: 1),
-                  itemBuilder: (context, index) {
-                    final log = logsState.logs[index];
-                    return _LogListItem(
-                      log: log,
-                      onTap: () {
-                        ref.read(logsProvider.notifier).selectLog(log);
-                        context.push(
-                            AppRoutes.logDetail.replaceAll(':id', log.id));
-                      },
-                    );
-                  },
-                ),
+              : logsState.logs.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.list_alt,
+                              size: 64,
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.loc.noData,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () => ref.read(logsProvider.notifier).loadLogs(refresh: true),
+                      child: ListView.separated(
+                        padding: EdgeInsets.zero,
+                        itemCount: logsState.logs.length,
+                        separatorBuilder: (_, __) =>
+                            Divider(color: Theme.of(context).dividerColor, height: 1),
+                        itemBuilder: (context, index) {
+                          final log = logsState.logs[index];
+                          return _LogListItem(
+                            log: log,
+                            onTap: () {
+                              ref.read(logsProvider.notifier).selectLog(log);
+                              context.push(
+                                  AppRoutes.logDetail.replaceAll(
+                                      ':id', log.id.value.toString()));
+                            },
+                          );
+                        },
+                      ),
+                    ),
     );
   }
 }
@@ -160,13 +178,15 @@ class _LogListItem extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      log.totalDrivingHours < 1
-                          ? '< 1m'
-                          : '${log.totalDrivingHours.toStringAsFixed(0)}h ${(log.totalDrivingHours % 1 * 60).toStringAsFixed(0)}m',
+                      log.formattedTotalWorkTime.isNotEmpty
+                          ? log.formattedTotalWorkTime
+                          : (log.totalDrivingHours < 1
+                              ? '< 1m'
+                              : '${log.totalDrivingHours.toStringAsFixed(0)}h ${(log.totalDrivingHours % 1 * 60).toStringAsFixed(0)}m'),
                       style: TextStyle(
                         fontSize: AppTypography.subtitleSize,
                         fontWeight: AppTypography.bold,
-                        color: log.totalDrivingHours > 0
+                        color: log.totalDrivingHours > 0 || log.formattedTotalWorkTime.isNotEmpty
                             ? AppColors.successGreen
                             : AppColors.textSecondary,
                       ),

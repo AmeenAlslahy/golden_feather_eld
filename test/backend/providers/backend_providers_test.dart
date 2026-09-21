@@ -5,6 +5,8 @@ import 'package:golden_feather_eld/backend/core/backend_registry.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/storage/ports/secure_storage_port.dart';
 import 'package:golden_feather_eld/core/storage/storage_providers.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:mocktail/mocktail.dart';
 
 class FakeSecureStorage implements SecureStoragePort {
   @override
@@ -17,6 +19,13 @@ class FakeSecureStorage implements SecureStoragePort {
   Future<void> deleteAll() async {}
   @override
   Future<bool> containsKey(String key) async => false;
+}
+
+class FakeLocalStorageService extends Mock implements LocalStorageService {
+  @override
+  String get backendType => 'mock';
+  @override
+  String get serverUrl => 'https://example.com';
 }
 
 void main() {
@@ -38,6 +47,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           secureStorageProvider.overrideWithValue(FakeSecureStorage()),
+          localStorageProvider.overrideWithValue(FakeLocalStorageService()),
         ],
       );
       final active = container.read(activeBackendProvider);
@@ -51,6 +61,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           secureStorageProvider.overrideWithValue(FakeSecureStorage()),
+          localStorageProvider.overrideWithValue(FakeLocalStorageService()),
         ],
       );
 

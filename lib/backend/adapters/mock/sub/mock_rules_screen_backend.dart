@@ -1,22 +1,69 @@
+import 'package:fpdart/fpdart.dart' as fp;
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
+import '../../../../features/account/application/models/rules_screen_model.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
+import '../../eld_engine/models/rules_screen_dto.dart';
+import '../../eld_engine/mappers/rules_screen_mapper.dart';
 
 /// In-memory mock for [RulesScreenBackend].
-/// **Status:** Skeleton — implemented in Phase 2.
 class MockRulesScreenBackend implements RulesScreenBackend {
-  const MockRulesScreenBackend();
+  Map<String, dynamic> _state = {
+    "driver": 100,
+    "ruleSource": "SnSoft - ELD",
+    "cycleRule": "USA 70 hour / 8 day",
+    "cargoType": "Property",
+    "restart": "34 Hour Restart",
+    "restBreak": "30 Minute Rest Break Required",
+    "sixteenHourException": false,
+    "options": {
+      "cycleRule": [
+        "USA 70 hour / 8 day",
+        "USA 60 hour / 7 day",
+        "Texas 70 hour / 7 day"
+      ],
+      "cargoType": ["Property", "Passenger"],
+      "restart": ["34 Hour Restart", "24 Hour Restart", "None"],
+      "restBreak": ["30 Minute Rest Break Required", "None"]
+    },
+    "limits": {
+      "cycleHours": 70,
+      "cycleDays": 8,
+      "maxShiftHours": 14,
+      "maxDrivingHours": 11,
+      "mandatoryRestHours": 10
+    },
+    "editableFields": [
+      "cycleRule",
+      "cargoType",
+      "restart",
+      "restBreak",
+      "sixteenHourException"
+    ],
+    "readOnlyFields": [],
+    "fixedSettings": {},
+    "notice": "All fields are available for local testing."
+  };
+
+  MockRulesScreenBackend();
 
   @override
-  Future<Result<RawJson>> getRulesScreen({DriverId? driverId}) =>
-      throw UnimplementedError(
-        'MockRulesScreenBackend.getRulesScreen — Phase 2',
-      );
+  Future<Result<RulesScreenModel>> getRulesScreen({DriverId? driverId}) async {
+    final dto = RulesScreenDto.fromJson(_state);
+    return fp.Right(RulesScreenMapper.toModel(dto));
+  }
 
   @override
-  Future<Result<RawJson>> saveRulesScreen(RawJson settings) =>
-      throw UnimplementedError(
-        'MockRulesScreenBackend.saveRulesScreen — Phase 2',
-      );
+  Future<Result<RulesScreenModel>> saveRulesScreen({
+    required DriverId driverId,
+    required RawJson update,
+  }) async {
+    _state = {
+      ..._state,
+      ...update,
+    };
+    final dto = RulesScreenDto.fromJson(_state);
+    return fp.Right(RulesScreenMapper.toModel(dto));
+  }
 }

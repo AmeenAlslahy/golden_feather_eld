@@ -9,36 +9,100 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../widgets/manual_mode_dialog.dart';
+
+import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
 
 class EldConnectionState {
   final bool isConnecting;
   final bool hasFailed;
+  final String? errorMessage;
 
-  EldConnectionState({this.isConnecting = false, this.hasFailed = false});
+  EldConnectionState({
+    this.isConnecting = false,
+    this.hasFailed = false,
+    this.errorMessage,
+  });
 
-  EldConnectionState copyWith({bool? isConnecting, bool? hasFailed}) {
+  EldConnectionState copyWith({
+    bool? isConnecting,
+    bool? hasFailed,
+    String? errorMessage,
+  }) {
     return EldConnectionState(
       isConnecting: isConnecting ?? this.isConnecting,
       hasFailed: hasFailed ?? this.hasFailed,
+      errorMessage: errorMessage,
     );
   }
 }
 
 class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
-  EldConnectionNotifier() : super(EldConnectionState());
+  final Ref _ref;
 
-  Future<void> attemptConnection() async {
-    state = state.copyWith(isConnecting: true, hasFailed: false);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      state = state.copyWith(isConnecting: false, hasFailed: true);
+  EldConnectionNotifier(this._ref) : super(EldConnectionState());
+
+  Future<void> attemptConnection(String macAddress) async {
+    state = state.copyWith(isConnecting: true, hasFailed: false, errorMessage: null);
+
+    try {
+      final bluetoothService = _ref.read(bluetoothServiceProvider);
+      
+      // 1. الاتصال المحلي بالبلوتوث
+      try {
+        await bluetoothService.connect(macAddress);
+      } catch (e) {
+        if (mounted) {
+          state = state.copyWith(
+            isConnecting: false,
+            hasFailed: true,
+            errorMessage: 'فشل الاتصال عبر البلوتوث: ${e.toString()}',
+          );
+        }
+        return;
+      }
+
+      // 2. التحقق من السيرفر وبدء الجلسة
+      final hardwareBackend = _ref.read(hardwareBackendProvider);
+      
+      final result = await hardwareBackend.connectSession(
+        uniqueId: macAddress,
+      );
+
+      if (mounted) {
+        result.fold(
+          (error) {
+            state = state.copyWith(
+              isConnecting: false,
+              hasFailed: true,
+              errorMessage: error.l10nKey,
+            );
+          },
+          (data) {
+            // نجاح الاتصال
+            state = state.copyWith(
+              isConnecting: false,
+              hasFailed: false,
+            );
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        state = state.copyWith(
+          isConnecting: false,
+          hasFailed: true,
+          errorMessage: e.toString(),
+        );
+      }
     }
   }
 }
 
 final eldConnectionProvider = StateNotifierProvider.autoDispose<
     EldConnectionNotifier, EldConnectionState>((ref) {
-  return EldConnectionNotifier();
+  return EldConnectionNotifier(ref);
 });
 
 class EldConnectionPage extends ConsumerStatefulWidget {
@@ -59,13 +123,21 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
   }
 
   Future<void> _attemptConnection() async {
-    await ref.read(eldConnectionProvider.notifier).attemptConnection();
+    final notifier = ref.read(eldConnectionProvider.notifier);
+    await notifier.attemptConnection(_macController.text);
   }
 
   @override
   Widget build(BuildContext context) {
     final dashboard = ref.watch(dashboardDataProvider);
     final connectionState = ref.watch(eldConnectionProvider);
+
+    // الانتقال للرئيسية عند النجاح
+    ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
+      if (previous != null && previous.isConnecting && !current.isConnecting && !current.hasFailed) {
+        context.go(AppRoutes.home);
+      }
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -103,7 +175,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                   horizontal: AppSpacing.md,
                 ),
                 child: Text(
-                  '${context.loc.unableToConnect} "${_macController.text}".',
+                  connectionState.errorMessage ?? '${context.loc.unableToConnect} "${_macController.text}".',
                   style: const TextStyle(
                     color: AppColors.surface,
                     fontSize: AppTypography.bodySize,
@@ -175,7 +247,15 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     type: EldButtonType.continueDisconnected,
                     onPressed: connectionState.isConnecting
                         ? null
-                        : () => context.go(AppRoutes.home),
+                        : () async {
+                            final success = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => const ManualModeDialog(),
+                            );
+                            if (success == true && context.mounted) {
+                              context.go(AppRoutes.home);
+                            }
+                          },
                   ),
                 ],
               ),

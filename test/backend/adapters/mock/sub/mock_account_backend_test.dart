@@ -71,8 +71,7 @@ void main() {
       final result = await backend.getMyAccount();
 
       result.tap(onSuccess: (data) {
-        expect(data['name'], 'Naseem Hassan Ali Adam');
-        expect(data['editableFields'], contains('language'));
+        expect(data.email, 'driver@example.com');
       });
     });
   });
@@ -85,8 +84,8 @@ void main() {
       );
 
       result.tap(onSuccess: (data) {
-        expect(data['language'], 'ar');
-        expect(data['odometer'], 'km');
+        expect(data.language, 'ar');
+        expect(data.odometer, 'km');
       });
     });
   });

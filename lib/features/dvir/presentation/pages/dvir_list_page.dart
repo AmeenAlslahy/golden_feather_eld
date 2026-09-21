@@ -158,7 +158,7 @@ class _DvirCard extends StatelessWidget {
               _infoRow(context, context.loc.trailer, report.trailerId!),
             _infoRow(context, context.loc.odometerReading,
                 '${report.odometer?.toStringAsFixed(0) ?? "-"} mi'),
-            // عدد الأعطال
+            // عدد الأعطال وحالة الإصلاح
             if (report.hasDefects)
               Container(
                 margin: const EdgeInsets.only(top: AppSpacing.sm),
@@ -167,15 +167,58 @@ class _DvirCard extends StatelessWidget {
                   color: AppColors.dangerRed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.warning,
-                        color: AppColors.dangerRed, size: 16),
-                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.warning,
+                            color: AppColors.dangerRed, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${report.defectsCount} ${context.loc.defectsFound}',
+                          style: const TextStyle(
+                              color: AppColors.dangerRed, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    if (report.repairStatus != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.build, color: AppColors.textSecondary, size: 14),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Repair: ${report.repairStatus}',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            // مراجعة السائق التالي
+            if (report.nextDriverReviewed)
+              Container(
+                margin: const EdgeInsets.only(top: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.successGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle,
+                        color: AppColors.successGreen, size: 16),
+                    SizedBox(width: 8),
                     Text(
-                      '${report.defectCount} ${context.loc.defectsFound}',
-                      style: const TextStyle(
-                          color: AppColors.dangerRed, fontSize: 13),
+                      'Reviewed by next driver',
+                      style: TextStyle(
+                          color: AppColors.successGreen, fontSize: 13),
                     ),
                   ],
                 ),

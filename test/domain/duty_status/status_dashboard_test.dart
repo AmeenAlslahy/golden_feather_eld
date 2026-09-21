@@ -12,7 +12,7 @@ void main() {
     test('fromWire parses known values', () {
       expect(DutyStatusCode.fromWire('DRIVING'), DutyStatusCode.driving);
       expect(DutyStatusCode.fromWire('OFF_DUTY'), DutyStatusCode.offDuty);
-      expect(DutyStatusCode.fromWire('SLEEPER_BERTH'), DutyStatusCode.sleeperBerth);
+      expect(DutyStatusCode.fromWire('SLEEPER'), DutyStatusCode.sleeperBerth);
       expect(DutyStatusCode.fromWire('ON_DUTY'), DutyStatusCode.onDutyNotDriving);
       expect(DutyStatusCode.fromWire('YARD_MOVE'), DutyStatusCode.yardMove);
       expect(DutyStatusCode.fromWire('PERSONAL_CONVEYANCE'), DutyStatusCode.personalConveyance);

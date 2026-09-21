@@ -119,7 +119,7 @@ class MockInspectionBackend implements InspectionBackend {
           activeDataDiagnostics: const [],
           activeDeviceMalfunctions: const [],
           events: [
-            DotInspectionEvent(
+            const DotInspectionEvent(
               sequenceNumber: 1,
               timeEt: '06:00',
               eventCode: 'ON',

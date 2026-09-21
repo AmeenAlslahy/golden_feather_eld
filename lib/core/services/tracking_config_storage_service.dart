@@ -72,19 +72,25 @@ class TrackingConfigStorageService {
 
     if (params['id'] != null) await setDeviceId(params['id']!);
     if (params['accuracy'] != null) await setAccuracy(params['accuracy']!);
-    if (params['interval'] != null)
+    if (params['interval'] != null) {
       await setInterval(int.tryParse(params['interval']!) ?? interval);
-    if (params['distance'] != null)
+    }
+    if (params['distance'] != null) {
       await setDistance(int.tryParse(params['distance']!) ?? distance);
-    if (params['angle'] != null)
+    }
+    if (params['angle'] != null) {
       await setAngle(int.tryParse(params['angle']!) ?? angle);
-    if (params['heartbeat'] != null)
+    }
+    if (params['heartbeat'] != null) {
       await setHeartbeat(int.tryParse(params['heartbeat']!) ?? heartbeat);
+    }
     if (params['buffer'] != null) await setBuffer(params['buffer'] == 'true');
-    if (params['wakelock'] != null)
+    if (params['wakelock'] != null) {
       await setWakelock(params['wakelock'] == 'true');
-    if (params['stopDetection'] != null)
+    }
+    if (params['stopDetection'] != null) {
       await setStopDetection(params['stopDetection'] == 'true');
+    }
     if (params['preferPlatformProviders'] != null) {
       await setPreferPlatformProviders(
           params['preferPlatformProviders'] == 'true');

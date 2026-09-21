@@ -105,16 +105,90 @@ class DvirNotifier extends StateNotifier<DvirState> {
           error: failure.message,
         ),
         (_) {
-          final updatedReports = [
-            report.copyWith(isSubmitted: true),
-            ...state.reports
-          ];
-          state = state.copyWith(
-            isLoading: false,
-            reports: updatedReports,
-            error: null,
-          );
+          _loadDvirs(); // Reload to get updated list with server IDs
         },
+      );
+    }
+  }
+
+  /// تصديق إصلاح العيوب من قبل الميكانيكي أو الناقل
+  Future<void> certifyRepair({
+    required String dvirId,
+    required String mechanicName,
+    required String action,
+    String? repairNotes,
+    required String mechanicSignature,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _repository.certifyRepair(
+      dvirId: dvirId,
+      mechanicName: mechanicName,
+      action: action,
+      repairNotes: repairNotes,
+      mechanicSignature: mechanicSignature,
+    );
+
+    if (mounted) {
+      result.fold(
+        (failure) => state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+        ),
+        (_) {
+          _loadDvirs(); // Reload to update state
+        },
+      );
+    }
+  }
+
+  /// مراجعة وتوقيع السائق التالي
+  Future<void> reviewDvir({
+    required String dvirId,
+    required int reviewingDriverId,
+    required String reviewingDriverName,
+    required String signatureData,
+    required bool driverAgreed,
+    String? reviewNotes,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _repository.reviewDvir(
+      dvirId: dvirId,
+      reviewingDriverId: reviewingDriverId,
+      reviewingDriverName: reviewingDriverName,
+      signatureData: signatureData,
+      driverAgreed: driverAgreed,
+      reviewNotes: reviewNotes,
+    );
+
+    if (mounted) {
+      result.fold(
+        (failure) => state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+        ),
+        (_) {
+          _loadDvirs(); // Reload to update state
+        },
+      );
+    }
+  }
+
+  /// استرجاع تفاصيل تقرير DVIR محدد
+  Future<void> loadDvirDetails(String dvirId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _repository.getDvirDetails(dvirId);
+
+    if (mounted) {
+      result.fold(
+        (failure) => state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+        ),
+        (report) => state = state.copyWith(
+          isLoading: false,
+          currentReport: report,
+          error: null,
+        ),
       );
     }
   }

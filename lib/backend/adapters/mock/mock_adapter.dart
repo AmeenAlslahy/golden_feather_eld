@@ -92,7 +92,7 @@ class MockAdapter implements BackendAdapter {
   // ==========================================================================
 
   @override
-  late final RulesScreenBackend rulesScreen = const MockRulesScreenBackend();
+  late final RulesScreenBackend rulesScreen = MockRulesScreenBackend();
 
   @override
   late final DailyLogsBackend dailyLogs = const MockDailyLogsBackend();

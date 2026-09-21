@@ -32,11 +32,15 @@ const accountProfileFixture = <String, dynamic>{
 };
 
 const accountMyAccountFixture = <String, dynamic>{
-  'id': 101,
+  'driverId': 101,
   'email': 'driver@example.com',
   'name': 'Naseem Hassan Ali Adam',
   'phone': '+1 555-0199',
-  'license': 'MI, A350622298913',
+  'license': {
+    'state': 'MI',
+    'number': 'A350622298913',
+    'formatted': 'MI, A350622298913'
+  },
   'carrier': 'Top Logistics LLC',
   'mainOfficeAddress': '100 Main St, Dallas, TX',
   'homeTerminalAddress': 'Dallas Terminal, TX',

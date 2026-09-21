@@ -1,4 +1,3 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/battery_optimization_service.dart';

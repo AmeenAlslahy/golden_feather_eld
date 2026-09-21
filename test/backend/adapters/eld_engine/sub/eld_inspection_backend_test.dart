@@ -39,7 +39,7 @@ void main() {
       );
       
       verify(() => mockApiClient.get<Map<String, dynamic>>(
-            '/eld/dot-inspection',
+            '/eld/inspections',
             queryParameters: {'driverId': 101},
             parser: any(named: 'parser'),
           )).called(1);

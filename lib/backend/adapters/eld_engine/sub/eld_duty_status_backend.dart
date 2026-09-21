@@ -70,7 +70,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
       if (!res.isSuccess) {
         throw Exception(res.message ?? 'Failed to submit duty status');
       }
-      return null;
+      return;
     });
   }
 
@@ -84,7 +84,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
       if (!res.isSuccess) {
         throw Exception(res.message ?? 'Failed to submit event');
       }
-      return null;
+      return;
     });
   }
 }

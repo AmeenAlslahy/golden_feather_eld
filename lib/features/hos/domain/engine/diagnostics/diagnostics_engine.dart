@@ -1,6 +1,6 @@
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../core/utils/logger.dart';
 import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../data/datasources/hos_local_data_source.dart';
@@ -277,15 +277,3 @@ class DiagnosticsEngine {
     _stateController.close();
   }
 }
-
-/// مزود محرك التشخيص
-final diagnosticsEngineProvider = Provider<DiagnosticsEngine>((ref) {
-  final tracking = ref.watch(liveTrackingDataSourceProvider);
-  final db = ref.watch(hosLocalDataSourceProvider);
-  final timeProvider = ref.watch(trustedTimeProvider);
-  final engine = DiagnosticsEngine(tracking, db, timeProvider);
-  ref.onDispose(() {
-    engine.dispose();
-  });
-  return engine;
-});

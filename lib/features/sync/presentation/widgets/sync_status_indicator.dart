@@ -14,8 +14,9 @@ class SyncStatusIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final syncState = ref.watch(syncStateProvider);
 
-    if (syncState.totalPending == 0 && !syncState.isSyncing)
+    if (syncState.totalPending == 0 && !syncState.isSyncing) {
       return const SizedBox.shrink();
+    }
 
     return InkWell(
       onTap: () {

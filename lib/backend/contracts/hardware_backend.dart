@@ -20,6 +20,12 @@ abstract interface class HardwareBackend {
     DriverId? driverId,
   });
 
+  /// POST /eld/sessions/connect
+  Future<Result<RawJson>> connectSession({
+    String? uniqueId,
+    bool disconnected = false,
+  });
+
   /// GET /eld/hardware/status
   Future<Result<RawJson>> getStatus({
     String? uniqueId,

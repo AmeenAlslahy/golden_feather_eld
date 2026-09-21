@@ -17,30 +17,86 @@ class EldHardwareBackend implements HardwareBackend {
   const EldHardwareBackend(this._apiClient);
 
   @override
-  Future<Result<RawJson>> getAlerts({DriverId? driverId}) =>
-      throw UnimplementedError('EldHardwareBackend.getAlerts — Phase 2');
+  Future<Result<RawJson>> getAlerts({DriverId? driverId}) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.hardwareAlerts,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> setManualMode({
     required bool enable,
     required String reason,
     DriverId? driverId,
-  }) =>
-      throw UnimplementedError('EldHardwareBackend.setManualMode — Phase 2');
+  }) async {
+    final Map<String, dynamic> query = {};
+    if (driverId != null) query['driverId'] = driverId.value;
+
+    final res = await _apiClient.post<RawJson>(
+      EldEndpoints.hardwareManualMode,
+      queryParameters: query.isNotEmpty ? query : null,
+      data: {
+        'enable': enable,
+        'reason': reason,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> getReadiness({
     String? uniqueId,
     DriverId? driverId,
-  }) =>
-      throw UnimplementedError('EldHardwareBackend.getReadiness — Phase 2');
+  }) async {
+    final Map<String, dynamic> query = {};
+    if (uniqueId != null) query['uniqueId'] = uniqueId;
+    if (driverId != null) query['driverId'] = driverId.value;
+
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.hardwareReadiness,
+      queryParameters: query.isNotEmpty ? query : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> connectSession({
+    String? uniqueId,
+    bool disconnected = false,
+  }) async {
+    final Map<String, dynamic> query = {};
+    if (uniqueId != null) query['uniqueId'] = uniqueId;
+    if (disconnected) query['disconnected'] = true;
+
+    final res = await _apiClient.post<RawJson>(
+      EldEndpoints.connectSession,
+      queryParameters: query.isNotEmpty ? query : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> getStatus({
     String? uniqueId,
     DriverId? driverId,
-  }) =>
-      throw UnimplementedError('EldHardwareBackend.getStatus — Phase 2');
+  }) async {
+    final Map<String, dynamic> query = {};
+    if (uniqueId != null) query['uniqueId'] = uniqueId;
+    if (driverId != null) query['driverId'] = driverId.value;
+
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.hardwareStatus,
+      queryParameters: query.isNotEmpty ? query : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<void>> sendTelemetry(TelemetryReading reading) {

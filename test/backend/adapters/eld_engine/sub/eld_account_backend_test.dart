@@ -8,6 +8,23 @@ import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
+const _mockAccountJson = {
+  'driverId': 101,
+  'email': 'driver@example.com',
+  'phone': '123-456-7890',
+  'carrier': 'Carrier Inc',
+  'mainOfficeAddress': '123 Main St',
+  'homeTerminalAddress': '456 Home St',
+  'timeZone': 'America/New_York',
+  'language': 'English',
+  'odometer': 'mi',
+  'license': {
+    'state': 'NY',
+    'number': '123456789',
+    'formatted': 'NY-123456789'
+  }
+};
+
 void main() {
   late Dio dio;
   late DioAdapter adapter;
@@ -80,20 +97,20 @@ void main() {
     test('works without driverId', () async {
       adapter.onGet(
         '/eld/account',
-        (server) => server.reply(200, {'name': 'Me'}),
+        (server) => server.reply(200, _mockAccountJson),
       );
 
       final result = await backend.getMyAccount();
 
       result.tap(onSuccess: (data) {
-        expect(data['name'], 'Me');
+        expect(data.language, 'English');
       });
     });
 
     test('passes driverId as query parameter', () async {
       adapter.onGet(
         '/eld/account',
-        (server) => server.reply(200, {'name': 'Me'}),
+        (server) => server.reply(200, _mockAccountJson),
         queryParameters: {'driverId': 101},
       );
 
@@ -109,7 +126,11 @@ void main() {
     test('sends language and odometer', () async {
       adapter.onPut(
         '/eld/account/preferences',
-        (server) => server.reply(200, {'language': 'ar', 'odometer': 'km'}),
+        (server) => server.reply(200, {
+          ..._mockAccountJson,
+          'language': 'ar',
+          'odometer': 'km',
+        }),
         data: {'language': 'ar', 'odometer': 'km'},
       );
 
@@ -119,7 +140,7 @@ void main() {
       );
 
       result.tap(onSuccess: (data) {
-        expect(data['language'], 'ar');
+        expect(data.language, 'ar');
       });
     });
   });

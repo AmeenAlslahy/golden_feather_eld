@@ -1,10 +1,7 @@
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
-import '../../../../core/config/hos_configuration.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/utils/logger.dart';
-import 'hos_rules_engine.dart';
-import 'hos_calculator.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 
 /// آلة حالات ساعات الخدمة
@@ -116,26 +113,3 @@ class StatusTransition {
     this.annotation,
   });
 }
-
-/// مزود الإعدادات (يمكن تغييره لاحقاً ليكون ديناميكياً يقرأ من DB أو SharedPreferences)
-final hosConfigurationProvider = Provider<HosConfiguration>((ref) {
-  return HosConfiguration.usa70_8();
-});
-
-/// مزود محرك HOS
-final hosEngineProvider = Provider<HosRulesEngine>((ref) {
-  final config = ref.watch(hosConfigurationProvider);
-  final timeProvider = ref.watch(trustedTimeProvider);
-  final calculator = HosCalculator(config, timeProvider);
-  final stateMachine = HosStateMachine(timeProvider);
-
-  ref.onDispose(() {
-    stateMachine.dispose();
-  });
-
-  return HosRulesEngine(
-    calculator: calculator,
-    stateMachine: stateMachine,
-    timeProvider: timeProvider,
-  );
-});

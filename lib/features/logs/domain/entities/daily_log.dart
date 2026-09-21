@@ -1,37 +1,61 @@
 import 'package:equatable/equatable.dart';
+import '../../../../domain/shared/value_objects.dart';
+
+enum FormStatus { completed, incomplete, unknown }
+enum CertificationStatus { certified, uncertified, reCertificationRequired, unknown }
 
 /// كيان السجل اليومي
 class DailyLog extends Equatable {
-  final String id;
+  final DailyLogId id;
+  final String uniqueId;
   final DateTime date;
-  final double totalDrivingHours;
-  final bool isFormComplete;
-  final bool isCertified;
+  final String formattedTotalWorkTime;
+  final double totalDrivingHours; // Legacy, keep if needed for older screens
+  final FormStatus formStatus;
+  final CertificationStatus certificationStatus;
+  final bool isFormComplete; // Computed from formStatus or kept for legacy
+  final bool isCertified; // Computed from certificationStatus or kept for legacy
+  final bool requiresAction;
   final List<LogEvent> events;
 
   const DailyLog({
     required this.id,
+    this.uniqueId = '',
     required this.date,
+    this.formattedTotalWorkTime = '',
     required this.totalDrivingHours,
+    this.formStatus = FormStatus.unknown,
+    this.certificationStatus = CertificationStatus.unknown,
     required this.isFormComplete,
     required this.isCertified,
+    this.requiresAction = false,
     this.events = const [],
   });
 
   DailyLog copyWith({
-    String? id,
+    DailyLogId? id,
+    String? uniqueId,
     DateTime? date,
+    String? formattedTotalWorkTime,
     double? totalDrivingHours,
+    FormStatus? formStatus,
+    CertificationStatus? certificationStatus,
     bool? isFormComplete,
     bool? isCertified,
+    bool? requiresAction,
     List<LogEvent>? events,
   }) {
     return DailyLog(
       id: id ?? this.id,
+      uniqueId: uniqueId ?? this.uniqueId,
       date: date ?? this.date,
+      formattedTotalWorkTime: formattedTotalWorkTime ?? this.formattedTotalWorkTime,
       totalDrivingHours: totalDrivingHours ?? this.totalDrivingHours,
+      formStatus: formStatus ?? this.formStatus,
+      certificationStatus: certificationStatus ?? this.certificationStatus,
       isFormComplete: isFormComplete ?? this.isFormComplete,
       isCertified: isCertified ?? this.isCertified,
+      requiresAction: requiresAction ?? this.requiresAction,
       events: events ?? this.events,
     );
   }
@@ -84,8 +108,19 @@ class DailyLog extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, date, totalDrivingHours, isFormComplete, isCertified, events];
+  List<Object?> get props => [
+        id,
+        uniqueId,
+        date,
+        formattedTotalWorkTime,
+        totalDrivingHours,
+        formStatus,
+        certificationStatus,
+        isFormComplete,
+        isCertified,
+        requiresAction,
+        events,
+      ];
 }
 
 /// كيان حدث في السجل

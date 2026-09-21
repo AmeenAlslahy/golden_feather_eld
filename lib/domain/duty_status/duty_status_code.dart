@@ -6,7 +6,7 @@ library;
 
 enum DutyStatusCode {
   offDuty('OFF_DUTY', 'OFF'),
-  sleeperBerth('SLEEPER_BERTH', 'SB'),
+  sleeperBerth('SLEEPER', 'SB'),
   driving('DRIVING', 'D'),
   onDutyNotDriving('ON_DUTY', 'ON'),
   yardMove('YARD_MOVE', 'YM'),

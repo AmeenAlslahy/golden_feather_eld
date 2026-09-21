@@ -1,9 +1,12 @@
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
+import '../../../../features/account/application/models/rules_screen_model.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
+import '../models/rules_screen_dto.dart';
+import '../mappers/rules_screen_mapper.dart';
 
 /// ELD Engine implementation of [RulesScreenBackend].
 class EldRulesScreenBackend implements RulesScreenBackend {
@@ -12,22 +15,26 @@ class EldRulesScreenBackend implements RulesScreenBackend {
   const EldRulesScreenBackend(this._apiClient);
 
   @override
-  Future<Result<RawJson>> getRulesScreen({DriverId? driverId}) async {
-    final res = await _apiClient.get<RawJson>(
+  Future<Result<RulesScreenModel>> getRulesScreen({DriverId? driverId}) async {
+    final res = await _apiClient.get<RulesScreenDto>(
       EldEndpoints.rulesScreen,
       queryParameters: driverId != null ? {'driverId': driverId.value} : null,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      parser: (data) => RulesScreenDto.fromJson(data as Map<String, dynamic>),
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((r) => RulesScreenMapper.toModel(r.data!));
   }
 
   @override
-  Future<Result<RawJson>> saveRulesScreen(RawJson settings) async {
-    final res = await _apiClient.put<RawJson>(
+  Future<Result<RulesScreenModel>> saveRulesScreen({
+    required DriverId driverId,
+    required RawJson update,
+  }) async {
+    final res = await _apiClient.put<RulesScreenDto>(
       EldEndpoints.rulesScreen,
-      data: settings,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      data: update,
+      parser: (data) => RulesScreenDto.fromJson(data as Map<String, dynamic>),
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((r) => RulesScreenMapper.toModel(r.data!));
   }
 }
+

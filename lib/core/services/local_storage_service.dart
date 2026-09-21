@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
 import '../constants/app_constants.dart';
+import 'dart:convert';
 import '../utils/logger.dart';
+import '../config/hos_configuration.dart';
 
 import 'tracking_config_storage_service.dart';
 import '../config/server_config_provider.dart';
@@ -60,6 +62,7 @@ class LocalStorageService implements ServerConfigProvider {
           'current_duty_status',
           'stationary_since',
           'backend_type',
+          'hos_configuration',
         },
       ),
     );
@@ -170,7 +173,27 @@ class LocalStorageService implements ServerConfigProvider {
 
   Future<void> applyFromUri(Uri uri) => _trackingStorage.applyFromUri(uri);
 
+  // ========== تخزين HOS Configuration ==========
+  
+  HosConfiguration get hosConfiguration {
+    final jsonStr = _prefs.getString('hos_configuration');
+    if (jsonStr != null && jsonStr.isNotEmpty) {
+      try {
+        return HosConfiguration.fromJson(jsonDecode(jsonStr));
+      } catch (e) {
+        AppLogger.error('Failed to parse hos_configuration', e);
+      }
+    }
+    return HosConfiguration.usa70_8();
+  }
+
+  Future<void> setHosConfiguration(HosConfiguration config) async {
+    final jsonStr = jsonEncode(config.toJson());
+    await _prefs.setString('hos_configuration', jsonStr);
+  }
+
   // ========== تخزين المركبة ==========
+
 
   Future<void> saveSelectedVehicleId(String id) =>
       _preferencesStorage.saveSelectedVehicleId(id);

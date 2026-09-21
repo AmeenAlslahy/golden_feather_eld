@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import '../http/api_client.dart';
 import '../http/api_config.dart';
 import '../http/interceptors/auth_interceptor.dart';

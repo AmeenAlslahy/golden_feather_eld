@@ -74,6 +74,15 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return notifier;
 });
 
+/// مزود للوصول السريع إلى معرف السائق الحالي أو null إذا لم يكن مسجلاً
+final currentDriverIdProvider = Provider<int?>((ref) {
+  final authState = ref.watch(authStateProvider);
+  if (authState.isAuthenticated && authState.user != null) {
+    return int.tryParse(authState.user!.id);
+  }
+  return null;
+});
+
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase _loginUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;

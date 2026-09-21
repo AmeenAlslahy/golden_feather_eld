@@ -1,5 +1,7 @@
 import '../../core/result/result.dart';
 import '../../domain/shared/value_objects.dart';
+import '../adapters/eld_engine/models/certify_dto.dart';
+import '../adapters/eld_engine/models/readiness_dto.dart';
 import 'raw_json.dart';
 
 abstract interface class DailyLogsBackend {
@@ -37,13 +39,7 @@ abstract interface class DailyLogsBackend {
   });
 
   /// POST /eld/daily-logs/{id}/certify
-  // TODO(P2): replace with CertificationResult
-  Future<Result<RawJson>> certify({
-    required DailyLogId logId,
-    required String signatureCertificateId,
-    required bool signatureConfirmation,
-    required bool certifiedTrue,
-  });
+  Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request);
 
   /// POST /eld/daily-logs/{id}/events/{statusId}/reassign-driving
   Future<Result<void>> reassignDriving({
@@ -72,8 +68,7 @@ abstract interface class DailyLogsBackend {
   Future<Result<void>> lock(DailyLogId logId);
 
   /// GET /eld/daily-logs/{id}/readiness
-  // TODO(P2): replace with CertificationReadiness
-  Future<Result<RawJson>> getReadiness(DailyLogId logId);
+  Future<Result<ReadinessDto>> getReadiness(DailyLogId logId);
 
   // --- Legacy methods for P5.5 ---
   Future<Result<List<dynamic>>> getLegacyDutyStatusLogs(

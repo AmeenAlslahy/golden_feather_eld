@@ -1,6 +1,5 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import '../../../../core/error/exception.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../domain/entities/vehicle.dart';

@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/edit_log_page.dart';
-import 'package:mocktail/mocktail.dart';
-
 class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   MockAuthNotifier(super.state);
   

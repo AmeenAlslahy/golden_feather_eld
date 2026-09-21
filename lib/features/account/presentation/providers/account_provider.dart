@@ -1,30 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:golden_feather_eld/core/domain/entities/user.dart';
-import '../../domain/repositories/account_repository.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/account_backend.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../core/network/network_providers.dart'; // Keep for networkInfoProvider until completely removed
-
-import '../../../../core/di/app_providers.dart';
+import '../../../../domain/account/driver_account.dart';
 
 class AccountState {
-  final User? userProfile;
+  final DriverAccount? accountData;
   final bool isLoading;
   final String? error;
 
   const AccountState({
-    this.userProfile,
+    this.accountData,
     this.isLoading = false,
     this.error,
   });
 
   AccountState copyWith({
-    User? userProfile,
+    DriverAccount? accountData,
     bool? isLoading,
     String? error,
   }) {
     return AccountState(
-      userProfile: userProfile ?? this.userProfile,
+      accountData: accountData ?? this.accountData,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -32,55 +30,67 @@ class AccountState {
 }
 
 class AccountNotifier extends StateNotifier<AccountState> {
-  final AccountRepository _repository;
+  final AccountBackend _backend;
   final Ref _ref;
 
-  AccountNotifier(this._repository, this._ref) : super(const AccountState());
+  AccountNotifier(this._backend, this._ref) : super(const AccountState());
 
-  Future<void> fetchUserProfile() async {
+  Future<void> fetchMyAccount() async {
     state = state.copyWith(isLoading: true, error: null);
 
     final authState = _ref.read(authStateProvider);
-    final userId = int.tryParse(authState.user?.id ?? '0') ?? 0;
-
-    if (userId == 0) {
-      state = state.copyWith(isLoading: false, error: 'User ID not found');
-      return;
+    final userIdStr = authState.user?.id;
+    
+    DriverId? driverId;
+    if (userIdStr != null && int.tryParse(userIdStr) != null) {
+      driverId = DriverId(int.parse(userIdStr));
     }
 
-    final result = await _repository.getUserProfile(userId);
-
-    result.fold(
-      (failure) =>
-          state = state.copyWith(isLoading: false, error: failure.message),
-      (user) => state =
-          state.copyWith(isLoading: false, userProfile: user, error: null),
-    );
+    try {
+      final result = await _backend.getMyAccount(driverId: driverId);
+      
+      result.fold(
+        (failure) => state = state.copyWith(isLoading: false, error: failure.l10nKey),
+        (driverAccount) => state = state.copyWith(isLoading: false, accountData: driverAccount, error: null),
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
-  Future<bool> updateUserProfile(User updatedUser) async {
+  Future<bool> updatePreferences({
+    required String language,
+    required String odometerUnit,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final result = await _repository.updateUserProfile(updatedUser);
+    try {
+      final result = await _backend.updatePreferences(
+        language: language,
+        odometerUnit: odometerUnit,
+      );
 
-    return result.fold(
-      (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
-        return false;
-      },
-      (user) {
-        state =
-            state.copyWith(isLoading: false, userProfile: user, error: null);
-        return true;
-      },
-    );
+      return result.fold(
+        (failure) {
+          state = state.copyWith(isLoading: false, error: failure.l10nKey);
+          return false;
+        },
+        (driverAccount) {
+          // تحديث البيانات المرجعة في الشاشة
+          state = state.copyWith(isLoading: false, accountData: driverAccount, error: null);
+          return true;
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
   }
 }
 
-final accountProvider =
-    StateNotifierProvider<AccountNotifier, AccountState>((ref) {
+final accountProvider = StateNotifierProvider<AccountNotifier, AccountState>((ref) {
   return AccountNotifier(
-    ref.watch(accountRepositoryProvider),
+    ref.watch(accountBackendProvider),
     ref,
   );
 });

@@ -57,12 +57,11 @@ class _DashboardView extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: AppSpacing.md),
-                  if (dashboard.regulatoryConstraints != null &&
-                      dashboard.regulatoryConstraints!.ruleSet !=
+                  if (dashboard.regulatoryConstraints.ruleSet !=
                           CycleRule.unknown)
                     Chip(
                       label: Text(
-                        dashboard.regulatoryConstraints!.ruleSet.wire.toUpperCase(),
+                        dashboard.regulatoryConstraints.ruleSet.wire.toUpperCase(),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       backgroundColor: AppColors.background,

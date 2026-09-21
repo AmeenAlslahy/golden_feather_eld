@@ -107,7 +107,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             backgroundColor: AppColors.successGreen,
           ),
         );
-        context.go(AppRoutes.home);
+        // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
+        context.go(AppRoutes.connection);
       }
     });
 

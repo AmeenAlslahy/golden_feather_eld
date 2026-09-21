@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../features/hos/domain/engine/hos_state_machine.dart';
+import '../providers/hos_engine_provider.dart';
 
 class HosTimerList extends ConsumerWidget {
   final HosStatusUpdate status;

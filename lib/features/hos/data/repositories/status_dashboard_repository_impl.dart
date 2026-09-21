@@ -16,7 +16,7 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
 
   @override
   Future<Either<Failure, StatusDashboard>> getDashboard({DriverId? driverId}) async {
-    if (!await _networkInfo.isConnected) {
+    if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
 
@@ -34,7 +34,7 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
     required DutyStatusCode status,
     String? notes,
   }) async {
-    if (!await _networkInfo.isConnected) {
+    if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
 
@@ -52,7 +52,7 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
 
   @override
   Future<Either<Failure, WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async {
-    if (!await _networkInfo.isConnected) {
+    if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
 

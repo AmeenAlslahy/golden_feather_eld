@@ -1,13 +1,15 @@
 import '../../core/result/result.dart';
 import '../../domain/shared/value_objects.dart';
+import '../../features/account/application/models/rules_screen_model.dart';
 import 'raw_json.dart';
 
 abstract interface class RulesScreenBackend {
   /// GET /eld/rules-screen
-  // TODO(P2): replace with RulesScreen
-  Future<Result<RawJson>> getRulesScreen({DriverId? driverId});
+  Future<Result<RulesScreenModel>> getRulesScreen({DriverId? driverId});
 
   /// PUT /eld/rules-screen
-  // TODO(P2): replace with RulesScreen
-  Future<Result<RawJson>> saveRulesScreen(RawJson settings);
+  Future<Result<RulesScreenModel>> saveRulesScreen({
+    required DriverId driverId,
+    required RawJson update,
+  });
 }

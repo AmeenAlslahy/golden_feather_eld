@@ -5,28 +5,43 @@ import '../../data/repositories/log_repository_impl.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// حالة شاشة السجلات
 class LogsState {
   final List<DailyLog> logs;
   final DailyLog? selectedLog;
   final bool isLoading;
+  final String? error;
+  final int offset;
+  final bool hasReachedMax;
 
   const LogsState({
     this.logs = const [],
     this.selectedLog,
     this.isLoading = false,
+    this.error,
+    this.offset = 0,
+    this.hasReachedMax = false,
   });
 
   LogsState copyWith({
     List<DailyLog>? logs,
     DailyLog? selectedLog,
     bool? isLoading,
+    String? error,
+    bool clearError = false,
+    int? offset,
+    bool? hasReachedMax,
   }) {
     return LogsState(
       logs: logs ?? this.logs,
       selectedLog: selectedLog ?? this.selectedLog,
       isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+      offset: offset ?? this.offset,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );
   }
 }
@@ -34,52 +49,67 @@ class LogsState {
 /// مزود السجلات
 final logsProvider = StateNotifierProvider<LogsNotifier, LogsState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
-  return LogsNotifier(repository);
+  final driverId = ref.watch(currentDriverIdProvider);
+  return LogsNotifier(repository, driverId);
 });
 
 class LogsNotifier extends StateNotifier<LogsState> {
   final LogRepository _repository;
+  final int? _driverId;
 
-  LogsNotifier(this._repository) : super(const LogsState()) {
-    _loadLogs();
+  LogsNotifier(this._repository, this._driverId) : super(const LogsState()) {
+    if (_driverId != null) {
+      loadLogs();
+    }
   }
 
-  Future<void> _loadLogs() async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final futures = List.generate(8, (i) async {
-        final date = DateTime.now().subtract(Duration(days: i));
+  Future<void> loadLogs({bool refresh = false}) async {
+    if (_driverId == null) return;
+    if (state.isLoading) return;
+    if (!refresh && state.hasReachedMax) return;
 
-        final result = await _repository.getEvents(date);
-        final events = result.match((l) => <LogEvent>[], (r) => r);
+    final isFirstLoad = state.logs.isEmpty || refresh;
+    if (isFirstLoad) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      state = state.copyWith(isLoading: true);
+    }
 
-        double totalDrivingHours = 0;
-        for (final event in events) {
-          if (event.status == 'D') {
-            totalDrivingHours += event.duration.inMinutes / 60.0;
-          }
+    final currentOffset = refresh ? 0 : state.offset;
+    const limit = 20;
+
+    final result = await _repository.getDailyLogs(
+      driverId: _driverId,
+      limit: limit,
+      offset: currentOffset,
+    );
+
+    if (!mounted) return;
+
+    result.match(
+      (failure) {
+        state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+        );
+      },
+      (newLogs) {
+        final mergedLogs = refresh ? newLogs : [...state.logs, ...newLogs];
+        // Deduplicate by ID just in case
+        final uniqueLogs = <DailyLogId, DailyLog>{};
+        for (final log in mergedLogs) {
+          uniqueLogs[log.id] = log;
         }
 
-        return DailyLog(
-          id: 'log_$i',
-          date: date,
-          totalDrivingHours: totalDrivingHours,
-          isFormComplete: i > 1,
-          isCertified: i > 2,
-          events: events,
+        state = state.copyWith(
+          isLoading: false,
+          logs: uniqueLogs.values.toList(),
+          offset: currentOffset + newLogs.length,
+          hasReachedMax: newLogs.length < limit,
+          clearError: true,
         );
-      });
-
-      final dbLogs = await Future.wait(futures);
-
-      if (mounted) {
-        state = state.copyWith(isLoading: false, logs: dbLogs);
-      }
-    } catch (e) {
-      if (mounted) {
-        state = state.copyWith(isLoading: false);
-      }
-    }
+      },
+    );
   }
 
   /// تحديد سجل محدد للتفاصيل
@@ -98,12 +128,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       return e;
     }).toList();
 
-    final updatedLog = DailyLog(
-      id: state.selectedLog!.id,
-      date: state.selectedLog!.date,
-      totalDrivingHours: state.selectedLog!.totalDrivingHours,
-      isFormComplete: state.selectedLog!.isFormComplete,
-      isCertified: state.selectedLog!.isCertified,
+    final updatedLog = state.selectedLog!.copyWith(
       events: updatedEvents,
     );
 
@@ -111,17 +136,10 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// تصديق السجل
-  void certifyLog(String logId) {
+  void certifyLog(DailyLogId logId) {
     final updatedLogs = state.logs.map((log) {
       if (log.id == logId) {
-        return DailyLog(
-          id: log.id,
-          date: log.date,
-          totalDrivingHours: log.totalDrivingHours,
-          isFormComplete: log.isFormComplete,
-          isCertified: true,
-          events: log.events,
-        );
+        return log.copyWith(isCertified: true);
       }
       return log;
     }).toList();
@@ -135,12 +153,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     final updatedEvents = <LogEvent>[...state.selectedLog!.events, event];
 
-    final updatedLog = DailyLog(
-      id: state.selectedLog!.id,
-      date: state.selectedLog!.date,
-      totalDrivingHours: state.selectedLog!.totalDrivingHours,
-      isFormComplete: state.selectedLog!.isFormComplete,
-      isCertified: state.selectedLog!.isCertified,
+    final updatedLog = state.selectedLog!.copyWith(
       events: updatedEvents,
     );
 

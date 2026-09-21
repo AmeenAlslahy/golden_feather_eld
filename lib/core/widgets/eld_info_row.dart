@@ -36,14 +36,17 @@ class EldInfoRow extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 16),
             // القيمة - أسود Bold
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: AppTypography.largeButtonSize,
-                fontWeight: AppTypography.bold,
-                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+            Expanded(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontSize: AppTypography.largeButtonSize,
+                  fontWeight: AppTypography.bold,
+                  color: valueColor ?? Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
             if (trailing != null) ...[

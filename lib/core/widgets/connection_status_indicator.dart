@@ -89,13 +89,16 @@ class ConnectionStatusIndicator extends ConsumerWidget {
             else
               Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
-            Text(
-              text,
-              style:
-                  (Theme.of(context).textTheme.labelSmall ?? const TextStyle())
-                      .copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    (Theme.of(context).textTheme.labelSmall ?? const TextStyle())
+                        .copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],

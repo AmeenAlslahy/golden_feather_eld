@@ -12,7 +12,6 @@ import '../../domain/entities/audit_entry.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import 'package:flutter/foundation.dart';
 
 @visibleForTesting
 String? resolveDriverIdForAudit(WidgetRef ref) {

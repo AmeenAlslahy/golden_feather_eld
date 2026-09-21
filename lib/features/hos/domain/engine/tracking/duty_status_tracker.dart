@@ -1,16 +1,13 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../core/utils/logger.dart';
 import '../../../../logs/domain/repositories/log_repository.dart';
-import '../../../../logs/data/repositories/log_repository_impl.dart';
-import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/services/local_storage_service.dart';
 
 /// متتبع حالة السائق (Domain Pure)
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../sync/domain/usecases/sync_engine.dart';
 import '../../../../sync/domain/entities/pending_event.dart';
-import '../../../../sync/presentation/providers/sync_engine_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 
@@ -355,31 +352,3 @@ class DutyStatusTracker {
     _transitionController.close();
   }
 }
-
-/// Provider
-final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
-  final repo = ref.watch(logRepositoryProvider);
-  final localStorage = ref.watch(localStorageProvider);
-  final syncEngine = ref.watch(syncEngineProvider);
-  final timeProvider = ref.watch(trustedTimeProvider);
-
-  final tracker = DutyStatusTracker(
-    logRepository: repo,
-    localStorage: localStorage,
-    syncEngine: syncEngine,
-    timeProvider: timeProvider,
-  );
-
-  // Wire up the GPS stream to the tracker
-  final tracking = ref.watch(liveTrackingDataSourceProvider);
-  final sub = tracking.events.listen((event) {
-    tracker.processEldEvent(event);
-  });
-
-  ref.onDispose(() {
-    sub.cancel();
-    tracker.dispose();
-  });
-
-  return tracker;
-});

@@ -3,20 +3,20 @@ import 'package:golden_feather_eld/core/config/feature_flags.dart';
 
 void main() {
   group('FeatureFlags — default', () {
-    test('useNewStatusDashboard is false by default', () {
+    test('useNewStatusDashboard is true by default', () {
       const flags = FeatureFlags();
-      expect(flags.useNewStatusDashboard, isFalse);
+      expect(flags.useNewStatusDashboard, isTrue);
     });
 
-    test('fromEnvironment returns a FeatureFlags instance', () {
+    test('default fromEnvironment defaults to true in test environment', () {
       final flags = FeatureFlags.fromEnvironment();
-      expect(flags, isA<FeatureFlags>());
+      expect(flags.useNewStatusDashboard, true);
     });
 
-    test('fromEnvironment defaults to false in test environment', () {
+    test('fromEnvironment defaults to true in test environment', () {
       // Tests run without --dart-define=USE_NEW_STATUS_DASHBOARD.
       final flags = FeatureFlags.fromEnvironment();
-      expect(flags.useNewStatusDashboard, isFalse);
+      expect(flags.useNewStatusDashboard, isTrue);
     });
   });
 

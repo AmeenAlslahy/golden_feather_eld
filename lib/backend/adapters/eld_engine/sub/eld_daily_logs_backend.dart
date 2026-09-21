@@ -4,6 +4,8 @@ import '../../../contracts/daily_logs_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
+import '../models/certify_dto.dart';
+import '../models/readiness_dto.dart';
 
 /// ELD Engine implementation of [DailyLogsBackend].
 class EldDailyLogsBackend implements DailyLogsBackend {
@@ -81,22 +83,13 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> certify({
-    required DailyLogId logId,
-    required String signatureCertificateId,
-    required bool signatureConfirmation,
-    required bool certifiedTrue,
-  }) async {
-    final res = await _apiClient.post<RawJson>(
-      EldEndpoints.certifyLog(logId.value),
-      data: {
-        'signatureCertificateId': signatureCertificateId,
-        'signatureConfirmation': signatureConfirmation,
-        'certifiedTrue': certifiedTrue,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+  Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request) async {
+    final res = await _apiClient.post<CertifyResponseDto>(
+      EldEndpoints.certifyLog(request.dailyLogId),
+      data: request.toJson(),
+      parser: (data) => CertifyResponseDto.fromJson(data as Map<String, dynamic>),
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((r) => r.data!);
   }
 
   @override
@@ -156,12 +149,12 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> getReadiness(DailyLogId logId) async {
-    final res = await _apiClient.get<RawJson>(
+  Future<Result<ReadinessDto>> getReadiness(DailyLogId logId) async {
+    final res = await _apiClient.get<ReadinessDto>(
       EldEndpoints.checkReadiness(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      parser: (data) => ReadinessDto.fromJson(data as Map<String, dynamic>),
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((r) => r.data!);
   }
 
   @override

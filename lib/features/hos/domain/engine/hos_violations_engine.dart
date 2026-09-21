@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/utils/logger.dart';
 import 'tracking/duty_status_tracker.dart';
 import '../../data/datasources/hos_local_data_source.dart';
 import '../../../../core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/time/trusted_time_provider.dart';
-import 'hos_state_machine.dart';
 
 class HosViolationsEngine {
   final DutyStatusTracker _tracker;
@@ -233,16 +232,3 @@ class HosViolationsEngine {
     _timer?.cancel();
   }
 }
-
-/// مزود محرك الانتهاكات
-final hosViolationsEngineProvider = Provider<HosViolationsEngine>((ref) {
-  final tracker = ref.watch(dutyStatusTrackerProvider);
-  final db = ref.watch(hosLocalDataSourceProvider);
-  final config = ref.watch(hosConfigurationProvider);
-  final timeProvider = ref.watch(trustedTimeProvider);
-  final engine = HosViolationsEngine(tracker, db, config, timeProvider);
-  ref.onDispose(() {
-    engine.dispose();
-  });
-  return engine;
-});

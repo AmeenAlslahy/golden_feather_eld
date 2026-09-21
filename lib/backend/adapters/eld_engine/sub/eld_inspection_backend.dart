@@ -149,7 +149,7 @@ class EldInspectionBackend implements InspectionBackend {
       if (!res.isSuccess) {
         throw Exception(res.message ?? 'Failed to export inspection data');
       }
-      return null;
+      return;
     });
   }
 }

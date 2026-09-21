@@ -6,7 +6,6 @@ import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
 import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/tracking/distance_tracker.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 
 class MockLiveTrackingDataSource extends Mock

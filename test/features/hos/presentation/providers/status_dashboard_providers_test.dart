@@ -5,6 +5,7 @@ import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/core/backend_identity.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
@@ -15,6 +16,8 @@ import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.da
 
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   ProviderContainer createContainer() {
     final container = ProviderContainer(
       overrides: [
@@ -186,7 +189,7 @@ void main() {
   // ==========================================================================
 
   group('statusDashboardProvider — error handling', () {
-    test('surfaces AppError when backend fails', () async {
+    test('surfaces Failure when backend fails', () async {
       final container = ProviderContainer(
         overrides: [
           activeBackendProvider.overrideWithValue(_FailingAdapter()),
@@ -196,7 +199,7 @@ void main() {
 
       await expectLater(
         container.read(statusDashboardProvider.future),
-        throwsA(isA<AppError>()),
+        throwsA(isA<Failure>()),
       );
 
       final state = container.read(statusDashboardProvider);

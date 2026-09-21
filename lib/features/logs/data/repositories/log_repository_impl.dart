@@ -11,8 +11,11 @@ import '../models/log_model.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../models/daily_log_dto.dart';
+import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
+import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../../../core/utils/repository_helper.dart';
 
 class LogRepositoryImpl implements LogRepository {
@@ -30,6 +33,39 @@ class LogRepositoryImpl implements LogRepository {
         _dailyLogsBackend = dailyLogsBackend,
         _networkInfo = networkInfo,
         _storageService = storageService;
+
+  @override
+  Future<Either<Failure, List<DailyLog>>> getDailyLogs({
+    required int driverId,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    if (!_networkInfo.isConnected) {
+      return const Left(ServerFailure(message: 'No internet connection'));
+    }
+
+    return executeWithHandling(
+      () async {
+        final result = await _dailyLogsBackend.list(
+          driverId: DriverId(driverId),
+          limit: limit,
+          offset: offset,
+        );
+
+        return result.match(
+          (failure) => throw Exception(failure.l10nKey),
+          (data) {
+            final logsJson = data['data'] as List<dynamic>? ?? [];
+            return logsJson
+                .map((json) =>
+                    DailyLogDto.fromJson(json as Map<String, dynamic>).toEntity())
+                .toList();
+          },
+        );
+      },
+      tag: 'LogRepositoryImpl.getDailyLogs',
+    );
+  }
 
   @override
   Future<Either<Failure, List<LogEvent>>> getEvents(DateTime date) async {
@@ -72,6 +108,55 @@ class LogRepositoryImpl implements LogRepository {
     return executeWithHandling(
       () => _localDataSource.updateEvent(event),
       tag: 'LogRepositoryImpl.updateEvent',
+    );
+  }
+
+  @override
+  Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId) async {
+    if (!_networkInfo.isConnected) {
+      return const Left(ServerFailure(message: 'No internet connection'));
+    }
+    return executeWithHandling(
+      () async {
+        final result = await _dailyLogsBackend.getReadiness(logId);
+        return result.match(
+          (failure) => throw Exception(failure.l10nKey),
+          (data) => data,
+        );
+      },
+      tag: 'LogRepositoryImpl.getReadiness',
+    );
+  }
+
+  @override
+  Future<Either<Failure, bool>> certifyLog({
+    required DailyLogId logId,
+    required String signatureCertificateId,
+    required bool signatureConfirmation,
+    required bool certifiedTrue,
+  }) async {
+    if (!_networkInfo.isConnected) {
+      return const Left(ServerFailure(message: 'No internet connection'));
+    }
+    return executeWithHandling(
+      () async {
+        final driverId = int.tryParse(_storageService.deviceId) ?? 101;
+        final result = await _dailyLogsBackend.certify(
+          CertifyRequestDto(
+            dailyLogId: logId.value,
+            driverId: driverId,
+            logDate: DateTime.now().toIso8601String().split('T').first,
+            signatureCertificateId: signatureCertificateId,
+            signatureConfirmation: signatureConfirmation,
+            certifiedTrue: certifiedTrue,
+          ),
+        );
+        return result.match(
+          (failure) => throw Exception(failure.l10nKey),
+          (data) => data.isCertified,
+        );
+      },
+      tag: 'LogRepositoryImpl.certifyLog',
     );
   }
 

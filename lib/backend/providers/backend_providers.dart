@@ -7,7 +7,7 @@ import '../../core/config/app_environment.dart';
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
 import '../../core/services/local_storage_service.dart';
-import '../../core/network/interceptors/time_drift_interceptor.dart';
+import '../http/interceptors/time_drift_interceptor.dart';
 import '../../core/time/trusted_time_provider.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';

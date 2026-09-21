@@ -10,6 +10,7 @@ class AppTypography {
   static const String fontFamilyIOS = 'SF Pro Text';
 
   static const double headerSize = 28.0;
+  static const double titleSize = 20.0;
   static const double largeButtonSize = 17.0;
   static const double bodySize = 16.0;
   static const double subtitleSize = 14.0;

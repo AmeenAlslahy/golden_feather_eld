@@ -89,7 +89,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       return const Right(true);
     } catch (e) {
       AppLogger.error('Failed to start tracking', e);
-      return Left(TrackingFailure(
+      return const Left(TrackingFailure(
         message: 'فشل بدء التتبع',
       ));
     }
@@ -104,7 +104,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       return const Right(true);
     } catch (e) {
       AppLogger.error('Failed to stop tracking', e);
-      return Left(TrackingFailure(
+      return const Left(TrackingFailure(
         message: 'فشل إيقاف التتبع',
       ));
     }
@@ -142,7 +142,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _localDataSource.saveLastLocation(fallbackLocation);
       return Right(fallbackLocation);
     } catch (e) {
-      return Left(TrackingFailure(
+      return const Left(TrackingFailure(
         message: 'فشل الحصول على الموقع',
       ));
     }
@@ -174,7 +174,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _localDataSource.saveLastLocation(fallbackLocation);
       return Right(fallbackLocation);
     } catch (e) {
-      return Left(TrackingFailure(
+      return const Left(TrackingFailure(
         message: 'فشل طلب الموقع',
       ));
     }

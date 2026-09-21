@@ -10,6 +10,8 @@ import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
 
 class MockSyncEngine implements SyncEngine {
   @override
@@ -52,6 +54,37 @@ class MockLogRepository implements LogRepository {
   @override
   Future<Either<Failure, bool>> updateEvent(LogEvent event) async =>
       throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, List<DailyLog>>> getDailyLogs({
+    required int driverId,
+    int limit = 50,
+    int offset = 0,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId) async {
+    return Right(ReadinessDto(
+      dailyLogId: logId.value,
+      driverId: 12345,
+      driverName: 'Mock Driver',
+      logDate: '2023-01-01',
+      readinessStatus: 'READY',
+      missingRequirements: const [],
+      availableActions: const [],
+      legalStatement: 'Mock Legal Statement',
+    ));
+  }
+
+  @override
+  Future<Either<Failure, bool>> certifyLog({
+    required DailyLogId logId,
+    required String signatureCertificateId,
+    required bool signatureConfirmation,
+    required bool certifiedTrue,
+  }) async {
+    return const Right(true);
+  }
 }
 
 // Replaced FakeClock with FakeTrustedTimeProvider inline in setUp

@@ -1,5 +1,6 @@
 import '../../core/result/result.dart';
 import '../../domain/shared/value_objects.dart';
+import '../../domain/account/driver_account.dart';
 import 'raw_json.dart';
 
 abstract interface class AccountBackend {
@@ -15,12 +16,10 @@ abstract interface class AccountBackend {
   });
 
   /// GET /eld/account
-  // TODO(P2): replace with UserProfile
-  Future<Result<RawJson>> getMyAccount({DriverId? driverId});
+  Future<Result<DriverAccount>> getMyAccount({DriverId? driverId});
 
   /// PUT /eld/account/preferences
-  // TODO(P2): replace with UserProfile
-  Future<Result<RawJson>> updatePreferences({
+  Future<Result<DriverAccount>> updatePreferences({
     required String language,
     required String odometerUnit,
   });

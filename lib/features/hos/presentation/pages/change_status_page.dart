@@ -10,7 +10,7 @@ import '../providers/hos_provider.dart';
 import '../widgets/status_option_tiles.dart';
 import '../widgets/location_display_widget.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../../domain/engine/hos_state_machine.dart';
+import '../providers/hos_engine_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 
 class ChangeStatusPage extends ConsumerStatefulWidget {

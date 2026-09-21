@@ -8,6 +8,7 @@ import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/config/feature_flags.dart';
 import 'package:golden_feather_eld/features/home/presentation/pages/home_page.dart';
 import 'package:golden_feather_eld/features/hos/presentation/pages/status_dashboard_page.dart';
+import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_alerts_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 import 'package:golden_feather_eld/core/config/app_environment.dart';
@@ -20,8 +21,6 @@ import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
-import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
-import 'package:golden_feather_eld/core/theme/app_colors.dart';
 import 'package:golden_feather_eld/core/theme/eld_theme_extension.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';
@@ -65,6 +64,14 @@ class MockHosNotifier extends StateNotifier<HosEngineResult> implements HosNotif
   
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class MockHardwareAlertsNotifier extends HardwareAlertsNotifier {
+  @override
+  Future<List<HardwareAlert>> build() async => [];
+  
+  @override
+  Future<void> fetchAlerts() async {}
 }
 
 class EmptyLiveTrackingDataSource implements LiveTrackingDataSource {
@@ -123,6 +130,7 @@ void main() {
         vehicleRepositoryProvider.overrideWithValue(mockVehicleRepo),
         syncStateProvider.overrideWith((ref) => MockSyncNotifier()),
         hosStatusProvider.overrideWith((ref) => MockHosNotifier()),
+        hardwareAlertsProvider.overrideWith(() => MockHardwareAlertsNotifier()),
       ],
     );
 

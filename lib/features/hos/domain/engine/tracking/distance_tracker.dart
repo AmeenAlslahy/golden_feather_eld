@@ -1,5 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/services/live_tracking_data_source.dart';
+
 import '../../../../../core/utils/distance_calculator.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
 
@@ -63,21 +62,3 @@ class DistanceTracker {
     return distance;
   }
 }
-
-/// مزود متتبع المسافات
-final distanceTrackerProvider = Provider<DistanceTracker>((ref) {
-  final timeProvider = ref.watch(trustedTimeProvider);
-  final tracker = DistanceTracker(timeProvider);
-  final dataSource = ref.watch(liveTrackingDataSourceProvider);
-
-  final subscription = dataSource.locations.listen((point) {
-    tracker.addPoint(point);
-  });
-
-  ref.onDispose(() {
-    subscription.cancel();
-    tracker.clear();
-  });
-
-  return tracker;
-});

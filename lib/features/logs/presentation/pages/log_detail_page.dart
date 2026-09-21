@@ -94,7 +94,32 @@ class LogDetailPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: _buildBodyContent(currentIndex, selectedLog),
+      body: Column(
+        children: [
+          if (selectedLog.certificationStatus == CertificationStatus.reCertificationRequired)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              color: AppColors.warningYellow.withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.warningYellow),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Re-certification Required: Edits were made after your last signature.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.warningYellow,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(child: _buildBodyContent(currentIndex, selectedLog)),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
