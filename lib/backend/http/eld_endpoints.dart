@@ -12,7 +12,7 @@ class EldEndpoints {
   // ==========================================================================
   // Authentication & Standard Traccar Entities
   // ==========================================================================
-  
+
   static const String session = '/session';
   static const String users = '/users';
   static const String devices = '/devices';
@@ -28,7 +28,8 @@ class EldEndpoints {
 
   // 2. Status Dashboard
   static const String status = '/eld/status';
-  static const String dutyStatusPost = '/eld/status/duty-status'; // (POST) Update duty status
+  static const String dutyStatusPost =
+      '/eld/status/duty-status'; // (POST) Update duty status
   static const String statusRecap = '/eld/status/recap';
 
   // 3. Driver Rules Screen
@@ -37,27 +38,34 @@ class EldEndpoints {
   // 4. Daily Logs
   static const String dailyLogs = '/eld/daily-logs';
   static String dailyLogDetails(int logId) => '/eld/daily-logs/$logId';
-  static String proposeCarrierEdit(int logId) => '/eld/daily-logs/$logId/carrier-edits';
-  static String respondCarrierEdit(int logId, String editId) => '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
+  static String proposeCarrierEdit(int logId) =>
+      '/eld/daily-logs/$logId/carrier-edits';
+  static String respondCarrierEdit(int logId, String editId) =>
+      '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
   static String certifyLog(int logId) => '/eld/daily-logs/$logId/certify';
-  static String reassignDriving(int logId, int statusId) => '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
+  static String reassignDriving(int logId, int statusId) =>
+      '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
   static String dailyLogForm(int logId) => '/eld/daily-logs/$logId/form';
-  static String dailyLogGraphGrid(int logId) => '/eld/daily-logs/$logId/graph-grid';
+  static String dailyLogGraphGrid(int logId) =>
+      '/eld/daily-logs/$logId/graph-grid';
   static String lockLog(int logId) => '/eld/daily-logs/$logId/lock';
   static String checkReadiness(int logId) => '/eld/daily-logs/$logId/readiness';
   static String teamStatus(int logId) => '/eld/daily-logs/$logId/team';
 
   // 5. Sessions & Connections
   static String getSession(int driverId) => '/eld/sessions/$driverId';
-  static String sessionMembers(int sessionId) => '/eld/sessions/$sessionId/members';
+  static String sessionMembers(int sessionId) =>
+      '/eld/sessions/$sessionId/members';
   static const String connectSession = '/eld/sessions/connect';
   static const String manageCoDriver = '/eld/sessions/co-driver';
-  static const String switchPrimaryDriver = '/eld/sessions/primary-driver/switch';
+  static const String switchPrimaryDriver =
+      '/eld/sessions/primary-driver/switch';
 
   // 6. Duty Status Events
   static const String dutyStatus = '/eld/duty-status';
   static String updateDutyStatus(int statusId) => '/eld/duty-status/$statusId';
-  static String editDutyStatusForm(int statusId) => '/eld/duty-status/$statusId/edit-form';
+  static String editDutyStatusForm(int statusId) =>
+      '/eld/duty-status/$statusId/edit-form';
   static const String graphGridTimeline = '/eld/duty-status/graph-grid';
 
   // 7. DVIR Management
@@ -67,8 +75,10 @@ class EldEndpoints {
   static String dvirNextDriverReview(int id) => '/eld/dvir/$id/review';
 
   // 8. Compliance Engine
-  static String evaluateCompliance(int driverId) => '/eld/compliance/$driverId/evaluate';
-  static String complianceRemaining(int driverId) => '/eld/compliance/$driverId/remaining';
+  static String evaluateCompliance(int driverId) =>
+      '/eld/compliance/$driverId/evaluate';
+  static String complianceRemaining(int driverId) =>
+      '/eld/compliance/$driverId/remaining';
 
   // 9. System Configuration
   static const String config = '/eld/config';
@@ -89,7 +99,8 @@ class EldEndpoints {
   static String document(int id) => '/eld/documents/$id';
   static String downloadDocument(int docId) => '/eld/documents/download/$docId';
   static String driverDocuments(int driverId) => '/eld/documents/$driverId';
-  static String uploadDocumentFile(int driverId) => '/eld/documents/$driverId/upload-file';
+  static String uploadDocumentFile(int driverId) =>
+      '/eld/documents/$driverId/upload-file';
   static String verifyDocument(int id) => '/eld/documents/$id/verify';
 
   // 13. System Health
@@ -97,16 +108,31 @@ class EldEndpoints {
   static const String health = '/eld/health';
 
   // 14. Roadside Inspection
+  static const String dotInspection = '/eld/dot-inspection';
+  static const String dotInspectionCycle = '/eld/dot-inspection/cycle';
+  static const String dotInspectionLogs = '/eld/dot-inspection/logs';
+  static const String dotInspectionEmailLogs = '/eld/dot-inspection/email-logs';
+  static const String dotInspectionSendLogs = '/eld/dot-inspection/send-logs';
+  static const String dotInspectionStart = '/eld/dot-inspection/start';
+  static const String dotInspectionTransfers = '/eld/dot-inspection/transfers';
+  static const String dotInspectionInfoPacket = '/eld/dot-inspection/information-packet';
+
+  // Legacy paths
   static String completeInspection(int id) => '/eld/inspections/$id/complete';
-  static String inspectionBlePackets(int id) => '/eld/inspections/$id/transfer/ble-packets';
+  static String inspectionBlePackets(int id) =>
+      '/eld/inspections/$id/transfer/ble-packets';
   static String inspectionReport(int id) => '/eld/inspections/$id/report';
-  static String inspectionHtmlReport(int id) => '/eld/inspections/$id/report/html';
-  static String driverInspections(int driverId) => '/eld/inspections/driver/$driverId';
+  static String inspectionHtmlReport(int id) =>
+      '/eld/inspections/$id/report/html';
+  static String driverInspections(int driverId) =>
+      '/eld/inspections/driver/$driverId';
   static String inspectionDataFile(int id) => '/eld/inspections/$id/data-file';
   static String inspectionDetails(int id) => '/eld/inspections/$id';
   static String inspectionQrCode(int id) => '/eld/inspections/$id/qr';
-  static String inspectionUsbTransfer(int id) => '/eld/inspections/$id/transfer/usb';
-  static String inspectionInitiateTransfer(int id) => '/eld/inspections/$id/transfer';
+  static String inspectionUsbTransfer(int id) =>
+      '/eld/inspections/$id/transfer/usb';
+  static String inspectionInitiateTransfer(int id) =>
+      '/eld/inspections/$id/transfer';
   static const String inspections = '/eld/inspections';
 
   // 15. ELD Reports
@@ -123,4 +149,7 @@ class EldEndpoints {
   static const String hardwareReadiness = '/eld/hardware/readiness';
   static const String hardwareStatus = '/eld/hardware/status';
   static const String hardwareTelemetry = '/eld/hardware/telemetry';
+
+  // 18. Vehicles
+  static const String myVehicles = '/eld/company-vehicles/my-vehicles';
 }

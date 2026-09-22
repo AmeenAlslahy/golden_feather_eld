@@ -1,6 +1,8 @@
 import 'dart:convert';
-import 'package:sqflite/sqflite.dart';
+
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
 import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/offline_queue.dart';
 

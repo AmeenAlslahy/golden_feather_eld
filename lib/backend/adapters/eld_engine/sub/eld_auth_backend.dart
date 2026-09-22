@@ -1,12 +1,14 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
-import '../../../../core/result/result.dart';
+
 import '../../../../core/error/app_error.dart';
+import '../../../../core/result/result.dart';
 import '../../../contracts/auth_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
-import '../../../http/error_mapper.dart';
 import '../../../http/eld_endpoints.dart';
+import '../../../http/error_mapper.dart';
 
 class EldAuthBackend implements AuthBackend {
   final ApiClient _apiClient;

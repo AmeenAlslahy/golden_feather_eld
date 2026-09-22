@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/domain/duty_status/duty_status_code.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/widgets/app_button.dart';
-import '../../../../../domain/duty_status/duty_status_code.dart';
 import '../../extensions/duty_status_l10n.dart';
 import '../../providers/status_dashboard_providers.dart';
 
@@ -95,7 +96,7 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
               margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
             ),
 

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/providers/backend_providers.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../core/domain/inspection/dot_inspection.dart';
 
 /// Provides the inspection screen for the current driver.
 final dotInspectionScreenProvider =

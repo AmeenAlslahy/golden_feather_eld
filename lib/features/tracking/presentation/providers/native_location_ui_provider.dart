@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/providers/app_repository_providers.dart';
 import '../../domain/entities/native_location_event.dart';
-
-import 'tracking_providers.dart';
 
 // A stream provider that exposes ONLY valid/stale/suspicious native locations to the UI.
 // This is intentionally isolated from HOS, Diagnostics, and Distance engines.

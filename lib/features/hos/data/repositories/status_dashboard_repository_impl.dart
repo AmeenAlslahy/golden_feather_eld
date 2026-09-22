@@ -1,11 +1,12 @@
 import 'package:fpdart/fpdart.dart';
+
 import '../../../../backend/contracts/status_dashboard_backend.dart';
+import '../../../../core/domain/duty_status/duty_status_code.dart';
+import '../../../../core/domain/duty_status/status_dashboard.dart';
+import '../../../../core/domain/duty_status/weekly_recap.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../domain/duty_status/duty_status_code.dart';
-import '../../../../domain/duty_status/status_dashboard.dart';
-import '../../../../domain/duty_status/weekly_recap.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../domain/repositories/status_dashboard_repository.dart';
 
 class StatusDashboardRepositoryImpl implements StatusDashboardRepository {

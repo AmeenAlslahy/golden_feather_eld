@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'network_info.dart';
-import 'api_config.dart';
-import '../services/local_storage_service.dart' as ls;
+
 import '../../features/settings/presentation/providers/server_config_providers.dart';
 import '../services/bluetooth_service.dart';
+import '../services/local_storage_service.dart' as ls;
+import 'api_config.dart';
+import 'network_info.dart';
 
 // Re-export apiClientProvider so files only need to import core_providers.dart
 export '../../backend/providers/backend_network_providers.dart'

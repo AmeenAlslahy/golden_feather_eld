@@ -1,10 +1,12 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 // import '../../../../l10n/app_localizations.dart';
 
@@ -99,7 +101,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                     onSubmitted: (_) => _addTrailer(),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                AppGap.hSm,
                 SizedBox(
                   height: 44,
                   child: FilledButton(
@@ -115,7 +117,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                       children: [
                         const Icon(Icons.add,
                             size: 18, color: AppColors.surface),
-                        const SizedBox(width: 4),
+                        AppGap.hXs,
                         Text(context.loc.addButton,
                             style: const TextStyle(color: AppColors.surface)),
                       ],

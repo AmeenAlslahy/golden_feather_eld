@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/domain/config/server_config.dart';
 import '../../../../core/storage/ports/secure_storage_port.dart';
 import '../../../../core/storage/storage_providers.dart';
-import '../../../../domain/config/server_config.dart';
 
 /// Manages the persisted [ServerConfig].
 ///

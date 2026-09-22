@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/widgets/app_gap.dart';
 // import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_state_provider.dart';
-
-import 'package:permission_handler/permission_handler.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -55,19 +57,19 @@ class _SplashPageState extends ConsumerState<SplashPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.button),
               child: Image.asset(
                 'assets/images/ic_launcher.png',
                 width: 120,
                 height: 120,
               ),
             ),
-            const SizedBox(height: 16),
+            AppGap.md,
             Text(
               context.loc.appName,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            const SizedBox(height: 24),
+            AppGap.lg,
             const CircularProgressIndicator(),
           ],
         ),

@@ -1,15 +1,26 @@
 import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../../../core/utils/logger.dart';
-import '../../../../core/utils/app_date_utils.dart';
-import '../../../../core/constants/storage_constants.dart';
 
-abstract class HosLocalDataSource {
+import '../../../../core/constants/storage_constants.dart';
+import '../../../../core/utils/app_date_utils.dart';
+import '../../../../core/utils/logger.dart';
+import '../../domain/ports/hos_storage_port.dart';
+
+/// Data-layer implementation of [HosStoragePort].
+///
+/// The abstract contract lives in Domain (`hos_storage_port.dart`).
+/// This class provides the concrete Hive-backed implementation.
+abstract class HosLocalDataSource implements HosStoragePort {
+  @override
   Future<bool> saveDiagnostic(Map<String, dynamic> diagnosticData);
+  @override
   Future<List<Map<String, dynamic>>> getDiagnostics(DateTime date);
 
+  @override
   Future<bool> saveViolation(Map<String, dynamic> violationData);
+  @override
   Future<List<Map<String, dynamic>>> getViolations(DateTime date);
 }
 

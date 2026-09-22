@@ -1,24 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/dvir_backend.dart';
-import '../../data/repositories/dvir_repository_impl.dart';
+
+// ARCH-HIGH-01 fix: Import from composition root
+import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../core/services/tracking_config_storage_service.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
-import '../../../../core/services/tracking_config_storage_service.dart';
-
-// --- Dependency Injection Providers ---
-
-final dvirBackendProviderAlias = Provider<DvirBackend>((ref) {
-  return ref.watch(dvirBackendProvider);
-});
-
-final dvirRepositoryProvider = Provider<DvirRepository>((ref) {
-  return DvirRepositoryImpl(
-    dvirBackend: ref.watch(dvirBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 
@@ -68,10 +54,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
   })  : _repository = repository,
         _storageService = storageService,
         super(const DvirState()) {
-    _loadDvirs();
+    loadDvirs();
   }
 
-  Future<void> _loadDvirs() async {
+  Future<void> loadDvirs() async {
     state = state.copyWith(isLoading: true, error: null);
 
     final vehicleId = _storageService.deviceId;
@@ -105,7 +91,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
           error: failure.message,
         ),
         (_) {
-          _loadDvirs(); // Reload to get updated list with server IDs
+          loadDvirs(); // Reload to update state
         },
       );
     }
@@ -135,7 +121,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
           error: failure.message,
         ),
         (_) {
-          _loadDvirs(); // Reload to update state
+          loadDvirs(); // Reload to update state
         },
       );
     }
@@ -167,7 +153,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
           error: failure.message,
         ),
         (_) {
-          _loadDvirs(); // Reload to update state
+          loadDvirs(); // Reload to update state
         },
       );
     }

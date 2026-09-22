@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/core/domain/config/server_config.dart';
 import 'package:golden_feather_eld/core/storage/ports/secure_storage_port.dart';
-import 'package:golden_feather_eld/domain/config/server_config.dart';
 import 'package:golden_feather_eld/features/settings/presentation/providers/server_config_providers.dart';
 
 class FakeSecureStorage implements SecureStoragePort {

@@ -1,11 +1,11 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:golden_feather_eld/core/config/hos_configuration.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_violations_engine.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/features/hos/data/datasources/hos_local_data_source.dart';
-import 'package:golden_feather_eld/core/config/hos_configuration.dart';
-import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockDutyStatusTracker extends Mock implements DutyStatusTracker {}
 

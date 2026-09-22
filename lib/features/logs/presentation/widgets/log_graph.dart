@@ -1,10 +1,11 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
+import '../../../../core/services/live_tracking_data_source.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/live_tracking_data_source.dart';
+import '../../../../core/widgets/app_gap.dart';
 
 final logGraphEventsProvider = StreamProvider.autoDispose<EldEvent>((ref) {
   return ref.watch(liveTrackingDataSourceProvider).events;
@@ -52,7 +53,7 @@ class LogGraph extends ConsumerWidget {
           ),
 
           // محور الوقت
-          const SizedBox(height: 4),
+          AppGap.xs,
           _buildTimeAxis(context),
         ],
       ),

@@ -1303,4 +1303,467 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sessionMissing => 'الجلسة غير موجودة، يرجى تسجيل الدخول';
+
+  @override
+  String get carrierEdits => 'تعديلات الناقل';
+
+  @override
+  String get switchDrivers => 'تبديل السائقين';
+
+  @override
+  String get auditTrail => 'سجل التدقيق';
+
+  @override
+  String get repairCertification => 'اعتماد الإصلاح';
+
+  @override
+  String get previousDvirReview => 'مراجعة تقرير الفحص السابق';
+
+  @override
+  String get reject => 'رفض';
+
+  @override
+  String get accept => 'قبول';
+
+  @override
+  String get aboutTitle => 'حول التطبيق';
+
+  @override
+  String get applicationInfo => 'معلومات التطبيق';
+
+  @override
+  String get nameLabel => 'الاسم';
+
+  @override
+  String get packageLabel => 'معرّف الحزمة';
+
+  @override
+  String get deviceIdLabel => 'معرّف الجهاز';
+
+  @override
+  String get diagnosticsTitle => 'التشخيص والاتصال';
+
+  @override
+  String get centralServer => 'الخادم المركزي';
+
+  @override
+  String get locationService => 'خدمة الموقع (GPS)';
+
+  @override
+  String get enabledLabel => 'مفعّل';
+
+  @override
+  String get disabledLabel => 'معطّل';
+
+  @override
+  String get ecmSyncStatus => 'تزامن المحرك (ECM Sync)';
+
+  @override
+  String get syncedLabel => 'متصل';
+
+  @override
+  String get desyncedLabel => 'غير متزامن';
+
+  @override
+  String get hardwareConnection => 'اتصال الجهاز';
+
+  @override
+  String get healthyLabel => 'سليم';
+
+  @override
+  String get faultyLabel => 'يوجد أخطاء';
+
+  @override
+  String get technicalInfo => 'المعلومات التقنية';
+
+  @override
+  String get eldEngineVersion => 'إصدار محرك ELD';
+
+  @override
+  String get hardwareVersion => 'إصدار الجهاز (Hardware)';
+
+  @override
+  String get lastDataReceived => 'توقيت آخر بيانات';
+
+  @override
+  String get supportMessage =>
+      'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.';
+
+  @override
+  String get unassignedVehicles => 'مركبات غير معينة';
+
+  @override
+  String get unassignedVehiclesCannotBeSelected =>
+      'المركبات غير المسندة لا يمكن اختيارها مباشرة. يتم تعيين المركبات للسائقين عبر البوابة الإلكترونية من قبل مدير الأسطول.\\n\\nيرجى الاتصال بمدير الأسطول لتعيين المركبة.';
+
+  @override
+  String get contactManager => 'اتصل بالمدير';
+
+  @override
+  String get developerOptions => 'خيارات المطور';
+
+  @override
+  String get trackingLogs => 'سجلات التتبع (Tracking Logs)';
+
+  @override
+  String get viewRawGpsLogs => 'عرض السجلات الخام للـ GPS';
+
+  @override
+  String get mockErrors => 'محاكاة الأخطاء';
+
+  @override
+  String get toolsToTestUi => 'أدوات لاختبار واجهة المستخدم';
+
+  @override
+  String get notAvailableInProductionBuild => 'غير متوفرة في نسخة الإنتاج';
+
+  @override
+  String get clearCache => 'مسح التخزين المؤقت';
+
+  @override
+  String get clearLocalAppData => 'مسح بيانات التطبيق المحلية';
+
+  @override
+  String get cacheCleared => 'تم تنظيف التخزين المؤقت';
+
+  @override
+  String get vehicleInMotion => 'المركبة في حالة حركة';
+
+  @override
+  String get toComplyWithFmcsaRegulations =>
+      'التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.';
+
+  @override
+  String get switchToManualMode => 'التسجيل اليدوي أثناء العطل';
+
+  @override
+  String get accordingToFmcsa39534 =>
+      'وفقاً لقوانين FMCSA §395.34، يمكنك الانتقال إلى التسجيل اليدوي إذا كان جهاز ELD متعطلاً. يرجى إدخال سبب الانتقال أدناه للتوثيق القانوني:';
+
+  @override
+  String get reasonForManualMode => 'سبب العطل (مثال: تعطل اتصال البلوتوث)...';
+
+  @override
+  String get pleaseProvideAReason => 'يرجى إدخال السبب';
+
+  @override
+  String get selectCoDriver => 'اختر مساعد السائق';
+
+  @override
+  String get selectYourCoDriver => 'الرجاء اختيار مساعد السائق الخاص بك';
+
+  @override
+  String get youWillBecomeCoDriver =>
+      'ستصبح السائق المساعد. سيبقى السائق المساعد سائقاً.';
+
+  @override
+  String get confirmSwitch => 'تأكيد التبديل';
+
+  @override
+  String get areYouSureYouWant => 'هل أنت متأكد من تبديل الأدوار؟';
+
+  @override
+  String get rolesSwitchedSuccessfully => '✅ تم تبديل الأدوار بنجاح';
+
+  @override
+  String get email1 => 'البريد الإلكتروني';
+
+  @override
+  String get phone => 'رقم الهاتف';
+
+  @override
+  String get timeZone => 'المنطقة الزمنية';
+
+  @override
+  String get languageUpdatedSuccessfully => 'تم تحديث اللغة بنجاح';
+
+  @override
+  String get odometerUnitUpdatedSuccessfully => 'تم تحديث وحدة المسافة بنجاح';
+
+  @override
+  String get pleaseContactFleetManagerTo =>
+      'يرجى الاتصال بمدير الأسطول لتغيير المعلومات';
+
+  @override
+  String get formIsIncompletePleaseFill =>
+      'البيانات غير مكتملة، يرجى ملء جميع الحقول أولاً.';
+
+  @override
+  String get failedToUpdateRulesFailure => 'فشل تحديث القواعد';
+
+  @override
+  String get hH => 'ساعة';
+
+  @override
+  String get hHMM => 'ساعة دقيقة';
+
+  @override
+  String get activeCycle => 'الدورة المطبقة';
+
+  @override
+  String get ruleSource => 'مصدر القاعدة';
+
+  @override
+  String get restart => 'إعادة التشغيل';
+
+  @override
+  String get cargoType => 'نوع الحمولة';
+
+  @override
+  String get restBreak => 'استراحة إلزامية';
+
+  @override
+  String get dailyLimits => 'الحدود اليومية';
+
+  @override
+  String get shiftWindow => 'نافذة العمل';
+
+  @override
+  String get requiredBreak => 'استراحة إلزامية';
+
+  @override
+  String get min => 'د';
+
+  @override
+  String get malfunctionTypes => 'أنواع الأعطال';
+
+  @override
+  String get dataGapRecordingInterruptionFor =>
+      'فجوة بيانات (Data Gap): انقطاع في تسجيل البيانات لأكثر من 5 دقائق.';
+
+  @override
+  String get positioningMalfunctionZeroCoordinatesAt =>
+      'عطل تحديد المواقع (Positioning Malfunction): إحداثيات صفرية مع سرعة عالية.';
+
+  @override
+  String get motionSensorMalfunctionSuddenSpeed =>
+      'عطل استشعار الحركة (Motion Sensor): تغير مفاجئ في السرعة > 80 كم/س.';
+
+  @override
+  String get engineSyncMalfunctionEngineRunning =>
+      'عطل مزامنة المحرك (Engine Sync): المحرك يعمل > 60 دقيقة بدون حركة.';
+
+  @override
+  String get unidentifiedDriveVehicleMovingWithout =>
+      'قيادة غير محددة (Unidentified Drive): المركبة تتحرك بدون إشعال.';
+
+  @override
+  String get troubleshootingSteps => 'خطوات استكشاف الأعطال';
+
+  @override
+  String get k1CheckEldDeviceConnection =>
+      '١. تحقق من توصيل جهاز ELD بمنفذ التشخيص.';
+
+  @override
+  String get k2RestartTheVehicleAnd => '٢. أعد تشغيل المركبة وانتظر 30 ثانية.';
+
+  @override
+  String get k3CheckThatBluetoothAnd =>
+      '٣. تحقق من تفعيل البلوتوث والـ GPS على هاتفك.';
+
+  @override
+  String get k4TryReconnectingFromThe =>
+      '٤. حاول إعادة الاتصال من شاشة الاتصال.';
+
+  @override
+  String get k5IfMalfunctionPersistsSwitch =>
+      '٥. إذا استمر العطل، انتقل إلى السجلات الورقية.';
+
+  @override
+  String get k6ContactYourFleetManager =>
+      '٦. اتصل بمدير الأسطول للإبلاغ عن العطل.';
+
+  @override
+  String get importantDeadlines => 'حدود زمنية مهمة';
+
+  @override
+  String get deviceMustBeRepairedWithin =>
+      'يجب إصلاح الجهاز خلال 8 أيام من حدوث العطل.';
+
+  @override
+  String get cannotDriveWithoutAWorking =>
+      'لا يمكن القيادة بدون جهاز ELD عامل لأكثر من 8 أيام.';
+
+  @override
+  String get allMalfunctionsMustBeDocumented =>
+      'يجب توثيق جميع الأعطال في السجلات.';
+
+  @override
+  String get topComplianceEldInspectionMode =>
+      'وضع التفتيش لـ TOP COMPLIANCE ELD';
+
+  @override
+  String get anInspectorMayPressArrows =>
+      'يمكن للمفتش الضغط على الأسهم لعرض السجلات السابقة أو التالية.';
+
+  @override
+  String get anInspectorMayViewThe =>
+      'يمكن للمفتش عرض نموذج السجل، المخطط الشبكي، والأحداث مع الملاحظات.';
+
+  @override
+  String get exitTheInspectionModeBy =>
+      'اخرج من وضع التفتيش بالضغط على سهم العودة في الزاوية العلوية.';
+
+  @override
+  String get topComplianceEldMalfunctionManual =>
+      'دليل الأعطال لـ TOP COMPLIANCE ELD';
+
+  @override
+  String get inAccordanceWithTheGuidelines =>
+      'وفقاً للإرشادات المحددة في 395.34';
+
+  @override
+  String get malfunctionIndication => 'مؤشر العطل';
+
+  @override
+  String get immediatelyContactTheSupportIf =>
+      'اتصل بالدعم فوراً إذا انطفأ ضوء LED عند التوصيل بالمركبة أو إذا أبلغ التطبيق عن عطل.';
+
+  @override
+  String get noteTheMalfunction => 'تسجيل العطل';
+
+  @override
+  String get noteTheMalfunctionAndProvide =>
+      'سجل العطل وقدم إشعاراً خطياً لشركتك خلال 24 ساعة.';
+
+  @override
+  String get switchToPaperLogs => 'التبديل للسجلات الورقية';
+
+  @override
+  String get keepAPaperLogFor =>
+      'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.';
+
+  @override
+  String get k8DaysRule => 'قاعدة 8 أيام';
+
+  @override
+  String get inTheEventOfAn =>
+      'في حال عطل ELD، يجب على الشركة اتخاذ إجراءات لإصلاح العطل خلال 8 أيام من اكتشافه.';
+
+  @override
+  String get contactTheSupportTeamAt => 'تواصل مع الدعم عبر topceld@gmail.com';
+
+  @override
+  String get eldUserManual => 'دليل المستخدم';
+
+  @override
+  String get features => 'الميزات';
+
+  @override
+  String get installationAndSetup => 'التثبيت والإعداد';
+
+  @override
+  String get logManagement => 'إدارة السجلات';
+
+  @override
+  String get roadsideInspections => 'تفتيش الطريق';
+
+  @override
+  String get electronicDriverVehicleInspectionReports =>
+      'تقارير فحص المركبة (DVIR)';
+
+  @override
+  String get fleetManagerPortal => 'بوابة مدير الأسطول';
+
+  @override
+  String get electronicLoggingDeviceEld => 'جهاز التسجيل الإلكتروني (ELD)';
+
+  @override
+  String get recordsOfNdutyStatus => 'سجلات حالة الخدمة';
+
+  @override
+  String get easilyManageYourDutyStatus =>
+      'إدارة الحالات بسهولة مع إمكانية عرض، وتعديل، وتوقيع السجلات بدقة.';
+
+  @override
+  String get availableHoursAndNrequiredBreaks =>
+      'الساعات المتاحة\\nوالفترات المطلوبة';
+
+  @override
+  String get stayInformedAboutYourAvailable =>
+      'ابقَ على اطلاع بساعات القيادة المتاحة وفترات الراحة الإلزامية لضمان الامتثال.';
+
+  @override
+  String get roadsideInspectionNfunction => 'تفتيش الطريق';
+
+  @override
+  String get duringRoadsideInspectionsUseThe =>
+      'أثناء التفتيش الأمني، استخدم وضع التفتيش (DOT) في التطبيق لمشاركة السجلات بسهولة.';
+
+  @override
+  String get vehicleInspectionNreports => 'تقارير فحص المركبة';
+
+  @override
+  String get generatePreOrPostTrip =>
+      'أنشئ تقارير DVIR قبل أو بعد الرحلة لإشعار الميكانيكيين بأي أعطال فوراً.';
+
+  @override
+  String get setUpFleetNmanagerPortal => 'إعداد البوابة';
+
+  @override
+  String get useYourCredentialsToSign =>
+      'استخدم بيانات الدخول للوصول إلى البوابة وتوفير معلومات شركتك والسائقين.';
+
+  @override
+  String get monitorHosAndNfmcsaCompliance => 'مراقبة الامتثال';
+
+  @override
+  String get stayOnTopOfDrivers =>
+      'تتبع حالة السائقين وساعاتهم المتبقية في الوقت الفعلي واستقبل التنبيهات.';
+
+  @override
+  String get installEldHardware => 'تثبيت الجهاز';
+
+  @override
+  String get beginByLocatingTheEcm =>
+      'ابدأ بتحديد موقع منفذ (ECM) في مركبتك. يتواجد عادة بالقرب من عجلة القيادة. بناءً على مركبتك استخدم الاتصال المناسب:';
+
+  @override
+  String get accessingLogs => 'الوصول للسجلات';
+
+  @override
+  String get logInAndNavigateTo => 'سجل الدخول وانتقل لقسم السجلات.';
+
+  @override
+  String get viewingLogs1 => 'عرض السجلات';
+
+  @override
+  String get viewDetailedRodsForDifferent =>
+      'شاهد التفاصيل اليومية لكل تغيير حالة.';
+
+  @override
+  String get editingLogs => 'تعديل السجلات';
+
+  @override
+  String get editDutyStatusEntriesExcept =>
+      'عدّل الإدخالات (باستثناء وقت القيادة الآلي).';
+
+  @override
+  String get hosComplianceAlerts => 'تنبيهات الامتثال';
+
+  @override
+  String get watchForTheRedExclamation =>
+      '• راقب العلامة الحمراء التحذيرية.\\n• راجع قائمة الانتهاكات أسفل المخطط لمعرفة التفاصيل.';
+
+  @override
+  String get createDvir => 'إنشاء فحص';
+
+  @override
+  String get startNewInspectionMarkDefects =>
+      'ابدأ فحصاً جديداً، حدد الأعطال إن وجدت، وضع الملاحظات ثم وقّع.';
+
+  @override
+  String get editDvir => 'تعديل الفحص';
+
+  @override
+  String get selectAnExistingReportTo => 'اختر فحصاً سابقاً للتعديل.';
+
+  @override
+  String get deleteDvir => 'حذف الفحص';
+
+  @override
+  String get removeTheReportFromHistory => 'احذف التقرير من قائمة السجل.';
+
+  @override
+  String get switchAction => 'تبديل';
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../../../../core/domain/duty_status/duty_status_code.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// Localized display names for [DutyStatusCode].
 ///

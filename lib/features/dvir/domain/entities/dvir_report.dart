@@ -95,6 +95,7 @@ class DvirReport extends Equatable {
   final bool outOfService;
   final bool certified;
   final String? mechanicName;
+  final DateTime? mechanicSignatureDate;
   final String? repairStatus;
   final String? repairNotes;
   final String? reviewingDriverName;
@@ -124,6 +125,7 @@ class DvirReport extends Equatable {
     this.outOfService = false,
     this.certified = false,
     this.mechanicName,
+    this.mechanicSignatureDate,
     this.repairStatus,
     this.repairNotes,
     this.reviewingDriverName,
@@ -154,6 +156,7 @@ class DvirReport extends Equatable {
     bool? outOfService,
     bool? certified,
     String? mechanicName,
+    DateTime? mechanicSignatureDate,
     String? repairStatus,
     String? repairNotes,
     String? reviewingDriverName,
@@ -183,6 +186,7 @@ class DvirReport extends Equatable {
       outOfService: outOfService ?? this.outOfService,
       certified: certified ?? this.certified,
       mechanicName: mechanicName ?? this.mechanicName,
+      mechanicSignatureDate: mechanicSignatureDate ?? this.mechanicSignatureDate,
       repairStatus: repairStatus ?? this.repairStatus,
       repairNotes: repairNotes ?? this.repairNotes,
       reviewingDriverName: reviewingDriverName ?? this.reviewingDriverName,
@@ -215,6 +219,7 @@ class DvirReport extends Equatable {
         outOfService,
         certified,
         mechanicName,
+        mechanicSignatureDate,
         repairStatus,
         repairNotes,
         reviewingDriverName,

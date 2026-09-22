@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/eld_card.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/account_provider.dart';
@@ -34,7 +37,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     
     final loc = context.loc;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
+    final notAvailable = context.loc.notAvailable;
 
     final availableLanguages = account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
     final availableOdometerUnits = account?.availableOdometerUnits ?? ['mi', 'km'];
@@ -64,7 +67,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         actions: [
           accountState.isLoading
               ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.mdLg),
                   child: Center(
                     child: SizedBox(
                       width: 20,
@@ -112,12 +115,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                             color: AppColors.primaryBlue,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.md),
+                        AppGap.md,
                         Text(
                           dashboard.driverName,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        const SizedBox(height: 4),
+                        AppGap.xs,
                         Text(
                           'Driver',
                           style: TextStyle(
@@ -128,7 +131,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
 
                   if (accountState.error != null)
                     Padding(
@@ -146,49 +149,49 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       children: [
                         _buildInfoRow(
                           context,
-                          isArabic ? 'البريد الإلكتروني' : 'Email',
+                          context.loc.email1,
                           account?.email ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'رقم الهاتف' : 'Phone',
+                          context.loc.phone,
                           account?.phone ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'رقم الرخصة' : 'License',
+                          context.loc.license,
                           account?.license.formatted ?? account?.license.number ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'الناقل' : 'Carrier',
+                          context.loc.carrier,
                           account?.carrier ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'المكتب الرئيسي' : 'Main Office',
+                          context.loc.mainOffice,
                           account?.mainOfficeAddress ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'العنوان' : 'Home Terminal',
+                          context.loc.homeTerminal,
                           account?.homeTerminalAddress ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          isArabic ? 'المنطقة الزمنية' : 'Time Zone',
+                          context.loc.timeZone,
                           account?.timeZone ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildDropdownRow(
                           context: context,
-                          title: isArabic ? 'لغة التطبيق' : 'Language',
+                          title: context.loc.languageLabel,
                           value: currentLanguage,
                           items: availableLanguages,
                           onChanged: accountState.isLoading ? null : (newValue) async {
@@ -200,7 +203,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                               if (context.mounted) {
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(isArabic ? 'تم تحديث اللغة بنجاح' : 'Language updated successfully')),
+                                    SnackBar(content: Text(context.loc.languageUpdatedSuccessfully)),
                                   );
                                 }
                               }
@@ -210,7 +213,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         const Divider(color: AppColors.border),
                         _buildDropdownRow(
                           context: context,
-                          title: isArabic ? 'وحدة المسافة' : 'Odometer',
+                          title: context.loc.odometer,
                           value: currentOdometer,
                           items: availableOdometerUnits,
                           onChanged: accountState.isLoading ? null : (newValue) async {
@@ -222,7 +225,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                               if (context.mounted) {
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(isArabic ? 'تم تحديث وحدة المسافة بنجاح' : 'Odometer unit updated successfully')),
+                                    SnackBar(content: Text(context.loc.odometerUnitUpdatedSuccessfully)),
                                   );
                                 }
                               }
@@ -232,26 +235,24 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  AppGap.lg,
 
                   // ========== رسالة تنبيه ==========
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.warningYellow.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.input),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
                             color: AppColors.warningYellow, size: 20),
-                        const SizedBox(width: AppSpacing.sm),
+                        AppGap.hSm,
                         Expanded(
                           child: Text(
                             account?.notice ?? 
-                            (isArabic
-                                ? 'يرجى الاتصال بمدير الأسطول لتغيير المعلومات'
-                                : 'Please contact fleet manager to change information'),
+                            (context.loc.pleaseContactFleetManagerTo),
                             style: const TextStyle(
                               fontSize: AppTypography.captionSize,
                               color: AppColors.textSecondary,
@@ -311,7 +312,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        vertical: 4.0, // Reduced padding to account for dropdown height
+        vertical: AppSpacing.xs, // Reduced padding to account for dropdown height
         horizontal: AppSpacing.xs,
       ),
       child: Row(

@@ -1,8 +1,9 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 
-import '../../../../core/utils/logger.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/utils/logger.dart';
 
 /// آلة حالات ساعات الخدمة
 class HosStateMachine {

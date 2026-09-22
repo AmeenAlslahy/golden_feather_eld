@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../routes.dart';
+import '../../../../core/theme/app_durations.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
-import '../providers/auth_state_provider.dart';
+import '../../../../core/widgets/app_gap.dart';
+import '../../../../routes.dart';
 import '../providers/auth_mode_provider.dart';
-import '../widgets/login_form.dart';
+import '../providers/auth_state_provider.dart';
 import '../widgets/forgot_password_form.dart';
+import '../widgets/login_form.dart';
 
 /// صفحة المصادقة الموحدة
 class AuthPage extends ConsumerStatefulWidget {
@@ -45,14 +49,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 children: [
                   // شعار التطبيق
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(AppRadius.xxl),
                     child: Image.asset(
                       'assets/images/ic_launcher.png',
                       width: 120,
                       height: 120,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  AppGap.lg,
 
                   // اسم التطبيق
                   Text(
@@ -63,7 +67,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  AppGap.sm,
 
                   // شعار التطبيق (الوصف)
                   Text(
@@ -73,7 +77,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       color: context.colors.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
 
                   // رسالة الخطأ (إن وجدت) في الأعلى لرؤية أفضل
                   if (isError && !isLoading)
@@ -82,7 +86,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: context.colors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.dialog),
                         border: Border.all(
                           color: context.colors.error.withValues(alpha: 0.3),
                         ),
@@ -94,7 +98,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             color: context.colors.error,
                             size: 20,
                           ),
-                          const SizedBox(width: AppSpacing.sm),
+                          AppGap.hSm,
                           if (authState.errorMessage != null)
                             Expanded(
                               child: Text(
@@ -125,7 +129,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
                   // التبديل بين النماذج مع انتقال سلس
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
+                    duration: AppDurations.normal,
                     switchInCurve: Curves.easeInOut,
                     switchOutCurve: Curves.easeInOut,
                     transitionBuilder: (child, animation) {

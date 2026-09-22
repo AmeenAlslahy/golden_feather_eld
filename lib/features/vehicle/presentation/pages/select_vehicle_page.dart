@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../routes.dart';
+import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/vehicle.dart';
 import '../providers/vehicle_provider.dart';
 
@@ -42,22 +44,20 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
         title: Row(
           children: [
             const Icon(Icons.warning_amber,
                 color: AppColors.warningYellow, size: 28),
-            const SizedBox(width: AppSpacing.sm),
+            AppGap.hSm,
             Text(
-              isArabic ? 'مركبات غير معينة' : 'Unassigned Vehicles',
+              context.loc.unassignedVehicles,
               style: AppTextStyles(context).bodyBold,
             ),
           ],
         ),
         content: Text(
-          isArabic
-              ? 'المركبات غير المسندة لا يمكن اختيارها مباشرة. يتم تعيين المركبات للسائقين عبر البوابة الإلكترونية من قبل مدير الأسطول.\n\nيرجى الاتصال بمدير الأسطول لتعيين المركبة.'
-              : 'Unassigned vehicles cannot be selected directly. Vehicles are assigned to drivers through the web portal by the fleet manager.\n\nPlease contact your fleet manager to assign the vehicle.',
+          context.loc.unassignedVehiclesCannotBeSelected,
           style: isArabic
               ? AppTextStyles(context).arabicBody
               : AppTextStyles(context).body,
@@ -66,7 +66,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isArabic ? 'موافق' : 'OK',
+              context.loc.okButton,
               style: AppTextStyles(context)
                   .buttonText
                   .copyWith(color: AppColors.primaryBlue),
@@ -75,7 +75,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isArabic ? 'اتصل بالمدير' : 'Contact Manager',
+              context.loc.contactManager,
               style: AppTextStyles(context)
                   .buttonText
                   .copyWith(color: AppColors.dangerRed),
@@ -160,7 +160,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                             Icon(Icons.local_shipping,
                                 size: 64,
                                 color: Theme.of(context).colorScheme.outline),
-                            const SizedBox(height: AppSpacing.md),
+                            AppGap.md,
                             Text(context.loc.noVehiclesFound),
                           ],
                         ),
@@ -171,7 +171,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                         ),
                         itemCount: filteredVehicles.length,
                         separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSpacing.sm),
+                            AppGap.sm,
                         itemBuilder: (context, index) {
                           final vehicle = filteredVehicles[index];
                           return _VehicleCard(
@@ -233,7 +233,7 @@ class _VehicleCard extends StatelessWidget {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
+              AppGap.hMd,
 
               // ========== معلومات المركبة ==========
               Expanded(
@@ -244,7 +244,7 @@ class _VehicleCard extends StatelessWidget {
                       vehicle.displayName,
                       style: AppTextStyles(context).bodyBold,
                     ),
-                    const SizedBox(height: 4),
+                    AppGap.xs,
                     if (vehicle.vin != null)
                       Text(
                         'VIN: ${vehicle.vin!.length > 8 ? vehicle.vin!.substring(vehicle.vin!.length - 8) : vehicle.vin}',
@@ -253,7 +253,7 @@ class _VehicleCard extends StatelessWidget {
                             .copyWith(color: AppColors.textSecondary),
                       ),
                     if (!vehicle.isAssigned) ...[
-                      const SizedBox(height: 4),
+                      AppGap.xs,
                       AppStatusBadge(
                         label: context.loc.unassigned,
                         type: AppStatusBadgeType.warning,

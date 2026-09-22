@@ -1,10 +1,12 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../providers/inspection_provider.dart';
@@ -92,7 +94,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                 children: [
                   const Icon(Icons.check_circle,
                       color: AppColors.successGreen, size: 80),
-                  const SizedBox(height: AppSpacing.lg),
+                  AppGap.lg,
                   Text(
                     widget.isEmailMode ? 'Email Sent!' : 'Logs Sent!',
                     style: Theme.of(context).textTheme.headlineMedium,
@@ -111,7 +113,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    AppGap.lg,
                     AppTextField(
                       controller: _emailController,
                       label: 'Recipient Email',
@@ -124,7 +126,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       'Select transfer method',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    AppGap.md,
                     ...TransferMethod.values
                         .map((method) => RadioListTile<TransferMethod>(
                               title: Text(method.englishName),
@@ -136,7 +138,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                               activeColor: AppColors.primaryBlue,
                             )),
                     if (_selectedMethod == TransferMethod.webService) ...[
-                      const SizedBox(height: AppSpacing.md),
+                      AppGap.md,
                       AppTextField(
                         controller: _routingCodeController,
                         label: 'Routing Code',
@@ -144,7 +146,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       ),
                     ],
                   ],
-                  const SizedBox(height: AppSpacing.lg),
+                  AppGap.lg,
                   SwitchListTile(
                     title: Text(context.loc.exportErods),
                     subtitle: Text(context.loc.requiredForFmcsa),
@@ -154,7 +156,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       setState(() => _exportAsErods = val);
                     },
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
                   AppButton(
                     label: widget.isEmailMode ? 'SEND EMAIL' : 'SEND LOGS',
                     isLoading: _isSending,

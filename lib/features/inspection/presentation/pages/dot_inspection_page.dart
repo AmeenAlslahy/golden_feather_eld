@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/services/file_sharing_service.dart';
 import '../../../../core/theme/app_colors.dart';
-// import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/eld_card.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../providers/inspection_provider.dart';
 import 'send_logs_page.dart';
-import '../../../../core/services/file_sharing_service.dart';
 
 /// شاشة DOT Inspection
 class DotInspectionPage extends ConsumerStatefulWidget {
@@ -55,7 +57,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              AppGap.sm,
               TextField(
                 controller: confirmPinController,
                 keyboardType: TextInputType.number,
@@ -194,25 +196,25 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                   children: [
                     Icon(Icons.assignment_turned_in,
                         size: 80, color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(height: AppSpacing.lg),
+                    AppGap.lg,
                     Text(
                       context.loc.dotInspection,
                       style: Theme.of(context).textTheme.headlineMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    AppGap.md,
                     Text(
                       context.loc.startInspectionDesc,
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    AppGap.xl,
                     AppButton(
                       label: context.loc.startInspection.toUpperCase(),
                       icon: Icons.lock,
                       onPressed: _showPinSetupDialog,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    AppGap.lg,
                     AppButton(
                       label: context.loc.sendLogs.toUpperCase(),
                       type: EldButtonType.send,
@@ -224,8 +226,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         );
                       },
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    const SizedBox(height: AppSpacing.md),
+                    AppGap.md,
+                    AppGap.md,
                     AppButton(
                       label: context.loc.emailLogs.toUpperCase(),
                       type: EldButtonType.send,
@@ -239,7 +241,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         );
                       },
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    AppGap.md,
                     AppButton(
                       label: 'تنزيل ومشاركة التقارير (EXCEL)',
                       icon: Icons.share,
@@ -276,13 +278,13 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         }
                       },
                     ),
-                    const SizedBox(height: AppSpacing.xl),
+                    AppGap.xl,
                     // شهادة FMCSA
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: AppColors.successGreen.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.input),
                         border: Border.all(
                             color:
                                 AppColors.successGreen.withValues(alpha: 0.2)),
@@ -291,7 +293,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         children: [
                           const Icon(Icons.verified,
                               color: AppColors.successGreen, size: 32),
-                          const SizedBox(height: AppSpacing.sm),
+                          AppGap.sm,
                           Text(
                             Localizations.localeOf(context).languageCode == 'ar'
                                 ? 'هذا التطبيق متوافق مع المعايير الدولية لسلامة النقل وإدارة الأساطيل'
@@ -303,7 +305,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                               fontWeight: AppTypography.semiBold,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          AppGap.xs,
                           Text(
                             'Golden Feather ELD v1.0.0',
                             textAlign: TextAlign.center,
@@ -403,7 +405,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.lg),
+                      AppGap.lg,
                       AppButton(
                         label: context.loc.endInspection.toUpperCase(),
                         type: EldButtonType.danger,

@@ -1,16 +1,15 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/config/app_environment.dart';
-import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
-
-import 'package:mocktail/mocktail.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
-import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 

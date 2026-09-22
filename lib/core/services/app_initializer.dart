@@ -1,18 +1,19 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app/orchestrators/tracking_orchestrator.dart';
+import '../../features/sync/presentation/providers/sync_engine_provider.dart';
+import '../../features/sync/presentation/providers/sync_provider.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
+import '../config/app_environment.dart';
+import '../time/trusted_time_provider.dart';
+import '../utils/logger.dart';
 import 'local_database_service.dart';
 import 'local_storage_service.dart';
 import 'push_notification_service.dart';
 import 'remote_config_service.dart';
 import 'utc_sync_service.dart';
-import '../config/app_environment.dart';
-import '../utils/logger.dart';
-import '../../features/sync/presentation/providers/sync_provider.dart';
-import '../../features/sync/presentation/providers/sync_engine_provider.dart';
-import '../../app/orchestrators/tracking_orchestrator.dart';
-import '../time/trusted_time_provider.dart';
 
 class AppInitializer {
   late final LocalStorageService localStorageService;

@@ -1,11 +1,13 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 
-import '../../../../../core/utils/logger.dart';
-import '../../../../../core/services/live_tracking_data_source.dart';
-import '../../../data/datasources/hos_local_data_source.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
 import '../../../../../core/domain/entities/location_point.dart'; // For LocationPoint
+import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
+import '../../../../../core/utils/logger.dart';
+// ARCH-CRIT-01 fix: Use Domain port instead of Data DataSource
+import '../../ports/hos_storage_port.dart';
 
 /// أنواع الأعطال
 enum MalfunctionType {
@@ -84,7 +86,7 @@ class DiagnosticsState {
 /// محرك التشخيص الذاتي
 class DiagnosticsEngine {
   final LiveTrackingDataSource _trackingDataSource;
-  final HosLocalDataSource _localDb;
+  final HosStoragePort _localDb;
   final TrustedTimeProvider _timeProvider;
   final _stateController = StreamController<DiagnosticsState>.broadcast();
 

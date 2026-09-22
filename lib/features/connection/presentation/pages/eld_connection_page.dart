@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../widgets/manual_mode_dialog.dart';
-
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
 
 class EldConnectionState {
   final bool isConnecting;
@@ -198,17 +199,17 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                         fontSize: AppTypography.bodySize,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    AppGap.md,
                     _buildChecklistItem(context.loc.macEnteredCorrectly),
                     _buildChecklistItem(context.loc.hardwareProperlyInstalled),
                     _buildChecklistItem(context.loc.vehiclePowerOn),
                     _buildChecklistItem(context.loc.bluetoothEnabled),
                     _buildChecklistItem(context.loc.gpsEnabled),
-                    const SizedBox(height: AppSpacing.lg),
+                    AppGap.lg,
                     Divider(color: Theme.of(context).dividerColor, height: 1),
-                    const SizedBox(height: AppSpacing.lg),
+                    AppGap.lg,
                   ] else ...[
-                    const SizedBox(height: AppSpacing.xl),
+                    AppGap.xl,
                   ],
 
                   // عنوان حقل MAC
@@ -218,7 +219,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       fontSize: AppTypography.bodySize,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
 
                   // ✅ حقل إدخال موحد
                   AppTextField(
@@ -228,7 +229,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     keyboardType: TextInputType.text,
                   ),
 
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
 
                   // ✅ زر اتصال
                   AppButton(
@@ -239,7 +240,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                         ? null
                         : _attemptConnection,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
 
                   // ✅ زر متابعة بدون اتصال
                   AppButton(
@@ -278,7 +279,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         children: [
           // ✅ نقطة بسيطة بدلاً من CircleAvatar
           const Padding(
-            padding: EdgeInsets.only(top: 8.0, right: AppSpacing.sm),
+            padding: EdgeInsetsDirectional.only(top: 8.0, end: AppSpacing.sm),
             child: Icon(
               Icons.circle,
               size: 6,

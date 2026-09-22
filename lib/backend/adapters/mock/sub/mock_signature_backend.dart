@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/domain/signature/signature.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../../domain/signature/signature.dart';
 import '../../../contracts/signature_backend.dart';
 
 class MockSignatureBackend implements SignatureBackend {

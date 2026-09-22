@@ -1,13 +1,14 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../../../../core/error/failure.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/location_entity.dart';
 import '../../domain/repositories/tracking_repository.dart';
-import '../datasources/tracking_local_data_source.dart';
 import '../datasources/native_event_channel_client.dart';
+import '../datasources/tracking_local_data_source.dart';
 import '../models/location_model.dart';
 import '../services/tracking_service.dart';
 

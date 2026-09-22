@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/codriver.dart';
 import '../providers/codriver_provider.dart';
@@ -73,24 +75,22 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
+                    context.loc.selectCoDriver,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  AppGap.xs,
                   Text(
-                    isArabic
-                        ? 'الرجاء اختيار مساعد السائق الخاص بك'
-                        : 'Select your co-driver',
+                    context.loc.selectYourCoDriver,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondaryColor,
                     ),
                   ),
-                  const SizedBox(height: 32.0),
+                  AppGap.xl,
 
                   // Selector Row
                   InkWell(
@@ -123,21 +123,19 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 60),
+                  const AppGap.custom(60),
 
                   Text(
-                    isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
+                    context.loc.switchDrivers,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  AppGap.sm,
                   Text(
-                    isArabic
-                        ? 'ستصبح السائق المساعد. سيبقى السائق المساعد سائقاً.'
-                        : 'You will become co-driver. Your co-driver will stay driver.',
+                    context.loc.youWillBecomeCoDriver,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -145,11 +143,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     ),
                   ),
 
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
 
                   // Switch Button
                   AppButton(
-                    label: isArabic ? 'تبديل' : 'SWITCH',
+                    label: context.loc.switchAction,
                     type: EldButtonType.agree,
                     isLoading: codriverState.isSwitching,
                     onPressed: (codriverState.isSwitching ||
@@ -159,13 +157,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: Text(isArabic
-                                    ? 'تأكيد التبديل'
-                                    : 'Confirm Switch'),
+                                title: Text(context.loc.confirmSwitch),
                                 content: Text(
-                                  isArabic
-                                      ? 'هل أنت متأكد من تبديل الأدوار؟'
-                                      : 'Are you sure you want to switch roles?',
+                                  context.loc.areYouSureYouWant,
                                 ),
                                 actions: [
                                   TextButton(
@@ -195,9 +189,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      isArabic
-                                          ? '✅ تم تبديل الأدوار بنجاح'
-                                          : '✅ Roles switched successfully',
+                                      context.loc.rolesSwitchedSuccessfully,
                                     ),
                                     backgroundColor: AppColors.successGreen,
                                   ),
@@ -227,7 +219,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
             return AlertDialog(
               backgroundColor: surfaceColor,
               title: Text(
-                isArabic ? 'مساعد السائق' : 'Co-driver',
+                context.loc.coDriver,
                 style:
                     TextStyle(color: textColor, fontWeight: FontWeight.normal),
               ),
@@ -267,7 +259,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    isArabic ? 'إلغاء' : 'CANCEL',
+                    context.loc.cancelButton,
                     style: const TextStyle(color: AppColors.primaryBlue),
                   ),
                 ),
@@ -285,7 +277,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    isArabic ? 'موافق' : 'OK',
+                    context.loc.okButton,
                     style: const TextStyle(color: AppColors.primaryBlue),
                   ),
                 ),

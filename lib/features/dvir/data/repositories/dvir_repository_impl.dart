@@ -1,11 +1,12 @@
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
+import '../../../../backend/contracts/dvir_backend.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
-import '../../../../backend/contracts/dvir_backend.dart';
-import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
-import '../../../../domain/shared/value_objects.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
@@ -148,7 +149,7 @@ class DvirRepositoryImpl implements DvirRepository {
       type: _parseInspectionType(dto.inspectionType),
       date: DateTime.tryParse(dto.inspectionTime ?? '') ?? DateTime.now(),
       driverName: dto.driver?.name ?? '',
-      vehicleId: dto.uniqueId ?? '',
+      vehicleId: dto.uniqueId ?? dto.id.toString(),
       trailerId: dto.trailerNumber,
       odometer: dto.odometer,
       condition: _parseVehicleCondition(dto.status),

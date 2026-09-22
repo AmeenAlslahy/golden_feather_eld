@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
-import 'package:golden_feather_eld/backend/core/backend_kind.dart';
+import 'package:golden_feather_eld/backend/base/backend_kind.dart';
 
 void main() {
   late MockAdapter adapter;

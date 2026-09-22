@@ -45,12 +45,18 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   Future<void> toggleTheme() async {
-    if (state == ThemeMode.light) {
+    // Cycle: system -> light -> dark -> system (for quick toggle)
+    if (state == ThemeMode.system) {
+      await setThemeMode(ThemeMode.light);
+    } else if (state == ThemeMode.light) {
       await setThemeMode(ThemeMode.dark);
     } else {
-      await setThemeMode(ThemeMode.light);
+      await setThemeMode(ThemeMode.system);
     }
   }
 
+  Future<void> setSystemTheme() async => setThemeMode(ThemeMode.system);
+
   bool get isDarkMode => state == ThemeMode.dark;
+  bool get isSystemMode => state == ThemeMode.system;
 }

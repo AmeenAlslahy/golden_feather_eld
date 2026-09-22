@@ -1,17 +1,19 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/widgets/eld_card.dart';
-import '../../../../core/theme/app_spacing.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../providers/hos_provider.dart';
-import '../widgets/status_option_tiles.dart';
-import '../widgets/location_display_widget.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../providers/hos_engine_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
+import '../providers/hos_engine_provider.dart';
+import '../providers/hos_provider.dart';
+import '../widgets/location_display_widget.dart';
+import '../widgets/status_option_tiles.dart';
 
 class ChangeStatusPage extends ConsumerStatefulWidget {
   const ChangeStatusPage({super.key});
@@ -174,7 +176,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ),
 
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
 
             // Location & Notes Card
             EldCard(
@@ -187,16 +189,16 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
                   const LocationDisplayWidget(),
-                  const SizedBox(height: AppSpacing.lg),
+                  AppGap.lg,
                   AppTextField(
                     controller: _locationController,
                     label: context.loc.customLocation,
                     hint: context.loc.customLocation,
                     prefixIcon: const Icon(Icons.edit_location_alt),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
                   AppTextField(
                     controller: _notesController,
                     label: context.loc.notes,
@@ -209,7 +211,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ),
 
-            const SizedBox(height: AppSpacing.xl),
+            AppGap.xl,
 
             // Save Button
             AppButton(
@@ -229,7 +231,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
           ],
         ),
       ),

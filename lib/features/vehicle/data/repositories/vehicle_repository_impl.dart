@@ -1,10 +1,11 @@
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
-import '../../../../backend/contracts/vehicle_backend.dart';
 import '../models/vehicle_model.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
@@ -27,14 +28,15 @@ class VehicleRepositoryImpl implements VehicleRepository {
     }
 
     try {
-      final result = await _vehicleBackend.getLegacyVehicles();
-      return result.fold(
+      final result = await _vehicleBackend.getMyVehicles();
+      return await Future.value(result.fold(
         (error) => Left(ServerFailure(message: 'فشل: ${error.code}')),
         (data) {
-          final vehicles = data.map((json) => VehicleModel.fromJson(json as Map<String, dynamic>)).toList();
+          final vehiclesList = data['data'] as List<dynamic>? ?? [];
+          final vehicles = vehiclesList.map((json) => VehicleModel.fromJson(json as Map<String, dynamic>)).toList();
           return Right(vehicles.cast<Vehicle>().toList());
         }
-      );
+      ));
     } catch (e) {
       return Left(ServerFailure(message: 'فشل جلب قائمة الشاحنات: $e'));
     }

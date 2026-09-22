@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
+
+import '../../../../../core/domain/shared/value_objects.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_gap.dart';
 import '../../../../../core/widgets/eld_card.dart';
-import '../../../../../core/extensions/context_extensions.dart';
-import '../../../domain/entities/daily_log.dart';
 import '../../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../../domain/shared/value_objects.dart';
-import 'package:intl/intl.dart';
+import '../../../domain/entities/daily_log.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/logs_provider.dart';
 
@@ -121,9 +123,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.dangerRed),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             Text(state.error!, textAlign: TextAlign.center, style: AppTextStyles(context).errorText),
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
             ElevatedButton(
               onPressed: () => ref.read(certifyLogProvider.notifier).checkReadiness(widget.selectedLog.id),
               child: const Text('Retry'),
@@ -145,36 +147,36 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(Icons.warning_amber_rounded, size: 64, color: AppColors.warningYellow),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             Text(
               'Not Ready for Certification',
               textAlign: TextAlign.center,
               style: AppTextStyles(context).pageTitle,
             ),
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
             Text(
               'Please resolve the following issues before certifying your log:',
               style: AppTextStyles(context).body,
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             ...readinessData.missingRequirements.map((req) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Row(
                 children: [
                   const Icon(Icons.circle, size: 8, color: AppColors.dangerRed),
-                  const SizedBox(width: AppSpacing.sm),
+                  AppGap.hSm,
                   Expanded(child: Text(req, style: AppTextStyles(context).body)),
                 ],
               ),
             )),
-            const SizedBox(height: AppSpacing.xl),
+            AppGap.xl,
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.surface,
                 foregroundColor: AppColors.primaryBlue,
                 side: const BorderSide(color: AppColors.primaryBlue),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
               ),
               child: Text('NOT READY (Close)', style: AppTextStyles(context).buttonText.copyWith(color: AppColors.primaryBlue)),
@@ -215,24 +217,24 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           InkWell(
             onTap: () => _signatureController.clear(),
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               child: Text(
                 context.loc.clearSignature,
                 style: AppTextStyles(context).body.copyWith(decoration: TextDecoration.underline),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
+          AppGap.xl,
           Text(
             readinessData.legalStatement,
             textAlign: TextAlign.center,
             style: AppTextStyles(context).body.copyWith(height: 1.5, fontWeight: FontWeight.w500),
           ),
-          const SizedBox(height: AppSpacing.md),
+          AppGap.md,
           if (!widget.selectedLog.isFormComplete)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -255,7 +257,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.successGreen,
                     disabledBackgroundColor: AppColors.border,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
                     elevation: 0,
                   ),
@@ -263,7 +265,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface),
                         )
                       : Text(
                           context.loc.agree,

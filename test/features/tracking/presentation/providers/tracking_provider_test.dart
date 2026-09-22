@@ -1,23 +1,26 @@
 import 'dart:async';
-import 'package:golden_feather_eld/core/config/app_environment.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fpdart/fpdart.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/app/providers/app_repository_providers.dart';
+import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
-import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
-import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
-import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
 import 'package:golden_feather_eld/core/services/battery_optimization_service.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
+import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
+import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Fake Repository
 class FakeTrackingRepository implements TrackingRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
   final StreamController<LocationEntity> _locationStreamController =
       StreamController<LocationEntity>.broadcast();
   bool isServiceStarted = false;

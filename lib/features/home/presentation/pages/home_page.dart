@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../../../../core/config/feature_flags.dart';
+import '../../../../core/domain/duty_status/duty_status_code.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../core/widgets/connection_status_indicator.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../hos/presentation/pages/hos_page.dart';
 import '../../../hos/presentation/pages/recap_page.dart';
-import '../../../hos/presentation/widgets/driving_lock_screen.dart';
-import '../../../sync/presentation/widgets/sync_status_indicator.dart';
-import '../../../../core/widgets/connection_status_indicator.dart';
-import '../widgets/eld_drawer.dart';
-import '../widgets/eld_bottom_nav.dart';
-import '../providers/dashboard_provider.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../tracking/presentation/providers/tracking_providers.dart';
-import 'package:geolocator/geolocator.dart';
-import '../../../../core/config/feature_flags.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../hos/presentation/widgets/driving_lock_screen.dart';
+import '../../../sync/presentation/widgets/sync_status_indicator.dart';
+import '../../../tracking/presentation/providers/tracking_providers.dart';
+import '../providers/dashboard_provider.dart';
+import '../widgets/eld_bottom_nav.dart';
+import '../widgets/eld_drawer.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -31,7 +33,7 @@ class HomePage extends ConsumerWidget {
     return [
       flags.useNewStatusDashboard
           ? const StatusDashboardPage()
-          : const StatusDashboard(), // legacy wrapper below
+          : const LegacyStatusDashboard(), // legacy wrapper below
       const RecapPage(),
     ];
   }
@@ -42,16 +44,16 @@ class HomePage extends ConsumerWidget {
     final currentNavIndex = ref.watch(homeNavIndexProvider);
     final statusDashboardState = ref.watch(statusDashboardProvider);
 
-    // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
+    final user = ref.watch(authStateProvider).user;
     final driverText = statusDashboardState.valueOrNull?.driver.displayText ??
         (dashboard.driverName != 'Unknown'
-            ? '${dashboard.driverName} - ${dashboard.vehicleDisplayName}'
+            ? '${dashboard.driverName} - ${user?.id ?? ""}'
             : null) ??
-        ref.watch(authStateProvider).user?.fullName ??
+        user?.fullName ??
         '';
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
-
+     print(driverText);
     return Stack(
       children: [
         Scaffold(
@@ -62,7 +64,8 @@ class HomePage extends ConsumerWidget {
               currentNavIndex == 0
                   ? driverText
                   : context.loc.hoursRecap,
-              style: const TextStyle(
+              style: 
+              const TextStyle(
                 fontSize: AppTypography.bodySize,
                 fontWeight: AppTypography.bold,
                 color: AppColors.surface,
@@ -79,7 +82,7 @@ class HomePage extends ConsumerWidget {
             actions: currentNavIndex == 0
                   ? [
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.0),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                       child: ConnectionStatusIndicator(),
                     ),
                     const SyncStatusIndicator(),
@@ -99,8 +102,8 @@ class HomePage extends ConsumerWidget {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Problems Detected'),
-                                  content: const Text('• GPS is Turned Off',
-                                      style: TextStyle(fontSize: 16)),
+                                  content: Text('• GPS is Turned Off',
+                                      style: context.textTheme.bodyLarge),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
@@ -132,12 +135,12 @@ class HomePage extends ConsumerWidget {
                   if (!isOnline)
                     Container(
                       width: double.infinity,
-                      color: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: const Text(
+                      color: AppColors.black87,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      child: Text(
                         'Offline mode. Check your internet connection.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        style: context.textTheme.bodyMedium?.copyWith(color: AppColors.surface),
                       ),
                     ),
                   Expanded(child: pages[currentNavIndex]),
@@ -166,8 +169,8 @@ class HomePage extends ConsumerWidget {
 // ========== صفحات مؤقتة ==========
 
 /// شاشة الحالة - نعرض داخلها HosPage
-class StatusDashboard extends StatelessWidget {
-  const StatusDashboard({super.key});
+class LegacyStatusDashboard extends StatelessWidget {
+  const LegacyStatusDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,16 +1,20 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../providers/hos_provider.dart';
-import '../widgets/main_circular_timer.dart';
-import '../widgets/hos_timer_list.dart';
-import '../pages/change_status_page.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/extensions/time_extensions.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme_provider.dart';
-import '../widgets/diagnostics_alert_card.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
+import '../pages/change_status_page.dart';
+import '../providers/hos_provider.dart';
+// CLEAN-HIGH-03 fix: Use unified CircularTimerWidget
+import '../widgets/circular_timer_widget.dart';
+import '../widgets/diagnostics_alert_card.dart';
+import '../widgets/hos_timer_list.dart';
 
 class HosPage extends ConsumerWidget {
   const HosPage({super.key});
@@ -61,17 +65,17 @@ class HosPage extends ConsumerWidget {
                   const DiagnosticsAlertCard(),
                   if (isUntrusted)
                     Container(
-                      padding: const EdgeInsets.all(12),
-                      color: Colors.red.shade100,
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      color: AppColors.dangerBg,
                       child: const Row(
                         children: [
-                          Icon(Icons.warning, color: Colors.red),
-                          SizedBox(width: 8),
+                          Icon(Icons.warning, color: AppColors.dangerRed),
+                          AppGap.hSm,
                           Expanded(
                               child: Text(
                                   'Trusted time is unavailable. HOS calculations suspended.',
                                   style: TextStyle(
-                                      color: Colors.red,
+                                      color: AppColors.dangerRed,
                                       fontWeight: FontWeight.bold))),
                         ],
                       ),
@@ -93,7 +97,7 @@ class HosPage extends ConsumerWidget {
                             },
                             customBorder: const CircleBorder(),
                             child: const Padding(
-                              padding: EdgeInsets.all(12),
+                              padding: EdgeInsets.all(AppSpacing.md),
                               child: Icon(
                                 Icons.brightness_2,
                                 color: AppColors.surface,
@@ -106,10 +110,13 @@ class HosPage extends ConsumerWidget {
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 32, bottom: 24),
-                          child: MainCircularTimer(
+                          child: CircularTimerWidget(
                             timeString: timeString,
                             statusText: _getStatusText(currentStatus, context),
+                            label: _getStatusText(currentStatus, context),
                             progress: progress.clamp(0.0, 1.0),
+                            isCritical: remainingMinutes <= 60,
+                            isExpired: remainingMinutes <= 0,
                             onTap: () {
                               _showStatusSelector(context);
                             },

@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_inspection_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_response.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -39,7 +39,7 @@ void main() {
       );
       
       verify(() => mockApiClient.get<Map<String, dynamic>>(
-            '/eld/inspections',
+            '/eld/dot-inspection',
             queryParameters: {'driverId': 101},
             parser: any(named: 'parser'),
           )).called(1);

@@ -1,9 +1,11 @@
 import 'package:go_router/go_router.dart';
-import '../routes.dart';
+
+import '../features/codriver/presentation/pages/codriver_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/hos/presentation/pages/hos_page.dart';
+import '../features/hos/presentation/pages/status_dashboard_page.dart';
 import '../features/vehicle/presentation/pages/select_vehicle_page.dart';
-import '../features/codriver/presentation/pages/codriver_page.dart';
+import '../routes.dart';
 
 class HomeRoutes {
   HomeRoutes._();
@@ -17,7 +19,7 @@ class HomeRoutes {
         GoRoute(
           path: AppRoutes.status,
           name: 'status',
-          builder: (context, state) => const StatusDashboard(),
+          builder: (context, state) => const StatusDashboardPage(),
         ),
         GoRoute(
           path: AppRoutes.hos,

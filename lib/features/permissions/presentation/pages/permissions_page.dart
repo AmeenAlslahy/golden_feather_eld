@@ -1,13 +1,15 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import 'package:go_router/go_router.dart';
 
 /// صفحة طلب الصلاحيات الأولية
 class PermissionsPage extends ConsumerStatefulWidget {
@@ -110,7 +112,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
               isRequired ? Icons.error : Icons.warning_amber,
               color: isRequired ? AppColors.dangerRed : AppColors.warningYellow,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            AppGap.hSm,
             Expanded(child: Text(title)),
           ],
         ),
@@ -156,7 +158,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 48),
+              AppGap.xxxl,
 
               // شعار التطبيق
               Icon(
@@ -164,20 +166,20 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                 size: 80,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: 24),
+              AppGap.lg,
 
               Text(
                 'صلاحيات التطبيق',
                 textAlign: TextAlign.center,
                 style: AppTextStyles(context).pageTitle,
               ),
-              const SizedBox(height: 8),
+              AppGap.sm,
               Text(
                 'يحتاج تطبيق ELD للصلاحيات التالية\nللعمل بشكل قانوني',
                 textAlign: TextAlign.center,
                 style: AppTextStyles(context).body,
               ),
-              const SizedBox(height: 48),
+              AppGap.xxxl,
 
               // الصلاحيات المطلوبة
               _buildPermissionTile(
@@ -188,7 +190,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                 isGranted: _locationGranted,
                 onRequest: _requestLocation,
               ),
-              const SizedBox(height: AppSpacing.md),
+              AppGap.md,
 
               _buildPermissionTile(
                 icon: Icons.bluetooth,
@@ -198,7 +200,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                 isGranted: _bluetoothGranted,
                 onRequest: _requestBluetooth,
               ),
-              const SizedBox(height: AppSpacing.md),
+              AppGap.md,
 
               _buildPermissionTile(
                 icon: Icons.notifications,
@@ -216,7 +218,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                 isGranted: _batteryGranted,
                 onRequest: _requestBattery,
               ),
-              const SizedBox(height: AppSpacing.md),
+              AppGap.md,
 
               _buildPermissionTile(
                 icon: Icons.camera_alt,
@@ -240,7 +242,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                         if (!_batteryGranted) _requestBattery();
                       },
               ),
-              const SizedBox(height: AppSpacing.lg),
+              AppGap.lg,
             ],
           ),
         ),

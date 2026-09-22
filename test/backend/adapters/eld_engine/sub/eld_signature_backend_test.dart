@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_signature_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_response.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/signature/signature.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:golden_feather_eld/domain/signature/signature.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockApiClient extends Mock implements ApiClient {}

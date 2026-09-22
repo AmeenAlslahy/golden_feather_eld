@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_card.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/services/local_storage_service.dart';
 
 /// Settings screen where the user enters the backend URL.
 ///
@@ -105,7 +106,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.successGreen,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -136,7 +137,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
                     'Current Status',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  AppGap.sm,
                   Text(
                     prefs.backendType == 'mock'
                         ? 'No server configured. Using Mock backend.'
@@ -149,7 +150,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // URL input
             AppTextField(
@@ -159,7 +160,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.done,
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // Save button
             AppButton(
@@ -167,7 +168,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               type: EldButtonType.agree,
               onPressed: _onSave,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            AppGap.sm,
 
             // Test Connection button
             AppButton(
@@ -175,7 +176,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               type: EldButtonType.agree,
               onPressed: _isTesting ? null : _onTestConnection,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            AppGap.sm,
 
             // Clear button
             AppButton(
@@ -184,7 +185,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               onPressed: _onClear,
             ),
 
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
             Text(
               'Note: real connection testing will be available in the next task.',
               textAlign: TextAlign.center,

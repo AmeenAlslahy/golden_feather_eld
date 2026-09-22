@@ -12,7 +12,6 @@
 ///   - Response caching.
 library;
 
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart' as fp;

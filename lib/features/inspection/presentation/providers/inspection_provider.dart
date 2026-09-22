@@ -1,24 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/inspection_backend.dart';
-import '../../data/repositories/inspection_repository_impl.dart';
+
+// ARCH-HIGH-01 fix: Import from composition root
+import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../core/services/tracking_config_storage_service.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/repositories/inspection_repository.dart';
-import '../../../../core/services/tracking_config_storage_service.dart';
-
-// --- Dependency Injection Providers ---
-
-final inspectionBackendProviderAlias = Provider<InspectionBackend>((ref) {
-  return ref.watch(inspectionBackendProvider);
-});
-
-final inspectionRepositoryProvider = Provider<InspectionRepository>((ref) {
-  return InspectionRepositoryImpl(
-    inspectionBackend: ref.watch(inspectionBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 

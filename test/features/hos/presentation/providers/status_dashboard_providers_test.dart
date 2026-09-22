@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
-import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
-import 'package:golden_feather_eld/backend/core/backend_identity.dart';
+import 'package:golden_feather_eld/backend/base/backend_adapter.dart';
+import 'package:golden_feather_eld/backend/base/backend_identity.dart';
+import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/weekly_recap.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
-import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
-import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
-import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
-import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 
 
 void main() {

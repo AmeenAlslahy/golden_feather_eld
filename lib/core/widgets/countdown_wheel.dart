@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../extensions/context_extensions.dart';
+import 'app_gap.dart';
 // import '../theme/app_colors.dart';
 
 /// حلقة عد تنازلي دائرية لحساب ساعات الخدمة
@@ -58,7 +59,7 @@ class CountdownWheel extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        AppGap.sm,
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall,

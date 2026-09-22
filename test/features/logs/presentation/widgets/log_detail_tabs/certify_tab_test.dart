@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
-import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/certify_tab.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:golden_feather_eld/app/providers/app_repository_providers.dart';
 
 class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   MockAuthNotifier(super.state);
@@ -28,12 +34,20 @@ class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier 
   void clearError() {}
 }
 
+class MockLogRepository extends Mock implements LogRepository {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(const DailyLogId(0));
+  });
+
   group('CertifyTab', () {
     late MockAdapter mockAdapter;
+    late MockLogRepository mockRepo;
 
     setUp(() {
       mockAdapter = MockAdapter();
+      mockRepo = MockLogRepository();
     });
 
     Future<void> pumpTab(
@@ -58,6 +72,7 @@ void main() {
           overrides: [
             activeBackendProvider.overrideWithValue(mockAdapter),
             authStateProvider.overrideWith((ref) => MockAuthNotifier(authState)),
+            logRepositoryProvider.overrideWithValue(mockRepo),
           ],
           child: MaterialApp(
             locale: const Locale('en'),
@@ -73,7 +88,7 @@ void main() {
 
     testWidgets('AGREE button is disabled when signature is empty', (tester) async {
       final log = DailyLog(
-        id: '123',
+        id: const DailyLogId(123),
         date: DateTime.now(),
         totalDrivingHours: 10.0,
         isCertified: false,
@@ -81,7 +96,19 @@ void main() {
         isFormComplete: true,
       );
 
+      when(() => mockRepo.getReadiness(any())).thenAnswer((_) async => Right(ReadinessDto(
+        dailyLogId: 123,
+        driverId: 1,
+        driverName: 'Test Driver',
+        logDate: '2023-01-01',
+        readinessStatus: 'READY',
+        missingRequirements: [],
+        availableActions: ['CERTIFY'],
+        legalStatement: 'I certify...',
+      )));
+
       await pumpTab(tester, log: log, driverId: null);
+      await tester.pumpAndSettle();
       
       final buttonFinder = find.byType(ElevatedButton);
       expect(buttonFinder, findsOneWidget);

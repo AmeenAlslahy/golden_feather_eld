@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_account_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_config.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
 const _mockAccountJson = {

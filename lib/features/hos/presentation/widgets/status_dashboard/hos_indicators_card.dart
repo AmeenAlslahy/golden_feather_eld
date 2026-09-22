@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/domain/duty_status/status_dashboard.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
+import '../../../../../core/widgets/app_gap.dart';
 import '../../../../../core/widgets/eld_card.dart';
-import '../../../../../domain/duty_status/status_dashboard.dart';
 
 /// Card with the four HOS indicators (drive, shift, break, cycle).
 class HosIndicatorsCard extends StatelessWidget {
@@ -62,7 +63,7 @@ class _IndicatorRow extends StatelessWidget {
                     fontWeight: AppTypography.bold,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const AppGap.custom(2),
                 Text(
                   indicator.type == IndicatorType.used
                       ? 'Used'

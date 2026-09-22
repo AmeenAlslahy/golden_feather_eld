@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
-import '../../../../core/extensions/context_extensions.dart';
 
 /// مؤشر حالة المزامنة
 class SyncStatusIndicator extends ConsumerWidget {
@@ -23,7 +25,7 @@ class SyncStatusIndicator extends ConsumerWidget {
         ref.read(syncStateProvider.notifier).syncNow();
       },
       child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
         child: AppStatusBadge(
           label: syncState.isSyncing
               ? context.loc.syncing
@@ -36,7 +38,7 @@ class SyncStatusIndicator extends ConsumerWidget {
               ? Text(
                   '(${context.loc.syncFailed(syncState.totalFailed.toString())})',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: AppTypography.smallSize,
                     color: AppColors.dangerRed,
                   ),
                 )

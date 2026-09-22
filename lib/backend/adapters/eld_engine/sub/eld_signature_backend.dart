@@ -1,6 +1,6 @@
+import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/domain/signature/signature.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../../domain/signature/signature.dart';
 import '../../../contracts/signature_backend.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';

@@ -1,7 +1,7 @@
 // ignore_for_file: unused_field, unused_import
 
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/stats_backend.dart';
 import '../../../http/api_client.dart';

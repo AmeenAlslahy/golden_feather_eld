@@ -1,15 +1,18 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+
+import '../../../../core/domain/inspection/dot_inspection.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
+import '../../domain/entities/audit_entry.dart';
 import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
-import '../../domain/entities/audit_entry.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
-import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
 
 final auditProvider =
     FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
@@ -111,7 +114,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                       const Divider(height: 1),
                       // ========== القسم ٤: سجل التدقيق ==========
                       _AuditTrail(selectedLog: selectedLog),
-                      const SizedBox(height: AppSpacing.lg),
+                      AppGap.lg,
                     ],
                   ),
                 ),
@@ -409,7 +412,7 @@ class _InspectionSummary extends ConsumerWidget {
                 label: loc.license, value: '-'),
             _SummaryCell(label: loc.licenseState, value: '-'),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 2: مساعد
           _SummaryRow(cells: [
             _SummaryCell(label: loc.exemptDriver, value: currentDay?.exemptDriver == true ? 'Yes' : 'No'),
@@ -419,7 +422,7 @@ class _InspectionSummary extends ConsumerWidget {
             _SummaryCell(
                 label: loc.coDriverId, value: '-'),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 3: التاريخ والتصديق
           _SummaryRow(cells: [
             _SummaryCell(
@@ -431,7 +434,7 @@ class _InspectionSummary extends ConsumerWidget {
             _SummaryCell(label: loc.displayLocation, value: currentDay?.displayLocation ?? '-'),
             _SummaryCell(label: loc.certified, value: currentDay?.certified == true ? 'Yes' : 'No'),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 4: ELD
           _SummaryRow(cells: [
             _SummaryCell(label: loc.eldRegId, value: screen.eldRegistrationId),
@@ -439,14 +442,14 @@ class _InspectionSummary extends ConsumerWidget {
             _SummaryCell(
                 label: loc.provider, value: currentDay?.eldProvider ?? '-', flex: 2),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 5: المؤشرات
           _SummaryRow(cells: [
             _SummaryCell(label: loc.periodStart, value: '00:00'),
             _SummaryCell(label: loc.dataDiag, value: currentDay?.activeDataDiagnostics.length.toString() ?? '0'),
             _SummaryCell(label: loc.deviceMalf, value: currentDay?.activeDeviceMalfunctions.length.toString() ?? '0'),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 6: المركبة
           _SummaryRow(cells: [
             _SummaryCell(label: loc.vehicle, value: currentDay?.vehicleNumber ?? '-'),
@@ -455,7 +458,7 @@ class _InspectionSummary extends ConsumerWidget {
             _SummaryCell(label: loc.distance, value: currentDay?.totalDistanceKm != null ? '${currentDay!.totalDistanceKm.toStringAsFixed(0)} km' : '-'),
             _SummaryCell(label: loc.engineHours, value: currentDay?.engineHours.toStringAsFixed(1) ?? '-'),
           ]),
-          const SizedBox(height: AppSpacing.sm),
+          AppGap.sm,
           // السطر 7: الناقل
           _SummaryRow(cells: [
             _SummaryCell(
@@ -508,24 +511,19 @@ class _SummaryCell extends StatelessWidget {
     return Expanded(
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.xs),
+        padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 8,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: context.textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 2),
+            const AppGap.custom(2),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: AppTypography.semiBold,
-                color: Theme.of(context).colorScheme.onSurface,
+              style: context.textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -560,7 +558,7 @@ class _AuditTrail extends ConsumerWidget {
               fontWeight: AppTypography.bold,
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          AppGap.md,
           auditsAsync.when(
             data: (audits) {
               if (audits.isEmpty) {
@@ -578,7 +576,7 @@ class _AuditTrail extends ConsumerWidget {
                                 .colorScheme
                                 .surfaceContainerHighest
                                 .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.input),
                             border: Border.all(
                                 color: Theme.of(context).dividerColor),
                           ),
@@ -593,22 +591,17 @@ class _AuditTrail extends ConsumerWidget {
                                       audit.timestamp
                                           .toString()
                                           .substring(0, 16),
-                                      style: const TextStyle(
-                                          fontWeight: AppTypography.semiBold,
-                                          fontSize: 12)),
+                                      style: context.textTheme.labelSmall),
                                   Text(
                                       context.loc.auditStatusChange(
-                                          audit.oldStatus ?? "New",
+                                          audit.oldStatus ?? 'New',
                                           audit.newStatus),
-                                      style: const TextStyle(
-                                          color: AppColors.primaryBlue,
-                                          fontWeight: AppTypography.bold,
-                                          fontSize: 12)),
+                                      style: context.textTheme.labelSmall?.copyWith(color: AppColors.primaryBlue)),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              AppGap.xs,
                               Text(context.loc.auditReason(audit.reason),
-                                  style: const TextStyle(fontSize: 12)),
+                                  style: context.textTheme.labelSmall),
                             ],
                           ),
                         ))

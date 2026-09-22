@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
+import 'package:signature/signature.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
@@ -33,8 +35,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 3,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
+    penColor: AppColors.black,
+    exportBackgroundColor: AppColors.surface,
   );
 
   bool _isSubmitting = false;
@@ -179,7 +181,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             _buildFieldGroup(
               title: 'Time (ET)',
               child: Text(currentTime,
-                  style: TextStyle(color: textColor, fontSize: 14)),
+                  style: context.textTheme.bodyMedium?.copyWith(color: textColor)),
               borderColor: borderColor,
               textColor: textColor,
             ),
@@ -212,20 +214,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(context.loc.vehicle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        const SizedBox(height: 4),
+                            style: context.textTheme.labelSmall?.copyWith(color: textColor)),
+                        AppGap.xs,
                         Text(dashboard.vehicleDisplayName,
-                            style: TextStyle(color: textColor, fontSize: 14)),
-                        const SizedBox(height: AppSpacing.md),
+                            style: context.textTheme.bodyMedium?.copyWith(color: textColor)),
+                        AppGap.md,
                         Text(context.loc.trailers,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        const SizedBox(height: 4),
+                            style: context.textTheme.labelSmall?.copyWith(color: textColor)),
+                        AppGap.xs,
                         Text(dashboard.trailerId ?? context.loc.trailers,
                             style: TextStyle(
                                 color: AppColors.textSecondaryFor(
@@ -239,18 +235,12 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(context.loc.defectsTitle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
+                            style: context.textTheme.labelSmall?.copyWith(color: textColor)),
                         _buildFlatTextField(_vehicleDefectsController,
                             context.loc.defectsTitle, textColor),
-                        const SizedBox(height: AppSpacing.sm),
+                        AppGap.sm,
                         Text(context.loc.defectsTitle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
+                            style: context.textTheme.labelSmall?.copyWith(color: textColor)),
                         _buildFlatTextField(_trailerDefectsController,
                             context.loc.defectsTitle, textColor),
                       ],
@@ -282,7 +272,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 items: _statusOptions
                     .map((status) => DropdownMenuItem(
                           value: status,
-                          child: Text(status, style: TextStyle(color: textColor, fontSize: 14)),
+                          child: Text(status, style: context.textTheme.bodyMedium?.copyWith(color: textColor)),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -323,11 +313,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                           child: Text(
                             'Image not\navailable.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade300,
-                            ),
+                            style: context.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade300),
                           ),
                         ),
                         Signature(
@@ -337,16 +323,12 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  AppGap.sm,
                   InkWell(
                     onTap: () => _signatureController.clear(),
-                    child: const Text(
+                    child: Text(
                       'Clear signature',
-                      style: TextStyle(
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                        decorationStyle: TextDecorationStyle.dotted,
-                      ),
+                      style: context.textTheme.bodyMedium,
                     ),
                   ),
                 ],
@@ -364,7 +346,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 onPressed: _isSubmitting ? null : _handleSubmit,
               ),
             ),
-            const SizedBox(height: 32.0),
+            AppGap.xl,
           ],
         ),
       ),
@@ -388,13 +370,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+            style: context.textTheme.labelSmall?.copyWith(color: textColor),
           ),
-          const SizedBox(height: 4),
+          AppGap.xs,
           child,
         ],
       ),
@@ -407,13 +385,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor, fontSize: 14),
+      style: context.textTheme.bodyMedium?.copyWith(color: textColor),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+        hintStyle: context.textTheme.bodyMedium?.copyWith(color: AppColors.border),
         border: InputBorder.none,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       ),
     );
   }

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_status_dashboard_backend.dart';
-import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
-import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/result/result.dart';
 
 import '../../../../helpers/test_helpers.dart';
 

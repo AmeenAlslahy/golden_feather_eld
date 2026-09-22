@@ -1,6 +1,7 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
@@ -43,7 +44,7 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
             : codriverState.error != null
                 ? Text(
                     'Error: ${codriverState.error}',
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: AppColors.dangerRed),
                   )
                 : SingleChildScrollView(
                     child: Column(

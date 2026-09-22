@@ -1,5 +1,5 @@
-import '../../../../domain/inspection/dot_inspection.dart';
-import '../../../../domain/shared/value_objects.dart';
+import '../../../../core/domain/inspection/dot_inspection.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 
 class DotInspectionMapper {
   const DotInspectionMapper._();

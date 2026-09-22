@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/mappers/signature_mapper.dart';
-import 'package:golden_feather_eld/domain/signature/signature.dart';
+import 'package:golden_feather_eld/core/domain/signature/signature.dart';
 
 void main() {
   group('SignatureMapper', () {

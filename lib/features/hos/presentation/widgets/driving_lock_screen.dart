@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 
 /// شاشة تظهر عندما تتغير حالة السائق إلى Driving
 /// تمنع تشتت السائق وتخفي واجهة التطبيق التزاماً بقواعد FMCSA.
@@ -13,7 +16,7 @@ class DrivingLockScreen extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     return Container(
-      color: Colors.black.withValues(alpha: 0.9), // خلفية داكنة جداً
+      color: AppColors.black.withValues(alpha: 0.9), // خلفية داكنة جداً
       width: double.infinity,
       height: double.infinity,
       child: Center(
@@ -25,25 +28,23 @@ class DrivingLockScreen extends StatelessWidget {
               color: AppColors.primaryBlue,
               size: 100,
             ),
-            const SizedBox(height: AppSpacing.xl),
+            AppGap.xl,
             Text(
-              isArabic ? 'المركبة في حالة حركة' : 'Vehicle in Motion',
+              context.loc.vehicleInMotion,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.surface,
                 fontSize: AppTypography.titleSize,
                 fontWeight: AppTypography.bold,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Text(
-                isArabic 
-                    ? 'التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.'
-                    : 'To comply with FMCSA regulations and safety rules, the application is locked while driving. It will unlock when the vehicle stops.',
+                context.loc.toComplyWithFmcsaRegulations,
                 style: const TextStyle(
-                  color: Colors.white70,
+                  color: AppColors.surface70,
                   fontSize: AppTypography.bodySize,
                   height: 1.5,
                 ),

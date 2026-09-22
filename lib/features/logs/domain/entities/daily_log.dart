@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../../domain/shared/value_objects.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 
 enum FormStatus { completed, incomplete, unknown }
 enum CertificationStatus { certified, uncertified, reCertificationRequired, unknown }
@@ -131,6 +131,7 @@ class LogEvent extends Equatable {
   final DateTime startTime;
   final Duration duration;
   final String location;
+  final String? notes;
   final double? odometer;
   final double? engineHours;
   final bool isExpanded; // للـ UI
@@ -142,6 +143,7 @@ class LogEvent extends Equatable {
     required this.startTime,
     required this.duration,
     required this.location,
+    this.notes,
     this.odometer,
     this.engineHours,
     this.isExpanded = false,
@@ -152,6 +154,8 @@ class LogEvent extends Equatable {
     final m = startTime.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
+
+  DateTime get endTime => startTime.add(duration);
 
   String get formattedDuration {
     final hours = duration.inHours;
@@ -167,6 +171,7 @@ class LogEvent extends Equatable {
       startTime: startTime,
       duration: duration,
       location: location,
+      notes: notes,
       odometer: odometer,
       engineHours: engineHours,
       isExpanded: isExpanded ?? this.isExpanded,

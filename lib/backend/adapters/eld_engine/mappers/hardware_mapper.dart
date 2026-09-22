@@ -1,4 +1,4 @@
-import '../../../../domain/hardware/telemetry_reading.dart';
+import '../../../../core/domain/hardware/telemetry_reading.dart';
 
 /// Maps [TelemetryReading] to the ELD backend wire format.
 ///

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../widgets/log_graph.dart';
-import '../providers/logs_provider.dart';
-import '../../domain/entities/audit_entry.dart';
-import 'package:uuid/uuid.dart';
 import '../../../../core/time/time_authority_provider.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/entities/audit_entry.dart';
+import '../../domain/entities/daily_log.dart';
+import '../providers/logs_provider.dart';
+import '../widgets/log_graph.dart';
 
 @visibleForTesting
 String? resolveDriverIdForAudit(WidgetRef ref) {
@@ -20,8 +24,8 @@ String? resolveDriverIdForAudit(WidgetRef ref) {
 
 class EditLogFormState {
   final String selectedStatus;
-  final String startTime;
-  final String duration;
+  final DateTime startTime;
+  final Duration duration;
   final String location;
   final String reason;
 
@@ -35,8 +39,8 @@ class EditLogFormState {
 
   EditLogFormState copyWith({
     String? selectedStatus,
-    String? startTime,
-    String? duration,
+    DateTime? startTime,
+    Duration? duration,
     String? location,
     String? reason,
   }) {
@@ -48,6 +52,23 @@ class EditLogFormState {
       reason: reason ?? this.reason,
     );
   }
+
+  String get formattedStartTime {
+    final hour = startTime.hour > 12
+        ? startTime.hour - 12
+        : (startTime.hour == 0 ? 12 : startTime.hour);
+    final hourStr = hour.toString().padLeft(2, '0');
+    final minuteStr = startTime.minute.toString().padLeft(2, '0');
+    final secondStr = startTime.second.toString().padLeft(2, '0');
+    final period = startTime.hour < 12 ? 'AM' : 'PM';
+    return '$hourStr:$minuteStr:$secondStr $period';
+  }
+
+  String get formattedDuration {
+    final h = duration.inHours.toString().padLeft(2, '0');
+    final m = (duration.inMinutes % 60).toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }
 
 class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
@@ -55,28 +76,20 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
 
   void setStatus(String status) =>
       state = state.copyWith(selectedStatus: status);
-  void setStartTime(String time) => state = state.copyWith(startTime: time);
+  void setStartTime(DateTime time) => state = state.copyWith(startTime: time);
   void setReason(String reason) => state = state.copyWith(reason: reason);
-}
-
-// دالة مساعدة لتنسيق الوقت الحالي
-String _formatCurrentTime() {
-  final now = DateTime.now();
-  final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
-  final hourStr = hour.toString().padLeft(2, '0');
-  final minute = now.minute.toString().padLeft(2, '0');
-  final second = now.second.toString().padLeft(2, '0');
-  final period = now.hour < 12 ? 'AM' : 'PM';
-  return '$hourStr:$minute:$second $period';
 }
 
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, dynamic>((ref, event) {
+  if (event is! LogEvent) {
+    throw ArgumentError('event must be a LogEvent');
+  }
   return EditLogFormNotifier(EditLogFormState(
-    selectedStatus: event.status ?? 'SB',
-    startTime: event.formattedStartTime ?? _formatCurrentTime(),
-    duration: event.formattedDuration ?? '00:00',
-    location: event.location ?? '',
+    selectedStatus: event.status,
+    startTime: event.startTime,
+    duration: event.duration,
+    location: event.location,
   ));
 });
 
@@ -92,6 +105,7 @@ class EditLogPage extends ConsumerWidget {
   });
 
   void _showTimePicker(BuildContext context, WidgetRef ref) {
+    final logEvent = event as LogEvent;
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -99,8 +113,18 @@ class EditLogPage extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => _TimePickerSheet(
-        onDone: (time) {
-          ref.read(editLogFormProvider(event).notifier).setStartTime(time);
+        onDone: (hour, minute, second) {
+          final newDateTime = DateTime(
+            logEvent.startTime.year,
+            logEvent.startTime.month,
+            logEvent.startTime.day,
+            hour,
+            minute,
+            second,
+          );
+          ref
+              .read(editLogFormProvider(event).notifier)
+              .setStartTime(newDateTime);
           Navigator.pop(context);
         },
       ),
@@ -146,24 +170,24 @@ class EditLogPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             LogGraph(
                 events:
                     selectedLog?.events ?? []), // تمرير الأحداث الحقيقية لليوم
 
             // 2. حقل الوقت والمدة
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             Row(
               children: [
                 Expanded(
                     child: _buildTimeField(
                         context,
                         context.loc.startTime,
-                        formState.startTime,
+                        formState.formattedStartTime,
                         () => _showTimePicker(context, ref))),
                 Expanded(
                     child: _buildTimeField(context, context.loc.duration,
-                        formState.duration, () {})),
+                        formState.formattedDuration, () {})),
               ],
             ),
             // خط متقطع أسفل الوقت (للمطابقة)
@@ -173,7 +197,7 @@ class EditLogPage extends ConsumerWidget {
                   painter:
                       DashedLinePainter(color: Theme.of(context).dividerColor)),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
 
             // 3. قائمة الحالات
             ...statuses.map((status) {
@@ -211,7 +235,7 @@ class EditLogPage extends ConsumerWidget {
                 ],
               );
             }),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // 4. المركبة
             Column(
@@ -224,21 +248,21 @@ class EditLogPage extends ConsumerWidget {
                     fontWeight: AppTypography.semiBold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                AppGap.sm,
                 Text(
                   dashboard.vehicleId,
                   style: const TextStyle(
                     fontSize: AppTypography.bodySize,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                AppGap.sm,
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
                     height: 1),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // 5. الموقع
             Column(
@@ -251,21 +275,21 @@ class EditLogPage extends ConsumerWidget {
                     fontWeight: AppTypography.semiBold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                AppGap.sm,
                 Text(
                   formState.location,
                   style: const TextStyle(
                     fontSize: AppTypography.bodySize,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                AppGap.sm,
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
                     height: 1),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // 6. إدخال موقع يدوي
             TextField(
@@ -281,7 +305,7 @@ class EditLogPage extends ConsumerWidget {
               style: const TextStyle(fontSize: AppTypography.bodySize),
               onChanged: (value) {},
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
 
             // حقل سبب التعديل (إجباري)
             Column(
@@ -294,14 +318,15 @@ class EditLogPage extends ConsumerWidget {
                     fontWeight: AppTypography.semiBold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                AppGap.sm,
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'Enter reason (Required)',
                     hintStyle: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                     border: const UnderlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   ),
                   style: const TextStyle(fontSize: AppTypography.bodySize),
                   onChanged: (value) {
@@ -312,7 +337,7 @@ class EditLogPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
 
             // 7. زر الحفظ
             AppButton(
@@ -324,19 +349,60 @@ class EditLogPage extends ConsumerWidget {
                   : () async {
                       // حفظ التعديلات وسجل التدقيق
                       final notifier = ref.read(logsProvider.notifier);
-                      
+                      final repository = ref.read(logRepositoryProvider);
+
                       final driverId = resolveDriverIdForAudit(ref);
 
                       if (driverId == null || driverId.isEmpty) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Cannot save: driver session not found.'),
-                              backgroundColor: Colors.red,
+                              content: Text(
+                                  'Cannot save: driver session not found.'),
+                              backgroundColor: AppColors.dangerRed,
                             ),
                           );
                         }
                         return;
+                      }
+
+                      // API Integration: Update event via API (FMCSA §395.30(e))
+                      if (!isNewEvent) {
+                        final logEvent = event as LogEvent;
+                        final statusId =
+                            _statusStringToInt(formState.selectedStatus);
+                        if (statusId != null) {
+                          final result = await repository.updateEvent(
+                            LogEvent(
+                              id: logEvent.id,
+                              status: formState.selectedStatus,
+                              statusArabic: formState.selectedStatus,
+                              startTime: formState.startTime,
+                              duration: formState.duration,
+                              location: formState.location,
+                              notes: formState.reason,
+                              odometer: logEvent.odometer,
+                              engineHours: logEvent.engineHours,
+                            ),
+                          );
+
+                          if (context.mounted) {
+                            result.match(
+                              (failure) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'Failed to update event: ${failure.message}'),
+                                    backgroundColor: AppColors.dangerRed,
+                                  ),
+                                );
+                              },
+                              (success) {
+                                // Event updated successfully
+                              },
+                            );
+                          }
+                        }
                       }
 
                       final timeAuthority = ref.read(timeAuthorityProvider);
@@ -354,7 +420,7 @@ class EditLogPage extends ConsumerWidget {
                       if (context.mounted) Navigator.pop(context, true);
                     },
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
           ],
         ),
       ),
@@ -378,7 +444,7 @@ class EditLogPage extends ConsumerWidget {
                 fontWeight: AppTypography.semiBold,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            AppGap.sm,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -403,7 +469,7 @@ class EditLogPage extends ConsumerWidget {
 
 /// منتقي الوقت (Picker Wheel)
 class _TimePickerSheet extends StatefulWidget {
-  final Function(String) onDone;
+  final Function(int, int, int) onDone;
 
   const _TimePickerSheet({required this.onDone});
 
@@ -446,9 +512,10 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
               ),
               TextButton(
                 onPressed: () {
-                  final time =
-                      '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} ${_selectedPeriod == 'AM' ? context.loc.am : context.loc.pm}';
-                  widget.onDone(time);
+                  int hour24 = _selectedPeriod == 'AM'
+                      ? (_selectedHour == 12 ? 0 : _selectedHour)
+                      : (_selectedHour == 12 ? 12 : _selectedHour + 12);
+                  widget.onDone(hour24, _selectedMinute, _selectedSecond);
                 },
                 child: Text(context.loc.saveButton,
                     style: const TextStyle(color: AppColors.primaryBlue)),
@@ -554,4 +621,20 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+/// Convert status string (OFF/SB/D/ON) to integer ID.
+int? _statusStringToInt(String status) {
+  switch (status.toUpperCase()) {
+    case 'OFF':
+      return 1; // Off Duty
+    case 'SB':
+      return 2; // Sleeper Berth
+    case 'D':
+      return 3; // Driving
+    case 'ON':
+      return 4; // On Duty
+    default:
+      return null;
+  }
 }

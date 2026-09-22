@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../providers/auth_mode_provider.dart';
 
 /// إرشاد استعادة كلمة المرور.
@@ -34,19 +37,19 @@ class ForgotPasswordForm extends ConsumerWidget {
               ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppSpacing.md),
+        AppGap.md,
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.dialog),
             border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.info_outline, color: colors.primary),
-              const SizedBox(width: AppSpacing.sm),
+              AppGap.hSm,
               Expanded(
                 child: Text(
                   guidance,
@@ -56,7 +59,7 @@ class ForgotPasswordForm extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        AppGap.lg,
         TextButton(
           onPressed: () {
             ref.read(authModeProvider.notifier).state = AuthMode.login;

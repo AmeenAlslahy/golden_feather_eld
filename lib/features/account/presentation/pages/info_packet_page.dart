@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/eld_card.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
-import 'manual_detail_page.dart';
 import 'instructions_page.dart';
+import 'manual_detail_page.dart';
 import 'user_manual_page.dart';
 
 /// شاشة الوثائق والمعلومات

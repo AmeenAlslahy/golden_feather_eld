@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import '../../../../core/theme/app_spacing.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_gap.dart';
 
 class StatusOptionTile extends StatelessWidget {
   final DutyStatus status;
@@ -42,7 +44,7 @@ class StatusOptionTile extends StatelessWidget {
                       : theme.dividerColor,
                   size: 24,
                 ),
-                const SizedBox(width: AppSpacing.md),
+                AppGap.hMd,
                 Expanded(
                   child: Text(
                     label,
@@ -62,7 +64,7 @@ class StatusOptionTile extends StatelessWidget {
         if (!isLast)
           Divider(
               height: 1,
-              indent: 48,
+              indent: AppSpacing.xxxl,
               endIndent: AppSpacing.lg,
               color: theme.dividerColor.withValues(alpha: 0.3)),
       ],
@@ -89,7 +91,7 @@ class YardMovesOptionTile extends StatelessWidget {
       children: [
         Divider(
             height: 1,
-            indent: 48,
+            indent: AppSpacing.xxxl,
             endIndent: AppSpacing.lg,
             color: theme.dividerColor.withValues(alpha: 0.3)),
         InkWell(
@@ -99,7 +101,7 @@ class YardMovesOptionTile extends StatelessWidget {
                 horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               children: [
-                const SizedBox(width: 36), // Indent to show it's a sub-option
+                AppGap.hXxl, // Indent to show it's a sub-option (36 = xxl)
                 Icon(
                   isYardMoves ? Icons.check_box : Icons.check_box_outline_blank,
                   color: isYardMoves
@@ -107,7 +109,7 @@ class YardMovesOptionTile extends StatelessWidget {
                       : theme.dividerColor,
                   size: 24,
                 ),
-                const SizedBox(width: AppSpacing.md),
+                AppGap.hMd,
                 Expanded(
                   child: Text(
                     loc.yardMoves,

@@ -14,6 +14,7 @@ dependencies:
   intl: ^0.20.2
   
   # Clean Architecture & State Management
+  mobile_scanner: ^5.2.3
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
   go_router: ^14.2.0

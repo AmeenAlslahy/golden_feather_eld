@@ -4,11 +4,13 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_environment.dart';
+import '../../core/network/core_providers.dart';
+import '../../core/services/local_storage_service.dart';
+import '../../core/time/trusted_time_provider.dart';
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
-import '../../core/services/local_storage_service.dart';
-import '../http/interceptors/time_drift_interceptor.dart';
-import '../../core/time/trusted_time_provider.dart';
+import '../base/backend_adapter.dart';
+import '../base/backend_registry.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';
 import '../contracts/compliance_backend.dart';
@@ -30,10 +32,9 @@ import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
-import '../core/backend_adapter.dart';
-import '../core/backend_registry.dart';
 import '../http/api_client.dart';
 import '../http/api_config.dart';
+import '../http/interceptors/time_drift_interceptor.dart';
 import 'backend_network_providers.dart';
 
 /// Provides the global [BackendRegistry].

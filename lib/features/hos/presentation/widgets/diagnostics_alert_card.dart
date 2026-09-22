@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
-import '../../../../core/theme/app_color_tokens.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../providers/diagnostics_state_provider.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_color_tokens.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_durations.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_gap.dart';
+import '../../../../features/hos/domain/engine/diagnostics/diagnostics_engine.dart';
+import '../providers/diagnostics_state_provider.dart';
 
 class DiagnosticsAlertCard extends ConsumerWidget {
   const DiagnosticsAlertCard({super.key});
@@ -49,19 +54,19 @@ class DiagnosticsAlertCard extends ConsumerWidget {
         final bgColor = getSeverityBackgroundColor(latestAlert.severity);
 
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+          duration: AppDurations.normal,
           margin: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: bgColor,
             border: Border.all(color: color.withValues(alpha: 0.5)),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.dialog),
           ),
           child: Row(
             children: [
               Icon(Icons.warning_rounded, color: color, size: 28),
-              const SizedBox(width: AppSpacing.sm),
+              AppGap.hSm,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +79,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    const SizedBox(height: 4),
+                    AppGap.xs,
                     Text(
                       latestAlert.message,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(),
@@ -84,7 +89,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
               ),
               if (state.activeMalfunctions.length > 1)
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(AppSpacing.xsSm),
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
@@ -92,7 +97,7 @@ class DiagnosticsAlertCard extends ConsumerWidget {
                   child: Text(
                     '+${state.activeMalfunctions.length - 1}',
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         fontSize: 10,
                         fontWeight: FontWeight.bold),
                   ),

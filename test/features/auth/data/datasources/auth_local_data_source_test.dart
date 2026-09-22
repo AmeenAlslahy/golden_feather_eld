@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/core/data/models/user_model.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/data/models/auth_session_dto.dart';
+import 'package:golden_feather_eld/features/auth/data/models/user_model.dart';
 
 void main() {
   group('AuthLocalDataSource Tests', () {

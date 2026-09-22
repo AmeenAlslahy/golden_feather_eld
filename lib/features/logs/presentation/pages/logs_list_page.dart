@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/daily_log.dart';
@@ -69,7 +71,7 @@ class LogsListPage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(logsState.error!, style: const TextStyle(color: AppColors.dangerRed)),
-                      const SizedBox(height: 16),
+                      AppGap.md,
                       ElevatedButton(
                         onPressed: () => ref.read(logsProvider.notifier).loadLogs(refresh: true),
                         child: const Text('Retry'), // Or context.loc.retry if available
@@ -86,7 +88,7 @@ class LogsListPage extends ConsumerWidget {
                               size: 64,
                               color:
                                   Theme.of(context).colorScheme.onSurfaceVariant),
-                          const SizedBox(height: 16),
+                          AppGap.md,
                           Text(
                             context.loc.noData,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -161,7 +163,7 @@ class _LogListItem extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 12), // مسافة بين السطر الأول والثاني
+            const AppGap.custom(12), // مسافة بين السطر الأول والثاني
 
             // السطر الثاني: الوقت + الحالات
             Row(
@@ -176,7 +178,7 @@ class _LogListItem extends StatelessWidget {
                           : AppColors.textSecondary,
                       size: 16,
                     ),
-                    const SizedBox(width: 6),
+                    const AppGap.custom(6, horizontal: true),
                     Text(
                       log.formattedTotalWorkTime.isNotEmpty
                           ? log.formattedTotalWorkTime
@@ -203,7 +205,7 @@ class _LogListItem extends StatelessWidget {
                   isComplete: log.isFormComplete,
                 ),
 
-                const SizedBox(width: 24), // مسافة ثابتة تفصل بين الحالتين
+                AppGap.hLg, // مسافة ثابتة تفصل بين الحالتين
 
                 // 3. حالة التوثيق (Certify)
                 _StatusChip(
@@ -238,7 +240,7 @@ class _StatusChip extends StatelessWidget {
           color: isComplete ? AppColors.successGreen : AppColors.dangerRed,
           size: 20,
         ),
-        const SizedBox(width: 4),
+        AppGap.hXs,
         Text(
           label,
           style: TextStyle(

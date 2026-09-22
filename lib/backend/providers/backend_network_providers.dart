@@ -1,15 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/config/app_environment.dart';
+import '../../core/network/core_providers.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../http/api_client.dart';
 import '../http/api_config.dart';
 import '../http/interceptors/auth_interceptor.dart';
-import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../http/interceptors/request_logger.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
-import '../../core/config/app_environment.dart';
-import '../../core/network/core_providers.dart';
 
 final unauthenticatedEventProvider = Provider<StreamController<void>>((ref) {
   final controller = StreamController<void>.broadcast();

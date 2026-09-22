@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/logger.dart';
+
 import '../constants/storage_constants.dart';
+import '../utils/logger.dart';
 
 class LocalDatabaseService {
   late SharedPreferences _prefs;

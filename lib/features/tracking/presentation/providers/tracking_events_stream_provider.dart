@@ -1,5 +1,6 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
 import '../../../../core/services/live_tracking_data_source.dart';
 
 /// مزود يقرأ التدفق الحي للأحداث (EldEvent) المستخرجة من نظام التتبع

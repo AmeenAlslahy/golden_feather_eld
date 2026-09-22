@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../network/core_providers.dart';
 
 import '../theme/eld_colors.dart';
+import '../widgets/app_gap.dart';
 
 /// امتدادات BuildContext
 extension ContextExtensions on BuildContext {
@@ -21,6 +22,18 @@ extension ContextExtensions on BuildContext {
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;
   double get screenHeight => screenSize.height;
+
+  // ========== Theme Typography Shortcuts ==========
+  // CLEAN-HIGH-01 fix: Use these instead of manual TextStyle(...)
+
+  TextStyle? get headline => textTheme.headlineLarge;
+  TextStyle? get title => textTheme.titleLarge;
+  TextStyle? get subtitle => textTheme.titleMedium;
+  TextStyle? get body => textTheme.bodyLarge;
+  TextStyle? get bodySmall => textTheme.bodyMedium;
+  TextStyle? get caption => textTheme.bodySmall;
+  TextStyle? get label => textTheme.labelLarge;
+  TextStyle? get labelSmall => textTheme.labelSmall;
 
   // ========== التنقل ==========
   void pop<T>([T? result]) => Navigator.pop(this, result);
@@ -76,7 +89,7 @@ extension ContextExtensions on BuildContext {
           content: Row(
             children: [
               const CircularProgressIndicator(),
-              const SizedBox(width: 16),
+              AppGap.hMd,
               Text(message),
             ],
           ),

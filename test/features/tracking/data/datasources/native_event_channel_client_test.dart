@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/native_location_event.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/native_event_channel_client.dart';
+import 'package:golden_feather_eld/features/tracking/domain/entities/native_location_event.dart';
 
 void main() {
   group('NativeLocationQualityValidator', () {

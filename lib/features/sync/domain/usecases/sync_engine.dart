@@ -1,9 +1,9 @@
 import 'package:fpdart/fpdart.dart';
+
 import '../../../../core/error/failure.dart';
+import '../../../../core/time/time_authority.dart';
 import '../entities/pending_event.dart';
 import '../repositories/offline_queue.dart';
-
-import '../../../../core/time/time_authority.dart';
 
 /// واجهة الإرسال الفعلي للبيانات لضمان عزل الـ Sync عن Traccar
 abstract class RemoteEventDispatcher {

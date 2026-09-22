@@ -1,6 +1,6 @@
+import '../../core/domain/inspection/dot_inspection.dart';
+import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
-import '../../domain/inspection/dot_inspection.dart';
-import '../../domain/shared/value_objects.dart';
 import 'contract_enums.dart';
 import 'raw_json.dart';
 

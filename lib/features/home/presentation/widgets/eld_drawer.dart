@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../routes.dart';
-import '../providers/home_provider.dart';
-import '../providers/dashboard_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../core/extensions/context_extensions.dart';
+import '../providers/dashboard_provider.dart';
+import '../providers/home_provider.dart';
 
 /// الدرج الجانبي لقائمة ELD
 class EldDrawer extends ConsumerWidget {
@@ -45,23 +47,21 @@ class EldDrawer extends ConsumerWidget {
                       color: AppColors.surface,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  // اسم السائق
+                  AppGap.md,
+                  // اسم السائق ومعرفه
                   Text(
-                    user?.fullName ?? dashboard.driverName,
-                    style: const TextStyle(
-                      fontSize: AppTypography.bodySize,
-                      fontWeight: AppTypography.bold,
+                    user != null ? '${user.fullName} - ${user.id}' : dashboard.driverName,
+                    // CLEAN-HIGH-01 fix: Use theme instead of manual TextStyle
+                    style: context.body?.copyWith(
+                      fontWeight: FontWeight.bold,
                       color: AppColors.surface,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  AppGap.xs,
                   // رقم الشاحنة
                   Text(
                     dashboard.vehicleDisplayName,
-                    style: const TextStyle(
-                      fontSize: AppTypography.captionSize,
-                      fontWeight: AppTypography.regular,
+                    style: context.caption?.copyWith(
                       color: AppColors.surface,
                     ),
                   ),
@@ -137,7 +137,7 @@ class EldDrawer extends ConsumerWidget {
                 _showLogoutDialog(context, ref);
               },
             ),
-            const SizedBox(height: AppSpacing.sm),
+            AppGap.sm,
           ],
         ),
       ),

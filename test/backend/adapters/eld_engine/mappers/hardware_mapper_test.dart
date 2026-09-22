@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/mappers/hardware_mapper.dart';
-import 'package:golden_feather_eld/domain/hardware/telemetry_reading.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/hardware/telemetry_reading.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 
 void main() {
   const driverId = DriverId(101);

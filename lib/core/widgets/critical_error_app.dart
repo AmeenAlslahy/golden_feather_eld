@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import 'app_gap.dart';
+
 /// تطبيق طوارئ يتم عرضه عندما تفشل تهيئة الخدمات الأساسية (مثل Firebase)
 class CriticalErrorApp extends StatelessWidget {
   final String message;
@@ -20,7 +24,7 @@ class CriticalErrorApp extends StatelessWidget {
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -29,7 +33,7 @@ class CriticalErrorApp extends StatelessWidget {
                   color: Colors.red,
                   size: 64,
                 ),
-                const SizedBox(height: 24),
+                AppGap.lg,
                 const Text(
                   'عذراً، حدث خطأ حرج',
                   style: TextStyle(
@@ -38,7 +42,7 @@ class CriticalErrorApp extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 12),
+                AppGap.smMd,
                 Text(
                   message,
                   textAlign: TextAlign.center,
@@ -48,12 +52,12 @@ class CriticalErrorApp extends StatelessWidget {
                   ),
                 ),
                 if (exception != null) ...[
-                  const SizedBox(height: 24),
+                  AppGap.lg,
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(AppSpacing.smMd),
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.input),
                     ),
                     child: Text(
                       exception.toString(),

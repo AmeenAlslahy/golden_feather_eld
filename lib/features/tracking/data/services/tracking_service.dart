@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../datasources/traccar_sdk/traccar_native_client.dart';
+
+import '../../../../core/config/app_environment.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/config/app_environment.dart';
 import '../../../../core/utils/logger.dart';
+import '../datasources/traccar_sdk/traccar_native_client.dart';
 
 /// خدمة التتبع - متكاملة مع Traccar Client SDK
 class TrackingService {
@@ -188,7 +190,8 @@ class TrackingService {
   }
 }
 
-/// مزود خدمة التتبع
+/// مزود خدمة التتبع — Composition root هو data/providers/repository_providers.dart
+/// هذا التعريف للتوافق، يُعاد تصديره من repository_providers.
 final trackingServiceProvider = Provider<TrackingService>((ref) {
   final storage = ref.watch(localStorageProvider);
   final tracker = ref.watch(traccarNativeClientProvider);

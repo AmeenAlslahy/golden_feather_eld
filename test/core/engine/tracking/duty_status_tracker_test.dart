@@ -1,17 +1,19 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+// ignore_for_file: non_abstract_class_inherits_abstract_member
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
-import 'package:golden_feather_eld/core/error/failure.dart';
-import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
-import 'package:golden_feather_eld/core/services/local_storage_service.dart';
-import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
-import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
+import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
+
 
 class MockSyncEngine implements SyncEngine {
   @override
@@ -23,6 +25,27 @@ class MockSyncEngine implements SyncEngine {
 
 class MockLogRepository implements LogRepository {
   List<DutyPeriod> savedPeriods = [];
+
+  @override
+  Future<Either<Failure, DailyLog>> getDailyLogById(DailyLogId logId) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getForm(DailyLogId logId) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> saveForm({required DailyLogId logId, required Map<String, dynamic> formData}) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getGraphGrid(DailyLogId logId) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, bool>> lockLog(DailyLogId logId) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, bool>> reassignDriving({required DailyLogId logId, required int statusId, required int targetCoDriverId, required String annotation}) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, bool>> respondToCarrierEdit({required DailyLogId logId, required String editId, required String action, String? driverNotes}) async => throw UnimplementedError();
 
   @override
   Future<Either<Failure, bool>> savePeriod(DutyPeriod period) async {

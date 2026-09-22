@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../../../../../core/theme/app_durations.dart';
+import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../domain/entities/daily_log.dart';
 import '../../../../../core/utils/status_color_helper.dart';
+import '../../../../../core/widgets/app_gap.dart';
+import '../../../domain/entities/daily_log.dart';
 import 'expanded_content.dart';
 
 class LogEventTile extends StatelessWidget {
@@ -44,10 +48,10 @@ class LogEventTile extends StatelessWidget {
                   height: 20,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                AppGap.hMd,
                 SizedBox(
                   width: 32,
                   child: Text(
@@ -93,7 +97,7 @@ class LogEventTile extends StatelessWidget {
               crossFadeState: isExpanded
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 300),
+              duration: AppDurations.normal,
             ),
           ],
         ),

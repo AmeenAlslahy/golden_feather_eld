@@ -1,12 +1,12 @@
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../../features/account/application/models/rules_screen_model.dart';
+import '../../../../features/account/domain/entities/rules_screen_model.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
-import '../models/rules_screen_dto.dart';
 import '../mappers/rules_screen_mapper.dart';
+import '../models/rules_screen_dto.dart';
 
 /// ELD Engine implementation of [RulesScreenBackend].
 class EldRulesScreenBackend implements RulesScreenBackend {

@@ -1,6 +1,7 @@
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+
 import '../../../../core/theme/app_colors.dart';
 // import '../../../../core/theme/app_spacing.dart';
 // import '../../../../core/theme/app_typography.dart';
@@ -36,7 +37,7 @@ class VehiclePickerDialog extends ConsumerWidget {
                     subtitle: vehicle.vin != null
                         ? Text(
                             '${context.loc.vin}: ${vehicle.vin!.substring(vehicle.vin!.length - 8)}',
-                            style: const TextStyle(fontSize: 12))
+                            style: context.textTheme.labelSmall)
                         : null,
                     value: vehicle.id,
                     groupValue: currentVehicleId,

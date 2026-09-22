@@ -1,6 +1,6 @@
 import '../../../../core/config/hos_configuration.dart';
-import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../core/domain/entities/hos_models.dart';
+import '../../../../core/time/trusted_time_provider.dart';
 
 sealed class CalculationResult {}
 

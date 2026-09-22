@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/domain/duty_status/status_dashboard.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart' as f;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../extensions/duty_status_l10n.dart';
 import '../providers/status_dashboard_providers.dart';
 import '../widgets/status_dashboard/change_status_sheet.dart';
@@ -56,7 +57,7 @@ class _DashboardView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Column(
                 children: [
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
                   if (dashboard.regulatoryConstraints.ruleSet !=
                           CycleRule.unknown)
                     Chip(
@@ -67,7 +68,7 @@ class _DashboardView extends StatelessWidget {
                       backgroundColor: AppColors.background,
                       side: const BorderSide(color: AppColors.border),
                     ),
-                  const SizedBox(height: AppSpacing.md),
+                  AppGap.md,
                   MainCircularTimer(
                     circle: dashboard.remainingCircle,
                     statusLabel: dashboard.currentDutyStatus.displayName(context),
@@ -76,7 +77,7 @@ class _DashboardView extends StatelessWidget {
                       currentStatus: dashboard.currentDutyStatus,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  AppGap.xl,
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
@@ -152,7 +153,7 @@ class _ErrorView extends StatelessWidget {
               size: 64,
               color: AppColors.dangerRed,
             ),
-            const SizedBox(height: AppSpacing.md),
+            AppGap.md,
             Text(
               message,
               textAlign: TextAlign.center,
@@ -161,7 +162,7 @@ class _ErrorView extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            AppGap.lg,
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),

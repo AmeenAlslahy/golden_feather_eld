@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
-import '../../../features/auth/data/datasources/auth_local_data_source.dart';
+
 import '../../../core/utils/logger.dart';
+import '../../../features/auth/data/datasources/auth_local_data_source.dart';
 
 class AuthInterceptor extends Interceptor {
   final AuthLocalDataSource localDataSource;

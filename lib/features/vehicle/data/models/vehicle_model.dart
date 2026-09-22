@@ -13,13 +13,13 @@ class VehicleModel extends Vehicle {
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
     return VehicleModel(
-      id: json['uniqueId']?.toString() ?? json['id']?.toString() ?? 'unknown',
-      name: json['name']?.toString() ?? 'Unknown Vehicle',
+      id: json['vehicleId']?.toString() ?? json['uniqueId']?.toString() ?? json['id']?.toString() ?? 'unknown',
+      name: json['vehicleName']?.toString() ?? json['name']?.toString() ?? 'Unknown Vehicle',
       year: json['model']?.toString() ?? 'N/A',
-      vin: json['uniqueId']?.toString(), // VIN is often stored in uniqueId
+      vin: json['vin']?.toString() ?? json['uniqueId']?.toString(), // VIN from ELD or fallback to uniqueId
       type: json['category']?.toString(),
       trailerId: null, // Depending on Traccar implementation
-      isAssigned: true, // Assuming returned means assigned
+      isAssigned: json['myVehicle'] as bool? ?? true, // Assuming returned means assigned
     );
   }
 

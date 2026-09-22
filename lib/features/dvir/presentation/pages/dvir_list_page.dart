@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+
 // import '../../../../l10n/app_localizations.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
@@ -55,9 +58,9 @@ class DvirListPage extends ConsumerWidget {
                       Icon(Icons.assignment,
                           size: 64,
                           color: Theme.of(context).colorScheme.outline),
-                      const SizedBox(height: AppSpacing.md),
+                      AppGap.md,
                       Text(context.loc.noDvirReports),
-                      const SizedBox(height: AppSpacing.lg),
+                      AppGap.lg,
                       FilledButton.icon(
                         onPressed: () {
                           Navigator.push(
@@ -113,7 +116,7 @@ class _DvirCard extends StatelessWidget {
                       ? AppColors.successGreen
                       : AppColors.primaryBlue,
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                AppGap.hSm,
                 Expanded(
                   child: Text(
                     isArabic ? report.type.arabicName : report.type.englishName,
@@ -127,13 +130,13 @@ class _DvirCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm,
-                    vertical: 4,
+                    vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
                     color: report.isSubmitted
                         ? AppColors.successGreen.withValues(alpha: 0.1)
                         : AppColors.warningYellow.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.dialog),
                   ),
                   child: Text(
                     report.isSubmitted
@@ -165,7 +168,7 @@ class _DvirCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.dangerRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +177,7 @@ class _DvirCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.warning,
                             color: AppColors.dangerRed, size: 16),
-                        const SizedBox(width: 8),
+                        AppGap.hSm,
                         Text(
                           '${report.defectsCount} ${context.loc.defectsFound}',
                           style: const TextStyle(
@@ -183,11 +186,11 @@ class _DvirCard extends StatelessWidget {
                       ],
                     ),
                     if (report.repairStatus != null) ...[
-                      const SizedBox(height: 4),
+                      AppGap.xs,
                       Row(
                         children: [
                           const Icon(Icons.build, color: AppColors.textSecondary, size: 14),
-                          const SizedBox(width: 8),
+                          AppGap.hSm,
                           Text(
                             'Repair: ${report.repairStatus}',
                             style: const TextStyle(
@@ -208,13 +211,13 @@ class _DvirCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.successGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
                 ),
                 child: const Row(
                   children: [
                     Icon(Icons.check_circle,
                         color: AppColors.successGreen, size: 16),
-                    SizedBox(width: 8),
+                    AppGap.hSm,
                     Text(
                       'Reviewed by next driver',
                       style: TextStyle(

@@ -1,13 +1,14 @@
 import 'dart:async';
-import '../../domain/entities/tracking_event.dart';
-import '../../domain/entities/connection_status.dart';
-import 'tracking_data_source.dart';
-import 'traccar_sdk/traccar_api_client.dart';
-import 'traccar_sdk/traccar_websocket_client.dart';
-import 'traccar_sdk/traccar_native_client.dart';
-import '../../../../core/utils/logger.dart';
+
 import '../../../../core/config/app_environment.dart';
+import '../../../../core/utils/logger.dart';
+import '../../domain/entities/connection_status.dart';
+import '../../domain/entities/tracking_event.dart';
 import 'native_event_channel_client.dart';
+import 'traccar_sdk/traccar_api_client.dart';
+import 'traccar_sdk/traccar_native_client.dart';
+import 'traccar_sdk/traccar_websocket_client.dart';
+import 'tracking_data_source.dart';
 
 /// محوّل (Adapter) يقوم بدمج عملاء Traccar المختلفة (API, WebSocket, Native)
 /// لتقديم واجهة TrackingDataSource الموحدة للنظام دون أن يتسرب أي من تفاصيل Traccar للخارج.

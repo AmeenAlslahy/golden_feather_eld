@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/tracking/presentation/providers/tracking_provider.dart';
-import '../../features/tracking/presentation/providers/tracking_providers.dart';
-import '../../features/auth/presentation/providers/auth_state_provider.dart';
-import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
-import '../../features/hos/presentation/providers/hos_provider.dart';
-import '../../features/hos/domain/engine/hos_rules_engine.dart';
+
 import '../../core/domain/entities/hos_models.dart';
 import '../../core/utils/logger.dart';
+import '../../features/auth/presentation/providers/auth_state_provider.dart';
+import '../../features/hos/domain/engine/hos_rules_engine.dart';
+import '../../features/hos/presentation/providers/hos_provider.dart';
+import '../../features/tracking/data/providers/repository_providers.dart';
+import '../../features/tracking/presentation/providers/tracking_provider.dart';
+import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
 
 final trackingOrchestratorProvider = Provider<void>((ref) {
   final notifier = ref.read(trackingStateProvider.notifier);

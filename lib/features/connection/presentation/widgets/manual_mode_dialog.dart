@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../../../backend/providers/backend_providers.dart';
 
 class ManualModeDialog extends ConsumerStatefulWidget {
   const ManualModeDialog({super.key});
@@ -63,31 +67,29 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
-    final titleText = isArabic ? 'التسجيل اليدوي أثناء العطل' : 'Switch to Manual Mode';
-    final descText = isArabic 
-      ? 'وفقاً لقوانين FMCSA §395.34، يمكنك الانتقال إلى التسجيل اليدوي إذا كان جهاز ELD متعطلاً. يرجى إدخال سبب الانتقال أدناه للتوثيق القانوني:'
-      : 'According to FMCSA §395.34, you may switch to manual recording if the ELD is malfunctioning. Please provide the reason below:';
-    final hintText = isArabic ? 'سبب العطل (مثال: تعطل اتصال البلوتوث)...' : 'Reason for manual mode...';
-    final cancelText = isArabic ? 'إلغاء' : 'Cancel';
-    final confirmText = isArabic ? 'تأكيد الانتقال' : 'Confirm';
-    final emptyErrorText = isArabic ? 'يرجى إدخال السبب' : 'Please provide a reason';
+    final titleText = context.loc.switchToManualMode;
+    final descText = context.loc.accordingToFmcsa39534;
+    final hintText = context.loc.reasonForManualMode;
+    final cancelText = context.loc.cancelButton;
+    final confirmText = context.loc.confirmTitle;
+    final emptyErrorText = context.loc.pleaseProvideAReason;
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.medium)),
       titlePadding: const EdgeInsets.all(AppSpacing.lg),
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       actionsPadding: const EdgeInsets.all(AppSpacing.lg),
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: AppColors.warningYellow.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.warning_amber, color: AppColors.warningYellow, size: 28),
           ),
-          const SizedBox(width: AppSpacing.md),
+          AppGap.hMd,
           Expanded(
             child: Text(
               titleText,
@@ -108,7 +110,7 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.input),
               border: Border.all(color: AppColors.border),
             ),
             child: Text(
@@ -120,7 +122,7 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          AppGap.md,
           AppTextField(
             controller: _reasonController,
             hint: hintText,
@@ -128,11 +130,11 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
             isUnderlined: false,
           ),
           if (_errorMessage != null) ...[
-            const SizedBox(height: AppSpacing.sm),
+            AppGap.sm,
             Row(
               children: [
                 const Icon(Icons.error, color: AppColors.dangerRed, size: 16),
-                const SizedBox(width: AppSpacing.xs),
+                AppGap.hXs,
                 Expanded(
                   child: Text(
                     _errorMessage == 'Please provide a reason' ? emptyErrorText : _errorMessage!,
@@ -170,10 +172,10 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
             backgroundColor: AppColors.dangerRed,
             foregroundColor: AppColors.surface,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.input)),
           ),
           child: _isLoading 
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface))
+            ? const SizedBox(width: AppSpacing.loaderSize, height: AppSpacing.loaderSize, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface))
             : Text(confirmText, style: const TextStyle(fontWeight: AppTypography.bold)),
         ),
       ],

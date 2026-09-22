@@ -1,23 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
+
+// ARCH-HIGH-01 fix: Import from composition root
+import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../backend/contracts/driver_session_backend.dart';
-import '../../data/repositories/codriver_repository_impl.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
-
-// --- Dependency Injection Providers ---
-
-final driverSessionBackendProviderAlias = Provider<DriverSessionBackend>((ref) {
-  return ref.watch(driverSessionBackendProvider);
-});
-
-final coDriverRepositoryProvider = Provider<CoDriverRepository>((ref) {
-  return CoDriverRepositoryImpl(
-    driverSessionBackend: ref.watch(driverSessionBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 
@@ -57,14 +47,20 @@ class CoDriverState {
 /// مزود السائق المساعد
 final codriverProvider =
     StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
-  return CoDriverNotifier(repository: ref.watch(coDriverRepositoryProvider));
+  return CoDriverNotifier(
+    repository: ref.watch(coDriverRepositoryProvider),
+    driverSessionBackend: ref.watch(driverSessionBackendProvider),
+  );
 });
 
 class CoDriverNotifier extends StateNotifier<CoDriverState> {
   final CoDriverRepository _repository;
+  final DriverSessionBackend _driverSessionBackend;
 
-  CoDriverNotifier({required CoDriverRepository repository})
+  CoDriverNotifier(
+      {required CoDriverRepository repository, required DriverSessionBackend driverSessionBackend})
       : _repository = repository,
+        _driverSessionBackend = driverSessionBackend,
         super(const CoDriverState()) {
     _loadDrivers();
   }
@@ -95,15 +91,34 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
     );
   }
 
-  /// تبديل الأدوار
-  Future<void> switchDrivers() async {
-    state = state.copyWith(isSwitching: true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      state = state.copyWith(
-        isSwitching: false,
-        // بعد التبديل، السائق الحالي يصبح المساعد والعكس
+  /// تبديل الأدوار — مربوط بالـ API الحقيقي
+  Future<bool> switchDrivers() async {
+    final coDriver = state.selectedCoDriver;
+    if (coDriver == null) {
+      state = state.copyWith(error: 'No co-driver selected');
+      return false;
+    }
+    state = state.copyWith(isSwitching: true, error: null);
+    try {
+      final driverId = int.tryParse(coDriver.id) ?? 0;
+      final result = await _driverSessionBackend.switchPrimaryDriver(
+        action: DutyStatusAction.switchPrimary,
+        coDriverId: DriverId(driverId),
+        reason: 'Driver requested switch',
       );
+      return result.fold(
+        (error) {
+          state = state.copyWith(isSwitching: false, error: error.code);
+          return false;
+        },
+        (_) {
+          state = state.copyWith(isSwitching: false, error: null);
+          return true;
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(isSwitching: false, error: e.toString());
+      return false;
     }
   }
 }

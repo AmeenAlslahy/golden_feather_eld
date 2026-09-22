@@ -1,9 +1,10 @@
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
-import '../../../../backend/contracts/driver_session_backend.dart';
 
 class CoDriverRepositoryImpl implements CoDriverRepository {
   final DriverSessionBackend driverSessionBackend;

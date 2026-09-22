@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
-
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/app/providers/app_repository_providers.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
-import 'package:golden_feather_eld/core/config/feature_flags.dart';
-import 'package:golden_feather_eld/features/home/presentation/pages/home_page.dart';
-import 'package:golden_feather_eld/features/hos/presentation/pages/status_dashboard_page.dart';
-import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_alerts_provider.dart';
-import 'package:golden_feather_eld/l10n/app_localizations.dart';
-
 import 'package:golden_feather_eld/core/config/app_environment.dart';
-import 'package:golden_feather_eld/core/services/local_storage_service.dart';
-import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
-import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/core/config/feature_flags.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
-import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
-import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
+import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/eld_theme_extension.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_alerts_provider.dart';
+import 'package:golden_feather_eld/features/home/presentation/pages/home_page.dart';
+import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
+import 'package:golden_feather_eld/features/hos/presentation/pages/status_dashboard_page.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';
-import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
-import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
+import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockLocalStorageService extends Mock implements LocalStorageService {

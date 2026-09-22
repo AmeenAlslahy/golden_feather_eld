@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/domain/duty_status/status_dashboard.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/theme/app_typography.dart';
-import '../../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../../core/widgets/app_gap.dart';
 import '../../../../connection/presentation/providers/hardware_alerts_provider.dart';
 
 /// Banner shown at the top of the dashboard when connection status
@@ -41,7 +42,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
             child: Row(
               children: [
                 Icon(icon, color: color, size: 24),
-                const SizedBox(width: AppSpacing.sm),
+                AppGap.hSm,
                 Expanded(
                   child: Text(
                     text,
@@ -68,7 +69,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
             child: Row(
               children: [
                 const Icon(Icons.error_outline, color: AppColors.dangerRed, size: 24),
-                const SizedBox(width: AppSpacing.sm),
+                AppGap.hSm,
                 Expanded(
                   child: Text(
                     alert.message,

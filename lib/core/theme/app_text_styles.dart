@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'app_typography.dart';
+
 import 'app_colors.dart';
+import 'app_typography.dart';
 import 'eld_colors.dart';
 
 /// الأنماط الدلالية للنصوص حسب دليل التصميم
@@ -111,5 +112,4 @@ extension AppThemeTextStylesExt on ThemeData {
 /// امتداد BuildContext للوصول المباشر
 extension AppTextStylesX on BuildContext {
   AppTextStyles get textStyles => AppTextStyles(this);
-  EldColors get eld => Theme.of(this).extension<EldColors>()!;
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
+
+import '../../../../core/error/failure.dart' as f;
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/extensions/time_extensions.dart';
-import '../../../../core/error/failure.dart' as f;
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../providers/recap_provider.dart';
 
 class RecapPage extends ConsumerWidget {
@@ -92,7 +94,7 @@ class RecapPage extends ConsumerWidget {
     bool isBold = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
       ),

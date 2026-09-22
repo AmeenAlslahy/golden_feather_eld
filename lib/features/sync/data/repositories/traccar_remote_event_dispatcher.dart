@@ -1,9 +1,10 @@
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../core/error/failure.dart';
+import '../../../auth/data/datasources/auth_local_data_source.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/usecases/sync_engine.dart';
-import '../../../../backend/contracts/duty_status_backend.dart';
-import '../../../auth/data/datasources/auth_local_data_source.dart';
 
 class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final DutyStatusBackend _dutyStatusBackend;
@@ -22,17 +23,17 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
           driverId = int.tryParse(session.user.id) ?? 0;
         }
         final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(driverId, event.payload);
-        return result.fold(
+        return await Future.value(result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (_) => const Right(true),
-        );
+        ));
       } else {
         // Fallback for generic Traccar events
         final result = await _dutyStatusBackend.submitLegacyGenericEvent(event.payload);
-        return result.fold(
+        return await Future.value(result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (_) => const Right(true),
-        );
+        ));
       }
     } catch (e) {
       return Left(ServerFailure(

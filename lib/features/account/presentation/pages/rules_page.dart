@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/eld_card.dart';
-import '../../../../core/widgets/eld_info_row.dart';
-import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../domain/entities/rules_screen_model.dart';
+import '../../domain/usecases/update_rules_use_case.dart';
 import '../providers/rules_screen_provider.dart';
-import '../../application/usecases/update_rules_use_case.dart';
-import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
-import '../../application/models/rules_screen_model.dart';
 
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key});
@@ -44,12 +45,11 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   }
 
   Future<void> _saveRules(RulesScreenModel model) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!_isFormValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isArabic ? 'البيانات غير مكتملة، يرجى ملء جميع الحقول أولاً.' : 'Form is incomplete, please fill all fields.'),
-          backgroundColor: Colors.red,
+          content: Text(context.loc.formIsIncompletePleaseFill),
+          backgroundColor: AppColors.dangerRed,
         ),
       );
       return;
@@ -70,14 +70,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
         result.fold(
           (failure) {
             final serverMsg = failure.context?['serverMessage'] as String?;
-            final displayMsg = serverMsg ?? (isArabic ? 'فشل تحديث القواعد: ${failure.l10nKey}' : 'Failed to update rules: ${failure.l10nKey}');
+            final displayMsg = serverMsg ?? (context.loc.failedToUpdateRulesFailure);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(displayMsg), backgroundColor: Colors.red),
+              SnackBar(content: Text(displayMsg), backgroundColor: AppColors.dangerRed),
             );
           },
           (_) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Rules updated successfully'), backgroundColor: Colors.green),
+              const SnackBar(content: Text('Rules updated successfully'), backgroundColor: AppColors.successGreen),
             );
             ref.invalidate(rulesScreenProvider);
           },
@@ -90,7 +90,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     }
   }
 
-  Widget _buildDropdownOrInfo(String fieldName, String label, String value, List<String> options, Set<String> editable) {
+  Widget _buildFlatRow(BuildContext context, String fieldName, String label, String value, List<String> options, Set<String> editable) {
     if (editable.contains(fieldName) && options.isNotEmpty) {
       String currentValue = value;
       switch (fieldName) {
@@ -108,64 +108,95 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           break;
       }
 
-      // Ensure current value is in options to prevent DropdownMenuItem errors
       if (!options.contains(currentValue) && options.isNotEmpty) {
         currentValue = options.first;
       }
 
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: DropdownButtonFormField<String>(
-          initialValue: currentValue,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-          items: options.map((String opt) {
-            return DropdownMenuItem<String>(
-              value: opt,
-              child: Text(opt),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                switch (fieldName) {
-                  case 'cycleRule':
-                    _cycleRule = newValue;
-                    break;
-                  case 'cargoType':
-                    _cargoType = newValue;
-                    break;
-                  case 'restart':
-                    _restart = newValue;
-                    break;
-                  case 'restBreak':
-                    _restBreak = newValue;
-                    break;
-                }
-              });
-            }
-          },
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            ),
+            Expanded(
+              flex: 3,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: currentValue,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  items: options.map((String opt) {
+                    return DropdownMenuItem<String>(
+                      value: opt,
+                      child: Text(opt, style: Theme.of(context).textTheme.bodyLarge),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        switch (fieldName) {
+                          case 'cycleRule':
+                            _cycleRule = newValue;
+                            break;
+                          case 'cargoType':
+                            _cargoType = newValue;
+                            break;
+                          case 'restart':
+                            _restart = newValue;
+                            break;
+                          case 'restBreak':
+                            _restBreak = newValue;
+                            break;
+                        }
+                      });
+                    }
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       );
     } else {
-      return EldInfoRow(label: label, value: value);
+      return _buildInfoRow(context, label, value);
     }
+  }
+
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+          AppGap.md,
+          Flexible(
+            child: Text(value, style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.end),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getAllowedText(BuildContext context, dynamic value) {
+    final isAllowed = value == true || value == 'Allowed';
+    if (Localizations.localeOf(context).languageCode == 'ar') {
+      return isAllowed ? 'مسموح' : 'ممنوع';
+    }
+    return isAllowed ? 'Allowed' : 'Forbidden';
   }
 
   @override
   Widget build(BuildContext context) {
     final rulesScreenAsync = ref.watch(rulesScreenProvider);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final loc = context.loc;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         title: Text(
-          loc.rules,
+          context.loc.rules,
           style: const TextStyle(
             fontSize: AppTypography.bodySize,
             fontWeight: AppTypography.bold,
@@ -186,31 +217,23 @@ class _RulesPageState extends ConsumerState<RulesPage> {
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (model) {
           _initForm(model);
-          final config = model.limits;
           final editable = model.editableFields;
           final hasEditableFields = editable.any((field) {
             if (field == 'sixteenHourException') return true;
             return (model.options[field] ?? []).isNotEmpty;
           });
 
-          String hours(int minutes) {
-            final h = minutes ~/ 60;
-            final m = minutes % 60;
-            if (m == 0) return isArabic ? '$h ساعة' : '$h h';
-            return isArabic ? '$h س $m د' : '${h}h ${m}m';
-          }
-
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (model.notice.isNotEmpty)
                   Container(
+                    margin: const EdgeInsets.all(AppSpacing.md),
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.warningYellow.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.dialog),
                       border: Border.all(
                         color: AppColors.warningYellow.withValues(alpha: 0.6),
                       ),
@@ -219,7 +242,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(Icons.info_outline, color: AppColors.textPrimary),
-                        const SizedBox(width: AppSpacing.sm),
+                        AppGap.hSm,
                         Expanded(
                           child: Text(
                             model.notice,
@@ -229,31 +252,25 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       ],
                     ),
                   ),
-                const SizedBox(height: AppSpacing.md),
-
-                EldCard(
+                
+                Container(
+                  color: Theme.of(context).cardColor,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isArabic ? 'الدورة المطبقة' : 'Active Cycle',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      EldInfoRow(
-                        label: isArabic ? 'مصدر القاعدة' : 'Rule Source',
-                        value: model.ruleSource,
-                      ),
-                      _buildDropdownOrInfo('cycleRule', isArabic ? 'الدورة' : 'Cycle', model.cycleRule, model.options['cycleRule'] ?? [], editable),
-                      _buildDropdownOrInfo('restart', isArabic ? 'إعادة التشغيل' : 'Restart', model.restart, model.options['restart'] ?? [], editable),
-                      _buildDropdownOrInfo('cargoType', isArabic ? 'نوع الحمولة' : 'Cargo Type', model.cargoType, model.options['cargoType'] ?? [], editable),
-                      _buildDropdownOrInfo('restBreak', isArabic ? 'استراحة إلزامية' : 'Rest Break', model.restBreak, model.options['restBreak'] ?? [], editable),
+                      _buildFlatRow(context, 'cycleRule', context.loc.cycleLimitTitle, model.cycleRule, model.options['cycleRule'] ?? [], editable),
+                      const Divider(height: 1),
+                      _buildFlatRow(context, 'cargoType', context.loc.cargoType, model.cargoType, model.options['cargoType'] ?? [], editable),
+                      const Divider(height: 1),
+                      _buildFlatRow(context, 'restart', context.loc.restart, model.restart, model.options['restart'] ?? [], editable),
+                      const Divider(height: 1),
+                      _buildFlatRow(context, 'restBreak', context.loc.restBreak, model.restBreak, model.options['restBreak'] ?? [], editable),
+                      const Divider(height: 1),
                       
                       if (editable.contains('sixteenHourException'))
                         Material(
                           type: MaterialType.transparency,
                           child: SwitchListTile(
-                            title: const Text('16-Hour Exception'),
+                            title: Text('16-Hour Short-Haul\nException', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                             value: _sixteenHourException ?? false,
                             onChanged: (val) {
                               setState(() => _sixteenHourException = val);
@@ -261,49 +278,65 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                           ),
                         )
                       else
-                        EldInfoRow(
-                          label: '16-Hour Exception',
-                          value: model.sixteenHourException ? 'Yes' : 'No',
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('16-Hour Short-Haul\nException', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                              Switch(value: model.sixteenHourException, onChanged: null),
+                            ],
+                          ),
                         ),
+                      const Divider(height: 1),
+
+                      _buildInfoRow(context, 'Personal Conveyance', _getAllowedText(context, model.fixedSettings['personalConveyance'])),
+                      const Divider(height: 1),
+                      _buildInfoRow(context, 'Yard Moves', _getAllowedText(context, model.fixedSettings['yardMoves'])),
+                      const Divider(height: 1),
+                      _buildInfoRow(context, 'Unlimited Trailers', _getAllowedText(context, model.fixedSettings['unlimitedTrailers'])),
+                      const Divider(height: 1),
+                      _buildInfoRow(context, 'Unlimited Shipping\nDocuments', _getAllowedText(context, model.fixedSettings['unlimitedShippingDocuments'])),
+                      const Divider(height: 1),
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
 
-                if (hasEditableFields)
-                  ElevatedButton(
-                    onPressed: (_isSaving || !_isFormValid) ? null : () => _saveRules(model),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      backgroundColor: AppColors.primaryBlue,
-                    ),
-                    child: _isSaving 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(isArabic ? 'حفظ' : 'Save', style: const TextStyle(color: Colors.white)),
-                  ),
-                  
-                const SizedBox(height: AppSpacing.md),
-
-                EldCard(
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isArabic ? 'الحدود اليومية' : 'Daily Limits',
-                        style: Theme.of(context).textTheme.titleMedium,
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: (_isSaving || !hasEditableFields || !_isFormValid) ? null : () => _saveRules(model),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.lightGreen.shade300,
+                            disabledBackgroundColor: Colors.lightGreen.shade300.withValues(alpha: 0.6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          child: _isSaving 
+                              ? const SizedBox(height: AppSpacing.loaderSize, width: AppSpacing.loaderSize, child: CircularProgressIndicator(color: AppColors.surface, strokeWidth: 2))
+                              : const Text('SAVE', style: TextStyle(color: AppColors.surface, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      EldInfoRow(
-                        label: isArabic ? 'القيادة' : 'Driving',
-                        value: hours(config.drivingLimitMinutes),
-                      ),
-                      EldInfoRow(
-                        label: isArabic ? 'نافذة العمل' : 'Shift window',
-                        value: hours(config.shiftLimitMinutes),
-                      ),
-                      EldInfoRow(
-                        label: isArabic ? 'استراحة إلزامية' : 'Required break',
-                        value: '${config.breakDurationMinutes} ${isArabic ? 'د' : 'min'} / ${hours(config.driveBeforeBreakMinutes)}',
+                      AppGap.xl,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.info, color: Colors.grey, size: 20),
+                          AppGap.hSm,
+                          Flexible(
+                            child: Text(
+                              'Please contact your fleet manager to change rules\nor to add exceptions.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

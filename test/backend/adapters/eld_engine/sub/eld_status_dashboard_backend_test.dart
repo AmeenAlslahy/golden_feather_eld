@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_status_dashboard_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_config.dart';
-import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
-import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
-import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/weekly_recap.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
 void main() {

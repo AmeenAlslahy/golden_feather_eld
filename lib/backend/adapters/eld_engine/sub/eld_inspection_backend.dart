@@ -1,6 +1,6 @@
+import '../../../../core/domain/inspection/dot_inspection.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/inspection_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -17,7 +17,7 @@ class EldInspectionBackend implements InspectionBackend {
   Future<Result<DotInspectionScreen>> getScreen({DriverId? driverId}) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          EldEndpoints.inspections,
+          EldEndpoints.dotInspection,
           queryParameters:
               driverId != null ? {'driverId': driverId.value} : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
@@ -38,7 +38,7 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<List<dynamic>>(
-          '${EldEndpoints.inspections}/cycle',
+          EldEndpoints.dotInspectionCycle,
           queryParameters: {
             if (driverId != null) 'driverId': driverId.value,
             'days': days,
@@ -62,7 +62,7 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          '${EldEndpoints.inspections}/logs',
+          EldEndpoints.dotInspectionLogs,
           queryParameters: {
             if (driverId != null) 'driverId': driverId.value,
             if (date != null)
@@ -86,12 +86,31 @@ class EldInspectionBackend implements InspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
-  }) =>
-      throw UnimplementedError('EldInspectionBackend.emailLogs — Phase 2');
+  }) async {
+    final response = await _apiClient.post<RawJson>(
+      EldEndpoints.dotInspectionEmailLogs,
+      data: {
+        'driverId': driverId.value,
+        'recipientEmail': recipientEmail,
+        if (routingCode != null) 'routingCode': routingCode,
+        if (comment != null) 'comment': comment,
+        if (daysCount != null) 'daysCount': daysCount,
+        if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
-  Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) =>
-      throw UnimplementedError('EldInspectionBackend.getInformationPacket — Phase 2');
+  Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) async {
+    final response = await _apiClient.get<RawJson>(
+      EldEndpoints.dotInspectionInfoPacket,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> sendLogs({
@@ -102,8 +121,22 @@ class EldInspectionBackend implements InspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
-  }) =>
-      throw UnimplementedError('EldInspectionBackend.sendLogs — Phase 2');
+  }) async {
+    final response = await _apiClient.post<RawJson>(
+      EldEndpoints.dotInspectionSendLogs,
+      data: {
+        'driverId': driverId.value,
+        'transferType': transferType.name.toUpperCase(),
+        'outputFileComment': outputFileComment,
+        if (routingCode != null) 'routingCode': routingCode,
+        if (recipientEmail != null) 'recipientEmail': recipientEmail,
+        if (daysCount != null) 'daysCount': daysCount,
+        if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> startInspection({
@@ -113,12 +146,31 @@ class EldInspectionBackend implements InspectionBackend {
     String? inspectorAgency,
     String? location,
     String? notes,
-  }) =>
-      throw UnimplementedError('EldInspectionBackend.startInspection — Phase 2');
+  }) async {
+    final response = await _apiClient.post<RawJson>(
+      EldEndpoints.dotInspectionStart,
+      data: {
+        'driverId': driverId.value,
+        if (inspectorName != null) 'inspectorName': inspectorName,
+        if (inspectorBadge != null) 'inspectorBadge': inspectorBadge,
+        if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
+        if (location != null) 'location': location,
+        if (notes != null) 'notes': notes,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
-  Future<Result<RawJson>> getTransfers({DriverId? driverId}) =>
-      throw UnimplementedError('EldInspectionBackend.getTransfers — Phase 2');
+  Future<Result<RawJson>> getTransfers({DriverId? driverId}) async {
+    final response = await _apiClient.get<RawJson>(
+      EldEndpoints.dotInspectionTransfers,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId) async {

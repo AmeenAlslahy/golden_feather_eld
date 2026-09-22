@@ -1,22 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../providers/logs_provider.dart';
-import '../providers/log_detail_tab_provider.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_gap.dart';
 import '../../domain/entities/daily_log.dart';
-import 'edit_log_page.dart';
-import 'inspection_preview_page.dart';
+import '../providers/log_detail_tab_provider.dart';
+import '../providers/logs_provider.dart';
+import '../widgets/log_detail_tabs/certify_tab.dart';
 import '../widgets/log_detail_tabs/events_tab.dart';
 import '../widgets/log_detail_tabs/form_tab.dart';
-import '../widgets/log_detail_tabs/certify_tab.dart';
+import 'edit_log_page.dart';
+import 'inspection_preview_page.dart';
 
 /// شاشة تفاصيل اليوم (Shell)
-class LogDetailPage extends ConsumerWidget {
-  const LogDetailPage({super.key});
+///
+/// UX-HIGH-03 fix: Accepts optional [logId] from route parameter.
+/// If provided, selects the matching log from the provider.
+class LogDetailPage extends ConsumerStatefulWidget {
+  final String? logId;
+
+  const LogDetailPage({super.key, this.logId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LogDetailPage> createState() => _LogDetailPageState();
+}
+
+class _LogDetailPageState extends ConsumerState<LogDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    // UX-HIGH-03 fix: If logId comes from route, select it
+    if (widget.logId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(logsProvider.notifier).selectLogById(widget.logId!);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedLog = ref.watch(logsProvider).selectedLog;
     final currentIndex = ref.watch(logDetailTabProvider);
 
@@ -99,12 +123,12 @@ class LogDetailPage extends ConsumerWidget {
           if (selectedLog.certificationStatus == CertificationStatus.reCertificationRequired)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.smMd, horizontal: AppSpacing.md),
               color: AppColors.warningYellow.withValues(alpha: 0.1),
               child: Row(
                 children: [
                   const Icon(Icons.warning_amber_rounded, color: AppColors.warningYellow),
-                  const SizedBox(width: 12),
+                  AppGap.hSmMd,
                   Expanded(
                     child: Text(
                       'Re-certification Required: Edits were made after your last signature.',

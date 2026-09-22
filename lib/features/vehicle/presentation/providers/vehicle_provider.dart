@@ -1,11 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/vehicle_backend.dart';
-import '../../data/repositories/vehicle_repository_impl.dart';
-import '../../domain/repositories/vehicle_repository.dart';
+
+// ARCH-HIGH-01 fix: Import from composition root, not data/repositories directly
+import '../../../../app/providers/app_repository_providers.dart';
 import '../../domain/entities/vehicle.dart';
+import '../../domain/repositories/vehicle_repository.dart';
 
 /// حالة شاشة المركبات
 class VehicleState {
@@ -58,24 +56,7 @@ class VehicleState {
   }
 }
 
-/// مزود مستودع المركبات
-final vehicleBackendProviderAlias = Provider<VehicleBackend>((ref) {
-  return ref.watch(vehicleBackendProvider);
-});
-
-final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
-  final vehicleBackend = ref.watch(vehicleBackendProviderAlias);
-  final localStorage = ref.watch(localStorageProvider);
-  final networkInfo = ref.watch(networkInfoProvider);
-
-  return VehicleRepositoryImpl(
-    vehicleBackend: vehicleBackend,
-    localDataSource: localStorage,
-    networkInfo: networkInfo,
-  );
-});
-
-/// مزود المركبات
+/// مزود المركبات (uses vehicleRepositoryProvider from composition root)
 final vehicleProvider =
     StateNotifierProvider<VehicleNotifier, VehicleState>((ref) {
   return VehicleNotifier(

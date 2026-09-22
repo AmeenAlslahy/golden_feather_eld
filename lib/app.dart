@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'l10n/app_localizations.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
+import 'core/constants/app_constants.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/services/quick_actions_initializer.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_provider.dart';
-import 'core/localization/locale_provider.dart';
-import 'core/constants/app_constants.dart';
-import 'core/services/quick_actions_initializer.dart';
-import 'routes.dart';
-import 'features/hos/presentation/providers/hos_provider.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'features/hos/domain/engine/hos_rules_engine.dart';
+import 'features/hos/presentation/providers/hos_provider.dart';
+import 'l10n/app_localizations.dart';
+import 'routes.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -28,11 +29,16 @@ class GoldenFeatherApp extends ConsumerWidget {
         if (next.update.currentStatus == DutyStatus.driving &&
             prevStatus != DutyStatus.driving) {
           scaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(
-              content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
+            SnackBar(
+              // UX-MEDIUM fix: Use locale-aware text instead of hard-coded Arabic
+              content: Text(
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'
+                    : 'Tracking service started automatically to record duty status',
+              ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -58,13 +64,15 @@ class GoldenFeatherApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           localeResolutionCallback: (locale, supportedLocales) {
-            if (locale == null) return const Locale('ar');
+            // UX-HIGH-01 fix: Default to English, not Arabic
+            if (locale == null) return const Locale('en');
             for (final supportedLocale in supportedLocales) {
               if (supportedLocale.languageCode == locale.languageCode) {
                 return supportedLocale;
               }
             }
-            return const Locale('ar');
+            // UX-HIGH-01 fix: Fallback to English, not Arabic
+            return const Locale('en');
           },
 
           // الثيم

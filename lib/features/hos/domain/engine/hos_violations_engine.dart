@@ -1,15 +1,17 @@
 import 'dart:async';
 
-import '../../../../core/utils/logger.dart';
-import 'tracking/duty_status_tracker.dart';
-import '../../data/datasources/hos_local_data_source.dart';
-import '../../../../core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+
+import '../../../../core/config/hos_configuration.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/utils/logger.dart';
+// ARCH-CRIT-01 fix: Use Domain port instead of Data DataSource
+import '../ports/hos_storage_port.dart';
+import 'tracking/duty_status_tracker.dart';
 
 class HosViolationsEngine {
   final DutyStatusTracker _tracker;
-  final HosLocalDataSource _localDb;
+  final HosStoragePort _localDb;
   final HosConfiguration _config;
   final TrustedTimeProvider _timeProvider;
 

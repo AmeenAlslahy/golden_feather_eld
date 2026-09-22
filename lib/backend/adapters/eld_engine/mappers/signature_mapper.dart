@@ -1,5 +1,5 @@
-import '../../../../domain/shared/value_objects.dart';
-import '../../../../domain/signature/signature.dart';
+import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/domain/signature/signature.dart';
 
 class SignatureMapper {
   const SignatureMapper._();

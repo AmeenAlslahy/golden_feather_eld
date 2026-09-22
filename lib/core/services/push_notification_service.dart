@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../app.dart';
-import '../../routes.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
-import 'local_storage_service.dart';
+import '../../routes.dart';
 import '../utils/logger.dart';
+import 'local_storage_service.dart';
 
 /// خدمة الإشعارات - من push_service.dart الأصلي
 class PushNotificationService {
@@ -138,16 +140,23 @@ class PushNotificationService {
     final id = _storage.deviceId;
     final url = _storage.serverUrl;
     if (id.isEmpty || url.isEmpty) return;
+    // Security: only https is allowed
+    if (!url.startsWith('https://')) {
+      AppLogger.warning('Token upload blocked: insecure URL (only HTTPS allowed)');
+      return;
+    }
 
     try {
       final request = await HttpClient().postUrl(Uri.parse(url));
       request.headers.contentType =
           ContentType.parse('application/x-www-form-urlencoded');
+      // Token is sent in POST body (not URL query) to avoid logging
       request.write(
           'id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}');
       await request.close();
       AppLogger.info('📤 Token uploaded to server');
     } catch (e) {
+      // Do not log token
       AppLogger.error('Failed to upload token', e);
     }
   }

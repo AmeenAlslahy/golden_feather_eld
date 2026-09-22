@@ -70,7 +70,7 @@ class ManualDetailPage extends StatelessWidget {
                           Container(
                             width: 28,
                             height: 28,
-                            margin: const EdgeInsets.only(right: AppSpacing.sm),
+                            margin: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
                             decoration: BoxDecoration(
                               color:
                                   AppColors.primaryBlue.withValues(alpha: 0.1),

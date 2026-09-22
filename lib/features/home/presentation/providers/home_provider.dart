@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../routes.dart';
+import '../../../../routes.dart';
 
 /// عنصر في القائمة
 class MenuItem {
@@ -20,6 +20,7 @@ class MenuItem {
 /// قائمة ELD الرئيسية (مطابقة لـ SRS §4 + §17)
 ///
 /// تسجيل الخروج إجراء مستقل في الدرج الجانبي وليس مساراً.
+/// ✅ Merged from main branch: Added Reports, Tracking, Settings
 class EldMenu {
   static const List<MenuItem> items = [
     MenuItem(
@@ -57,6 +58,23 @@ class EldMenu {
         arabicTitle: 'اختيار المركبة',
         icon: Icons.local_shipping,
         route: AppRoutes.selectVehicle),
+    // ✅ Merged from main branch
+    MenuItem(
+        title: 'Reports',
+        arabicTitle: 'التقارير',
+        icon: Icons.assessment,
+        route: AppRoutes.reports),
+    MenuItem(
+        title: 'Tracking',
+        arabicTitle: 'التتبع',
+        icon: Icons.location_on,
+        route: AppRoutes.tracking),
+    MenuItem(
+        title: 'Settings',
+        arabicTitle: 'الإعدادات',
+        icon: Icons.settings,
+        route: AppRoutes.settings),
+    // Original items
     MenuItem(
         title: 'Account',
         arabicTitle: 'الحساب',

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
-import 'package:golden_feather_eld/features/tracking/data/services/tracking_service.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
+import 'package:golden_feather_eld/features/tracking/data/services/tracking_service.dart';
 
 class MockTraccarClient implements TraccarNativeClient {
   Map<String, dynamic>? lastConfig;

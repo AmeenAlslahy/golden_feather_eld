@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fpdart/fpdart.dart';
+
+import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/error/failure.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+// ARCH-HIGH-01 fix: Removed unused data-layer import.
+// Presentation depends on LogRepository (domain interface), not the impl.
+import '../../domain/entities/audit_entry.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/repositories/log_repository.dart';
-import '../../data/repositories/log_repository_impl.dart';
-import '../../domain/entities/audit_entry.dart';
-import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/failure.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// حالة شاشة السجلات
 class LogsState {
@@ -115,6 +118,14 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// تحديد سجل محدد للتفاصيل
   void selectLog(DailyLog log) {
     state = state.copyWith(selectedLog: log);
+  }
+
+  /// UX-HIGH-03 fix: Select a log by its ID (used by route parameter).
+  void selectLogById(String id) {
+    final matchingLog = state.logs.where((log) => log.id == id).firstOrNull;
+    if (matchingLog != null) {
+      state = state.copyWith(selectedLog: matchingLog);
+    }
   }
 
   /// تبديل توسيع حدث

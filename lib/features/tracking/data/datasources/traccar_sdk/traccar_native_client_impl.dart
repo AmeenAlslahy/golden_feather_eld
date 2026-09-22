@@ -1,5 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../../../../core/utils/logger.dart';
 import 'traccar_native_client.dart';
 
 class TraccarNativeClientImpl implements TraccarNativeClient {
@@ -11,7 +11,7 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
     try {
       await _channel.invokeMethod('setConfig', config);
     } on PlatformException catch (e) {
-      debugPrint('Failed to configure native tracking: ${e.message}');
+      AppLogger.error('Failed to configure native tracking: ${e.message}');
       rethrow;
     }
   }
@@ -21,7 +21,7 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
     try {
       await _channel.invokeMethod('start');
     } on PlatformException catch (e) {
-      debugPrint('Failed to start native tracking: ${e.message}');
+      AppLogger.error('Failed to start native tracking: ${e.message}');
       rethrow;
     }
   }
@@ -31,7 +31,7 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
     try {
       await _channel.invokeMethod('stop');
     } on PlatformException catch (e) {
-      debugPrint('Failed to stop native tracking: ${e.message}');
+      AppLogger.error('Failed to stop native tracking: ${e.message}');
       rethrow;
     }
   }
@@ -51,7 +51,7 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
     try {
       await _channel.invokeMethod('requestPosition', {'alarm': alarm});
     } on PlatformException catch (e) {
-      debugPrint('Failed to request immediate position: ${e.message}');
+      AppLogger.error('Failed to request immediate position: ${e.message}');
       rethrow;
     }
   }
@@ -73,7 +73,7 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
     try {
       await _channel.invokeMethod('clearLogs');
     } on PlatformException catch (e) {
-      debugPrint('Failed to clear native logs: ${e.message}');
+      AppLogger.error('Failed to clear native logs: ${e.message}');
     }
   }
 }

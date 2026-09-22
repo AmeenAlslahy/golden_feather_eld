@@ -62,17 +62,17 @@ class _UnclaimedTab extends StatelessWidget {
     final events = [
       {
         'status': 'ON',
-        'color': Colors.blue,
+        'color': AppColors.infoBlue,
         'date': 'Aug 26, 2026 7:19 AM EDT'
       },
       {
         'status': 'D',
-        'color': Colors.green,
+        'color': AppColors.successGreen,
         'date': 'Aug 26, 2026 7:15 AM EDT'
       },
       {
         'status': 'ON',
-        'color': Colors.blue,
+        'color': AppColors.infoBlue,
         'date': 'Aug 26, 2026 7:14 AM EDT'
       },
     ];
@@ -121,7 +121,7 @@ class _UnclaimedTab extends StatelessWidget {
                         width: 4,
                         height: 20,
                         color: event['color'] as Color,
-                        margin: const EdgeInsets.only(right: AppSpacing.sm),
+                        margin: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
                       ),
                       // Status Code
                       SizedBox(
@@ -144,7 +144,7 @@ class _UnclaimedTab extends StatelessWidget {
                         ),
                       ),
                       // Trailing Arrow
-                      const Icon(Icons.chevron_right, color: Colors.grey),
+                      const Icon(Icons.chevron_right, color: AppColors.border),
                     ],
                   ),
                 ),

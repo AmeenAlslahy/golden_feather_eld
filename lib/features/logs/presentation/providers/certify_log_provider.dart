@@ -1,13 +1,16 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/repositories/log_repository.dart';
-import '../../data/repositories/log_repository_impl.dart';
-import '../../../../domain/shared/value_objects.dart';
+
+import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../../../backend/contracts/signature_backend.dart';
 import '../../../../backend/providers/backend_providers.dart';
-import 'dart:convert';
-import 'dart:typed_data';
-import '../../../../domain/signature/signature.dart';
+// ARCH-HIGH-01 fix: Removed unused data-layer import.
+import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/domain/signature/signature.dart';
+import '../../domain/repositories/log_repository.dart';
 
 class CertifyLogState {
   final bool isLoading;
@@ -113,8 +116,12 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
           (failure) {
             state = state.copyWith(isLoading: false, error: failure.message);
           },
-          (success) {
+          (success) async {
             state = state.copyWith(isLoading: false, isSuccess: true);
+            
+            // SRS §5.12 + L6: Lock the log after successful certification
+            // to prevent any further modifications (FMCSA §395.30(g))
+            await _repository.lockLog(logId);
           },
         );
       },

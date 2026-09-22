@@ -1,9 +1,10 @@
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../backend/contracts/inspection_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/repositories/inspection_repository.dart';
-import '../../../../backend/contracts/inspection_backend.dart';
 
 class InspectionRepositoryImpl implements InspectionRepository {
   final InspectionBackend inspectionBackend;

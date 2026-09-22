@@ -1,6 +1,6 @@
+import '../../../../core/domain/hardware/telemetry_reading.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
-import '../../../../domain/hardware/telemetry_reading.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
 

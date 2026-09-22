@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../backend/providers/backend_providers.dart';
+
 import '../../../../backend/contracts/account_backend.dart';
-import '../../../../domain/shared/value_objects.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/domain/account/driver_account.dart';
+import '../../../../core/domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../domain/account/driver_account.dart';
 
 class AccountState {
   final DriverAccount? accountData;

@@ -1,5 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'local_storage_service.dart';
 
 class UserPreferencesStorageService {
@@ -21,10 +22,12 @@ class UserPreferencesStorageService {
       _prefs.getString(_currentDutyStatusKey) ?? 'off_duty';
   String? get stationarySince => _prefs.getString(_stationarySinceKey);
   String? get selectedVehicleId => _prefs.getString(_selectedVehicleKey);
+  bool get hasLanguage => _prefs.getString(_languageKey) != null;
 
   // Setters
   Future<void> setLanguage(String value) =>
       _prefs.setString(_languageKey, value);
+  Future<void> clearLanguage() => _prefs.remove(_languageKey);
   Future<void> setTheme(String value) => _prefs.setString(_themeKey, value);
   Future<void> setCurrentDutyStatus(String value) =>
       _prefs.setString(_currentDutyStatusKey, value);
@@ -34,6 +37,9 @@ class UserPreferencesStorageService {
   Future<void> saveSelectedVehicleId(String id) =>
       _prefs.setString(_selectedVehicleKey, id);
   Future<void> clearSelectedVehicle() => _prefs.remove(_selectedVehicleKey);
+
+  String? get password => _prefs.getString('password');
+  Future<void> setPassword(String value) => _prefs.setString('password', value);
 }
 
 final userPreferencesStorageProvider =

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/mappers/status_dashboard_mapper.dart';
-import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
-import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/core/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 
 void main() {
   group('StatusDashboardMapper.fromDashboardJson', () {

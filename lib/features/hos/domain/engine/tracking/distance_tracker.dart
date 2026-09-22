@@ -1,8 +1,7 @@
 
-import '../../../../../core/utils/distance_calculator.dart';
-import '../../../../../core/time/trusted_time_provider.dart';
-
 import '../../../../../core/domain/entities/location_point.dart';
+import '../../../../../core/time/trusted_time_provider.dart';
+import '../../../../../core/utils/distance_calculator.dart';
 
 /// متتبع المسافات
 class DistanceTracker {

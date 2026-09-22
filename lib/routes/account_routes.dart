@@ -1,10 +1,11 @@
 import 'package:go_router/go_router.dart';
-import '../routes.dart';
-import '../features/account/presentation/pages/account_page.dart';
-import '../features/account/presentation/pages/rules_page.dart';
-import '../features/account/presentation/pages/info_packet_page.dart';
-import '../features/account/presentation/pages/user_manual_page.dart';
+
 import '../features/about/presentation/pages/about_page.dart';
+import '../features/account/presentation/pages/account_page.dart';
+import '../features/account/presentation/pages/info_packet_page.dart';
+import '../features/account/presentation/pages/rules_page.dart';
+import '../features/account/presentation/pages/user_manual_page.dart';
+import '../routes.dart';
 
 /// مسارات الحساب والوثائق وحول التطبيق (SRS §3, §6, §13, §17)
 class AccountRoutes {

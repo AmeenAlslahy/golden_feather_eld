@@ -1,15 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
-import '../constants/app_constants.dart';
-import 'dart:convert';
-import '../utils/logger.dart';
-import '../config/hos_configuration.dart';
 
-import 'tracking_config_storage_service.dart';
+import '../config/hos_configuration.dart';
 import '../config/server_config_provider.dart';
+import '../constants/app_constants.dart';
+import '../utils/logger.dart';
+import 'tracking_config_storage_service.dart';
 import 'user_preferences_storage_service.dart';
 
 /// خدمة التخزين المحلي - تعمل كواجهة (Facade) للخدمات الجديدة
@@ -91,7 +92,7 @@ class LocalStorageService implements ServerConfigProvider {
     // وضع الإعدادات الافتراضية إذا لم تكن موجودة
     const String defaultServer = 'https://snsoft.cloud';
     final currentUrl = _prefs.getString('url');
-        
+
     if (currentUrl == null || currentUrl.isEmpty) {
       await _prefs.setString('url', defaultServer);
       await _prefs.setString('backend_type', 'eld');
@@ -141,6 +142,8 @@ class LocalStorageService implements ServerConfigProvider {
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
   String? get stationarySince => _preferencesStorage.stationarySince;
   String? get selectedVehicleId => _preferencesStorage.selectedVehicleId;
+  String? get password => _preferencesStorage.password;
+  bool get hasLanguage => _preferencesStorage.hasLanguage;
 
   // ========== Setters ==========
 
@@ -163,18 +166,20 @@ class LocalStorageService implements ServerConfigProvider {
 
   Future<void> setLanguage(String value) =>
       _preferencesStorage.setLanguage(value);
+  Future<void> clearLanguage() => _preferencesStorage.clearLanguage();
   Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);
   Future<void> setCurrentDutyStatus(String value) =>
       _preferencesStorage.setCurrentDutyStatus(value);
   Future<void> setStationarySince(String value) =>
       _preferencesStorage.setStationarySince(value);
+  Future<void> setPassword(String value) => _preferencesStorage.setPassword(value);
 
   // ========== إعدادات التتبع ==========
 
   Future<void> applyFromUri(Uri uri) => _trackingStorage.applyFromUri(uri);
 
   // ========== تخزين HOS Configuration ==========
-  
+
   HosConfiguration get hosConfiguration {
     final jsonStr = _prefs.getString('hos_configuration');
     if (jsonStr != null && jsonStr.isNotEmpty) {
@@ -194,7 +199,6 @@ class LocalStorageService implements ServerConfigProvider {
 
   // ========== تخزين المركبة ==========
 
-
   Future<void> saveSelectedVehicleId(String id) =>
       _preferencesStorage.saveSelectedVehicleId(id);
   Future<void> clearSelectedVehicle() =>
@@ -210,4 +214,16 @@ class LocalStorageService implements ServerConfigProvider {
 /// مزود خدمة التخزين المحلي
 final localStorageProvider = Provider<LocalStorageService>((ref) {
   return LocalStorageService();
+});
+
+/// STORAGE-HIGH-01 fix: Canonical SharedPreferences provider.
+///
+/// All code should use this provider instead of calling
+/// `SharedPreferences.getInstance()` directly.
+/// This ensures a single storage access path.
+final sharedPreferencesProvider =
+    FutureProvider<SharedPreferencesWithCache>((ref) async {
+  return SharedPreferencesWithCache.create(
+    cacheOptions: const SharedPreferencesWithCacheOptions(),
+  );
 });

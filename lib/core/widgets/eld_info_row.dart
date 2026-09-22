@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_spacing.dart';
 // import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'app_gap.dart';
 
 /// صف معلومات - عنوان رمادي على اليسار، قيمة سوداء على اليمين
 class EldInfoRow extends StatelessWidget {
@@ -24,7 +27,7 @@ class EldInfoRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.smMd, horizontal: AppSpacing.md),
         child: Row(
           children: [
             // العنوان - رمادي
@@ -36,7 +39,7 @@ class EldInfoRow extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(width: 16),
+            AppGap.hMd,
             // القيمة - أسود Bold
             Expanded(
               child: Text(
@@ -50,7 +53,7 @@ class EldInfoRow extends StatelessWidget {
               ),
             ),
             if (trailing != null) ...[
-              const SizedBox(width: 8),
+              AppGap.hSm,
               trailing!,
             ],
           ],
