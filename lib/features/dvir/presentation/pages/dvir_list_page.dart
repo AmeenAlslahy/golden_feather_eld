@@ -14,11 +14,24 @@ import '../providers/dvir_provider.dart';
 import 'dvir_form_page.dart';
 
 /// شاشة قائمة تقارير DVIR
-class DvirListPage extends ConsumerWidget {
+class DvirListPage extends ConsumerStatefulWidget {
   const DvirListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DvirListPage> createState() => _DvirListPageState();
+}
+
+class _DvirListPageState extends ConsumerState<DvirListPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dvirProvider.notifier).loadDvirs();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final dvirState = ref.watch(dvirProvider);
 
     return Scaffold(
@@ -50,40 +63,53 @@ class DvirListPage extends ConsumerWidget {
       ),
       body: dvirState.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : dvirState.reports.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.assignment,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.outline),
-                      AppGap.md,
-                      Text(context.loc.noDvirReports),
-                      AppGap.lg,
-                      FilledButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const DvirFormPage(),
+          : RefreshIndicator(
+              onRefresh: () => ref.read(dvirProvider.notifier).loadDvirs(),
+              child: dvirState.reports.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.assignment,
+                                    size: 64,
+                                    color:
+                                        Theme.of(context).colorScheme.outline),
+                                AppGap.md,
+                                Text(context.loc.noDvirReports),
+                                AppGap.lg,
+                                FilledButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const DvirFormPage(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.add),
+                                  label: Text(context.loc.createNewReport),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                        label: Text(context.loc.createNewReport),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  itemCount: dvirState.reports.length,
-                  itemBuilder: (context, index) {
-                    final report = dvirState.reports[index];
-                    return _DvirCard(report: report);
-                  },
-                ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      itemCount: dvirState.reports.length,
+                      itemBuilder: (context, index) {
+                        final report = dvirState.reports[index];
+                        return _DvirCard(report: report);
+                      },
+                    ),
+            ),
     );
   }
 }

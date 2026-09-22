@@ -5,32 +5,57 @@ import '../../../../backend/contracts/dvir_backend.dart';
 import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../auth/data/datasources/auth_local_data_source.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
   final NetworkInfo networkInfo;
+  final AuthLocalDataSource authLocalDataSource;
 
   DvirRepositoryImpl({
     required this.dvirBackend,
     required this.networkInfo,
+    required this.authLocalDataSource,
   });
 
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
       String vehicleId) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    final result = await dvirBackend.list(uniqueId: vehicleId);
+
+    final session = await authLocalDataSource.getSession();
+    DriverId? driverIdObj;
+    if (session != null) {
+      final dId = int.tryParse(session.user.id);
+      if (dId != null && dId > 0) {
+        driverIdObj = DriverId(dId);
+      }
+    }
+
+    final cleanVehicleId =
+        (vehicleId.isNotEmpty && vehicleId != 'unknown_vehicle')
+            ? vehicleId
+            : null;
+
+    final result = await dvirBackend.list(
+      driverId: driverIdObj,
+      uniqueId: cleanVehicleId,
+    );
     
     return result.fold(
       (error) => Left(ServerFailure(message: error.code)),
       (rawJson) {
-        final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
-        final reports = rawReports.map((json) {
-          final dto = DvirDto.fromJson(json as Map<String, dynamic>);
-          return _mapDtoToEntity(dto);
-        }).toList();
+        final rawReports = (rawJson['data'] as List<dynamic>?) ??
+            (rawJson['reports'] as List<dynamic>?) ??
+            [];
+        final reports = rawReports
+            .whereType<Map<String, dynamic>>()
+            .map((json) {
+              final dto = DvirDto.fromJson(json);
+              return _mapDtoToEntity(dto);
+            }).toList();
         return Right(reports);
       }
     );
@@ -62,8 +87,14 @@ class DvirRepositoryImpl implements DvirRepository {
             ))
         .toList();
 
+    final session = await authLocalDataSource.getSession();
+    int driverId = 0;
+    if (session != null) {
+      driverId = int.tryParse(session.user.id) ?? 0;
+    }
+
     final dto = CreateDvirRequestDto(
-      driverId: 0, // Should be passed correctly in a real scenario from auth
+      driverId: driverId,
       uniqueId: report.vehicleId,
       vehicleName: report.vehicleId,
       inspectionType: report.type.name,

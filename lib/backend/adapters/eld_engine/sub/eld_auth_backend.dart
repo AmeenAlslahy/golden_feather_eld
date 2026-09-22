@@ -26,13 +26,14 @@ class EldAuthBackend implements AuthBackend {
       final baseUrl = serverUrl.endsWith('/')
           ? serverUrl.substring(0, serverUrl.length - 1)
           : serverUrl;
-      final isEld = backendType == 'eld';
 
+      // The Traccar /api/session endpoint requires application/x-www-form-urlencoded
+      // regardless of the backend type label.
       final response = await _apiClient.dio.post(
         '$baseUrl/api${EldEndpoints.session}',
         data: {'email': identifier, 'password': password},
         options: Options(
-          contentType: isEld ? 'application/json' : 'application/x-www-form-urlencoded',
+          contentType: 'application/x-www-form-urlencoded',
           responseType: ResponseType.plain,
           followRedirects: false,
           validateStatus: (status) => status != null && status < 500,
@@ -59,24 +60,18 @@ class EldAuthBackend implements AuthBackend {
       parsedData ??= {};
 
       String? credential;
-      if (isEld) {
-        if (parsedData is Map<String, dynamic>) {
-          final data = parsedData['data'] ?? parsedData;
-          credential = data['token'] ?? data['access_token'] ?? data['session_token'];
-        }
-      } else {
-        final setCookieHeaders = response.headers['set-cookie'] ?? [];
-        for (var cookie in setCookieHeaders) {
-          final parts = cookie.split(';');
-          for (var part in parts) {
-            part = part.trim();
-            if (part.startsWith('JSESSIONID=')) {
-              credential = part.substring('JSESSIONID='.length);
-              break;
-            }
+      // Traccar returns session credential as a JSESSIONID cookie
+      final setCookieHeaders = response.headers['set-cookie'] ?? [];
+      for (var cookie in setCookieHeaders) {
+        final parts = cookie.split(';');
+        for (var part in parts) {
+          part = part.trim();
+          if (part.startsWith('JSESSIONID=')) {
+            credential = part.substring('JSESSIONID='.length);
+            break;
           }
-          if (credential != null) break;
         }
+        if (credential != null) break;
       }
 
       if (credential == null || credential.isEmpty) {
@@ -110,12 +105,11 @@ class EldAuthBackend implements AuthBackend {
     required String backendType,
   }) async {
     try {
+      // Traccar /api/session uses Cookie-based auth (JSESSIONID)
       final response = await _apiClient.dio.get(
         '$serverOrigin/api${EldEndpoints.session}',
         options: Options(
-          headers: backendType == 'eld'
-              ? {'Authorization': 'Bearer $sessionCredential'}
-              : {'Cookie': 'JSESSIONID=$sessionCredential'},
+          headers: {'Cookie': 'JSESSIONID=$sessionCredential'},
           followRedirects: false,
           validateStatus: (status) => status != null && status < 500,
         ),
@@ -154,16 +148,12 @@ class EldAuthBackend implements AuthBackend {
     required String backendType,
   }) async {
     try {
-      final isEld = backendType == 'eld';
+      // Traccar /api/session uses Cookie-based auth (JSESSIONID)
       final options = Options(
-        headers: isEld
-            ? {'Authorization': 'Bearer $sessionCredential'}
-            : {'Cookie': 'JSESSIONID=$sessionCredential'},
+        headers: {'Cookie': 'JSESSIONID=$sessionCredential'},
         followRedirects: false,
         validateStatus: (status) => true,
       );
-      
-      // Defaulting to DELETE for logout
       await _apiClient.dio.delete('$serverOrigin/api${EldEndpoints.session}', options: options);
       return ok(null);
     } catch (e) {

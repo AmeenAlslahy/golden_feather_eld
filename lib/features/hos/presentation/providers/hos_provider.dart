@@ -124,6 +124,12 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     state = _engine.currentStatus;
   }
 
+  void reset() {
+    _tracker.reset();
+    _engine.reset();
+    refresh();
+  }
+
   @override
   void dispose() {
     _refreshTimer?.cancel();

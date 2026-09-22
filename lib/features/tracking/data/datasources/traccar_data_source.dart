@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import '../../../../core/config/app_environment.dart';
+import '../../../../core/domain/shared/speed.dart';
+// ignore: directives_ordering
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/connection_status.dart';
 import '../../domain/entities/tracking_event.dart';
@@ -84,7 +86,7 @@ class TraccarDataSource implements TrackingDataSource {
             : 'native_device',
         latitude: nativeEvent.latitude,
         longitude: nativeEvent.longitude,
-        speed: nativeEvent.speedMetersPerSecond,
+        speed: Speed.fromMetersPerSecond(nativeEvent.speedMetersPerSecond),
         bearing: nativeEvent.bearingDegrees,
         altitude: nativeEvent.altitudeMeters,
         accuracy: nativeEvent.accuracyMeters,

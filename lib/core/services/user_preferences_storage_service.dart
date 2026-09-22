@@ -14,6 +14,7 @@ class UserPreferencesStorageService {
   static const String _selectedVehicleKey = 'selected_vehicle';
   static const String _currentDutyStatusKey = 'current_duty_status';
   static const String _stationarySinceKey = 'stationary_since';
+  static const String _driverIdKey = 'driver_id';
 
   // Getters
   String get language => _prefs.getString(_languageKey) ?? 'ar';
@@ -22,6 +23,7 @@ class UserPreferencesStorageService {
       _prefs.getString(_currentDutyStatusKey) ?? 'off_duty';
   String? get stationarySince => _prefs.getString(_stationarySinceKey);
   String? get selectedVehicleId => _prefs.getString(_selectedVehicleKey);
+  String? get driverId => _prefs.getString(_driverIdKey);
   bool get hasLanguage => _prefs.getString(_languageKey) != null;
 
   // Setters
@@ -33,6 +35,8 @@ class UserPreferencesStorageService {
       _prefs.setString(_currentDutyStatusKey, value);
   Future<void> setStationarySince(String value) =>
       _prefs.setString(_stationarySinceKey, value);
+  Future<void> setDriverId(String value) =>
+      _prefs.setString(_driverIdKey, value);
 
   Future<void> saveSelectedVehicleId(String id) =>
       _prefs.setString(_selectedVehicleKey, id);

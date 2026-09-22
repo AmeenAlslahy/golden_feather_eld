@@ -20,7 +20,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
     if (networkInfo.isConnected) {
       try {
         final result = await driverSessionBackend.getAvailableDrivers();
-        return result.fold(
+        return await result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (rawDrivers) {
             final drivers = rawDrivers

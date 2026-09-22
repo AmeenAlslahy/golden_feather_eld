@@ -131,7 +131,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         .map((method) => RadioListTile<TransferMethod>(
                               title: Text(method.englishName),
                               value: method,
+                              // ignore: deprecated_member_use
                               groupValue: _selectedMethod,
+                              // ignore: deprecated_member_use
                               onChanged: (value) {
                                 setState(() => _selectedMethod = value!);
                               },

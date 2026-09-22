@@ -63,5 +63,6 @@ abstract interface class InspectionBackend {
   // --- Legacy methods for P5.5 ---
   Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId);
   Future<Result<void>> exportLegacyInspectionData(
+      // ignore: avoid_positional_boolean_parameters
       int driverId, String method, String? email, bool isErods);
 }

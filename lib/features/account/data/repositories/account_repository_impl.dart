@@ -1,12 +1,13 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
-import '../models/account_user_model.dart';
 
 import '../../../../backend/contracts/account_backend.dart';
+// ignore: directives_ordering
 import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/repositories/account_repository.dart';
+import '../models/account_user_model.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AccountBackend accountBackend;

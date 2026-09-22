@@ -24,8 +24,19 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
     if (data == null) return [];
     try {
       final List<dynamic> list = jsonDecode(data);
-      return list.map((e) => SyncItemModel.fromJson(e)).toList();
+      final validItems = <SyncItem>[];
+      for (final e in list) {
+        try {
+          validItems.add(SyncItemModel.fromJson(e));
+        } catch (_) {
+          // Skip invalid individual items but keep the rest
+        }
+      }
+      return validItems;
     } catch (e) {
+      // If the entire JSON is fundamentally corrupted, backup the data so it's not permanently lost
+      await prefs.setString('${_queueKey}_corrupted_${DateTime.now().millisecondsSinceEpoch}', data);
+      await prefs.remove(_queueKey);
       return [];
     }
   }

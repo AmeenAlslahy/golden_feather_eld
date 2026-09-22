@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/shared/speed.dart';
 
 import '../../../../core/domain/entities/location_point.dart';
 import '../../../../core/utils/logger.dart';
@@ -36,7 +37,8 @@ class TrackingEventProcessor {
   Stream<ConnectionStatus> get connectionStatusStream =>
       _connectionStatusController.stream;
 
-  void startProcessing() {
+  Future<void> startProcessing() async {
+    await _trackingDataSource.start();
     _subscription = _trackingDataSource.events.listen(_processTrackingEvent);
     _connectionSubscription =
         _trackingDataSource.connectionStatusStream.listen((status) {
@@ -57,7 +59,7 @@ class TrackingEventProcessor {
   EldEvent _mapToEldEvent(TrackingEvent event) {
     return EldEvent(
       timestamp: event.timestampUtc,
-      speedMph: event.speed,
+      speed: event.speed,
       speedDurationSeconds: 0,
       odometerMiles: event.odometer,
       engineHours: event.engineHours,
@@ -112,7 +114,7 @@ class MockTrackingEventProcessor extends TrackingEventProcessor {
       _mockConnectionController.stream;
 
   @override
-  void startProcessing() {
+  Future<void> startProcessing() async {
     AppLogger.warning(
         '⚠️ [MockTrackingEventProcessor] Running in MOCK mode — development only!');
     _mockConnectionController.add(ConnectionStatus.connected);
@@ -130,7 +132,7 @@ class MockTrackingEventProcessor extends TrackingEventProcessor {
 
       _mockEldController.add(EldEvent(
         timestamp: now,
-        speedMph: mockSpeed,
+        speed: Speed.fromMilesPerHour(mockSpeed),
         speedDurationSeconds: 5,
         odometerMiles: null,
         engineHours: null,

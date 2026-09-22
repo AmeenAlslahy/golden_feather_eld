@@ -53,7 +53,6 @@ class HomePage extends ConsumerWidget {
         '';
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
-     print(driverText);
     return Stack(
       children: [
         Scaffold(

@@ -43,18 +43,32 @@ class TrackingConfigStorageService {
   // Setters
   Future<void> setDeviceId(String value) =>
       _prefs.setString(_deviceIdKey, value);
-  Future<void> setServerUrl(String value) =>
-      _prefs.setString(_serverUrlKey, value);
+  Future<void> setServerUrl(String value) {
+    // Normalize: remove trailing slashes and /api so the stored value is
+    // always the base origin. The backend adapters append /api themselves.
+    var normalized = value.trim();
+    while (normalized.endsWith('/')) {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+    while (normalized.endsWith('/api')) {
+      normalized = normalized.substring(0, normalized.length - 4);
+    }
+    return _prefs.setString(_serverUrlKey, normalized);
+  }
   Future<void> setAccuracy(String value) =>
       _prefs.setString(_accuracyKey, value);
   Future<void> setDistance(int value) => _prefs.setInt(_distanceKey, value);
   Future<void> setInterval(int value) => _prefs.setInt(_intervalKey, value);
   Future<void> setAngle(int value) => _prefs.setInt(_angleKey, value);
   Future<void> setHeartbeat(int value) => _prefs.setInt(_heartbeatKey, value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setBuffer(bool value) => _prefs.setBool(_bufferKey, value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setWakelock(bool value) => _prefs.setBool(_wakelockKey, value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setStopDetection(bool value) =>
       _prefs.setBool(_stopDetectionKey, value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setPreferPlatformProviders(bool value) =>
       _prefs.setBool(_preferPlatformProvidersKey, value);
   Future<void> setBackendType(String value) =>

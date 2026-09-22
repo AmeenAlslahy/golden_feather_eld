@@ -31,7 +31,7 @@ class UserModel extends User {
 
   factory UserModel.fromJson(Map<String, dynamic> json,
       {String? defaultEmail}) {
-    // Traccar API returns id as int, name, email, administrator boolean
+    // Use the real driver ID returned by the Traccar server (handles both int from API and String from storage)
     final idValue = json['id']?.toString() ?? '';
     final nameValue =
         json['name']?.toString() ?? json['fullName']?.toString() ?? '';
@@ -43,12 +43,16 @@ class UserModel extends User {
     if (json['administrator'] == true) {
       userRole = UserRole.admin;
     } else if (json['role'] != null) {
-      userRole = UserRole.fromCode(json['role'] as String);
+      userRole = UserRole.fromCode(json['role'].toString());
     }
 
+    final disabled = json['disabled'];
+    final bool isDisabled = disabled is bool
+        ? disabled
+        : (disabled is num ? disabled != 0 : false);
     final isActive = json['disabled'] != null
-        ? !(json['disabled'] as bool)
-        : (json['isActive'] as bool? ?? true);
+        ? !isDisabled
+        : (json['isActive'] is bool ? (json['isActive'] as bool) : true);
 
     return UserModel(
       id: idValue,
@@ -64,22 +68,15 @@ class UserModel extends User {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      attributes: json['attributes'] as Map<String, dynamic>? ?? {},
+      attributes: json['attributes'] is Map
+          ? Map<String, dynamic>.from(json['attributes'] as Map)
+          : const {},
     );
   }
 
   factory UserModel.fromMetadata(Map<String, dynamic> metadata,
       {String? defaultEmail}) {
-    final email =
-        metadata['email'] ?? metadata['name'] ?? defaultEmail ?? 'unknown';
-    return UserModel(
-      id: metadata['id']?.toString() ?? '',
-      fullName: metadata['name'] ?? email,
-      email: email,
-      username: email,
-      role: UserRole.fieldWorker,
-      createdAt: DateTime.now(),
-    );
+    return UserModel.fromJson(metadata, defaultEmail: defaultEmail);
   }
 
   Map<String, dynamic> toJson() {

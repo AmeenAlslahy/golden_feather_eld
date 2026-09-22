@@ -7,11 +7,13 @@ class AuthInterceptor extends Interceptor {
   final AuthLocalDataSource localDataSource;
   final String backendType;
   final void Function()? onUnauthenticated;
+  final List<String> allowedDomains;
 
   AuthInterceptor({
     required this.localDataSource,
     required this.backendType,
     this.onUnauthenticated,
+    this.allowedDomains = const [],
   });
 
   @override
@@ -23,21 +25,21 @@ class AuthInterceptor extends Interceptor {
       return super.onRequest(options, handler);
     }
 
+    // Security: Only send tokens to allowed domains (or allow all if empty for backwards compatibility)
+    if (allowedDomains.isNotEmpty && !allowedDomains.contains(options.uri.host)) {
+      AppLogger.warning('AuthInterceptor blocked token for unauthorized domain: ${options.uri.host}');
+      return super.onRequest(options, handler);
+    }
+
     try {
       final session = await localDataSource.getSession();
 
       if (session != null && session.sessionCredential.isNotEmpty) {
-        if (backendType == 'eld') {
-          // Add Bearer token for ELD server
-          options.headers['Authorization'] =
-              'Bearer ${session.sessionCredential}';
-        } else {
-          // Add JSESSIONID cookie for Traccar
-          final cookie = 'JSESSIONID=${session.sessionCredential}';
-          final existingCookie = options.headers['Cookie'];
-          options.headers['Cookie'] =
-              existingCookie != null ? '$existingCookie; $cookie' : cookie;
-        }
+        // Traccar uses JSESSIONID cookie for all authenticated requests
+        final cookie = 'JSESSIONID=${session.sessionCredential}';
+        final existingCookie = options.headers['Cookie'];
+        options.headers['Cookie'] =
+            existingCookie != null ? '$existingCookie; $cookie' : cookie;
       }
     } catch (e) {
       AppLogger.error('AuthInterceptor failed to read session: $e');

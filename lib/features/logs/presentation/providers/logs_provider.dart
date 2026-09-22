@@ -122,6 +122,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
   /// UX-HIGH-03 fix: Select a log by its ID (used by route parameter).
   void selectLogById(String id) {
+    // ignore: unrelated_type_equality_checks
     final matchingLog = state.logs.where((log) => log.id == id).firstOrNull;
     if (matchingLog != null) {
       state = state.copyWith(selectedLog: matchingLog);

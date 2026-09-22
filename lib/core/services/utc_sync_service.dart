@@ -1,22 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ntp/ntp.dart';
+import '../time/trusted_time_provider.dart';
 import '../utils/logger.dart';
 
 /// خدمة مزامنة التوقيت مع UTC
 class UtcSyncService {
+  final TrustedTimeProvider timeProvider;
+  
   DateTime? _lastSyncTime;
   Duration? _drift; // انحراف الوقت المحلي
+
+  UtcSyncService({required this.timeProvider});
 
   /// مزامنة الوقت مع UTC
   Future<void> syncWithUtc() async {
     try {
       final now = DateTime.now();
-      final utcNow = now.toUtc();
-
-      // حساب الانحراف
-      _drift = utcNow.difference(now);
+      
+      final int offset = await NTP.getNtpOffset(
+        localTime: now,
+        lookUpAddress: 'time.google.com',
+      );
+      
+      _drift = Duration(milliseconds: offset);
       _lastSyncTime = now;
+      
+      final trueUtc = now.add(_drift!).toUtc();
+      timeProvider.anchor(trueUtc);
 
-      AppLogger.info('🕐 UTC Sync: ${utcNow.toIso8601String()}');
+      AppLogger.info('🕐 UTC Sync via NTP: ${trueUtc.toIso8601String()}');
       AppLogger.info('   Local: ${now.toIso8601String()}');
       AppLogger.info('   Drift: ${_drift?.inSeconds}s');
     } catch (e) {
@@ -60,5 +72,5 @@ class UtcSyncService {
 
 /// مزود خدمة UTC
 final utcSyncServiceProvider = Provider<UtcSyncService>((ref) {
-  return UtcSyncService();
+  return UtcSyncService(timeProvider: ref.watch(trustedTimeProvider));
 });

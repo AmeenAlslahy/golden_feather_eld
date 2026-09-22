@@ -26,7 +26,8 @@ class InfoPacketPage extends ConsumerWidget {
         backgroundColor: AppColors.primaryBlue,
         title: Text(
           loc.infoPacket,
-          style: const TextStyle(
+          style: 
+          const TextStyle(
             fontSize: AppTypography.bodySize,
             fontWeight: AppTypography.bold,
             color: AppColors.surface,

@@ -25,7 +25,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
         },
       );
 
-      return response.match(
+      return await response.match(
         (error) => throw Exception('Authentication failed: ${error.code}'),
         (res) {
           if (res.isSuccess && res.data != null) {
@@ -44,7 +44,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   Future<List<Map<String, dynamic>>> getDevices() async {
     try {
       final response = await _apiClient.get<dynamic>('/devices');
-      return response.match(
+      return await response.match(
         (error) => throw Exception('Error getting devices: ${error.code}'),
         (res) {
           if (res.isSuccess && res.data != null) {
@@ -66,7 +66,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
         '/positions',
         queryParameters: {'deviceId': deviceId},
       );
-      return response.match(
+      return await response.match(
         (error) => throw Exception('Error getting positions: ${error.code}'),
         (res) {
           if (res.isSuccess && res.data != null) {
@@ -93,7 +93,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
         '/events',
         queryParameters: queryParams,
       );
-      return response.match(
+      return await response.match(
         (error) => throw Exception('Error getting events: ${error.code}'),
         (res) {
           if (res.isSuccess && res.data != null) {

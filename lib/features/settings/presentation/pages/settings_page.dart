@@ -550,6 +550,7 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Widget _buildSwitchRow(BuildContext context, WidgetRef ref, String label,
+      // ignore: avoid_positional_boolean_parameters
       bool value, Function(bool) onChanged) {
     return SwitchListTile(
       title: Text(label, style: AppTextStyles(context).body),

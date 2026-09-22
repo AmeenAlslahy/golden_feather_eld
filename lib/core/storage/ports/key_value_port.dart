@@ -12,6 +12,7 @@ abstract interface class KeyValuePort {
   Future<void> setInt(String key, int value);
 
   bool? getBool(String key);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setBool(String key, bool value);
 
   double? getDouble(String key);

@@ -71,7 +71,7 @@ class AccountNotifier extends StateNotifier<AccountState> {
         odometerUnit: odometerUnit,
       );
 
-      return result.fold(
+      return await result.fold(
         (failure) {
           state = state.copyWith(isLoading: false, error: failure.l10nKey);
           return false;

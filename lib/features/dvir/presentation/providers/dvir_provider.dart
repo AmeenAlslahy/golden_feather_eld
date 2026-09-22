@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: directives_ordering
+import 'package:fpdart/fpdart.dart';
 
 // ARCH-HIGH-01 fix: Import from composition root
 import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
+import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 
@@ -41,28 +45,34 @@ class DvirState {
 final dvirProvider = StateNotifierProvider<DvirNotifier, DvirState>((ref) {
   final repository = ref.watch(dvirRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
-  return DvirNotifier(repository: repository, storageService: storageService);
+  final vehicleState = ref.watch(vehicleProvider);
+  final vehicleId = vehicleState.selectedVehicle?.id ?? storageService.deviceId;
+  return DvirNotifier(
+    repository: repository,
+    storageService: storageService,
+    vehicleId: vehicleId,
+  );
 });
 
 class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
-  final TrackingConfigStorageService _storageService;
+  final String _vehicleId;
 
   DvirNotifier({
     required DvirRepository repository,
-    required TrackingConfigStorageService storageService,
+    TrackingConfigStorageService? storageService,
+    String? vehicleId,
   })  : _repository = repository,
-        _storageService = storageService,
+        _vehicleId = vehicleId ?? storageService?.deviceId ?? '',
         super(const DvirState()) {
     loadDvirs();
   }
 
-  Future<void> loadDvirs() async {
+  Future<void> loadDvirs({String? vehicleId}) async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final vehicleId = _storageService.deviceId;
-    final result = await _repository
-        .getDvirReports(vehicleId.isEmpty ? 'unknown_vehicle' : vehicleId);
+    final targetVehicleId = vehicleId ?? _vehicleId;
+    final result = await _repository.getDvirReports(targetVehicleId);
 
     if (mounted) {
       result.fold(
@@ -80,7 +90,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 
   /// إنشاء تقرير جديد وإرساله
-  Future<void> createReport(DvirReport report) async {
+  Future<Either<Failure, bool>> createReport(DvirReport report) async {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _repository.submitDvirReport(report);
 
@@ -95,6 +105,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
         },
       );
     }
+    return result;
   }
 
   /// تصديق إصلاح العيوب من قبل الميكانيكي أو الناقل
@@ -180,10 +191,14 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 
   /// تحديث تقرير موجود (للاستخدام المحلي)
-  void updateReport(DvirReport report) {
+  Future<Either<Failure, bool>> updateReport(DvirReport report) async {
     final updatedReports = state.reports.map((r) {
       return r.id == report.id ? report : r;
     }).toList();
     state = state.copyWith(reports: updatedReports);
+    
+    // Attempt to submit update to backend via submitDvirReport for now (or a specific update endpoint if available)
+    final result = await _repository.submitDvirReport(report);
+    return result;
   }
 }

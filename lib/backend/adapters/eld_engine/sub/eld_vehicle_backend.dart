@@ -2,6 +2,7 @@
 
 import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/vehicle_backend.dart';
 import '../../../http/api_client.dart';
@@ -20,24 +21,24 @@ class EldVehicleBackend implements VehicleBackend {
 
   @override
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async {
-    final response = await _apiClient.get<RawJson>(
-      EldEndpoints.myVehicles,
-      queryParameters: {
-        if (driverId != null) 'driverId': driverId.value,
-      },
-      parser: (data) => data is List ? {'data': data} : (data is Map<String, dynamic> ? data : {}),
+    final response = await _apiClient.get<List<dynamic>>(
+      EldEndpoints.devices,
+      parser: (data) => data is List ? data : [],
     );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+
+    return response.mapValue((res) {
+      final list = res.data ?? <dynamic>[];
+      AppLogger.info('🚗 [EldVehicleBackend] Fetched ${list.length} vehicles from server: $list');
+      return {'data': list};
+    });
   }
 
   @override
   Future<Result<List<dynamic>>> getLegacyVehicles() async {
-    final response = await _apiClient.get<List<dynamic>>(EldEndpoints.devices);
-    return response.map((res) {
-      if (res.isSuccess && res.data != null) {
-        return res.data!;
-      }
-      throw Exception(res.message ?? 'Failed to fetch vehicles');
-    });
+    final response = await _apiClient.get<List<dynamic>>(
+      EldEndpoints.devices,
+      parser: (data) => data is List ? data : [],
+    );
+    return response.mapValue((res) => res.data ?? []);
   }
 }

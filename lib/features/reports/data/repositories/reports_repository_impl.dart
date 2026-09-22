@@ -31,7 +31,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         queryParameters: queryParams,
       );
 
-      return result.fold(
+      return await result.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (apiResponse) => Right(apiResponse.data ?? {}),
       );
@@ -56,7 +56,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         queryParameters: queryParams,
       );
 
-      return result.fold(
+      return await result.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (apiResponse) => Right(apiResponse.data ?? {}),
       );
@@ -82,7 +82,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         data: body,
       );
 
-      return result.fold(
+      return await result.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (apiResponse) {
           final data = apiResponse.data;
@@ -117,7 +117,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         queryParameters: queryParams,
       );
 
-      return result.fold(
+      return await result.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (apiResponse) {
           final data = apiResponse.data;
@@ -149,7 +149,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         queryParameters: queryParams,
       );
 
-      return result.fold(
+      return await result.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (apiResponse) => Right(apiResponse.data ?? []),
       );
@@ -206,7 +206,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         headers: {'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'},
       );
 
-      return downloadResult.fold(
+      return await downloadResult.fold(
         (l) => Left(ServerFailure(message: l.l10nKey)),
         (bytes) async {
           final tempDir = await getTemporaryDirectory();

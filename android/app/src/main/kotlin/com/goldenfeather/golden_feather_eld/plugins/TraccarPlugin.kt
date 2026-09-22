@@ -59,7 +59,7 @@ class TraccarPlugin(
     private val handler = Handler(Looper.getMainLooper())
     
     private val dbHelper by lazy { LocationDatabaseHelper(context) }
-    private val networkUploader by lazy { NetworkUploader(context) }
+    private val networkUploader by lazy { NetworkUploader(dbHelper) }
     private var connectivityManager: ConnectivityManager? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 

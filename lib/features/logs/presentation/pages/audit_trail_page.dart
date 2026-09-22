@@ -56,6 +56,7 @@ class _AuditTrailPageState extends ConsumerState<AuditTrailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ignore: dead_null_aware_expression
       appBar: EldAppBar(title: context.loc.auditTrail ?? 'Audit Trail'),
       body: _buildBody(),
     );

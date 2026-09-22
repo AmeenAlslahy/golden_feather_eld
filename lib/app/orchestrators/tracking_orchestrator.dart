@@ -26,9 +26,12 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
       ref.read(trackingRepositoryProvider).getCurrentConfig().then((config) {
         ref.read(trackingRepositoryProvider).updateConfig(config);
       });
+      // Load vehicles immediately on successful login
+      ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true);
     } else if (next.status == AuthStatus.unauthenticated &&
         previous?.status == AuthStatus.authenticated) {
       notifier.stopTracking(force: true);
+      ref.read(hosStatusProvider.notifier).reset();
     }
   });
 

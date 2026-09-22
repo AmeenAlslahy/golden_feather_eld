@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: duplicate_import
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/shared/speed.dart';
 
 import '../../core/network/traccar/traccar_api_client_impl.dart';
 import '../../core/network/traccar/traccar_websocket_client_impl.dart';
@@ -57,7 +59,7 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
 
       _eventsController.add(EldEvent(
         timestamp: now,
-        speedMph: _mockSpeed,
+        speed: Speed.fromMilesPerHour(_mockSpeed),
         speedDurationSeconds: 5,
         odometerMiles: _mockOdometer,
         engineHours: _mockEngineHours,
@@ -81,7 +83,7 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
     final now = DateTime.now();
     _eventsController.add(EldEvent(
       timestamp: now,
-      speedMph: _mockSpeed,
+      speed: Speed.fromMilesPerHour(_mockSpeed),
       speedDurationSeconds: 0,
       odometerMiles: _mockOdometer,
       engineHours: _mockEngineHours,
@@ -113,7 +115,7 @@ class ProcessorLiveTrackingDataSource implements LiveTrackingDataSource {
 
   @override
   Future<bool> start() async {
-    processor.startProcessing();
+    await processor.startProcessing();
     return true;
   }
 

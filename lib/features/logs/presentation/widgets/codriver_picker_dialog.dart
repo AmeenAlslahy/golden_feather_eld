@@ -61,7 +61,9 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
                             ),
                           ),
                           value: driver.id,
+                          // ignore: deprecated_member_use
                           groupValue: _selectedId,
+                          // ignore: deprecated_member_use
                           onChanged: (value) {
                             setState(() => _selectedId = value);
                           },

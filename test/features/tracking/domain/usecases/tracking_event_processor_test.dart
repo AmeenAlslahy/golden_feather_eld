@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/shared/speed.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/tracking_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/tracking_event.dart';
@@ -39,14 +40,14 @@ void main() {
       final mockDataSource = MockTrackingDataSource();
       final processor = TrackingEventProcessor(trackingDataSource: mockDataSource);
 
-      processor.startProcessing();
+      await processor.startProcessing();
 
       // Expect an EldEvent mapped from TrackingEvent without fabrication
       final expectFuture = expectLater(
         processor.eldEventsStream,
         emits(
           isA<EldEvent>()
-              .having((e) => e.speedMph, 'speed', 60.0)
+              .having((e) => e.speed.inMilesPerHour, 'speed', closeTo(60.0, 0.01))
               .having((e) => e.odometerMiles, 'odometerMiles', isNull)
               .having((e) => e.engineHours, 'engineHours', isNull),
         ),
@@ -63,7 +64,7 @@ void main() {
           altitude: 0.0,
           bearing: 0.0,
           accuracy: 0.0,
-          speed: 60.0, // MPH
+          speed: Speed.fromMilesPerHour(60.0),
           timestampUtc: now,
           // Explicitly leaving odometer and engineHours as null
         ),

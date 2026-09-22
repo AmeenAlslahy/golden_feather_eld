@@ -1,16 +1,18 @@
 
 
+import '../../../../core/domain/shared/speed.dart';
+
 // ==========================================
 // 1. Duty Status & Tracking Models
 // ==========================================
 
-/// ط­ط§ظ„ط§طھ ط§ظ„ط®ط¯ظ…ط© ط§ظ„ظ…ط¹طھظ…ط¯ط© ظ…ظ† FMCSA
+/// حالات الخدمة المعتمدة من FMCSA
 enum DutyStatus {
-  offDuty('Off Duty', 'ط®ط§ط±ط¬ ط§ظ„ط®ط¯ظ…ط©'),
-  sleeperBerth('Sleeper Berth', 'ط§ظ„ظ†ظˆظ…'),
-  onDutyNotDriving('On Duty', 'ط¹ظ„ظ‰ ط£ظ‡ط¨ط© ط§ظ„ط¹ظ…ظ„'),
-  driving('Driving', 'ظ‚ظٹط§ط¯ط©'),
-  personalUse('Personal Use', 'ط§ط³طھط®ط¯ط§ظ… ط´ط®طµظٹ');
+  offDuty('Off Duty', 'خارج الخدمة'),
+  sleeperBerth('Sleeper Berth', 'النوم'),
+  onDutyNotDriving('On Duty', 'على أهبة العمل'),
+  driving('Driving', 'قيادة'),
+  personalUse('Personal Use', 'استخدام شخصي');
 
   final String englishName;
   final String arabicName;
@@ -49,9 +51,9 @@ enum DutyStatus {
   }
 }
 
-/// ط­ط¯ط« ظ…ظ† ط¬ظ‡ط§ط² ELD
+/// حدث من جهاز ELD
 class EldEvent {
-  final double speedMph;
+  final Speed speed;
   final int speedDurationSeconds;
 
   /// Cumulative odometer in miles.
@@ -70,7 +72,7 @@ class EldEvent {
   final int engineRpm;
 
   const EldEvent({
-    required this.speedMph,
+    required this.speed,
     this.speedDurationSeconds = 0,
     this.odometerMiles,
     this.engineHours,
@@ -80,7 +82,7 @@ class EldEvent {
 
   factory EldEvent.fromMap(Map<dynamic, dynamic> map) {
     return EldEvent(
-      speedMph: (map['speedMph'] as num?)?.toDouble() ?? 0.0,
+      speed: Speed.fromMilesPerHour((map['speedMph'] as num?)?.toDouble() ?? 0.0),
       engineRpm: map['engineRpm'] as int? ?? 0,
       odometerMiles: (map['odometerMiles'] as num?)?.toDouble(),
       engineHours: (map['engineHours'] as num?)?.toDouble(),

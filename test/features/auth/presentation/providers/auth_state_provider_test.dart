@@ -5,6 +5,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
@@ -12,11 +13,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+class MockLocalStorageService extends Mock implements LocalStorageService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   
   final mockAuthRepo = MockAuthRepository();
+  final mockLocalStorage = MockLocalStorageService();
 
   setUpAll(() async {
     FlutterSecureStorage.setMockInitialValues({});
@@ -28,9 +31,12 @@ void main() {
       await AppEnvironmentConfig.init(testEnv: {
         'TRACCAR_ENVIRONMENT': 'mock', 
       });
+      when(() => mockLocalStorage.setDriverId(any())).thenAnswer((_) async {});
+
       container = ProviderContainer(
         overrides: [
           traccarAuthRepositoryProvider.overrideWithValue(mockAuthRepo),
+          localStorageProvider.overrideWithValue(mockLocalStorage),
         ],
       );
 

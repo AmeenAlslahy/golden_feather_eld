@@ -29,14 +29,22 @@ class VehicleRepositoryImpl implements VehicleRepository {
 
     try {
       final result = await _vehicleBackend.getMyVehicles();
-      return await Future.value(result.fold(
+      final Either<Failure, List<Vehicle>> response = result.fold(
         (error) => Left(ServerFailure(message: 'فشل: ${error.code}')),
         (data) {
-          final vehiclesList = data['data'] as List<dynamic>? ?? [];
-          final vehicles = vehiclesList.map((json) => VehicleModel.fromJson(json as Map<String, dynamic>)).toList();
-          return Right(vehicles.cast<Vehicle>().toList());
-        }
-      ));
+          dynamic rawList = data['data'] ?? data['vehicles'];
+          if (rawList is! List && data is List) {
+            rawList = data;
+          }
+          final vehiclesList = rawList is List ? rawList : const [];
+          final vehicles = vehiclesList
+              .whereType<Map>()
+              .map((item) => VehicleModel.fromJson(Map<String, dynamic>.from(item)))
+              .toList();
+          return Right(vehicles);
+        },
+      );
+      return response;
     } catch (e) {
       return Left(ServerFailure(message: 'فشل جلب قائمة الشاحنات: $e'));
     }

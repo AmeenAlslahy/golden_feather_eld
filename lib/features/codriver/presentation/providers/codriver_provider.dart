@@ -106,7 +106,7 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
         coDriverId: DriverId(driverId),
         reason: 'Driver requested switch',
       );
-      return result.fold(
+      return await result.fold(
         (error) {
           state = state.copyWith(isSwitching: false, error: error.code);
           return false;

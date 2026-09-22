@@ -66,8 +66,16 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     if (data == null) return [];
     try {
       final decoded = jsonDecode(data) as List;
-      return decoded.map((e) => e as Map<String, dynamic>).toList();
+      final validItems = <Map<String, dynamic>>[];
+      for (final e in decoded) {
+        if (e is Map<String, dynamic>) {
+          validItems.add(e);
+        }
+      }
+      return validItems;
     } catch (_) {
+      // Backup corrupted data to prevent silent overwriting
+      box.put('${dateStr}_corrupted_${DateTime.now().millisecondsSinceEpoch}', data);
       return [];
     }
   }
@@ -111,9 +119,35 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<bool> updateEvent(LogEvent event) async {
-    // Basic implementation since we just append right now.
-    // In a real local DB with Hive, you'd find the item and update it.
-    return addEvent(event);
+    try {
+      final dateStr = AppDateUtils.formatDate(event.startTime);
+      final currentList = _getListFromBox(_eventsBox, dateStr);
+      
+      final index = currentList.indexWhere((e) => e['id'] == event.id);
+      final map = {
+        'id': event.id,
+        'status': event.status,
+        'statusArabic': event.statusArabic,
+        'startTime': event.startTime.toIso8601String(),
+        'durationSeconds': event.duration.inSeconds,
+        'location': event.location,
+        'odometer': event.odometer,
+        'engineHours': event.engineHours,
+        'timestamp': event.startTime.toIso8601String(),
+      };
+      
+      if (index != -1) {
+        currentList[index] = map;
+      } else {
+        currentList.add(map);
+      }
+      
+      await _eventsBox.put(dateStr, jsonEncode(currentList));
+      return true;
+    } catch (e) {
+      AppLogger.error('Failed to update event', e);
+      return false;
+    }
   }
 
   @override

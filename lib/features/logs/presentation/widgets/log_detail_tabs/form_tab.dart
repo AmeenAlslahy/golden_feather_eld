@@ -102,6 +102,7 @@ class _FormTabState extends ConsumerState<FormTab> {
               );
               if (result != null && context.mounted) {
                 // Sync trailers from result to form state
+                // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
                 ref.read(dailyFormProvider.notifier).state = ref.read(dailyFormProvider).copyWith(
                       trailers: result
                           .map((t) => {'trailerNumber': t})
@@ -128,6 +129,7 @@ class _FormTabState extends ConsumerState<FormTab> {
                     builder: (_) => const ShippingDocumentsPage()),
               );
               if (result != null && context.mounted) {
+                // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
                 ref.read(dailyFormProvider.notifier).state = ref.read(dailyFormProvider).copyWith(
                       shippingDocuments: result
                           .map((d) => {'documentNumber': d})

@@ -130,15 +130,8 @@ void main() {
 
 /// مزود وقت مزيف للاختبار
 class FakeTrustedTimeProvider implements TrustedTimeProvider {
-  @override
   DateTime initialUtcTime;
   FakeTrustedTimeProvider({required this.initialUtcTime});
-  @override
-  DateTime get nowUtc => initialUtcTime;
-  @override
-  Future<DateTime> getTrustedTime() async => nowUtc;
-  @override
-  Stream<DateTime> get onTimeChanged => Stream.value(nowUtc);
 
   @override
   void anchor(DateTime serverUtc) {
@@ -149,8 +142,8 @@ class FakeTrustedTimeProvider implements TrustedTimeProvider {
   TrustedTimeResult get currentTime => TrustedTimeAvailable(initialUtcTime);
 
   @override
-  Duration get monotonicElapsed => Duration.zero;
+  TrustedTimeState get state => TrustedTimeState.trusted;
 
   @override
-  TrustedTimeState get state => TrustedTimeState.trusted;
+  Duration get monotonicElapsed => Duration.zero;
 }

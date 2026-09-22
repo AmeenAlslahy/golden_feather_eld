@@ -81,8 +81,10 @@ class ServerConfigNotifier extends StateNotifier<ServerConfig?> {
       };
 
   static ServerConfig _fromJson(Map<String, dynamic> json) {
+    final rawUrl = json['baseUrl'] as String? ?? '';
     return ServerConfig(
-      baseUrl: json['baseUrl'] as String? ?? '',
+      // Re-normalize on load to fix any values saved before the /api-stripping rule
+      baseUrl: ServerConfig.normalizeUrl(rawUrl),
       backendType: BackendType.fromWire(json['backendType'] as String?),
       lastTestedAt: DateTime.tryParse(json['lastTestedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

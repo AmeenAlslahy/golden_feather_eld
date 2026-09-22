@@ -64,6 +64,8 @@ class LocalStorageService implements ServerConfigProvider {
           'stationary_since',
           'backend_type',
           'hos_configuration',
+          'driver_id',
+          'password',
         },
       ),
     );
@@ -142,6 +144,7 @@ class LocalStorageService implements ServerConfigProvider {
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
   String? get stationarySince => _preferencesStorage.stationarySince;
   String? get selectedVehicleId => _preferencesStorage.selectedVehicleId;
+  String? get driverId => _preferencesStorage.driverId;
   String? get password => _preferencesStorage.password;
   bool get hasLanguage => _preferencesStorage.hasLanguage;
 
@@ -155,10 +158,14 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> setInterval(int value) => _trackingStorage.setInterval(value);
   Future<void> setAngle(int value) => _trackingStorage.setAngle(value);
   Future<void> setHeartbeat(int value) => _trackingStorage.setHeartbeat(value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setBuffer(bool value) => _trackingStorage.setBuffer(value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setWakelock(bool value) => _trackingStorage.setWakelock(value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setStopDetection(bool value) =>
       _trackingStorage.setStopDetection(value);
+  // ignore: avoid_positional_boolean_parameters
   Future<void> setPreferPlatformProviders(bool value) =>
       _trackingStorage.setPreferPlatformProviders(value);
   Future<void> setBackendType(String value) =>
@@ -172,6 +179,8 @@ class LocalStorageService implements ServerConfigProvider {
       _preferencesStorage.setCurrentDutyStatus(value);
   Future<void> setStationarySince(String value) =>
       _preferencesStorage.setStationarySince(value);
+  Future<void> setDriverId(String value) =>
+      _preferencesStorage.setDriverId(value);
   Future<void> setPassword(String value) => _preferencesStorage.setPassword(value);
 
   // ========== إعدادات التتبع ==========

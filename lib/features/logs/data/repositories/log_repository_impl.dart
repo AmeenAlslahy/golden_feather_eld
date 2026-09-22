@@ -122,7 +122,7 @@ class LogRepositoryImpl implements LogRepository {
               'editReason': event.notes ?? 'Manual edit',
             },
           );
-          return result.match(
+          return await result.match(
             (failure) => Left(ServerFailure(message: failure.l10nKey)),
             (_) => const Right(true),
           );

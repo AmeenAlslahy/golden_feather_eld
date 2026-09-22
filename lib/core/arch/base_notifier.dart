@@ -28,6 +28,7 @@ abstract class BaseNotifier<S> extends StateNotifier<S> {
   /// ```
   Future<T?> guard<T>(
     Future<T> Function() action, {
+    // ignore: avoid_positional_boolean_parameters
     required S Function(S state, bool isLoading) setLoading,
     required S Function(S state, String? error) setError,
     String? tag,

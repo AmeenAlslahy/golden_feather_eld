@@ -72,7 +72,6 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   }
 
   Future<void> _init() async {
-    await loadVehicles();
     await _loadSelectedVehicle();
   }
 

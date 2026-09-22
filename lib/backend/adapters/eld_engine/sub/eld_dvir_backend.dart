@@ -24,7 +24,10 @@ class EldDvirBackend implements DvirBackend {
       EldEndpoints.dvir,
       queryParameters: {
         if (driverId != null) 'driverId': driverId.value,
-        if (uniqueId != null) 'uniqueId': uniqueId,
+        if (uniqueId != null &&
+            uniqueId.isNotEmpty &&
+            uniqueId != 'unknown_vehicle')
+          'uniqueId': uniqueId,
         if (date != null) 'date': date.toIso8601String().split('T').first,
         if (status != null) 'status': status,
         'limit': limit,

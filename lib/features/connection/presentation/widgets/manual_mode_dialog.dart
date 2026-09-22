@@ -65,6 +65,7 @@ class _ManualModeDialogState extends ConsumerState<ManualModeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     final titleText = context.loc.switchToManualMode;

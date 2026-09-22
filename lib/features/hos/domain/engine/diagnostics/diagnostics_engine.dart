@@ -127,10 +127,10 @@ class DiagnosticsEngine {
 
     _eventSubscription = _trackingDataSource.events.listen((event) {
       // نستنتج حالة التشغيل من السرعة وعداد المحرك في هذا التطبيق الوهمي
-      bool ignition = event.speedMph > 0 || event.speedDurationSeconds > 0;
+      bool ignition = event.speed.inMilesPerHour > 0 || event.speedDurationSeconds > 0;
       processDataPoint(
         timestamp: event.timestamp,
-        speed: event.speedMph,
+        speed: event.speed.inMilesPerHour,
         ignition: ignition,
         latitude: _lastLat,
         longitude: _lastLon,
@@ -262,6 +262,7 @@ class DiagnosticsEngine {
     _stateController.add(_state);
   }
 
+  // ignore: avoid_positional_boolean_parameters
   void checkMissingCertification(bool isCertified) {
     if (!isCertified) {
       _addMalfunction(MalfunctionEvent(

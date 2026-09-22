@@ -45,14 +45,24 @@ abstract class ServerConfig with _$ServerConfig {
   /// Whether this config is usable for real requests.
   bool get isUsable => isVerified && baseUrl.isNotEmpty;
 
-  /// Normalizes a URL: trims, ensures scheme, removes trailing slashes.
+  /// Normalizes a URL: trims, ensures scheme, removes trailing slashes and
+  /// any trailing `/api` segment. This allows users to enter either:
+  ///   - `https://snsoft.cloud`       → stored as-is
+  ///   - `https://snsoft.cloud/api`   → stored as `https://snsoft.cloud`
+  ///
+  /// The `/api` prefix is always appended by the backend adapters themselves.
   static String normalizeUrl(String url) {
     var normalized = url.trim();
     if (!normalized.contains('://')) {
       normalized = 'https://$normalized';
     }
+    // Remove trailing slashes
     while (normalized.endsWith('/')) {
       normalized = normalized.substring(0, normalized.length - 1);
+    }
+    // Remove trailing /api so the user can type either format
+    while (normalized.endsWith('/api')) {
+      normalized = normalized.substring(0, normalized.length - 4);
     }
     return normalized;
   }

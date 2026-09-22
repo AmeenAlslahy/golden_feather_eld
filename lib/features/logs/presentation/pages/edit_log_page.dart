@@ -218,7 +218,9 @@ class EditLogPage extends ConsumerWidget {
                       ),
                     ),
                     value: status['value']!,
+                    // ignore: deprecated_member_use
                     groupValue: formState.selectedStatus,
+                    // ignore: deprecated_member_use
                     onChanged: (value) {
                       ref
                           .read(editLogFormProvider(event).notifier)
@@ -366,42 +368,67 @@ class EditLogPage extends ConsumerWidget {
                         return;
                       }
 
-                      // API Integration: Update event via API (FMCSA §395.30(e))
                       if (!isNewEvent) {
                         final logEvent = event as LogEvent;
-                        final statusId =
-                            _statusStringToInt(formState.selectedStatus);
-                        if (statusId != null) {
-                          final result = await repository.updateEvent(
-                            LogEvent(
-                              id: logEvent.id,
-                              status: formState.selectedStatus,
-                              statusArabic: formState.selectedStatus,
-                              startTime: formState.startTime,
-                              duration: formState.duration,
-                              location: formState.location,
-                              notes: formState.reason,
-                              odometer: logEvent.odometer,
-                              engineHours: logEvent.engineHours,
-                            ),
-                          );
+                        final result = await repository.updateEvent(
+                          LogEvent(
+                            id: logEvent.id,
+                            status: formState.selectedStatus,
+                            statusArabic: formState.selectedStatus,
+                            startTime: formState.startTime,
+                            duration: formState.duration,
+                            location: formState.location,
+                            notes: formState.reason,
+                            odometer: logEvent.odometer,
+                            engineHours: logEvent.engineHours,
+                          ),
+                        );
 
-                          if (context.mounted) {
-                            result.match(
-                              (failure) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        'Failed to update event: ${failure.message}'),
-                                    backgroundColor: AppColors.dangerRed,
-                                  ),
-                                );
-                              },
-                              (success) {
-                                // Event updated successfully
-                              },
-                            );
-                          }
+                        if (context.mounted) {
+                          result.match(
+                            (failure) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Failed to update event: ${failure.message}'),
+                                  backgroundColor: AppColors.dangerRed,
+                                ),
+                              );
+                            },
+                            (success) {
+                              // Event updated successfully
+                            },
+                          );
+                        }
+                      } else {
+                        // isNewEvent
+                        final result = await repository.addEvent(
+                          LogEvent(
+                            id: const Uuid().v4(),
+                            status: formState.selectedStatus,
+                            statusArabic: formState.selectedStatus,
+                            startTime: formState.startTime,
+                            duration: formState.duration,
+                            location: formState.location,
+                            notes: formState.reason,
+                            odometer: 0, // Should be fetched from dashboard/vehicle
+                            engineHours: 0,
+                          ),
+                        );
+
+                        if (context.mounted) {
+                          result.match(
+                            (failure) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Failed to add event: ${failure.message}'),
+                                  backgroundColor: AppColors.dangerRed,
+                                ),
+                              );
+                            },
+                            (success) {},
+                          );
                         }
                       }
 
@@ -417,6 +444,9 @@ class EditLogPage extends ConsumerWidget {
                       );
 
                       await notifier.saveAuditEntry(entry);
+                      // Force refresh the logs so the UI reflects the edit
+                      await notifier.loadLogs(refresh: true);
+                      
                       if (context.mounted) Navigator.pop(context, true);
                     },
             ),
@@ -623,18 +653,3 @@ class DashedLinePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-/// Convert status string (OFF/SB/D/ON) to integer ID.
-int? _statusStringToInt(String status) {
-  switch (status.toUpperCase()) {
-    case 'OFF':
-      return 1; // Off Duty
-    case 'SB':
-      return 2; // Sleeper Berth
-    case 'D':
-      return 3; // Driving
-    case 'ON':
-      return 4; // On Duty
-    default:
-      return null;
-  }
-}

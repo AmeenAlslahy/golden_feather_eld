@@ -40,7 +40,9 @@ class VehiclePickerDialog extends ConsumerWidget {
                             style: context.textTheme.labelSmall)
                         : null,
                     value: vehicle.id,
+                    // ignore: deprecated_member_use
                     groupValue: currentVehicleId,
+                    // ignore: deprecated_member_use
                     onChanged: (value) {
                       if (value != null) {
                         Navigator.pop(context, vehicle);

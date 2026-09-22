@@ -36,6 +36,7 @@ class _SwitchDriversPageState extends ConsumerState<SwitchDriversPage> {
     final coDriver = coDriverState.selectedCoDriver;
 
     return Scaffold(
+      // ignore: dead_null_aware_expression
       appBar: EldAppBar(title: context.loc.switchDrivers ?? 'switchDrivers'),
       body: SafeArea(
         child: Padding(
@@ -188,6 +189,7 @@ class _SwitchDriversPageState extends ConsumerState<SwitchDriversPage> {
                             strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary),
                       )
                     : Text(
+                        // ignore: dead_null_aware_expression
                         context.loc.switchDrivers ?? 'Switch Drivers',
                         style: AppTextStyles(context)
                             .buttonText
@@ -270,6 +272,7 @@ class _SwitchDriversPageState extends ConsumerState<SwitchDriversPage> {
       if (success) {
         if (!mounted) return;
         showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (dialogContext) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.dialog)),

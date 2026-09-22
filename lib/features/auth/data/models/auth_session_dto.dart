@@ -30,10 +30,15 @@ class AuthSessionDto {
 
   factory AuthSessionDto.fromJson(Map<String, dynamic> json) {
     return AuthSessionDto(
-      serverOrigin: json['serverOrigin'] as String,
-      sessionCredential: json['sessionCredential'] as String,
-      userModel: UserModel.fromJson(json['userModel'] as Map<String, dynamic>),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      serverOrigin: json['serverOrigin']?.toString() ?? '',
+      sessionCredential: json['sessionCredential']?.toString() ?? '',
+      userModel: UserModel.fromJson(
+        json['userModel'] is Map
+            ? Map<String, dynamic>.from(json['userModel'] as Map)
+            : <String, dynamic>{},
+      ),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now().toUtc(),
     );
   }
 

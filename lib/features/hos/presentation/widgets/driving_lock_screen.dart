@@ -13,6 +13,7 @@ class DrivingLockScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     return Container(

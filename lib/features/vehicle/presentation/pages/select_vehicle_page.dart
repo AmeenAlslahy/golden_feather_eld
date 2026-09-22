@@ -27,6 +27,14 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true);
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -152,41 +160,54 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           Expanded(
             child: vehicleState.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : filteredVehicles.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.local_shipping,
-                                size: 64,
-                                color: Theme.of(context).colorScheme.outline),
-                            AppGap.md,
-                            Text(context.loc.noVehiclesFound),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                        ),
-                        itemCount: filteredVehicles.length,
-                        separatorBuilder: (_, __) =>
-                            AppGap.sm,
-                        itemBuilder: (context, index) {
-                          final vehicle = filteredVehicles[index];
-                          return _VehicleCard(
-                            key: ValueKey(vehicle.id),
-                            vehicle: vehicle,
-                            onTap: () {
-                              if (!vehicle.isAssigned) {
-                                _showUnassignedVehicleDialog();
-                              } else {
-                                _handleVehicleSelected(vehicle);
-                              }
+                : RefreshIndicator(
+                    onRefresh: () => ref
+                        .read(vehicleProvider.notifier)
+                        .loadVehicles(forceRefresh: true),
+                    child: filteredVehicles.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.local_shipping,
+                                          size: 64,
+                                          color: Theme.of(context).colorScheme.outline),
+                                      AppGap.md,
+                                      Text(context.loc.noVehiclesFound),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                            ),
+                            itemCount: filteredVehicles.length,
+                            separatorBuilder: (_, __) => AppGap.sm,
+                            itemBuilder: (context, index) {
+                              final vehicle = filteredVehicles[index];
+                              return _VehicleCard(
+                                key: ValueKey(vehicle.id),
+                                vehicle: vehicle,
+                                onTap: () {
+                                  if (!vehicle.isAssigned) {
+                                    _showUnassignedVehicleDialog();
+                                  } else {
+                                    _handleVehicleSelected(vehicle);
+                                  }
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                  ),
           ),
         ],
       ),

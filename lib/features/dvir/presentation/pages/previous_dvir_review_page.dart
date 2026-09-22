@@ -40,6 +40,7 @@ class _PreviousDvirReviewPageState
     final dvirState = ref.watch(dvirProvider);
 
     return Scaffold(
+      // ignore: dead_null_aware_expression
       appBar: EldAppBar(title: context.loc.previousDvirReview ?? 'Previous DVIR Review'),
       body: _buildBody(context, dvirState),
     );
@@ -327,14 +328,18 @@ class _PreviousDvirReviewPageState
       final dvirState = ref.read(dvirProvider);
       if (dvirState.error != null) {
         if (!mounted) return;
+        // ignore: use_build_context_synchronously
         AppSnackBar.showError(context, dvirState.error!);
         return;
       }
       if (!mounted) return;
+      // ignore: use_build_context_synchronously
       AppSnackBar.showSuccess(context, context.loc.successMessage);
+      // ignore: use_build_context_synchronously
       context.pop();
     } catch (e) {
       if (!mounted) return;
+      // ignore: use_build_context_synchronously
       AppSnackBar.showError(context, e.toString());
     }
   }

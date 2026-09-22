@@ -127,6 +127,7 @@ class ReportsNotifier extends StateNotifier<ReportsState> {
     }
   }
 
+  // ignore: avoid_positional_boolean_parameters
   Future<String?> exportReport(bool isEld, String format,
       {String? standardReportType}) async {
     try {

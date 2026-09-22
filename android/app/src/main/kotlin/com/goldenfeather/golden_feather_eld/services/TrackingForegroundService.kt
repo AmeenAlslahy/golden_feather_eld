@@ -19,6 +19,10 @@ import com.goldenfeather.golden_feather_eld.MainActivity
 import com.goldenfeather.golden_feather_eld.R
 import com.goldenfeather.golden_feather_eld.database.LocationDatabaseHelper
 import com.goldenfeather.golden_feather_eld.database.NetworkUploader
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class TrackingForegroundService : Service(), LocationListener {
 
@@ -38,18 +42,22 @@ class TrackingForegroundService : Service(), LocationListener {
     private var isTracking = false
     private lateinit var dbHelper: LocationDatabaseHelper
     private lateinit var networkUploader: NetworkUploader
+    
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     override fun onCreate() {
         super.onCreate()
         dbHelper = LocationDatabaseHelper(this)
-        networkUploader = NetworkUploader(this)
+        networkUploader = NetworkUploader(dbHelper)
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_START -> startForeground()
-            ACTION_STOP -> stopForeground()
+        if (intent == null || intent.action == ACTION_START) {
+            startForeground()
+        } else if (intent.action == ACTION_STOP) {
+            stopForeground()
         }
         return START_STICKY
     }
@@ -105,6 +113,7 @@ class TrackingForegroundService : Service(), LocationListener {
             Log.e("TRACKING_SVC", "Failed to remove updates", e)
         }
         isTracking = false
+        serviceJob.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -144,17 +153,21 @@ class TrackingForegroundService : Service(), LocationListener {
     override fun onLocationChanged(location: Location) {
         Log.i("TRACKING_SVC", "New Location: ${location.latitude}, ${location.longitude}")
 
-        // 1. Save to SQLite
-        dbHelper.insertLocation(location)
+        // Use Coroutines on IO thread for SQLite insertion
+        serviceScope.launch {
+            // 1. Save to SQLite
+            dbHelper.insertLocation(location)
 
-        // 2. Trigger Upload
-        val prefs = getSharedPreferences("traccar_config", Context.MODE_PRIVATE)
-        val serverUrl = prefs.getString("serverUrl", "") ?: ""
-        val deviceId = prefs.getString("deviceId", "") ?: ""
-        networkUploader.triggerUpload(serverUrl, deviceId)
+            // 2. Trigger Upload
+            val prefs = getSharedPreferences("traccar_config", Context.MODE_PRIVATE)
+            val serverUrl = prefs.getString("serverUrl", "") ?: ""
+            val deviceId = prefs.getString("deviceId", "") ?: ""
+            networkUploader.triggerUpload(serverUrl, deviceId)
+        }
 
         // 3. Broadcast for Flutter UI
         val intent = Intent(ACTION_LOCATION_UPDATE).apply {
+            setPackage(packageName) // Secure broadcast to this app only
             putExtra("latitude", location.latitude)
             putExtra("longitude", location.longitude)
             putExtra("speed", location.speed.toDouble())

@@ -189,6 +189,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
+                                      // ignore: use_build_context_synchronously
                                       context.loc.rolesSwitchedSuccessfully,
                                     ),
                                     backgroundColor: AppColors.successGreen,
@@ -242,7 +243,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         ),
                       ),
                       value: driver.id,
+                      // ignore: deprecated_member_use
                       groupValue: dialogSelectedId,
+                      // ignore: deprecated_member_use
                       onChanged: (value) {
                         setStateDialog(() {
                           dialogSelectedId = value!;

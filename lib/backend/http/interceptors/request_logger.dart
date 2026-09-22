@@ -57,6 +57,10 @@ class RequestLogger extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     AppLogger.debug(
         '✅ Response [${response.statusCode}] ${response.requestOptions.uri}');
+    if (response.data != null) {
+      final safeData = _redactSensitiveData(response.data);
+      AppLogger.info('📦 Response Data (${response.requestOptions.uri.path}): $safeData');
+    }
     super.onResponse(response, handler);
   }
 

@@ -22,7 +22,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
       try {
         final result = await inspectionBackend.getLegacyInspectionReport(driverId);
         
-        return result.fold(
+        return await result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (rawData) {
             final days = rawData.map((json) {
@@ -54,7 +54,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
       try {
         final result = await inspectionBackend.exportLegacyInspectionData(
             driverId, method.name, email, isErods);
-        return result.fold(
+        return await result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (_) => const Right(true),
         );

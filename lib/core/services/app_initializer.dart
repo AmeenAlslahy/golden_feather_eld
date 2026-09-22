@@ -20,6 +20,7 @@ class AppInitializer {
   late final LocalDatabaseService localDatabaseService;
   late final TrackingService trackingService;
   late final UtcSyncService utcSync;
+  late final TrustedTimeProvider timeProvider;
 
   Future<void> initialize() async {
     // 1. تهيئة البيئة
@@ -50,6 +51,8 @@ class AppInitializer {
 
     localDatabaseService = LocalDatabaseService();
     await localDatabaseService.init();
+
+    timeProvider = MonotonicTrustedTimeProvider();
   }
 
   Future<void> _initDependentServices() async {
@@ -70,7 +73,7 @@ class AppInitializer {
   }
 
   Future<void> _initSyncServices() async {
-    utcSync = UtcSyncService();
+    utcSync = UtcSyncService(timeProvider: timeProvider);
     await utcSync.syncWithUtc();
   }
 
@@ -81,6 +84,7 @@ class AppInitializer {
         localDatabaseServiceProvider.overrideWithValue(localDatabaseService),
         trackingServiceProvider.overrideWithValue(trackingService),
         utcSyncServiceProvider.overrideWithValue(utcSync),
+        trustedTimeProvider.overrideWithValue(timeProvider),
       ],
     );
   }

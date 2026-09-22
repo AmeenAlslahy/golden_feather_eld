@@ -65,7 +65,7 @@ class DutyStatusTracker {
   }
 
   void processEldEvent(EldEvent eldEvent) {
-    if (eldEvent.speedMph > 5.0) {
+    if (eldEvent.speed.inMilesPerHour > 5.0) {
       // Moving logic
       _movingSince ??= eldEvent.timestamp;
       _consecutiveMovingEvents++;
@@ -123,12 +123,12 @@ class DutyStatusTracker {
       {DateTime? eventTimestamp, double? odometer, double? engineHours}) {
     if (_stationarySince == null || _currentStatus != 'driving') return;
 
-    final currentTime = _getCurrentTime();
-    final elapsed = currentTime.difference(_stationarySince!);
+    final referenceTime = eventTimestamp ?? _getCurrentTime();
+    final elapsed = referenceTime.difference(_stationarySince!);
 
     if (elapsed.inMinutes >= 5) {
       // Met the 5-minute stationary rule
-      final effectiveTimestamp = eventTimestamp ?? currentTime;
+      final effectiveTimestamp = referenceTime;
       _stationarySince = null;
       _localStorage.setStationarySince('');
       _wakeupTimer?.cancel();
@@ -150,7 +150,7 @@ class DutyStatusTracker {
     }
   }
 
-  void _transitionTo({
+  Future<void> _transitionTo({
     required String newStatus,
     required DateTime timestamp,
     double? latitude,
@@ -158,7 +158,7 @@ class DutyStatusTracker {
     double? odometer,
     double? engineHours,
     String? annotation,
-  }) {
+  }) async {
     if (_currentStatus == newStatus) return;
 
     final event = DutyStatusEvent(
@@ -171,6 +171,8 @@ class DutyStatusTracker {
     );
 
     _events.add(event);
+
+    bool periodSaved = true;
 
     if (_lastEvent != null) {
       final period = DutyPeriod(
@@ -185,30 +187,37 @@ class DutyStatusTracker {
         endLon: event.longitude,
       );
 
-      _periods.add(period);
+      final result = await _logRepository.savePeriod(period);
+      result.match(
+        (failure) {
+          AppLogger.error('Failed to save period', failure.message);
+          periodSaved = false;
+        },
+        (success) {
+          _periods.add(period);
+          AppLogger.info('Period saved successfully');
+        }
+      );
+    }
 
-      _logRepository.savePeriod(period).then((result) {
-        result.match(
-          (failure) =>
-              AppLogger.error('Failed to save period', failure.message),
-          (success) => AppLogger.info('Period saved successfully'),
-        );
-      });
+    if (!periodSaved) {
+      return; // Do not broadcast or change memory if save failed
     }
 
     _currentStatus = newStatus;
-    _localStorage.setCurrentDutyStatus(newStatus);
+    await _localStorage.setCurrentDutyStatus(newStatus);
     _lastEvent = event;
     AppLogger.info('📊 Duty Status: $currentStatus');
 
-    // Queue the transition to be synced with the backend
-    _syncEngine.submitEvent(PendingEvent(
+    // Queue the transition to be synced with the backend (Transactional Outbox)
+    await _syncEngine.submitEvent(PendingEvent(
       id: const Uuid().v4(),
       type: 'duty_status',
       payload: {
         'status': newStatus,
         'timestamp': timestamp.toIso8601String(),
         'deviceId': int.tryParse(_localStorage.deviceId) ?? 0,
+        'driverId': int.tryParse(_localStorage.driverId ?? '0') ?? 0,
         'location': latitude != null && longitude != null
             ? '$latitude, $longitude'
             : 'Unknown',
@@ -220,10 +229,13 @@ class DutyStatusTracker {
       createdAt: _getCurrentTime(),
     ));
 
-    _transitionController.add(DutyTransition(
-      newStatus: newStatus,
-      annotation: annotation ?? 'Manual/System Transition',
-    ));
+    // Only broadcast to UI AFTER successful persistence
+    if (!_transitionController.isClosed) {
+      _transitionController.add(DutyTransition(
+        newStatus: newStatus,
+        annotation: annotation ?? 'Manual/System Transition',
+      ));
+    }
   }
 
   void manualTransition(String newStatus,
@@ -251,22 +263,51 @@ class DutyStatusTracker {
 
     // Watchdog timer: If GPS is completely off or not moving, we start counting 5 mins.
     if (newStatus == 'driving') {
-      _stationarySince = _getCurrentTime();
-      _localStorage.setStationarySince(_stationarySince!.toIso8601String());
-      _evaluateStationaryState();
+      _startWatchdogTimer();
     }
+  }
+
+  Timer? _watchdogTimer;
+
+  void reset() {
+    _wakeupTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _events.clear();
+    _periods.clear();
+    _currentStatus = 'off_duty';
+    _stationarySince = null;
+    _movingSince = null;
+    _consecutiveMovingEvents = 0;
+    _lastEvent = null;
+  }
+
+  void _startWatchdogTimer() {
+    _stationarySince = _getCurrentTime();
+    _localStorage.setStationarySince(_stationarySince!.toIso8601String());
+    _evaluateStationaryState();
+  }
+
+  Duration _getIntersection(DateTime pStart, DateTime pEnd, DateTime wStart, DateTime wEnd) {
+    final start = pStart.isAfter(wStart) ? pStart : wStart;
+    final end = pEnd.isBefore(wEnd) ? pEnd : wEnd;
+    if (end.isAfter(start)) {
+      return end.difference(start);
+    }
+    return Duration.zero;
   }
 
   Map<String, double> getTodayStats() {
     final now = _getCurrentTime();
     final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
 
     double driving = 0, onDuty = 0, offDuty = 0, sleeper = 0;
     double totalDistance = 0;
 
     for (final period in _periods) {
-      if (period.startTime.isAfter(todayStart)) {
-        final hours = period.duration.inMinutes / 60.0;
+      final intersectDuration = _getIntersection(period.startTime, period.endTime, todayStart, todayEnd);
+      if (intersectDuration > Duration.zero) {
+        final hours = intersectDuration.inMinutes / 60.0;
         switch (period.status) {
           case 'driving':
             driving += hours;
@@ -299,13 +340,16 @@ class DutyStatusTracker {
   Map<String, double> getWeekStats() {
     final now = _getCurrentTime();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    // Usually week boundary ends at now
+    final weekEnd = now;
 
     double driving = 0, work = 0, rest = 0;
     double totalDistance = 0;
 
     for (final period in _periods) {
-      if (period.startTime.isAfter(weekStart)) {
-        final hours = period.duration.inMinutes / 60.0;
+      final intersectDuration = _getIntersection(period.startTime, period.endTime, weekStart, weekEnd);
+      if (intersectDuration > Duration.zero) {
+        final hours = intersectDuration.inMinutes / 60.0;
         switch (period.status) {
           case 'driving':
             driving += hours;
@@ -342,6 +386,7 @@ class DutyStatusTracker {
     _stationarySince = null;
     _localStorage.setStationarySince('');
     _wakeupTimer?.cancel();
+    _watchdogTimer?.cancel();
 
     _movingSince = null;
     _consecutiveMovingEvents = 0;
@@ -349,6 +394,7 @@ class DutyStatusTracker {
 
   void dispose() {
     _wakeupTimer?.cancel();
+    _watchdogTimer?.cancel();
     _transitionController.close();
   }
 }

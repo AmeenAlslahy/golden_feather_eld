@@ -64,6 +64,7 @@ class _RepairCertificationPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // ignore: dead_null_aware_expression
       appBar: EldAppBar(title: context.loc.repairCertification ?? 'repairCertification'),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -317,6 +318,7 @@ class _RepairCertificationPageState
         TextButton(
           onPressed: () => _signatureController.clear(),
           child: Text(
+            // ignore: dead_null_aware_expression
             context.loc.clearSignature ?? 'Clear Signature',
             style: AppTextStyles(context).body.copyWith(
                   decoration: TextDecoration.underline,
@@ -343,6 +345,7 @@ class _RepairCertificationPageState
                       strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary),
                 )
               : Text(
+                  // ignore: dead_null_aware_expression
                   context.loc.agree ?? 'Acknowledge & Submit',
                   style: AppTextStyles(context)
                       .buttonText

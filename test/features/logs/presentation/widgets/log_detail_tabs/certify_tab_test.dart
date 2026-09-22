@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/app/providers/app_repository_providers.dart';
+import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+// ignore: directives_ordering
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+// ignore: directives_ordering
+import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+// ignore: directives_ordering
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/certify_tab.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
-import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
-import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
-import 'package:fpdart/fpdart.dart';
+// ignore: directives_ordering
 import 'package:mocktail/mocktail.dart';
-import 'package:golden_feather_eld/app/providers/app_repository_providers.dart';
 
 class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   MockAuthNotifier(super.state);
@@ -96,7 +100,8 @@ void main() {
         isFormComplete: true,
       );
 
-      when(() => mockRepo.getReadiness(any())).thenAnswer((_) async => Right(ReadinessDto(
+      // ignore: prefer_const_constructors
+      when(() => mockRepo.getReadiness(any())).thenAnswer((_) async => const Right(ReadinessDto(
         dailyLogId: 123,
         driverId: 1,
         driverName: 'Test Driver',

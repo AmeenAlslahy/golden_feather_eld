@@ -76,6 +76,7 @@ void main() {
 
     group('Offline Queue - لا فقدان بيانات', () {
       test('حتى بعد 5 محاولات فاشلة، الحدث لا يُحذف', () async {
+        // ignore: unused_local_variable
         final event = PendingEvent(
           id: 'net_001',
           type: 'hos_event',

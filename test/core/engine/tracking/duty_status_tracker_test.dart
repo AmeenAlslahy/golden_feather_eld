@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/shared/speed.dart';
 import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
@@ -122,6 +123,9 @@ class FakeLocalStorage implements LocalStorageService {
   String get deviceId => data['device_id'] ?? '12345';
 
   @override
+  String? get driverId => data['driver_id'] ?? '54321';
+
+  @override
   String get currentDutyStatus => data['current_duty_status'] ?? 'off_duty';
 
   @override
@@ -169,7 +173,7 @@ void main() {
       expect(tracker.currentStatus, 'driving');
 
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -183,14 +187,14 @@ void main() {
     test('2. stationary < 5 min - remains driving', () {
       tracker.manualTransition('driving');
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
 
       clock.advance(const Duration(minutes: 4));
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -201,14 +205,14 @@ void main() {
     test('3. stationary >= 5 min - transitions to on_duty', () {
       tracker.manualTransition('driving');
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
 
       clock.advance(const Duration(minutes: 5));
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -220,7 +224,7 @@ void main() {
     test('4. movement interrupts stationary period (needs 3s sustained)', () {
       tracker.manualTransition('driving');
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -229,7 +233,7 @@ void main() {
       clock.advance(const Duration(minutes: 3));
       // Moving again - spike (1 event, 0s elapsed)
       tracker.processEldEvent(EldEvent(
-          speedMph: 6.0,
+          speed: Speed.fromMilesPerHour(6.0),
           odometerMiles: 10.5,
           engineHours: 1.1,
           timestamp: getClockTime()));
@@ -239,13 +243,13 @@ void main() {
       // Send 3 events spanning 3 seconds
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(EldEvent(
-          speedMph: 6.0,
+          speed: Speed.fromMilesPerHour(6.0),
           odometerMiles: 10.5,
           engineHours: 1.1,
           timestamp: getClockTime()));
       clock.advance(const Duration(seconds: 2));
       tracker.processEldEvent(EldEvent(
-          speedMph: 6.0,
+          speed: Speed.fromMilesPerHour(6.0),
           odometerMiles: 10.5,
           engineHours: 1.1,
           timestamp: getClockTime()));
@@ -258,12 +262,12 @@ void main() {
     test('5. restart during stationary hydration', () {
       tracker.manualTransition('driving');
       tracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
 
-      // Simulate app kill and advance clock by 6 minutes
+      tracker.dispose(); // Simulate app kill and advance clock by 6 minutes
       final savedData = db.data;
       clock.advance(const Duration(minutes: 6));
 
@@ -278,7 +282,7 @@ void main() {
       // The status should hydrate to driving, and stationarySince should be intact.
       // Now, an event arrives (which triggers _evaluateStationaryState if speed is 0)
       newTracker.processEldEvent(EldEvent(
-          speedMph: 0,
+          speed: Speed.fromMilesPerHour(0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -316,7 +320,7 @@ void main() {
     test('below threshold (<= 5) remains current status if not driving', () {
       expect(tracker.currentStatus, 'off_duty');
       tracker.processEldEvent(EldEvent(
-          speedMph: 4.9,
+          speed: Speed.fromMilesPerHour(4.9),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -326,7 +330,7 @@ void main() {
     test('at threshold (= 5.0) remains current status', () {
       expect(tracker.currentStatus, 'off_duty');
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.0,
+          speed: Speed.fromMilesPerHour(5.0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -337,7 +341,7 @@ void main() {
         () {
       expect(tracker.currentStatus, 'off_duty');
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -351,7 +355,7 @@ void main() {
 
       // Event 1 (0s)
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -360,7 +364,7 @@ void main() {
       // Event 2 (1s)
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -369,7 +373,7 @@ void main() {
       // Event 3 (3s)
       clock.advance(const Duration(seconds: 2));
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -381,7 +385,7 @@ void main() {
 
       // Event 1 (> 5)
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -389,7 +393,7 @@ void main() {
       // Event 2 (<= 5) - interrupts the streak
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(EldEvent(
-          speedMph: 4.0,
+          speed: Speed.fromMilesPerHour(4.0),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -397,7 +401,7 @@ void main() {
       // Event 3 (> 5)
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));
@@ -405,7 +409,7 @@ void main() {
       // Event 4 (> 5)
       clock.advance(const Duration(seconds: 2));
       tracker.processEldEvent(EldEvent(
-          speedMph: 5.1,
+          speed: Speed.fromMilesPerHour(5.1),
           odometerMiles: 10,
           engineHours: 1,
           timestamp: getClockTime()));

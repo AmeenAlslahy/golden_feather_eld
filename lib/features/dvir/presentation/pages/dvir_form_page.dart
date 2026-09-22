@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -97,6 +98,22 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
     bool hasDefects = _vehicleDefectsController.text.isNotEmpty || _trailerDefectsController.text.isNotEmpty;
 
+    final List<ItemInspectionResult> items = [];
+    if (_vehicleDefectsController.text.isNotEmpty) {
+      items.add(ItemInspectionResult(
+        item: InspectionItem.engine, // Using a generic item since we don't have 'vehicle' enum
+        isDefective: true,
+        defectDescription: 'Vehicle: ${_vehicleDefectsController.text}',
+      ));
+    }
+    if (_trailerDefectsController.text.isNotEmpty) {
+      items.add(ItemInspectionResult(
+        item: InspectionItem.trailerCoupling,
+        isDefective: true,
+        defectDescription: 'Trailer: ${_trailerDefectsController.text}',
+      ));
+    }
+
     final report = DvirReport(
       id: widget.existingReport?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
@@ -106,10 +123,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       vehicleId: dashboard.vehicleId,
       trailerId: dashboard.trailerId,
       odometer: double.tryParse(_odometerController.text),
-      items: const [], // Detailed items not used in this flat layout, but we pass defects strings
+      items: items,
       notes: _remarksController.text.isNotEmpty ? _remarksController.text : null,
       signature: signatureData != null
-          ? 'signature_${DateTime.now().millisecondsSinceEpoch}'
+          ? base64Encode(signatureData)
           : null,
       condition: condition,
       isSubmitted: true,
@@ -124,23 +141,36 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       defectsSummary: hasDefects ? '${_vehicleDefectsController.text} | ${_trailerDefectsController.text}' : null,
     );
 
+    bool success = false;
     if (widget.existingReport != null) {
-      ref.read(dvirProvider.notifier).updateReport(report);
+      final res = await ref.read(dvirProvider.notifier).updateReport(report);
+      success = res.isRight();
     } else {
-      await ref.read(dvirProvider.notifier).createReport(report);
+      final res = await ref.read(dvirProvider.notifier).createReport(report);
+      success = res.isRight();
     }
 
     if (mounted) {
       setState(() {
         _isSubmitting = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.loc.reportSavedSuccess),
-          backgroundColor: AppColors.successGreen,
-        ),
-      );
-      Navigator.pop(context);
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.loc.reportSavedSuccess),
+            backgroundColor: AppColors.successGreen,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save report'),
+            backgroundColor: AppColors.dangerRed,
+          ),
+        );
+      }
     }
   }
 

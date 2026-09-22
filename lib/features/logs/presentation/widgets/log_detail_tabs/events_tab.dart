@@ -77,7 +77,10 @@ class _EventsTabState extends ConsumerState<EventsTab> {
     return Column(
       children: [
         // ========== Graph Grid ==========
-        LogGraph(events: widget.selectedLog.events),
+        // Use API graph-grid events (authoritative), fall back to local events
+        LogGraph(events: graphState.events.isNotEmpty
+            ? graphState.events
+            : widget.selectedLog.events),
 
         // ========== Totals from API ==========
         if (graphState.data != null) _buildTotalsBar(context, graphState),

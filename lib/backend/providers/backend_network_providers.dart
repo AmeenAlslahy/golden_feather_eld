@@ -47,11 +47,13 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final localDataSource = ref.watch(authLocalDataSourceProvider);
   final backendType = ref.watch(backendTypeProvider);
   
+  // ignore: close_sinks
   final unauthController = ref.watch(unauthenticatedEventProvider);
   
   dio.interceptors.add(AuthInterceptor(
     localDataSource: localDataSource,
     backendType: backendType,
+    allowedDomains: effectiveUrl.isNotEmpty ? [Uri.parse(effectiveUrl).host] : [],
     onUnauthenticated: () {
       // Trigger event instead of directly depending on AuthStateProvider
       unauthController.add(null);

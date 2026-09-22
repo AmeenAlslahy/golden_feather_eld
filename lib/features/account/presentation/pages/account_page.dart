@@ -36,6 +36,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final account = accountState.accountData;
     
     final loc = context.loc;
+    // ignore: unused_local_variable
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final notAvailable = context.loc.notAvailable;
 

@@ -19,7 +19,9 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       if (event.type == 'duty_status') {
         final session = await _localDataSource.getSession();
         int driverId = 0;
-        if (session != null) {
+        if (event.payload.containsKey('driverId')) {
+          driverId = event.payload['driverId'] as int;
+        } else if (session != null) {
           driverId = int.tryParse(session.user.id) ?? 0;
         }
         final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(driverId, event.payload);
