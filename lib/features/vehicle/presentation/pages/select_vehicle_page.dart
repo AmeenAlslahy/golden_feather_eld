@@ -80,15 +80,6 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                   .copyWith(color: AppColors.primaryBlue),
             ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.loc.contactManager,
-              style: AppTextStyles(context)
-                  .buttonText
-                  .copyWith(color: AppColors.dangerRed),
-            ),
-          ),
         ],
       ),
     );
@@ -115,8 +106,10 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             backgroundColor: AppColors.successGreen,
           ),
         );
-        // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
-        context.go(AppRoutes.connection);
+        // تأجيل التنقل لإطار واحد لضمان ظهور SnackBar قبل تفكيك الصفحة
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go(AppRoutes.connection);
+        });
       }
     });
 

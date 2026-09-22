@@ -35,18 +35,20 @@ void main() {
           .thenAnswer((_) async => ok({
                 'data': [
                   {
-                    'id': 101,
-                    'name': 'Truck 101',
-                    'uniqueId': 'VIN-101',
-                    'model': '2024',
-                    'category': 'truck',
+                    'vehicleId': 'VIN-101',
+                    'vehicleName': 'Truck 101',
+                    'vin': 'VIN-101',
+                    'model': 'Cascadia',
+                    'myVehicle': true,
+                    'inUseByOtherDriver': false,
                   },
                   {
-                    'id': 102,
-                    'name': 'Truck 102',
-                    'uniqueId': 'VIN-102',
-                    'model': '2023',
-                    'category': 'truck',
+                    'vehicleId': 'VIN-102',
+                    'vehicleName': 'Truck 102',
+                    'vin': 'VIN-102',
+                    'model': 'LT',
+                    'myVehicle': false,
+                    'inUseByOtherDriver': false,
                   }
                 ]
               }));
@@ -60,7 +62,9 @@ void main() {
           expect(vehicles.length, equals(2));
           expect(vehicles[0].id, equals('VIN-101'));
           expect(vehicles[0].name, equals('Truck 101'));
+          expect(vehicles[0].isAssigned, isTrue);
           expect(vehicles[1].id, equals('VIN-102'));
+          expect(vehicles[1].isAssigned, isFalse);
         },
       );
     });

@@ -27,20 +27,24 @@ class VehicleState {
 
   List<Vehicle> get filteredVehicles {
     if (searchQuery.isEmpty) return vehicles;
+    final query = searchQuery.toLowerCase();
     return vehicles.where((v) {
-      final query = searchQuery.toLowerCase();
-      return v.id.contains(query) ||
+      return v.id.toLowerCase().contains(query) ||
           v.name.toLowerCase().contains(query) ||
-          v.year.contains(query);
+          v.year.toLowerCase().contains(query) ||
+          (v.vin?.toLowerCase().contains(query) ?? false);
     }).toList();
   }
+
+  /// Sentinel لتمييز "لم يُمرَّر error" عن "تم تمرير null لمسح الخطأ"
+  static const _keep = Object();
 
   VehicleState copyWith({
     List<Vehicle>? vehicles,
     Vehicle? selectedVehicle,
     String? searchQuery,
     bool? isLoading,
-    String? error,
+    Object? error = _keep, // يستخدم sentinel بدلاً من null
     bool? isInitialized,
     bool? isSuccess,
   }) {
@@ -49,7 +53,10 @@ class VehicleState {
       selectedVehicle: selectedVehicle ?? this.selectedVehicle,
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
-      error: error, // Can be null to clear error
+      // إذا لم يُمرَّر error (sentinel)، احتفظ بالقيمة الحالية
+      // إذا مُرِّر null صراحةً، امسح الخطأ
+      // إذا مُرِّرت قيمة، استخدمها
+      error: identical(error, _keep) ? this.error : error as String?,
       isInitialized: isInitialized ?? this.isInitialized,
       isSuccess: isSuccess ?? this.isSuccess,
     );
@@ -77,6 +84,8 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
 
   Future<void> loadVehicles({bool forceRefresh = false}) async {
     if (state.isInitialized && !forceRefresh) return;
+    // منع تنفيذين متزامنين عند استدعاء forceRefresh مرتين متتاليتين
+    if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
@@ -92,6 +101,7 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
         vehicles: vehicles,
         isLoading: false,
         isInitialized: true,
+        error: null, // مسح أي خطأ سابق عند النجاح
       );
     });
   }

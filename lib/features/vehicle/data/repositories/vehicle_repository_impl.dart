@@ -4,9 +4,11 @@ import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/utils/logger.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../models/vehicle_model.dart';
+
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleBackend _vehicleBackend;
@@ -30,23 +32,24 @@ class VehicleRepositoryImpl implements VehicleRepository {
     try {
       final result = await _vehicleBackend.getMyVehicles();
       final Either<Failure, List<Vehicle>> response = result.fold(
-        (error) => Left(ServerFailure(message: 'فشل: ${error.code}')),
+        (error) => Left(ServerFailure(message: error.code)),
         (data) {
-          dynamic rawList = data['data'] ?? data['vehicles'];
-          if (rawList is! List && data is List) {
-            rawList = data;
-          }
+          // data هو RawJson = Map<String, dynamic> دائماً
+          // ELD API يلف القائمة في مفتاح 'data'
+          final rawList = data['data'] ?? data['vehicles'];
           final vehiclesList = rawList is List ? rawList : const [];
           final vehicles = vehiclesList
               .whereType<Map>()
-              .map((item) => VehicleModel.fromJson(Map<String, dynamic>.from(item)))
+              .map((item) =>
+                  VehicleModel.fromJson(Map<String, dynamic>.from(item)))
               .toList();
           return Right(vehicles);
         },
       );
       return response;
-    } catch (e) {
-      return Left(ServerFailure(message: 'فشل جلب قائمة الشاحنات: $e'));
+    } catch (e, st) {
+      AppLogger.error('VehicleRepositoryImpl.getVehicles', e, st);
+      return const Left(ServerFailure(message: 'vehicle_fetch_failed'));
     }
   }
 

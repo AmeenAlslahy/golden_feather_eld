@@ -9,7 +9,6 @@ import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [VehicleBackend].
-/// **Status:** Skeleton — implemented in Phase 2.
 class EldVehicleBackend implements VehicleBackend {
   final ApiClient _apiClient;
 
@@ -21,14 +20,18 @@ class EldVehicleBackend implements VehicleBackend {
 
   @override
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async {
+    // استخدام ELD endpoint الصحيح بدلاً من Traccar /devices
     final response = await _apiClient.get<List<dynamic>>(
-      EldEndpoints.devices,
+      EldEndpoints.myVehicles,
       parser: (data) => data is List ? data : [],
     );
 
     return response.mapValue((res) {
       final list = res.data ?? <dynamic>[];
-      AppLogger.info('🚗 [EldVehicleBackend] Fetched ${list.length} vehicles from server: $list');
+      AppLogger.info(
+        '🚗 [EldVehicleBackend] Fetched ${list.length} vehicles '
+        'from ELD API (${EldEndpoints.myVehicles})',
+      );
       return {'data': list};
     });
   }
@@ -36,7 +39,7 @@ class EldVehicleBackend implements VehicleBackend {
   @override
   Future<Result<List<dynamic>>> getLegacyVehicles() async {
     final response = await _apiClient.get<List<dynamic>>(
-      EldEndpoints.devices,
+      EldEndpoints.myVehicles,
       parser: (data) => data is List ? data : [],
     );
     return response.mapValue((res) => res.data ?? []);

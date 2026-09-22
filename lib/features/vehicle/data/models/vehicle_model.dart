@@ -12,23 +12,45 @@ class VehicleModel extends Vehicle {
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
+    // تحليل آمن للـ bool بدون cast مباشر يسبب TypeError
+    bool safeBool(dynamic value, {bool fallback = false}) {
+      if (value is bool) return value;
+      if (value is int) return value != 0;
+      if (value is String) return value.toLowerCase() == 'true';
+      return fallback;
+    }
+
+    // isAssigned = السائق الحالي هو من أُسندت له هذه المركبة
+    // وليست تحت استخدام سائق آخر حالياً
+    final myVehicle = safeBool(json['myVehicle'], fallback: false);
+    final inUseByOther = safeBool(json['inUseByOtherDriver'], fallback: false);
+    final isAssigned = myVehicle && !inUseByOther;
+
     return VehicleModel(
-      id: json['vehicleId']?.toString() ?? json['uniqueId']?.toString() ?? json['id']?.toString() ?? 'unknown',
-      name: json['vehicleName']?.toString() ?? json['name']?.toString() ?? 'Unknown Vehicle',
-      year: json['model']?.toString() ?? 'N/A',
-      vin: json['vin']?.toString() ?? json['uniqueId']?.toString(), // VIN from ELD or fallback to uniqueId
-      type: json['category']?.toString(),
-      trailerId: null, // Depending on Traccar implementation
-      isAssigned: json['myVehicle'] as bool? ?? true, // Assuming returned means assigned
+      // vehicleId هو المفتاح الأساسي في ELD API
+      id: json['vehicleId']?.toString() ??
+          json['id']?.toString() ??
+          'unknown',
+      // vehicleName هو اسم المركبة في ELD API
+      name: json['vehicleName']?.toString() ??
+          json['name']?.toString() ??
+          'Unknown Vehicle',
+      // model في ELD API = طراز المركبة (Freightliner Cascadia, إلخ)
+      year: json['model']?.toString() ?? '',
+      vin: json['vin']?.toString(),
+      // ELD API لا يعيد category؛ type يبقى null
+      type: null,
+      trailerId: null,
+      isAssigned: isAssigned,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'uniqueId': id,
-      'name': name,
+      'vehicleId': id,
+      'vehicleName': name,
       'model': year,
-      'category': type,
+      'vin': vin,
     };
   }
 
