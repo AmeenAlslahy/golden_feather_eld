@@ -37,12 +37,12 @@ class AppTheme {
 
     // ========== شريط العنوان ==========
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.secondary,
-      foregroundColor: AppColors.primaryGold,
+      backgroundColor: AppColors.primaryGold, // Gold is Primary
+      foregroundColor: AppColors.black, // Text/icons on Gold should be Black
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: AppStyles.light().appBarTitle.copyWith(color: AppColors.primaryGold),
-      iconTheme: const IconThemeData(color: AppColors.primaryGold),
+      titleTextStyle: AppStyles.light().appBarTitle.copyWith(color: AppColors.black),
+      iconTheme: const IconThemeData(color: AppColors.black),
     ),
 
     // ========== البطاقات ==========
