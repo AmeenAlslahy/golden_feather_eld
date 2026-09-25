@@ -21,9 +21,9 @@ class AppTheme {
     extensions: [EldColors.light(), AppStyles.light()],
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGold,
-      onPrimary: AppColors.surface,
-      secondary: AppColors.successGreen,
-      onSecondary: AppColors.surface,
+      onPrimary: AppColors.black,
+      secondary: AppColors.black,
+      onSecondary: AppColors.primaryGold,
       error: AppColors.dangerRed,
       onError: AppColors.surface,
       surface: AppColors.surface,
@@ -162,8 +162,8 @@ class AppTheme {
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.black,
-      secondary: AppColors.successGreen, // Fix dark mode button background
-      onSecondary: AppColors.black,
+      secondary: AppColors.surfaceDark,
+      onSecondary: AppColors.primaryGold,
       error: AppColors.dangerOnDark,
       onError: AppColors.black,
       surface: AppColors.surfaceDark,
