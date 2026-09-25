@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../theme/app_colors.dart';
+import '../extensions/context_extensions.dart';
 import '../utils/logger.dart';
 
 /// خدمة فحص تحسين البطارية
@@ -48,8 +48,8 @@ class BatteryOptimizationDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
-      icon: const Icon(Icons.battery_alert,
-          color: AppColors.warningYellow, size: 48),
+      icon: Icon(Icons.battery_alert,
+          color: context.eld.warningFg, size: 48),
       title: const Text('تحسين البطارية'),
       content: const Text(
         'لضمان تتبع موثوق للمركبة، يرجى تعطيل تحسين البطارية لهذا التطبيق.\n\n'
