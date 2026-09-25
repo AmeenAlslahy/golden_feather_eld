@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
-/// شريط التنقل السفلي
-class EldBottomNav extends ConsumerWidget {
-  final int currentIndex;
-  final Function(int) onTap;
+/// Available يسار، Recap يمين — مطابق للقطة.
+class EldBottomNav extends StatelessWidget {
+  final bool showingRecap;
+  final VoidCallback onRecap;
+  final VoidCallback onAvailable;
 
   const EldBottomNav({
     super.key,
-    required this.currentIndex,
-    required this.onTap,
+    required this.showingRecap,
+    required this.onRecap,
+    required this.onAvailable,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -26,23 +27,32 @@ class EldBottomNav extends ConsumerWidget {
         ),
       ),
       child: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: onTap,
+        currentIndex: showingRecap ? 1 : 0,
+        onTap: (index) {
+          if (index == 0) {
+            onAvailable();
+          } else {
+            onRecap();
+          }
+        },
         backgroundColor: Theme.of(context).colorScheme.surface,
-        selectedItemColor: AppColors.navBarActive,
+        selectedItemColor: AppColors.navBarInactive,
         unselectedItemColor: AppColors.navBarInactive,
+        selectedIconTheme: IconThemeData(
+          color: showingRecap ? AppColors.navBarInactive : AppColors.textPrimary,
+        ),
         type: BottomNavigationBarType.fixed,
         selectedFontSize: AppTypography.captionSize,
-        unselectedFontSize: AppTypography.smallSize,
+        unselectedFontSize: AppTypography.captionSize,
         items: [
           BottomNavigationBarItem(
             icon: const Icon(Icons.access_time),
-            activeIcon: const Icon(Icons.access_time_filled),
+            activeIcon: const Icon(Icons.access_time),
             label: context.loc.available,
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.calculate_outlined),
-            activeIcon: const Icon(Icons.calculate),
+            activeIcon: const Icon(Icons.calculate_outlined),
             label: context.loc.recap,
           ),
         ],

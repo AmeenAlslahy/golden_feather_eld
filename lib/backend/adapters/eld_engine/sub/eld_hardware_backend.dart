@@ -1,8 +1,8 @@
 // ignore_for_file: unused_field, unused_import
 
-import '../../../../core/domain/hardware/telemetry_reading.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/hardware/telemetry_reading.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
@@ -93,7 +93,11 @@ class EldHardwareBackend implements HardwareBackend {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.hardwareStatus,
       queryParameters: query.isNotEmpty ? query : null,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      parser: (data) {
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+        throw const FormatException('connectivity body is not an object');
+      },
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }

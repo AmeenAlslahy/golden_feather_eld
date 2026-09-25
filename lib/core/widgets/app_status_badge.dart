@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../extensions/context_extensions.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
-import 'app_gap.dart';
 
 enum AppStatusBadgeType {
   success,
@@ -28,17 +27,16 @@ class AppStatusBadge extends StatelessWidget {
     this.trailing,
   });
 
-  Color _getBackgroundColor(BuildContext context) {
-    final eld = context.eld;
+  Color _getBackgroundColor(ThemeData theme) {
     switch (type) {
       case AppStatusBadgeType.success:
-        return eld.successBg;
+        return theme.successLightBackground;
       case AppStatusBadgeType.error:
-        return eld.dangerBg;
+        return theme.errorLightBackground;
       case AppStatusBadgeType.warning:
-        return eld.warningBg;
+        return theme.warningLightBackground;
       case AppStatusBadgeType.info:
-        return eld.infoBg;
+        return theme.infoLightBackground;
     }
   }
 
@@ -51,12 +49,13 @@ class AppStatusBadge extends StatelessWidget {
       case AppStatusBadgeType.warning:
         return AppColors.warningYellow;
       case AppStatusBadgeType.info:
-        return AppColors.primaryBlue;
+        return AppColors.primaryGold;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final textColor = _getTextColor();
 
     return Container(
@@ -65,7 +64,7 @@ class AppStatusBadge extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: _getBackgroundColor(context),
+        color: _getBackgroundColor(theme),
         borderRadius: BorderRadius.circular(AppRadius.badge),
       ),
       child: Row(
@@ -73,7 +72,7 @@ class AppStatusBadge extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Icon(icon, size: 14, color: textColor),
-            AppGap.hXs,
+            const SizedBox(width: 4),
           ],
           Text(
             label,
@@ -83,7 +82,7 @@ class AppStatusBadge extends StatelessWidget {
             ).copyWith(color: textColor),
           ),
           if (trailing != null) ...[
-            AppGap.hXs,
+            const SizedBox(width: 4),
             trailing!,
           ],
         ],

@@ -5,7 +5,11 @@ import '../entities/dvir_report.dart';
 abstract class DvirRepository {
   Future<Either<Failure, List<DvirReport>>> getDvirReports(String vehicleId);
   Future<Either<Failure, DvirReport>> getDvirDetails(String id);
-  Future<Either<Failure, bool>> submitDvirReport(DvirReport report);
+  Future<Either<Failure, bool>> submitDvirReport(
+    DvirReport report, {
+    required int driverId,
+    required String status,
+  });
   Future<Either<Failure, bool>> certifyRepair({
     required String dvirId,
     required String mechanicName,

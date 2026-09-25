@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/services/file_sharing_service.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_gap.dart';
-import '../../../../core/widgets/eld_card.dart';
+import '../../../../routes.dart';
+import '../../../account/presentation/providers/account_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../codriver/presentation/providers/codriver_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
-import '../../domain/entities/inspection_data.dart';
+import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
+import '../widgets/inspection_duty_graph.dart';
+import '../widgets/inspection_events_table.dart';
+import '../widgets/inspection_log_header_table.dart';
 import 'send_logs_page.dart';
 
 /// شاشة DOT Inspection
@@ -25,394 +31,300 @@ class DotInspectionPage extends ConsumerStatefulWidget {
 }
 
 class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
-  final _pinController = TextEditingController();
   int _currentDayIndex = 0;
 
   @override
-  void dispose() {
-    _pinController.dispose();
-    super.dispose();
-  }
-
-  void _showPinSetupDialog() {
-    final newPinController = TextEditingController();
-    final confirmPinController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(context.loc.setInspectionPin),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: newPinController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: context.loc.enter4DigitPin,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-              AppGap.sm,
-              TextField(
-                controller: confirmPinController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: context.loc.confirmPin,
-                  border: const OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (newPinController.text == confirmPinController.text &&
-                  newPinController.text.length == 4) {
-                ref
-                    .read(inspectionProvider.notifier)
-                    .setPinCode(newPinController.text);
-                ref.read(inspectionProvider.notifier).startInspection();
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.loc.startInspection),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showUnlockDialog() {
-    final unlockController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(context.loc.enterPinToUnlock),
-        content: TextField(
-          controller: unlockController,
-          keyboardType: TextInputType.number,
-          maxLength: 4,
-          obscureText: true,
-          autofocus: true,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              final success = ref
-                  .read(inspectionProvider.notifier)
-                  .unlock(unlockController.text);
-              if (success) {
-                ref.read(inspectionProvider.notifier).endInspection();
-                setState(() => _currentDayIndex = 0);
-                Navigator.pop(context);
-              } else {
-                unlockController.clear();
-              }
-            },
-            child: Text(context.loc.unlock),
-          ),
-        ],
-      ),
-    );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(accountProvider.notifier).fetchMyAccount();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final inspectionState = ref.watch(inspectionProvider);
-    final currentDay = inspectionState.days.isNotEmpty
-        ? inspectionState.days[_currentDayIndex]
-        : null;
+    final locked = inspectionState.isInspectionMode && inspectionState.isPinLocked;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
-        automaticallyImplyLeading: !inspectionState.isInspectionMode,
-        title: Text(
-          context.loc.dotInspection,
-          style: const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
+    return PopScope(
+      canPop: !locked,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && locked) {
+          _promptDriverExit();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          automaticallyImplyLeading: !locked,
+          title: Text(
+            context.loc.dotInspection,
+            style: context.styles.appBarTitle,
           ),
-        ),
-        leading: inspectionState.isInspectionMode
-            ? null
-            : Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.surface),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
+          leading: locked
+              ? IconButton(
+                  icon: const Icon(Icons.lock, color: AppColors.surface),
+                  onPressed: _promptDriverExit,
+                )
+              : Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu, color: AppColors.surface),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
                 ),
-              ),
-      ),
-      drawer: inspectionState.isInspectionMode ? null : const EldDrawer(),
-      body: PopScope(
-        canPop: !inspectionState.isInspectionMode,
-        onPopInvokedWithResult: (didPop, result) {
-          if (inspectionState.isInspectionMode && !didPop) {
-            _showUnlockDialog();
-          }
-        },
-        child: inspectionState.isLoading
+        ),
+        drawer: locked ? null : const EldDrawer(),
+        body: inspectionState.isLoading
             ? const Center(child: CircularProgressIndicator())
             : !inspectionState.isInspectionMode
                 ? _buildStartInspection()
-                : _buildInspectionView(currentDay, inspectionState),
+                : _buildInspectionView(inspectionState),
       ),
     );
   }
 
-  /// شاشة بدء التفتيش
   Widget _buildStartInspection() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.assignment_turned_in,
-                        size: 80, color: Theme.of(context).colorScheme.primary),
-                    AppGap.lg,
-                    Text(
-                      context.loc.dotInspection,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    AppGap.md,
-                    Text(
-                      context.loc.startInspectionDesc,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    AppGap.xl,
-                    AppButton(
-                      label: context.loc.startInspection.toUpperCase(),
-                      icon: Icons.lock,
-                      onPressed: _showPinSetupDialog,
-                    ),
-                    AppGap.lg,
-                    AppButton(
-                      label: context.loc.sendLogs.toUpperCase(),
-                      type: EldButtonType.send,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SendLogsPage()),
-                        );
-                      },
-                    ),
-                    AppGap.md,
-                    AppGap.md,
-                    AppButton(
-                      label: context.loc.emailLogs.toUpperCase(),
-                      type: EldButtonType.send,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const SendLogsPage(isEmailMode: true),
-                          ),
-                        );
-                      },
-                    ),
-                    AppGap.md,
-                    AppButton(
-                      label: 'تنزيل ومشاركة التقارير (EXCEL)',
-                      icon: Icons.share,
-                      onPressed: () async {
-                        try {
-                          // إظهار مؤشر التحميل
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('جاري تجهيز وتنزيل التقرير...')),
-                          );
-                          // استدعاء خدمة المشاركة (تم إضافة معلمات افتراضية لتجنب خطأ 400 من الخادم)
-                          final now = DateTime.now().toUtc();
-                          final from = now
-                              .subtract(const Duration(days: 1))
-                              .toIso8601String();
-                          final to = now.toIso8601String();
-                          await ref
-                              .read(fileSharingServiceProvider)
-                              .downloadAndShare(
-                            '/api/reports/route',
-                            queryParameters: {
-                              'deviceId': 0, // معرف وهمي أو حقيقي إذا توفر
-                              'from': from,
-                              'to': to,
-                            },
-                          );
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(e.toString()),
-                                backgroundColor: AppColors.dangerRed),
-                          );
-                        }
-                      },
-                    ),
-                    AppGap.xl,
-                    // شهادة FMCSA
-                    Container(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      decoration: BoxDecoration(
-                        color: AppColors.successGreen.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(AppRadius.input),
-                        border: Border.all(
-                            color:
-                                AppColors.successGreen.withValues(alpha: 0.2)),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.verified,
-                              color: AppColors.successGreen, size: 32),
-                          AppGap.sm,
-                          Text(
-                            Localizations.localeOf(context).languageCode == 'ar'
-                                ? 'هذا التطبيق متوافق مع المعايير الدولية لسلامة النقل وإدارة الأساطيل'
-                                : 'This application is compliant with international fleet safety standards',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: AppTypography.captionSize,
-                              color: AppColors.successGreen,
-                              fontWeight: AppTypography.semiBold,
-                            ),
-                          ),
-                          AppGap.xs,
-                          Text(
-                            'Golden Feather ELD v1.0.0',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: AppTypography.smallSize,
-                              color:
-                                  AppColors.successGreen.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final error = ref.watch(inspectionProvider).error;
+    // Live GET /eld/dot-inspection. Server text wins when present; local copy is the fallback.
+    final screen = ref.watch(dotInspectionScreenProvider).asData?.value;
+    final guidance = _nonEmpty(screen?.guidanceText) ??
+        (isArabic
+            ? 'افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة'
+            : 'Inspect logs for the 24-hour period and the previous days for one HOS cycle');
+    final handOver = _nonEmpty(screen?.handOverDeviceNotice) ??
+        (isArabic
+            ? 'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط'
+            : 'Set a PIN, select "Start Inspection", and give your device to the officer');
+    final compliance = _nonEmpty(screen?.carrierComplianceStatement) ??
+        (isArabic
+            ? 'يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.'
+            : 'This ELD certifies that use of the app with the ELD device complies with all requirements for ELD as defined in Federal Motor Carrier Safety regulation 49 CFR part 395 Subpart B.');
+    final canStart = screen?.canStartInspection ?? true;
+    final canSend = screen?.canSendLogs ?? true;
+    final canEmail = screen?.canEmailLogs ?? true;
+    final canPacket = screen?.canViewInformationPacket ?? true;
+    final notAllowed = isArabic
+        ? 'غير متاح لهذا الحساب حسب الخادم.'
+        : 'Not available for this account per the server.';
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      children: [
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(error, textAlign: TextAlign.center),
           ),
-        );
-      },
+        Text(
+          guidance,
+          textAlign: TextAlign.center,
+          style: context.styles.body,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          handOver,
+          textAlign: TextAlign.center,
+          style: context.styles.muted,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: isArabic ? 'بدء التفتيش' : 'START INSPECTION',
+          type: EldButtonType.dark,
+          onPressed: canStart ? _startWithPin : null,
+        ),
+        if (!canStart) ...[
+          const SizedBox(height: 8),
+          Text(
+            isArabic
+                ? 'الخادم لا يسمح ببدء التفتيش الآن.'
+                : 'The server does not allow starting an inspection right now.',
+            textAlign: TextAlign.center,
+            style: context.styles.muted,
+          ),
+        ],
+        const SizedBox(height: 28),
+        const Divider(height: 1),
+        const SizedBox(height: 28),
+        Text(
+          isArabic
+              ? 'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة'
+              : 'Send logs for the 24-hour period and the previous days for one HOS cycle',
+          textAlign: TextAlign.center,
+          style: context.styles.body,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          isArabic
+              ? 'أرسل سجلاتك للضابط إذا طلب ذلك'
+              : 'Send your logs to the officer if they request',
+          textAlign: TextAlign.center,
+          style: context.styles.muted,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: isArabic ? 'إرسال السجلات' : 'SEND LOGS',
+          type: EldButtonType.dark,
+          onPressed: canSend
+              ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SendLogsPage()),
+                  );
+                }
+              : null,
+        ),
+        if (!canSend) ...[
+          const SizedBox(height: 8),
+          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
+        ],
+        const SizedBox(height: 28),
+        const Divider(height: 1),
+        const SizedBox(height: 28),
+        Text(
+          isArabic
+              ? 'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF'
+              : 'Email logs for the 24-hour period and the previous days for one HOS cycle as PDF',
+          textAlign: TextAlign.center,
+          style: context.styles.body,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          isArabic
+              ? 'أرسل سجلاتك بصيغة PDF'
+              : 'Email your logs in the PDF format',
+          textAlign: TextAlign.center,
+          style: context.styles.muted,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: isArabic ? 'بريد السجلات' : 'EMAIL LOGS',
+          type: EldButtonType.dark,
+          onPressed: canEmail
+              ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SendLogsPage(isEmailMode: true),
+                    ),
+                  );
+                }
+              : null,
+        ),
+        if (!canEmail) ...[
+          const SizedBox(height: 8),
+          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
+        ],
+        const SizedBox(height: 28),
+        const Divider(height: 1),
+        const SizedBox(height: 28),
+        Text(
+          compliance,
+          textAlign: TextAlign.center,
+          style: context.styles.body,
+        ),
+        const SizedBox(height: 16),
+        AppButton(
+          label: isArabic ? 'حزمة المعلومات' : 'INFORMATION PACKET',
+          type: EldButtonType.dark,
+          onPressed: canPacket ? () => context.push(AppRoutes.infoPacket) : null,
+        ),
+        if (!canPacket) ...[
+          const SizedBox(height: 8),
+          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
+        ],
+      ],
     );
   }
 
-  /// عرض التفتيش مع السجلات
-  Widget _buildInspectionView(
-      InspectionDayData? currentDay, InspectionState state) {
+  Widget _buildInspectionView(InspectionState state) {
+    final log = state.log;
+    final day = _currentDayIndex >= 0 && _currentDayIndex < state.cycle.length
+        ? state.cycle[_currentDayIndex]
+        : null;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final account = ref.watch(accountProvider).accountData;
+    final co = ref.watch(codriverProvider).currentCoDriver;
     return Column(
       children: [
-        // التنقل بين الأيام
+        if (state.error != null)
+          Material(
+            color: AppColors.warningYellow.withValues(alpha: 0.15),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(state.error!, textAlign: TextAlign.center),
+            ),
+          ),
         Container(
-          color: AppColors.primaryBlue.withValues(alpha: 0.05),
+          color: AppColors.primaryGold.withValues(alpha: 0.05),
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
-                onPressed: _currentDayIndex < state.days.length - 1
-                    ? () => setState(() => _currentDayIndex++)
+                onPressed: _currentDayIndex < state.cycle.length - 1
+                    ? () {
+                        final next = _currentDayIndex + 1;
+                        setState(() => _currentDayIndex = next);
+                        ref
+                            .read(inspectionProvider.notifier)
+                            .loadLog(state.cycle[next].logDate);
+                      }
                     : null,
               ),
               Text(
-                currentDay?.formattedDate ?? '',
-                style: const TextStyle(
-                  fontSize: AppTypography.bodySize,
-                  fontWeight: AppTypography.bold,
-                ),
+                day?.displayDate.isNotEmpty == true
+                    ? day!.displayDate
+                    : (log?.displayDate ?? ''),
+                style: context.styles.bodyBold,
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
                 onPressed: _currentDayIndex > 0
-                    ? () => setState(() => _currentDayIndex--)
+                    ? () {
+                        final next = _currentDayIndex - 1;
+                        setState(() => _currentDayIndex = next);
+                        ref
+                            .read(inspectionProvider.notifier)
+                            .loadLog(state.cycle[next].logDate);
+                      }
                     : null,
               ),
             ],
           ),
         ),
         const Divider(height: 1),
-        // تفاصيل اليوم
         Expanded(
-          child: currentDay == null
-              ? Center(child: Text(context.loc.noData))
+          child: log == null
+              ? Center(child: Text(state.error ?? context.loc.noData))
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: Column(
                     children: [
-                      EldCard(
-                        child: Column(
-                          children: [
-                            _buildHosRow(
-                                context.loc.drivingStatus,
-                                '${currentDay.drivingHours}h',
-                                AppColors.successGreen),
-                            const Divider(),
-                            _buildHosRow(
-                                context.loc.onDuty,
-                                '${currentDay.onDutyHours}h',
-                                AppColors.warningYellow),
-                            const Divider(),
-                            _buildHosRow(
-                                context.loc.offDuty,
-                                '${currentDay.offDutyHours}h',
-                                AppColors.textSecondary),
-                            const Divider(),
-                            _buildHosRow(
-                                context.loc.sleeperBerth,
-                                '${currentDay.sleeperHours}h',
-                                AppColors.primaryBlue),
-                            const Divider(),
-                            _buildHosRow(
-                                context.loc.certified,
-                                currentDay.isCertified
-                                    ? context.loc.yes
-                                    : context.loc.no,
-                                currentDay.isCertified
-                                    ? AppColors.successGreen
-                                    : AppColors.dangerRed),
-                          ],
+                      InspectionLogHeaderTable(
+                        log: log,
+                        day: day,
+                        driverLicense: account?.license.number ?? '-',
+                        driverLicenseState: account?.license.state ?? '-',
+                        coDriver: co?.name ?? '',
+                        coDriverId:
+                            co?.isLinked == true ? '${co!.coDriverId}' : '',
+                      ),
+                      const Divider(height: 1),
+                      InspectionDutyGraph(events: log.events),
+                      const Divider(height: 1),
+                      InspectionEventsTable(events: log.events),
+                      const SizedBox(height: AppSpacing.lg),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: AppButton(
+                          label: isArabic
+                              ? 'خروج السائق'
+                              : 'DRIVER EXIT',
+                          type: EldButtonType.danger,
+                          onPressed: _promptDriverExit,
                         ),
                       ),
-                      AppGap.lg,
-                      AppButton(
-                        label: context.loc.endInspection.toUpperCase(),
-                        type: EldButtonType.danger,
-                        onPressed: () {
-                          _showUnlockDialog();
-                        },
-                      ),
+                      const SizedBox(height: AppSpacing.lg),
                     ],
                   ),
                 ),
@@ -421,21 +333,219 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     );
   }
 
-  Widget _buildHosRow(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontSize: AppTypography.bodySize)),
-          Text(value,
-              style: TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.bold,
-                color: color,
-              )),
-        ],
-      ),
-    );
+  Future<void> _startWithPin() async {
+    final pin = await _askNewPin();
+    if (pin == null || !mounted) return;
+    await ref.read(inspectionProvider.notifier).startInspection(pin: pin);
+    if (!mounted) return;
+    setState(() => _currentDayIndex = 0);
   }
+
+  Future<String?> _askNewPin() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final pin = TextEditingController();
+    final confirm = TextEditingController();
+    String? error;
+    final result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                isArabic ? 'رمز التفتيش' : 'Inspection PIN',
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic
+                        ? 'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.'
+                        : 'Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.',
+                    style: context.styles.muted,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: pin,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: isArabic ? 'الرمز' : 'PIN',
+                      counterText: '',
+                    ),
+                  ),
+                  TextField(
+                    controller: confirm,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: isArabic ? 'تأكيد الرمز' : 'Confirm PIN',
+                      counterText: '',
+                    ),
+                  ),
+                  if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(error!, style: context.styles.error),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (pin.text.length != 4) {
+                      setDialogState(() {
+                        error = isArabic
+                            ? 'الرمز يجب أن يكون 4 أرقام.'
+                            : 'PIN must be 4 digits.';
+                      });
+                      return;
+                    }
+                    if (pin.text != confirm.text) {
+                      setDialogState(() {
+                        error = isArabic
+                            ? 'الرمزان غير متطابقين.'
+                            : 'The PINs do not match.';
+                      });
+                      return;
+                    }
+                    Navigator.pop(dialogContext, pin.text);
+                  },
+                  child: Text(isArabic ? 'بدء' : 'Start'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    Future.delayed(const Duration(milliseconds: 400), () {
+      pin.dispose();
+      confirm.dispose();
+    });
+    return result;
+  }
+
+  Future<void> _promptDriverExit() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final password = TextEditingController();
+    String? error;
+    var busy = false;
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(isArabic ? 'كلمة مرور السائق' : 'Driver password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic
+                        ? 'أدخل كلمة مرور حساب السائق للخروج. المفتش لا يخرج من هنا.'
+                        : 'Enter the driver account password to exit. The officer cannot leave here.',
+                    style: context.styles.muted,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: password,
+                    obscureText: true,
+                    autofocus: true,
+                    enabled: !busy,
+                    decoration: InputDecoration(
+                      labelText: isArabic ? 'كلمة المرور' : 'Password',
+                    ),
+                  ),
+                  if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(error!, style: context.styles.error),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.pop(dialogContext, false),
+                  child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                ),
+                TextButton(
+                  onPressed: busy
+                      ? null
+                      : () async {
+                          final user = ref.read(authStateProvider).user;
+                          final identifier =
+                              user?.username.trim().isNotEmpty == true
+                                  ? user!.username.trim()
+                                  : (user?.email.trim() ?? '');
+                          if (identifier.isEmpty || password.text.isEmpty) {
+                            setDialogState(() {
+                              error = isArabic
+                                  ? 'أدخل كلمة مرور السائق.'
+                                  : 'Enter the driver password.';
+                            });
+                            return;
+                          }
+                          setDialogState(() {
+                            busy = true;
+                            error = null;
+                          });
+                          final result =
+                              await ref.read(authBackendProvider).login(
+                                    identifier: identifier,
+                                    password: password.text,
+                                    serverUrl: ref.read(serverUrlProvider),
+                                    backendType: ref
+                                        .read(localStorageProvider)
+                                        .backendType,
+                                  );
+                          if (!dialogContext.mounted) return;
+                          final accepted =
+                              result.fold((_) => false, (_) => true);
+                          if (!accepted) {
+                            setDialogState(() {
+                              busy = false;
+                              error = isArabic
+                                  ? 'كلمة المرور غير صحيحة.'
+                                  : 'Incorrect password.';
+                            });
+                            return;
+                          }
+                          ref
+                              .read(inspectionProvider.notifier)
+                              .exitAfterDriverVerified();
+                          Navigator.pop(dialogContext, true);
+                        },
+                  child: Text(isArabic ? 'خروج' : 'Exit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    Future.delayed(const Duration(milliseconds: 400), () {
+      password.dispose();
+    });
+    if (ok == true && mounted) {
+      setState(() => _currentDayIndex = 0);
+    }
+  }
+}
+
+String? _nonEmpty(String? value) {
+  final v = value?.trim();
+  return (v == null || v.isEmpty) ? null : v;
 }

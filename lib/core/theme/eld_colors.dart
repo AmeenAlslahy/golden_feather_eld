@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 /// الألوان الدلالية للهوية — أزواج آمنة (Fg / Bg).
@@ -49,7 +49,7 @@ class EldColors extends ThemeExtension<EldColors> {
         goldFg: AppColors.goldDeep,
         goldBg: Color(0xFFFDF8E7),
         onGold: AppColors.black,
-        onBlack: AppColors.primaryBlue,
+        onBlack: AppColors.primaryGold,
         successFg: AppColors.successText,
         successBg: AppColors.successBg,
         warningFg: AppColors.warningText,
@@ -62,10 +62,10 @@ class EldColors extends ThemeExtension<EldColors> {
 
   /// الوضع الداكن — نصوص فاتحة لضمان التباين على الأسود.
   factory EldColors.dark() => const EldColors(
-        goldFg: AppColors.primaryBlue,
+        goldFg: AppColors.primaryGold,
         goldBg: Color(0xFF2A2410),
         onGold: AppColors.black,
-        onBlack: AppColors.primaryBlue,
+        onBlack: AppColors.primaryGold,
         successFg: AppColors.successOnDark,
         successBg: Color(0xFF0F2417),
         warningFg: AppColors.warningOnDark,
@@ -125,4 +125,21 @@ class EldColors extends ThemeExtension<EldColors> {
       infoBg: Color.lerp(infoBg, other.infoBg, t)!,
     );
   }
+}
+
+/// ألوان الحالة من الثيم — لا تُنشئ طبقة ألوان ثانية.
+extension EldColorTokens on ThemeData {
+  EldColors get eld => extension<EldColors>()!;
+  Color get goldColor => eld.goldFg;
+  Color get goldLightBackground => eld.goldBg;
+  Color get onGoldColor => eld.onGold;
+  Color get onBlackColor => eld.onBlack;
+  Color get successColor => eld.successFg;
+  Color get successLightBackground => eld.successBg;
+  Color get warningColor => eld.warningFg;
+  Color get warningLightBackground => eld.warningBg;
+  Color get dangerColor => eld.dangerFg;
+  Color get errorLightBackground => eld.dangerBg;
+  Color get infoColor => eld.infoFg;
+  Color get infoLightBackground => eld.infoBg;
 }

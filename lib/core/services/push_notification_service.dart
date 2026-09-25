@@ -140,23 +140,16 @@ class PushNotificationService {
     final id = _storage.deviceId;
     final url = _storage.serverUrl;
     if (id.isEmpty || url.isEmpty) return;
-    // Security: only https is allowed
-    if (!url.startsWith('https://')) {
-      AppLogger.warning('Token upload blocked: insecure URL (only HTTPS allowed)');
-      return;
-    }
 
     try {
       final request = await HttpClient().postUrl(Uri.parse(url));
       request.headers.contentType =
           ContentType.parse('application/x-www-form-urlencoded');
-      // Token is sent in POST body (not URL query) to avoid logging
       request.write(
           'id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}');
       await request.close();
       AppLogger.info('📤 Token uploaded to server');
     } catch (e) {
-      // Do not log token
       AppLogger.error('Failed to upload token', e);
     }
   }

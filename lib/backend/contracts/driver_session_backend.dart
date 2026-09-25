@@ -1,5 +1,5 @@
-import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
+import '../../domain/shared/value_objects.dart';
 import 'contract_enums.dart';
 import 'raw_json.dart';
 
@@ -11,10 +11,13 @@ abstract interface class DriverSessionBackend {
   /// GET /api/drivers
   Future<Result<List<dynamic>>> getAvailableDrivers();
 
+  /// GET /eld/sessions/co-driver
+  Future<Result<RawJson>> getCurrentCoDriver();
+
   /// GET /eld/sessions/{sessionId}/members
   Future<Result<RawJson>> getMembers(int sessionId);
 
-  /// POST /eld/sessions/connect
+  /// POST /eld/hardware/connect
   // TODO(P2): replace with DriverSession
   Future<Result<RawJson>> connect({
     String? uniqueId,

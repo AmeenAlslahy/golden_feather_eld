@@ -3,14 +3,13 @@ import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_gap.dart';
 
 class StatusOptionTile extends StatelessWidget {
   final DutyStatus status;
   final String label;
   final bool isSelected;
   final bool isLast;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const StatusOptionTile({
     super.key,
@@ -25,37 +24,39 @@ class StatusOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDriving = status == DutyStatus.driving;
+    final enabled = onTap != null;
 
     return Column(
       children: [
         InkWell(
           onTap: onTap,
+          splashColor: Colors.black.withValues(alpha: 0.14),
+          highlightColor: Colors.black.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               children: [
-                Icon(
-                  isSelected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.dividerColor,
-                  size: 24,
-                ),
-                AppGap.hMd,
                 Expanded(
                   child: Text(
                     label,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isDriving && !isSelected
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: !enabled || (isDriving && !isSelected)
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.38)
                           : theme.colorScheme.onSurface,
                     ),
                   ),
+                ),
+                Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: isSelected
+                      ? const Color(0xFF1565C0)
+                      : theme.dividerColor,
+                  size: 22,
                 ),
               ],
             ),
@@ -64,9 +65,9 @@ class StatusOptionTile extends StatelessWidget {
         if (!isLast)
           Divider(
               height: 1,
-              indent: AppSpacing.xxxl,
+              indent: AppSpacing.lg,
               endIndent: AppSpacing.lg,
-              color: theme.dividerColor.withValues(alpha: 0.3)),
+              color: theme.dividerColor.withValues(alpha: 0.5)),
       ],
     );
   }
@@ -74,7 +75,7 @@ class StatusOptionTile extends StatelessWidget {
 
 class YardMovesOptionTile extends StatelessWidget {
   final bool isYardMoves;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const YardMovesOptionTile({
     super.key,
@@ -91,34 +92,35 @@ class YardMovesOptionTile extends StatelessWidget {
       children: [
         Divider(
             height: 1,
-            indent: AppSpacing.xxxl,
+            indent: AppSpacing.lg,
             endIndent: AppSpacing.lg,
-            color: theme.dividerColor.withValues(alpha: 0.3)),
+            color: theme.dividerColor.withValues(alpha: 0.5)),
         InkWell(
           onTap: onTap,
+          splashColor: Colors.black.withValues(alpha: 0.14),
+          highlightColor: Colors.black.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               children: [
-                AppGap.hXxl, // Indent to show it's a sub-option (36 = xxl)
-                Icon(
-                  isYardMoves ? Icons.check_box : Icons.check_box_outline_blank,
-                  color: isYardMoves
-                      ? theme.colorScheme.primary
-                      : theme.dividerColor,
-                  size: 24,
-                ),
-                AppGap.hMd,
                 Expanded(
                   child: Text(
                     loc.yardMoves,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight:
-                          isYardMoves ? FontWeight.bold : FontWeight.normal,
-                      color: theme.colorScheme.onSurface,
+                          isYardMoves ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
+                ),
+                Icon(
+                  isYardMoves
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: isYardMoves
+                      ? const Color(0xFF1565C0)
+                      : theme.dividerColor,
+                  size: 22,
                 ),
               ],
             ),

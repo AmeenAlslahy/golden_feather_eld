@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/driver_session_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -13,6 +13,11 @@ class MockDriverSessionBackend implements DriverSessionBackend {
   Future<Result<RawJson>> getActiveSession(DriverId driverId) =>
       throw UnimplementedError(
         'MockDriverSessionBackend.getActiveSession — Phase 2',
+      );
+
+  @override
+  Future<Result<RawJson>> getCurrentCoDriver() => throw UnimplementedError(
+        'MockDriverSessionBackend.getCurrentCoDriver — no invented co-driver',
       );
 
   @override
@@ -38,10 +43,12 @@ class MockDriverSessionBackend implements DriverSessionBackend {
     DriverId? newCoDriverId,
     String? uniqueId,
     String? reason,
-  }) =>
-      throw UnimplementedError(
-        'MockDriverSessionBackend.manageCoDriver — Phase 2',
-      );
+  }) async {
+    return ok(<String, dynamic>{
+      'action': action.wire,
+      if (coDriverId != null) 'coDriverId': coDriverId.value,
+    });
+  }
 
   @override
   Future<Result<void>> switchPrimaryDriver({

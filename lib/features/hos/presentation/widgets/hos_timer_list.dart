@@ -5,9 +5,7 @@ import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:golden_feather_eld/core/extensions/time_extensions.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../providers/hos_engine_provider.dart';
 
 class HosTimerList extends ConsumerWidget {
@@ -30,7 +28,7 @@ class HosTimerList extends ConsumerWidget {
         // شريط العنوان
         Container(
           color: Theme.of(context).colorScheme.surface,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           alignment: Alignment.center,
           child: const Text(
             'HOURS OF SERVICE',
@@ -86,7 +84,7 @@ class HosTimerList extends ConsumerWidget {
     required String time,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.smMd),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -100,7 +98,7 @@ class HosTimerList extends ConsumerWidget {
                   fontWeight: AppTypography.bold,
                 ),
               ),
-              const AppGap.custom(2),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: const TextStyle(

@@ -1,4 +1,4 @@
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../domain/entities/daily_log.dart';
 import 'log_model.dart';
 
@@ -84,6 +84,7 @@ class DailyLogDto {
       isFormComplete: mappedFormStatus == FormStatus.completed,
       isCertified: mappedCertStatus == CertificationStatus.certified,
       requiresAction: requiresAction,
+      today: today,
       events: events.map((e) => LogEventModel.fromJson(e)).toList(),
     );
   }

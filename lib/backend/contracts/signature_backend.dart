@@ -1,6 +1,6 @@
-import '../../core/domain/shared/value_objects.dart';
-import '../../core/domain/signature/signature.dart';
 import '../../core/result/result.dart';
+import '../../domain/shared/value_objects.dart';
+import '../../domain/signature/signature.dart';
 
 abstract interface class SignatureBackend {
   /// POST /eld/signatures/{driverId}

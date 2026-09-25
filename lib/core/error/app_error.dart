@@ -12,6 +12,8 @@
 /// **Rule:** Every [AppError] subclass must be constructible as `const`.
 library;
 
+import 'package:equatable/equatable.dart';
+
 /// Severity of an error, used for logging and UI presentation.
 enum ErrorSeverity {
   /// Informational; user should not be alarmed.
@@ -80,13 +82,13 @@ sealed class AppError {
   /// Returns a copy with additional context merged in.
   ///
   /// Useful for enriching an error as it propagates up the stack.
-  AppError withContext(Map<String, dynamic> extra) {
-    return _copyWith(context: {...?context, ...extra});
+  T withContext<T extends AppError>(Map<String, dynamic> extra) {
+    return _copyWith(context: {...?context, ...extra}) as T;
   }
 
   /// Returns a copy with cause and stackTrace attached.
-  AppError withCause(Object cause, [StackTrace? stackTrace]) {
-    return _copyWith(cause: cause, stackTrace: stackTrace);
+  T withCause<T extends AppError>(Object cause, [StackTrace? stackTrace]) {
+    return _copyWith(cause: cause, stackTrace: stackTrace) as T;
   }
 
   /// Internal copy helper. Subclasses override.
@@ -527,4 +529,119 @@ final class UnknownError extends AppError {
       context: context ?? this.context,
     );
   }
+}
+
+// ============================================================================
+// Legacy Failure (Gradual Migration Bridge)
+// ============================================================================
+
+/// واجهة الفشل الأساسية
+abstract class Failure extends AppError with Equatable {
+  final String message;
+  final int? statusCode;
+
+  const Failure({
+    required this.message,
+    this.statusCode,
+  }) : super(
+          code: 'legacy.failure',
+          l10nKey: message,
+          severity: ErrorSeverity.error,
+        );
+
+  @override
+  List<Object?> get props => [message, statusCode];
+
+  @override
+  Failure _copyWith({
+    Object? cause,
+    StackTrace? stackTrace,
+    Map<String, dynamic>? context,
+  }) {
+    return this; // Legacy failures do not support deep copy
+  }
+}
+
+/// فشل الخادم
+class ServerFailure extends Failure {
+  const ServerFailure({
+    required super.message,
+    super.statusCode,
+  });
+}
+
+/// إخفاق مخصص عند انقطاع الإنترنت
+class NetworkFailure extends Failure {
+  const NetworkFailure({
+    super.message = 'noInternet',
+  });
+}
+
+/// فشل المصادقة
+class AuthFailure extends Failure {
+  const AuthFailure({
+    super.message = 'sessionExpired',
+  });
+}
+
+class MissingConfigurationFailure extends Failure {
+  const MissingConfigurationFailure({
+    super.message = 'serverNotConfigured',
+  });
+}
+
+class InvalidConfigurationFailure extends Failure {
+  const InvalidConfigurationFailure({
+    super.message = 'invalidConfiguration',
+  });
+}
+
+class InvalidCredentialsFailure extends Failure {
+  const InvalidCredentialsFailure({
+    super.message = 'invalidCredentials',
+  });
+}
+
+class SessionMissingFailure extends Failure {
+  const SessionMissingFailure({
+    super.message = 'sessionMissing',
+  });
+}
+
+/// فشل التخزين المؤقت
+class CacheFailure extends Failure {
+  const CacheFailure({
+    required super.message,
+  });
+}
+
+/// فشل الصلاحيات
+class PermissionFailure extends Failure {
+  const PermissionFailure({
+    required super.message,
+  });
+}
+
+/// فشل التتبع
+class TrackingFailure extends Failure {
+  const TrackingFailure({
+    required super.message,
+  });
+}
+
+/// فشل المزامنة
+class SyncFailure extends Failure {
+  const SyncFailure({
+    required super.message,
+  });
+}
+
+/// فشل التحقق من البيانات
+class ValidationFailure extends Failure {
+  final Map<String, String>? fieldErrors;
+
+  const ValidationFailure({
+    required super.message,
+    this.fieldErrors,
+  });
 }

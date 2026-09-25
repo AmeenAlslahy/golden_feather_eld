@@ -4,13 +4,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_environment.dart';
+import '../../core/config/runtime_selection.dart';
 import '../../core/network/core_providers.dart';
 import '../../core/services/local_storage_service.dart';
-import '../../core/time/trusted_time_provider.dart';
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
-import '../base/backend_adapter.dart';
-import '../base/backend_registry.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';
 import '../contracts/compliance_backend.dart';
@@ -32,55 +30,34 @@ import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
-import '../http/api_client.dart';
-import '../http/api_config.dart';
-import '../http/interceptors/time_drift_interceptor.dart';
-import 'backend_network_providers.dart';
-
-/// Provides the global [BackendRegistry].
-///
-/// In Phase 1, it registers [MockAdapter] and [EldEngineAdapter].
+import '../core/backend_adapter.dart';
+import '../core/backend_registry.dart';
+/// View of [activeBackendProvider]. Not a second selector and not a second client.
 final backendRegistryProvider = Provider<BackendRegistry>((ref) {
-  final mockAdapter = MockAdapter();
-  final realAdapter = EldEngineAdapter.create(
-    baseUrl: 'https://snsoft.cloud',
-    apiClient: ApiClient(
-      config: const ApiConfig(baseUrl: 'https://snsoft.cloud/api'),
-    ),
-  );
-
-  return BackendRegistry(
-    adapters: [mockAdapter, realAdapter],
-    activeId: mockAdapter.identity.id, // Default to mock for local dev
-  );
+  return BackendRegistry.single(ref.watch(activeBackendProvider));
 });
 
 /// Provides the active [BackendAdapter].
 ///
-/// يستخدم [apiClientProvider] الموحّد الذي يحتوي على AuthInterceptor
-/// لضمان إرسال التوكن مع كل الطلبات.
-/// يُعاد الرجوع إلى [MockAdapter] فقط عند ضبط البيئة صراحةً على `mock`.
+/// Mock only when the environment is mock, or development saved an explicit
+/// mock override. Production and staging ignore a saved mock flag.
+/// The host comes from [serverUrlProvider], the same value the HTTP client uses.
 final activeBackendProvider = Provider<BackendAdapter>((ref) {
   final prefs = ref.watch(localStorageProvider);
-  
-  // الوضع الوهمي (Mock)
-  if (prefs.backendType == 'mock' || AppEnvironmentConfig.current == AppEnvironment.mock) {
+  final choice = resolveRuntimeBackend(
+    environment: AppEnvironmentConfig.current,
+    buildBaseUrl: AppEnvironmentConfig.apiBaseUrl,
+    savedServerUrl: ref.watch(serverUrlProvider),
+    savedBackendType: prefs.backendType,
+  );
+
+  if (choice.useMock) {
     return MockAdapter();
   }
 
-  // استخدام apiClientProvider الموحّد (يحتوي على AuthInterceptor + RequestLogger)
-  final apiClient = ref.watch(apiClientProvider);
-
-  // حقن متلقف حساب التوقيت (Time Drift)
-  apiClient.dio.interceptors.add(
-    TimeDriftInterceptor(timeProvider: ref.read(trustedTimeProvider)),
-  );
-
-  final baseUrl = prefs.serverUrl.isNotEmpty ? prefs.serverUrl : 'https://snsoft.cloud';
-
   return EldEngineAdapter.create(
-    baseUrl: baseUrl,
-    apiClient: apiClient,
+    baseUrl: choice.serverUrl,
+    apiClient: ref.watch(apiClientProvider),
   );
 });
 

@@ -7,10 +7,6 @@ import '../../routes.dart';
 import '../extensions/context_extensions.dart';
 import '../services/live_tracking_data_source.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_radius.dart';
-import '../theme/app_spacing.dart';
-import '../utils/logger.dart';
-import 'app_gap.dart';
 
 final connectionStatusStreamProvider =
     StreamProvider.autoDispose<ConnectionStatus>((ref) async* {
@@ -28,14 +24,8 @@ class ConnectionStatusIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statusAsyncValue = ref.watch(connectionStatusStreamProvider);
 
-    AppLogger.info('ConnectionStatusIndicator UI State: $statusAsyncValue');
-
+    // لا تسجيل داخل build: المعرّف يظهر في AppBar ويُعاد بناؤه كثيراً.
     final status = statusAsyncValue.value ?? ConnectionStatus.disconnected;
-
-    // تسجيل حالة تحميل صريحة إذا كانت موجودة (لأغراض التصحيح)
-    if (statusAsyncValue.isLoading && !statusAsyncValue.hasValue) {
-      AppLogger.info('ConnectionStatusIndicator is strictly in Loading state');
-    }
 
     return _buildIndicator(context, status);
   }
@@ -71,11 +61,11 @@ class ConnectionStatusIndicator extends ConsumerWidget {
 
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xsLg, vertical: AppSpacing.xs),
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
@@ -83,8 +73,8 @@ class ConnectionStatusIndicator extends ConsumerWidget {
           children: [
             if (isSyncingOrConnecting)
               SizedBox(
-                width: AppSpacing.smMd,
-                height: AppSpacing.smMd,
+                width: 12,
+                height: 12,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -92,7 +82,7 @@ class ConnectionStatusIndicator extends ConsumerWidget {
               )
             else
               Icon(icon, size: 14, color: color),
-            AppGap.hXsSm,
+            const SizedBox(width: 6),
             Flexible(
               child: Text(
                 text,

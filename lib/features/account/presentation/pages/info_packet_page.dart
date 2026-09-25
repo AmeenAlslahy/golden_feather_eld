@@ -4,16 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/eld_card.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../inspection/domain/inspection_transfer.dart';
+import '../../../inspection/presentation/providers/inspection_provider.dart';
 import 'instructions_page.dart';
-import 'manual_detail_page.dart';
 import 'user_manual_page.dart';
 
-/// شاشة الوثائق والمعلومات
+/// Original information-packet landing: User Manual + Instructions.
 class InfoPacketPage extends ConsumerWidget {
   const InfoPacketPage({super.key});
+
+  static const _manualBlurbEn =
+      'The user\'s manual, instruction sheet, and malfunction instruction sheet can be in electronic form. This is in accordance with the federal register titled "Regulatory Guidance Concerning Electronic Signatures and Documents" (76 FR 411).';
+  static const _manualBlurbAr =
+      'يجوز أن يكون دليل المستخدم وورقة التعليمات وورقة تعليمات الأعطال بصيغة إلكترونية، وفق السجل الفيدرالي بعنوان "إرشاد تنظيمي بشأن التوقيعات والمستندات الإلكترونية" (76 FR 411).';
+  static const _instructionsBlurbEn =
+      'In addition to the above, a supply of blank driver\'s records of duty status (RODS) graph-grids sufficient to record the driver\'s duty status and other related information for a minimum of 8 days must be onboard the commercial motor vehicle (CMV).';
+  static const _instructionsBlurbAr =
+      'بالإضافة إلى ما سبق، يجب أن تكون في المركبة التجارية نماذج فارغة لسجلات حالة الخدمة (RODS) تكفي لتسجيل حالة السائق والمعلومات ذات الصلة لمدة لا تقل عن 8 أيام.';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,17 +30,12 @@ class InfoPacketPage extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.eldAppBar,
         title: Text(
-          loc.infoPacket,
-          style: 
-          const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          isArabic ? loc.infoPacket : 'Information Packet',
+          style: context.styles.appBarTitle,
         ),
         centerTitle: true,
         leading: Builder(
@@ -42,274 +46,132 @@ class InfoPacketPage extends ConsumerWidget {
         ),
       ),
       drawer: const EldDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ========== دليل المستخدم ==========
-            EldCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.menu_book,
-                            color: AppColors.primaryBlue, size: 24),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.userManual,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              loc.userManual, // Fallback for secondary text or adjust if there is a specific one
-                              style: const TextStyle(
-                                  fontSize: AppTypography.smallSize,
-                                  color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const UserManualPage(),
-                          ),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.darkButton),
-                      child: Text(loc.viewUserManual),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // ========== تعليمات السجلات الورقية ==========
-            EldCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.warningYellow.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.assignment,
-                            color: AppColors.warningYellow, size: 24),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.instructions,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              loc.instructions,
-                              style: const TextStyle(
-                                  fontSize: AppTypography.smallSize,
-                                  color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const InstructionsPage(),
-                          ),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.darkButton),
-                      child: Text(loc.viewInstructions),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // ========== دليل الأعطال ==========
-            EldCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.dangerRed.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.warning_amber,
-                            color: AppColors.dangerRed, size: 24),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              loc.malfunctionManual,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              loc.malfunctionManual,
-                              style: const TextStyle(
-                                  fontSize: AppTypography.smallSize,
-                                  color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ManualDetailPage(
-                              title: loc.malfunctionManual,
-                              content: _getMalfunctionManualContent(isArabic),
-                            ),
-                          ),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.darkButton),
-                      child: Text(loc.viewMalfunctionManual),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-
-            // ========== ملاحظة قانونية ==========
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                loc.legalNotice,
-                style: const TextStyle(
-                    fontSize: AppTypography.captionSize,
-                    color: AppColors.textSecondary),
-              ),
-            ),
-          ],
-        ),
+      body: ListView(
+        children: [
+          const SizedBox(height: AppSpacing.xl),
+          _PacketStatus(packet: ref.watch(informationPacketProvider)),
+          _PacketBlock(
+            title: loc.userManual,
+            body: isArabic ? _manualBlurbAr : _manualBlurbEn,
+            buttonLabel: loc.viewUserManual.toUpperCase(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserManualPage()),
+              );
+            },
+          ),
+          const Divider(height: 1),
+          _PacketBlock(
+            title: loc.instructions,
+            body: isArabic ? _instructionsBlurbAr : _instructionsBlurbEn,
+            buttonLabel: loc.viewInstructions.toUpperCase(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InstructionsPage()),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-// ========== محتوى دليل الأعطال ==========
-List<ManualSection> _getMalfunctionManualContent(bool isArabic) {
-  return [
-    ManualSection(
-      title: isArabic ? 'أنواع الأعطال' : 'Malfunction Types',
-      steps: [
-        isArabic
-            ? 'فجوة بيانات (Data Gap): انقطاع في تسجيل البيانات لأكثر من 5 دقائق.'
-            : 'Data Gap: Recording interruption for more than 5 minutes.',
-        isArabic
-            ? 'عطل تحديد المواقع (Positioning Malfunction): إحداثيات صفرية مع سرعة عالية.'
-            : 'Positioning Malfunction: Zero coordinates at high speed.',
-        isArabic
-            ? 'عطل استشعار الحركة (Motion Sensor): تغير مفاجئ في السرعة > 80 كم/س.'
-            : 'Motion Sensor Malfunction: Sudden speed change > 80 km/h.',
-        isArabic
-            ? 'عطل مزامنة المحرك (Engine Sync): المحرك يعمل > 60 دقيقة بدون حركة.'
-            : 'Engine Sync Malfunction: Engine running > 60 min without motion.',
-        isArabic
-            ? 'قيادة غير محددة (Unidentified Drive): المركبة تتحرك بدون إشعال.'
-            : 'Unidentified Drive: Vehicle moving without ignition.',
-      ],
-    ),
-    ManualSection(
-      title: isArabic ? 'خطوات استكشاف الأعطال' : 'Troubleshooting Steps',
-      steps: [
-        isArabic
-            ? '١. تحقق من توصيل جهاز ELD بمنفذ التشخيص.'
-            : '1. Check ELD device connection to diagnostic port.',
-        isArabic
-            ? '٢. أعد تشغيل المركبة وانتظر 30 ثانية.'
-            : '2. Restart the vehicle and wait 30 seconds.',
-        isArabic
-            ? '٣. تحقق من تفعيل البلوتوث والـ GPS على هاتفك.'
-            : '3. Check that Bluetooth and GPS are enabled on your phone.',
-        isArabic
-            ? '٤. حاول إعادة الاتصال من شاشة الاتصال.'
-            : '4. Try reconnecting from the Connection screen.',
-        isArabic
-            ? '٥. إذا استمر العطل، انتقل إلى السجلات الورقية.'
-            : '5. If malfunction persists, switch to paper logs.',
-        isArabic
-            ? '٦. اتصل بمدير الأسطول للإبلاغ عن العطل.'
-            : '6. Contact your fleet manager to report the malfunction.',
-      ],
-    ),
-    ManualSection(
-      title: isArabic ? 'حدود زمنية مهمة' : 'Important Deadlines',
-      steps: [
-        isArabic
-            ? 'يجب إصلاح الجهاز خلال 8 أيام من حدوث العطل.'
-            : 'Device must be repaired within 8 days of malfunction.',
-        isArabic
-            ? 'لا يمكن القيادة بدون جهاز ELD عامل لأكثر من 8 أيام.'
-            : 'Cannot drive without a working ELD for more than 8 days.',
-        isArabic
-            ? 'يجب توثيق جميع الأعطال في السجلات.'
-            : 'All malfunctions must be documented in logs.',
-      ],
-    ),
-  ];
+class _PacketStatus extends StatelessWidget {
+  const _PacketStatus({required this.packet});
+
+  final AsyncValue<InformationPacketView> packet;
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return packet.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (view) {
+        final missing = view.missing.join(', ');
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            0,
+            AppSpacing.xl,
+            AppSpacing.md,
+          ),
+          child: Text(
+            view.complete
+                ? (isArabic ? 'الحزمة مكتملة.' : 'The packet is complete.')
+                : (missing.isEmpty
+                    ? (isArabic ? 'الحزمة غير مكتملة.' : 'The packet is incomplete.')
+                    : (isArabic
+                        ? 'الحزمة غير مكتملة: $missing'
+                        : 'Packet incomplete: $missing')),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: view.complete
+                  ? AppColors.textSecondary
+                  : AppColors.dangerRed,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PacketBlock extends StatelessWidget {
+  final String title;
+  final String body;
+  final String buttonLabel;
+  final VoidCallback onPressed;
+
+  const _PacketBlock({
+    required this.title,
+    required this.body,
+    required this.buttonLabel,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.45,
+              color: Color(0xFF9E9E9E),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppButton(
+            label: buttonLabel,
+            type: EldButtonType.dark,
+            onPressed: onPressed,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,5 @@
-import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
+import '../../domain/shared/value_objects.dart';
 import '../adapters/eld_engine/models/certify_dto.dart';
 import '../adapters/eld_engine/models/readiness_dto.dart';
 import 'raw_json.dart';

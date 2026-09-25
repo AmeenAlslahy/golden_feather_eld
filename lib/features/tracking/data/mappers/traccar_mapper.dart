@@ -1,4 +1,3 @@
-import '../../../../core/domain/shared/speed.dart';
 import '../../domain/entities/tracking_event.dart';
 
 /// محول (Mapper) يقوم بتحويل استجابات Traccar (JSON Maps)
@@ -20,7 +19,7 @@ class TraccarMapper {
       driverId: driverId,
       latitude: (position['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (position['longitude'] as num?)?.toDouble() ?? 0.0,
-      speed: Speed.fromKnots((position['speed'] as num?)?.toDouble() ?? 0.0),
+      speed: (position['speed'] as num?)?.toDouble() ?? 0.0,
       bearing: (position['course'] as num?)?.toDouble() ?? 0.0,
       altitude: (position['altitude'] as num?)?.toDouble() ?? 0.0,
       accuracy: (position['accuracy'] as num?)?.toDouble() ?? 0.0,
@@ -50,7 +49,7 @@ class TraccarMapper {
       driverId: driverId,
       latitude: (lastKnownPosition['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (lastKnownPosition['longitude'] as num?)?.toDouble() ?? 0.0,
-      speed: Speed.fromKnots((lastKnownPosition['speed'] as num?)?.toDouble() ?? 0.0),
+      speed: (lastKnownPosition['speed'] as num?)?.toDouble() ?? 0.0,
       bearing: (lastKnownPosition['course'] as num?)?.toDouble() ?? 0.0,
       altitude: (lastKnownPosition['altitude'] as num?)?.toDouble() ?? 0.0,
       accuracy: (lastKnownPosition['accuracy'] as num?)?.toDouble() ?? 0.0,

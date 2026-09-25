@@ -1,3 +1,5 @@
+import 'rules_screen_options.dart';
+
 class RulesScreenDto {
   final String driverId;
   final String ruleSource;
@@ -38,10 +40,7 @@ class RulesScreenDto {
       restart: json['restart'] as String? ?? '',
       restBreak: json['restBreak'] as String? ?? '',
       sixteenHourException: json['sixteenHourException'] as bool? ?? false,
-      options: (json['options'] as Map<String, dynamic>?)?.map(
-            (k, e) => MapEntry(k, (e as List).map((x) => x.toString()).toList()),
-          ) ??
-          {},
+      options: readRulesOptions(json['options']),
       limits: RulesScreenLimitsDto.fromJson(json['limits'] as Map<String, dynamic>? ?? {}),
       editableFields: (json['editableFields'] as List?)?.map((e) => e.toString()).toList() ?? [],
       readOnlyFields: (json['readOnlyFields'] as List?)?.map((e) => e.toString()).toList() ?? [],

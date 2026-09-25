@@ -66,16 +66,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     if (data == null) return [];
     try {
       final decoded = jsonDecode(data) as List;
-      final validItems = <Map<String, dynamic>>[];
-      for (final e in decoded) {
-        if (e is Map<String, dynamic>) {
-          validItems.add(e);
-        }
-      }
-      return validItems;
+      return decoded.map((e) => e as Map<String, dynamic>).toList();
     } catch (_) {
-      // Backup corrupted data to prevent silent overwriting
-      box.put('${dateStr}_corrupted_${DateTime.now().millisecondsSinceEpoch}', data);
       return [];
     }
   }
@@ -93,7 +85,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
               statusArabic:
                   e['statusArabic'] as String? ?? e['status'] as String,
               startTime: DateTime.parse(e['startTime'] as String),
-              duration: Duration(seconds: e['durationSeconds'] as int? ?? 0),
+              duration: Duration(
+                  seconds: _readDurationSeconds(e)),
               location: e['location'] as String? ?? 'Unknown',
               odometer: (e['odometer'] as num?)?.toDouble(),
               engineHours: (e['engineHours'] as num?)?.toDouble(),
@@ -101,9 +94,14 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
         .toList();
   }
 
-  @override
-  Future<bool> addEvent(LogEvent event) async {
-    final map = {
+  /// يقبل 'durationSeconds' (الصيغة المحلية) أو 'duration' (صيغة الخادم).
+  int _readDurationSeconds(Map<String, dynamic> e) {
+    final v = (e['durationSeconds'] as num?) ?? (e['duration'] as num?);
+    return v?.toInt() ?? 0;
+  }
+
+  Map<String, dynamic> _eventMap(LogEvent event) {
+    return {
       'id': event.id,
       'status': event.status,
       'statusArabic': event.statusArabic,
@@ -114,39 +112,30 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'engineHours': event.engineHours,
       'timestamp': event.startTime.toIso8601String(),
     };
-    return _saveToBox(_eventsBox, map, 'timestamp', 'event');
+  }
+
+  @override
+  Future<bool> addEvent(LogEvent event) async {
+    return _saveToBox(_eventsBox, _eventMap(event), 'timestamp', 'event');
   }
 
   @override
   Future<bool> updateEvent(LogEvent event) async {
+    final map = _eventMap(event);
     try {
       final dateStr = AppDateUtils.formatDate(event.startTime);
       final currentList = _getListFromBox(_eventsBox, dateStr);
-      
-      final index = currentList.indexWhere((e) => e['id'] == event.id);
-      final map = {
-        'id': event.id,
-        'status': event.status,
-        'statusArabic': event.statusArabic,
-        'startTime': event.startTime.toIso8601String(),
-        'durationSeconds': event.duration.inSeconds,
-        'location': event.location,
-        'odometer': event.odometer,
-        'engineHours': event.engineHours,
-        'timestamp': event.startTime.toIso8601String(),
-      };
-      
-      if (index != -1) {
-        currentList[index] = map;
+      final idx = currentList.indexWhere((e) => e['id'] == event.id);
+      if (idx >= 0) {
+        currentList[idx] = map;
       } else {
         currentList.add(map);
       }
-      
       await _eventsBox.put(dateStr, jsonEncode(currentList));
       return true;
     } catch (e) {
       AppLogger.error('Failed to update event', e);
-      return false;
+      throw Exception('Failed to update event: $e');
     }
   }
 

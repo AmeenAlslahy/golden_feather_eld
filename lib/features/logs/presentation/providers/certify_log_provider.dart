@@ -1,15 +1,10 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
-import '../../../../backend/contracts/signature_backend.dart';
-import '../../../../backend/providers/backend_providers.dart';
-// ARCH-HIGH-01 fix: Removed unused data-layer import.
-import '../../../../core/domain/shared/value_objects.dart';
-import '../../../../core/domain/signature/signature.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../data/repositories/log_repository_impl.dart';
 import '../../domain/repositories/log_repository.dart';
 
 class CertifyLogState {
@@ -46,15 +41,36 @@ class CertifyLogState {
 
 final certifyLogProvider = StateNotifierProvider<CertifyLogNotifier, CertifyLogState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
-  final signatureBackend = ref.watch(activeBackendProvider).signature;
-  return CertifyLogNotifier(repository, signatureBackend);
+  return CertifyLogNotifier(repository);
 });
 
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
-  final SignatureBackend? _signatureBackend;
 
-  CertifyLogNotifier(this._repository, this._signatureBackend) : super(const CertifyLogState());
+  CertifyLogNotifier(this._repository) : super(const CertifyLogState());
+
+  Future<String?> respondToCarrierEdit({
+    required DailyLogId logId,
+    required String editId,
+    required String action,
+    String? driverNotes,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    final result = await _repository.respondToCarrierEdit(
+      logId: logId,
+      editId: editId,
+      action: action,
+      driverNotes: driverNotes,
+    );
+    if (!mounted) return 'Response was interrupted.';
+    final error = result.fold((failure) => failure.message, (_) => null);
+    if (error != null) {
+      state = state.copyWith(isLoading: false, error: error);
+      return error;
+    }
+    await checkReadiness(logId);
+    return null;
+  }
 
   Future<void> checkReadiness(DailyLogId logId) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -86,44 +102,31 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   }) async {
     state = state.copyWith(isLoading: true, clearError: true, isSuccess: false);
     
-    if (_signatureBackend == null) {
-      state = state.copyWith(isLoading: false, error: 'Signature service unavailable.');
+    // The live contract has no signature-upload path. The drawn signature
+    // remains the driver's confirmation on this device; the legal record is
+    // POST /eld/daily-logs/{id}/certify.
+    if (signatureBytes.isEmpty) {
+      state = state.copyWith(isLoading: false, error: 'Please draw a signature first.');
       return;
     }
 
-    final signatureResult = await _signatureBackend.save(
-      driverId: driverId,
+    final certifyResult = await _repository.certifyLog(
+      logId: logId,
+      driverId: driverId.value,
       logDate: logDate,
-      signatureDataBase64: base64Encode(signatureBytes),
-      type: SignatureType.driverCertification,
+      signatureCertificateId: '',
+      signatureConfirmation: true,
+      certifiedTrue: true,
     );
 
-    await signatureResult.match(
-      (error) async {
-        state = state.copyWith(isLoading: false, error: 'Failed to save signature: ${error.l10nKey}');
-      },
-      (certificate) async {
-        final certifyResult = await _repository.certifyLog(
-          logId: logId,
-          signatureCertificateId: certificate.signatureId,
-          signatureConfirmation: true,
-          certifiedTrue: true,
-        );
-        
-        if (!mounted) return;
+    if (!mounted) return;
 
-        certifyResult.match(
-          (failure) {
-            state = state.copyWith(isLoading: false, error: failure.message);
-          },
-          (success) async {
-            state = state.copyWith(isLoading: false, isSuccess: true);
-            
-            // SRS §5.12 + L6: Lock the log after successful certification
-            // to prevent any further modifications (FMCSA §395.30(g))
-            await _repository.lockLog(logId);
-          },
-        );
+    certifyResult.match(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+      },
+      (success) {
+        state = state.copyWith(isLoading: false, isSuccess: true);
       },
     );
   }

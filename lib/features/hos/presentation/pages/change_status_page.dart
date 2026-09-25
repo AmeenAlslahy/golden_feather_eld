@@ -6,10 +6,11 @@ import 'package:golden_feather_eld/core/widgets/eld_card.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../account/presentation/providers/rules_screen_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
+import '../duty_change_message.dart';
 import '../providers/hos_engine_provider.dart';
 import '../providers/hos_provider.dart';
 import '../widgets/location_display_widget.dart';
@@ -25,6 +26,7 @@ class ChangeStatusPage extends ConsumerStatefulWidget {
 class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
   late DutyStatus _selectedStatus;
   bool _isYardMoves = false;
+  bool _saving = false;
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
@@ -44,7 +46,8 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     super.dispose();
   }
 
-  void _onSave() {
+  Future<void> _onSave() async {
+    if (_saving) return;
     final annotation = _notesController.text.trim();
 
     // Validation: Annotation is required for PC and YM
@@ -53,8 +56,11 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
         annotation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-              'يجب كتابة ملاحظة (Annotation) للقيادة الشخصية أو حركة الساحة'),
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? 'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.'
+                : 'An annotation is required for personal conveyance or yard moves.',
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -62,23 +68,33 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
       return;
     }
 
-    final success = ref.read(hosStatusProvider.notifier).changeStatus(
+    setState(() => _saving = true);
+    final error = await ref.read(hosStatusProvider.notifier).changeStatus(
           _selectedStatus,
           annotation: annotation.isNotEmpty ? annotation : null,
           isYardMoves: _isYardMoves,
         );
+    if (!mounted) return;
+    setState(() => _saving = false);
 
-    if (!success) {
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.loc.errorCannotChangeStatusWhileMoving),
+          content: Text(dutyChangeMessage(context, error)),
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } else {
-      Navigator.pop(context);
+      return;
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(dutyChangeAcceptedMessage(context)),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Navigator.pop(context);
   }
 
   String _getLocalizedStatusName(DutyStatus status) {
@@ -105,6 +121,10 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     final speedThreshold =
         ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
     final isMoving = currentSpeedKmh >= speedThreshold;
+    final rules = ref.watch(rulesScreenProvider).asData?.value;
+    final personalConveyanceEnabled =
+        rules?.fixedSettings['personalConveyanceEnabled'] == true;
+    final yardMoveEnabled = rules?.fixedSettings['yardMoveEnabled'] == true;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -124,28 +144,28 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Status Options Card
             EldCard(
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   ...DutyStatus.values
-                      .where((s) => s != DutyStatus.driving)
+                      .where((s) =>
+                          s != DutyStatus.personalUse ||
+                          personalConveyanceEnabled)
                       .map((status) {
-                    final isLast = status == DutyStatus.values.last;
-                    // If moving, we can't select other statuses.
-                    // To keep UI responsive, we disable tiles if isMoving is true and it's not the current status.
+                    final drivingLocked = status == DutyStatus.driving;
                     final isCurrent = _selectedStatus == status;
-
+                    final disabled =
+                        drivingLocked || (isMoving && !isCurrent);
                     return Opacity(
-                      opacity: (isMoving && !isCurrent) ? 0.5 : 1.0,
+                      opacity: disabled ? 0.45 : 1.0,
                       child: StatusOptionTile(
                         status: status,
                         label: _getLocalizedStatusName(status),
-                        isSelected: isCurrent,
-                        isLast: isLast && !_isYardMovesVisible,
-                        onTap: (isMoving && !isCurrent)
-                            ? () {}
+                        isSelected: isCurrent && !drivingLocked,
+                        isLast: false,
+                        onTap: disabled
+                            ? null
                             : () {
                                 setState(() {
                                   _selectedStatus = status;
@@ -157,17 +177,20 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                       ),
                     );
                   }),
-                  // Yard Moves Special Option (Visible only if On Duty is selected)
-                  if (_isYardMovesVisible)
+                  if (yardMoveEnabled)
                     Opacity(
-                      opacity: isMoving ? 0.5 : 1.0,
+                      opacity: isMoving ? 0.45 : 1.0,
                       child: YardMovesOptionTile(
                         isYardMoves: _isYardMoves,
                         onTap: isMoving
-                            ? () {}
+                            ? null
                             : () {
                                 setState(() {
                                   _isYardMoves = !_isYardMoves;
+                                  if (_isYardMoves) {
+                                    _selectedStatus =
+                                        DutyStatus.onDutyNotDriving;
+                                  }
                                 });
                               },
                       ),
@@ -176,7 +199,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ),
 
-            AppGap.lg,
+            const SizedBox(height: AppSpacing.lg),
 
             // Location & Notes Card
             EldCard(
@@ -189,16 +212,16 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  AppGap.md,
+                  const SizedBox(height: AppSpacing.md),
                   const LocationDisplayWidget(),
-                  AppGap.lg,
+                  const SizedBox(height: AppSpacing.lg),
                   AppTextField(
                     controller: _locationController,
                     label: context.loc.customLocation,
                     hint: context.loc.customLocation,
                     prefixIcon: const Icon(Icons.edit_location_alt),
                   ),
-                  AppGap.md,
+                  const SizedBox(height: AppSpacing.md),
                   AppTextField(
                     controller: _notesController,
                     label: context.loc.notes,
@@ -211,14 +234,27 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ),
 
-            AppGap.xl,
+            const SizedBox(height: AppSpacing.xl),
 
             // Save Button
             AppButton(
-              label: context.loc.updateButton,
-              onPressed: isMoving ? null : _onSave,
-              type: EldButtonType.agree,
-              icon: Icons.check_circle_outline,
+              label: context.loc.updateButton.toUpperCase(),
+              onPressed: _saving
+                  ? null
+                  : () {
+                      if (isMoving) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              context.loc.errorCannotChangeStatusWhileMoving,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      _onSave();
+                    },
+              type: EldButtonType.send,
             ),
             if (isMoving)
               Padding(
@@ -231,13 +267,11 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
           ],
         ),
       ),
     );
   }
 
-  bool get _isYardMovesVisible =>
-      _selectedStatus == DutyStatus.onDutyNotDriving;
 }

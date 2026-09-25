@@ -8,7 +8,6 @@ import 'routes/auth_routes.dart';
 import 'routes/dvir_routes.dart';
 import 'routes/home_routes.dart';
 import 'routes/logs_routes.dart';
-import 'routes/merged_routes.dart'; // ✅ Merged from main branch
 
 /// مسارات التطبيق (مطابقة لقائمة التنقل في SRS §4)
 class AppRoutes {
@@ -35,20 +34,9 @@ class AppRoutes {
   static const String selectVehicle = '/select-vehicle';
   static const String userManual = '/user-manual';
   static const String about = '/about';
+  static const String settings = '/settings';
   static const String suggestedEvents = '/logs/suggested-events';
   static const String unidentifiedEvents = '/logs/unidentified-events';
-  static const String serverConfig = '/server-config';
-  
-  // ✅ Merged from main branch
-  static const String reports = '/reports';
-  static const String tracking = '/tracking';
-  static const String trackingLogs = '/tracking/logs';
-  static const String settings = '/settings';
-  static const String developerOptions = '/settings/developer';
-  static const String qrScanner = '/settings/qr-scanner';
-  static const String carrierEdits = '/logs/:id/carrier-edits';
-  static const String switchDrivers = '/switch-drivers';
-  static const String auditTrail = '/logs/:id/audit-trail';
 
   /// مسارات متاحة بدون تسجيل دخول
   static const Set<String> publicRoutes = {
@@ -56,7 +44,6 @@ class AppRoutes {
     permissions,
     login,
     about, // SRS §17: حول التطبيق والتشخيص متاحة بدون مصادقة
-    serverConfig,
   };
 }
 
@@ -104,7 +91,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ...LogsRoutes.routes,
       ...DvirRoutes.routes,
       ...AccountRoutes.routes,
-      ...MergedRoutes.routes, // ✅ Merged from main branch
     ],
   );
 });

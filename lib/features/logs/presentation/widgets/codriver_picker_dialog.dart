@@ -44,33 +44,31 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
             : codriverState.error != null
                 ? Text(
                     'Error: ${codriverState.error}',
-                    style: const TextStyle(color: AppColors.dangerRed),
+                    style: const TextStyle(color: Colors.red),
                   )
                 : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: codrivers.map((driver) {
-                        final isSelected = driver.id == _selectedId;
-                        return RadioListTile<String>(
-                          title: Text(
-                            driver.name,
-                            style: TextStyle(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                    child: RadioGroup<String>(
+                      groupValue: _selectedId,
+                      onChanged: (value) => setState(() => _selectedId = value),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: codrivers.map((driver) {
+                          final isSelected = driver.id == _selectedId;
+                          return RadioListTile<String>(
+                            title: Text(
+                              driver.name,
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                             ),
-                          ),
-                          value: driver.id,
-                          // ignore: deprecated_member_use
-                          groupValue: _selectedId,
-                          // ignore: deprecated_member_use
-                          onChanged: (value) {
-                            setState(() => _selectedId = value);
-                          },
-                          activeColor: AppColors.primaryBlue,
-                          contentPadding: EdgeInsets.zero,
-                        );
-                      }).toList(),
+                            value: driver.id,
+                            activeColor: AppColors.primaryGold,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
       ),

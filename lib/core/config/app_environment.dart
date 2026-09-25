@@ -56,6 +56,7 @@ class AppEnvironmentConfig {
 
   static String? _getEnv(String key) {
     if (_testEnv != null) return _testEnv![key];
+    if (!dotenv.isInitialized) return null;
     return dotenv.env[key];
   }
 

@@ -5,6 +5,7 @@ import '../features/account/presentation/pages/account_page.dart';
 import '../features/account/presentation/pages/info_packet_page.dart';
 import '../features/account/presentation/pages/rules_page.dart';
 import '../features/account/presentation/pages/user_manual_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 import '../routes.dart';
 
 /// مسارات الحساب والوثائق وحول التطبيق (SRS §3, §6, §13, §17)
@@ -36,6 +37,11 @@ class AccountRoutes {
           path: AppRoutes.about,
           name: 'about',
           builder: (context, state) => const AboutPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.settings,
+          name: 'settings',
+          builder: (context, state) => const SettingsPage(),
         ),
       ];
 }

@@ -1,5 +1,5 @@
-import '../../../../core/domain/inspection/dot_inspection.dart';
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../domain/shared/value_objects.dart';
 
 class DotInspectionMapper {
   const DotInspectionMapper._();
@@ -19,10 +19,10 @@ class DotInspectionMapper {
       driverName: _asString(json['driver']?['name']),
       inspectionDate: _asDate(json['inspectionDate']),
       cycleDaysCovered: _asInt(json['cycleDaysCovered']),
-      canStartInspection: _asBool(json['canStartInspection']),
-      canSendLogs: _asBool(json['canSendLogs']),
-      canEmailLogs: _asBool(json['canEmailLogs']),
-      canViewInformationPacket: _asBool(json['canViewInformationPacket']),
+      canStartInspection: _asBool(json['canStartInspection'], fallback: true), // absent flag must not lock the driver out
+      canSendLogs: _asBool(json['canSendLogs'], fallback: true), // absent flag must not lock the driver out
+      canEmailLogs: _asBool(json['canEmailLogs'], fallback: true), // absent flag must not lock the driver out
+      canViewInformationPacket: _asBool(json['canViewInformationPacket'], fallback: true), // absent flag must not lock the driver out
       inspectionActive: _asBool(json['inspectionActive']),
       readOnlyMode: _asBool(json['readOnlyMode']),
       activeInspectionId: json['activeInspectionId'] as int?,
@@ -167,7 +167,9 @@ class DotInspectionMapper {
   }
 
   static DateTime _asDate(Object? v) {
-    return _asDateOrNull(v) ?? DateTime.utc(2026, 1, 1);
+    // التاريخ الناقص يُعلَّم بميلاد Unix (1970) لا بتاريخ وهمي يبدو حقيقياً —
+    // عرض 2026-01-01 كان قد يُقدَّم كأنه تاريخ رسمي في شاشة التفتيش.
+    return _asDateOrNull(v) ?? DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   static DateTime? _asDateOrNull(Object? v) {

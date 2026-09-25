@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/error/failure.dart' as f;
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/extensions/time_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/eld_retry_view.dart';
 import '../providers/recap_provider.dart';
 
 class RecapPage extends ConsumerWidget {
@@ -31,37 +29,41 @@ class RecapPage extends ConsumerWidget {
               children: [
                 // 7 Days Table
                 ...data.days.map((dayData) => _buildRow(
+                      context,
                       title: dayData.dayOfWeek,
                       subtitle: DateFormat('MMM d').format(dayData.date),
-                      value: dayData.totalWork.inMinutes.toHoursMinutes(),
+                      value: _decimalHours(dayData.totalWork),
                     )),
-
-                const Divider(height: 1, color: AppColors.border),
                 _buildRow(
-                  title: 'Cycle Rule',
-                  value: data.cycleRule.wire,
-                  isBold: true,
+                  context,
+                  title: context.loc.total,
+                  subtitle: context.loc.last7Days,
+                  value: _decimalHours(data.cycleUsed),
                 ),
-
-                const Divider(height: 1, color: AppColors.border),
                 _buildRow(
-                  title: 'Cycle Used', // You can use context.loc.total if suitable
-                  value: data.cycleUsed.inMinutes.toHoursMinutes(),
-                  isBold: true,
+                  context,
+                  title: context.loc.hoursWorkedToday,
+                  value: () {
+                    final now = DateTime.now();
+                    for (final day in data.days) {
+                      if (day.date.year == now.year &&
+                          day.date.month == now.month &&
+                          day.date.day == now.day) {
+                        return _decimalHours(day.totalWork);
+                      }
+                    }
+                    return '00.00';
+                  }(),
                 ),
-
-                const Divider(height: 1, color: AppColors.border),
                 _buildRow(
-                  title: 'Cycle Remaining',
-                  value: data.cycleRemaining.inMinutes.toHoursMinutes(),
-                  isBold: true,
+                  context,
+                  title: context.loc.hoursAvailableToday,
+                  value: _decimalHours(data.cycleRemaining),
                 ),
-
-                const Divider(height: 1, color: AppColors.border),
                 _buildRow(
+                  context,
                   title: context.loc.hoursAvailableTomorrow,
-                  value: data.availableTomorrow.inMinutes.toHoursMinutes(),
-                  isBold: true,
+                  value: _decimalHours(data.availableTomorrow),
                 ),
               ],
             ),
@@ -69,32 +71,29 @@ class RecapPage extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
-          String msg = 'حدث خطأ غير متوقع';
-          if (err is f.Failure) {
-            if (err is f.NetworkFailure) {
-              msg = 'لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.';
-            } else if (err is f.ServerFailure) {
-              msg = 'حدثت مشكلة في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
-            } else {
-              msg = 'فشل في العملية. الرجاء المحاولة مرة أخرى.';
-            }
-          }
-          return Center(
-            child: Text(msg),
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          return EldRetryView(
+            message: anyErrorUserMessage(err, isArabic: isArabic),
+            onRetry: () => ref.invalidate(recapProvider),
           );
         },
       ),
     );
   }
 
-  Widget _buildRow({
+  String _decimalHours(Duration d) {
+    final hours = d.inMinutes / 60.0;
+    return hours.abs().toStringAsFixed(2).padLeft(5, '0');
+  }
+
+  Widget _buildRow(
+    BuildContext context, {
     required String title,
     String? subtitle,
     required String value,
-    bool isBold = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
       ),
@@ -102,35 +101,21 @@ class RecapPage extends ConsumerWidget {
         children: [
           Expanded(
             flex: 2,
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight:
-                    isBold ? AppTypography.bold : AppTypography.semiBold,
-              ),
-            ),
+            child: Text(title, style: context.styles.sectionTitle),
           ),
           if (subtitle != null)
             Expanded(
               flex: 2,
-              child: Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 15,
-                ),
-              ),
-            ),
+              child: Text(subtitle, style: context.styles.muted),
+            )
+          else
+            const Spacer(flex: 2),
           Expanded(
             flex: 1,
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: AppTypography.semiBold,
-                fontFamily: 'monospace',
-              ),
+              style: context.styles.number,
             ),
           ),
         ],

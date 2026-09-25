@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
@@ -74,7 +74,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               return null;
             },
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
 
           // كلمة المرور
           AppTextField(
@@ -119,7 +119,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ),
           ),
 
-          AppGap.sm,
+          const SizedBox(height: AppSpacing.sm),
 
           // زر تسجيل الدخول
           AppButton(

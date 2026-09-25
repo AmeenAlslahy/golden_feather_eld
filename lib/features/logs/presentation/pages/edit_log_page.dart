@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/audit_entry.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../domain/log_edit.dart';
 import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
 
@@ -24,8 +23,8 @@ String? resolveDriverIdForAudit(WidgetRef ref) {
 
 class EditLogFormState {
   final String selectedStatus;
-  final DateTime startTime;
-  final Duration duration;
+  final String startTime;
+  final String duration;
   final String location;
   final String reason;
 
@@ -39,8 +38,8 @@ class EditLogFormState {
 
   EditLogFormState copyWith({
     String? selectedStatus,
-    DateTime? startTime,
-    Duration? duration,
+    String? startTime,
+    String? duration,
     String? location,
     String? reason,
   }) {
@@ -52,23 +51,6 @@ class EditLogFormState {
       reason: reason ?? this.reason,
     );
   }
-
-  String get formattedStartTime {
-    final hour = startTime.hour > 12
-        ? startTime.hour - 12
-        : (startTime.hour == 0 ? 12 : startTime.hour);
-    final hourStr = hour.toString().padLeft(2, '0');
-    final minuteStr = startTime.minute.toString().padLeft(2, '0');
-    final secondStr = startTime.second.toString().padLeft(2, '0');
-    final period = startTime.hour < 12 ? 'AM' : 'PM';
-    return '$hourStr:$minuteStr:$secondStr $period';
-  }
-
-  String get formattedDuration {
-    final h = duration.inHours.toString().padLeft(2, '0');
-    final m = (duration.inMinutes % 60).toString().padLeft(2, '0');
-    return '$h:$m';
-  }
 }
 
 class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
@@ -76,20 +58,30 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
 
   void setStatus(String status) =>
       state = state.copyWith(selectedStatus: status);
-  void setStartTime(DateTime time) => state = state.copyWith(startTime: time);
+  void setStartTime(String time) => state = state.copyWith(startTime: time);
   void setReason(String reason) => state = state.copyWith(reason: reason);
+}
+
+// دالة مساعدة لتنسيق الوقت الحالي
+String _formatCurrentTime() {
+  final now = DateTime.now();
+  final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+  final hourStr = hour.toString().padLeft(2, '0');
+  final minute = now.minute.toString().padLeft(2, '0');
+  final second = now.second.toString().padLeft(2, '0');
+  final period = now.hour < 12 ? 'AM' : 'PM';
+  return '$hourStr:$minute:$second $period';
 }
 
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, dynamic>((ref, event) {
-  if (event is! LogEvent) {
-    throw ArgumentError('event must be a LogEvent');
-  }
   return EditLogFormNotifier(EditLogFormState(
-    selectedStatus: event.status,
-    startTime: event.startTime,
-    duration: event.duration,
-    location: event.location,
+    // الرمز المخزن (D/ON/...) يُعاد إلى قيمة القائمة (Driving/On Duty/...)
+    // حتى تُحدد الحالة الحالية في الواجهة.
+    selectedStatus: editValueForStatus(event.status),
+    startTime: event.formattedStartTime ?? _formatCurrentTime(),
+    duration: event.formattedDuration ?? '00:00',
+    location: event.location ?? '',
   ));
 });
 
@@ -105,7 +97,6 @@ class EditLogPage extends ConsumerWidget {
   });
 
   void _showTimePicker(BuildContext context, WidgetRef ref) {
-    final logEvent = event as LogEvent;
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -113,18 +104,8 @@ class EditLogPage extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => _TimePickerSheet(
-        onDone: (hour, minute, second) {
-          final newDateTime = DateTime(
-            logEvent.startTime.year,
-            logEvent.startTime.month,
-            logEvent.startTime.day,
-            hour,
-            minute,
-            second,
-          );
-          ref
-              .read(editLogFormProvider(event).notifier)
-              .setStartTime(newDateTime);
+        onDone: (time) {
+          ref.read(editLogFormProvider(event).notifier).setStartTime(time);
           Navigator.pop(context);
         },
       ),
@@ -158,9 +139,7 @@ class EditLogPage extends ConsumerWidget {
           isNewEvent
               ? context.loc.insertDutyStatus
               : context.loc.editDutyStatus,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.surface,
-              ),
+          style: context.styles.appBarTitle,
         ),
       ),
       body: SingleChildScrollView(
@@ -170,24 +149,24 @@ class EditLogPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
             LogGraph(
                 events:
                     selectedLog?.events ?? []), // تمرير الأحداث الحقيقية لليوم
 
             // 2. حقل الوقت والمدة
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
                     child: _buildTimeField(
                         context,
                         context.loc.startTime,
-                        formState.formattedStartTime,
+                        formState.startTime,
                         () => _showTimePicker(context, ref))),
                 Expanded(
                     child: _buildTimeField(context, context.loc.duration,
-                        formState.formattedDuration, () {})),
+                        formState.duration, () {})),
               ],
             ),
             // خط متقطع أسفل الوقت (للمطابقة)
@@ -197,10 +176,17 @@ class EditLogPage extends ConsumerWidget {
                   painter:
                       DashedLinePainter(color: Theme.of(context).dividerColor)),
             ),
-            AppGap.lg,
+            const SizedBox(height: AppSpacing.lg),
 
             // 3. قائمة الحالات
-            ...statuses.map((status) {
+            RadioGroup<String>(
+              groupValue: formState.selectedStatus,
+              onChanged: (value) {
+                if (value == null) return;
+                ref.read(editLogFormProvider(event).notifier).setStatus(value);
+              },
+              child: Column(
+                children: statuses.map((status) {
               final isSelected = formState.selectedStatus == status['value'];
               return Column(
                 children: [
@@ -213,20 +199,12 @@ class EditLogPage extends ConsumerWidget {
                             ? AppTypography.semiBold
                             : AppTypography.regular,
                         color: isSelected
-                            ? AppColors.primaryBlue
+                            ? AppColors.primaryGold
                             : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     value: status['value']!,
-                    // ignore: deprecated_member_use
-                    groupValue: formState.selectedStatus,
-                    // ignore: deprecated_member_use
-                    onChanged: (value) {
-                      ref
-                          .read(editLogFormProvider(event).notifier)
-                          .setStatus(value!);
-                    },
-                    activeColor: AppColors.primaryBlue,
+                    activeColor: const Color(0xFF1565C0),
                     controlAffinity: ListTileControlAffinity.trailing,
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -236,8 +214,10 @@ class EditLogPage extends ConsumerWidget {
                       height: 1),
                 ],
               );
-            }),
-            AppGap.md,
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
 
             // 4. المركبة
             Column(
@@ -245,26 +225,21 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.vehicle,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.semiBold,
-                  ),
+                  style: context.styles.sectionTitle,
                 ),
-                AppGap.sm,
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   dashboard.vehicleId,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                  ),
+                  style: context.styles.body,
                 ),
-                AppGap.sm,
+                const SizedBox(height: AppSpacing.sm),
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
                     height: 1),
               ],
             ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
 
             // 5. الموقع
             Column(
@@ -272,26 +247,21 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.location,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.semiBold,
-                  ),
+                  style: context.styles.sectionTitle,
                 ),
-                AppGap.sm,
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   formState.location,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                  ),
+                  style: context.styles.body,
                 ),
-                AppGap.sm,
+                const SizedBox(height: AppSpacing.sm),
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
                     height: 1),
               ],
             ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
 
             // 6. إدخال موقع يدوي
             TextField(
@@ -304,33 +274,34 @@ class EditLogPage extends ConsumerWidget {
                 focusedBorder: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: const TextStyle(fontSize: AppTypography.bodySize),
+              style: context.styles.body,
               onChanged: (value) {},
             ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
 
             // حقل سبب التعديل (إجباري)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Reason for Change',
-                  style: TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.semiBold,
-                  ),
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'سبب التعديل'
+                      : 'Reason for Change',
+                  style: context.styles.sectionTitle,
                 ),
-                AppGap.sm,
+                const SizedBox(height: AppSpacing.sm),
                 TextField(
                   decoration: InputDecoration(
-                    hintText: 'Enter reason (Required)',
+                    hintText:
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'أدخل السبب (مطلوب)'
+                            : 'Enter reason (Required)',
                     hintStyle: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                     border: const UnderlineInputBorder(),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
-                  style: const TextStyle(fontSize: AppTypography.bodySize),
+                  style: context.styles.body,
                   onChanged: (value) {
                     ref
                         .read(editLogFormProvider(event).notifier)
@@ -339,97 +310,118 @@ class EditLogPage extends ConsumerWidget {
                 ),
               ],
             ),
-            AppGap.lg,
+            const SizedBox(height: AppSpacing.lg),
 
             // 7. زر الحفظ
             AppButton(
               label:
                   isNewEvent ? context.loc.addButton : context.loc.saveButton,
               type: EldButtonType.agree,
-              onPressed: formState.reason.trim().isEmpty
-                  ? null
-                  : () async {
+              onPressed: () async {
+                      if (formState.reason.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              Localizations.localeOf(context).languageCode ==
+                                      'ar'
+                                  ? 'سبب التعديل مطلوب.'
+                                  : 'A reason for the change is required.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
                       // حفظ التعديلات وسجل التدقيق
                       final notifier = ref.read(logsProvider.notifier);
-                      final repository = ref.read(logRepositoryProvider);
-
+                      
                       final driverId = resolveDriverIdForAudit(ref);
 
                       if (driverId == null || driverId.isEmpty) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                  'Cannot save: driver session not found.'),
-                              backgroundColor: AppColors.dangerRed,
+                                Localizations.localeOf(context).languageCode ==
+                                        'ar'
+                                    ? 'جلسة السائق غير موجودة. لا يمكن الحفظ.'
+                                    : 'Cannot save: driver session not found.',
+                              ),
+                              backgroundColor: Colors.red,
                             ),
                           );
                         }
                         return;
                       }
 
-                      if (!isNewEvent) {
-                        final logEvent = event as LogEvent;
-                        final result = await repository.updateEvent(
-                          LogEvent(
-                            id: logEvent.id,
-                            status: formState.selectedStatus,
-                            statusArabic: formState.selectedStatus,
-                            startTime: formState.startTime,
-                            duration: formState.duration,
-                            location: formState.location,
-                            notes: formState.reason,
-                            odometer: logEvent.odometer,
-                            engineHours: logEvent.engineHours,
-                          ),
+                      // بناء الحدث كما عدّله المستخدم (القيمة الحالية للنموذج)
+                      final selectedLog = ref.read(logsProvider).selectedLog;
+                      final status =
+                          statusFromEditValue(formState.selectedStatus);
+                      final existing = event is LogEvent ? event : null;
+                      final newStart = parseEditFormTime(
+                              formState.startTime, selectedLog?.date) ??
+                          existing?.startTime ??
+                          DateTime.now();
+                      if (existing != null) {
+                        final refusal = refuseAutomaticDrivingEdit(
+                          original: existing,
+                          newStatusCode: status.code,
+                          newStart: newStart,
                         );
-
-                        if (context.mounted) {
-                          result.match(
-                            (failure) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Failed to update event: ${failure.message}'),
-                                  backgroundColor: AppColors.dangerRed,
+                        if (refusal != null) {
+                          if (context.mounted) {
+                            final isArabic =
+                                Localizations.localeOf(context).languageCode ==
+                                    'ar';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isArabic
+                                      ? 'لا يمكن تقصير أو حذف وقت القيادة الآلي.'
+                                      : 'Automatic driving time cannot be shortened or removed.',
                                 ),
-                              );
-                            },
-                            (success) {
-                              // Event updated successfully
-                            },
+                              ),
+                            );
+                          }
+                          return;
+                        }
+                      }
+
+                      final updatedEvent = existing?.copyWith(
+                            status: status.code,
+                            statusArabic: status.arabic,
+                            startTime: newStart,
+                          ) ??
+                          LogEvent(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            status: status.code,
+                            statusArabic: status.arabic,
+                            startTime: newStart,
+                            duration: Duration.zero,
+                            location: formState.location,
+                          );
+
+                      // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
+                      final saved = isNewEvent
+                          ? await notifier.addEvent(updatedEvent)
+                          : await notifier.updateEvent(updatedEvent);
+                      if (!saved) {
+                        if (context.mounted) {
+                          final isArabic =
+                              Localizations.localeOf(context).languageCode ==
+                                  'ar';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isArabic
+                                    ? 'تعذر حفظ الحدث.'
+                                    : 'The event could not be saved.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                         }
-                      } else {
-                        // isNewEvent
-                        final result = await repository.addEvent(
-                          LogEvent(
-                            id: const Uuid().v4(),
-                            status: formState.selectedStatus,
-                            statusArabic: formState.selectedStatus,
-                            startTime: formState.startTime,
-                            duration: formState.duration,
-                            location: formState.location,
-                            notes: formState.reason,
-                            odometer: 0, // Should be fetched from dashboard/vehicle
-                            engineHours: 0,
-                          ),
-                        );
-
-                        if (context.mounted) {
-                          result.match(
-                            (failure) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Failed to add event: ${failure.message}'),
-                                  backgroundColor: AppColors.dangerRed,
-                                ),
-                              );
-                            },
-                            (success) {},
-                          );
-                        }
+                        return;
                       }
 
                       final timeAuthority = ref.read(timeAuthorityProvider);
@@ -438,19 +430,37 @@ class EditLogPage extends ConsumerWidget {
                         id: const Uuid().v4(),
                         timestamp: timeAuthority.nowUtc(),
                         driverId: driverId,
-                        oldStatus: isNewEvent ? null : event.status,
-                        newStatus: formState.selectedStatus,
+                        oldStatus:
+                            isNewEvent ? null : (existing?.status),
+                        newStatus: status.code,
                         reason: formState.reason,
                       );
 
-                      await notifier.saveAuditEntry(entry);
-                      // Force refresh the logs so the UI reflects the edit
-                      await notifier.loadLogs(refresh: true);
-                      
+                      final auditSaved = (await notifier.saveAuditEntry(entry))
+                          .fold((_) => false, (ok) => ok);
+                      if (!auditSaved) {
+                        if (context.mounted) {
+                          final isArabic =
+                              Localizations.localeOf(context).languageCode ==
+                                  'ar';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isArabic
+                                    ? 'حُفظ الحدث لكن تعذر تسجيل سبب التعديل.'
+                                    : 'The event was saved but the change audit could not be recorded.',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                        return;
+                      }
+
                       if (context.mounted) Navigator.pop(context, true);
                     },
             ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
           ],
         ),
       ),
@@ -474,16 +484,13 @@ class EditLogPage extends ConsumerWidget {
                 fontWeight: AppTypography.semiBold,
               ),
             ),
-            AppGap.sm,
+            const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.regular,
-                  ),
+                  style: context.styles.body,
                 ),
                 Icon(Icons.access_time,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -499,7 +506,7 @@ class EditLogPage extends ConsumerWidget {
 
 /// منتقي الوقت (Picker Wheel)
 class _TimePickerSheet extends StatefulWidget {
-  final Function(int, int, int) onDone;
+  final Function(String) onDone;
 
   const _TimePickerSheet({required this.onDone});
 
@@ -536,19 +543,18 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               TextButton(
-                onPressed: () => context.pop(),
+                onPressed: () => Navigator.pop(context),
                 child: Text(context.loc.cancelButton,
-                    style: const TextStyle(color: AppColors.dangerRed)),
+                    style: context.styles.error),
               ),
               TextButton(
                 onPressed: () {
-                  int hour24 = _selectedPeriod == 'AM'
-                      ? (_selectedHour == 12 ? 0 : _selectedHour)
-                      : (_selectedHour == 12 ? 12 : _selectedHour + 12);
-                  widget.onDone(hour24, _selectedMinute, _selectedSecond);
+                  final time =
+                      '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} ${_selectedPeriod == 'AM' ? context.loc.am : context.loc.pm}';
+                  widget.onDone(time);
                 },
                 child: Text(context.loc.saveButton,
-                    style: const TextStyle(color: AppColors.primaryBlue)),
+                    style: const TextStyle(color: AppColors.primaryGold)),
               ),
             ],
           ),
@@ -590,7 +596,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: index == selected
-                    ? AppColors.primaryBlue
+                    ? AppColors.primaryGold
                     : AppColors.textSecondary,
               ),
             ),
@@ -619,7 +625,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
-                    ? AppColors.primaryBlue
+                    ? AppColors.primaryGold
                     : AppColors.textSecondary,
               ),
             ),
@@ -652,4 +658,3 @@ class DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-

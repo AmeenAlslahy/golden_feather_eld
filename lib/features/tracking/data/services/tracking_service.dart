@@ -190,8 +190,7 @@ class TrackingService {
   }
 }
 
-/// مزود خدمة التتبع — Composition root هو data/providers/repository_providers.dart
-/// هذا التعريف للتوافق، يُعاد تصديره من repository_providers.
+/// مزود خدمة التتبع
 final trackingServiceProvider = Provider<TrackingService>((ref) {
   final storage = ref.watch(localStorageProvider);
   final tracker = ref.watch(traccarNativeClientProvider);

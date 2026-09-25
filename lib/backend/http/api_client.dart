@@ -12,6 +12,7 @@
 ///   - Response caching.
 library;
 
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart' as fp;
@@ -21,6 +22,7 @@ import '../../core/result/result.dart';
 import 'api_config.dart';
 import 'api_response.dart';
 import 'error_mapper.dart';
+import 'lenient_json_transformer.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -29,6 +31,7 @@ class ApiClient {
   ApiClient({required ApiConfig config, Dio? dio})
       : _config = config.normalized(),
         _dio = dio ?? Dio() {
+    _dio.transformer = LenientJsonTransformer();
     _dio.options
       ..baseUrl = _config.baseUrl
       ..connectTimeout = _config.connectTimeout
@@ -40,7 +43,8 @@ class ApiClient {
     if (kDebugMode) {
       _dio.interceptors.add(LogInterceptor(
         request: true,
-        requestHeader: true,
+        // لا نسجّل رؤوس الطلب: قد تحمل Cookie JSESSIONID (مهلة الجلسة).
+        requestHeader: false,
         requestBody: true,
         responseHeader: false,
         responseBody: true,

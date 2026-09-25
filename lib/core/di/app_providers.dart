@@ -6,9 +6,11 @@ import '../../core/services/local_storage_service.dart';
 // Import data implementations (ONLY ALLOWED IN THIS FILE)
 import '../../features/account/data/repositories/account_repository_impl.dart';
 import '../../features/account/domain/repositories/account_repository.dart';
-import '../../features/auth/data/datasources/auth_local_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import 'auth_local_data_source_provider.dart';
+
+export 'auth_local_data_source_provider.dart';
 
 /// Composition Root for all Domain Repositories.
 /// 
@@ -31,10 +33,6 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
 // Auth Feature
 // ==========================================================================
 
-
-final authLocalDataSourceProvider = Provider<AuthLocalDataSource>((ref) {
-  return AuthLocalDataSourceImpl();
-});
 
 final traccarAuthRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(

@@ -1,6 +1,6 @@
-import '../../core/domain/hardware/telemetry_reading.dart';
-import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
+import '../../domain/hardware/telemetry_reading.dart';
+import '../../domain/shared/value_objects.dart';
 import 'raw_json.dart';
 
 abstract interface class HardwareBackend {
@@ -20,7 +20,7 @@ abstract interface class HardwareBackend {
     DriverId? driverId,
   });
 
-  /// POST /eld/sessions/connect
+  /// POST /eld/hardware/connect
   Future<Result<RawJson>> connectSession({
     String? uniqueId,
     bool disconnected = false,

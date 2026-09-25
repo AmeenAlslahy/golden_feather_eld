@@ -1,6 +1,6 @@
-import '../../../../core/domain/hardware/telemetry_reading.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/hardware/telemetry_reading.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
 
@@ -23,7 +23,7 @@ class MockHardwareBackend implements HardwareBackend {
 
   @override
   Future<Result<RawJson>> getAlerts({DriverId? driverId}) async {
-    throw UnimplementedError();
+    throw UnimplementedError('MockHardwareBackend.getAlerts — not implemented');
   }
 
   @override
@@ -32,7 +32,11 @@ class MockHardwareBackend implements HardwareBackend {
     required String reason,
     DriverId? driverId,
   }) async {
-    throw UnimplementedError();
+    return ok(<String, dynamic>{
+      'connectionStatus': enable ? 'MALFUNCTION' : 'CONNECTED',
+      'manualModeActive': enable,
+      'reason': reason,
+    });
   }
 
   @override
@@ -40,7 +44,7 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     DriverId? driverId,
   }) async {
-    throw UnimplementedError();
+    throw UnimplementedError('MockHardwareBackend.getReadiness — not implemented');
   }
 
   @override
@@ -48,7 +52,7 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     bool disconnected = false,
   }) async {
-    throw UnimplementedError();
+    throw UnimplementedError('MockHardwareBackend.connectSession — not implemented');
   }
 
   @override
@@ -56,7 +60,7 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     DriverId? driverId,
   }) async {
-    throw UnimplementedError();
+    throw UnimplementedError('MockHardwareBackend.getStatus — not implemented');
   }
 
   @override

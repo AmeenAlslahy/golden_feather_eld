@@ -6,21 +6,24 @@ class HardwareAlert {
   final String id;
   final String type;
   final String message;
-  final DateTime timestamp;
-  
+  final DateTime? timestamp;
+
   HardwareAlert({
     required this.id,
     required this.type,
     required this.message,
-    required this.timestamp,
+    this.timestamp,
   });
 
   factory HardwareAlert.fromJson(Map<String, dynamic> json) {
+    final rawTime = json['timestamp']?.toString();
     return HardwareAlert(
       id: json['id']?.toString() ?? '',
-      type: json['type']?.toString() ?? 'unknown',
-      message: json['message']?.toString() ?? 'No message provided',
-      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now(),
+      type: json['type']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      timestamp: rawTime == null || rawTime.isEmpty
+          ? null
+          : DateTime.tryParse(rawTime),
     );
   }
 }
@@ -61,36 +64,42 @@ class HardwareAlertsNotifier extends AsyncNotifier<List<HardwareAlert>> {
     return result.fold(
       (failure) => throw Exception(failure.l10nKey),
       (json) {
-        final data = json['data'] as Map<String, dynamic>?;
-        if (data == null || !data.containsKey('alerts')) return [];
-        
-        final alertsList = data['alerts'] as List?;
-        if (alertsList == null || alertsList.isEmpty) return [];
+        final alertsList = _alertList(json);
+        if (alertsList == null) {
+          throw Exception('Hardware alerts response was not a list');
+        }
+        if (alertsList.isEmpty) return [];
 
         return alertsList.map((e) {
           // If the API returns a string directly
           if (e is String) {
             return HardwareAlert(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              type: 'system',
+              id: '',
+              type: '',
               message: e,
-              timestamp: DateTime.now(),
             );
           }
-          // Fallback to object mapping if API changes back
           if (e is Map<String, dynamic>) {
             return HardwareAlert.fromJson(e);
           }
           return HardwareAlert(
-            id: '0',
-            type: 'unknown',
+            id: '',
+            type: '',
             message: e.toString(),
-            timestamp: DateTime.now(),
           );
-        }).toList();
+        }).where((alert) => alert.message.trim().isNotEmpty).toList();
       },
     );
   }
+}
+
+List<dynamic>? _alertList(Map<String, dynamic> json) {
+  if (json['alerts'] is List) return json['alerts'] as List;
+  final data = json['data'];
+  if (data is List) return data;
+  if (data is Map && data['alerts'] is List) return data['alerts'] as List;
+  if (!json.containsKey('alerts') && !json.containsKey('data')) return [];
+  return null;
 }
 
 final hardwareAlertsProvider = AsyncNotifierProvider<HardwareAlertsNotifier, List<HardwareAlert>>(() {

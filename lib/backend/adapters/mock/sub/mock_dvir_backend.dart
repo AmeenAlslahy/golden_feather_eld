@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/dvir_backend.dart';
 import '../../../contracts/raw_json.dart';
 
@@ -44,8 +44,21 @@ class MockDvirBackend implements DvirBackend {
       throw UnimplementedError('MockDvirBackend.review — Phase 2');
 
   @override
-  Future<Result<RawJson>> getDefectsCatalog() =>
-      throw UnimplementedError('MockDvirBackend.getDefectsCatalog — Phase 2');
+  Future<Result<RawJson>> getDefectsCatalog() async => ok(<String, dynamic>{
+        'items': [
+          {'code': 'BRAKES_SERVICE', 'name': 'Service brakes', 'nameAr': 'مكابح الخدمة', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'PARKING_BRAKE', 'name': 'Parking brake', 'nameAr': 'مكبح الوقوف', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'STEERING', 'name': 'Steering mechanism', 'nameAr': 'آلية التوجيه', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'LIGHTS', 'name': 'Lighting devices and reflectors', 'nameAr': 'الإضاءة والعاكسات', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': false},
+          {'code': 'TIRES', 'name': 'Tires', 'nameAr': 'الإطارات', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'HORN', 'name': 'Horn', 'nameAr': 'البوق', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': false},
+          {'code': 'WIPERS', 'name': 'Windshield wipers', 'nameAr': 'مساحات الزجاج', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': false},
+          {'code': 'MIRRORS', 'name': 'Rear vision mirrors', 'nameAr': 'المرايا', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': false},
+          {'code': 'COUPLING', 'name': 'Coupling devices', 'nameAr': 'أجهزة الربط', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'WHEELS_RIMS', 'name': 'Wheels and rims', 'nameAr': 'العجلات والجنوط', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': true},
+          {'code': 'EMERGENCY_EQUIPMENT', 'name': 'Emergency equipment', 'nameAr': 'معدات الطوارئ', 'category': 'REGULATORY_MINIMUM', 'statutoryMandatory': true, 'criticalSafety': false},
+        ],
+      });
 
   @override
   Future<Result<RawJson>> getPreviousDvir(String uniqueId) =>

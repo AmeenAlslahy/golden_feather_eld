@@ -5,7 +5,6 @@ import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/services/live_tracking_data_source.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_gap.dart';
 
 final logGraphEventsProvider = StreamProvider.autoDispose<EldEvent>((ref) {
   return ref.watch(liveTrackingDataSourceProvider).events;
@@ -53,7 +52,7 @@ class LogGraph extends ConsumerWidget {
           ),
 
           // محور الوقت
-          AppGap.xs,
+          const SizedBox(height: 4),
           _buildTimeAxis(context),
         ],
       ),
@@ -126,7 +125,7 @@ class _LogGraphPainter extends CustomPainter {
     final chartWidth = size.width - 40;
     final chartHeight = size.height;
     const offsetX = 40.0;
-    final rowHeight = chartHeight / 4;
+    final rowHeight = chartHeight / 6;
 
     // 1. رسم خطوط الشبكة
     _drawGridLines(canvas, size, offsetX, chartWidth, rowHeight);
@@ -177,7 +176,7 @@ class _LogGraphPainter extends CustomPainter {
       ..strokeWidth = 0.5;
 
     // أفقي
-    for (int i = 0; i <= 4; i++) {
+    for (int i = 0; i <= 6; i++) {
       canvas.drawLine(Offset(offsetX, i * rowHeight),
           Offset(size.width, i * rowHeight), gridPaint);
     }
@@ -191,7 +190,7 @@ class _LogGraphPainter extends CustomPainter {
   }
 
   void _drawYAxisLabels(Canvas canvas, Size size, double rowHeight) {
-    const labels = ['OFF', 'SB', 'D', 'ON'];
+    const labels = ['OFF', 'SB', 'D', 'ON', 'PC', 'OTH'];
     for (int i = 0; i < labels.length; i++) {
       final textSpan = TextSpan(
         text: labels[i],
@@ -209,14 +208,14 @@ class _LogGraphPainter extends CustomPainter {
   }
 
   void _drawRightSideStats(Canvas canvas, Size size, double rowHeight) {
-    const labels = ['OFF', 'SB', 'D', 'ON'];
-    final Map<String, double> stats = {'OFF': 0, 'SB': 0, 'D': 0, 'ON': 0};
+    const labels = ['OFF', 'SB', 'D', 'ON', 'PC', 'OTH'];
+    // حساب الإحصائيات (أي حالة خارج المعجم تُحتسب في OTH لا في OFF)
+    final Map<String, double> stats = {'OFF': 0, 'SB': 0, 'D': 0, 'ON': 0, 'PC': 0, 'OTH': 0};
     for (final event in events) {
-      final status = _extractStatus(event);
-      final durationMin = _extractDurationMinutes(event);
-      if (stats.containsKey(status)) {
-        stats[status] = stats[status]! + (durationMin / 60.0);
-      }
+      final status = event.status as String;
+      final duration = event.duration as Duration;
+      final key = stats.containsKey(status) ? status : 'OTH';
+      stats[key] = stats[key]! + (duration.inMinutes / 60.0);
     }
 
     for (int i = 0; i < labels.length; i++) {
@@ -244,115 +243,68 @@ class _LogGraphPainter extends CustomPainter {
       double chartWidth, double chartHeight, double rowHeight) {
     if (events.isEmpty) return;
 
+    // إعدادات القلم للخط الأزرق الرفيع
     final linePaint = Paint()
-      ..color = AppColors.primaryBlue
+      ..color = AppColors.primaryGold // لون أزرق داكن مشابه للصورة
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.round;
 
     final path = Path();
 
-    // ترتيب الأحداث حسب الوقت
+    // ترتيب الأحداث حسب الوقت (ضروري لرسم خط متصل صحيح)
     final sortedEvents = List<dynamic>.from(events)
-      ..sort((a, b) {
-        final ta = _extractStartTime(a);
-        final tb = _extractStartTime(b);
-        if (ta == null || tb == null) return 0;
-        return ta.compareTo(tb);
-      });
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
+    // 1. إيجاد الحالة عند منتصف الليل (لبدء الرسم من أقصى اليسار)
+    // نفترض أن أول حدث يبدأ عند منتصف الليل أو قبله.
+    // سنبدأ رسم الخط من الساعة 0:00 (x = offsetX) عند مستوى الحالة الأولى
     final firstEvent = sortedEvents.first;
-    final firstStatus = _extractStatus(firstEvent);
-    final double startY = _getYPosition(firstStatus, rowHeight);
+    final double startY = _getYPosition(firstEvent.status, rowHeight);
 
-    path.moveTo(offsetX, startY);
+    path.moveTo(offsetX, startY); // نقطة البداية عند أقصى اليسار
 
     double currentX = offsetX;
     double currentY = startY;
 
     for (final event in sortedEvents) {
-      final startTime = _extractStartTime(event);
-      final durationMin = _extractDurationMinutes(event);
-      final status = _extractStatus(event);
+      final startTime = event.startTime as DateTime;
+      final duration = event.duration as Duration;
+      final status = event.status as String;
 
-      if (startTime == null) continue;
-
+      // حساب الوقت بالساعات منذ منتصف الليل (0.0 إلى 24.0)
       final startHour = startTime.hour + startTime.minute / 60.0;
-      final endHour = startHour + (durationMin / 60.0);
+      final endHour = startHour + (duration.inMinutes / 60.0);
 
+      // تحويل الوقت إلى احداثيات X
       final xStart = offsetX + (startHour / 24.0) * chartWidth;
       final xEnd = offsetX + (endHour / 24.0) * chartWidth;
 
+      // 2. الحركة العمودية المفاجئة (تغيير الحالة)
       final double newY = _getYPosition(status, rowHeight);
 
+      // إذا تغيرت الحالة، ارسم خطاً عمودياً (انتقال مباشر للأسفل/للأعلى)
+      // (ملاحظة: نحرص على عدم رسم خط عامودي إذا كانت xStart مساوية لـ currentX بسبب أخطاء التوقيت)
       if (xStart > currentX + 0.01) {
-        path.lineTo(xStart, currentY);
+        path.lineTo(xStart, currentY); // خط أفقي قبل تغيير الحالة
       }
-      path.lineTo(xStart, newY);
+
+      path.lineTo(xStart, newY); // خط عمودي (نقلة نوعية)
+
+      // 3. الحركة الأفقية (استمرار الحالة)
       path.lineTo(xEnd, newY);
 
+      // تحديث المتغيرات الحالية للنقطة التالية
       currentX = xEnd;
       currentY = newY;
     }
 
+    // التأكد من أن الخط ينتهي عند أقصى اليمين (الساعة 24:00)
     if (currentX < offsetX + chartWidth) {
       path.lineTo(offsetX + chartWidth, currentY);
     }
 
     canvas.drawPath(path, linePaint);
-  }
-
-  // ─── Helpers: extract fields from API maps OR local domain objects ───────
-
-  /// Extract status string from either a Map (API) or a typed object.
-  String _extractStatus(dynamic event) {
-    if (event is Map) {
-      return (event['status'] ?? event['dutyStatus'] ?? 'OFF').toString();
-    }
-    try {
-      return (event.status as Object).toString();
-    } catch (_) {
-      return 'OFF';
-    }
-  }
-
-  /// Extract startTime from either a Map (API) or a typed object.
-  DateTime? _extractStartTime(dynamic event) {
-    if (event is Map) {
-      final raw = event['startTime'] ?? event['eventTime'] ?? event['timestamp'];
-      if (raw == null) return null;
-      if (raw is DateTime) return raw;
-      return DateTime.tryParse(raw.toString());
-    }
-    try {
-      return event.startTime as DateTime;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Extract duration in minutes from either a Map (API) or a typed object.
-  double _extractDurationMinutes(dynamic event) {
-    if (event is Map) {
-      // API may return durationMinutes as int/double, or endTime to compute
-      final dm = event['durationMinutes'];
-      if (dm != null) return (dm as num).toDouble();
-      // Compute from startTime + endTime
-      final start = _extractStartTime(event);
-      final endRaw = event['endTime'];
-      if (start != null && endRaw != null) {
-        final end = endRaw is DateTime
-            ? endRaw
-            : DateTime.tryParse(endRaw.toString());
-        if (end != null) return end.difference(start).inMinutes.toDouble();
-      }
-      return 0;
-    }
-    try {
-      return (event.duration as Duration).inMinutes.toDouble();
-    } catch (_) {
-      return 0;
-    }
   }
 
   /// دالة مساعدة لحساب موقع Y بناءً على الحالة
@@ -371,8 +323,12 @@ class _LogGraphPainter extends CustomPainter {
       case 'ON':
         index = 3;
         break;
+      case 'PC':
+        index = 4;
+        break;
       default:
-        index = 0;
+        // حالة غير معروفة: صف مستقل (OTH) وليس Off Duty صامتاً
+        index = 5;
     }
     // إضافة (rowHeight / 2) ليتمركز الخط في منتصف الصف بالضبط
     return index * rowHeight + (rowHeight / 2);

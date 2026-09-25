@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 
 /// القيم الخام للهوية الذهبية/السوداء.
 ///
-/// **قاعدة الاستخدام:**
-/// - لا تستخدم هذا الملف مباشرة في الواجهات.
-/// - استخدم `context.eld.successFg` أو `context.textStyles.errorText`.
-/// - هذا الملف مرجعي فقط — يُعدَّل هنا وتتبع التغييرات تلقائيًا.
+/// **ملاحظة:** يفضل استخدام ألوان الثيم `Theme.of(context).colorScheme` 
+/// أو `context.eld` لدعم الوضع الداكن/الفاتح، 
+/// لكن يمكن استخدام ألوان `AppColors` المباشرة للألوان الثابتة (مثل الألوان التحذيرية).
 class AppColors {
   AppColors._();
 
   // ========== الهوية الأساسية ==========
 
-  /// الذهبي — لون الهوية الأساسي (الاسم الصحيح).
+  /// الذهبي — لون الهوية الأساسي.
   static const Color primaryGold = Color(0xFFD4AF37);
 
-  /// @deprecated استخدم primaryGold — للتوافق فقط.
-  static const Color primaryBlue = primaryGold;
+  /// SRS §25.1 — شريط التطبيق.
+  static const Color eldAppBar = Color(0xFF2196F3);
+
+  /// Alias used by the original driver screens (blue app bar).
+  static const Color primaryBlue = eldAppBar;
+
+  /// SRS §25.1 — زر التوقيع.
+  static const Color signGreen = Color(0xFF4CAF50);
 
   /// أسود الهوية — الخلفية الفاخرة.
   static const Color secondary = Color(0xFF0D0D0D);
@@ -69,18 +74,6 @@ class AppColors {
   /// النص الثانوي — 6.65:1 مع الأبيض.
   static const Color textSecondary = Color(0xFF5C5C5C);
 
-  // ========== متغيرات توافقية — لتجنب كسر الثيمات القديمة ==========
-
-  /// توافق: كان يُستعمل كـ AppColors.onPrimary في ثيم قديم
-  static const Color onPrimary = surface;
-
-  /// خلفيات فاتحة للـ ThemeExtension القديم
-  static const Color successLight = successBg;
-  static const Color warningLight = warningBg;
-  static const Color errorLight = dangerBg;
-  static const Color info = infoBlue;
-  static const Color infoLight = infoBg;
-
   // ========== الوضع الداكن ==========
 
   static const Color darkBackground = Color(0xFF0D0D0D);
@@ -100,20 +93,6 @@ class AppColors {
   /// لون خفيف مكمل.
   static const Color paleGreen = Color(0xFFE8DFC0);
 
-  // ========== خلفيات أقسام خاصة (بدل Color(0x..) يدوي) ==========
-
-  /// خلفية قسم Inspection (فاتح).
-  static const Color inspectionSectionLight = Color(0xFF333A45);
-
-  /// خلفية قسم Inspection (داكن).
-  static const Color inspectionSectionDark = Color(0xFF1E242C);
-
-  /// خلفية بطاقة فاتحة بديلة.
-  static const Color cardAltLight = Color(0xFFF7F7F7);
-
-  /// خلفية بطاقة داكنة بديلة.
-  static const Color cardAltDark = Color(0xFF1C1C1E);
-
   // ========== شريط التنقل السفلي ==========
 
   static const Color navBarBackground = Color(0xFFFFFFFF);
@@ -129,8 +108,6 @@ class AppColors {
   static const Color transparent = Colors.transparent;
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF0D0D0D);
-  static const Color black87 = Color(0xDD0D0D0D); // 87% opacity
-  static const Color surface70 = Color(0xB3FFFFFF); // 70% opacity
 
   // ========== دوال مساعدة ==========
 

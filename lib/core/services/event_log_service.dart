@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/utils/logger.dart';
 import '../time/time_authority.dart';
 import '../time/time_authority_provider.dart';
@@ -54,7 +55,9 @@ class EventLogService {
   Future<void> logEvent(String type, Map<String, dynamic> data) async {
     final now = _timeAuthority.nowUtc();
     final event = LoggedEvent(
-      id: now.millisecondsSinceEpoch.toString(),
+      // Uuid لا milliseconds: حدثان في نفس الميلي ثانية كانا يتصادمان
+      // ويحذف أحدهما الآخر من خرائط القراءة.
+      id: const Uuid().v4(),
       type: type,
       timestamp: now,
       data: data,

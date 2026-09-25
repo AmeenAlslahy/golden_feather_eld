@@ -18,24 +18,24 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     try {
       if (event.type == 'duty_status') {
         final session = await _localDataSource.getSession();
-        int driverId = 0;
-        if (event.payload.containsKey('driverId')) {
-          driverId = event.payload['driverId'] as int;
-        } else if (session != null) {
-          driverId = int.tryParse(session.user.id) ?? 0;
+        final driverId = session == null ? 0 : (int.tryParse(session.user.id) ?? 0);
+        if (driverId <= 0) {
+          return const Left(ServerFailure(message: 'Driver session is missing'));
         }
-        final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(driverId, event.payload);
-        return await Future.value(result.fold(
+        final payload = Map<String, dynamic>.from(event.payload);
+        payload['driverId'] = driverId;
+        final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(driverId, payload);
+        return result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (_) => const Right(true),
-        ));
+        );
       } else {
         // Fallback for generic Traccar events
         final result = await _dutyStatusBackend.submitLegacyGenericEvent(event.payload);
-        return await Future.value(result.fold(
+        return result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (_) => const Right(true),
-        ));
+        );
       }
     } catch (e) {
       return Left(ServerFailure(

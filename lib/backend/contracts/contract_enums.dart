@@ -3,8 +3,10 @@
 library;
 
 enum InspectionTransferType {
-  webServices('WEBSERVICES'),
-  email('EMAIL');
+  webServices('WEB_SERVICES'),
+  email('EMAIL'),
+  usb('USB'),
+  bluetooth('BLUETOOTH');
 
   const InspectionTransferType(this.wire);
   final String wire;

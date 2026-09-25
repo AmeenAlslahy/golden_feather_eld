@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../routes.dart';
+import '../../../../../routes.dart';
 
 /// عنصر في القائمة
 class MenuItem {
@@ -17,83 +17,62 @@ class MenuItem {
   });
 }
 
-/// قائمة ELD الرئيسية (مطابقة لـ SRS §4 + §17)
-///
-/// تسجيل الخروج إجراء مستقل في الدرج الجانبي وليس مساراً.
-/// ✅ Merged from main branch: Added Reports, Tracking, Settings
+/// قائمة السائق. About is required by SRS 2.2 (existing About route).
 class EldMenu {
   static const List<MenuItem> items = [
     MenuItem(
         title: 'Status',
         arabicTitle: 'الحالة',
-        icon: Icons.dashboard,
+        icon: Icons.access_time,
         route: AppRoutes.home),
     MenuItem(
         title: 'Logs',
         arabicTitle: 'السجلات',
-        icon: Icons.list_alt,
+        icon: Icons.description_outlined,
         route: AppRoutes.logs),
     MenuItem(
         title: 'DVIR',
         arabicTitle: 'فحص المركبة',
-        icon: Icons.engineering,
+        icon: Icons.build_outlined,
         route: AppRoutes.dvir),
     MenuItem(
-        title: 'Inspection',
-        arabicTitle: 'التفتيش',
-        icon: Icons.assignment_turned_in,
+        title: 'DOT Inspection',
+        arabicTitle: 'تفتيش DOT',
+        icon: Icons.check_circle_outline,
         route: AppRoutes.inspection),
     MenuItem(
         title: 'Rules',
         arabicTitle: 'القواعد',
-        icon: Icons.gavel,
+        icon: Icons.list_alt,
         route: AppRoutes.rules),
     MenuItem(
-        title: 'Co-Driver',
+        title: 'Co-driver',
         arabicTitle: 'سائق مساعد',
-        icon: Icons.people,
+        icon: Icons.person_add_alt,
         route: AppRoutes.codriver),
     MenuItem(
         title: 'Select Vehicle',
         arabicTitle: 'اختيار المركبة',
-        icon: Icons.local_shipping,
+        icon: Icons.airport_shuttle_outlined,
         route: AppRoutes.selectVehicle),
-    // ✅ Merged from main branch
-    MenuItem(
-        title: 'Reports',
-        arabicTitle: 'التقارير',
-        icon: Icons.assessment,
-        route: AppRoutes.reports),
-    MenuItem(
-        title: 'Tracking',
-        arabicTitle: 'التتبع',
-        icon: Icons.location_on,
-        route: AppRoutes.tracking),
-    MenuItem(
-        title: 'Settings',
-        arabicTitle: 'الإعدادات',
-        icon: Icons.settings,
-        route: AppRoutes.settings),
-    // Original items
     MenuItem(
         title: 'Account',
         arabicTitle: 'الحساب',
-        icon: Icons.person,
+        icon: Icons.person_outline,
         route: AppRoutes.account),
     MenuItem(
-        title: 'Info Packet',
+        title: 'Information Packet',
         arabicTitle: 'حزمة المعلومات',
-        icon: Icons.description,
+        icon: Icons.info_outline,
         route: AppRoutes.infoPacket),
     MenuItem(
         title: 'About',
         arabicTitle: 'حول التطبيق',
-        icon: Icons.info_outline,
+        icon: Icons.help_outline,
         route: AppRoutes.about),
   ];
 }
 
-/// مزود القائمة
 final menuProvider = Provider<List<MenuItem>>((ref) {
   return EldMenu.items;
 });

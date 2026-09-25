@@ -1,3 +1,5 @@
+import 'email_regex.dart';
+
 /// كائن القيمة (Value Object) لتمثيل البريد الإلكتروني
 class Email {
   final String value;
@@ -8,11 +10,7 @@ class Email {
   /// إنشاء كائن بريد إلكتروني مع التحقق من صحته
   factory Email(String input) {
     final trimmed = input.trim();
-    // Regex للتحقق من البريد الإلكتروني
-    final regex = RegExp(
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-    );
-    final isValid = regex.hasMatch(trimmed);
+    final isValid = RegExp(emailPattern).hasMatch(trimmed);
     return Email._(trimmed, isValid);
   }
 

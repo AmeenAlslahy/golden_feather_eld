@@ -1,13 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// ARCH-HIGH-01 fix: Import from composition root
-import '../../../../app/providers/app_repository_providers.dart';
-import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../data/repositories/codriver_repository_impl.dart';
+import '../../domain/current_codriver.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
+
+// --- Dependency Injection Providers ---
+
+final driverSessionBackendProviderAlias = Provider<DriverSessionBackend>((ref) {
+  return ref.watch(driverSessionBackendProvider);
+});
+
+final coDriverRepositoryProvider = Provider<CoDriverRepository>((ref) {
+  return CoDriverRepositoryImpl(
+    driverSessionBackend: ref.watch(driverSessionBackendProviderAlias),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
 
 // --- State and Notifier ---
 
@@ -15,6 +27,8 @@ import '../../domain/repositories/codriver_repository.dart';
 class CoDriverState {
   final List<CoDriver> availableDrivers;
   final CoDriver? selectedCoDriver;
+  final CurrentCoDriverRead? currentCoDriver;
+  final String? currentError;
   final bool isLoading;
   final bool isSwitching;
   final String? error;
@@ -22,6 +36,8 @@ class CoDriverState {
   const CoDriverState({
     this.availableDrivers = const [],
     this.selectedCoDriver,
+    this.currentCoDriver,
+    this.currentError,
     this.isLoading = false,
     this.isSwitching = false,
     this.error,
@@ -30,6 +46,10 @@ class CoDriverState {
   CoDriverState copyWith({
     List<CoDriver>? availableDrivers,
     CoDriver? selectedCoDriver,
+    CurrentCoDriverRead? currentCoDriver,
+    bool clearCurrent = false,
+    String? currentError,
+    bool clearCurrentError = false,
     bool? isLoading,
     bool? isSwitching,
     String? error,
@@ -37,6 +57,10 @@ class CoDriverState {
     return CoDriverState(
       availableDrivers: availableDrivers ?? this.availableDrivers,
       selectedCoDriver: selectedCoDriver ?? this.selectedCoDriver,
+      currentCoDriver:
+          clearCurrent ? currentCoDriver : (currentCoDriver ?? this.currentCoDriver),
+      currentError:
+          clearCurrentError ? currentError : (currentError ?? this.currentError),
       isLoading: isLoading ?? this.isLoading,
       isSwitching: isSwitching ?? this.isSwitching,
       error: error,
@@ -47,41 +71,64 @@ class CoDriverState {
 /// مزود السائق المساعد
 final codriverProvider =
     StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
-  return CoDriverNotifier(
-    repository: ref.watch(coDriverRepositoryProvider),
-    driverSessionBackend: ref.watch(driverSessionBackendProvider),
-  );
+  return CoDriverNotifier(repository: ref.watch(coDriverRepositoryProvider));
 });
 
 class CoDriverNotifier extends StateNotifier<CoDriverState> {
   final CoDriverRepository _repository;
-  final DriverSessionBackend _driverSessionBackend;
 
-  CoDriverNotifier(
-      {required CoDriverRepository repository, required DriverSessionBackend driverSessionBackend})
+  CoDriverNotifier({required CoDriverRepository repository})
       : _repository = repository,
-        _driverSessionBackend = driverSessionBackend,
         super(const CoDriverState()) {
     _loadDrivers();
   }
 
+  /// Pull-to-refresh / retry: re-reads the driver list and the current link.
+  Future<void> reload() => _loadDrivers();
+
   Future<void> _loadDrivers() async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await _repository.getAvailableDrivers();
+    final driversResult = await _repository.getAvailableDrivers();
+    final currentResult = await _repository.getCurrentCoDriver();
+    if (!mounted) return;
 
-    if (mounted) {
-      result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
-        (drivers) => state = state.copyWith(
-          isLoading: false,
-          availableDrivers: drivers,
-          error: null,
-        ),
-      );
-    }
+    var next = state.copyWith(isLoading: false, error: null);
+    driversResult.fold(
+      (failure) => next = next.copyWith(error: failure.message),
+      (drivers) => next = next.copyWith(availableDrivers: drivers, error: null),
+    );
+    currentResult.fold(
+      (failure) => next = next.copyWith(
+        error: next.error,
+        currentError: failure.message,
+        clearCurrent: true,
+        clearCurrentError: true,
+      ),
+      (current) => next = next.copyWith(
+        error: next.error,
+        currentCoDriver: current,
+        clearCurrentError: true,
+      ),
+    );
+    state = next;
+  }
+
+  Future<void> _refreshCurrent() async {
+    final currentResult = await _repository.getCurrentCoDriver();
+    if (!mounted) return;
+    currentResult.fold(
+      (failure) => state = state.copyWith(
+        error: state.error,
+        currentError: failure.message,
+        clearCurrent: true,
+        clearCurrentError: true,
+      ),
+      (current) => state = state.copyWith(
+        error: state.error,
+        currentCoDriver: current,
+        clearCurrentError: true,
+      ),
+    );
   }
 
   /// اختيار سائق مساعد
@@ -91,34 +138,56 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
     );
   }
 
-  /// تبديل الأدوار — مربوط بالـ API الحقيقي
-  Future<bool> switchDrivers() async {
-    final coDriver = state.selectedCoDriver;
-    if (coDriver == null) {
-      state = state.copyWith(error: 'No co-driver selected');
-      return false;
+  /// Link or remove the session co-driver. Form co-driver is unchanged.
+  Future<String?> applySessionCoDriver({
+    required CoDriver driver,
+    required String? uniqueId,
+  }) async {
+    final remove = driver.id == 'none' || driver.id.isEmpty;
+    final coId = int.tryParse(driver.id);
+    final result = await _repository.updateSessionCoDriver(
+      remove: remove,
+      coDriverId: remove ? null : coId,
+      uniqueId: uniqueId,
+    );
+    if (!mounted) return 'Link was interrupted.';
+    final message = result.fold(
+      (failure) {
+        state = state.copyWith(error: failure.message);
+        return failure.message;
+      },
+      (_) {
+        selectCoDriver(driver);
+        state = state.copyWith(error: null);
+        return null;
+      },
+    );
+    if (message == null) await _refreshCurrent();
+    return message;
+  }
+
+  /// تبديل الأدوار
+  Future<String?> switchDrivers() async {
+    final id = int.tryParse(state.selectedCoDriver?.id ?? '');
+    if (id == null || id <= 0) {
+      const message = 'Select a co-driver before switching.';
+      state = state.copyWith(isSwitching: false, error: message);
+      return message;
     }
     state = state.copyWith(isSwitching: true, error: null);
-    try {
-      final driverId = int.tryParse(coDriver.id) ?? 0;
-      final result = await _driverSessionBackend.switchPrimaryDriver(
-        action: DutyStatusAction.switchPrimary,
-        coDriverId: DriverId(driverId),
-        reason: 'Driver requested switch',
-      );
-      return await result.fold(
-        (error) {
-          state = state.copyWith(isSwitching: false, error: error.code);
-          return false;
-        },
-        (_) {
-          state = state.copyWith(isSwitching: false, error: null);
-          return true;
-        },
-      );
-    } catch (e) {
-      state = state.copyWith(isSwitching: false, error: e.toString());
-      return false;
-    }
+    final result = await _repository.switchPrimary(coDriverId: id);
+    if (!mounted) return 'Switch was interrupted.';
+    final message = result.fold(
+      (failure) {
+        state = state.copyWith(isSwitching: false, error: failure.message);
+        return failure.message;
+      },
+      (_) {
+        state = state.copyWith(isSwitching: false, error: null);
+        return null;
+      },
+    );
+    if (message == null) await _refreshCurrent();
+    return message;
   }
 }

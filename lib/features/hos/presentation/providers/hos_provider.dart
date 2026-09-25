@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
+import '../../../../core/services/live_tracking_data_source.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import 'hos_engine_provider.dart';
 
@@ -23,6 +25,7 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   final Ref _ref;
   Timer? _refreshTimer;
   StreamSubscription? _trackerSub;
+  StreamSubscription? _motionSub;
 
   HosNotifier(this._engine, this._tracker, this._ref)
       : super(_engine.currentStatus) {
@@ -39,6 +42,13 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         _engine.manualTransition(status, annotation: transition.annotation);
         refresh();
       }
+    });
+    _motionSub =
+        _ref.read(liveTrackingDataSourceProvider).events.listen((event) {
+      if (!_ref.read(authStateProvider).isAuthenticated) return;
+      if (event.timestamp.millisecondsSinceEpoch == 0) return;
+      final result = _engine.processEvent(event);
+      if (mounted) state = result;
     });
   }
 
@@ -62,10 +72,10 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     });
   }
 
-  /// تغيير حالة الخدمة
-  bool changeStatus(DutyStatus newStatus,
-      {String? annotation, bool isYardMoves = false}) {
-    if (state is! HosEngineReady) return false;
+  /// تغيير حالة الخدمة. null يعني أن الخادم قبل الختم. أي نص آخر سبب رفض.
+  Future<String?> changeStatus(DutyStatus newStatus,
+      {String? annotation, bool isYardMoves = false}) async {
+    if (state is! HosEngineReady) return DutyStampRefusal.notReady;
     final currentHosStatus = (state as HosEngineReady).update.currentStatus;
 
     final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
@@ -80,43 +90,37 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       speedThresholdKmh: speedThreshold,
     );
 
-    return validationResult.match(
-      (failure) {
-        AppLogger.warning('⚠️ ${failure.message}');
-        return false;
-      },
-      (_) {
-        String finalAnnotation = annotation ?? '';
-        if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
-          finalAnnotation = '[YM] $finalAnnotation'.trim();
-        }
+    if (validationResult.isLeft()) {
+      AppLogger.warning('⚠️ ${validationResult.fold((f) => f.message, (_) => '')}');
+      return DutyStampRefusal.moving;
+    }
 
-        String statusStr;
-        switch (newStatus) {
-          case DutyStatus.driving:
-            statusStr = 'driving';
-            break;
-          case DutyStatus.onDutyNotDriving:
-            statusStr = 'on_duty';
-            break;
-          case DutyStatus.sleeperBerth:
-            statusStr = 'sleeper_berth';
-            break;
-          case DutyStatus.offDuty:
-            statusStr = 'off_duty';
-            break;
-          case DutyStatus.personalUse:
-            statusStr = 'personal_use';
-            break;
-        }
+    String finalAnnotation = annotation ?? '';
+    if (isYardMoves && newStatus == DutyStatus.onDutyNotDriving) {
+      finalAnnotation = '[YM] $finalAnnotation'.trim();
+    }
 
-        // This relies on tracking provider deciding to return error if time untrusted.
-        _tracker.manualTransition(statusStr,
-            annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
+    String statusStr;
+    switch (newStatus) {
+      case DutyStatus.driving:
+        statusStr = 'driving';
+        break;
+      case DutyStatus.onDutyNotDriving:
+        statusStr = 'on_duty';
+        break;
+      case DutyStatus.sleeperBerth:
+        statusStr = 'sleeper_berth';
+        break;
+      case DutyStatus.offDuty:
+        statusStr = 'off_duty';
+        break;
+      case DutyStatus.personalUse:
+        statusStr = 'personal_use';
+        break;
+    }
 
-        return true;
-      },
-    );
+    return _tracker.submitManualChange(statusStr,
+        annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
   }
 
   /// تحديث الحالة
@@ -124,16 +128,11 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     state = _engine.currentStatus;
   }
 
-  void reset() {
-    _tracker.reset();
-    _engine.reset();
-    refresh();
-  }
-
   @override
   void dispose() {
     _refreshTimer?.cancel();
     _trackerSub?.cancel();
+    _motionSub?.cancel();
     super.dispose();
   }
 }

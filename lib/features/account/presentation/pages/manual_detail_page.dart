@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -17,17 +18,14 @@ class ManualDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           title,
-          style: const TextStyle(
-              fontSize: AppTypography.bodySize,
-              fontWeight: AppTypography.bold,
-              color: AppColors.surface),
+          style: context.styles.appBarTitle,
         ),
       ),
       body: ListView.builder(
@@ -55,10 +53,9 @@ class ManualDetailPage extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: Text(
                     section.title!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: AppTypography.bold,
-                          color: AppColors.primaryBlue,
-                        ),
+                    style: context.styles.sectionTitle.copyWith(
+                      color: AppColors.goldFor(Theme.of(context).brightness),
+                    ),
                   ),
                 ),
               ...section.steps.map((step) => Padding(
@@ -70,25 +67,22 @@ class ManualDetailPage extends StatelessWidget {
                           Container(
                             width: 28,
                             height: 28,
-                            margin: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
+                            margin: const EdgeInsets.only(right: AppSpacing.sm),
                             decoration: BoxDecoration(
                               color:
-                                  AppColors.primaryBlue.withValues(alpha: 0.1),
+                                  AppColors.primaryGold.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Text('${section.steps.indexOf(step) + 1}',
                                   style: const TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.primaryBlue,
+                                      color: AppColors.primaryGold,
                                       fontWeight: AppTypography.bold)),
                             ),
                           ),
                         Expanded(
-                            child: Text(step,
-                                style: const TextStyle(
-                                    fontSize: AppTypography.bodySize,
-                                    height: 1.6))),
+                            child: Text(step, style: context.styles.body)),
                       ],
                     ),
                   )),

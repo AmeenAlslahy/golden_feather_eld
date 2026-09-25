@@ -16,20 +16,19 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // إعداد شريط الحالة
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 
-  // تسجيل أخطاء Flutter الحرجة
+  // أخطاء Flutter: تُسجَّل ويُعاد عرضها كما هي — النسخة السابقة كانت
+  // تسكت "setState after dispose" و"RenderBox not laid out"، وهما bug حقيقي
+  // كان يُخفى عن المطوّر.
   FlutterError.onError = (details) {
-    if (_isExpectedError(details.exception)) {
-      return;
-    }
     AppLogger.error('Critical Flutter Error', details.exception, details.stack);
+    FlutterError.presentError(details);
   };
 
   final initializer = AppInitializer();
@@ -54,23 +53,10 @@ void main() async {
   } catch (e, stack) {
     AppLogger.error('Fatal initialization error', e, stack);
     runApp(
-      CriticalErrorApp(
+      const CriticalErrorApp(
         message:
             'تعذر تهيئة الخدمات الأساسية للتطبيق.\nيرجى التحقق من اتصالك وإعادة التشغيل.',
-        exception: e,
       ),
     );
   }
-}
-
-bool _isExpectedError(Object error) {
-  if (error is FlutterError) {
-    final msg = error.message;
-    if (msg.contains('setState() called after dispose') ||
-        msg.contains('RenderBox was not laid out')) {
-      AppLogger.debug('Expected Flutter error (ignored): $msg');
-      return true;
-    }
-  }
-  return false;
 }

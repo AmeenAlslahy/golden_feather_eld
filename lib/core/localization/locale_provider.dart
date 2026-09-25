@@ -12,8 +12,7 @@ final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
 class LocaleNotifier extends StateNotifier<Locale> {
   final LocalStorageService _storage;
 
-  // UX-HIGH-01 fix: Default locale is English per product requirement.
-  LocaleNotifier(this._storage) : super(const Locale('en')) {
+  LocaleNotifier(this._storage) : super(const Locale('ar')) {
     _loadLocale();
   }
 
@@ -30,36 +29,13 @@ class LocaleNotifier extends StateNotifier<Locale> {
       await oldPrefs.remove(_oldLanguageKey);
     }
 
-    // If user never chose language, follow device locale
-    if (!_storage.hasLanguage) {
-      // Follow system locale
-      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      final supportedCode = ['ar', 'en'].contains(deviceLocale.languageCode)
-          ? deviceLocale.languageCode
-          : 'en';
-      state = Locale(supportedCode);
-      return;
-    }
-
     // Read from unified storage
     final langCode = _storage.language;
     state = Locale(langCode);
   }
 
   Future<void> setLocale(String languageCode) async {
-    if (languageCode == 'system') {
-      // Follow device locale and clear stored preference
-      await _storage.clearLanguage();
-      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      final supportedCode = ['ar', 'en'].contains(deviceLocale.languageCode)
-          ? deviceLocale.languageCode
-          : 'en';
-      state = Locale(supportedCode);
-      return;
-    }
     state = Locale(languageCode);
     await _storage.setLanguage(languageCode);
   }
-
-  Future<void> setSystemLocale() async => setLocale('system');
 }

@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 // import '../../../../l10n/app_localizations.dart';
 
@@ -66,18 +65,12 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Trailers',
-          style: TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+        title: Text('Trailers', style: context.styles.appBarTitle,
         ),
         centerTitle: true,
       ),
@@ -101,13 +94,13 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                     onSubmitted: (_) => _addTrailer(),
                   ),
                 ),
-                AppGap.hSm,
+                const SizedBox(width: AppSpacing.sm),
                 SizedBox(
                   height: 44,
                   child: FilledButton(
                     onPressed: _addTrailer,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: AppColors.primaryGold,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
@@ -117,7 +110,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                       children: [
                         const Icon(Icons.add,
                             size: 18, color: AppColors.surface),
-                        AppGap.hXs,
+                        const SizedBox(width: 4),
                         Text(context.loc.addButton,
                             style: const TextStyle(color: AppColors.surface)),
                       ],
@@ -156,10 +149,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                         ),
                         title: Text(
                           trailer,
-                          style: const TextStyle(
-                            fontSize: AppTypography.bodySize,
-                            fontWeight: AppTypography.semiBold,
-                          ),
+                          style: context.styles.sectionTitle,
                         ),
                         trailing: TextButton(
                           onPressed: () => _removeTrailer(trailer),

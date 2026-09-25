@@ -5,8 +5,8 @@ import '../../core/utils/logger.dart';
 import '../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../features/hos/domain/engine/hos_rules_engine.dart';
 import '../../features/hos/presentation/providers/hos_provider.dart';
-import '../../features/tracking/data/providers/repository_providers.dart';
 import '../../features/tracking/presentation/providers/tracking_provider.dart';
+import '../../features/tracking/presentation/providers/tracking_providers.dart';
 import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
 
 final trackingOrchestratorProvider = Provider<void>((ref) {
@@ -22,16 +22,13 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
     if (next.status == AuthStatus.authenticated &&
         previous?.status != AuthStatus.authenticated) {
       AppLogger.info('🚀 Auth successful, configuring tracking service');
-      // After POST /eld/sessions/connect, configure tracking Plugin (nativeUploadEnabled is implicit in Traccar SDK)
+      // After POST /eld/hardware/connect, configure tracking Plugin (nativeUploadEnabled is implicit in Traccar SDK)
       ref.read(trackingRepositoryProvider).getCurrentConfig().then((config) {
         ref.read(trackingRepositoryProvider).updateConfig(config);
       });
-      // Load vehicles immediately on successful login
-      ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true);
     } else if (next.status == AuthStatus.unauthenticated &&
         previous?.status == AuthStatus.authenticated) {
       notifier.stopTracking(force: true);
-      ref.read(hosStatusProvider.notifier).reset();
     }
   });
 

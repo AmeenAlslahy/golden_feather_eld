@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../dvir_catalog.dart';
+
 /// نوع الفحص
 enum InspectionType {
   preTrip('قبل الرحلة', 'Pre-Trip'),
@@ -95,11 +97,13 @@ class DvirReport extends Equatable {
   final bool outOfService;
   final bool certified;
   final String? mechanicName;
-  final DateTime? mechanicSignatureDate;
   final String? repairStatus;
   final String? repairNotes;
   final String? reviewingDriverName;
   final bool nextDriverReviewed;
+
+  /// §396.11 catalog items marked defective on this report.
+  final List<DvirDefectSelection> selectedDefects;
 
   const DvirReport({
     required this.id,
@@ -125,11 +129,11 @@ class DvirReport extends Equatable {
     this.outOfService = false,
     this.certified = false,
     this.mechanicName,
-    this.mechanicSignatureDate,
     this.repairStatus,
     this.repairNotes,
     this.reviewingDriverName,
     this.nextDriverReviewed = false,
+    this.selectedDefects = const [],
   });
 
   DvirReport copyWith({
@@ -156,11 +160,11 @@ class DvirReport extends Equatable {
     bool? outOfService,
     bool? certified,
     String? mechanicName,
-    DateTime? mechanicSignatureDate,
     String? repairStatus,
     String? repairNotes,
     String? reviewingDriverName,
     bool? nextDriverReviewed,
+    List<DvirDefectSelection>? selectedDefects,
   }) {
     return DvirReport(
       id: id ?? this.id,
@@ -186,11 +190,11 @@ class DvirReport extends Equatable {
       outOfService: outOfService ?? this.outOfService,
       certified: certified ?? this.certified,
       mechanicName: mechanicName ?? this.mechanicName,
-      mechanicSignatureDate: mechanicSignatureDate ?? this.mechanicSignatureDate,
       repairStatus: repairStatus ?? this.repairStatus,
       repairNotes: repairNotes ?? this.repairNotes,
       reviewingDriverName: reviewingDriverName ?? this.reviewingDriverName,
       nextDriverReviewed: nextDriverReviewed ?? this.nextDriverReviewed,
+      selectedDefects: selectedDefects ?? this.selectedDefects,
     );
   }
 
@@ -219,10 +223,10 @@ class DvirReport extends Equatable {
         outOfService,
         certified,
         mechanicName,
-        mechanicSignatureDate,
         repairStatus,
         repairNotes,
         reviewingDriverName,
         nextDriverReviewed,
+        selectedDefects,
       ];
 }

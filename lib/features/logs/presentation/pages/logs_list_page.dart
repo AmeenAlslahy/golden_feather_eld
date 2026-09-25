@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/daily_log.dart';
@@ -27,9 +28,7 @@ class LogsListPage extends ConsumerWidget {
         title: Center(
           child: Text(
             context.loc.logsTitle,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.surface,
-                ),
+            style: context.styles.appBarTitle,
           ),
         ),
         leading: Builder(
@@ -66,39 +65,19 @@ class LogsListPage extends ConsumerWidget {
       body: (logsState.isLoading && logsState.logs.isEmpty)
           ? const Center(child: CircularProgressIndicator())
           : (logsState.error != null && logsState.logs.isEmpty)
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(logsState.error!, style: const TextStyle(color: AppColors.dangerRed)),
-                      AppGap.md,
-                      ElevatedButton(
-                        onPressed: () => ref.read(logsProvider.notifier).loadLogs(refresh: true),
-                        child: const Text('Retry'), // Or context.loc.retry if available
-                      ),
-                    ],
+              ? EldRetryView(
+                  message: anyErrorUserMessage(
+                    logsState.error!,
+                    isArabic: Localizations.localeOf(context).languageCode == 'ar',
                   ),
+                  onRetry: () =>
+                      ref.read(logsProvider.notifier).loadLogs(refresh: true),
                 )
               : logsState.logs.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.list_alt,
-                              size: 64,
-                              color:
-                                  Theme.of(context).colorScheme.onSurfaceVariant),
-                          AppGap.md,
-                          Text(
-                            context.loc.noData,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
+                  ? EldRetryView(
+                      message: context.loc.noRecords,
+                      onRetry: () =>
+                          ref.read(logsProvider.notifier).loadLogs(refresh: true),
                     )
                   : RefreshIndicator(
                       onRefresh: () => ref.read(logsProvider.notifier).loadLogs(refresh: true),
@@ -136,6 +115,8 @@ class _LogListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      splashColor: Colors.black.withValues(alpha: 0.14),
+      highlightColor: Colors.black.withValues(alpha: 0.08),
       child: Container(
         color: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.symmetric(
@@ -148,13 +129,38 @@ class _LogListItem extends StatelessWidget {
             // السطر الأول: التاريخ + السهم
             Row(
               children: [
-                Text(
-                  log.formattedDate,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.semiBold,
+                Flexible(
+                  child: Text(
+                    log.formattedDate,
+                    style: context.styles.sectionTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (log.today) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'اليوم'
+                        : 'Today',
+                    style: context.styles.caption.copyWith(
+                      color: AppColors.primaryGold,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                if (log.requiresAction) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'يتطلب إجراء'
+                        : 'Action',
+                    style: context.styles.caption.copyWith(
+                      color: AppColors.dangerRed,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
                 const Spacer(), // يدفع السهم إلى أقصى اليمين
                 const Icon(
                   Icons.chevron_right,
@@ -163,13 +169,17 @@ class _LogListItem extends StatelessWidget {
               ],
             ),
 
-            const AppGap.custom(12), // مسافة بين السطر الأول والثاني
+            const SizedBox(height: 12), // مسافة بين السطر الأول والثاني
 
-            // السطر الثاني: الوقت + الحالات
-            Row(
+            // السطر الثاني: الوقت + الحالات (يلتف على شاشة ضيقة بدل أن يفيض)
+            Wrap(
+              spacing: 24,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 // 1. عدد الساعات
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.check_circle,
@@ -178,7 +188,7 @@ class _LogListItem extends StatelessWidget {
                           : AppColors.textSecondary,
                       size: 16,
                     ),
-                    const AppGap.custom(6, horizontal: true),
+                    const SizedBox(width: 6),
                     Text(
                       log.formattedTotalWorkTime.isNotEmpty
                           ? log.formattedTotalWorkTime
@@ -196,16 +206,11 @@ class _LogListItem extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(
-                    width: 32), // مسافة ثابتة تفصل بين الوقت والحالة الأولى
-
                 // 2. حالة النموذج (Form)
                 _StatusChip(
                   label: context.loc.formLabel,
                   isComplete: log.isFormComplete,
                 ),
-
-                AppGap.hLg, // مسافة ثابتة تفصل بين الحالتين
 
                 // 3. حالة التوثيق (Certify)
                 _StatusChip(
@@ -240,7 +245,7 @@ class _StatusChip extends StatelessWidget {
           color: isComplete ? AppColors.successGreen : AppColors.dangerRed,
           size: 20,
         ),
-        AppGap.hXs,
+        const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(

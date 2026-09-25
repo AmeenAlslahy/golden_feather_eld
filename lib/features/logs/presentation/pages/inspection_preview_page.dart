@@ -2,22 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 
-import '../../../../core/domain/inspection/dot_inspection.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../inspection/domain/transfer_audit.dart';
 import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
-import '../../domain/entities/audit_entry.dart';
+import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
 import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
-
-final auditProvider =
-    FutureProvider.family<List<AuditEntry>, DateTime>((ref, date) async {
-  return ref.read(logsProvider.notifier).getAuditEntries(date);
-});
 
 /// صفحة معاينة التفتيش الكاملة
 class InspectionPreviewPage extends ConsumerStatefulWidget {
@@ -57,30 +51,12 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.primaryBlue,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.surface),
               onPressed: () => Navigator.pop(context),
             ),
-            title: Text(
-              selectedLog?.formattedDate ?? '',
-              style: const TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.bold,
-                color: AppColors.surface,
-              ),
-            ),
+            title: Text('Inspection Logs', style: context.styles.appBarTitle),
             centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.tune, color: AppColors.surface),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('خيارات التصفية قيد التطوير')),
-                  );
-                },
-              ),
-            ],
           ),
           body: selectedLog == null
               ? Center(child: Text(loc.noData))
@@ -103,45 +79,18 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                           }
                         },
                       ),
-                      // ========== القسم ١: الرسم البياني ==========
-                      LogGraph(events: selectedLog.events),
-                      const Divider(height: 1),
-                      // ========== القسم ٢: جدول الأحداث ==========
-                      _EventsTable(events: selectedLog.events),
-                      const Divider(height: 1),
-                      // ========== القسم ٣: ملخص التفتيش ==========
                       _InspectionSummary(screen: screen, selectedLog: selectedLog),
                       const Divider(height: 1),
-                      // ========== القسم ٤: سجل التدقيق ==========
-                      _AuditTrail(selectedLog: selectedLog),
-                      AppGap.lg,
+                      LogGraph(events: selectedLog.events),
+                      const Divider(height: 1),
+                      _EventsTable(events: selectedLog.events),
+                      const Divider(height: 1),
+                      const _AuditTrail(),
+                      const SizedBox(height: AppSpacing.lg),
                     ],
                   ),
                 ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border:
-                  Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-            ),
-            child: BottomNavigationBar(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              selectedItemColor: Theme.of(context).colorScheme.onSurface,
-              unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-              currentIndex: 0,
-              type: BottomNavigationBarType.fixed,
-              items: [
-                BottomNavigationBarItem(
-                    icon: const Icon(Icons.access_time), label: loc.events),
-                BottomNavigationBarItem(
-                    icon: const Icon(Icons.assignment), label: loc.form),
-                BottomNavigationBarItem(
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: loc.certify),
-              ],
-              onTap: (_) {},
-            ),
-          ),
+          bottomNavigationBar: null,
         );
       },
     );
@@ -169,27 +118,21 @@ class _DateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      color: const Color(0xFF3A3A3C),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left,
-                color: Theme.of(context).colorScheme.onSurface),
+            icon: const Icon(Icons.chevron_left, color: Colors.white),
             onPressed: hasPrevious ? onPrevious : null,
           ),
           Text(
             selectedLog?.formattedDate ?? '',
-            style: TextStyle(
-              fontSize: AppTypography.bodySize,
-              fontWeight: AppTypography.semiBold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+            style: context.styles.appBarTitle,
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right,
-                color: Theme.of(context).colorScheme.onSurface),
+            icon: const Icon(Icons.chevron_right, color: Colors.white),
             onPressed: hasNext ? onNext : null,
           ),
         ],
@@ -263,10 +206,8 @@ class _EventsTable extends StatelessWidget {
   }
 
   TextStyle _headerStyle(BuildContext context) {
-    return TextStyle(
-      fontSize: AppTypography.smallSize,
-      fontWeight: AppTypography.semiBold,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return context.styles.caption.copyWith(
+      fontWeight: FontWeight.w600,
     );
   }
 }
@@ -349,8 +290,7 @@ class _EventRow extends StatelessWidget {
   }
 
   TextStyle _valueStyle(BuildContext context) {
-    return TextStyle(
-      fontSize: AppTypography.smallSize,
+    return context.styles.caption.copyWith(
       color: Theme.of(context).colorScheme.onSurface,
     );
   }
@@ -362,7 +302,7 @@ class _EventRow extends StatelessWidget {
       case 'ON':
         return AppColors.warningYellow;
       case 'SB':
-        return AppColors.primaryBlue;
+        return AppColors.primaryGold;
       case 'OFF':
         return AppColors.textSecondary;
       default:
@@ -381,16 +321,15 @@ class _InspectionSummary extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loc = AppLocalizations.of(context)!;
     final cycleAsync = ref.watch(dotInspectionCycleProvider);
-    
     DotInspectionCycleDay? currentDay;
     cycleAsync.whenData((cycle) {
       try {
         currentDay = cycle.firstWhere(
-          (d) => d.logDate.year == selectedLog.date.year && 
-                 d.logDate.month == selectedLog.date.month && 
-                 d.logDate.day == selectedLog.date.day,
+          (d) =>
+              d.logDate.year == selectedLog.date.year &&
+              d.logDate.month == selectedLog.date.month &&
+              d.logDate.day == selectedLog.date.day,
           orElse: () => cycle.first,
         );
       } catch (_) {
@@ -398,138 +337,7 @@ class _InspectionSummary extends ConsumerWidget {
       }
     });
 
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // السطر 1: السائق
-          _SummaryRow(cells: [
-            _SummaryCell(
-                label: loc.driverName, value: screen.driverName, flex: 3),
-            _SummaryCell(label: loc.driverId, value: screen.driverId.value.toString()),
-            _SummaryCell(
-                label: loc.license, value: '-'),
-            _SummaryCell(label: loc.licenseState, value: '-'),
-          ]),
-          AppGap.sm,
-          // السطر 2: مساعد
-          _SummaryRow(cells: [
-            _SummaryCell(label: loc.exemptDriver, value: currentDay?.exemptDriver == true ? 'Yes' : 'No'),
-            _SummaryCell(label: loc.unidentifiedDriving, value: currentDay?.unidentifiedDrivingCount.toString() ?? '0'),
-            _SummaryCell(
-                label: loc.coDriver, value: 'None'),
-            _SummaryCell(
-                label: loc.coDriverId, value: '-'),
-          ]),
-          AppGap.sm,
-          // السطر 3: التاريخ والتصديق
-          _SummaryRow(cells: [
-            _SummaryCell(
-                label: loc.logDate,
-                value: currentDay?.displayDate ?? screen.inspectionDate.toString().substring(0, 10)),
-            _SummaryCell(
-                label: loc.displayDate,
-                value: currentDay?.displayDate ?? screen.inspectionDate.toString().substring(0, 10)),
-            _SummaryCell(label: loc.displayLocation, value: currentDay?.displayLocation ?? '-'),
-            _SummaryCell(label: loc.certified, value: currentDay?.certified == true ? 'Yes' : 'No'),
-          ]),
-          AppGap.sm,
-          // السطر 4: ELD
-          _SummaryRow(cells: [
-            _SummaryCell(label: loc.eldRegId, value: screen.eldRegistrationId),
-            _SummaryCell(label: loc.eldIdentifier, value: screen.eldIdentifier),
-            _SummaryCell(
-                label: loc.provider, value: currentDay?.eldProvider ?? '-', flex: 2),
-          ]),
-          AppGap.sm,
-          // السطر 5: المؤشرات
-          _SummaryRow(cells: [
-            _SummaryCell(label: loc.periodStart, value: '00:00'),
-            _SummaryCell(label: loc.dataDiag, value: currentDay?.activeDataDiagnostics.length.toString() ?? '0'),
-            _SummaryCell(label: loc.deviceMalf, value: currentDay?.activeDeviceMalfunctions.length.toString() ?? '0'),
-          ]),
-          AppGap.sm,
-          // السطر 6: المركبة
-          _SummaryRow(cells: [
-            _SummaryCell(label: loc.vehicle, value: currentDay?.vehicleNumber ?? '-'),
-            _SummaryCell(label: loc.vin, value: currentDay?.vin ?? '-', flex: 2),
-            _SummaryCell(label: loc.odometer, value: currentDay?.startOdometerKm.toStringAsFixed(0) ?? '-'),
-            _SummaryCell(label: loc.distance, value: currentDay?.totalDistanceKm != null ? '${currentDay!.totalDistanceKm.toStringAsFixed(0)} km' : '-'),
-            _SummaryCell(label: loc.engineHours, value: currentDay?.engineHours.toStringAsFixed(1) ?? '-'),
-          ]),
-          AppGap.sm,
-          // السطر 7: الناقل
-          _SummaryRow(cells: [
-            _SummaryCell(
-                label: loc.trailers, value: currentDay?.trailers.isNotEmpty == true ? currentDay!.trailers : '-'),
-            _SummaryCell(
-                label: loc.shippingDocuments,
-                value: currentDay?.shippingDocuments.isNotEmpty == true ? currentDay!.shippingDocuments : '-'),
-            _SummaryCell(
-                label: loc.carrier, value: screen.carrierName, flex: 2),
-            _SummaryCell(
-                label: loc.mainOffice, value: currentDay?.mainOfficeAddress ?? '-', flex: 2),
-            _SummaryCell(
-                label: loc.homeTerminal,
-                value: currentDay?.homeTerminalAddress ?? '-',
-                flex: 2),
-          ]),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// صف في الملخص
-// ============================================================
-class _SummaryRow extends StatelessWidget {
-  final List<Widget> cells;
-  const _SummaryRow({required this.cells});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: cells,
-    );
-  }
-}
-
-// ============================================================
-// خلية في الملخص
-// ============================================================
-class _SummaryCell extends StatelessWidget {
-  final String label;
-  final String value;
-  final int flex;
-  const _SummaryCell({required this.label, required this.value, this.flex = 1});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      flex: flex,
-      child: Padding(
-        padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: context.textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const AppGap.custom(2),
-            Text(
-              value,
-              style: context.textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return InspectionLogHeaderTable(screen: screen, day: currentDay);
   }
 }
 
@@ -537,82 +345,83 @@ class _SummaryCell extends StatelessWidget {
 // سجل التدقيق
 // ============================================================
 class _AuditTrail extends ConsumerWidget {
-  final dynamic selectedLog;
-  const _AuditTrail({required this.selectedLog});
+  const _AuditTrail();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (selectedLog == null) return const SizedBox.shrink();
-
-    final auditsAsync = ref.watch(auditProvider(selectedLog.date));
+    final auditsAsync = ref.watch(transferAuditProvider);
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Audit Trail',
-            style: TextStyle(
+          Text(
+            arabic ? 'سجل نقل السجلات' : 'Transfer audit',
+            style: const TextStyle(
               fontSize: AppTypography.subtitleSize,
               fontWeight: AppTypography.bold,
             ),
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
           auditsAsync.when(
             data: (audits) {
               if (audits.isEmpty) {
-                return Text(context.loc.noManualModifications,
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant));
+                return Text(
+                  arabic
+                      ? 'لا توجد عمليات نقل في رد الخادم.'
+                      : 'The server returned no transfers.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                );
               }
               return Column(
-                children: audits
-                    .map((audit) => Container(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          padding: const EdgeInsets.all(AppSpacing.sm),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(AppRadius.input),
-                            border: Border.all(
-                                color: Theme.of(context).dividerColor),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                      audit.timestamp
-                                          .toString()
-                                          .substring(0, 16),
-                                      style: context.textTheme.labelSmall),
-                                  Text(
-                                      context.loc.auditStatusChange(
-                                          audit.oldStatus ?? 'New',
-                                          audit.newStatus),
-                                      style: context.textTheme.labelSmall?.copyWith(color: AppColors.primaryBlue)),
-                                ],
-                              ),
-                              AppGap.xs,
-                              Text(context.loc.auditReason(audit.reason),
-                                  style: context.textTheme.labelSmall),
-                            ],
-                          ),
-                        ))
-                    .toList(),
+                children: [
+                  for (final audit in audits) _TransferAuditTile(audit: audit),
+                ],
               );
             },
             loading: () => const CircularProgressIndicator(),
-            error: (_, __) => Text(context.loc.failedToLoadAudits),
+            error: (error, _) => Text(
+              arabic
+                  ? 'تعذر قراءة سجل النقل: $error'
+                  : 'Transfer audit was not loaded: $error',
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TransferAuditTile extends StatelessWidget {
+  final TransferAuditRow audit;
+  const _TransferAuditTile({required this.audit});
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = [
+      if (audit.status.isNotEmpty) audit.status,
+      if (audit.channel.isNotEmpty) audit.channel,
+      if (audit.recipient.isNotEmpty) audit.recipient,
+      if (audit.transferredAt.isNotEmpty) audit.transferredAt,
+      if (audit.message.isNotEmpty) audit.message,
+    ];
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Text(lines.join(' · '), style: const TextStyle(fontSize: 12)),
     );
   }
 }

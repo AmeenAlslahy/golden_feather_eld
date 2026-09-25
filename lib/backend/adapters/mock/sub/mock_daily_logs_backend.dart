@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/daily_logs_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../eld_engine/models/certify_dto.dart';
@@ -27,20 +27,21 @@ class MockDailyLogsBackend implements DailyLogsBackend {
         {
           'id': 1,
           'uniqueId': 'log_1',
-          'date': '2023-10-25',
+          // المفاتيح تطابق DailyLogDto.fromJson (logDate + قيم COMPLETED/CERTIFIED)
+          'logDate': '2023-10-25',
           'formattedTotalWorkTime': '6h 26m',
           'today': true,
-          'formStatus': 'complete',
-          'certificationStatus': 'certified'
+          'formStatus': 'COMPLETED',
+          'certificationStatus': 'CERTIFIED'
         },
         {
           'id': 2,
           'uniqueId': 'log_2',
-          'date': '2023-10-24',
+          'logDate': '2023-10-24',
           'formattedTotalWorkTime': '10h 15m',
           'today': false,
-          'formStatus': 'incomplete',
-          'certificationStatus': 'uncertified'
+          'formStatus': 'INCOMPLETE',
+          'certificationStatus': 'UNCERTIFIED'
         }
       ]
     });
@@ -65,10 +66,9 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     required EditId editId,
     required String action,
     String? driverNotes,
-  }) =>
-      throw UnimplementedError(
-        'MockDailyLogsBackend.respondToCarrierEdit — Phase 2',
-      );
+  }) async {
+    return ok(null);
+  }
 
   @override
   Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request) async {
@@ -85,10 +85,9 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     required DutyStatusId statusId,
     required DriverId targetCoDriverId,
     required String annotation,
-  }) =>
-      throw UnimplementedError(
-        'MockDailyLogsBackend.reassignDriving — Phase 2',
-      );
+  }) async {
+    return ok(null);
+  }
 
   @override
   Future<Result<RawJson>> getForm(DailyLogId logId) =>

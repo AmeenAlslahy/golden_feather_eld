@@ -1,3 +1,5 @@
+import 'email_regex.dart';
+
 /// كائن القيمة (Value Object) لتمثيل مُعرف تسجيل الدخول (بريد إلكتروني أو اسم مستخدم)
 class LoginIdentifier {
   final String value;
@@ -14,11 +16,8 @@ class LoginIdentifier {
     }
 
     if (trimmed.contains('@')) {
-      // التحقق كبريد إلكتروني
-      final regex = RegExp(
-        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-      );
-      final isValidEmail = regex.hasMatch(trimmed);
+      // التحقق كبريد إلكتروني (النمط الواحد في email_regex.dart)
+      final isValidEmail = RegExp(emailPattern).hasMatch(trimmed);
       return LoginIdentifier._(trimmed, isValidEmail, true);
     } else {
       // التحقق كاسم مستخدم (طوله أكبر من 0)

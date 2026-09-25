@@ -6,8 +6,7 @@ import '../../../../../core/domain/entities/location_point.dart'; // For Locatio
 import '../../../../../core/services/live_tracking_data_source.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
 import '../../../../../core/utils/logger.dart';
-// ARCH-CRIT-01 fix: Use Domain port instead of Data DataSource
-import '../../ports/hos_storage_port.dart';
+import '../../../data/datasources/hos_local_data_source.dart';
 
 /// أنواع الأعطال
 enum MalfunctionType {
@@ -86,7 +85,7 @@ class DiagnosticsState {
 /// محرك التشخيص الذاتي
 class DiagnosticsEngine {
   final LiveTrackingDataSource _trackingDataSource;
-  final HosStoragePort _localDb;
+  final HosLocalDataSource _localDb;
   final TrustedTimeProvider _timeProvider;
   final _stateController = StreamController<DiagnosticsState>.broadcast();
 
@@ -96,9 +95,10 @@ class DiagnosticsEngine {
   DiagnosticsState _state = const DiagnosticsState();
   DateTime? _lastDataPoint;
   double? _lastSpeed;
-  int _engineRunningWithoutMotion = 0; // دقائق
+  // بداية تجمّد المحرك (وقت) — العداد السابق كان يعد الأحداث لا الدقائق
+  DateTime? _engineStillSince;
   static const int dataGapThreshold = 300; // 5 دقائق
-  static const int engineSyncThreshold = 60; // 60 دقيقة
+  static const Duration engineSyncThreshold = Duration(minutes: 60);
   static const int motionSensorThreshold = 80; // 80 كم/س تغير مفاجئ
 
   double _lastLat = 0.0;
@@ -109,11 +109,9 @@ class DiagnosticsEngine {
     _startListening();
   }
 
-  DateTime _getCurrentTime() {
+  DateTime? _getCurrentTime() {
     final timeResult = _timeProvider.currentTime;
-    return timeResult is TrustedTimeAvailable
-        ? timeResult.utc
-        : DateTime.now().toUtc();
+    return timeResult is TrustedTimeAvailable ? timeResult.utc : null;
   }
 
   DiagnosticsState get state => _state;
@@ -127,10 +125,10 @@ class DiagnosticsEngine {
 
     _eventSubscription = _trackingDataSource.events.listen((event) {
       // نستنتج حالة التشغيل من السرعة وعداد المحرك في هذا التطبيق الوهمي
-      bool ignition = event.speed.inMilesPerHour > 0 || event.speedDurationSeconds > 0;
+      bool ignition = event.speedMph > 0 || event.speedDurationSeconds > 0;
       processDataPoint(
         timestamp: event.timestamp,
-        speed: event.speed.inMilesPerHour,
+        speed: event.speedMph,
         ignition: ignition,
         latitude: _lastLat,
         longitude: _lastLon,
@@ -149,8 +147,10 @@ class DiagnosticsEngine {
     _checkDataGap(timestamp);
     _checkPositioning(speed, latitude, longitude);
     _checkMotionSensor(speed);
-    _checkEngineSync(ignition, speed);
-    _checkUnidentifiedDrive(ignition, speed);
+    _checkEngineSync(ignition, speed, timestamp);
+    // ملاحظة: "القيادة غير المعروفة" لا تُحدَّد محلياً — فحصها السابق
+    // (!ignition && speed > 8) كان مستحيلاً رياضياً (speed > 0 ⇒ ignition)،
+    // والتحديد الفعلي يأتي من الخادم عبر ميزة الأحداث غير المعروفة.
 
     _lastDataPoint = timestamp;
     _lastSpeed = speed;
@@ -174,13 +174,14 @@ class DiagnosticsEngine {
 
   void _checkPositioning(double speed, double lat, double lon) {
     if (speed > 8.0 && (lat == 0.0 || lon == 0.0)) {
-      _addMalfunction(MalfunctionEvent(
+      if (!_addStampedMalfunction(
         type: MalfunctionType.positioningMalfunction,
         severity: MalfunctionSeverity.major,
         message:
             'Positioning malfunction: zero coordinates at speed $speed km/h',
-        timestamp: _getCurrentTime(),
-      ));
+      )) {
+        return;
+      }
       AppLogger.error('🛰️ Positioning malfunction');
     }
   }
@@ -189,47 +190,59 @@ class DiagnosticsEngine {
     if (_lastSpeed != null) {
       final speedChange = (currentSpeed - _lastSpeed!).abs();
       if (speedChange > motionSensorThreshold) {
-        _addMalfunction(MalfunctionEvent(
+        if (!_addStampedMalfunction(
           type: MalfunctionType.motionSensorMalfunction,
           severity: MalfunctionSeverity.major,
           message:
               'Sudden speed change: ${speedChange.toStringAsFixed(0)} km/h',
-          timestamp: _getCurrentTime(),
           details: {'speed_change': speedChange},
-        ));
+        )) {
+          return;
+        }
         AppLogger.error('📊 Motion sensor malfunction');
       }
     }
   }
 
-  void _checkEngineSync(bool ignition, double speed) {
+  void _checkEngineSync(bool ignition, double speed, DateTime timestamp) {
     if (ignition && speed < 1.0) {
-      _engineRunningWithoutMotion++;
-      if (_engineRunningWithoutMotion >= engineSyncThreshold) {
-        _addMalfunction(MalfunctionEvent(
+      _engineStillSince ??= timestamp;
+      final duration = timestamp.difference(_engineStillSince!);
+      if (duration >= engineSyncThreshold) {
+        if (!_addStampedMalfunction(
           type: MalfunctionType.engineSyncMalfunction,
           severity: MalfunctionSeverity.minor,
           message:
-              'Engine running without motion for $_engineRunningWithoutMotion minutes',
-          timestamp: _getCurrentTime(),
-        ));
+              'Engine running without motion for ${duration.inMinutes} minutes',
+        )) {
+          return;
+        }
+        // إعادة توقيت النافذة وإلا كان كل حدث لاحق يضيف عطلاً جديداً
+        // (لا dedup في _addMalfunction).
+        _engineStillSince = timestamp;
         AppLogger.warning('🔧 Engine sync malfunction');
       }
     } else if (speed >= 1.0) {
-      _engineRunningWithoutMotion = 0;
+      _engineStillSince = null;
     }
   }
 
-  void _checkUnidentifiedDrive(bool ignition, double speed) {
-    if (!ignition && speed > 8.0) {
-      _addMalfunction(MalfunctionEvent(
-        type: MalfunctionType.unidentifiedDrive,
-        severity: MalfunctionSeverity.major,
-        message: 'Unidentified drive: vehicle moving without ignition',
-        timestamp: _getCurrentTime(),
-      ));
-      AppLogger.error('🚨 Unidentified drive');
-    }
+  bool _addStampedMalfunction({
+    required MalfunctionType type,
+    required MalfunctionSeverity severity,
+    required String message,
+    Map<String, dynamic>? details,
+  }) {
+    final now = _getCurrentTime();
+    if (now == null) return false;
+    _addMalfunction(MalfunctionEvent(
+      type: type,
+      severity: severity,
+      message: message,
+      timestamp: now,
+      details: details,
+    ));
+    return true;
   }
 
   void _addMalfunction(MalfunctionEvent event) {
@@ -262,15 +275,13 @@ class DiagnosticsEngine {
     _stateController.add(_state);
   }
 
-  // ignore: avoid_positional_boolean_parameters
   void checkMissingCertification(bool isCertified) {
     if (!isCertified) {
-      _addMalfunction(MalfunctionEvent(
+      _addStampedMalfunction(
         type: MalfunctionType.missingCertification,
         severity: MalfunctionSeverity.major,
         message: 'Missing certification for daily log',
-        timestamp: _getCurrentTime(),
-      ));
+      );
     }
   }
 

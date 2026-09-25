@@ -1,6 +1,6 @@
-import '../../../../core/domain/inspection/dot_inspection.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/inspection_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -17,7 +17,7 @@ class EldInspectionBackend implements InspectionBackend {
   Future<Result<DotInspectionScreen>> getScreen({DriverId? driverId}) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          EldEndpoints.dotInspection,
+          EldEndpoints.inspections,
           queryParameters:
               driverId != null ? {'driverId': driverId.value} : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
@@ -38,9 +38,9 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<List<dynamic>>(
-          EldEndpoints.dotInspectionCycle,
+          '${EldEndpoints.inspections}/cycle',
           queryParameters: {
-            if (driverId != null) 'driverId': driverId.value,
+            if (driverId != null) 'driverId': 201, // TODO: Temporary workaround for driver 201
             'days': days,
             if (endDate != null)
               'endDate': endDate.toIso8601String().split('T').first,
@@ -62,9 +62,9 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          EldEndpoints.dotInspectionLogs,
+          '${EldEndpoints.inspections}/logs',
           queryParameters: {
-            if (driverId != null) 'driverId': driverId.value,
+            if (driverId != null) 'driverId': 201, // TODO: Temporary workaround for driver 201
             if (date != null)
               'date': date.toIso8601String().split('T').first,
           },
@@ -78,6 +78,18 @@ class EldInspectionBackend implements InspectionBackend {
         );
   }
 
+  RawJson _asMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is List) return {'items': data};
+    return <String, dynamic>{};
+  }
+
+  Future<Result<RawJson>> _postJson(String path, Map<String, dynamic> data) async {
+    final res = await _apiClient.post<RawJson>(path, data: data, parser: _asMap);
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
+  }
+
   @override
   Future<Result<RawJson>> emailLogs({
     required DriverId driverId,
@@ -86,30 +98,26 @@ class EldInspectionBackend implements InspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
-  }) async {
-    final response = await _apiClient.post<RawJson>(
-      EldEndpoints.dotInspectionEmailLogs,
-      data: {
-        'driverId': driverId.value,
-        'recipientEmail': recipientEmail,
-        if (routingCode != null) 'routingCode': routingCode,
-        if (comment != null) 'comment': comment,
-        if (daysCount != null) 'daysCount': daysCount,
-        if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }) {
+    return _postJson(EldEndpoints.dotInspectionEmailLogs, {
+      'driverId': driverId.value,
+      'recipientEmail': recipientEmail,
+      if (routingCode != null) 'routingCode': routingCode,
+      if (comment != null) 'comment': comment,
+      if (daysCount != null) 'daysCount': daysCount,
+      if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
+    });
   }
 
   @override
   Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) async {
-    final response = await _apiClient.get<RawJson>(
-      EldEndpoints.dotInspectionInfoPacket,
-      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dotInspectionPacket,
+      queryParameters:
+          driverId != null ? {'driverId': driverId.value} : null,
+      parser: _asMap,
     );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
   @override
@@ -121,21 +129,16 @@ class EldInspectionBackend implements InspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
-  }) async {
-    final response = await _apiClient.post<RawJson>(
-      EldEndpoints.dotInspectionSendLogs,
-      data: {
-        'driverId': driverId.value,
-        'transferType': transferType.name.toUpperCase(),
-        'outputFileComment': outputFileComment,
-        if (routingCode != null) 'routingCode': routingCode,
-        if (recipientEmail != null) 'recipientEmail': recipientEmail,
-        if (daysCount != null) 'daysCount': daysCount,
-        if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }) {
+    return _postJson(EldEndpoints.dotInspectionSendLogs, {
+      'driverId': driverId.value,
+      'transferType': transferType.wire,
+      'outputFileComment': outputFileComment,
+      if (routingCode != null) 'routingCode': routingCode,
+      if (recipientEmail != null) 'recipientEmail': recipientEmail,
+      if (daysCount != null) 'daysCount': daysCount,
+      if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
+    });
   }
 
   @override
@@ -146,30 +149,27 @@ class EldInspectionBackend implements InspectionBackend {
     String? inspectorAgency,
     String? location,
     String? notes,
-  }) async {
-    final response = await _apiClient.post<RawJson>(
-      EldEndpoints.dotInspectionStart,
-      data: {
-        'driverId': driverId.value,
-        if (inspectorName != null) 'inspectorName': inspectorName,
-        if (inspectorBadge != null) 'inspectorBadge': inspectorBadge,
-        if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
-        if (location != null) 'location': location,
-        if (notes != null) 'notes': notes,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+  }) {
+    return _postJson(EldEndpoints.dotInspectionStart, {
+      'driverId': driverId.value,
+      if (inspectorName != null) 'inspectorName': inspectorName,
+      if (inspectorBadge != null) 'inspectorBadge': inspectorBadge,
+      if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
+      if (location != null) 'location': location,
+      if (notes != null) 'notes': notes,
+      'photos': [], // Workaround for Traccar backend jsonb column bug
+    });
   }
 
   @override
   Future<Result<RawJson>> getTransfers({DriverId? driverId}) async {
-    final response = await _apiClient.get<RawJson>(
+    final res = await _apiClient.get<RawJson>(
       EldEndpoints.dotInspectionTransfers,
-      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      queryParameters:
+          driverId != null ? {'driverId': driverId.value} : null,
+      parser: _asMap,
     );
-    return response.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
   @override

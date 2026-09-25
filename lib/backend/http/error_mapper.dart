@@ -58,6 +58,15 @@ AppError mapDioException(DioException e) {
 
     case DioExceptionType.unknown:
     default:
+      if (e.error is FormatException) {
+        return ServerError(
+          code: 'server.malformedResponse',
+          l10nKey: 'serverError',
+          cause: e,
+          stackTrace: e.stackTrace,
+          context: {'uri': e.requestOptions.uri.toString()},
+        );
+      }
       return UnknownError(
         code: 'network.unknown',
         cause: e,
@@ -183,12 +192,31 @@ AppError _mapBadResponse(DioException e) {
 }
 
 String? _extractServerMessage(Object? data) {
-  if (data is! Map<String, dynamic>) return null;
-  final message = data['message'];
-  if (message is String && message.isNotEmpty) return message;
-  final error = data['error'];
-  if (error is String && error.isNotEmpty) return error;
-  return null;
+  String? raw;
+  if (data is Map) {
+    final message = data['message'];
+    if (message is String && message.trim().isNotEmpty) raw = message.trim();
+    final error = data['error'];
+    if (raw == null && error is String && error.trim().isNotEmpty) {
+      raw = error.trim();
+    }
+  } else if (data is String && data.trim().isNotEmpty) {
+    raw = data.trim();
+  }
+  if (raw == null) return null;
+  if (_looksLikeServerDump(raw)) return null;
+  return raw;
+}
+
+bool _looksLikeServerDump(String text) {
+  final lower = text.toLowerCase();
+  return lower.contains('org.hibernate') ||
+      lower.contains('org.postgresql') ||
+      lower.contains('eldpersistenceexception') ||
+      lower.contains('psqlexception') ||
+      lower.contains('could not execute statement') ||
+      lower.contains('\tat ') ||
+      text.length > 280;
 }
 
 String? _extractServerErrorCode(Object? data) {

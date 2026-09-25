@@ -64,8 +64,6 @@ class LocalStorageService implements ServerConfigProvider {
           'stationary_since',
           'backend_type',
           'hos_configuration',
-          'driver_id',
-          'password',
         },
       ),
     );
@@ -94,7 +92,7 @@ class LocalStorageService implements ServerConfigProvider {
     // وضع الإعدادات الافتراضية إذا لم تكن موجودة
     const String defaultServer = 'https://snsoft.cloud';
     final currentUrl = _prefs.getString('url');
-
+        
     if (currentUrl == null || currentUrl.isEmpty) {
       await _prefs.setString('url', defaultServer);
       await _prefs.setString('backend_type', 'eld');
@@ -144,9 +142,6 @@ class LocalStorageService implements ServerConfigProvider {
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
   String? get stationarySince => _preferencesStorage.stationarySince;
   String? get selectedVehicleId => _preferencesStorage.selectedVehicleId;
-  String? get driverId => _preferencesStorage.driverId;
-  String? get password => _preferencesStorage.password;
-  bool get hasLanguage => _preferencesStorage.hasLanguage;
 
   // ========== Setters ==========
 
@@ -158,14 +153,10 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> setInterval(int value) => _trackingStorage.setInterval(value);
   Future<void> setAngle(int value) => _trackingStorage.setAngle(value);
   Future<void> setHeartbeat(int value) => _trackingStorage.setHeartbeat(value);
-  // ignore: avoid_positional_boolean_parameters
   Future<void> setBuffer(bool value) => _trackingStorage.setBuffer(value);
-  // ignore: avoid_positional_boolean_parameters
   Future<void> setWakelock(bool value) => _trackingStorage.setWakelock(value);
-  // ignore: avoid_positional_boolean_parameters
   Future<void> setStopDetection(bool value) =>
       _trackingStorage.setStopDetection(value);
-  // ignore: avoid_positional_boolean_parameters
   Future<void> setPreferPlatformProviders(bool value) =>
       _trackingStorage.setPreferPlatformProviders(value);
   Future<void> setBackendType(String value) =>
@@ -173,22 +164,18 @@ class LocalStorageService implements ServerConfigProvider {
 
   Future<void> setLanguage(String value) =>
       _preferencesStorage.setLanguage(value);
-  Future<void> clearLanguage() => _preferencesStorage.clearLanguage();
   Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);
   Future<void> setCurrentDutyStatus(String value) =>
       _preferencesStorage.setCurrentDutyStatus(value);
   Future<void> setStationarySince(String value) =>
       _preferencesStorage.setStationarySince(value);
-  Future<void> setDriverId(String value) =>
-      _preferencesStorage.setDriverId(value);
-  Future<void> setPassword(String value) => _preferencesStorage.setPassword(value);
 
   // ========== إعدادات التتبع ==========
 
   Future<void> applyFromUri(Uri uri) => _trackingStorage.applyFromUri(uri);
 
   // ========== تخزين HOS Configuration ==========
-
+  
   HosConfiguration get hosConfiguration {
     final jsonStr = _prefs.getString('hos_configuration');
     if (jsonStr != null && jsonStr.isNotEmpty) {
@@ -208,6 +195,7 @@ class LocalStorageService implements ServerConfigProvider {
 
   // ========== تخزين المركبة ==========
 
+
   Future<void> saveSelectedVehicleId(String id) =>
       _preferencesStorage.saveSelectedVehicleId(id);
   Future<void> clearSelectedVehicle() =>
@@ -223,16 +211,4 @@ class LocalStorageService implements ServerConfigProvider {
 /// مزود خدمة التخزين المحلي
 final localStorageProvider = Provider<LocalStorageService>((ref) {
   return LocalStorageService();
-});
-
-/// STORAGE-HIGH-01 fix: Canonical SharedPreferences provider.
-///
-/// All code should use this provider instead of calling
-/// `SharedPreferences.getInstance()` directly.
-/// This ensures a single storage access path.
-final sharedPreferencesProvider =
-    FutureProvider<SharedPreferencesWithCache>((ref) async {
-  return SharedPreferencesWithCache.create(
-    cacheOptions: const SharedPreferencesWithCacheOptions(),
-  );
 });

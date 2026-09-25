@@ -3,7 +3,6 @@ import 'package:golden_feather_eld/core/domain/entities/user.dart';
 
 import '../../../../backend/providers/backend_network_providers.dart';
 import '../../../../core/error/failure.dart';
-import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
@@ -40,14 +39,17 @@ class AuthState {
     AuthStatus? status,
     User? user,
     String? errorMessage,
+    String? arabicErrorMessage,
     bool clearError = false,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      // النسخة السابقة كانت `(arabicErrorMessage ?? arabicErrorMessage)` —
+      // مرجع ذاتي يجعل الحقل لا يمكن تعيينه إطلاقًا.
       arabicErrorMessage:
-          clearError ? null : (arabicErrorMessage ?? arabicErrorMessage),
+          clearError ? null : (arabicErrorMessage ?? this.arabicErrorMessage),
     );
   }
 
@@ -62,7 +64,6 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
     loginUseCase: LoginUseCase(repository),
     checkAuthStatusUseCase: CheckAuthStatusUseCase(repository),
     logoutUseCase: LogoutUseCase(repository),
-    localStorageService: ref.watch(localStorageProvider),
   );
 
   final unauthEventStream = ref.watch(unauthenticatedEventProvider).stream;
@@ -90,7 +91,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase _loginUseCase;
   final CheckAuthStatusUseCase _checkAuthStatusUseCase;
   final LogoutUseCase _logoutUseCase;
-  final LocalStorageService _localStorageService;
 
   int _operationId = 0;
   bool _isOperationInProgress = false;
@@ -99,11 +99,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required LoginUseCase loginUseCase,
     required CheckAuthStatusUseCase checkAuthStatusUseCase,
     required LogoutUseCase logoutUseCase,
-    required LocalStorageService localStorageService,
   })  : _loginUseCase = loginUseCase,
         _checkAuthStatusUseCase = checkAuthStatusUseCase,
         _logoutUseCase = logoutUseCase,
-        _localStorageService = localStorageService,
         super(const AuthState());
 
   /// استخراج دالة مساعدة لمعالجة الأخطاء وتقليل التكرار
@@ -130,7 +128,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       sessionResult.match((failure) {
         state = const AuthState(status: AuthStatus.unauthenticated);
       }, (user) {
-        _localStorageService.setDriverId(user.id);
         state = AuthState(
           status: AuthStatus.authenticated,
           user: user,
@@ -177,7 +174,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
           return false;
         },
         (user) {
-          _localStorageService.setDriverId(user.id);
           state = AuthState(
             status: AuthStatus.authenticated,
             user: user,

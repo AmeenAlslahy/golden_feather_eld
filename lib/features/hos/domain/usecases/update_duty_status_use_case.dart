@@ -1,8 +1,7 @@
 import 'package:fpdart/fpdart.dart';
-
-import '../../../../core/domain/duty_status/duty_status_code.dart';
-import '../../../../core/domain/duty_status/status_dashboard.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../domain/duty_status/status_dashboard.dart';
 import '../repositories/status_dashboard_repository.dart';
 
 class UpdateDutyStatusUseCase {

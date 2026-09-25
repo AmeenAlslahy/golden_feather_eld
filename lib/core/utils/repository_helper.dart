@@ -28,8 +28,10 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     return Right(result);
   } on ServerException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} ServerException: ${e.message}');
+    // 401 في جلسة قائمة = انتهاء صلاحية الجلسة، وليس كلمة مرور خاطئة —
+    // InvalidCredentialsFailure كان يخبر المستخدم بأن أخطاءه في البيانات.
     if (e.statusCode == 401) {
-      return const Left(InvalidCredentialsFailure());
+      return const Left(AuthFailure());
     }
     return Left(ServerFailure(
       message: e.message ?? 'فشل الاتصال بالخادم',
@@ -52,8 +54,9 @@ Future<Either<Failure, T>> executeWithHandling<T>(
   } catch (e, stackTrace) {
     AppLogger.error(
         '${tag ?? 'Repository'} Unexpected Exception: $e', e, stackTrace);
-    return Left(ServerFailure(
-      message: 'An unexpected error occurred: $e',
+    // التفاصيل تبقى في السجلات فقط — نص الاستثناء قد يحوي مسارات أو بيانات حساسة.
+    return const Left(ServerFailure(
+      message: 'An unexpected error occurred',
     ));
   }
 }

@@ -1,12 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-import '../../../../../core/domain/duty_status/status_dashboard.dart';
-import '../circular_timer_widget.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_typography.dart';
+import '../../../../../domain/duty_status/status_dashboard.dart';
 
-/// Status Dashboard wrapper around [CircularTimerWidget].
+/// Large central circle showing remaining legal time.
 ///
-/// **CLEAN-HIGH-03 fix:** Delegates to the unified widget, converting
-/// [RemainingCircle] domain entity into simple display parameters.
+/// Colors change based on [RemainingCircle.isCritical] and
+/// [RemainingCircle.isExpired].
 class MainCircularTimer extends StatelessWidget {
   final RemainingCircle circle;
   final String statusLabel;
@@ -21,15 +24,67 @@ class MainCircularTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircularTimerWidget(
-      progress: circle.progress,
-      timeString: _formatDuration(circle.remaining),
-      label: circle.label,
-      statusText: statusLabel,
-      isCritical: circle.isCritical,
-      isExpired: circle.isExpired,
-      onTap: onTap,
+    final color = _color();
+    final timeString = _formatDuration(circle.remaining);
+
+    return Semantics(
+      button: onTap != null,
+      label: 'Remaining time: $timeString. Status: $statusLabel',
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 280,
+          height: 280,
+          child: CustomPaint(
+            painter: _CirclePainter(
+              progress: circle.progress,
+              trackColor: color.withValues(alpha: 0.15),
+              progressColor: color,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  circle.label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: color.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  timeString,
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: AppTypography.bold,
+                    color: color,
+                    letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  statusLabel.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: AppTypography.semiBold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Icon(Icons.keyboard_arrow_down, size: 22),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
+
+  Color _color() {
+    if (circle.isExpired) return AppColors.dangerRed;
+    if (circle.isCritical) return AppColors.warningYellow;
+    return AppColors.successGreen;
   }
 
   static String _formatDuration(Duration duration) {
@@ -41,4 +96,52 @@ class MainCircularTimer extends StatelessWidget {
     return '$sign${hours.toString().padLeft(2, '0')}:'
         '${minutes.toString().padLeft(2, '0')}';
   }
+}
+
+class _CirclePainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color progressColor;
+
+  _CirclePainter({
+    required this.progress,
+    required this.trackColor,
+    required this.progressColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2 - 12;
+    const strokeWidth = 12.0;
+
+    // Track
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = trackColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth,
+    );
+
+    // Progress
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * progress.clamp(0.0, 1.0),
+      false,
+      Paint()
+        ..color = progressColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CirclePainter old) =>
+      old.progress != progress ||
+      old.progressColor != progressColor ||
+      old.trackColor != trackColor;
 }

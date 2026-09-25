@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../../../../core/config/feature_flags.dart';
-import '../../../../core/domain/duty_status/duty_status_code.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/connection_status_indicator.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../hos/presentation/pages/hos_page.dart';
+import '../../../hos/presentation/pages/change_status_page.dart';
 import '../../../hos/presentation/pages/recap_page.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
@@ -29,12 +26,9 @@ class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   List<Widget> _pagesFor(WidgetRef ref) {
-    final flags = ref.watch(featureFlagsProvider);
-    return [
-      flags.useNewStatusDashboard
-          ? const StatusDashboardPage()
-          : const LegacyStatusDashboard(), // legacy wrapper below
-      const RecapPage(),
+    return const [
+      StatusDashboardPage(),
+      RecapPage(),
     ];
   }
 
@@ -44,15 +38,16 @@ class HomePage extends ConsumerWidget {
     final currentNavIndex = ref.watch(homeNavIndexProvider);
     final statusDashboardState = ref.watch(statusDashboardProvider);
 
-    final user = ref.watch(authStateProvider).user;
+    // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
     final driverText = statusDashboardState.valueOrNull?.driver.displayText ??
         (dashboard.driverName != 'Unknown'
-            ? '${dashboard.driverName} - ${user?.id ?? ""}'
+            ? '${dashboard.driverName} - ${dashboard.vehicleDisplayName}'
             : null) ??
-        user?.fullName ??
+        ref.watch(authStateProvider).user?.fullName ??
         '';
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
+
     return Stack(
       children: [
         Scaffold(
@@ -63,12 +58,7 @@ class HomePage extends ConsumerWidget {
               currentNavIndex == 0
                   ? driverText
                   : context.loc.hoursRecap,
-              style: 
-              const TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.bold,
-                color: AppColors.surface,
-              ),
+              style: context.styles.appBarTitle,
               overflow: TextOverflow.ellipsis,
             ),
             centerTitle: currentNavIndex == 1, // توسيط العنوان في شاشة Recap
@@ -81,7 +71,7 @@ class HomePage extends ConsumerWidget {
             actions: currentNavIndex == 0
                   ? [
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      padding: EdgeInsets.symmetric(horizontal: 4.0),
                       child: ConnectionStatusIndicator(),
                     ),
                     const SyncStatusIndicator(),
@@ -97,16 +87,24 @@ class HomePage extends ConsumerWidget {
                               size: 28,
                             ),
                             onPressed: () {
+                              final isArabic =
+                                  Localizations.localeOf(context).languageCode ==
+                                      'ar';
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text('Problems Detected'),
-                                  content: Text('• GPS is Turned Off',
-                                      style: context.textTheme.bodyLarge),
+                                  title: Text(
+                                    isArabic ? 'تنبيه' : 'Notice',
+                                  ),
+                                  content: Text(
+                                    isArabic
+                                        ? 'نظام تحديد المواقع مغلق.'
+                                        : 'GPS is turned off.',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: const Text('OK'),
+                                      child: Text(isArabic ? 'حسناً' : 'OK'),
                                     ),
                                   ],
                                 ),
@@ -134,12 +132,14 @@ class HomePage extends ConsumerWidget {
                   if (!isOnline)
                     Container(
                       width: double.infinity,
-                      color: AppColors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      color: Colors.black87,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
-                        'Offline mode. Check your internet connection.',
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.'
+                            : 'No internet. You can continue with saved data.',
                         textAlign: TextAlign.center,
-                        style: context.textTheme.bodyMedium?.copyWith(color: AppColors.surface),
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     ),
                   Expanded(child: pages[currentNavIndex]),
@@ -150,9 +150,19 @@ class HomePage extends ConsumerWidget {
 
           // ========== شريط التنقل السفلي ==========
           bottomNavigationBar: EldBottomNav(
-            currentIndex: currentNavIndex,
-            onTap: (index) {
-              ref.read(homeNavIndexProvider.notifier).state = index;
+            showingRecap: currentNavIndex == 1,
+            onRecap: () {
+              ref.read(homeNavIndexProvider.notifier).state = 1;
+            },
+            onAvailable: () {
+              if (currentNavIndex == 1) {
+                ref.read(homeNavIndexProvider.notifier).state = 0;
+              }
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ChangeStatusPage(),
+                ),
+              );
             },
           ),
         ),
@@ -162,20 +172,5 @@ class HomePage extends ConsumerWidget {
           ),
       ],
     );
-  }
-}
-
-// ========== صفحات مؤقتة ==========
-
-/// شاشة الحالة - نعرض داخلها HosPage
-class LegacyStatusDashboard extends StatelessWidget {
-  const LegacyStatusDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Scaffold داخل Scaffold ليس جيداً، لكن مؤقتاً لعرض محتوى HosPage
-    // تم إزالة الـ AppBar من HosPage في التحديث القادم أو يتم تجاهله.
-    // لتفادي تكرار الـ AppBar هنا سنقوم فقط بعرض HosPage
-    return const HosPage();
   }
 }

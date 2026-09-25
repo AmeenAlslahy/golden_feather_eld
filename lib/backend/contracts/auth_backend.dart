@@ -20,4 +20,10 @@ abstract interface class AuthBackend {
     required String sessionCredential,
     required String backendType,
   });
+
+  /// Traccar password-reset mail. Not an ELD path.
+  Future<Result<void>> requestPasswordReset({
+    required String email,
+    required String serverUrl,
+  });
 }

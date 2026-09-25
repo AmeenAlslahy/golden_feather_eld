@@ -26,9 +26,8 @@ class EldAuthBackend implements AuthBackend {
       final baseUrl = serverUrl.endsWith('/')
           ? serverUrl.substring(0, serverUrl.length - 1)
           : serverUrl;
-
-      // The Traccar /api/session endpoint requires application/x-www-form-urlencoded
-      // regardless of the backend type label.
+      // POST /api/session is Traccar SessionResource. JSON is HTTP 415 on the
+      // live host. The stored backend label does not select a second login.
       final response = await _apiClient.dio.post(
         '$baseUrl/api${EldEndpoints.session}',
         data: {'email': identifier, 'password': password},
@@ -40,7 +39,9 @@ class EldAuthBackend implements AuthBackend {
         ),
       );
 
-      if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 403 || response.statusCode == 404) {
+      // 404 = مسار غير موجود، وليس رفضاً للمصادقة؛ إظهاره "بيانات غير صالحة"
+      // يُضلّل التشخيص.
+      if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 403) {
          return err(ServerError(code: 'unauthorized', context: {'statusCode': response.statusCode}));
       } else if (response.statusCode != 200 && response.statusCode != 201) {
          return err(ServerError(code: 'server_error', context: {'statusCode': response.statusCode}));
@@ -60,7 +61,6 @@ class EldAuthBackend implements AuthBackend {
       parsedData ??= {};
 
       String? credential;
-      // Traccar returns session credential as a JSESSIONID cookie
       final setCookieHeaders = response.headers['set-cookie'] ?? [];
       for (var cookie in setCookieHeaders) {
         final parts = cookie.split(';');
@@ -75,7 +75,7 @@ class EldAuthBackend implements AuthBackend {
       }
 
       if (credential == null || credential.isEmpty) {
-        return err(const ServerError(code: 'missing_credential'));
+        return err(ServerError(code: 'missing_credential', context: {'backendType': backendType}));
       }
 
       dynamic userData = parsedData;
@@ -105,7 +105,6 @@ class EldAuthBackend implements AuthBackend {
     required String backendType,
   }) async {
     try {
-      // Traccar /api/session uses Cookie-based auth (JSESSIONID)
       final response = await _apiClient.dio.get(
         '$serverOrigin/api${EldEndpoints.session}',
         options: Options(
@@ -115,8 +114,8 @@ class EldAuthBackend implements AuthBackend {
         ),
       );
 
-      if (response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404) {
-         return err(ServerError(code: 'unauthorized', context: {'statusCode': response.statusCode}));
+      if (response.statusCode == 401 || response.statusCode == 403) {
+         return err(ServerError(code: 'unauthorized', context: {'statusCode': response.statusCode, 'backendType': backendType}));
       } else if (response.statusCode != 200) {
          return err(ServerError(code: 'server_error', context: {'statusCode': response.statusCode}));
       }
@@ -148,17 +147,56 @@ class EldAuthBackend implements AuthBackend {
     required String backendType,
   }) async {
     try {
-      // Traccar /api/session uses Cookie-based auth (JSESSIONID)
       final options = Options(
         headers: {'Cookie': 'JSESSIONID=$sessionCredential'},
+        extra: {'backendType': backendType},
         followRedirects: false,
         validateStatus: (status) => true,
       );
+      
+      // Defaulting to DELETE for logout
       await _apiClient.dio.delete('$serverOrigin/api${EldEndpoints.session}', options: options);
       return ok(null);
     } catch (e) {
        // Fail gracefully
        return ok(null);
+    }
+  }
+
+  @override
+  Future<Result<void>> requestPasswordReset({
+    required String email,
+    required String serverUrl,
+  }) async {
+    try {
+      final baseUrl = serverUrl.endsWith('/')
+          ? serverUrl.substring(0, serverUrl.length - 1)
+          : serverUrl;
+      final response = await _apiClient.dio.post(
+        '$baseUrl/api/password',
+        data: {'email': email},
+        options: Options(
+          contentType: 'application/x-www-form-urlencoded',
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return ok(null);
+      }
+      if (response.statusCode == 404) {
+        return err(const NotFoundError(code: 'password.resetUnavailable'));
+      }
+      return err(ServerError(
+        code: 'password.resetFailed',
+        context: {'statusCode': response.statusCode},
+      ));
+    } on DioException catch (e) {
+      return err(mapDioException(e));
+    } catch (e, st) {
+      return err(UnknownError(code: 'password.resetFailed', cause: e, stackTrace: st));
     }
   }
 }

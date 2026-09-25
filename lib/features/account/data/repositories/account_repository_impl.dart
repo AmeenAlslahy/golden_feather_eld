@@ -1,13 +1,12 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 
 import '../../../../backend/contracts/account_backend.dart';
-// ignore: directives_ordering
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../domain/repositories/account_repository.dart';
-import '../models/account_user_model.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   final AccountBackend accountBackend;
@@ -29,7 +28,7 @@ class AccountRepositoryImpl implements AccountRepository {
             message: error.code,
             statusCode: error.context?['statusCode'] as int?)), (rawJson) {
       try {
-        return Right(AccountUserModel.fromJson(rawJson));
+        return Right(UserModel.fromJson(rawJson));
       } catch (e) {
         return Left(ServerFailure(message: 'Invalid data format: $e'));
       }
@@ -40,7 +39,7 @@ class AccountRepositoryImpl implements AccountRepository {
   Future<Either<Failure, User>> updateUserProfile(User user) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
 
-    final userModel = AccountUserModel.fromEntity(user);
+    final userModel = UserModel.fromEntity(user);
     final driverIdInt = int.tryParse(user.id) ?? 0;
     
     final result = await accountBackend.updateProfile(
@@ -53,7 +52,7 @@ class AccountRepositoryImpl implements AccountRepository {
             message: error.code,
             statusCode: error.context?['statusCode'] as int?)), (rawJson) {
       try {
-        return Right(AccountUserModel.fromJson(rawJson));
+        return Right(UserModel.fromJson(rawJson));
       } catch (e) {
         return Left(ServerFailure(message: 'Invalid data format: $e'));
       }

@@ -1,6 +1,6 @@
-import '../../core/domain/inspection/dot_inspection.dart';
-import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
+import '../../domain/inspection/dot_inspection.dart';
+import '../../domain/shared/value_objects.dart';
 import 'contract_enums.dart';
 import 'raw_json.dart';
 
@@ -63,6 +63,5 @@ abstract interface class InspectionBackend {
   // --- Legacy methods for P5.5 ---
   Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId);
   Future<Result<void>> exportLegacyInspectionData(
-      // ignore: avoid_positional_boolean_parameters
       int driverId, String method, String? email, bool isErods);
 }

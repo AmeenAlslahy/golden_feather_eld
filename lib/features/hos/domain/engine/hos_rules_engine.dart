@@ -154,8 +154,11 @@ class HosRulesEngine {
     // We can only stamp violations if time is available.
     // If it's unavailable, the engine handles it upstream via HosEngineTimeUnavailable,
     // but processEvent covers this already.
-    final timestamp =
-        timeResult is TrustedTimeAvailable ? timeResult.utc : DateTime.now();
+    if (timeResult is! TrustedTimeAvailable) {
+      // A violation without a trusted timestamp is not a legal record.
+      return violations;
+    }
+    final timestamp = timeResult.utc;
 
     if (limits.remainingDriveMinutes <= 0) {
       violations.add(HosViolation(

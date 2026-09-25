@@ -26,32 +26,32 @@ class VehiclePickerDialog extends ConsumerWidget {
         width: double.maxFinite,
         child: vehicles.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : ListView.builder(
-                shrinkWrap: true,
-                itemCount: vehicles.length,
-                itemBuilder: (context, index) {
-                  final vehicle = vehicles[index];
-
-                  return RadioListTile<String>(
-                    title: Text(vehicle.displayName),
-                    subtitle: vehicle.vin != null
-                        ? Text(
-                            '${context.loc.vin}: ${vehicle.vin!.substring(vehicle.vin!.length - 8)}',
-                            style: context.textTheme.labelSmall)
-                        : null,
-                    value: vehicle.id,
-                    // ignore: deprecated_member_use
-                    groupValue: currentVehicleId,
-                    // ignore: deprecated_member_use
-                    onChanged: (value) {
-                      if (value != null) {
-                        Navigator.pop(context, vehicle);
-                      }
-                    },
-                    activeColor: AppColors.primaryBlue,
-                    contentPadding: EdgeInsets.zero,
-                  );
+            : RadioGroup<String>(
+                groupValue: currentVehicleId,
+                onChanged: (value) {
+                  if (value == null) return;
+                  final picked = vehicles.where((v) => v.id == value);
+                  if (picked.isNotEmpty) Navigator.pop(context, picked.first);
                 },
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: vehicles.length,
+                  itemBuilder: (context, index) {
+                    final vehicle = vehicles[index];
+
+                    return RadioListTile<String>(
+                      title: Text(vehicle.displayName),
+                      subtitle: vehicle.vin != null
+                          ? Text(
+                              '${context.loc.vin}: ${vehicle.vin!.substring(vehicle.vin!.length - 8)}',
+                              style: const TextStyle(fontSize: 12))
+                          : null,
+                      value: vehicle.id,
+                      activeColor: AppColors.primaryGold,
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  },
+                ),
               ),
       ),
       actions: [

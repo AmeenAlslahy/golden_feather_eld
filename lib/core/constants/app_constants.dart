@@ -6,8 +6,7 @@ class AppConstants {
   static const String appName = 'Golden Feather ELD';
   static const String appVersion = '1.0.0';
   static const String appPackageName = 'com.goldenfeather.eld';
-  static const bool isDevelopmentMode =
-      true; // Added to fix tracking_service.dart error
+  static const bool isDevelopmentMode = false;
 
   // إعدادات التتبع الافتراضية
   static const double defaultDistanceMeters = 75.0;

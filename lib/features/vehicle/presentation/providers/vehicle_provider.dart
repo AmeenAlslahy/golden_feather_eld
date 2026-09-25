@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// ARCH-HIGH-01 fix: Import from composition root, not data/repositories directly
-import '../../../../app/providers/app_repository_providers.dart';
+import '../../../../backend/contracts/vehicle_backend.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../data/repositories/vehicle_repository_impl.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
+import '../../domain/vehicle_selection.dart';
 
 /// حالة شاشة المركبات
 class VehicleState {
@@ -27,43 +30,55 @@ class VehicleState {
 
   List<Vehicle> get filteredVehicles {
     if (searchQuery.isEmpty) return vehicles;
-    final query = searchQuery.toLowerCase();
     return vehicles.where((v) {
-      return v.id.toLowerCase().contains(query) ||
+      final query = searchQuery.toLowerCase();
+      return v.id.contains(query) ||
           v.name.toLowerCase().contains(query) ||
-          v.year.toLowerCase().contains(query) ||
-          (v.vin?.toLowerCase().contains(query) ?? false);
+          v.year.contains(query);
     }).toList();
   }
-
-  /// Sentinel لتمييز "لم يُمرَّر error" عن "تم تمرير null لمسح الخطأ"
-  static const _keep = Object();
 
   VehicleState copyWith({
     List<Vehicle>? vehicles,
     Vehicle? selectedVehicle,
+    bool clearSelected = false,
     String? searchQuery,
     bool? isLoading,
-    Object? error = _keep, // يستخدم sentinel بدلاً من null
+    String? error,
     bool? isInitialized,
     bool? isSuccess,
   }) {
     return VehicleState(
       vehicles: vehicles ?? this.vehicles,
-      selectedVehicle: selectedVehicle ?? this.selectedVehicle,
+      selectedVehicle: clearSelected
+          ? selectedVehicle
+          : (selectedVehicle ?? this.selectedVehicle),
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
-      // إذا لم يُمرَّر error (sentinel)، احتفظ بالقيمة الحالية
-      // إذا مُرِّر null صراحةً، امسح الخطأ
-      // إذا مُرِّرت قيمة، استخدمها
-      error: identical(error, _keep) ? this.error : error as String?,
+      error: error, // Can be null to clear error
       isInitialized: isInitialized ?? this.isInitialized,
       isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }
 
-/// مزود المركبات (uses vehicleRepositoryProvider from composition root)
+/// مزود مستودع المركبات
+final vehicleBackendProviderAlias = Provider<VehicleBackend>((ref) {
+  return ref.watch(vehicleBackendProvider);
+});
+
+final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
+  final vehicleBackend = ref.watch(vehicleBackendProviderAlias);
+  final networkInfo = ref.watch(networkInfoProvider);
+
+  return VehicleRepositoryImpl(
+    vehicleBackend: vehicleBackend,
+    hardwareBackend: ref.watch(hardwareBackendProvider),
+    networkInfo: networkInfo,
+  );
+});
+
+/// مزود المركبات
 final vehicleProvider =
     StateNotifierProvider<VehicleNotifier, VehicleState>((ref) {
   return VehicleNotifier(
@@ -75,17 +90,11 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   final VehicleRepository _repository;
 
   VehicleNotifier(this._repository) : super(const VehicleState()) {
-    _init();
-  }
-
-  Future<void> _init() async {
-    await _loadSelectedVehicle();
+    loadVehicles();
   }
 
   Future<void> loadVehicles({bool forceRefresh = false}) async {
     if (state.isInitialized && !forceRefresh) return;
-    // منع تنفيذين متزامنين عند استدعاء forceRefresh مرتين متتاليتين
-    if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
@@ -97,43 +106,70 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
         error: failure.message,
       );
     }, (vehicles) {
+      final selected = _serverSelected(vehicles);
+      state = state.copyWith(
+        vehicles: vehicles,
+        selectedVehicle: selected,
+        clearSelected: selected == null,
+        isLoading: false,
+        isInitialized: true,
+        error: null,
+      );
+    });
+  }
+
+  Future<void> loadCompanyVehicles() async {
+    state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+    final result = await _repository.getCompanyVehicles();
+    result.match((failure) {
+      state = state.copyWith(isLoading: false, error: failure.message);
+    }, (vehicles) {
       state = state.copyWith(
         vehicles: vehicles,
         isLoading: false,
         isInitialized: true,
-        error: null, // مسح أي خطأ سابق عند النجاح
+        error: null,
       );
     });
   }
 
-  Future<void> _loadSelectedVehicle() async {
-    final result = await _repository.getSelectedVehicle();
-    result.match((failure) {}, (vehicle) {
-      if (vehicle != null) {
-        state = state.copyWith(selectedVehicle: vehicle);
+  Vehicle? _serverSelected(List<Vehicle> vehicles) {
+    for (final vehicle in vehicles) {
+      if (vehicle.activeForCurrentDriver == true ||
+          vehicle.selectedByServer == true) {
+        return vehicle;
       }
-    });
+    }
+    return null;
   }
 
   /// البحث عن مركبة
   void search(String query) {
-    state = state.copyWith(searchQuery: query);
+    state = state.copyWith(searchQuery: query, error: state.error);
   }
 
   /// اختيار مركبة
-  Future<void> selectVehicle(Vehicle vehicle) async {
+  Future<void> selectVehicle(
+    Vehicle vehicle, {
+    required double? speedMps,
+    required double thresholdKmh,
+  }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
-
-    final result = await _repository.selectVehicle(vehicle.id);
-
-    result.match((failure) {
-      state = state.copyWith(isLoading: false, error: failure.message);
-    }, (_) {
-      state = state.copyWith(
-        isLoading: false,
-        selectedVehicle: vehicle,
-        isSuccess: true,
-      );
-    });
+    final refusal = refuseVehicleOperate(
+      speedMps: speedMps,
+      thresholdKmh: thresholdKmh,
+      uniqueId: vehicle.uniqueId,
+    );
+    if (refusal != null) {
+      state = state.copyWith(isLoading: false, error: refusal.name);
+      return;
+    }
+    // List tap is select, not operate. Connection page owns connectSession.
+    state = state.copyWith(
+      isLoading: false,
+      selectedVehicle: vehicle,
+      isSuccess: true,
+      error: null,
+    );
   }
 }

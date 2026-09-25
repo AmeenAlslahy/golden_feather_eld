@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
 
 class UserManualPage extends StatelessWidget {
   const UserManualPage({super.key});
@@ -28,7 +24,7 @@ class UserManualPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          context.loc.eldUserManual,
+          isArabic ? 'دليل المستخدم' : 'ELD User Manual',
           style: const TextStyle(
             fontSize: AppTypography.headerSize,
             fontWeight: AppTypography.bold,
@@ -39,38 +35,46 @@ class UserManualPage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildHeader(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
+          _buildHeader(isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
           _buildSectionTitle(
-              context.loc.features, textColor, context),
-          _buildFeaturesSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
+              isArabic ? 'الميزات' : 'Features', textColor, context),
+          _buildFeaturesSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
           _buildSectionTitle(
-              context.loc.installationAndSetup,
+              isArabic ? 'التثبيت والإعداد' : 'Installation and Setup',
               textColor,
               context),
-          _buildInstallationSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
-          _buildSectionTitle(context.loc.logManagement,
+          _buildInstallationSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildSectionTitle(isArabic ? 'إدارة السجلات' : 'Log Management',
               textColor, context),
-          _buildLogManagementSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
-          _buildSectionTitle(context.loc.roadsideInspections,
+          _buildLogManagementSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
+          _buildSectionTitle(isArabic ? 'تفتيش الطريق' : 'Roadside Inspections',
               textColor, context),
-          _buildRoadsideSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
+          _buildRoadsideSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
           _buildSectionTitle(
-              context.loc.electronicDriverVehicleInspectionReports,
+              isArabic
+                  ? 'تقارير فحص المركبة (DVIR)'
+                  : 'Electronic Driver Vehicle Inspection Reports (DVIR)',
               textColor,
               context),
-          _buildDvirSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.lg,
+          _buildDvirSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: AppSpacing.lg),
           _buildSectionTitle(
-              context.loc.fleetManagerPortal,
+              isArabic ? 'بوابة مدير الأسطول' : 'Fleet Manager Portal',
               textColor,
               context),
-          _buildFleetManagerSection(context, isArabic, surfaceColor, textColor, textSecondaryColor),
-          AppGap.xl,
+          _buildFleetManagerSection(
+              isArabic, surfaceColor, textColor, textSecondaryColor),
+          const SizedBox(height: 32.0),
         ],
       ),
     );
@@ -86,22 +90,30 @@ class UserManualPage extends StatelessWidget {
         children: [
           Text(
             title,
-            style: context.textTheme.bodyLarge?.copyWith(color: textColor),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
           ),
-          AppGap.xs,
-          Divider(color: AppColors.surface.withValues(alpha: 0.2), thickness: 1),
+          const SizedBox(height: 4),
+          Divider(color: Colors.white.withValues(alpha: 0.2), thickness: 1),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isArabic, Color surfaceColor, Color textColor,
+  Widget _buildHeader(bool isArabic, Color surfaceColor, Color textColor,
       Color secondaryColor) {
+    // Minimum 250 tall, but grows with the text so narrow (360dp) phones and
+    // large font scales never overflow the header.
     return Container(
       color: surfaceColor,
-      height: 250,
-      child: Row(
-        children: [
+      constraints: const BoxConstraints(minHeight: 250),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Placeholder for the Truck Image
           Expanded(
             flex: 4,
@@ -109,10 +121,10 @@ class UserManualPage extends StatelessWidget {
               margin: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(AppRadius.dialog),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
-                child: Icon(Icons.local_shipping, size: 64, color: AppColors.border),
+                child: Icon(Icons.local_shipping, size: 64, color: Colors.grey),
               ),
             ),
           ),
@@ -128,14 +140,20 @@ class UserManualPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    context.loc.userManual,
-                    style: context.textTheme.labelSmall?.copyWith(color: secondaryColor),
+                    isArabic ? 'دليل المستخدم' : 'User Manual',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: secondaryColor,
+                        fontWeight: FontWeight.bold),
                   ),
                   const Divider(),
-                  AppGap.md,
+                  const SizedBox(height: AppSpacing.md),
                   Text(
-                    'TOP COMPLIANCE ELD',
-                    style: context.textTheme.bodyMedium?.copyWith(color: textColor),
+                    'Golden Feather ELD',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textColor),
                   ),
                   const Spacer(),
                   Container(
@@ -143,42 +161,56 @@ class UserManualPage extends StatelessWidget {
                         horizontal: AppSpacing.md, vertical: AppSpacing.xl),
                     decoration: BoxDecoration(
                       color: AppColors.background,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Text(
-                      context.loc.electronicLoggingDeviceEld,
-                      style: context.textTheme.labelSmall?.copyWith(color: AppColors.textPrimary),
+                      isArabic
+                          ? 'جهاز التسجيل الإلكتروني (ELD)'
+                          : 'Electronic Logging Device (ELD)',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.textPrimary),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildFeaturesSection(BuildContext context, bool isArabic, Color surfaceColor,
+  Widget _buildFeaturesSection(bool isArabic, Color surfaceColor,
       Color textColor, Color secondaryColor) {
     final features = [
       {
-        'title': context.loc.recordsOfNdutyStatus,
-        'desc': context.loc.easilyManageYourDutyStatus
+        'title': isArabic ? 'سجلات حالة الخدمة' : 'Records of\nDuty Status',
+        'desc': isArabic
+            ? 'إدارة الحالات بسهولة مع إمكانية عرض، وتعديل، وتوقيع السجلات بدقة.'
+            : 'Easily manage your duty status changes with our user-friendly ELD app. View, edit, and certify your logs.'
       },
       {
-        'title': context.loc.availableHoursAndNrequiredBreaks,
-        'desc': context.loc.stayInformedAboutYourAvailable
+        'title': isArabic
+            ? 'الساعات المتاحة\nوالفترات المطلوبة'
+            : 'Available Hours and\nRequired Breaks',
+        'desc': isArabic
+            ? 'ابقَ على اطلاع بساعات القيادة المتاحة وفترات الراحة الإلزامية لضمان الامتثال.'
+            : 'Stay informed about your available driving hours and mandatory rest breaks to ensure compliance.'
       },
       {
-        'title': context.loc.roadsideInspectionNfunction,
-        'desc': context.loc.duringRoadsideInspectionsUseThe
+        'title': isArabic ? 'تفتيش الطريق' : 'Roadside Inspection\nFunction',
+        'desc': isArabic
+            ? 'أثناء التفتيش الأمني، استخدم وضع التفتيش (DOT) في التطبيق لمشاركة السجلات بسهولة.'
+            : 'During roadside inspections, use the DOT Inspection mode in the app to share your logs with ease.'
       },
       {
         'title':
-            context.loc.vehicleInspectionNreports,
-        'desc': context.loc.generatePreOrPostTrip
+            isArabic ? 'تقارير فحص المركبة' : 'Vehicle Inspection\nReports',
+        'desc': isArabic
+            ? 'أنشئ تقارير DVIR قبل أو بعد الرحلة لإشعار الميكانيكيين بأي أعطال فوراً.'
+            : 'Generate pre- or post-trip DVIRs within the app, notifying mechanics of any vehicle defects.'
       },
     ];
 
@@ -187,23 +219,28 @@ class UserManualPage extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: features
-            .map((f) => _buildListRow(context, f['title']!, f['desc']!, textColor, secondaryColor))
+            .map((f) => _buildListRow(
+                f['title']!, f['desc']!, textColor, secondaryColor))
             .toList(),
       ),
     );
   }
 
-  Widget _buildFleetManagerSection(BuildContext context, bool isArabic, Color surfaceColor,
+  Widget _buildFleetManagerSection(bool isArabic, Color surfaceColor,
       Color textColor, Color secondaryColor) {
     final features = [
       {
-        'title': context.loc.setUpFleetNmanagerPortal,
-        'desc': context.loc.useYourCredentialsToSign
+        'title': isArabic ? 'إعداد البوابة' : 'Set Up Fleet\nManager Portal',
+        'desc': isArabic
+            ? 'استخدم بيانات الدخول للوصول إلى البوابة وتوفير معلومات شركتك والسائقين.'
+            : 'Use your credentials to sign into the online portal, providing essential information about your company.'
       },
       {
         'title':
-            context.loc.monitorHosAndNfmcsaCompliance,
-        'desc': context.loc.stayOnTopOfDrivers
+            isArabic ? 'مراقبة الامتثال' : 'Monitor HOS and\nFMCSA-Compliance',
+        'desc': isArabic
+            ? 'تتبع حالة السائقين وساعاتهم المتبقية في الوقت الفعلي واستقبل التنبيهات.'
+            : 'Stay on top of drivers\' duty status and remaining hours in real-time. Receive notifications.'
       },
     ];
 
@@ -212,13 +249,14 @@ class UserManualPage extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         children: features
-            .map((f) => _buildListRow(context, f['title']!, f['desc']!, textColor, secondaryColor))
+            .map((f) => _buildListRow(
+                f['title']!, f['desc']!, textColor, secondaryColor))
             .toList(),
       ),
     );
   }
 
-  Widget _buildListRow(BuildContext context,
+  Widget _buildListRow(
       String title, String description, Color textColor, Color secondaryColor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -226,7 +264,7 @@ class UserManualPage extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(AppRadius.input),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -236,7 +274,10 @@ class UserManualPage extends StatelessWidget {
               child: Text(
                 title,
                 textAlign: TextAlign.center,
-                style: context.textTheme.labelSmall?.copyWith(color: textColor),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: textColor),
               ),
             ),
             Container(
@@ -249,7 +290,7 @@ class UserManualPage extends StatelessWidget {
               flex: 6,
               child: Text(
                 description,
-                style: context.textTheme.labelSmall?.copyWith(color: secondaryColor),
+                style: TextStyle(fontSize: 12, color: secondaryColor),
               ),
             ),
           ],
@@ -258,7 +299,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInstallationSection(BuildContext context, bool isArabic, Color surfaceColor,
+  Widget _buildInstallationSection(bool isArabic, Color surfaceColor,
       Color textColor, Color secondaryColor) {
     return Container(
       color: surfaceColor,
@@ -273,29 +314,35 @@ class UserManualPage extends StatelessWidget {
               height: 150,
               decoration: BoxDecoration(
                 color: Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(AppRadius.input),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
-                  child: Icon(Icons.router, color: AppColors.surface, size: 48)),
+                  child: Icon(Icons.router, color: Colors.white, size: 48)),
             ),
           ),
-          AppGap.hMd,
+          const SizedBox(width: AppSpacing.md),
           // Instructions
           Expanded(
             flex: 7,
-            child: _buildInfoCard(context, title: context.loc.installEldHardware,
+            child: _buildInfoCard(
+              title: isArabic ? 'تثبيت الجهاز' : 'Install ELD Hardware',
               textColor: textColor,
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    context.loc.beginByLocatingTheEcm,
-                    style: context.textTheme.labelSmall?.copyWith(color: secondaryColor),
+                    isArabic
+                        ? 'ابدأ بتحديد موقع منفذ (ECM) في مركبتك. يتواجد عادة بالقرب من عجلة القيادة. بناءً على مركبتك استخدم الاتصال المناسب:'
+                        : 'Begin by locating the ECM (diagnostic) port in your vehicle. Depending on your vehicle type, use the appropriate connection:',
+                    style: TextStyle(fontSize: 12, color: secondaryColor),
                   ),
-                  AppGap.sm,
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                       '• 6-pin Connector\n• 9-pin Connector\n• OBDII Connector',
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: secondaryColor,
+                          fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -305,7 +352,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLogManagementSection(BuildContext context, bool isArabic, Color surfaceColor,
+  Widget _buildLogManagementSection(bool isArabic, Color surfaceColor,
       Color textColor, Color secondaryColor) {
     return Container(
       color: surfaceColor,
@@ -320,37 +367,46 @@ class UserManualPage extends StatelessWidget {
               height: 250,
               decoration: BoxDecoration(
                 color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(AppRadius.medium),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade400, width: 2),
               ),
               child: const Center(
-                  child: Icon(Icons.smartphone, color: AppColors.border, size: 48)),
+                  child: Icon(Icons.smartphone, color: Colors.grey, size: 48)),
             ),
           ),
-          AppGap.hMd,
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             flex: 7,
             child: Column(
               children: [
-                _buildInfoCard(context, title: context.loc.accessingLogs,
+                _buildInfoCard(
+                  title: isArabic ? 'الوصول للسجلات' : 'Accessing Logs',
                   textColor: textColor,
                   content: Text(
-                      context.loc.logInAndNavigateTo,
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      isArabic
+                          ? 'سجل الدخول وانتقل لقسم السجلات.'
+                          : 'Log in and navigate to the "Logs" section.',
+                      style: TextStyle(fontSize: 11, color: secondaryColor)),
                 ),
-                AppGap.sm,
-                _buildInfoCard(context, title: context.loc.viewingLogs1,
+                const SizedBox(height: AppSpacing.sm),
+                _buildInfoCard(
+                  title: isArabic ? 'عرض السجلات' : 'Viewing Logs',
                   textColor: textColor,
                   content: Text(
-                      context.loc.viewDetailedRodsForDifferent,
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      isArabic
+                          ? 'شاهد التفاصيل اليومية لكل تغيير حالة.'
+                          : 'View detailed RODS for different dates.',
+                      style: TextStyle(fontSize: 11, color: secondaryColor)),
                 ),
-                AppGap.sm,
-                _buildInfoCard(context, title: context.loc.editingLogs,
+                const SizedBox(height: AppSpacing.sm),
+                _buildInfoCard(
+                  title: isArabic ? 'تعديل السجلات' : 'Editing Logs',
                   textColor: textColor,
                   content: Text(
-                      context.loc.editDutyStatusEntriesExcept,
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      isArabic
+                          ? 'عدّل الإدخالات (باستثناء وقت القيادة الآلي).'
+                          : 'Edit duty status entries (except auto driving).',
+                      style: TextStyle(fontSize: 11, color: secondaryColor)),
                 ),
               ],
             ),
@@ -360,7 +416,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRoadsideSection(BuildContext context, bool isArabic, Color surfaceColor,
+  Widget _buildRoadsideSection(bool isArabic, Color surfaceColor,
       Color textColor, Color secondaryColor) {
     return Container(
       color: surfaceColor,
@@ -369,25 +425,29 @@ class UserManualPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: _buildInfoCard(context, title: context.loc.dotInspection,
+            child: _buildInfoCard(
+              title: isArabic ? 'تفتيش DOT' : 'DOT Inspection',
               textColor: textColor,
               content: Text(
                 isArabic
                     ? '• اختر وضع التفتيش من القائمة.\n• اضغط "بدء التفتيش" لعرض السجلات.\n• استخدم الأسهم للتنقل.\n• شارك البيانات عند الطلب.'
                     : '• Access "DOT Inspection" mode.\n• Tap "Start Inspection".\n• Use arrows to review logs.\n• Send RODS via web/email.',
                 style:
-                    context.textTheme.labelSmall?.copyWith(color: secondaryColor, height: 1.5),
+                    TextStyle(fontSize: 11, color: secondaryColor, height: 1.5),
               ),
             ),
           ),
-          AppGap.hSm,
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: _buildInfoCard(context, title: context.loc.hosComplianceAlerts,
+            child: _buildInfoCard(
+              title: isArabic ? 'تنبيهات الامتثال' : 'HOS Compliance Alerts',
               textColor: textColor,
               content: Text(
-                context.loc.watchForTheRedExclamation,
+                isArabic
+                    ? '• راقب العلامة الحمراء التحذيرية.\n• راجع قائمة الانتهاكات أسفل المخطط لمعرفة التفاصيل.'
+                    : '• Watch for the red exclamation icon.\n• Review a list of HOS violations below the log graph.',
                 style:
-                    context.textTheme.labelSmall?.copyWith(color: secondaryColor, height: 1.5),
+                    TextStyle(fontSize: 11, color: secondaryColor, height: 1.5),
               ),
             ),
           ),
@@ -396,7 +456,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDvirSection(BuildContext context, bool isArabic, Color surfaceColor, Color textColor,
+  Widget _buildDvirSection(bool isArabic, Color surfaceColor, Color textColor,
       Color secondaryColor) {
     return Container(
       color: surfaceColor,
@@ -405,29 +465,38 @@ class UserManualPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: _buildInfoCard(context, title: context.loc.createDvir,
+            child: _buildInfoCard(
+              title: isArabic ? 'إنشاء فحص' : 'Create DVIR',
               textColor: textColor,
               content: Text(
-                  context.loc.startNewInspectionMarkDefects,
-                  style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                  isArabic
+                      ? 'ابدأ فحصاً جديداً، حدد الأعطال إن وجدت، وضع الملاحظات ثم وقّع.'
+                      : 'Start new inspection, mark defects, add notes, and sign.',
+                  style: TextStyle(fontSize: 11, color: secondaryColor)),
             ),
           ),
-          AppGap.hSm,
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               children: [
-                _buildInfoCard(context, title: context.loc.editDvir,
+                _buildInfoCard(
+                  title: isArabic ? 'تعديل الفحص' : 'Edit DVIR',
                   textColor: textColor,
                   content: Text(
-                      context.loc.selectAnExistingReportTo,
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      isArabic
+                          ? 'اختر فحصاً سابقاً للتعديل.'
+                          : 'Select an existing report to edit.',
+                      style: TextStyle(fontSize: 11, color: secondaryColor)),
                 ),
-                AppGap.sm,
-                _buildInfoCard(context, title: context.loc.deleteDvir,
+                const SizedBox(height: AppSpacing.sm),
+                _buildInfoCard(
+                  title: isArabic ? 'حذف الفحص' : 'Delete DVIR',
                   textColor: textColor,
                   content: Text(
-                      context.loc.removeTheReportFromHistory,
-                      style: context.textTheme.labelSmall?.copyWith(color: secondaryColor)),
+                      isArabic
+                          ? 'احذف التقرير من قائمة السجل.'
+                          : 'Remove the report from history.',
+                      style: TextStyle(fontSize: 11, color: secondaryColor)),
                 ),
               ],
             ),
@@ -437,7 +506,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context,
+  Widget _buildInfoCard(
       {required String title,
       required Widget content,
       required Color textColor}) {
@@ -446,20 +515,21 @@ class UserManualPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background.withValues(alpha: 0.5),
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(AppRadius.input),
+        borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: context.textTheme.labelSmall?.copyWith(color: textColor)),
+              style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
           const Divider(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: const EdgeInsetsDirectional.only(top: 4, end: 6, start: 2),
+                margin: const EdgeInsets.only(top: 4, right: 6, left: 2),
                 width: 4,
                 height: 12,
                 color: AppColors.primaryBlue.withValues(alpha: 0.1),

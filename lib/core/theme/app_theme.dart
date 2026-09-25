@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
+import 'app_styles.dart';
 import 'app_typography.dart';
 import 'eld_colors.dart';
+import 'press_feedback.dart';
 
-export 'app_color_tokens.dart';
-export 'app_text_styles.dart';
+export 'app_styles.dart';
 export 'eld_colors.dart';
 
 /// ثيم تطبيق ELD
@@ -17,9 +18,9 @@ class AppTheme {
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    extensions: [EldColors.light()],
+    extensions: [EldColors.light(), AppStyles.light()],
     colorScheme: const ColorScheme.light(
-      primary: AppColors.primaryBlue,
+      primary: AppColors.primaryGold,
       onPrimary: AppColors.surface,
       secondary: AppColors.successGreen,
       onSecondary: AppColors.surface,
@@ -29,18 +30,19 @@ class AppTheme {
       onSurface: AppColors.textPrimary,
     ),
     scaffoldBackgroundColor: AppColors.background,
+    splashFactory: PressFeedback.splashFactory,
+    splashColor: PressFeedback.ink,
+    highlightColor: Colors.black.withValues(alpha: 0.06),
     textTheme: AppTypography.lightTextTheme,
 
     // ========== شريط العنوان ==========
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.primaryBlue,
-      foregroundColor: AppColors.surface,
+      backgroundColor: AppColors.secondary,
+      foregroundColor: AppColors.primaryGold,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: AppTypography.lightTextTheme.headlineSmall?.copyWith(
-        color: AppColors.surface,
-      ),
-      iconTheme: const IconThemeData(color: AppColors.surface),
+      titleTextStyle: AppStyles.light().appBarTitle.copyWith(color: AppColors.primaryGold),
+      iconTheme: const IconThemeData(color: AppColors.primaryGold),
     ),
 
     // ========== البطاقات ==========
@@ -64,6 +66,40 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.button),
         ),
         textStyle: AppTypography.lightTextTheme.titleLarge,
+        splashFactory: PressFeedback.splashFactory,
+        animationDuration: const Duration(milliseconds: 90),
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        shape: const StadiumBorder(),
+        splashFactory: PressFeedback.splashFactory,
+        animationDuration: const Duration(milliseconds: 90),
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(onDark: true),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        splashFactory: PressFeedback.splashFactory,
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        splashFactory: PressFeedback.splashFactory,
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        splashFactory: PressFeedback.splashFactory,
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(),
       ),
     ),
 
@@ -82,7 +118,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.input),
-        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+        borderSide: const BorderSide(color: AppColors.primaryGold, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.input),
@@ -113,7 +149,7 @@ class AppTheme {
     radioTheme: RadioThemeData(
       fillColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return AppColors.primaryBlue;
+          return AppColors.primaryGold;
         }
         return const Color(0xFFC7C7CC);
       }),
@@ -122,14 +158,14 @@ class AppTheme {
 
   static final ThemeData dark = light.copyWith(
     brightness: Brightness.dark,
-    extensions: [EldColors.dark()],
+    extensions: [EldColors.dark(), AppStyles.dark()],
     colorScheme: const ColorScheme.dark(
-      primary: AppColors.primaryBlue,
+      primary: AppColors.primaryGold,
       onPrimary: AppColors.black,
-      secondary: AppColors.darkTextPrimary,
-      onSecondary: AppColors.primaryBlue,
+      secondary: AppColors.successGreen, // Fix dark mode button background
+      onSecondary: AppColors.black,
       error: AppColors.dangerOnDark,
-      onError: AppColors.surfaceDark,
+      onError: AppColors.black,
       surface: AppColors.surfaceDark,
       onSurface: AppColors.darkTextPrimary,
     ),

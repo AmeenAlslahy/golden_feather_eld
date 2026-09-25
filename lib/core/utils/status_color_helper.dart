@@ -5,7 +5,7 @@ class StatusColorHelper {
   static Color getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'ON':
-        return AppColors.primaryBlue;
+        return AppColors.primaryGold;
       case 'OFF':
         return AppColors.textSecondary;
       case 'D':
@@ -15,7 +15,7 @@ class StatusColorHelper {
         return AppColors.warningYellow;
       case 'YM':
       case 'PC':
-        return AppColors.primaryBlue;
+        return AppColors.primaryGold;
       default:
         return AppColors.textSecondary;
     }

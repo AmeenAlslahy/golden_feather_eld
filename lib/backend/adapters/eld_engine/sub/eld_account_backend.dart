@@ -1,6 +1,6 @@
-import '../../../../core/domain/account/driver_account.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/account/driver_account.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/account_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';

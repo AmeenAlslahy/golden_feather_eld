@@ -2,47 +2,45 @@ import 'package:dio/dio.dart';
 
 import '../../../core/utils/logger.dart';
 import '../../../features/auth/data/datasources/auth_local_data_source.dart';
+import '../eld_endpoints.dart';
 
+/// Attaches the session cookie issued by `POST /api/session`.
+///
+/// The live host rejects JSON login with HTTP 415 and creates the session in
+/// Traccar `SessionResource`, which sets `JSESSIONID`. A stored backend label
+/// is not an authentication scheme, so this does not send `Authorization:
+/// Bearer` or `?token=`.
 class AuthInterceptor extends Interceptor {
   final AuthLocalDataSource localDataSource;
   final String backendType;
   final void Function()? onUnauthenticated;
-  final List<String> allowedDomains;
 
   AuthInterceptor({
     required this.localDataSource,
     required this.backendType,
     this.onUnauthenticated,
-    this.allowedDomains = const [],
   });
 
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    // Ignore login and register endpoints
-    if (options.path.contains('/session') ||
+    // لا نستثني إلا نقطة إنشاء الجلسة نفسها؛ contains('/session') كانت
+    // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
+    if (options.path == EldEndpoints.session ||
         options.path.contains('/users') && options.method.toUpperCase() == 'POST') {
-      return super.onRequest(options, handler);
-    }
-
-    // Security: Only send tokens to allowed domains (or allow all if empty for backwards compatibility)
-    if (allowedDomains.isNotEmpty && !allowedDomains.contains(options.uri.host)) {
-      AppLogger.warning('AuthInterceptor blocked token for unauthorized domain: ${options.uri.host}');
       return super.onRequest(options, handler);
     }
 
     try {
       final session = await localDataSource.getSession();
-
       if (session != null && session.sessionCredential.isNotEmpty) {
-        // Traccar uses JSESSIONID cookie for all authenticated requests
         final cookie = 'JSESSIONID=${session.sessionCredential}';
         final existingCookie = options.headers['Cookie'];
         options.headers['Cookie'] =
             existingCookie != null ? '$existingCookie; $cookie' : cookie;
       }
     } catch (e) {
-      AppLogger.error('AuthInterceptor failed to read session: $e');
+      AppLogger.error('AuthInterceptor failed to read session for $backendType: $e');
     }
 
     super.onRequest(options, handler);
@@ -51,9 +49,7 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
-      if (onUnauthenticated != null) {
-        onUnauthenticated!();
-      }
+      onUnauthenticated?.call();
     }
     super.onError(err, handler);
   }

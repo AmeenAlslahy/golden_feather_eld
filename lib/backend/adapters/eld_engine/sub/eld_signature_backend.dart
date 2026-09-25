@@ -1,12 +1,15 @@
-import '../../../../core/domain/shared/value_objects.dart';
-import '../../../../core/domain/signature/signature.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../../domain/signature/signature.dart';
 import '../../../contracts/signature_backend.dart';
 import '../../../http/api_client.dart';
-import '../../../http/eld_endpoints.dart';
-import '../mappers/signature_mapper.dart';
 
+/// The live ELD contract has no `/eld/signatures` resource.
+/// Certification uses `POST /eld/daily-logs/{id}/certify` directly.
 class EldSignatureBackend implements SignatureBackend {
+  // Kept so the adapter constructor stays stable. The live contract has no call to make.
+  // ignore: unused_field
   final ApiClient _apiClient;
 
   const EldSignatureBackend(this._apiClient);
@@ -17,22 +20,13 @@ class EldSignatureBackend implements SignatureBackend {
     required String logDate,
     required String signatureDataBase64,
     required SignatureType type,
-  }) {
-    return _apiClient
-        .post<Map<String, dynamic>>(
-          EldEndpoints.signatures(driverId.value),
-          data: {
-            'driverId': driverId.value,
-            'logDate': logDate,
-            'signatureData': signatureDataBase64,
-            'signatureType': type.wire,
-          },
-          parser: (data) => data is Map<String, dynamic> ? data : {},
-        )
-        .then(
-          (result) => result.mapValue(
-            (response) => SignatureMapper.fromJson(response.data ?? const {}),
-          ),
-        );
+  }) async {
+    return err(const ServerError(
+      code: 'eld.signature_endpoint_absent',
+      context: {
+        'message':
+            'The server contract has no signature upload path. Certify the daily log instead.',
+      },
+    ));
   }
 }

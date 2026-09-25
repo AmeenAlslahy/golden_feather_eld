@@ -2,52 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // import '../../../../l10n/app_localizations.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../domain/dvir_list_summary.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
 import 'dvir_form_page.dart';
 
 /// شاشة قائمة تقارير DVIR
-class DvirListPage extends ConsumerStatefulWidget {
+class DvirListPage extends ConsumerWidget {
   const DvirListPage({super.key});
 
   @override
-  ConsumerState<DvirListPage> createState() => _DvirListPageState();
-}
-
-class _DvirListPageState extends ConsumerState<DvirListPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dvirProvider.notifier).loadDvirs();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dvirState = ref.watch(dvirProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: const EldDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
         title: Text(
           context.loc.dvirTitle,
-          style: const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          style: context.styles.appBarTitle,
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            onPressed: () => ref.read(dvirProvider.notifier).refresh(),
+          ),
           IconButton(
             icon: const Icon(Icons.add, color: AppColors.surface),
             onPressed: () {
@@ -64,38 +50,27 @@ class _DvirListPageState extends ConsumerState<DvirListPage> {
       body: dvirState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () => ref.read(dvirProvider.notifier).loadDvirs(),
+              onRefresh: () => ref.read(dvirProvider.notifier).refresh(),
               child: dvirState.reports.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.assignment,
-                                    size: 64,
-                                    color:
-                                        Theme.of(context).colorScheme.outline),
-                                AppGap.md,
-                                Text(context.loc.noDvirReports),
-                                AppGap.lg,
-                                FilledButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const DvirFormPage(),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.add),
-                                  label: Text(context.loc.createNewReport),
-                                ),
-                              ],
-                            ),
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: EldRetryView(
+                            message: dvirState.error != null
+                                ? anyErrorUserMessage(
+                                    dvirState.error!,
+                                    isArabic:
+                                        Localizations.localeOf(context).languageCode ==
+                                            'ar',
+                                  )
+                                : (Localizations.localeOf(context).languageCode ==
+                                        'ar'
+                                    ? 'لا توجد تقارير.'
+                                    : 'No records.'),
+                            onRetry: () =>
+                                ref.read(dvirProvider.notifier).refresh(),
                           ),
                         ),
                       ],
@@ -103,10 +78,26 @@ class _DvirListPageState extends ConsumerState<DvirListPage> {
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(AppSpacing.md),
-                      itemCount: dvirState.reports.length,
+                      itemCount: dvirState.reports.length + 1,
                       itemBuilder: (context, index) {
-                        final report = dvirState.reports[index];
-                        return _DvirCard(report: report);
+                        if (index == 0) {
+                          return _DvirSummaryRow(
+                            summary: summarizeDvirReports(dvirState.reports),
+                          );
+                        }
+                        final report = dvirState.reports[index - 1];
+                        return _DvirCard(
+                          report: report,
+                          onOpen: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DvirFormPage(existingReport: report),
+                              ),
+                            );
+                          },
+                        );
                       },
                     ),
             ),
@@ -114,11 +105,49 @@ class _DvirListPageState extends ConsumerState<DvirListPage> {
   }
 }
 
+class _DvirSummaryRow extends StatelessWidget {
+  const _DvirSummaryRow({required this.summary});
+
+  final DvirListSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Row(
+        children: [
+          _cell(isArabic ? 'إجمالي' : 'Total', summary.total),
+          _cell(isArabic ? 'عيوب مفتوحة' : 'Open', summary.openDefects),
+          _cell(isArabic ? 'موقّعة' : 'Signed', summary.signed),
+          _cell(isArabic ? 'خارج الخدمة' : 'OOS', summary.outOfService),
+        ],
+      ),
+    );
+  }
+
+  Widget _cell(String label, int value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            '$value',
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
 /// بطاقة تقرير DVIR
 class _DvirCard extends StatelessWidget {
   final DvirReport report;
+  final VoidCallback onOpen;
 
-  const _DvirCard({required this.report});
+  const _DvirCard({required this.report, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +155,9 @@ class _DvirCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Padding(
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,29 +171,26 @@ class _DvirCard extends StatelessWidget {
                       : Icons.stop_circle,
                   color: report.type == InspectionType.preTrip
                       ? AppColors.successGreen
-                      : AppColors.primaryBlue,
+                      : AppColors.primaryGold,
                 ),
-                AppGap.hSm,
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     isArabic ? report.type.arabicName : report.type.englishName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: AppTypography.bodySize,
-                    ),
+                    style: context.styles.bodyBold,
                   ),
                 ),
                 // حالة التقرير
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: report.isSubmitted
                         ? AppColors.successGreen.withValues(alpha: 0.1)
                         : AppColors.warningYellow.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppRadius.dialog),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     report.isSubmitted
@@ -194,7 +222,7 @@ class _DvirCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.dangerRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,20 +231,19 @@ class _DvirCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.warning,
                             color: AppColors.dangerRed, size: 16),
-                        AppGap.hSm,
+                        const SizedBox(width: 8),
                         Text(
                           '${report.defectsCount} ${context.loc.defectsFound}',
-                          style: const TextStyle(
-                              color: AppColors.dangerRed, fontSize: 13),
+                          style: context.styles.error,
                         ),
                       ],
                     ),
                     if (report.repairStatus != null) ...[
-                      AppGap.xs,
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           const Icon(Icons.build, color: AppColors.textSecondary, size: 14),
-                          AppGap.hSm,
+                          const SizedBox(width: 8),
                           Text(
                             'Repair: ${report.repairStatus}',
                             style: const TextStyle(
@@ -237,13 +264,13 @@ class _DvirCard extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: AppColors.successGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
                     Icon(Icons.check_circle,
                         color: AppColors.successGreen, size: 16),
-                    AppGap.hSm,
+                    SizedBox(width: 8),
                     Text(
                       'Reviewed by next driver',
                       style: TextStyle(
@@ -255,6 +282,7 @@ class _DvirCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -262,10 +290,18 @@ class _DvirCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          Text(label, style: context.styles.muted),
+          const SizedBox(width: 8),
+          // Long values (defect summaries, locations) wrap instead of overflowing.
+          Expanded(
+            child: Text(
+              value,
+              style: context.styles.body,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );

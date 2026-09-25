@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/domain/duty_status/duty_status_code.dart';
+import '../../../../../core/error/failure.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/theme/app_typography.dart';
+import '../../../../../core/time/trusted_time_provider.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../domain/engine/tracking/duty_status_tracker.dart';
+import '../../duty_change_message.dart';
 import '../../extensions/duty_status_l10n.dart';
 import '../../providers/status_dashboard_providers.dart';
 
@@ -60,6 +64,24 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
       Navigator.of(context).pop();
       return;
     }
+    if (_notesController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An annotation is required for this change.')),
+      );
+      return;
+    }
+
+    final driverId = ref.read(currentDriverIdProvider);
+    if (driverId == null || driverId <= 0) {
+      _showResult(dutyChangeMessage(context, DutyStampRefusal.sessionMissing),
+          accepted: false);
+      return;
+    }
+    if (ref.read(trustedTimeProvider).currentTime is! TrustedTimeAvailable) {
+      _showResult(dutyChangeMessage(context, DutyStampRefusal.timeUnavailable),
+          accepted: false);
+      return;
+    }
 
     setState(() => _submitting = true);
 
@@ -70,7 +92,26 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
         );
 
     if (!mounted) return;
+    setState(() => _submitting = false);
+    final next = ref.read(statusDashboardProvider);
+    if (next.hasError) {
+      final error = next.error;
+      final message = error is Failure ? error.message : '$error';
+      _showResult(message, accepted: false);
+      return;
+    }
+    _showResult(dutyChangeAcceptedMessage(context), accepted: true);
     Navigator.of(context).pop();
+  }
+
+  void _showResult(String message, {required bool accepted}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: accepted ? null : Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -96,7 +137,7 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
               margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.border,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
 
@@ -107,9 +148,7 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
                 children: [
                   Text(
                     'Change Status',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: AppTypography.bold,
-                    ),
+                    style: context.styles.pageTitle,
                   ),
                   const Spacer(),
                   IconButton(
@@ -142,11 +181,9 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
                             value: status,
                             title: Text(
                               status.displayName(context),
-                              style: const TextStyle(
-                                fontSize: AppTypography.bodySize,
-                              ),
+                              style: context.styles.body,
                             ),
-                            activeColor: AppColors.primaryBlue,
+                            activeColor: AppColors.primaryGold,
                           ),
                       ],
                     ),
@@ -160,7 +197,7 @@ class _ChangeStatusSheetState extends ConsumerState<ChangeStatusSheet> {
                       maxLines: 2,
                       minLines: 1,
                       decoration: const InputDecoration(
-                        labelText: 'Notes (optional)',
+                        labelText: 'Annotation (required)',
                         border: OutlineInputBorder(),
                       ),
                     ),

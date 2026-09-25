@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
 /// مزود قائمة وثائق الشحن
@@ -66,18 +65,12 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Shipping Documents',
-          style: TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+        title: Text('Shipping Documents', style: context.styles.appBarTitle,
         ),
         centerTitle: true,
       ),
@@ -101,13 +94,13 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                     onSubmitted: (_) => _addDocument(),
                   ),
                 ),
-                AppGap.hSm,
+                const SizedBox(width: AppSpacing.sm),
                 SizedBox(
                   height: 44,
                   child: FilledButton(
                     onPressed: _addDocument,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: AppColors.primaryGold,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button),
                       ),
@@ -117,7 +110,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                       children: [
                         const Icon(Icons.add,
                             size: 18, color: AppColors.surface),
-                        AppGap.hXs,
+                        const SizedBox(width: 4),
                         Text(context.loc.addButton,
                             style: const TextStyle(color: AppColors.surface)),
                       ],
@@ -156,10 +149,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                         ),
                         title: Text(
                           doc,
-                          style: const TextStyle(
-                            fontSize: AppTypography.bodySize,
-                            fontWeight: AppTypography.semiBold,
-                          ),
+                          style: context.styles.sectionTitle,
                         ),
                         trailing: TextButton(
                           onPressed: () => _removeDocument(doc),

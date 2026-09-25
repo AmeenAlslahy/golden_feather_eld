@@ -1,8 +1,8 @@
-import '../../../../core/domain/duty_status/duty_status_code.dart';
-import '../../../../core/domain/duty_status/status_dashboard.dart';
-import '../../../../core/domain/duty_status/weekly_recap.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../domain/duty_status/weekly_recap.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/status_dashboard_backend.dart';
 
 /// In-memory mock for [StatusDashboardBackend].
@@ -61,11 +61,9 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
         connectionStatus: ConnectionStatus.ok,
       ),
       currentDutyStatus: _currentStatus,
-      remainingCircle: const RemainingCircle(
-        remaining: Duration(hours: 8, minutes: 37),
-        label: 'Remaining',
-        progress: 0.62,
-      ),
+      // الحلقة الدائرية تتبع الحالة النشطة — القيمة الثابتة (8:37) كانت
+      // تعرض نفس الرقم أثناء القيادة وخارجها.
+      remainingCircle: _remainingCircle(),
       hosIndicators: const HosIndicators(
         drive: HosIndicator(
           label: 'DRIVE',
@@ -97,6 +95,24 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
           'cycleHours: 70',
         ],
       ),
+    );
+  }
+
+  RemainingCircle _remainingCircle() {
+    const remaining = Duration(hours: 8, minutes: 37);
+    if (_currentStatus == DutyStatusCode.driving) {
+      const total = Duration(hours: 11);
+      return RemainingCircle(
+        remaining: remaining,
+        label: 'Drive remaining',
+        progress: remaining.inMinutes / total.inMinutes,
+      );
+    }
+    const total = Duration(hours: 14);
+    return RemainingCircle(
+      remaining: remaining,
+      label: 'Shift remaining',
+      progress: remaining.inMinutes / total.inMinutes,
     );
   }
 

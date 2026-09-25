@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_durations.dart';
-import '../../../../../core/theme/app_radius.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/status_color_helper.dart';
-import '../../../../../core/widgets/app_gap.dart';
 import '../../../domain/entities/daily_log.dart';
 import 'expanded_content.dart';
+
+/// 'HH:mm' + اختصار منطقة توقيت الحدث (3 أحرف إن توفرت)،
+/// دون اعتماد على DateTime.now() ودون رمي استثناء لاسم توقيت فارغ.
+String _formatTimeWithZone(DateTime time) {
+  final h = time.hour.toString().padLeft(2, '0');
+  final m = time.minute.toString().padLeft(2, '0');
+  final name = time.timeZoneName.trim();
+  if (name.isEmpty) return '$h:$m';
+  final short = name.length >= 3 ? name.substring(0, 3) : name;
+  return '$h:$m ${short.toUpperCase()}';
+}
 
 class LogEventTile extends StatelessWidget {
   final LogEvent event;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
+  final VoidCallback? onEdit;
 
   const LogEventTile({
     super.key,
     required this.event,
     required this.onTap,
-    required this.onEdit,
+    this.onEdit,
   });
 
   @override
@@ -48,24 +56,24 @@ class LogEventTile extends StatelessWidget {
                   height: 20,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                AppGap.hMd,
+                const SizedBox(width: AppSpacing.md),
                 SizedBox(
                   width: 32,
                   child: Text(
                     event.status,
-                    style: AppTextStyles(context).bodyBold,
+                    style: context.styles.bodyBold,
                   ),
                 ),
 
-                // Time
+                // Time (من وقت الحدث نفسه، مع اختصار آمن لمنطقة التوقيت)
                 Expanded(
                   flex: 2,
                   child: Text(
-                    '${event.formattedStartTime} ${DateTime.now().timeZoneName.substring(0, 3).toUpperCase()}',
-                    style: AppTextStyles(context).body,
+                    _formatTimeWithZone(event.startTime),
+                    style: context.styles.body,
                   ),
                 ),
 
@@ -74,20 +82,20 @@ class LogEventTile extends StatelessWidget {
                   flex: 2,
                   child: Text(
                     event.formattedDuration,
-                    style: AppTextStyles(context).body,
+                    style: context.styles.body,
                   ),
                 ),
 
-                // Edit Icon
-                IconButton(
-                  onPressed: onEdit,
-                  icon: const Icon(
-                    Icons.edit,
-                    size: 22,
+                if (onEdit != null)
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(
+                      Icons.edit,
+                      size: 22,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
               ],
             ),
             // Expanded content
@@ -97,7 +105,7 @@ class LogEventTile extends StatelessWidget {
               crossFadeState: isExpanded
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
-              duration: AppDurations.normal,
+              duration: const Duration(milliseconds: 300),
             ),
           ],
         ),

@@ -109,6 +109,6 @@ class AppTypography {
         lightTextTheme.labelSmall!.copyWith(color: AppColors.darkTextSecondary),
     // عداد الوقت — ذهبي لامع على أسود (9.24:1)
     displayMedium:
-        lightTextTheme.displayMedium!.copyWith(color: AppColors.primaryBlue),
+        lightTextTheme.displayMedium!.copyWith(color: AppColors.primaryGold),
   );
 }

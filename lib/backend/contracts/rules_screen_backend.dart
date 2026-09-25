@@ -1,6 +1,6 @@
-import '../../core/domain/shared/value_objects.dart';
 import '../../core/result/result.dart';
-import '../../features/account/domain/entities/rules_screen_model.dart';
+import '../../domain/shared/value_objects.dart';
+import '../../features/account/application/models/rules_screen_model.dart';
 import 'raw_json.dart';
 
 abstract interface class RulesScreenBackend {

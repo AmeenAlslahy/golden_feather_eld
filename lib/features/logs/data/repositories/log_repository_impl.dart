@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'package:golden_feather_eld/core/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
@@ -81,9 +81,8 @@ class LogRepositoryImpl implements LogRepository {
         );
 
         if (remoteLogs.isNotEmpty) {
-          // In a real scenario, we would merge these or update the local DB
-          // For now, we prefer remote if available and not empty
-          return Right(remoteLogs.cast<LogEvent>().toList());
+          // الخادم هو مصدر الحقيقة؛ المحلي احتياطي عند غياب الرد.
+          return Right(remoteLogs.toList());
         }
       } catch (_) {
         // Fallback to local on any error
@@ -105,184 +104,10 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> updateEvent(LogEvent event) async {
-    // Try API first, fallback to local
-    if (_networkInfo.isConnected && event.id.isNotEmpty) {
-      try {
-        final statusId = int.tryParse(event.id);
-        if (statusId != null) {
-          final result = await _dailyLogsBackend.proposeCarrierEdit(
-            logId: DailyLogId(statusId),
-            edit: {
-              'status': event.status,
-              'startTime': event.startTime.toIso8601String(),
-              'endTime': event.endTime.toIso8601String(),
-              'locationText': event.location,
-              'notes': event.notes ?? '',
-              'editReason': event.notes ?? 'Manual edit',
-            },
-          );
-          return await result.match(
-            (failure) => Left(ServerFailure(message: failure.l10nKey)),
-            (_) => const Right(true),
-          );
-        }
-      } catch (_) {
-        // Fallback to local
-      }
-    }
+  Future<Either<Failure, bool>> updateEvent(LogEvent event) {
     return executeWithHandling(
       () => _localDataSource.updateEvent(event),
       tag: 'LogRepositoryImpl.updateEvent',
-    );
-  }
-
-  // ==========================================================================
-  // Daily Log Details (Driver-facing) — NEW
-  // ==========================================================================
-
-  @override
-  Future<Either<Failure, DailyLog>> getDailyLogById(DailyLogId logId) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.getById(logId);
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) => DailyLogDto.fromJson(data).toEntity(),
-        );
-      },
-      tag: 'LogRepositoryImpl.getDailyLogById',
-    );
-  }
-
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> getForm(DailyLogId logId) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.getForm(logId);
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) => data,
-        );
-      },
-      tag: 'LogRepositoryImpl.getForm',
-    );
-  }
-
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> saveForm({
-    required DailyLogId logId,
-    required Map<String, dynamic> formData,
-  }) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.saveForm(
-          logId: logId,
-          form: formData,
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) => data,
-        );
-      },
-      tag: 'LogRepositoryImpl.saveForm',
-    );
-  }
-
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> getGraphGrid(DailyLogId logId) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.getGraphGrid(logId);
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) => data,
-        );
-      },
-      tag: 'LogRepositoryImpl.getGraphGrid',
-    );
-  }
-
-  @override
-  Future<Either<Failure, bool>> lockLog(DailyLogId logId) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.lock(logId);
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (_) => true,
-        );
-      },
-      tag: 'LogRepositoryImpl.lockLog',
-    );
-  }
-
-  @override
-  Future<Either<Failure, bool>> reassignDriving({
-    required DailyLogId logId,
-    required int statusId,
-    required int targetCoDriverId,
-    required String annotation,
-  }) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.reassignDriving(
-          logId: logId,
-          statusId: DutyStatusId(statusId),
-          targetCoDriverId: DriverId(targetCoDriverId),
-          annotation: annotation,
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (_) => true,
-        );
-      },
-      tag: 'LogRepositoryImpl.reassignDriving',
-    );
-  }
-
-  @override
-  Future<Either<Failure, bool>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required String editId,
-    required String action,
-    String? driverNotes,
-  }) async {
-    if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
-    }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.respondToCarrierEdit(
-          logId: logId,
-          editId: EditId(editId),
-          action: action,
-          driverNotes: driverNotes,
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (_) => true,
-        );
-      },
-      tag: 'LogRepositoryImpl.respondToCarrierEdit',
     );
   }
 
@@ -306,21 +131,28 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, bool>> certifyLog({
     required DailyLogId logId,
+    required int driverId,
+    required String logDate,
     required String signatureCertificateId,
     required bool signatureConfirmation,
     required bool certifiedTrue,
   }) async {
+    if (driverId <= 0) {
+      return const Left(ServerFailure(message: 'Driver session is missing'));
+    }
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(logDate)) {
+      return const Left(ServerFailure(message: 'Log date must be YYYY-MM-DD'));
+    }
     if (!_networkInfo.isConnected) {
       return const Left(ServerFailure(message: 'No internet connection'));
     }
     return executeWithHandling(
       () async {
-        final driverId = int.tryParse(_storageService.deviceId) ?? 101;
         final result = await _dailyLogsBackend.certify(
           CertifyRequestDto(
             dailyLogId: logId.value,
             driverId: driverId,
-            logDate: DateTime.now().toIso8601String().split('T').first,
+            logDate: logDate,
             signatureCertificateId: signatureCertificateId,
             signatureConfirmation: signatureConfirmation,
             certifiedTrue: certifiedTrue,
@@ -332,6 +164,54 @@ class LogRepositoryImpl implements LogRepository {
         );
       },
       tag: 'LogRepositoryImpl.certifyLog',
+    );
+  }
+
+  @override
+  Future<Either<Failure, bool>> respondToCarrierEdit({
+    required DailyLogId logId,
+    required String editId,
+    required String action,
+    String? driverNotes,
+  }) {
+    return executeWithHandling(
+      () async {
+        final result = await _dailyLogsBackend.respondToCarrierEdit(
+          logId: logId,
+          editId: EditId(editId),
+          action: action,
+          driverNotes: driverNotes,
+        );
+        return result.match(
+          (failure) => throw Exception(failure.l10nKey),
+          (_) => true,
+        );
+      },
+      tag: 'LogRepositoryImpl.respondToCarrierEdit',
+    );
+  }
+
+  @override
+  Future<Either<Failure, bool>> reassignDriving({
+    required DailyLogId logId,
+    required int statusId,
+    required int targetCoDriverId,
+    required String annotation,
+  }) {
+    return executeWithHandling(
+      () async {
+        final result = await _dailyLogsBackend.reassignDriving(
+          logId: logId,
+          statusId: DutyStatusId(statusId),
+          targetCoDriverId: DriverId(targetCoDriverId),
+          annotation: annotation,
+        );
+        return result.match(
+          (failure) => throw Exception(failure.l10nKey),
+          (_) => true,
+        );
+      },
+      tag: 'LogRepositoryImpl.reassignDriving',
     );
   }
 

@@ -1,12 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 
-import '../../../../app/providers/app_repository_providers.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-// ARCH-HIGH-01 fix: Removed unused data-layer import.
-// Presentation depends on LogRepository (domain interface), not the impl.
+import '../../data/repositories/log_repository_impl.dart';
 import '../../domain/entities/audit_entry.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/repositories/log_repository.dart';
@@ -116,17 +114,39 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// تحديد سجل محدد للتفاصيل
-  void selectLog(DailyLog log) {
+  Future<void> selectLog(DailyLog log) async {
+    // تعيين السجل مبدئياً لكي تفتح الشاشة فوراً
     state = state.copyWith(selectedLog: log);
-  }
 
-  /// UX-HIGH-03 fix: Select a log by its ID (used by route parameter).
-  void selectLogById(String id) {
-    // ignore: unrelated_type_equality_checks
-    final matchingLog = state.logs.where((log) => log.id == id).firstOrNull;
-    if (matchingLog != null) {
-      state = state.copyWith(selectedLog: matchingLog);
-    }
+    if (log.events.isNotEmpty) return; // قد تكون جُلبت مسبقاً
+
+    // جلب الأحداث التفصيلية من السيرفر
+    final eventsResult = await _repository.getEvents(log.date);
+    
+    if (!mounted) return;
+
+    eventsResult.match(
+      (failure) {
+        // يمكنك إظهار خطأ أو طباعته
+      },
+      (events) {
+        // تحديث السجل بالأحداث الجديدة
+        final updatedLog = log.copyWith(events: events);
+        
+        // تحديث السجل المحدد
+        if (state.selectedLog?.id == updatedLog.id) {
+           state = state.copyWith(selectedLog: updatedLog);
+        }
+        
+        // تحديث القائمة الرئيسية
+        final updatedLogs = state.logs.map((l) {
+          if (l.id == updatedLog.id) return updatedLog;
+          return l;
+        }).toList();
+        
+        state = state.copyWith(logs: updatedLogs);
+      },
+    );
   }
 
   /// تبديل توسيع حدث
@@ -160,8 +180,13 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// إضافة حدث جديد للسجل المحدد
-  void addEvent(LogEvent event) {
-    if (state.selectedLog == null) return;
+  Future<bool> addEvent(LogEvent event) async {
+    if (state.selectedLog == null) return false;
+
+    // الحفظ في المستودع أولاً؛ لا تحديث للواجهة عند فشل الحفظ.
+    final persisted =
+        (await _repository.addEvent(event)).fold((_) => false, (ok) => ok);
+    if (!persisted) return false;
 
     final updatedEvents = <LogEvent>[...state.selectedLog!.events, event];
 
@@ -179,6 +204,33 @@ class LogsNotifier extends StateNotifier<LogsState> {
     }).toList();
 
     state = state.copyWith(logs: updatedLogs);
+    return true;
+  }
+
+  Future<bool> updateEvent(LogEvent event) async {
+    if (state.selectedLog == null) return false;
+
+    final persisted =
+        (await _repository.updateEvent(event)).fold((_) => false, (ok) => ok);
+    if (!persisted) return false;
+
+    final updatedEvents = state.selectedLog!.events
+        .map((e) => e.id == event.id ? event : e)
+        .toList();
+
+    final updatedLog = state.selectedLog!.copyWith(
+      events: updatedEvents,
+    );
+
+    state = state.copyWith(selectedLog: updatedLog);
+
+    final updatedLogs = state.logs.map((log) {
+      if (log.id == updatedLog.id) return updatedLog;
+      return log;
+    }).toList();
+
+    state = state.copyWith(logs: updatedLogs);
+    return true;
   }
 
   /// تحديث سجل بالكامل (مثل إكمال النموذج)
@@ -204,7 +256,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// حفظ سجل تدقيق جديد
-  Future<Either<Failure, void>> saveAuditEntry(AuditEntry entry) async {
+  Future<Either<Failure, bool>> saveAuditEntry(AuditEntry entry) async {
     return await _repository.logAudit(entry);
   }
 }

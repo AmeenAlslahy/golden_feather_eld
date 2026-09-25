@@ -57,10 +57,6 @@ class RequestLogger extends Interceptor {
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     AppLogger.debug(
         '✅ Response [${response.statusCode}] ${response.requestOptions.uri}');
-    if (response.data != null) {
-      final safeData = _redactSensitiveData(response.data);
-      AppLogger.info('📦 Response Data (${response.requestOptions.uri.path}): $safeData');
-    }
     super.onResponse(response, handler);
   }
 
@@ -80,6 +76,8 @@ class RequestLogger extends Interceptor {
       final serverMsg = err.response?.statusMessage;
       AppLogger.error(
           'Message: ${serverMsg ?? 'Server returned status code $statusCode'}');
+    } else if (err.error is FormatException) {
+      AppLogger.error('Message: Response was not JSON');
     } else if (err.message != null && err.message!.isNotEmpty) {
       AppLogger.error('Message: ${err.message}');
     } else {
@@ -96,6 +94,11 @@ class RequestLogger extends Interceptor {
           final title =
               titleMatch != null ? titleMatch.group(1) : 'HTML Error Page';
           AppLogger.error('Data: [Server responded with HTML page: $title]');
+        } else if (data.contains('org.hibernate') ||
+            data.contains('PSQLException') ||
+            data.contains('ELDPersistenceException')) {
+          AppLogger.error(
+              'Data: [Server database error — stack omitted from driver logs]');
         } else {
           AppLogger.error(
               'Data: ${data.length > 500 ? '${data.substring(0, 500)}...' : data}');

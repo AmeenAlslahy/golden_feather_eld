@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_spacing.dart';
-// import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
-import 'app_gap.dart';
+import '../extensions/context_extensions.dart';
 
 /// صف معلومات - عنوان رمادي على اليسار، قيمة سوداء على اليمين
 class EldInfoRow extends StatelessWidget {
@@ -26,34 +22,32 @@ class EldInfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      splashColor: Colors.black.withValues(alpha: 0.12),
+      highlightColor: Colors.black.withValues(alpha: 0.06),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.smMd, horizontal: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
-            // العنوان - رمادي
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.regular,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            // العنوان - رمادي (يلتف بدل أن يفيض مع العناوين الطويلة)
+            Flexible(
+              child: Text(
+                label,
+                style: context.styles.muted,
               ),
             ),
-            AppGap.hMd,
+            const SizedBox(width: 16),
             // القيمة - أسود Bold
             Expanded(
               child: Text(
                 value,
                 textAlign: TextAlign.end,
-                style: TextStyle(
-                  fontSize: AppTypography.largeButtonSize,
-                  fontWeight: AppTypography.bold,
-                  color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-                ),
+                style: valueColor == null
+                    ? context.styles.bodyBold
+                    : context.styles.bodyBold.copyWith(color: valueColor),
               ),
             ),
             if (trailing != null) ...[
-              AppGap.hSm,
+              const SizedBox(width: 8),
               trailing!,
             ],
           ],

@@ -13,10 +13,12 @@ class LogEventModel extends LogEvent {
     super.odometer,
     super.engineHours,
     super.isExpanded,
+    super.automatedDriving,
+    super.editable,
   });
 
   factory LogEventModel.fromJson(Map<String, dynamic> json) {
-    final statusCode = json['status']?.toString() ?? 'OFF';
+    final statusCode = (json['status'] ?? json['statusCode'] ?? json['eventCode'] ?? json['type'])?.toString() ?? 'OFF';
     final startTimeStr =
         json['startTime']?.toString() ?? json['time']?.toString();
     final durationSecs = json['duration'] as int? ?? 0;
@@ -40,6 +42,16 @@ class LogEventModel extends LogEvent {
       engineHours: json['engineHours'] != null
           ? double.tryParse(json['engineHours'].toString())
           : null,
+      automatedDriving: json['automatedDriving'] == true
+          ? true
+          : json['automatedDriving'] == false
+              ? false
+              : null,
+      editable: json['editable'] == true
+          ? true
+          : json['editable'] == false
+              ? false
+              : null,
     );
   }
 
@@ -66,6 +78,8 @@ class LogEventModel extends LogEvent {
       odometer: entity.odometer,
       engineHours: entity.engineHours,
       isExpanded: entity.isExpanded,
+      automatedDriving: entity.automatedDriving,
+      editable: entity.editable,
     );
   }
 }

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/domain/duty_status/status_dashboard.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/theme/app_typography.dart';
-import '../../../../../core/widgets/app_gap.dart';
+import '../../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../connection/presentation/providers/hardware_alerts_provider.dart';
 
 /// Banner shown at the top of the dashboard when connection status
@@ -23,94 +22,78 @@ class OperationalAlertsBanner extends ConsumerWidget {
     final hardwareAlertsAsync = ref.watch(hardwareAlertsProvider);
     final hardwareAlerts = hardwareAlertsAsync.valueOrNull ?? [];
 
-    if (alerts.connectionStatus == ConnectionStatus.ok && hardwareAlerts.isEmpty) {
+    if (hardwareAlerts.isNotEmpty) {
+      final alert = hardwareAlerts.first;
+      return _banner(
+        context,
+        color: AppColors.warningYellow,
+        icon: Icons.info_outline,
+        text: alert.message,
+      );
+    }
+
+    if (alerts.connectionStatus == ConnectionStatus.ok) {
       return const SizedBox.shrink();
     }
 
-    final (color, icon, text) = _presentation();
-
-    return Column(
-      children: [
-        if (alerts.connectionStatus != ConnectionStatus.ok)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            color: color.withValues(alpha: 0.15),
-            child: Row(
-              children: [
-                Icon(icon, color: color, size: 24),
-                AppGap.hSm,
-                Expanded(
-                  child: Text(
-                    text,
-                    style: const TextStyle(
-                      fontSize: AppTypography.subtitleSize,
-                      fontWeight: AppTypography.semiBold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        
-        // عرض تنبيهات الهاردوير
-        for (final alert in hardwareAlerts)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            color: AppColors.dangerRed.withValues(alpha: 0.15),
-            child: Row(
-              children: [
-                const Icon(Icons.error_outline, color: AppColors.dangerRed, size: 24),
-                AppGap.hSm,
-                Expanded(
-                  child: Text(
-                    alert.message,
-                    style: const TextStyle(
-                      fontSize: AppTypography.subtitleSize,
-                      fontWeight: AppTypography.semiBold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-
-      ],
-    );
-  }
-
-  (Color, IconData, String) _presentation() {
-    return switch (alerts.connectionStatus) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final (color, icon, text) = switch (alerts.connectionStatus) {
+      ConnectionStatus.warning => (
+          AppColors.warningYellow,
+          Icons.info_outline,
+          isArabic
+              ? 'الاتصال ضعيف. قد تتأخر بعض البيانات.'
+              : 'Weak connection. Some data may be delayed.',
+        ),
+      ConnectionStatus.disconnected => (
+          AppColors.dangerRed,
+          Icons.cloud_off,
+          isArabic
+              ? 'لا يوجد اتصال بالإنترنت.'
+              : 'No internet connection.',
+        ),
+      ConnectionStatus.unknown => (
+          AppColors.textSecondary,
+          Icons.info_outline,
+          isArabic
+              ? 'حالة الاتصال غير معروفة.'
+              : 'Connection status is unknown.',
+        ),
       ConnectionStatus.ok => (
           AppColors.successGreen,
           Icons.check_circle,
           '',
         ),
-      ConnectionStatus.warning => (
-          AppColors.warningYellow,
-          Icons.warning_amber,
-          'Connection warning — some data may be delayed',
-        ),
-      ConnectionStatus.disconnected => (
-          AppColors.dangerRed,
-          Icons.cloud_off,
-          'Disconnected from server',
-        ),
-      ConnectionStatus.unknown => (
-          AppColors.textSecondary,
-          Icons.help_outline,
-          'Connection status unknown',
-        ),
     };
+
+    return _banner(context, color: color, icon: icon, text: text);
+  }
+
+  Widget _banner(
+    BuildContext context, {
+    required Color color,
+    required IconData icon,
+    required String text,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      color: color.withValues(alpha: 0.15),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: context.styles.body,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

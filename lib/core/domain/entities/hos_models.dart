@@ -1,7 +1,5 @@
 
 
-import '../../../../core/domain/shared/speed.dart';
-
 // ==========================================
 // 1. Duty Status & Tracking Models
 // ==========================================
@@ -36,14 +34,19 @@ enum DutyStatus {
   static DutyStatus fromShortCode(String code) {
     switch (code.toUpperCase()) {
       case 'OFF':
+      case '1':
         return DutyStatus.offDuty;
       case 'SB':
+      case '2':
         return DutyStatus.sleeperBerth;
       case 'ON':
+      case '4':
         return DutyStatus.onDutyNotDriving;
       case 'D':
+      case '3':
         return DutyStatus.driving;
       case 'PC':
+      case '6':
         return DutyStatus.personalUse;
       default:
         return DutyStatus.offDuty;
@@ -53,7 +56,7 @@ enum DutyStatus {
 
 /// حدث من جهاز ELD
 class EldEvent {
-  final Speed speed;
+  final double speedMph;
   final int speedDurationSeconds;
 
   /// Cumulative odometer in miles.
@@ -71,29 +74,36 @@ class EldEvent {
   final DateTime timestamp;
   final int engineRpm;
 
+  /// True only when speed and odometer come from the vehicle ECM/ELD.
+  /// Phone GPS and simulated streams must leave this false.
+  final bool fromEcm;
+
   const EldEvent({
-    required this.speed,
+    required this.speedMph,
     this.speedDurationSeconds = 0,
     this.odometerMiles,
     this.engineHours,
     required this.timestamp,
     this.engineRpm = 0,
+    this.fromEcm = false,
   });
 
   factory EldEvent.fromMap(Map<dynamic, dynamic> map) {
     return EldEvent(
-      speed: Speed.fromMilesPerHour((map['speedMph'] as num?)?.toDouble() ?? 0.0),
+      speedMph: (map['speedMph'] as num?)?.toDouble() ?? 0.0,
       engineRpm: map['engineRpm'] as int? ?? 0,
       odometerMiles: (map['odometerMiles'] as num?)?.toDouble(),
       engineHours: (map['engineHours'] as num?)?.toDouble(),
+      fromEcm: map['fromEcm'] == true,
       timestamp: map['timestamp'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int)
-          : DateTime.now(),
+          ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int,
+              isUtc: true)
+          : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
 }
 
-/// ط­ط¯ط« طھط؛ظٹظٹط± ط­ط§ظ„ط© (طھظڈط³طھط®ط¯ظ… ظ„ظ„ط­ظپط¸ ط£ظˆ ظ„ظ„طھط§ط±ظٹط®)
+/// حدث تغيير حالة (تُستخدم للحفظ أو للتاريخ)
 class DutyStatusEvent {
   final String status;
   final DateTime timestamp;
@@ -112,7 +122,7 @@ class DutyStatusEvent {
   });
 }
 
-/// ظپطھط±ط© ط²ظ…ظ†ظٹط©
+/// فترة زمنية
 class DutyPeriod {
   final String status;
   final DateTime startTime;
@@ -142,13 +152,13 @@ class DutyPeriod {
         startLon != null &&
         endLat != null &&
         endLon != null) {
-      return null; // ط³ظٹطھظ… ط§ط³طھط®ط¯ط§ظ…ظ‡ ظ„ط§ط­ظ‚ط§ ظ…ط¹ Haversine
+      return null; // سيتم استخدامه لاحقا مع Haversine
     }
     return null;
   }
 }
 
-/// ط§ظ†طھظ‚ط§ظ„ ظپظٹ ط§ظ„ط­ط§ظ„ط© ظٹطھظ… ط¥ط±ط³ط§ظ„ظ‡ ط¹ط¨ط± ط§ظ„ط¨ط«
+/// انتقال في الحالة يتم إرساله عبر البث
 class DutyTransition {
   final String newStatus;
   final String annotation;
@@ -160,7 +170,7 @@ class DutyTransition {
 // 2. Alert & Limits Models
 // ==========================================
 
-/// ط£ظ†ظˆط§ط¹ ط§ظ„طھظ†ط¨ظٹظ‡ط§طھ
+/// أنواع التنبيهات
 enum HosAlertType {
   drivingExpiring,
   shiftExpiring,
@@ -168,14 +178,14 @@ enum HosAlertType {
   breakRequired,
 }
 
-/// ظ…ط³طھظˆظٹط§طھ ط§ظ„ط®ط·ظˆط±ط©
+/// مستويات الخطورة
 enum AlertSeverity {
   info,
   warning,
   critical,
 }
 
-/// طھظ†ط¨ظٹظ‡
+/// تنبيه
 class HosAlert {
   final HosAlertType type;
   final String message;
@@ -190,7 +200,7 @@ class HosAlert {
   });
 }
 
-/// طھط­ط¯ظٹط« ط­ط§ظ„ط© HOS
+/// تحديث حالة HOS
 class HosStatusUpdate {
   final DutyStatus currentStatus;
   final HosLimits limits;
@@ -223,7 +233,7 @@ class HosStatusUpdate {
 // 3. Violation Models
 // ==========================================
 
-/// ط£ظ†ظˆط§ط¹ ط§ظ†طھظ‡ط§ظƒط§طھ HOS
+/// أنواع انتهاكات HOS
 enum HosViolationType {
   dailyDrivingExceeded,
   dailyWorkExceeded,
@@ -234,19 +244,19 @@ enum HosViolationType {
   weeklyRestInsufficient,
 }
 
-/// ظ…ط³طھظˆظ‰ ط§ظ„ط§ظ†طھظ‡ط§ظƒ
+/// مستوى الانتهاك
 enum ViolationLevel {
-  minor('ط¨ط³ظٹط·', 'Minor'),
-  medium('ظ…طھظˆط³ط·', 'Medium'),
-  high('ط¹ط§ظ„ظٹ', 'High'),
-  critical('ط­ط±ط¬', 'Critical');
+  minor('بسيط', 'Minor'),
+  medium('متوسط', 'Medium'),
+  high('عالي', 'High'),
+  critical('حرج', 'Critical');
 
   final String arabicName;
   final String englishName;
   const ViolationLevel(this.arabicName, this.englishName);
 }
 
-/// ظ†ظ…ظˆط°ط¬ ط§ظ†طھظ‡ط§ظƒ
+/// نموذج انتهاك
 class HosViolation {
   final HosViolationType type;
   final ViolationLevel level;

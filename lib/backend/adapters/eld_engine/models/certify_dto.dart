@@ -20,7 +20,8 @@ class CertifyRequestDto {
       'dailyLogId': dailyLogId,
       'driverId': driverId,
       'logDate': logDate,
-      'signatureCertificateId': signatureCertificateId,
+      if (signatureCertificateId.isNotEmpty)
+        'signatureCertificateId': signatureCertificateId,
       'signatureConfirmation': signatureConfirmation,
       'certifiedTrue': certifiedTrue,
     };

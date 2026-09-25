@@ -5,45 +5,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../network/core_providers.dart';
 
+import '../theme/app_styles.dart';
 import '../theme/eld_colors.dart';
-import '../widgets/app_gap.dart';
+
+import '../../l10n/app_localizations_en.dart';
 
 /// امتدادات BuildContext
 extension ContextExtensions on BuildContext {
   // ========== السمات والترجمة ==========
-  AppLocalizations get loc => AppLocalizations.of(this)!;
+  AppLocalizations get loc => AppLocalizations.of(this) ?? AppLocalizationsEn();
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
   ColorScheme get colors => theme.colorScheme;
-  EldColors get eldColors => theme.extension<EldColors>()!;
-  EldColors get eld => theme.extension<EldColors>()!;
+  EldColors get eld => theme.extension<EldColors>() ?? EldColors.light();
+  AppStyles get styles => theme.extension<AppStyles>() ?? AppStyles.light();
   MediaQueryData get mediaQuery => MediaQuery.of(this);
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;
   double get screenHeight => screenSize.height;
-
-  // ========== Theme Typography Shortcuts ==========
-  // CLEAN-HIGH-01 fix: Use these instead of manual TextStyle(...)
-
-  TextStyle? get headline => textTheme.headlineLarge;
-  TextStyle? get title => textTheme.titleLarge;
-  TextStyle? get subtitle => textTheme.titleMedium;
-  TextStyle? get body => textTheme.bodyLarge;
-  TextStyle? get bodySmall => textTheme.bodyMedium;
-  TextStyle? get caption => textTheme.bodySmall;
-  TextStyle? get label => textTheme.labelLarge;
-  TextStyle? get labelSmall => textTheme.labelSmall;
-
-  // ========== التنقل ==========
-  void pop<T>([T? result]) => Navigator.pop(this, result);
 
   // ========== الرسائل ==========
   void showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : null,
+        backgroundColor: isError ? colorScheme.error : null, // Use theme error color instead of Colors.red
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -59,27 +46,30 @@ extension ContextExtensions on BuildContext {
     required String message,
     String? confirmText,
     String? cancelText,
+    bool isDismissible = true,
   }) async {
     return showDialog<bool>(
       context: this,
+      barrierDismissible: isDismissible,
       builder: (context) => AlertDialog(
         title: Text(title),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(cancelText ?? 'إلغاء'),
+            child: Text(cancelText ?? loc.cancelButton), // Use localization
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(confirmText ?? 'تأكيد'),
+            child: Text(confirmText ?? loc.confirmTitle), // Use localization
           ),
         ],
       ),
     );
   }
 
-  void showLoadingDialog({String message = 'جاري التحميل...'}) {
+  void showLoadingDialog({String? message}) {
+    final loadingMsg = message ?? 'Loading...'; // Fallback message, although usually loc is available
     showDialog(
       context: this,
       barrierDismissible: false,
@@ -89,8 +79,8 @@ extension ContextExtensions on BuildContext {
           content: Row(
             children: [
               const CircularProgressIndicator(),
-              AppGap.hMd,
-              Text(message),
+              const SizedBox(width: 16),
+              Text(loadingMsg),
             ],
           ),
         ),

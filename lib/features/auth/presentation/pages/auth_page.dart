@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_durations.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
-import '../../../../core/widgets/app_gap.dart';
-import '../../../../routes.dart';
 import '../providers/auth_mode_provider.dart';
 import '../providers/auth_state_provider.dart';
 import '../widgets/forgot_password_form.dart';
@@ -31,11 +26,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     final isLoading = authState.status == AuthStatus.loading;
 
     return Scaffold(
-      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
+        child: Center(
               child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -49,14 +41,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 children: [
                   // شعار التطبيق
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.xxl),
+                    borderRadius: BorderRadius.circular(28),
                     child: Image.asset(
                       'assets/images/ic_launcher.png',
                       width: 120,
                       height: 120,
                     ),
                   ),
-                  AppGap.lg,
+                  const SizedBox(height: AppSpacing.lg),
 
                   // اسم التطبيق
                   Text(
@@ -67,7 +59,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  AppGap.sm,
+                  const SizedBox(height: AppSpacing.sm),
 
                   // شعار التطبيق (الوصف)
                   Text(
@@ -77,7 +69,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       color: context.colors.onSurfaceVariant,
                     ),
                   ),
-                  AppGap.xl,
+                  const SizedBox(height: AppSpacing.xl),
 
                   // رسالة الخطأ (إن وجدت) في الأعلى لرؤية أفضل
                   if (isError && !isLoading)
@@ -86,7 +78,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: context.colors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.dialog),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: context.colors.error.withValues(alpha: 0.3),
                         ),
@@ -98,7 +90,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             color: context.colors.error,
                             size: 20,
                           ),
-                          AppGap.hSm,
+                          const SizedBox(width: AppSpacing.sm),
                           if (authState.errorMessage != null)
                             Expanded(
                               child: Text(
@@ -129,7 +121,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
                   // التبديل بين النماذج مع انتقال سلس
                   AnimatedSwitcher(
-                    duration: AppDurations.normal,
+                    duration: const Duration(milliseconds: 300),
                     switchInCurve: Curves.easeInOut,
                     switchOutCurve: Curves.easeInOut,
                     transitionBuilder: (child, animation) {
@@ -152,18 +144,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 ],
               ),
             ),
-              ),
-            ),
-            Positioned(
-              top: AppSpacing.md,
-              right: AppSpacing.md,
-              child: IconButton(
-                icon: const Icon(Icons.settings),
-                tooltip: 'Server Configuration',
-                onPressed: () => context.push(AppRoutes.serverConfig),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

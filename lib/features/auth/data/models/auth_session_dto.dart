@@ -1,4 +1,4 @@
-import 'package:golden_feather_eld/features/auth/data/models/user_model.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 import '../../domain/entities/auth_session.dart';
 
@@ -30,15 +30,10 @@ class AuthSessionDto {
 
   factory AuthSessionDto.fromJson(Map<String, dynamic> json) {
     return AuthSessionDto(
-      serverOrigin: json['serverOrigin']?.toString() ?? '',
-      sessionCredential: json['sessionCredential']?.toString() ?? '',
-      userModel: UserModel.fromJson(
-        json['userModel'] is Map
-            ? Map<String, dynamic>.from(json['userModel'] as Map)
-            : <String, dynamic>{},
-      ),
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
-          DateTime.now().toUtc(),
+      serverOrigin: json['serverOrigin'] as String,
+      sessionCredential: json['sessionCredential'] as String,
+      userModel: UserModel.fromJson(json['userModel'] as Map<String, dynamic>),
+      createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
 

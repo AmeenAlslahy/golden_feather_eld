@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../../core/domain/shared/speed.dart';
-
 /// يحدد مصدر إحداثيات التتبع
 enum TrackingEventSource { gps, network, mock, obd, traccar, unknown }
 
@@ -14,7 +12,7 @@ class TrackingEvent extends Equatable {
   final String? driverId;
   final double latitude;
   final double longitude;
-  final Speed speed;
+  final double speed;
   final double bearing;
   final double altitude;
   final double accuracy;
@@ -49,7 +47,7 @@ class TrackingEvent extends Equatable {
     String? driverId,
     double? latitude,
     double? longitude,
-    Speed? speed,
+    double? speed,
     double? bearing,
     double? altitude,
     double? accuracy,

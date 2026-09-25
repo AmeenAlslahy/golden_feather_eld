@@ -1,34 +1,31 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ntp/ntp.dart';
-import '../time/trusted_time_provider.dart';
 import '../utils/logger.dart';
 
 /// خدمة مزامنة التوقيت مع UTC
 class UtcSyncService {
-  final TrustedTimeProvider timeProvider;
-  
   DateTime? _lastSyncTime;
   Duration? _drift; // انحراف الوقت المحلي
 
-  UtcSyncService({required this.timeProvider});
-
-  /// مزامنة الوقت مع UTC
-  Future<void> syncWithUtc() async {
+  /// مزامنة الوقت مع مرجع الخادم.
+  ///
+  /// الانحراف لا يُحسب من ساعة الجهاز نفسها — الصيغة القديمة
+  /// (`now.toUtc().difference(now)`) كانت تعيد صفرًا دائمًا، أي أن
+  /// "مزامنة" لا تفعل شيئًا كانت تسجّل نفسها ناجحة. بدون زمن خادم
+  /// مرجعي لا نَدّعي مزامنة الآن. المصدر الموثوق الوحيد للزمن هو
+  /// ترويسة Date عبر TimeDriftInterceptor.
+  Future<void> syncWithUtc({DateTime? serverTime}) async {
+    final now = DateTime.now();
+    if (serverTime == null) {
+      AppLogger.warning(
+          'UTC sync skipped: no server reference time (device clock must not anchor trusted time)');
+      return;
+    }
     try {
-      final now = DateTime.now();
-      
-      final int offset = await NTP.getNtpOffset(
-        localTime: now,
-        lookUpAddress: 'time.google.com',
-      );
-      
-      _drift = Duration(milliseconds: offset);
+      _drift = serverTime.toUtc().difference(now);
       _lastSyncTime = now;
-      
-      final trueUtc = now.add(_drift!).toUtc();
-      timeProvider.anchor(trueUtc);
 
-      AppLogger.info('🕐 UTC Sync via NTP: ${trueUtc.toIso8601String()}');
+      AppLogger.info(
+          '🕐 UTC Sync: server=${serverTime.toUtc().toIso8601String()}');
       AppLogger.info('   Local: ${now.toIso8601String()}');
       AppLogger.info('   Drift: ${_drift?.inSeconds}s');
     } catch (e) {
@@ -72,5 +69,5 @@ class UtcSyncService {
 
 /// مزود خدمة UTC
 final utcSyncServiceProvider = Provider<UtcSyncService>((ref) {
-  return UtcSyncService(timeProvider: ref.watch(trustedTimeProvider));
+  return UtcSyncService();
 });

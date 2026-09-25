@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traccar + ELD Engine Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b1120;
+            --bg-secondary: #111827;
+            --card-bg: rgba(17, 24, 39, 0.85);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glow: 0 0 25px rgba(59, 130, 246, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%);
+            top: -100px;
+            right: -100px;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.12), transparent 70%);
+            bottom: -100px;
+            left: -100px;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-emerald);
+            padding: 0.35rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .badge-status .pulse {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            animation: pulse-animation 1.5s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.75rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: var(--glow);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.925rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .services-bar {
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <div class="badge-status">
+                <span class="pulse"></span>
+                <span>النظام قيد التشغيل والجاهزية الكاملة</span>
+            </div>
+            <h1>منصة Traccar + محرك ELD/HOS</h1>
+            <p class="subtitle">نظام التتبع وإدارة ساعات خدمة السائقين والامتثال التنظيمي الذكي</p>
+        </header>
+
+        <main class="cards-grid">
+            <!-- Swagger UI Card -->
+            <a href="/api/swagger" class="card" target="_blank">
+                <div>
+                    <div class="card-icon">⚡</div>
+                    <div class="card-title">وثائق Swagger Interactive UI</div>
+                    <p class="card-desc">واجهة تفاعلية لتجربة واستعراض كافة نقاط اتصال ELD REST API ونظام Traccar مع التوثيق الكامل.</p>
+                </div>
+                <div class="card-action">
+                    <span>فتح واجهة Swagger</span>
+                    <span>&larr;</span>
+                </div>
+            </a>
+
+            <!-- OpenAPI Spec Card -->
+            <a href="/api/eld/openapi.yaml" class="card" target="_blank">
+                <div>
+                    <div class="card-icon">📜</div>
+                    <div class="card-title">مواصفات OpenAPI 3.0 (YAML)</div>
+                    <p class="card-desc">تحميل أو استعراض المخطط الكامل للواجهات البرمجية بصيغة OpenAPI YAML للاستيراد في Postman أو Insomnia.</p>
+                </div>
+                <div class="card-action">
+                    <span>تحميل OpenAPI Spec</span>
+                    <span>&larr;</span>
+                </div>
+            </a>
+
+            <!-- pgAdmin Card -->
+            <a href="http://localhost:5050" class="card" target="_blank">
+                <div>
+                    <div class="card-icon">🗄️</div>
+                    <div class="card-title">إدارة قواعد البيانات (pgAdmin)</div>
+                    <p class="card-desc">الوصول إلى واجهة pgAdmin لإدارة جداول ومخطط <code>eld_schema</code> وجداول Traccar على المنفذ 5050.</p>
+                </div>
+                <div class="card-action">
+                    <span>فتح pgAdmin 4</span>
+                    <span>&larr;</span>
+                </div>
+            </a>
+        </main>
+
+        <section class="services-bar">
+            <div class="service-item">
+                <span class="dot"></span>
+                <span>Traccar Core: <strong>المنفذ 8082</strong></span>
+            </div>
+            <div class="service-item">
+                <span class="dot"></span>
+                <span>PostgreSQL DB: <strong>المنفذ 5432</strong></span>
+            </div>
+            <div class="service-item">
+                <span class="dot"></span>
+                <span>pgAdmin 4: <strong>المنفذ 5050</strong></span>
+            </div>
+            <div class="service-item">
+                <span class="dot"></span>
+                <span>HOS Scheduler: <strong>نشط (Clean + Purge)</strong></span>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Traccar ELD Integration Engine v2.5.1 &bull; تطوير ودمج المنظومة بنجاح</p>
+        </footer>
+    </div>
+
+</body>
+</html>

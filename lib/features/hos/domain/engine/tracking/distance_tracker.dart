@@ -42,9 +42,8 @@ class DistanceTracker {
   /// الحصول على مسافة اليوم
   double getTodayDistance() {
     final timeResult = _timeProvider.currentTime;
-    final now = timeResult is TrustedTimeAvailable
-        ? timeResult.utc
-        : DateTime.now().toUtc();
+    if (timeResult is! TrustedTimeAvailable) return 0;
+    final now = timeResult.utc;
     final todayStart = DateTime(now.year, now.month, now.day);
 
     double distance = 0;

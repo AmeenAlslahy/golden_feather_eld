@@ -1,4 +1,4 @@
- // ignore: unused_import
+import 'dart:async';
 
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
@@ -8,75 +8,60 @@ import '../../../../core/utils/logger.dart';
 /// آلة حالات ساعات الخدمة
 class HosStateMachine {
   DutyStatus _currentStatus = DutyStatus.offDuty;
-  late DateTime _shiftStartTime;
-  double _accumulatedDrivingHours = 0.0;
-  double _accumulatedCycleHours = 0.0;
-  DateTime? _lastStatusChangeTime;
+  DateTime _shiftStartTime = DateTime.utc(1970);
+  double _totalDrivingHours = 0.0;
+  double _cycleHours = 0.0;
 
   final List<StatusTransition> _transitions = [];
+  Timer? _drivingTimer;
   final TrustedTimeProvider _timeProvider;
 
   HosStateMachine(this._timeProvider) {
-    _shiftStartTime = _getCurrentTime();
-    _lastStatusChangeTime = _shiftStartTime;
+    final trusted = _trustedNow();
+    if (trusted != null) _shiftStartTime = trusted;
   }
 
-  DateTime _getCurrentTime() {
+  /// Legal timestamps only. Wall-clock time is never used as a duty stamp.
+  DateTime? _trustedNow() {
     final timeResult = _timeProvider.currentTime;
-    return timeResult is TrustedTimeAvailable
-        ? timeResult.utc
-        : DateTime.now().toUtc();
+    return timeResult is TrustedTimeAvailable ? timeResult.utc : null;
   }
 
   // ========== Getters ==========
 
   DutyStatus get currentStatus => _currentStatus;
   DateTime get shiftStartTime => _shiftStartTime;
-  
-  double get totalDrivingHours {
-    double current = _accumulatedDrivingHours;
-    if (_currentStatus == DutyStatus.driving && _lastStatusChangeTime != null) {
-      current += _getCurrentTime().difference(_lastStatusChangeTime!).inSeconds / 3600.0;
-    }
-    return current;
-  }
-
-  double get cycleHours {
-    double current = _accumulatedCycleHours;
-    if ((_currentStatus == DutyStatus.driving || _currentStatus == DutyStatus.onDutyNotDriving) && _lastStatusChangeTime != null) {
-      current += _getCurrentTime().difference(_lastStatusChangeTime!).inSeconds / 3600.0;
-    }
-    return current;
-  }
+  double get totalDrivingHours => _totalDrivingHours;
+  double get cycleHours => _cycleHours;
 
   // ========== التحويلات ==========
 
   /// الانتقال إلى حالة جديدة
   void transitionTo(DutyStatus newStatus, {String? annotation}) {
     if (_currentStatus == newStatus) return;
-
-    final transitionTime = _getCurrentTime();
-    
-    if (_lastStatusChangeTime != null) {
-      final elapsedHours = transitionTime.difference(_lastStatusChangeTime!).inSeconds / 3600.0;
-      if (_currentStatus == DutyStatus.driving) {
-        _accumulatedDrivingHours += elapsedHours;
-      }
-      if (_currentStatus == DutyStatus.driving || _currentStatus == DutyStatus.onDutyNotDriving) {
-        _accumulatedCycleHours += elapsedHours;
-      }
+    final now = _trustedNow();
+    if (now == null) {
+      AppLogger.warning(
+          'Refusing duty transition: trusted time unavailable');
+      return;
     }
 
     final transition = StatusTransition(
       from: _currentStatus,
       to: newStatus,
-      timestamp: transitionTime,
+      timestamp: now,
       annotation: annotation,
     );
 
     _transitions.add(transition);
     _currentStatus = newStatus;
-    _lastStatusChangeTime = transitionTime;
+
+    // بدء/إيقاف مؤقت القيادة
+    if (newStatus == DutyStatus.driving) {
+      _startDrivingTimer();
+    } else {
+      _stopDrivingTimer();
+    }
 
     // إعادة تعيين نافذة العمل إذا كانت خارج الخدمة
     if (newStatus == DutyStatus.offDuty ||
@@ -88,21 +73,37 @@ class HosStateMachine {
         'State transition: ${transition.from.name} → ${transition.to.name}');
   }
 
+  /// بدء مؤقت القيادة
+  void _startDrivingTimer() {
+    _drivingTimer?.cancel();
+    _drivingTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (_trustedNow() == null) return;
+      _totalDrivingHours += 1 / 60; // زيادة دقيقة واحدة
+      _cycleHours += 1 / 60;
+    });
+  }
+
+  /// إيقاف مؤقت القيادة
+  void _stopDrivingTimer() {
+    _drivingTimer?.cancel();
+    _drivingTimer = null;
+  }
+
   /// الحصول على سجل التحويلات
   List<StatusTransition> get transitions => List.unmodifiable(_transitions);
 
   /// إعادة تعيين
   void reset() {
+    _stopDrivingTimer();
     _currentStatus = DutyStatus.offDuty;
-    _shiftStartTime = _getCurrentTime();
-    _lastStatusChangeTime = _shiftStartTime;
-    _accumulatedDrivingHours = 0.0;
-    _accumulatedCycleHours = 0.0;
+    _shiftStartTime = _trustedNow() ?? DateTime.utc(1970);
+    _totalDrivingHours = 0.0;
+    _cycleHours = 0.0;
     _transitions.clear();
   }
 
   void dispose() {
-    // No timers to cancel anymore
+    _stopDrivingTimer();
   }
 }
 

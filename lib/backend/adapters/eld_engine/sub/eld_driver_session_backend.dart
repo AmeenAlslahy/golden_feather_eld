@@ -1,5 +1,6 @@
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/driver_session_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -17,6 +18,19 @@ class EldDriverSessionBackend implements DriverSessionBackend {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.getSession(driverId.value),
       parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> getCurrentCoDriver() async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.manageCoDriver,
+      parser: (data) {
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+        throw const FormatException('co-driver body is not an object');
+      },
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
@@ -68,7 +82,7 @@ class EldDriverSessionBackend implements DriverSessionBackend {
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.manageCoDriver,
       queryParameters: {
-        'action': action.name,
+        'action': action.wire,
         if (coDriverId != null) 'coDriverId': coDriverId.value,
         if (newCoDriverId != null) 'newCoDriverId': newCoDriverId.value,
         if (uniqueId != null) 'uniqueId': uniqueId,
@@ -85,14 +99,23 @@ class EldDriverSessionBackend implements DriverSessionBackend {
     required DriverId coDriverId,
     String? reason,
   }) async {
-    final res = await _apiClient.post<dynamic>(
+    final res = await _apiClient.post<RawJson>(
       EldEndpoints.switchPrimaryDriver,
       queryParameters: {
-        'action': action.name,
+        'action': action.wire,
         'coDriverId': coDriverId.value,
         if (reason != null) 'reason': reason,
       },
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
-    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
+    return res.fold(
+      err,
+      (response) => response.isSuccess
+          ? ok(null)
+          : err(ServerError(
+              code: 'eld.request_failed',
+              context: {'message': response.message},
+            )),
+    );
   }
 }

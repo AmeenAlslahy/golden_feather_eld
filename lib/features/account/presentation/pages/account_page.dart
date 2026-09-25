@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
@@ -36,9 +34,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final account = accountState.accountData;
     
     final loc = context.loc;
-    // ignore: unused_local_variable
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final notAvailable = context.loc.notAvailable;
+    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
 
     final availableLanguages = account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
     final availableOdometerUnits = account?.availableOdometerUnits ?? ['mi', 'km'];
@@ -49,14 +46,9 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
         title: Text(
-          loc.account,
-          style: const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          isArabic ? loc.account : 'My Account',
+          style: context.styles.appBarTitle,
         ),
         centerTitle: true,
         leading: Builder(
@@ -68,7 +60,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         actions: [
           accountState.isLoading
               ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.mdLg),
+                  padding: EdgeInsets.symmetric(horizontal: 20.0),
                   child: Center(
                     child: SizedBox(
                       width: 20,
@@ -99,47 +91,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ========== صورة واسم السائق ==========
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 44,
-                            color: AppColors.primaryBlue,
-                          ),
-                        ),
-                        AppGap.md,
-                        Text(
-                          dashboard.driverName,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        AppGap.xs,
-                        Text(
-                          'Driver',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.outline,
-                            fontSize: AppTypography.captionSize,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  AppGap.xl,
-
                   if (accountState.error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: Text(
                         accountState.error!,
-                        style: const TextStyle(color: AppColors.dangerRed),
+                        style: context.styles.error,
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -150,49 +107,59 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       children: [
                         _buildInfoRow(
                           context,
-                          context.loc.email1,
+                          isArabic ? 'البريد الإلكتروني' : 'Email',
                           account?.email ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.phone,
+                          isArabic ? 'الاسم' : 'Name',
+                          dashboard.driverName,
+                        ),
+                        const Divider(color: AppColors.border),
+                        _buildInfoRow(
+                          context,
+                          isArabic ? 'رقم الهاتف' : 'Phone',
                           account?.phone ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.license,
-                          account?.license.formatted ?? account?.license.number ?? notAvailable,
+                          isArabic ? 'الرخصة' : 'License',
+                          account == null
+                              ? notAvailable
+                              : (account.license.formatted.contains(',')
+                                  ? account.license.formatted
+                                  : '${account.license.state}, ${account.license.number}'),
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.carrier,
+                          isArabic ? 'الناقل' : 'Carrier',
                           account?.carrier ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.mainOffice,
+                          isArabic ? 'المكتب الرئيسي' : 'Main Office Address',
                           account?.mainOfficeAddress ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.homeTerminal,
+                          isArabic ? 'المحطة الرئيسية' : 'Home Terminal Address',
                           account?.homeTerminalAddress ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildInfoRow(
                           context,
-                          context.loc.timeZone,
+                          isArabic ? 'المنطقة الزمنية' : 'Time zone',
                           account?.timeZone ?? notAvailable,
                         ),
                         const Divider(color: AppColors.border),
                         _buildDropdownRow(
                           context: context,
-                          title: context.loc.languageLabel,
+                          title: isArabic ? 'لغة التطبيق' : 'Language',
                           value: currentLanguage,
                           items: availableLanguages,
                           onChanged: accountState.isLoading ? null : (newValue) async {
@@ -204,7 +171,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                               if (context.mounted) {
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(context.loc.languageUpdatedSuccessfully)),
+                                    SnackBar(content: Text(isArabic ? 'تم تحديث اللغة بنجاح' : 'Language updated successfully')),
                                   );
                                 }
                               }
@@ -214,7 +181,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         const Divider(color: AppColors.border),
                         _buildDropdownRow(
                           context: context,
-                          title: context.loc.odometer,
+                          title: isArabic ? 'وحدة المسافة' : 'Odometer',
                           value: currentOdometer,
                           items: availableOdometerUnits,
                           onChanged: accountState.isLoading ? null : (newValue) async {
@@ -226,7 +193,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                               if (context.mounted) {
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(context.loc.odometerUnitUpdatedSuccessfully)),
+                                    SnackBar(content: Text(isArabic ? 'تم تحديث وحدة المسافة بنجاح' : 'Odometer unit updated successfully')),
                                   );
                                 }
                               }
@@ -236,28 +203,27 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       ],
                     ),
                   ),
-                  AppGap.lg,
+                  const SizedBox(height: AppSpacing.lg),
 
                   // ========== رسالة تنبيه ==========
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: AppColors.warningYellow.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppRadius.input),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
                             color: AppColors.warningYellow, size: 20),
-                        AppGap.hSm,
+                        const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             account?.notice ?? 
-                            (context.loc.pleaseContactFleetManagerTo),
-                            style: const TextStyle(
-                              fontSize: AppTypography.captionSize,
-                              color: AppColors.textSecondary,
-                            ),
+                            (isArabic
+                                ? 'يرجى الاتصال بمدير الأسطول لتغيير معلومات الحساب.'
+                                : 'Please contact your fleet manager to change your account information.'),
+                            style: context.styles.caption,
                           ),
                         ),
                       ],
@@ -281,19 +247,13 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: AppTypography.bodySize,
-              color: AppColors.textSecondary,
-            ),
+            style: context.styles.muted,
           ),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: AppTypography.bodySize,
-                fontWeight: AppTypography.semiBold,
-              ),
+              style: context.styles.sectionTitle,
             ),
           ),
         ],
@@ -313,7 +273,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xs, // Reduced padding to account for dropdown height
+        vertical: 4.0, // Reduced padding to account for dropdown height
         horizontal: AppSpacing.xs,
       ),
       child: Row(
@@ -321,14 +281,11 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: AppTypography.bodySize,
-              color: AppColors.textSecondary,
-            ),
+            style: context.styles.muted,
           ),
           DropdownButton<String>(
             value: safeValue.isEmpty ? null : safeValue,
-            icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryBlue),
+            icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primaryGold),
             underline: const SizedBox(),
             onChanged: onChanged,
             style: const TextStyle(

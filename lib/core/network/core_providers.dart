@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../features/settings/presentation/providers/server_config_providers.dart';
+import '../config/app_environment.dart';
+import '../config/runtime_selection.dart';
+import '../config/server_config_store.dart';
 import '../services/bluetooth_service.dart';
 import '../services/local_storage_service.dart' as ls;
 import 'api_config.dart';
@@ -25,7 +27,10 @@ final isConnectedProvider = StreamProvider<bool>((ref) {
 });
 
 final networkInfoProvider = Provider<NetworkInfo>((ref) {
-  return NetworkInfoImpl();
+  final networkInfo = NetworkInfoImpl();
+  // النسخة السابقة لم تستدعِ dispose أبداً — اشتراك Connectivity بقي للأبد.
+  ref.onDispose(networkInfo.dispose);
+  return networkInfo;
 });
 
 final apiConfigProvider = Provider<ApiConfig>((ref) {
@@ -36,31 +41,26 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
 });
 
-final serverUrlProvider = StateProvider<String>((ref) {
+final serverUrlProvider = Provider<String>((ref) {
   final config = ref.watch(serverConfigProvider);
-  if (config != null && config.baseUrl.isNotEmpty) {
-    return config.baseUrl;
-  }
-
   final storage = ref.watch(goldenFeatherEldLocalStorageProvider);
-  return storage.serverUrl;
+  final saved = config != null && config.baseUrl.isNotEmpty
+      ? config.baseUrl
+      : storage.serverUrl;
+  return resolveRuntimeBackend(
+    environment: AppEnvironmentConfig.current,
+    buildBaseUrl: AppEnvironmentConfig.apiBaseUrl,
+    savedServerUrl: saved,
+    savedBackendType: storage.backendType,
+  ).serverUrl;
 });
 
 final backendTypeProvider = Provider<String>((ref) {
   final config = ref.watch(serverConfigProvider);
-  if (config != null) {
-    return config.backendType.wire;
-  }
-
   final storage = ref.watch(goldenFeatherEldLocalStorageProvider);
-  final serverUrl = ref.watch(serverUrlProvider);
-
-  if (serverUrl.contains('/api/v1/tracker/traccar') ||
-      serverUrl.contains('api.goldenfeather.com')) {
-    return 'eld';
-  } else if (serverUrl.contains('traccar.org') || serverUrl.contains('demo')) {
-    return 'traccar';
-  }
-
-  return storage.backendType.isNotEmpty ? storage.backendType : 'traccar';
+  return resolveBackendType(
+    configuredType: AppEnvironmentConfig.configuredBackendType,
+    savedConfigType: config?.backendType.wire,
+    storedType: storage.backendType,
+  );
 });

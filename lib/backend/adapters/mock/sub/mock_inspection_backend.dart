@@ -1,6 +1,6 @@
-import '../../../../core/domain/inspection/dot_inspection.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/inspection_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -27,10 +27,12 @@ class MockInspectionBackend implements InspectionBackend {
         driverName: 'Ahmed',
         inspectionDate: DateTime.utc(2026, 1, 15),
         cycleDaysCovered: 8,
-        canStartInspection: true,
-        canSendLogs: true,
-        canEmailLogs: true,
-        canViewInformationPacket: true,
+        // الأزرار التي ترمي UnimplementedError في هذا الموك لا تُعلن عن
+        // تنفيذ — إعلان true كان يُظهر زرًا ينهار عند الضغط.
+        canStartInspection: false,
+        canSendLogs: false,
+        canEmailLogs: false,
+        canViewInformationPacket: false,
         inspectionActive: false,
         readOnlyMode: false,
       ),

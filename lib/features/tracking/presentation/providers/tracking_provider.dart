@@ -2,13 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/services/battery_optimization_service.dart';
-import '../../../../core/theme/app_durations.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/location_entity.dart';
 import '../../domain/repositories/tracking_repository.dart';
+import 'tracking_providers.dart';
 
 /// حالة التتبع
 enum TrackingStatus { initial, active, stopped, loading, error }
@@ -149,7 +148,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     _gpsTimeoutTimer?.cancel();
 
     // إظهار خطأ واضح في حال تأخر النيتف عن إرسال إحداثيات (البقاء في حالة الانتظار)
-    _gpsTimeoutTimer = Timer(AppDurations.gpsTimeout, () {
+    _gpsTimeoutTimer = Timer(const Duration(seconds: 10), () {
       if (!state.isTracking) {
         state = state.copyWith(
           errorMessage: 'No GPS signal received from device',

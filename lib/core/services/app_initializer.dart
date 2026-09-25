@@ -7,7 +7,6 @@ import '../../features/sync/presentation/providers/sync_provider.dart';
 import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import '../config/app_environment.dart';
-import '../time/trusted_time_provider.dart';
 import '../utils/logger.dart';
 import 'local_database_service.dart';
 import 'local_storage_service.dart';
@@ -20,7 +19,6 @@ class AppInitializer {
   late final LocalDatabaseService localDatabaseService;
   late final TrackingService trackingService;
   late final UtcSyncService utcSync;
-  late final TrustedTimeProvider timeProvider;
 
   Future<void> initialize() async {
     // 1. تهيئة البيئة
@@ -51,8 +49,6 @@ class AppInitializer {
 
     localDatabaseService = LocalDatabaseService();
     await localDatabaseService.init();
-
-    timeProvider = MonotonicTrustedTimeProvider();
   }
 
   Future<void> _initDependentServices() async {
@@ -73,7 +69,7 @@ class AppInitializer {
   }
 
   Future<void> _initSyncServices() async {
-    utcSync = UtcSyncService(timeProvider: timeProvider);
+    utcSync = UtcSyncService();
     await utcSync.syncWithUtc();
   }
 
@@ -84,15 +80,14 @@ class AppInitializer {
         localDatabaseServiceProvider.overrideWithValue(localDatabaseService),
         trackingServiceProvider.overrideWithValue(trackingService),
         utcSyncServiceProvider.overrideWithValue(utcSync),
-        trustedTimeProvider.overrideWithValue(timeProvider),
       ],
     );
   }
 
   Future<void> initializePostContainer(ProviderContainer container) async {
-    // إرساء التوقيت الموثوق باستخدام خدمة المزامنة
-    final utcSyncService = container.read(utcSyncServiceProvider);
-    container.read(trustedTimeProvider).anchor(utcSyncService.utcNow);
+    // UtcSyncService.utcNow is DateTime.now(). Anchoring TrustedTimeProvider
+    // from it would let a device clock become a legal duty stamp. Only a
+    // server Date header, through TimeDriftInterceptor, may anchor the clock.
 
     try {
       await RemoteConfigService.fetchOnStartup(container);

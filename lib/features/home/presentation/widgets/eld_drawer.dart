@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/theme/press_feedback.dart';
 import '../../../../routes.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../providers/dashboard_provider.dart';
 import '../providers/home_provider.dart';
 
-/// الدرج الجانبي لقائمة ELD
+/// الدرج الجانبي — مطابق للقطة Menu (بدون رأس ذهبي، بدون أسهم).
 class EldDrawer extends ConsumerWidget {
   const EldDrawer({super.key});
 
@@ -20,61 +19,32 @@ class EldDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final menuItems = ref.watch(menuProvider);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final user = ref.watch(authStateProvider).user;
-    final dashboard = ref.watch(dashboardDataProvider);
 
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      width: MediaQuery.of(context).size.width * 0.78,
+      width: MediaQuery.of(context).size.width * 0.82,
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ========== رأس القائمة ==========
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              color: AppColors.primaryBlue,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // صورة السائق
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: AppColors.surface.withValues(alpha: 0.2),
-                    child: const Icon(
-                      Icons.person,
-                      size: 32,
-                      color: AppColors.surface,
-                    ),
-                  ),
-                  AppGap.md,
-                  // اسم السائق ومعرفه
-                  Text(
-                    user != null ? '${user.fullName} - ${user.id}' : dashboard.driverName,
-                    // CLEAN-HIGH-01 fix: Use theme instead of manual TextStyle
-                    style: context.body?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.surface,
-                    ),
-                  ),
-                  AppGap.xs,
-                  // رقم الشاحنة
-                  Text(
-                    dashboard.vehicleDisplayName,
-                    style: context.caption?.copyWith(
-                      color: AppColors.surface,
-                    ),
-                  ),
-                ],
+              color: AppColors.eldAppBar,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.lg,
+              ),
+              child: Text(
+                isArabic ? 'القائمة' : 'Menu',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.surface,
+                ),
               ),
             ),
-
-            // ========== قائمة العناصر ==========
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm,
-                ),
+                padding: EdgeInsets.zero,
                 itemCount: menuItems.length,
                 separatorBuilder: (_, __) => const Divider(
                   color: AppColors.border,
@@ -83,29 +53,18 @@ class EldDrawer extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final item = menuItems[index];
                   final title = isArabic ? item.arabicTitle : item.title;
-
                   return ListTile(
-                    leading: Icon(
-                      item.icon,
-                      size: 24,
-                    ),
+                    splashColor: PressFeedback.ink,
+                    leading: Icon(item.icon, size: 24),
                     title: Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: AppTypography.bodySize,
-                        fontWeight: AppTypography.regular,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      size: 20,
+                      style: context.styles.body,
                     ),
                     onTap: () {
-                      Navigator.pop(context); // إغلاق الدرج
+                      Navigator.pop(context);
                       final currentRoute =
                           GoRouterState.of(context).matchedLocation;
                       if (item.route == currentRoute) return;
-
                       if (item.route == AppRoutes.home) {
                         context.go(item.route);
                       } else {
@@ -116,28 +75,47 @@ class EldDrawer extends ConsumerWidget {
                 },
               ),
             ),
-
-            // ========== زر تسجيل الخروج ==========
             const Divider(color: AppColors.border, height: 1),
             ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: AppColors.dangerRed,
-                size: 24,
-              ),
+              splashColor: PressFeedback.ink,
+              leading: const Icon(Icons.settings_outlined, size: 24),
               title: Text(
-                context.loc.logout,
-                style: const TextStyle(
-                  fontSize: AppTypography.bodySize,
-                  fontWeight: AppTypography.regular,
-                  color: AppColors.dangerRed,
-                ),
+                isArabic ? 'الإعدادات' : 'Settings',
+                style: context.styles.body,
               ),
               onTap: () {
-                _showLogoutDialog(context, ref);
+                Navigator.pop(context);
+                final currentRoute = GoRouterState.of(context).matchedLocation;
+                if (currentRoute == AppRoutes.settings) return;
+                context.push(AppRoutes.settings);
               },
             ),
-            AppGap.sm,
+            ListTile(
+              splashColor: PressFeedback.ink,
+              leading: const Icon(Icons.logout, size: 24, color: AppColors.dangerRed),
+              title: Text(
+                context.loc.logout,
+                style: context.styles.error,
+              ),
+              onTap: () => _showLogoutDialog(context, ref),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final version = snapshot.data?.version ?? '1.0.0';
+                  return Text(
+                    'v$version',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -152,24 +130,20 @@ class EldDrawer extends ConsumerWidget {
         content: Text(context.loc.confirmLogout),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext); // إغلاق الدايلوج
-            },
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(context.loc.cancelButton),
           ),
           TextButton(
             onPressed: () async {
               final router = GoRouter.of(context);
-              Navigator.pop(dialogContext); // إغلاق الدايلوج
-              Navigator.pop(context); // إغلاق الدرج الجانبي
-
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
               await ref.read(authStateProvider.notifier).logout();
-
               router.go(AppRoutes.login);
             },
             child: Text(
               context.loc.logout,
-              style: const TextStyle(color: AppColors.dangerRed),
+              style: context.styles.error,
             ),
           ),
         ],

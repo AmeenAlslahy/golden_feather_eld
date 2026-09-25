@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_gap.dart';
 import '../../domain/entities/daily_log.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../providers/logs_provider.dart';
@@ -15,32 +13,11 @@ import 'edit_log_page.dart';
 import 'inspection_preview_page.dart';
 
 /// شاشة تفاصيل اليوم (Shell)
-///
-/// UX-HIGH-03 fix: Accepts optional [logId] from route parameter.
-/// If provided, selects the matching log from the provider.
-class LogDetailPage extends ConsumerStatefulWidget {
-  final String? logId;
-
-  const LogDetailPage({super.key, this.logId});
+class LogDetailPage extends ConsumerWidget {
+  const LogDetailPage({super.key});
 
   @override
-  ConsumerState<LogDetailPage> createState() => _LogDetailPageState();
-}
-
-class _LogDetailPageState extends ConsumerState<LogDetailPage> {
-  @override
-  void initState() {
-    super.initState();
-    // UX-HIGH-03 fix: If logId comes from route, select it
-    if (widget.logId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(logsProvider.notifier).selectLogById(widget.logId!);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final selectedLog = ref.watch(logsProvider).selectedLog;
     final currentIndex = ref.watch(logDetailTabProvider);
 
@@ -63,9 +40,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
         ),
         title: Text(
           selectedLog.formattedDate,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.surface,
-              ),
+          style: context.styles.appBarTitle,
         ),
         centerTitle: true,
         actions: [
@@ -104,7 +79,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
               );
 
               if (result == true && context.mounted) {
-                ref.read(logsProvider.notifier).addEvent(newEvent);
+                // الحفظ يتم من داخل EditLogPage (حدث المستخدم المعدّل وليس الافتراضي)
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -123,15 +98,17 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
           if (selectedLog.certificationStatus == CertificationStatus.reCertificationRequired)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.smMd, horizontal: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               color: AppColors.warningYellow.withValues(alpha: 0.1),
               child: Row(
                 children: [
                   const Icon(Icons.warning_amber_rounded, color: AppColors.warningYellow),
-                  AppGap.hSmMd,
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Re-certification Required: Edits were made after your last signature.',
+                      Localizations.localeOf(context).languageCode == 'ar'
+                          ? 'يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.'
+                          : 'Re-certification Required: Edits were made after your last signature.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.warningYellow,
                             fontWeight: FontWeight.bold,

@@ -1,47 +1,60 @@
 // ignore_for_file: unused_field, unused_import
 
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/result/result.dart';
-import '../../../../core/utils/logger.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/vehicle_backend.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [VehicleBackend].
+/// **Status:** Skeleton — implemented in Phase 2.
 class EldVehicleBackend implements VehicleBackend {
   final ApiClient _apiClient;
 
   const EldVehicleBackend(this._apiClient);
 
   @override
-  Future<Result<RawJson>> getCompanyFleet({DriverId? driverId}) =>
-      throw UnimplementedError('EldVehicleBackend.getCompanyFleet — Phase 2');
+  Future<Result<RawJson>> getCompanyFleet({DriverId? driverId}) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.companyVehicles,
+      queryParameters:
+          driverId != null ? {'driverId': driverId.value} : null,
+      parser: (data) {
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+        if (data is List) return {'items': data};
+        throw const FormatException('vehicle list is not an object');
+      },
+    );
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
+  }
 
   @override
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async {
-    // استخدام ELD endpoint الصحيح بدلاً من Traccar /devices
-    final response = await _apiClient.get<List<dynamic>>(
+    final res = await _apiClient.get<RawJson>(
       EldEndpoints.myVehicles,
-      parser: (data) => data is List ? data : [],
+      queryParameters:
+          driverId != null ? {'driverId': driverId.value} : null,
+      parser: (data) {
+        if (data is Map<String, dynamic>) return data;
+        if (data is Map) return Map<String, dynamic>.from(data);
+        if (data is List) return {'items': data};
+        return <String, dynamic>{};
+      },
     );
-
-    return response.mapValue((res) {
-      final list = res.data ?? <dynamic>[];
-      AppLogger.info(
-        '🚗 [EldVehicleBackend] Fetched ${list.length} vehicles '
-        'from ELD API (${EldEndpoints.myVehicles})',
-      );
-      return {'data': list};
-    });
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
   @override
   Future<Result<List<dynamic>>> getLegacyVehicles() async {
-    final response = await _apiClient.get<List<dynamic>>(
-      EldEndpoints.myVehicles,
-      parser: (data) => data is List ? data : [],
-    );
-    return response.mapValue((res) => res.data ?? []);
+    final response = await _apiClient.get<List<dynamic>>(EldEndpoints.devices);
+    return response.map((res) {
+      if (res.isSuccess && res.data != null) {
+        return res.data!;
+      }
+      throw Exception(res.message ?? 'Failed to fetch vehicles');
+    });
   }
 }

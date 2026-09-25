@@ -1,68 +1,55 @@
 import '../../domain/entities/vehicle.dart';
+import '../../domain/vehicle_selection.dart';
 
 class VehicleModel extends Vehicle {
   const VehicleModel({
     required super.id,
+    super.uniqueId,
     required super.name,
     required super.year,
     super.type,
     super.vin,
     super.trailerId,
     super.isAssigned,
+    super.operationalStatus,
+    super.statusReason,
+    super.inUseByOther,
+    super.selectedByServer,
+    super.activeForCurrentDriver,
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
-    // تحليل آمن للـ bool بدون cast مباشر يسبب TypeError
-    bool safeBool(dynamic value, {bool fallback = false}) {
-      if (value is bool) return value;
-      if (value is int) return value != 0;
-      if (value is String) return value.toLowerCase() == 'true';
-      return fallback;
+    final vehicle = readVehicle(json);
+    if (vehicle == null) {
+      throw const FormatException('vehicle row has no identifier');
     }
-
-    // isAssigned = السائق الحالي هو من أُسندت له هذه المركبة
-    // وليست تحت استخدام سائق آخر حالياً
-    final myVehicle = safeBool(json['myVehicle'], fallback: false);
-    final inUseByOther = safeBool(json['inUseByOtherDriver'], fallback: false);
-    final isAssigned = myVehicle && !inUseByOther;
-
-    return VehicleModel(
-      // vehicleId هو المفتاح الأساسي في ELD API
-      id: json['vehicleId']?.toString() ??
-          json['id']?.toString() ??
-          'unknown',
-      // vehicleName هو اسم المركبة في ELD API
-      name: json['vehicleName']?.toString() ??
-          json['name']?.toString() ??
-          'Unknown Vehicle',
-      // model في ELD API = طراز المركبة (Freightliner Cascadia, إلخ)
-      year: json['model']?.toString() ?? '',
-      vin: json['vin']?.toString(),
-      // ELD API لا يعيد category؛ type يبقى null
-      type: null,
-      trailerId: null,
-      isAssigned: isAssigned,
-    );
+    return VehicleModel.fromEntity(vehicle);
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'vehicleId': id,
-      'vehicleName': name,
+      if (uniqueId != null) 'uniqueId': uniqueId,
+      'name': name,
       'model': year,
-      'vin': vin,
+      'category': type,
     };
   }
 
   factory VehicleModel.fromEntity(Vehicle entity) {
     return VehicleModel(
       id: entity.id,
+      uniqueId: entity.uniqueId,
       name: entity.name,
       year: entity.year,
       type: entity.type,
       vin: entity.vin,
       trailerId: entity.trailerId,
       isAssigned: entity.isAssigned,
+      operationalStatus: entity.operationalStatus,
+      statusReason: entity.statusReason,
+      inUseByOther: entity.inUseByOther,
+      selectedByServer: entity.selectedByServer,
+      activeForCurrentDriver: entity.activeForCurrentDriver,
     );
   }
 }

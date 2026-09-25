@@ -29,16 +29,11 @@ class GoldenFeatherApp extends ConsumerWidget {
         if (next.update.currentStatus == DutyStatus.driving &&
             prevStatus != DutyStatus.driving) {
           scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(
-              // UX-MEDIUM fix: Use locale-aware text instead of hard-coded Arabic
-              content: Text(
-                Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'
-                    : 'Tracking service started automatically to record duty status',
-              ),
+            const SnackBar(
+              content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
+              duration: Duration(seconds: 3),
             ),
           );
         }
@@ -64,15 +59,13 @@ class GoldenFeatherApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           localeResolutionCallback: (locale, supportedLocales) {
-            // UX-HIGH-01 fix: Default to English, not Arabic
-            if (locale == null) return const Locale('en');
+            if (locale == null) return const Locale('ar');
             for (final supportedLocale in supportedLocales) {
               if (supportedLocale.languageCode == locale.languageCode) {
                 return supportedLocale;
               }
             }
-            // UX-HIGH-01 fix: Fallback to English, not Arabic
-            return const Locale('en');
+            return const Locale('ar');
           },
 
           // الثيم

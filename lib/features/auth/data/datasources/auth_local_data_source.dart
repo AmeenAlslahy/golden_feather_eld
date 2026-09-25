@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/data/models/user_model.dart';
 import '../../../../core/domain/entities/user.dart';
 import '../../../../core/utils/logger.dart';
-import '../../../auth/data/models/user_model.dart';
 import '../../domain/entities/auth_session.dart';
 import '../models/auth_session_dto.dart';
 
@@ -33,6 +33,11 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   static const _sessionKey = 'traccar_auth_session';
   static const _userKey = 'app_user_profile';
 
+  /// كاش في الذاكرة لبيانات الجلسة: AuthInterceptor يقرأ الجلسة قبل كل طلب
+  /// HTTP، وقراءة Keychain/Keystore في كل مرة تبطئ كل الطلبات.
+  /// يُحدَّث هنا حصراً (save/clear) فلا يستهلك مستهلك قيمة قديمة.
+  AuthSession? _sessionCache;
+
   AuthLocalDataSourceImpl({
     FlutterSecureStorage? secureStorage,
   }) : _secureStorage = secureStorage ?? const FlutterSecureStorage();
@@ -43,6 +48,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       final dto = AuthSessionDto.fromEntity(session);
       final jsonString = jsonEncode(dto.toJson());
       await _secureStorage.write(key: _sessionKey, value: jsonString);
+      _sessionCache = session;
       AppLogger.info('Session securely stored for origin: ${session.serverOrigin}');
     } catch (e) {
       AppLogger.error('Failed to securely store session', e);
@@ -52,13 +58,17 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<AuthSession?> getSession() async {
+    final cached = _sessionCache;
+    if (cached != null) return cached;
     try {
       final jsonString = await _secureStorage.read(key: _sessionKey);
       if (jsonString == null) return null;
 
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
       final dto = AuthSessionDto.fromJson(jsonMap);
-      return dto.toEntity();
+      final session = dto.toEntity();
+      _sessionCache = session;
+      return session;
     } catch (e) {
       AppLogger.error('Failed to read or parse session from secure storage', e);
       return null;
@@ -69,6 +79,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> clearSession() async {
     try {
       await _secureStorage.delete(key: _sessionKey);
+      _sessionCache = null;
       AppLogger.info('Session cleared from secure storage');
     } catch (e) {
       AppLogger.error('Failed to clear session', e);

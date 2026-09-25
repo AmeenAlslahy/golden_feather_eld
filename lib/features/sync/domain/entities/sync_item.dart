@@ -49,12 +49,17 @@ class SyncItem extends Equatable {
       createdAt: createdAt,
       status: status ?? this.status,
       retryCount: retryCount ?? this.retryCount,
-      errorMessage: errorMessage,
+      // النسخة السابقة كانت تمسح رسالة الخطأ عند أي copyWith بدون تمريرها —
+      // محاولة retry بلا سبب كانت تنسي آخر خطأ معروف.
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [id, type, status, retryCount];
+  // data خارج المقارنة عمداً: Map بعد دورة JSON/خزنة كائن جديد
+  // (identity ≠ المضمون)، فتساوٍ مضلل بالاتجاهين.
+  List<Object?> get props =>
+      [id, type, createdAt, status, retryCount, errorMessage];
 }
 
 /// حالة المزامنة العامة

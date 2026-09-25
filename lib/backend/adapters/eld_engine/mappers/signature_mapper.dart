@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
-import '../../../../core/domain/signature/signature.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../../domain/signature/signature.dart';
 
 class SignatureMapper {
   const SignatureMapper._();
@@ -23,7 +23,9 @@ class SignatureMapper {
   }
 
   static DateTime _parseDate(Object? v) {
-    if (v is String) return DateTime.tryParse(v) ?? DateTime.now().toUtc();
-    return DateTime.now().toUtc();
+    // التوقيع بلا وقت يُعلَّم بميلاد Unix، ولا يُنسب للحظة الاستلام
+    // (توقيع قانوني "الآن" يكون سجلاً زائفاً).
+    if (v is String) return DateTime.tryParse(v) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 }

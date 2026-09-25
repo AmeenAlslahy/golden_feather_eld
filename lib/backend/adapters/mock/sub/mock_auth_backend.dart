@@ -40,4 +40,12 @@ class MockAuthBackend implements AuthBackend {
   }) async {
     return ok(null);
   }
+
+  @override
+  Future<Result<void>> requestPasswordReset({
+    required String email,
+    required String serverUrl,
+  }) async {
+    return ok(null);
+  }
 }

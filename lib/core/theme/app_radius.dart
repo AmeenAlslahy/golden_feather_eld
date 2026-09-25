@@ -22,19 +22,4 @@ class AppRadius {
 
   /// البطاقات الكبيرة
   static const double largeCard = 12.0;
-
-  /// متوسط — 16px (للأزرار والبطاقات المتوسطة)
-  static const double medium = 16.0;
-
-  /// صغير — 8px (alias لـ input)
-  static const double sm = 8.0;
-
-  /// صغير جداً — 2px (للخطوط والعناصر الدقيقة)
-  static const double xs = 2.0;
-
-  /// كبير — 20px
-  static const double xl = 20.0;
-
-  /// كبير جداً — 28px (لكروت تسجيل الدخول)
-  static const double xxl = 28.0;
 }

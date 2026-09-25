@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 
-import '../../../../../core/domain/duty_status/status_dashboard.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/theme/app_typography.dart';
-import '../../../../../core/widgets/app_gap.dart';
 import '../../../../../core/widgets/eld_card.dart';
+import '../../../../../domain/duty_status/status_dashboard.dart';
 
 /// Card with the four HOS indicators (drive, shift, break, cycle).
 class HosIndicatorsCard extends StatelessWidget {
@@ -58,31 +57,25 @@ class _IndicatorRow extends StatelessWidget {
               children: [
                 Text(
                   indicator.label,
-                  style: const TextStyle(
-                    fontSize: AppTypography.bodySize,
-                    fontWeight: AppTypography.bold,
-                  ),
+                  style: context.styles.bodyBold,
                 ),
-                const AppGap.custom(2),
+                const SizedBox(height: 2),
                 Text(
                   indicator.type == IndicatorType.used
                       ? 'Used'
                       : 'Remaining',
-                  style: const TextStyle(
-                    fontSize: AppTypography.smallSize,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: context.styles.caption,
                 ),
               ],
             ),
           ),
           Text(
             _formatDuration(indicator.value),
-            style: TextStyle(
+            style: context.styles.number.copyWith(
               fontSize: 24,
-              fontWeight: AppTypography.bold,
-              color: isCritical ? AppColors.dangerRed : AppColors.textPrimary,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              color: isCritical
+                  ? context.styles.error.color
+                  : context.styles.number.color,
             ),
           ),
         ],

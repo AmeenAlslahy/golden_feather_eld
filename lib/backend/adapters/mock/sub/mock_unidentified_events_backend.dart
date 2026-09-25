@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/unidentified_events_backend.dart';

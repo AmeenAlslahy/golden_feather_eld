@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../vehicle/domain/vehicle_selection.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 
 /// بيانات لوحة القيادة
@@ -77,6 +79,14 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       state = state.copyWith(
         vehicleId: 'No Vehicle',
         vehicleDisplayName: 'Select a vehicle',
+      );
+      return;
+    }
+
+    if (vehicle is Vehicle) {
+      state = state.copyWith(
+        vehicleId: readOperableUniqueId(vehicle.uniqueId) ?? 'No Vehicle',
+        vehicleDisplayName: vehicle.displayName,
       );
       return;
     }

@@ -21,7 +21,8 @@ class AuditEntry extends Equatable {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'timestamp': timestamp.millisecondsSinceEpoch,
+      // ISO string: _saveToBox يستخرج مفتاح اليوم من نص ISO.
+      'timestamp': timestamp.toIso8601String(),
       'driverId': driverId,
       'oldStatus': oldStatus,
       'newStatus': newStatus,
@@ -31,13 +32,22 @@ class AuditEntry extends Equatable {
 
   factory AuditEntry.fromMap(Map<String, dynamic> map) {
     return AuditEntry(
-      id: map['id'] as String,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
-      driverId: map['driverId'] as String,
+      id: map['id'] as String? ?? '',
+      timestamp: _readTimestamp(map['timestamp']),
+      driverId: map['driverId'] as String? ?? '',
       oldStatus: map['oldStatus'] as String?,
-      newStatus: map['newStatus'] as String,
-      reason: map['reason'] as String,
+      newStatus: map['newStatus'] as String? ?? '',
+      reason: map['reason'] as String? ?? '',
     );
+  }
+
+  /// يقبل ISO string (الصيغة الحالية) أو int milliseconds (سجلات قديمة).
+  static DateTime _readTimestamp(Object? raw) {
+    if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+    if (raw is String) {
+      return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   @override

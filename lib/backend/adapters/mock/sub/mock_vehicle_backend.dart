@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/vehicle_backend.dart';
 
@@ -8,13 +8,15 @@ import '../../../contracts/vehicle_backend.dart';
 class MockVehicleBackend implements VehicleBackend {
   const MockVehicleBackend();
 
+  // Honest empty envelopes: a synchronous throw here crashed every page that
+  // lists vehicles under the mock backend before the repository's try/catch.
   @override
-  Future<Result<RawJson>> getCompanyFleet({DriverId? driverId}) =>
-      throw UnimplementedError('MockVehicleBackend.getCompanyFleet — Phase 2');
+  Future<Result<RawJson>> getCompanyFleet({DriverId? driverId}) async =>
+      ok(<String, dynamic>{'data': <dynamic>[]});
 
   @override
-  Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) =>
-      throw UnimplementedError('MockVehicleBackend.getMyVehicles — Phase 2');
+  Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async =>
+      ok(<String, dynamic>{'data': <dynamic>[]});
 
   @override
   Future<Result<List<dynamic>>> getLegacyVehicles() async {

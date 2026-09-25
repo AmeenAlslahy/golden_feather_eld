@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 
 class LocationDisplayWidget extends ConsumerWidget {
@@ -21,7 +20,7 @@ class LocationDisplayWidget extends ConsumerWidget {
     return Row(
       children: [
         Icon(Icons.location_on, color: theme.colorScheme.primary, size: 20),
-        AppGap.hSm,
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             locString,

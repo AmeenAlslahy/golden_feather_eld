@@ -1,97 +1,99 @@
 import 'package:fpdart/fpdart.dart';
 
+import '../../../../backend/contracts/hardware_backend.dart';
+import '../../../../backend/contracts/raw_json.dart';
 import '../../../../backend/contracts/vehicle_backend.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/utils/logger.dart';
+import '../../../../core/result/result.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
-import '../models/vehicle_model.dart';
-
+import '../../domain/vehicle_selection.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleBackend _vehicleBackend;
-  final LocalStorageService _localDataSource;
+  final HardwareBackend _hardwareBackend;
   final NetworkInfo _networkInfo;
 
   VehicleRepositoryImpl({
     required VehicleBackend vehicleBackend,
-    required LocalStorageService localDataSource,
+    required HardwareBackend hardwareBackend,
     required NetworkInfo networkInfo,
   })  : _vehicleBackend = vehicleBackend,
-        _localDataSource = localDataSource,
+        _hardwareBackend = hardwareBackend,
         _networkInfo = networkInfo;
 
   @override
-  Future<Either<Failure, List<Vehicle>>> getVehicles() async {
-    if (!_networkInfo.isConnected) {
-      return const Left(NetworkFailure());
-    }
+  Future<Either<Failure, List<Vehicle>>> getVehicles() {
+    return _readList(_vehicleBackend.getMyVehicles());
+  }
 
+  @override
+  Future<Either<Failure, List<Vehicle>>> getCompanyVehicles() {
+    return _readList(_vehicleBackend.getCompanyFleet());
+  }
+
+  Future<Either<Failure, List<Vehicle>>> _readList(
+    Future<Result<RawJson>> request,
+  ) async {
+    if (!_networkInfo.isConnected) return const Left(NetworkFailure());
     try {
-      final result = await _vehicleBackend.getMyVehicles();
-      final Either<Failure, List<Vehicle>> response = result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
+      final result = await request;
+      return result.fold(
+        (error) => Left(ServerFailure(message: _message(error))),
         (data) {
-          // data هو RawJson = Map<String, dynamic> دائماً
-          // ELD API يلف القائمة في مفتاح 'data'
-          final rawList = data['data'] ?? data['vehicles'];
-          final vehiclesList = rawList is List ? rawList : const [];
-          final vehicles = vehiclesList
-              .whereType<Map>()
-              .map((item) =>
-                  VehicleModel.fromJson(Map<String, dynamic>.from(item)))
-              .toList();
+          final vehicles = parseVehicleList(data);
+          if (vehicles == null) {
+            return const Left(ServerFailure(message: 'vehicle_list_unreadable'));
+          }
           return Right(vehicles);
         },
       );
-      return response;
-    } catch (e, st) {
-      AppLogger.error('VehicleRepositoryImpl.getVehicles', e, st);
-      return const Left(ServerFailure(message: 'vehicle_fetch_failed'));
+    } catch (_) {
+      return const Left(ServerFailure(message: 'vehicle_list_unreadable'));
     }
   }
 
   @override
-  Future<Either<Failure, bool>> selectVehicle(String vehicleId) async {
+  Future<Either<Failure, bool>> selectVehicle(String uniqueId) async {
+    if (!_networkInfo.isConnected) return const Left(NetworkFailure());
+    final id = uniqueId.trim();
+    if (id.isEmpty || id == 'unknown' || id == 'No Vehicle') {
+      return const Left(ServerFailure(message: 'vehicle_identifier_missing'));
+    }
     try {
-      // In a real ELD system, selecting a vehicle might also ping the backend
-      // But for now, saving it locally is sufficient as the app's state
-      await _localDataSource.saveSelectedVehicleId(vehicleId);
-      return const Right(true);
-    } catch (e) {
-      return const Left(CacheFailure(message: 'فشل في حفظ الشاحنة محلياً'));
+      final result = await _hardwareBackend.connectSession(uniqueId: id);
+      return result.fold(
+        (error) => Left(ServerFailure(message: _message(error))),
+        (_) => const Right(true),
+      );
+    } catch (_) {
+      return const Left(ServerFailure(message: 'rejected'));
     }
   }
 
   @override
   Future<Either<Failure, Vehicle?>> getSelectedVehicle() async {
-    try {
-      final savedId = _localDataSource.selectedVehicleId;
-      if (savedId == null) {
-        return const Right(null);
+    final listed = await getVehicles();
+    return listed.fold((failure) => Left(failure), (vehicles) {
+      for (final vehicle in vehicles) {
+        if (vehicle.activeForCurrentDriver == true ||
+            vehicle.selectedByServer == true) {
+          return Right(vehicle);
+        }
       }
+      return const Right(null);
+    });
+  }
 
-      // If we have an ID, we should get the full list to return the matching vehicle
-      final vehiclesResult = await getVehicles();
-      final Either<Failure, Vehicle?> result = vehiclesResult.match(
-        (failure) => const Right(
-            null), // If we can't fetch, we can't get the full object. A better offline approach would cache the list.
-        (vehicles) {
-          try {
-            final vehicle = vehicles.firstWhere((v) => v.id == savedId);
-            return Right(vehicle);
-          } catch (e) {
-            // Vehicle no longer assigned or doesn't exist
-            _localDataSource.clearSelectedVehicle();
-            return const Right(null);
-          }
-        },
-      );
-      return result;
-    } catch (e) {
-      return const Left(CacheFailure(message: 'فشل في قراءة الشاحنة المحفوظة'));
-    }
+  String _message(AppError error) {
+    final status = error.context?['statusCode'];
+    final statusCode = status is num ? status.toInt() : int.tryParse('$status');
+    return vehicleOperateFailure(
+      code: error.code,
+      serverMessage: error.context?['serverMessage']?.toString(),
+      statusCode: statusCode,
+    );
   }
 }

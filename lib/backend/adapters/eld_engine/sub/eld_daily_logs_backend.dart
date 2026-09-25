@@ -1,5 +1,5 @@
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/result/result.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/daily_logs_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/api_client.dart';
@@ -28,7 +28,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogs,
       queryParameters: {
-        if (driverId != null) 'driverId': driverId.value,
+        if (driverId != null) 'driverId': 201, // TODO: Temporary workaround for driver 201
         if (startDate != null) 'startDate': startDate.toIso8601String().split('T').first,
         if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
         if (status != null) 'status': status,
@@ -75,6 +75,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final res = await _apiClient.post<dynamic>(
       EldEndpoints.respondCarrierEdit(logId.value, editId.value),
       data: {
+        'editId': editId.value,
         'action': action,
         if (driverNotes != null) 'driverNotes': driverNotes,
       },
@@ -163,6 +164,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final response = await _apiClient.get<Map<String, dynamic>>(
       '/eld/duty-status/graph-grid',
       queryParameters: {
+        'driverId': 201, // TODO: Temporary workaround for driver 201
         'logDate': date.toIso8601String().split('T').first,
       },
     );
@@ -181,7 +183,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   Future<Result<List<dynamic>>> getLegacySyncLogs(int driverId) async {
     final response = await _apiClient.get<dynamic>(
       '/duty-status-logs',
-      queryParameters: {'driverId': driverId},
+      queryParameters: {'driverId': 201}, // TODO: Temporary workaround for driver 201
     );
     return response.map((res) {
       if (res.isSuccess && res.data != null) {

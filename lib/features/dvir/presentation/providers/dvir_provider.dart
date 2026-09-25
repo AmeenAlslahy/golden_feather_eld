@@ -1,14 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// ignore: directives_ordering
-import 'package:fpdart/fpdart.dart';
 
-// ARCH-HIGH-01 fix: Import from composition root
-import '../../../../app/providers/app_repository_providers.dart';
-import '../../../../core/error/failure.dart';
+import '../../../../backend/contracts/dvir_backend.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
-import '../../../vehicle/presentation/providers/vehicle_provider.dart';
+import '../../data/repositories/dvir_repository_impl.dart';
+import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
+
+// --- Dependency Injection Providers ---
+
+final dvirBackendProviderAlias = Provider<DvirBackend>((ref) {
+  return ref.watch(dvirBackendProvider);
+});
+
+final dvirRepositoryProvider = Provider<DvirRepository>((ref) {
+  return DvirRepositoryImpl(
+    dvirBackend: ref.watch(dvirBackendProviderAlias),
+    networkInfo: ref.watch(networkInfoProvider),
+  );
+});
 
 // --- State and Notifier ---
 
@@ -45,34 +57,30 @@ class DvirState {
 final dvirProvider = StateNotifierProvider<DvirNotifier, DvirState>((ref) {
   final repository = ref.watch(dvirRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
-  final vehicleState = ref.watch(vehicleProvider);
-  final vehicleId = vehicleState.selectedVehicle?.id ?? storageService.deviceId;
-  return DvirNotifier(
-    repository: repository,
-    storageService: storageService,
-    vehicleId: vehicleId,
-  );
+  return DvirNotifier(repository: repository, storageService: storageService);
 });
 
 class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
-  final String _vehicleId;
+  final TrackingConfigStorageService _storageService;
 
   DvirNotifier({
     required DvirRepository repository,
-    TrackingConfigStorageService? storageService,
-    String? vehicleId,
+    required TrackingConfigStorageService storageService,
   })  : _repository = repository,
-        _vehicleId = vehicleId ?? storageService?.deviceId ?? '',
+        _storageService = storageService,
         super(const DvirState()) {
-    loadDvirs();
+    _loadDvirs();
   }
 
-  Future<void> loadDvirs({String? vehicleId}) async {
+  Future<void> refresh() => _loadDvirs();
+
+  Future<void> _loadDvirs() async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final targetVehicleId = vehicleId ?? _vehicleId;
-    final result = await _repository.getDvirReports(targetVehicleId);
+    final vehicleId = _storageService.deviceId;
+    final result = await _repository
+        .getDvirReports(vehicleId.isEmpty ? 'unknown_vehicle' : vehicleId);
 
     if (mounted) {
       result.fold(
@@ -90,22 +98,28 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 
   /// إنشاء تقرير جديد وإرساله
-  Future<Either<Failure, bool>> createReport(DvirReport report) async {
+  Future<bool> createReport(
+    DvirReport report, {
+    required int driverId,
+    required String status,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await _repository.submitDvirReport(report);
-
-    if (mounted) {
-      result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
-        (_) {
-          loadDvirs(); // Reload to update state
-        },
-      );
-    }
-    return result;
+    final result = await _repository.submitDvirReport(
+      report,
+      driverId: driverId,
+      status: status,
+    );
+    if (!mounted) return false;
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return false;
+      },
+      (_) {
+        _loadDvirs();
+        return true;
+      },
+    );
   }
 
   /// تصديق إصلاح العيوب من قبل الميكانيكي أو الناقل
@@ -116,30 +130,14 @@ class DvirNotifier extends StateNotifier<DvirState> {
     String? repairNotes,
     required String mechanicSignature,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-    final result = await _repository.certifyRepair(
-      dvirId: dvirId,
-      mechanicName: mechanicName,
-      action: action,
-      repairNotes: repairNotes,
-      mechanicSignature: mechanicSignature,
+    state = state.copyWith(
+      isLoading: false,
+      error: 'Repair certification is a carrier action and is not available to the driver.',
     );
-
-    if (mounted) {
-      result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
-        (_) {
-          loadDvirs(); // Reload to update state
-        },
-      );
-    }
   }
 
   /// مراجعة وتوقيع السائق التالي
-  Future<void> reviewDvir({
+  Future<String?> reviewDvir({
     required String dvirId,
     required int reviewingDriverId,
     required String reviewingDriverName,
@@ -147,6 +145,11 @@ class DvirNotifier extends StateNotifier<DvirState> {
     required bool driverAgreed,
     String? reviewNotes,
   }) async {
+    if (signatureData.trim().isEmpty) {
+      const message = 'A signature is required to review the previous report.';
+      state = state.copyWith(isLoading: false, error: message);
+      return message;
+    }
     state = state.copyWith(isLoading: true, error: null);
     final result = await _repository.reviewDvir(
       dvirId: dvirId,
@@ -156,18 +159,17 @@ class DvirNotifier extends StateNotifier<DvirState> {
       driverAgreed: driverAgreed,
       reviewNotes: reviewNotes,
     );
-
-    if (mounted) {
-      result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
-        (_) {
-          loadDvirs(); // Reload to update state
-        },
-      );
-    }
+    if (!mounted) return 'Review was interrupted.';
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return failure.message;
+      },
+      (_) {
+        state = state.copyWith(isLoading: false, error: null);
+        return null;
+      },
+    );
   }
 
   /// استرجاع تفاصيل تقرير DVIR محدد
@@ -191,14 +193,22 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 
   /// تحديث تقرير موجود (للاستخدام المحلي)
-  Future<Either<Failure, bool>> updateReport(DvirReport report) async {
+  void updateReport(DvirReport report) {
     final updatedReports = state.reports.map((r) {
       return r.id == report.id ? report : r;
     }).toList();
     state = state.copyWith(reports: updatedReports);
-    
-    // Attempt to submit update to backend via submitDvirReport for now (or a specific update endpoint if available)
-    final result = await _repository.submitDvirReport(report);
-    return result;
   }
 }
+
+/// `GET /eld/dvir/catalog` — the §396.11 item list. Not cached across sessions.
+final dvirCatalogProvider = FutureProvider<List<DvirCatalogItem>>((ref) async {
+  final result = await ref.watch(dvirBackendProviderAlias).getDefectsCatalog();
+  return result.fold((error) => throw error, (json) {
+    final items = parseDvirCatalog(json);
+    if (items == null) {
+      throw const FormatException('catalog body is not a list');
+    }
+    return items;
+  });
+});

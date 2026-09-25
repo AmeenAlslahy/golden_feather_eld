@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/widgets/app_gap.dart';
 // import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_state_provider.dart';
 
@@ -57,19 +55,19 @@ class _SplashPageState extends ConsumerState<SplashPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.button),
+              borderRadius: BorderRadius.circular(24),
               child: Image.asset(
                 'assets/images/ic_launcher.png',
                 width: 120,
                 height: 120,
               ),
             ),
-            AppGap.md,
+            const SizedBox(height: 16),
             Text(
               context.loc.appName,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            AppGap.lg,
+            const SizedBox(height: 24),
             const CircularProgressIndicator(),
           ],
         ),

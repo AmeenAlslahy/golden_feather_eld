@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/widgets/app_status_badge.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../hos/domain/engine/hos_rules_engine.dart';
+import '../../../hos/presentation/providers/hos_engine_provider.dart';
+import '../../../hos/presentation/providers/hos_provider.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../domain/entities/codriver.dart';
+import '../../domain/role_switch_guard.dart';
 import '../providers/codriver_provider.dart';
 
 class CoDriverPage extends ConsumerStatefulWidget {
@@ -33,29 +40,21 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final textColor = AppColors.textPrimaryFor(brightness);
     final textSecondaryColor = AppColors.textSecondaryFor(brightness);
 
-    final drivers = [CoDriver.none, ...codriverState.availableDrivers];
+    final selfId = ref.watch(currentDriverIdProvider)?.toString();
+    final drivers = [
+      CoDriver.none,
+      ...codriverState.availableDrivers.where((d) => d.id != selfId),
+    ];
 
-    // Get current selection name
     final currentSelectedId =
         _selectedId ?? codriverState.selectedCoDriver?.id ?? 'none';
-    final selectedDriverName = drivers
-        .firstWhere(
-          (d) => d.id == currentSelectedId,
-          orElse: () => CoDriver.none,
-        )
-        .name;
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
         title: Text(
           loc.coDriver,
-          style: const TextStyle(
-            fontSize: AppTypography.bodySize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          style: context.styles.appBarTitle,
         ),
         centerTitle: true,
         leading: Builder(
@@ -64,33 +63,47 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: isArabic ? 'تحديث' : 'Refresh',
+            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            onPressed: codriverState.isLoading
+                ? null
+                : () => ref.read(codriverProvider.notifier).reload(),
+          ),
+        ],
       ),
       drawer: const EldDrawer(),
       body: codriverState.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : RefreshIndicator(
+              onRefresh: () => ref.read(codriverProvider.notifier).reload(),
+              child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg, vertical: 48.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    context.loc.selectCoDriver,
+                    isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
-                  AppGap.xs,
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
-                    context.loc.selectYourCoDriver,
+                    isArabic
+                        ? 'الرجاء اختيار مساعد السائق الخاص بك'
+                        : 'Select your co-driver',
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondaryColor,
                     ),
                   ),
-                  AppGap.xl,
+                  const SizedBox(height: 32.0),
 
                   // Selector Row
                   InkWell(
@@ -110,7 +123,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              selectedDriverName.toUpperCase(),
+                              _driverLabel(
+                                drivers.firstWhere(
+                                  (d) => d.id == currentSelectedId,
+                                  orElse: () => CoDriver.none,
+                                ),
+                                isArabic,
+                              ).toUpperCase(),
                               style: TextStyle(
                                 fontSize: 16,
                                 color: textColor,
@@ -123,43 +142,87 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     ),
                   ),
 
-                  const AppGap.custom(60),
+                  const SizedBox(height: 60),
 
                   Text(
-                    context.loc.switchDrivers,
+                    isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
-                  AppGap.sm,
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
-                    context.loc.youWillBecomeCoDriver,
+                    isArabic
+                        ? 'ستصبح السائق المساعد. سيصبح مساعدك السائق.'
+                        : 'You will become the co-driver. Your co-driver will become the driver.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondaryColor,
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _LinkedCoDriver(state: codriverState, isArabic: isArabic),
+                  if (codriverState.error != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      codriverState.error!,
+                      textAlign: TextAlign.center,
+                      style: context.styles.error,
+                    ),
+                  ],
 
-                  AppGap.xl,
+                  const SizedBox(height: AppSpacing.xl),
+                  if (codriverState.isSwitching)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: Text(
+                        isArabic ? 'جاري التبديل...' : 'Switching...',
+                      ),
+                    ),
 
                   // Switch Button
                   AppButton(
-                    label: context.loc.switchAction,
+                    label: isArabic ? 'تبديل' : 'SWITCH',
                     type: EldButtonType.agree,
                     isLoading: codriverState.isSwitching,
                     onPressed: (codriverState.isSwitching ||
                             codriverState.selectedCoDriver == null)
                         ? null
                         : () async {
+                            final hos = ref.read(hosStatusProvider);
+                            final driving = hos is HosEngineReady
+                                ? hos.update.currentStatus == DutyStatus.driving
+                                : null;
+                            final refusal = refuseRoleSwitch(
+                              currentDriverId: ref.read(currentDriverIdProvider),
+                              coDriverId: codriverState.selectedCoDriver?.id,
+                              speedMps: ref.read(currentVehicleSpeedProvider),
+                              thresholdKmh: ref
+                                  .read(hosConfigurationProvider)
+                                  .movingSpeedThresholdKmh,
+                              currentStatusIsDriving: driving,
+                            );
+                            if (refusal != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(_refusalText(refusal, isArabic)),
+                                ),
+                              );
+                              return;
+                            }
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: Text(context.loc.confirmSwitch),
+                                title: Text(isArabic
+                                    ? 'تأكيد التبديل'
+                                    : 'Confirm Switch'),
                                 content: Text(
-                                  context.loc.areYouSureYouWant,
+                                  isArabic
+                                      ? 'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.'
+                                      : 'This asks the server to switch roles. Hours are not copied and duty status is not changed.',
                                 ),
                                 actions: [
                                   TextButton(
@@ -181,28 +244,33 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                             );
 
                             if (confirm == true && mounted) {
-                              await ref
+                              final error = await ref
                                   .read(codriverProvider.notifier)
                                   .switchDrivers();
-                              if (mounted) {
-                                // ignore: use_build_context_synchronously
+                              if (!context.mounted) return;
+                              if (error != null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      // ignore: use_build_context_synchronously
-                                      context.loc.rolesSwitchedSuccessfully,
-                                    ),
-                                    backgroundColor: AppColors.successGreen,
-                                  ),
+                                  SnackBar(content: Text(error)),
                                 );
-                                // ignore: use_build_context_synchronously
-                                context.go('/home');
+                                return;
                               }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isArabic
+                                        ? 'قبل الخادم التبديل. لم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
+                                        : 'The server accepted the switch. Hours were not copied and duty status was not changed. The new driver sets duty before moving.',
+                                  ),
+                                  backgroundColor: AppColors.successGreen,
+                                ),
+                              );
+                              context.go('/home');
                             }
                           },
                   ),
                 ],
               ),
+            ),
             ),
     );
   }
@@ -220,40 +288,39 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
             return AlertDialog(
               backgroundColor: surfaceColor,
               title: Text(
-                context.loc.coDriver,
+                isArabic ? 'مساعد السائق' : 'Co-driver',
                 style:
                     TextStyle(color: textColor, fontWeight: FontWeight.normal),
               ),
               contentPadding: const EdgeInsets.only(top: 16),
               content: SizedBox(
                 width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: drivers.length,
-                  itemBuilder: (context, index) {
-                    final driver = drivers[index];
-                    return RadioListTile<String>(
-                      title: Text(
-                        driver.name.toUpperCase(),
-                        style: TextStyle(
-                          color: dialogSelectedId == driver.id
-                              ? AppColors.primaryBlue
-                              : textColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                      value: driver.id,
-                      // ignore: deprecated_member_use
-                      groupValue: dialogSelectedId,
-                      // ignore: deprecated_member_use
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          dialogSelectedId = value!;
-                        });
-                      },
-                      activeColor: AppColors.primaryBlue,
-                    );
+                child: RadioGroup<String>(
+                  groupValue: dialogSelectedId,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setStateDialog(() => dialogSelectedId = value);
                   },
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: drivers.length,
+                    itemBuilder: (context, index) {
+                      final driver = drivers[index];
+                      return RadioListTile<String>(
+                        title: Text(
+                          _driverLabel(driver, isArabic).toUpperCase(),
+                          style: TextStyle(
+                            color: dialogSelectedId == driver.id
+                                ? AppColors.primaryGold
+                                : textColor,
+                            fontSize: 14,
+                          ),
+                        ),
+                        value: driver.id,
+                        activeColor: AppColors.primaryGold,
+                      );
+                    },
+                  ),
                 ),
               ),
               actions: [
@@ -262,26 +329,42 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    context.loc.cancelButton,
-                    style: const TextStyle(color: AppColors.primaryBlue),
+                    isArabic ? 'إلغاء' : 'CANCEL',
+                    style: const TextStyle(color: AppColors.primaryGold),
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    // Apply selection
+                  onPressed: () async {
+                    final selected =
+                        drivers.firstWhere((d) => d.id == dialogSelectedId);
+                    final uniqueId =
+                        ref.read(vehicleProvider).selectedVehicle?.uniqueId;
+                    final error = await ref
+                        .read(codriverProvider.notifier)
+                        .applySessionCoDriver(
+                          driver: selected,
+                          uniqueId: uniqueId,
+                        );
+                    if (!context.mounted) return;
+                    if (error != null) {
+                      final text = error == 'vehicle_identifier_missing'
+                          ? (isArabic
+                              ? 'اختر مركبة قبل ربط السائق المساعد.'
+                              : 'Select a vehicle before linking a co-driver.')
+                          : error;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(text)),
+                      );
+                      return;
+                    }
                     setState(() {
                       _selectedId = dialogSelectedId;
                     });
-                    final selected =
-                        drivers.firstWhere((d) => d.id == dialogSelectedId);
-                    ref
-                        .read(codriverProvider.notifier)
-                        .selectCoDriver(selected);
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    context.loc.okButton,
-                    style: const TextStyle(color: AppColors.primaryBlue),
+                    isArabic ? 'موافق' : 'OK',
+                    style: const TextStyle(color: AppColors.primaryGold),
                   ),
                 ),
               ],
@@ -289,6 +372,104 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
           },
         );
       },
+    );
+  }
+}
+
+String _driverLabel(CoDriver driver, bool isArabic) {
+  if (driver.id == CoDriver.none.id) {
+    return isArabic ? 'لا سائق مساعد' : 'No co-driver';
+  }
+  return driver.name;
+}
+
+String _refusalText(RoleSwitchRefusal refusal, bool isArabic) {
+  switch (refusal) {
+    case RoleSwitchRefusal.sessionMissing:
+      return isArabic
+          ? 'جلسة السائق غير موجودة. سجّل الدخول قبل التبديل.'
+          : 'Driver session is missing. Sign in before switching.';
+    case RoleSwitchRefusal.stillDriving:
+      return isArabic
+          ? 'غيّر حالة الواجب قبل التسليم. التبديل لا يغيّر الحالة.'
+          : 'Change duty status before handover. The switch does not change it.';
+    case RoleSwitchRefusal.motionUnknown:
+      return isArabic
+          ? 'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.'
+          : 'Vehicle motion is unknown. That is not treated as stopped.';
+    case RoleSwitchRefusal.thresholdMissing:
+      return isArabic
+          ? 'عتبة الحركة غير متوفرة من الإعداد.'
+          : 'The motion threshold is not available.';
+    case RoleSwitchRefusal.vehicleMoving:
+      return isArabic
+          ? 'لا يمكن تبديل الأدوار والمركبة تتحرك.'
+          : 'Roles can be switched only when the vehicle is stopped.';
+    case RoleSwitchRefusal.coDriverMissing:
+      return isArabic
+          ? 'اختر سائقاً مساعداً قبل التبديل.'
+          : 'Select a co-driver before switching.';
+    case RoleSwitchRefusal.sameDriver:
+      return isArabic
+          ? 'لا يمكن اختيار الحساب الحالي سائقاً مساعداً.'
+          : 'The current account cannot be selected as the co-driver.';
+  }
+}
+
+class _LinkedCoDriver extends StatelessWidget {
+  final CoDriverState state;
+  final bool isArabic;
+
+  const _LinkedCoDriver({required this.state, required this.isArabic});
+
+  @override
+  Widget build(BuildContext context) {
+    final linked = state.currentCoDriver;
+    final String value;
+    if (state.currentError != null) {
+      value = state.currentError!;
+    } else if (linked == null) {
+      value = isArabic ? 'لم يُقرأ الارتباط بعد.' : 'The link has not been read.';
+    } else if (!linked.isLinked) {
+      value = isArabic ? 'لا سائق مساعد مرتبط.' : 'No linked co-driver.';
+    } else {
+      value = linked.name ?? linked.coDriverId.toString();
+    }
+    // SRS 10.3: the team state is read from the server link
+    // (`teamDrivingActive`); the app does not infer who is driving.
+    final AppStatusBadge? teamBadge = (linked != null && linked.isLinked)
+        ? (linked.teamDrivingActive
+            ? AppStatusBadge(
+                label: isArabic ? 'قيادة جماعية نشطة' : 'Team driving active',
+                type: AppStatusBadgeType.success,
+              )
+            : AppStatusBadge(
+                label: isArabic ? 'قيادة جماعية غير نشطة' : 'Team driving inactive',
+                type: AppStatusBadgeType.warning,
+              ))
+        : null;
+    return Column(
+      children: [
+        Text(
+          isArabic ? 'المساعد المرتبط' : 'Linked co-driver',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            color: state.currentError == null
+                ? AppColors.textSecondary
+                : AppColors.dangerRed,
+          ),
+        ),
+        if (teamBadge != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          teamBadge,
+        ],
+      ],
     );
   }
 }

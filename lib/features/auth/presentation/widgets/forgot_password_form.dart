@@ -1,32 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/error/app_error.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_radius.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../providers/auth_mode_provider.dart';
 
-/// إرشاد استعادة كلمة المرور.
-///
-/// وفق SRS §1 لا ينفّذ التطبيق أي منطق محلي لإعادة التعيين؛ الاستعادة تتم
-/// عبر خدمة إعادة التعيين في منصة التتبع المركزية أو بالتواصل مع مدير الأسطول.
-class ForgotPasswordForm extends ConsumerWidget {
+class ForgotPasswordForm extends ConsumerStatefulWidget {
   const ForgotPasswordForm({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final colors = Theme.of(context).colorScheme;
+  ConsumerState<ForgotPasswordForm> createState() => _ForgotPasswordFormState();
+}
 
-    final guidance = isArabic
-        ? 'لأسباب أمنية وتنظيمية، لا يمكن إعادة تعيين كلمة المرور من داخل التطبيق.\n\n'
-            'يرجى استخدام خدمة استعادة كلمة المرور في منصة التتبع المركزية، '
-            'أو التواصل مع مدير الأسطول (Fleet Manager) لإعادة تعيين بيانات الدخول.'
-        : 'For security and compliance reasons, passwords cannot be reset from within the app.\n\n'
-            'Please use the password recovery service of the central tracking platform, '
-            'or contact your Fleet Manager to reset your credentials.';
+class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
+  final _email = TextEditingController();
+  bool _sending = false;
+  String? _feedback;
+  bool _ok = false;
 
+  bool get _arabic => Localizations.localeOf(context).languageCode == 'ar';
+
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final email = _email.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() {
+        _ok = false;
+        _feedback = _arabic
+            ? 'أدخل بريداً صالحاً.'
+            : 'Enter a valid email.';
+      });
+      return;
+    }
+    setState(() {
+      _sending = true;
+      _feedback = null;
+    });
+    final result = await ref.read(authBackendProvider).requestPasswordReset(
+          email: email,
+          serverUrl: ref.read(localStorageProvider).serverUrl,
+        );
+    if (!mounted) return;
+    result.fold(
+      (error) {
+        setState(() {
+          _sending = false;
+          _ok = false;
+          _feedback = error is NotFoundError
+              ? (_arabic
+                  ? 'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.'
+                  : 'Reset is not available on this server. Contact your fleet manager.')
+              : anyErrorUserMessage(error, isArabic: _arabic);
+        });
+      },
+      (_) {
+        setState(() {
+          _sending = false;
+          _ok = true;
+          _feedback = _arabic
+              ? 'إن كان البريد مسجّلاً فستصلك تعليمات إعادة التعيين.'
+              : 'If the email is registered, reset instructions will be sent.';
+        });
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -37,40 +88,43 @@ class ForgotPasswordForm extends ConsumerWidget {
               ),
           textAlign: TextAlign.center,
         ),
-        AppGap.md,
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(AppRadius.dialog),
-            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, color: colors.primary),
-              AppGap.hSm,
-              Expanded(
-                child: Text(
-                  guidance,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          _arabic
+              ? 'أدخل بريد الحساب. إن لم يصلك شيء فتواصل مع مدير الأسطول.'
+              : 'Enter the account email. If nothing arrives, contact your fleet manager.',
+          textAlign: TextAlign.center,
+          style: context.styles.muted,
         ),
-        AppGap.lg,
+        const SizedBox(height: AppSpacing.lg),
+        AppTextField(
+          controller: _email,
+          label: context.loc.email,
+          prefixIcon: const Icon(Icons.email_outlined),
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _submit(),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        AppButton(
+          label: _arabic ? 'إرسال' : 'Send',
+          isLoading: _sending,
+          onPressed: _sending ? null : _submit,
+        ),
+        if (_feedback != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            _feedback!,
+            textAlign: TextAlign.center,
+            style: _ok ? context.styles.success : context.styles.error,
+          ),
+        ],
+        const SizedBox(height: AppSpacing.lg),
         TextButton(
           onPressed: () {
             ref.read(authModeProvider.notifier).state = AuthMode.login;
           },
-          child: Text(
-            context.loc.backToLogin,
-            style: TextStyle(
-              color: colors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: Text(context.loc.backToLogin),
         ),
       ],
     );

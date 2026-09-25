@@ -3,14 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
 
-import '../../../../../core/domain/shared/value_objects.dart';
+import '../../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/widgets/app_gap.dart';
-import '../../../../../core/widgets/eld_card.dart';
+import '../../../../../core/widgets/app_button.dart';
+import '../../../../../domain/shared/value_objects.dart';
 import '../../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../domain/entities/daily_log.dart';
 import '../../providers/certify_log_provider.dart';
@@ -70,10 +68,34 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
+  /// Accept / reject one carrier-proposed edit through the existing respond API.
+  Future<void> _respondToEdit(String editId, String action) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final error = await ref.read(certifyLogProvider.notifier).respondToCarrierEdit(
+          logId: widget.selectedLog.id,
+          editId: editId,
+          action: action,
+        );
+    if (!mounted) return;
+    if (error != null) {
+      _showError(error);
+      return;
+    }
+    _showSuccess(
+      action.toUpperCase() == 'ACCEPT'
+          ? (isArabic ? 'تم قبول تعديل الناقل. أعد التصديق.' : 'Carrier edit accepted. Re-certify the log.')
+          : (isArabic ? 'تم رفض تعديل الناقل.' : 'Carrier edit rejected.'),
+    );
+  }
+
   Future<void> _onAgree() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final signatureBytes = await _signatureController.toPngBytes();
+    if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
-      _showError('Please draw a signature first.');
+      _showError(
+        isArabic ? 'ارسم التوقيع أولاً.' : 'Please draw a signature first.',
+      );
       return;
     }
 
@@ -96,7 +118,11 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     
     final certifyState = ref.read(certifyLogProvider);
     if (certifyState.isSuccess) {
-      _showSuccess('Log successfully certified.');
+      _showSuccess(
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'تم اعتماد السجل.'
+            : 'Log successfully certified.',
+      );
       ref.read(logsProvider.notifier).loadLogs(refresh: true);
       if (mounted) Navigator.of(context).pop();
     } else if (certifyState.error != null) {
@@ -123,12 +149,12 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.dangerRed),
-            AppGap.md,
-            Text(state.error!, textAlign: TextAlign.center, style: AppTextStyles(context).errorText),
-            AppGap.lg,
-            ElevatedButton(
+            const SizedBox(height: AppSpacing.md),
+            Text(state.error!, textAlign: TextAlign.center, style: context.styles.error),
+            const SizedBox(height: AppSpacing.lg),
+            AppButton(
+              label: 'RETRY',
               onPressed: () => ref.read(certifyLogProvider.notifier).checkReadiness(widget.selectedLog.id),
-              child: const Text('Retry'),
             )
           ],
         ),
@@ -147,39 +173,46 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Icon(Icons.warning_amber_rounded, size: 64, color: AppColors.warningYellow),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
             Text(
-              'Not Ready for Certification',
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'غير جاهز للاعتماد'
+                  : 'Not Ready for Certification',
               textAlign: TextAlign.center,
-              style: AppTextStyles(context).pageTitle,
+              style: context.styles.pageTitle,
             ),
-            AppGap.lg,
+            const SizedBox(height: AppSpacing.lg),
             Text(
-              'Please resolve the following issues before certifying your log:',
-              style: AppTextStyles(context).body,
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'عالج النواقص التالية قبل اعتماد السجل:'
+                  : 'Please resolve the following issues before certifying your log:',
+              style: context.styles.body,
             ),
-            AppGap.md,
+            const SizedBox(height: AppSpacing.md),
             ...readinessData.missingRequirements.map((req) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: Row(
                 children: [
                   const Icon(Icons.circle, size: 8, color: AppColors.dangerRed),
-                  AppGap.hSm,
-                  Expanded(child: Text(req, style: AppTextStyles(context).body)),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(req, style: context.styles.body)),
                 ],
               ),
             )),
-            AppGap.xl,
-            ElevatedButton(
+            const SizedBox(height: AppSpacing.xl),
+            if (readinessData.pendingCarrierEdits.isNotEmpty) ...[
+              for (final edit in readinessData.pendingCarrierEdits)
+                _CarrierEditCard(
+                  edit: edit,
+                  busy: state.isLoading,
+                  onRespond: (action) => _respondToEdit(edit.id, action),
+                ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+            AppButton(
+              label: 'NOT READY',
+              type: EldButtonType.send,
               onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.surface,
-                foregroundColor: AppColors.primaryBlue,
-                side: const BorderSide(color: AppColors.primaryBlue),
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
-              ),
-              child: Text('NOT READY (Close)', style: AppTextStyles(context).buttonText.copyWith(color: AppColors.primaryBlue)),
             ),
           ],
         ),
@@ -190,90 +223,171 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          EldCard(
-            child: Container(
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.imagePlaceholder),
-                border: Border.all(color: AppColors.border, width: 1),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Text(
-                      context.loc.drawSignatureHere,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles(context).pageTitle.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border, width: 1),
+              color: Colors.white,
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    context.loc.imageNotAvailable,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFD0D0D0),
                     ),
                   ),
-                  Signature(
-                    controller: _signatureController,
-                    height: 200,
-                    backgroundColor: AppColors.transparent,
-                  ),
-                ],
-              ),
+                ),
+                Signature(
+                  controller: _signatureController,
+                  height: 200,
+                  backgroundColor: AppColors.transparent,
+                ),
+              ],
             ),
           ),
-          AppGap.sm,
+          const SizedBox(height: AppSpacing.sm),
           InkWell(
             onTap: () => _signatureController.clear(),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
               child: Text(
-                context.loc.clearSignature,
-                style: AppTextStyles(context).body.copyWith(decoration: TextDecoration.underline),
+                'Clear signature',
+                style: TextStyle(
+                  fontSize: 14,
+                  decoration: TextDecoration.underline,
+                  decorationStyle: TextDecorationStyle.dotted,
+                ),
               ),
             ),
           ),
-          AppGap.xl,
+          const SizedBox(height: AppSpacing.xl),
           Text(
-            readinessData.legalStatement,
+            readinessData.legalStatement.trim().isEmpty
+                ? 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.'
+                : readinessData.legalStatement,
             textAlign: TextAlign.center,
-            style: AppTextStyles(context).body.copyWith(height: 1.5, fontWeight: FontWeight.w500),
+            style: context.styles.body.copyWith(height: 1.5, fontWeight: FontWeight.w500),
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
+          if (readinessData.pendingCarrierEdits.isNotEmpty) ...[
+            Text(
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'تعديلات الناقل بانتظار ردك قبل الاعتماد.'
+                  : 'Carrier edits must be accepted or rejected before certification.',
+              textAlign: TextAlign.center,
+              style: context.styles.error,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            for (final edit in readinessData.pendingCarrierEdits)
+              _CarrierEditCard(
+                edit: edit,
+                busy: state.isLoading,
+                onRespond: (action) => _respondToEdit(edit.id, action),
+              ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           if (!widget.selectedLog.isFormComplete)
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: Text(
                 context.loc.fillFormFirst,
                 textAlign: TextAlign.center,
-                style: AppTextStyles(context).errorText,
+                style: context.styles.error,
               ),
             ),
+          AppButton(
+            label: 'NOT READY',
+            type: EldButtonType.muted,
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          const SizedBox(height: AppSpacing.md),
           ListenableBuilder(
             listenable: _signatureController,
             builder: (context, _) {
-              final isSigned = _signatureController.isNotEmpty;
-              return SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (state.isLoading || !isSigned || !widget.selectedLog.isFormComplete)
-                      ? null
-                      : _onAgree,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.successGreen,
-                    disabledBackgroundColor: AppColors.border,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
-                    elevation: 0,
-                  ),
-                  child: state.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface),
-                        )
-                      : Text(
-                          context.loc.agree,
-                          style: AppTextStyles(context).buttonText.copyWith(color: AppColors.surface),
-                        ),
-                ),
+              return AppButton(
+                label: context.loc.agree.toUpperCase(),
+                type: EldButtonType.agree,
+                isLoading: state.isLoading,
+                onPressed: () {
+                  if (state.isLoading) return;
+                  if (_signatureController.isEmpty ||
+                      !widget.selectedLog.isFormComplete) {
+                    _showError(context.loc.fillFormFirst);
+                    return;
+                  }
+                  _onAgree();
+                },
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CarrierEditCard extends StatelessWidget {
+  const _CarrierEditCard({
+    required this.edit,
+    required this.busy,
+    required this.onRespond,
+  });
+
+  final CarrierProposedEdit edit;
+  final bool busy;
+  final void Function(String action) onRespond;
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final summary = [
+      if (edit.carrierName != null && edit.carrierName!.trim().isNotEmpty)
+        edit.carrierName!.trim(),
+      if (edit.proposedStatus != null && edit.proposedStatus!.trim().isNotEmpty)
+        edit.proposedStatus!.trim(),
+      if (edit.newValuesSummary != null &&
+          edit.newValuesSummary!.trim().isNotEmpty)
+        edit.newValuesSummary!.trim(),
+      if (edit.carrierReason != null && edit.carrierReason!.trim().isNotEmpty)
+        edit.carrierReason!.trim(),
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            summary.isEmpty
+                ? (isArabic ? 'تعديل من الناقل' : 'Carrier proposed edit')
+                : summary,
+            textAlign: TextAlign.center,
+            style: context.styles.body,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: isArabic ? 'رفض' : 'REJECT',
+                  type: EldButtonType.danger,
+                  onPressed: busy ? null : () => onRespond('REJECT'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: AppButton(
+                  label: isArabic ? 'قبول' : 'ACCEPT',
+                  type: EldButtonType.agree,
+                  onPressed: busy ? null : () => onRespond('ACCEPT'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

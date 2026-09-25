@@ -1,33 +1,22 @@
 import '../../domain/entities/connection_status.dart';
 import '../../domain/entities/tracking_event.dart';
-// ARCH-CRIT-01 fix: Data implements the Domain port
-import '../../domain/ports/tracking_data_source_port.dart';
 
-/// Data-layer contract for tracking data sources.
-///
-/// The abstract contract now lives in Domain as [TrackingDataSourcePort].
-/// This class is kept as a type alias for backward compatibility;
-/// new code should reference [TrackingDataSourcePort] directly.
-///
-/// Implementations: TraccarDataSource, MockTrackingDataSource, etc.
-abstract class TrackingDataSource implements TrackingDataSourcePort {
-  /// Stream of live tracking events (position, speed, odometer, etc.)
-  @override
+/// واجهة موحدة لجميع مصادر التتبع
+/// (مثل TraccarDataSource أو Backend الشركة مستقبلاً).
+/// تعزل الـ Repository تماماً عن طريقة الاتصال أو التقنية المستخدمة.
+abstract class TrackingDataSource {
+  /// تدفق (Stream) الأحداث الحية والمواقع الواردة
   Stream<TrackingEvent> get events;
 
-  /// Stream of connection status changes.
-  @override
+  /// حالة الاتصال بالخادم
   Stream<ConnectionStatus> get connectionStatusStream;
 
-  /// Start receiving tracking events.
-  @override
+  /// بدء عملية التتبع
   Future<void> start();
 
-  /// Stop receiving tracking events.
-  @override
+  /// إيقاف التتبع
   Future<void> stop();
 
-  /// Retrieve the last recorded tracking event.
-  @override
+  /// جلب آخر حدث تم تسجيله
   Future<TrackingEvent?> getLastEvent();
 }

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../../core/domain/shared/value_objects.dart';
+import '../../../../domain/shared/value_objects.dart';
 
 enum FormStatus { completed, incomplete, unknown }
 enum CertificationStatus { certified, uncertified, reCertificationRequired, unknown }
@@ -16,6 +16,7 @@ class DailyLog extends Equatable {
   final bool isFormComplete; // Computed from formStatus or kept for legacy
   final bool isCertified; // Computed from certificationStatus or kept for legacy
   final bool requiresAction;
+  final bool today;
   final List<LogEvent> events;
 
   const DailyLog({
@@ -29,6 +30,7 @@ class DailyLog extends Equatable {
     required this.isFormComplete,
     required this.isCertified,
     this.requiresAction = false,
+    this.today = false,
     this.events = const [],
   });
 
@@ -43,6 +45,7 @@ class DailyLog extends Equatable {
     bool? isFormComplete,
     bool? isCertified,
     bool? requiresAction,
+    bool? today,
     List<LogEvent>? events,
   }) {
     return DailyLog(
@@ -56,6 +59,7 @@ class DailyLog extends Equatable {
       isFormComplete: isFormComplete ?? this.isFormComplete,
       isCertified: isCertified ?? this.isCertified,
       requiresAction: requiresAction ?? this.requiresAction,
+      today: today ?? this.today,
       events: events ?? this.events,
     );
   }
@@ -119,6 +123,7 @@ class DailyLog extends Equatable {
         isFormComplete,
         isCertified,
         requiresAction,
+        today,
         events,
       ];
 }
@@ -131,10 +136,11 @@ class LogEvent extends Equatable {
   final DateTime startTime;
   final Duration duration;
   final String location;
-  final String? notes;
   final double? odometer;
   final double? engineHours;
   final bool isExpanded; // للـ UI
+  final bool? automatedDriving;
+  final bool? editable;
 
   const LogEvent({
     required this.id,
@@ -143,10 +149,11 @@ class LogEvent extends Equatable {
     required this.startTime,
     required this.duration,
     required this.location,
-    this.notes,
     this.odometer,
     this.engineHours,
     this.isExpanded = false,
+    this.automatedDriving,
+    this.editable,
   });
 
   String get formattedStartTime {
@@ -155,26 +162,37 @@ class LogEvent extends Equatable {
     return '$h:$m';
   }
 
-  DateTime get endTime => startTime.add(duration);
-
   String get formattedDuration {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     return '${hours}h ${minutes}m';
   }
 
-  LogEvent copyWith({bool? isExpanded}) {
+  LogEvent copyWith({
+    String? id,
+    String? status,
+    String? statusArabic,
+    DateTime? startTime,
+    Duration? duration,
+    String? location,
+    double? odometer,
+    double? engineHours,
+    bool? isExpanded,
+    bool? automatedDriving,
+    bool? editable,
+  }) {
     return LogEvent(
-      id: id,
-      status: status,
-      statusArabic: statusArabic,
-      startTime: startTime,
-      duration: duration,
-      location: location,
-      notes: notes,
-      odometer: odometer,
-      engineHours: engineHours,
+      id: id ?? this.id,
+      status: status ?? this.status,
+      statusArabic: statusArabic ?? this.statusArabic,
+      startTime: startTime ?? this.startTime,
+      duration: duration ?? this.duration,
+      location: location ?? this.location,
+      odometer: odometer ?? this.odometer,
+      engineHours: engineHours ?? this.engineHours,
       isExpanded: isExpanded ?? this.isExpanded,
+      automatedDriving: automatedDriving ?? this.automatedDriving,
+      editable: editable ?? this.editable,
     );
   }
 

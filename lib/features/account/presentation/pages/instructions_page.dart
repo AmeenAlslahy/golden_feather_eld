@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 
 class InstructionsPage extends StatelessWidget {
   const InstructionsPage({super.key});
@@ -15,18 +15,14 @@ class InstructionsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.eldAppBar,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           isArabic ? 'التعليمات' : 'Instructions',
-          style: const TextStyle(
-            fontSize: AppTypography.headerSize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          style: context.styles.appBarTitle,
         ),
         centerTitle: true,
       ),
@@ -82,8 +78,8 @@ class InstructionsPage extends StatelessWidget {
               children: [
                 Text(
                   isArabic
-                      ? 'وضع التفتيش لـ TOP COMPLIANCE ELD'
-                      : 'TOP COMPLIANCE ELD Inspection Mode',
+                      ? 'وضع التفتيش لـ Golden Feather ELD'
+                      : 'Golden Feather ELD Inspection Mode',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -115,8 +111,8 @@ class InstructionsPage extends StatelessWidget {
                 ),
                 _buildChecklistItem(
                   text: isArabic
-                      ? 'اخرج من وضع التفتيش بالضغط على سهم العودة في الزاوية العلوية.'
-                      : 'Exit the inspection mode by pressing back arrow in the left top corner of the app.',
+                      ? 'لا يخرج المفتش من وضع التفتيش. يخرج السائق بزر خروج السائق بعد إدخال كلمة مرور حسابه.'
+                      : 'The officer cannot leave inspection. The driver exits with Driver Exit after entering the account password.',
                   textColor: textColor,
                   iconColor: Colors.white,
                 ),
@@ -157,8 +153,8 @@ class InstructionsPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   isArabic
-                      ? 'جهاز TOP COMPLIANCE ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
-                      : 'TOP COMPLIANCE ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
+                      ? 'جهاز Golden Feather ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
+                      : 'Golden Feather ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
                   style: TextStyle(
                       fontSize: 10, color: textSecondaryColor, height: 1.5),
                 ),
@@ -221,8 +217,8 @@ class InstructionsPage extends StatelessWidget {
               children: [
                 Text(
                   isArabic
-                      ? 'دليل الأعطال لـ TOP COMPLIANCE ELD'
-                      : 'TOP COMPLIANCE ELD Malfunction Manual',
+                      ? 'دليل الأعطال لـ Golden Feather ELD'
+                      : 'Golden Feather ELD Malfunction Manual',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

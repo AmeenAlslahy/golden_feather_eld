@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/domain/duty_status/status_dashboard.dart';
-import '../../../../core/error/app_error.dart';
-import '../../../../core/error/failure.dart' as f;
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/app_gap.dart';
+import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../domain/duty_status/status_dashboard.dart';
 import '../extensions/duty_status_l10n.dart';
 import '../providers/status_dashboard_providers.dart';
-import '../widgets/status_dashboard/change_status_sheet.dart';
 import '../widgets/status_dashboard/hos_indicators_card.dart';
 import '../widgets/status_dashboard/main_circular_timer.dart';
 import '../widgets/status_dashboard/operational_alerts_banner.dart';
+import '../widgets/status_dashboard/change_status_sheet.dart';
 
 /// Main driver dashboard — status, remaining time, HOS indicators.
 ///
@@ -40,24 +38,27 @@ class StatusDashboardPage extends ConsumerWidget {
 // Data view
 // =============================================================================
 
-class _DashboardView extends StatelessWidget {
+class _DashboardView extends ConsumerWidget {
   final StatusDashboard dashboard;
 
   const _DashboardView({required this.dashboard});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
           OperationalAlertsBanner(alerts: dashboard.operationalAlerts),
           Expanded(
-            child: SingleChildScrollView(
+            child: RefreshIndicator(
+              onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),
+              child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
               child: Column(
                 children: [
-                  AppGap.md,
+                  const SizedBox(height: AppSpacing.md),
                   if (dashboard.regulatoryConstraints.ruleSet !=
                           CycleRule.unknown)
                     Chip(
@@ -68,16 +69,18 @@ class _DashboardView extends StatelessWidget {
                       backgroundColor: AppColors.background,
                       side: const BorderSide(color: AppColors.border),
                     ),
-                  AppGap.md,
+                  const SizedBox(height: AppSpacing.md),
                   MainCircularTimer(
                     circle: dashboard.remainingCircle,
                     statusLabel: dashboard.currentDutyStatus.displayName(context),
-                    onTap: () => ChangeStatusSheet.show(
-                      context,
-                      currentStatus: dashboard.currentDutyStatus,
-                    ),
+                    onTap: () {
+                      ChangeStatusSheet.show(
+                        context,
+                        currentStatus: dashboard.currentDutyStatus,
+                      );
+                    },
                   ),
-                  AppGap.xl,
+                  const SizedBox(height: AppSpacing.xl),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
@@ -88,6 +91,7 @@ class _DashboardView extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         ],
@@ -126,51 +130,10 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String message = 'حدث خطأ غير متوقع'; // Fallback user message
-
-    if (error is f.Failure) {
-      final fail = error as f.Failure;
-      if (fail is f.NetworkFailure) {
-        message = 'لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.';
-      } else if (fail is f.ServerFailure) {
-        message = 'حدثت مشكلة في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
-      } else {
-        // We avoid printing raw developer messages here
-        message = 'فشل في العملية. الرجاء المحاولة مرة أخرى.';
-      }
-    } else if (error is AppError) {
-      message = (error as AppError).l10nKey;
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.dangerRed,
-            ),
-            AppGap.md,
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: AppTypography.bodySize,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            AppGap.lg,
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return EldRetryView(
+      message: anyErrorUserMessage(error, isArabic: isArabic),
+      onRetry: onRetry,
     );
   }
 }

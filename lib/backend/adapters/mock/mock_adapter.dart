@@ -1,5 +1,3 @@
-import '../../base/backend_adapter.dart';
-import '../../base/backend_identity.dart';
 import '../../contracts/account_backend.dart';
 import '../../contracts/auth_backend.dart';
 import '../../contracts/compliance_backend.dart';
@@ -22,6 +20,8 @@ import '../../contracts/stats_backend.dart';
 import '../../contracts/status_dashboard_backend.dart';
 import '../../contracts/unidentified_events_backend.dart';
 import '../../contracts/vehicle_backend.dart';
+import '../../core/backend_adapter.dart';
+import '../../core/backend_identity.dart';
 import 'sub/mock_account_backend.dart';
 import 'sub/mock_auth_backend.dart';
 import 'sub/mock_compliance_backend.dart';

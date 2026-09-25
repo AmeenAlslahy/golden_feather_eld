@@ -4,13 +4,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_feedback.dart';
-import '../../../../core/widgets/app_gap.dart';
-import '../../../../core/widgets/eld_app_bar.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
@@ -22,20 +22,34 @@ final packageInfoProvider = FutureProvider<PackageInfo>((ref) {
   return PackageInfo.fromPlatform();
 });
 
-/// شاشة "حول التطبيق والتشخيص" (SRS §17) — 0% قيم يدوية، 100% loc
+/// شاشة "حول التطبيق والتشخيص" (SRS §17)
+///
+/// - متاحة بدون تسجيل دخول
+/// - تعرض إصدار التطبيق ومعرّف الجهاز الفريد
+/// - تعرض حالة الاتصال بالخادم المركزي وخدمة الموقع
 class AboutPage extends ConsumerWidget {
   const AboutPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final packageInfo = ref.watch(packageInfoProvider);
     final isConnected = ref.watch(isConnectedProvider);
     final gpsStatus = ref.watch(gpsStatusProvider);
     final storage = ref.watch(localStorageProvider);
 
+    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: EldAppBar(title: context.loc.aboutTitle),
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryGold,
+        centerTitle: true,
+        title: Text(
+          isArabic ? 'حول التطبيق' : 'About',
+          style: context.styles.appBarTitle,
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -44,92 +58,116 @@ class AboutPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(context.loc.applicationInfo, style: context.textTheme.titleMedium),
-                AppGap.sm,
-                EldInfoRow(label: context.loc.nameLabel, value: AppConstants.appName),
+                Text(
+                  isArabic ? 'معلومات التطبيق' : 'Application',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                EldInfoRow(
+                  label: isArabic ? 'الاسم' : 'Name',
+                  value: AppConstants.appName,
+                ),
                 packageInfo.when(
                   data: (info) => Column(
                     children: [
-                      EldInfoRow(label: context.loc.versionLabel, value: '${info.version} (${info.buildNumber})'),
-                      EldInfoRow(label: context.loc.packageLabel, value: info.packageName),
+                      EldInfoRow(
+                        label: isArabic ? 'الإصدار' : 'Version',
+                        value: '${info.version} (${info.buildNumber})',
+                      ),
+                      EldInfoRow(
+                        label: isArabic ? 'معرّف الحزمة' : 'Package',
+                        value: info.packageName,
+                      ),
                     ],
                   ),
-                  loading: () => EldInfoRow(label: context.loc.versionLabel, value: '...'),
-                  error: (_, __) => EldInfoRow(label: context.loc.versionLabel, value: AppConstants.appVersion),
+                  loading: () => EldInfoRow(
+                    label: isArabic ? 'الإصدار' : 'Version',
+                    value: '...',
+                  ),
+                  error: (_, __) => EldInfoRow(
+                    label: isArabic ? 'الإصدار' : 'Version',
+                    value: AppConstants.appVersion,
+                  ),
                 ),
                 EldInfoRow(
-                  label: context.loc.deviceIdLabel,
-                  value: storage.deviceId.isNotEmpty ? storage.deviceId : context.loc.notAvailable,
+                  label: isArabic ? 'معرّف الجهاز' : 'Device ID',
+                  value: storage.deviceId.isNotEmpty
+                      ? storage.deviceId
+                      : notAvailable,
                 ),
               ],
             ),
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
+
           // ========== حالة الاتصال ==========
           EldCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(context.loc.diagnosticsTitle, style: context.textTheme.titleMedium),
-                AppGap.sm,
+                Text(
+                  isArabic ? 'التشخيص والاتصال' : 'Diagnostics',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 _StatusTile(
                   icon: Icons.cloud_outlined,
-                  label: context.loc.centralServer,
+                  label: isArabic ? 'الخادم المركزي' : 'Central server',
                   isOk: isConnected.valueOrNull ?? false,
-                  okText: context.loc.connected,
-                  badText: context.loc.disconnected,
+                  okText: isArabic ? 'متصل' : 'Connected',
+                  badText: isArabic ? 'غير متصل' : 'Disconnected',
                 ),
-                const Divider(),
+                const Divider(color: AppColors.border),
                 _StatusTile(
                   icon: Icons.gps_fixed,
-                  label: context.loc.locationService,
+                  label: isArabic ? 'خدمة الموقع (GPS)' : 'Location service (GPS)',
                   isOk: gpsStatus.valueOrNull == ServiceStatus.enabled,
-                  okText: context.loc.enabledLabel,
-                  badText: context.loc.disabledLabel,
+                  okText: isArabic ? 'مفعّل' : 'Enabled',
+                  badText: isArabic ? 'معطّل' : 'Disabled',
                 ),
-                // حالة اتصال الـ ELD
+                
+                // إضافة حالة اتصال الـ ELD 
                 Consumer(
                   builder: (context, ref, _) {
                     final alertsState = ref.watch(hardwareAlertsProvider);
+                    
                     return alertsState.when(
-                      data: (alerts) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Divider(),
-                          _StatusTile(
-                            icon: Icons.developer_board,
-                            label: context.loc.ecmSyncStatus,
-                            isOk: alerts.isEmpty,
-                            okText: context.loc.syncedLabel,
-                            badText: context.loc.desyncedLabel,
-                          ),
-                          const Divider(),
-                          _StatusTile(
-                            icon: Icons.bluetooth_connected,
-                            label: context.loc.hardwareConnection,
-                            isOk: alerts.isEmpty,
-                            okText: context.loc.healthyLabel,
-                            badText: context.loc.faultyLabel,
-                          ),
-                          if (alerts.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: alerts
-                                    .map((a) => Text('• ${a.message}', style: context.textTheme.bodySmall?.copyWith(color: context.eld.dangerFg)))
-                                    .toList(),
-                              ),
+                      data: (alerts) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Divider(color: AppColors.border),
+                            _StatusTile(
+                              icon: Icons.developer_board,
+                              label: isArabic ? 'تنبيهات الجهاز' : 'Hardware alerts',
+                              isOk: alerts.isEmpty,
+                              okText: isArabic ? 'لا توجد تنبيهات' : 'No active alerts',
+                              badText: isArabic ? 'يوجد تنبيهات' : 'Active alerts',
                             ),
-                        ],
-                      ),
+                            if (alerts.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: alerts.map((a) => Text(
+                                    '• ${a.message}',
+                                    style: context.styles.error,
+                                  )).toList(),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                       loading: () => const Padding(
                         padding: EdgeInsets.all(AppSpacing.md),
-                        child: AppLoading(),
+                        child: Center(child: CircularProgressIndicator()),
                       ),
                       error: (err, _) => Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Text('Error loading hardware status: $err', style: TextStyle(color: context.eld.dangerFg)),
+                        child: Text(
+                          anyErrorUserMessage(err, isArabic: isArabic),
+                          style: context.styles.error,
+                        ),
                       ),
                     );
                   },
@@ -137,37 +175,61 @@ class AboutPage extends ConsumerWidget {
               ],
             ),
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
+
           // ========== معلومات تقنية (SRS 3.8) ==========
           EldCard(
             child: Consumer(
               builder: (context, ref, _) {
+                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                 final hwStatusAsync = ref.watch(hardwareStatusProvider);
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(context.loc.technicalInfo, style: context.textTheme.titleMedium),
-                    AppGap.sm,
+                    Text(
+                      isArabic ? 'المعلومات التقنية' : 'Technical Info',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     hwStatusAsync.when(
                       data: (data) => Column(
                         children: [
-                          EldInfoRow(label: context.loc.eldEngineVersion, value: data.engineVersion),
-                          EldInfoRow(label: context.loc.hardwareVersion, value: data.deviceVersion),
-                          EldInfoRow(label: context.loc.lastDataReceived, value: data.lastDataTime),
+                          EldInfoRow(
+                            label: isArabic ? 'إصدار محرك ELD' : 'ELD Engine Version',
+                            value: data.engineVersion ?? notAvailable,
+                          ),
+                          EldInfoRow(
+                            label: isArabic ? 'إصدار الجهاز (Hardware)' : 'Hardware Version',
+                            value: data.deviceVersion ?? notAvailable,
+                          ),
+                          EldInfoRow(
+                            label: isArabic ? 'توقيت آخر بيانات' : 'Last Data Received',
+                            value: data.lastHeartbeat ?? notAvailable,
+                          ),
                         ],
                       ),
-                      loading: () => const AppLoading(),
-                      error: (err, _) => Text('Error: $err', style: TextStyle(color: context.eld.dangerFg)),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      // Never a raw exception string for the driver.
+                      error: (err, _) => Text(
+                        anyErrorUserMessage(err, isArabic: isArabic),
+                        style: context.styles.error,
+                      ),
                     ),
                   ],
                 );
               },
             ),
           ),
-          AppGap.md,
+          const SizedBox(height: AppSpacing.md),
+
           Text(
-            context.loc.supportMessage,
-            style: context.textTheme.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
+            isArabic
+                ? 'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.'
+                : 'For technical support, provide the device ID and version shown above.',
+            style: context.textTheme.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -193,14 +255,22 @@ class _StatusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isOk ? context.eld.successFg : context.eld.dangerFg;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color),
-      title: Text(label, style: context.textTheme.bodyMedium),
-      trailing: Text(
-        isOk ? okText : badText,
-        style: context.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: color),
+    final color = isOk ? AppColors.successGreen : AppColors.dangerRed;
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon, color: color),
+        title: Text(label,
+            style: context.styles.body),
+        trailing: Text(
+          isOk ? okText : badText,
+          style: TextStyle(
+            fontSize: AppTypography.captionSize,
+            fontWeight: AppTypography.bold,
+            color: color,
+          ),
+        ),
       ),
     );
   }

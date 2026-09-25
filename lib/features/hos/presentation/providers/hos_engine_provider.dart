@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/providers/app_repository_providers.dart';
 import '../../../../core/config/hos_configuration.dart';
 import '../../../../core/services/live_tracking_data_source.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/time/trusted_time_provider.dart';
-// ARCH-HIGH-01 fix: Import from composition roots
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../logs/data/repositories/log_repository_impl.dart';
 import '../../../sync/presentation/providers/sync_engine_provider.dart';
+import '../../data/datasources/hos_local_data_source.dart';
 import '../../domain/engine/diagnostics/diagnostics_engine.dart';
 import '../../domain/engine/hos_calculator.dart';
 import '../../domain/engine/hos_rules_engine.dart';
@@ -51,6 +52,7 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
     localStorage: localStorage,
     syncEngine: syncEngine,
     timeProvider: timeProvider,
+    readDriverId: () => ref.read(currentDriverIdProvider),
   );
 
   final tracking = ref.watch(liveTrackingDataSourceProvider);

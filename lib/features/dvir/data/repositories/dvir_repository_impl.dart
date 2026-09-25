@@ -2,60 +2,39 @@ import 'package:fpdart/fpdart.dart';
 
 import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
 import '../../../../backend/contracts/dvir_backend.dart';
-import '../../../../core/domain/shared/value_objects.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../auth/data/datasources/auth_local_data_source.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
   final NetworkInfo networkInfo;
-  final AuthLocalDataSource authLocalDataSource;
 
   DvirRepositoryImpl({
     required this.dvirBackend,
     required this.networkInfo,
-    required this.authLocalDataSource,
   });
 
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
       String vehicleId) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
-
-    final session = await authLocalDataSource.getSession();
-    DriverId? driverIdObj;
-    if (session != null) {
-      final dId = int.tryParse(session.user.id);
-      if (dId != null && dId > 0) {
-        driverIdObj = DriverId(dId);
-      }
-    }
-
-    final cleanVehicleId =
-        (vehicleId.isNotEmpty && vehicleId != 'unknown_vehicle')
-            ? vehicleId
-            : null;
-
-    final result = await dvirBackend.list(
-      driverId: driverIdObj,
-      uniqueId: cleanVehicleId,
-    );
+    final result = vehicleId.trim().isEmpty || vehicleId == 'unknown_vehicle'
+        ? await dvirBackend.list()
+        : await dvirBackend.list(uniqueId: vehicleId);
     
     return result.fold(
       (error) => Left(ServerFailure(message: error.code)),
       (rawJson) {
-        final rawReports = (rawJson['data'] as List<dynamic>?) ??
-            (rawJson['reports'] as List<dynamic>?) ??
-            [];
-        final reports = rawReports
-            .whereType<Map<String, dynamic>>()
-            .map((json) {
-              final dto = DvirDto.fromJson(json);
-              return _mapDtoToEntity(dto);
-            }).toList();
+        final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
+        final reports = rawReports.map((json) {
+          final dto = DvirDto.fromJson(json as Map<String, dynamic>);
+          return _mapDtoToEntity(dto);
+        }).toList();
         return Right(reports);
       }
     );
@@ -76,40 +55,34 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> submitDvirReport(DvirReport report) async {
+  Future<Either<Failure, bool>> submitDvirReport(
+    DvirReport report, {
+    required int driverId,
+    required String status,
+  }) async {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    
-    final defectsDto = report.items
-        .where((item) => item.isDefective)
-        .map((item) => DvirDefectDto(
-              itemName: item.item.name,
-              description: item.defectDescription,
-            ))
-        .toList();
-
-    final session = await authLocalDataSource.getSession();
-    int driverId = 0;
-    if (session != null) {
-      driverId = int.tryParse(session.user.id) ?? 0;
-    }
-
-    final dto = CreateDvirRequestDto(
+    final body = buildDvirCreateBody(
       driverId: driverId,
       uniqueId: report.vehicleId,
-      vehicleName: report.vehicleId,
-      inspectionType: report.type.name,
-      inspectionTime: report.date.toIso8601String(),
+      status: status,
+      signatureData: report.signature,
+      inspectionTime: report.date.toUtc().toIso8601String(),
       location: report.location,
       odometer: report.odometer,
       trailerNumber: report.trailerId,
       companyName: report.companyName,
       remarks: report.notes,
-      status: report.condition.name,
-      defects: defectsDto,
-      signatureData: report.signature ?? '',
+      vehicleDefects: report.vehicleDefects,
+      trailerDefects: report.trailerDefects,
+      catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
     );
+    if (body == null) {
+      return const Left(ServerFailure(
+        message: 'Driver, vehicle, or signature is missing.',
+      ));
+    }
 
-    final result = await dvirBackend.create(dto.toJson());
+    final result = await dvirBackend.create(body);
     return result.fold(
       (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
@@ -180,7 +153,7 @@ class DvirRepositoryImpl implements DvirRepository {
       type: _parseInspectionType(dto.inspectionType),
       date: DateTime.tryParse(dto.inspectionTime ?? '') ?? DateTime.now(),
       driverName: dto.driver?.name ?? '',
-      vehicleId: dto.uniqueId ?? dto.id.toString(),
+      vehicleId: dto.uniqueId ?? '',
       trailerId: dto.trailerNumber,
       odometer: dto.odometer,
       condition: _parseVehicleCondition(dto.status),
@@ -206,6 +179,20 @@ class DvirRepositoryImpl implements DvirRepository {
           defectDescription: defect.description,
         );
       }).toList(),
+      // Server defects with a catalog code are shown as catalog chips on the saved report.
+      selectedDefects: [
+        for (final defect in dto.defects)
+          if ((defect.itemCode ?? '').trim().isNotEmpty)
+            DvirDefectSelection(
+              item: DvirCatalogItem(
+                code: defect.itemCode!.trim(),
+                name: defect.itemName ?? defect.itemCode!,
+                category: defect.category ?? '',
+                critical: defect.safetyAffecting || defect.outOfService,
+              ),
+              description: defect.description,
+            ),
+      ],
     );
   }
 
@@ -215,13 +202,16 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   VehicleCondition _parseVehicleCondition(String? condition) {
-    if (condition == VehicleCondition.needsRepair.name) {
-      return VehicleCondition.needsRepair;
-    }
-    if (condition == VehicleCondition.unsafe.name) {
-      return VehicleCondition.unsafe;
-    }
-    return VehicleCondition.safe;
+    final c = condition?.trim() ?? '';
+    // نص السلك الذي يبنيه التطبيق نفسه في buildDvirCreateBody:
+    if (c == 'Vehicle Condition Satisfactory') return VehicleCondition.safe;
+    if (c == 'Has Defects') return VehicleCondition.needsRepair;
+    // أسماء enum (توافقية مع التخزين المحلي والقيم السابقة):
+    if (c == VehicleCondition.needsRepair.name) return VehicleCondition.needsRepair;
+    if (c == VehicleCondition.unsafe.name) return VehicleCondition.unsafe;
+    if (c == VehicleCondition.safe.name) return VehicleCondition.safe;
+    // حالة غير معروفة: لا نُقرّ بأنها "آمنة" — الأمان يفضّل التحفظ.
+    return VehicleCondition.needsRepair;
   }
 
   InspectionItem _parseInspectionItem(String? name) {
