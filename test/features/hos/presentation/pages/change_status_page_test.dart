@@ -164,7 +164,12 @@ void main() {
     await tester.pumpAndSettle(); // entrance animation → timer starts
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(find.byType(SnackBar), findsNothing);
+    // The refusal is an AppFeedback overlay now (not a SnackBar); it must
+    // be gone once its auto-dismiss timer has fired.
+    expect(
+      find.text('An annotation is required for personal conveyance or yard moves.'),
+      findsNothing,
+    );
 
     await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Driving home');
     await tester.ensureVisible(find.widgetWithText(AppButton, 'UPDATE'));
@@ -175,6 +180,10 @@ void main() {
     expect(find.text('The server accepted the duty status change.'), findsOneWidget);
     // Accepted → the page pops back.
     expect(find.byType(ChangeStatusPage), findsNothing);
+    // AppFeedback auto-dismisses after 3s; pump past the timer so no
+    // pending timer is left when the widget tree is disposed.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Yard Moves forces On Duty and is flagged on the request',
@@ -190,6 +199,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(hos.calls, ['onDutyNotDriving|Moving to dock 4|ym=true']);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('while moving nothing can be changed and nothing is sent',
@@ -204,6 +216,9 @@ void main() {
     await tester.pump();
     expect(hos.calls, isEmpty);
     expect(find.byType(ChangeStatusPage), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('a refusal from the engine/server is explained and the page stays',

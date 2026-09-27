@@ -169,6 +169,10 @@ void main() {
       findsOneWidget,
     );
     verifyNever(() => repo.switchPrimary(coDriverId: any(named: 'coDriverId')));
+    // Pump past the AppFeedback auto-dismiss timer (3s) so no pending
+    // timer is left when the widget tree is disposed.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('SWITCH while stopped: confirm → switchPrimary → home', (tester) async {
@@ -221,6 +225,9 @@ void main() {
 
     expect(find.text('Co-driver is not on duty with this vehicle.'), findsWidgets);
     expect(find.text('HOME ROUTE'), findsNothing);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('linked co-driver shows the server team state; refresh re-reads it',
