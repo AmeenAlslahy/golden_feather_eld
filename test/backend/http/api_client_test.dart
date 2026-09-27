@@ -71,7 +71,12 @@ void main() {
       });
     });
 
-    test('returns NetworkError on timeout', () async {
+    test('returns NetworkError on timeout (retries disabled)', () async {
+      final noRetryClient = ApiClient(
+        config: const ApiConfig(baseUrl: 'https://api.example.com'),
+        dio: dio,
+        maxRetries: 0,
+      );
       adapter.onGet(
         '/eld/status',
         (server) => server.throws(
@@ -83,7 +88,7 @@ void main() {
         ),
       );
 
-      final result = await client.get<dynamic>('/eld/status');
+      final result = await noRetryClient.get<dynamic>('/eld/status');
 
       expect(result.isFailure, isTrue);
       expect(result.errorOrNull, isA<NetworkError>());
@@ -334,6 +339,122 @@ void main() {
         'Accept': 'application/json',
         'X-Version': '1.0',
       });
+    });
+  });
+
+  group('ApiClient — retry & cancellation', () {
+    // http_mock_adapter's route handler is evaluated once at registration
+    // (a later registration of the same route replaces the earlier one), so
+    // `replyCallback` — whose data callback runs per request — is the way
+    // to both count attempts and vary the outcome.
+    ApiClient fastRetryClient(Dio dio) => ApiClient(
+          config: const ApiConfig(baseUrl: 'https://api.example.com'),
+          dio: dio,
+          // Zero backoff keeps these tests deterministic and fast.
+          retryBackoff: Duration.zero,
+        );
+
+    DioException transientTimeout(String path) => DioException(
+          requestOptions: RequestOptions(path: path),
+          type: DioExceptionType.connectionTimeout,
+        );
+
+    test('GET retries a transient timeout and succeeds on the next attempt',
+        () async {
+      final retryDio = Dio();
+      final retryAdapter = DioAdapter(dio: retryDio);
+      final client = fastRetryClient(retryDio);
+      var attempts = 0;
+
+      retryAdapter.onGet('/eld/status', (server) {
+        server.replyCallback(200, (options) {
+          attempts++;
+          if (attempts == 1) {
+            throw transientTimeout('/eld/status');
+          }
+          return {'driver': 'Ahmed'};
+        });
+      });
+
+      final result = await client.get<Map<String, dynamic>>('/eld/status');
+
+      expect(result.isSuccess, isTrue);
+      expect(attempts, 2);
+      result.tap(onSuccess: (response) {
+        expect(response.data, {'driver': 'Ahmed'});
+      });
+    });
+
+    test('GET stops after maxRetries and maps the last error', () async {
+      final retryDio = Dio();
+      final retryAdapter = DioAdapter(dio: retryDio);
+      final client = fastRetryClient(retryDio);
+      var attempts = 0;
+
+      retryAdapter.onGet('/eld/status', (server) {
+        server.replyCallback(200, (options) {
+          attempts++;
+          throw transientTimeout('/eld/status');
+        });
+      });
+
+      final result = await client.get<dynamic>('/eld/status');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<NetworkError>());
+      // 1 original attempt + 2 retries.
+      expect(attempts, 3);
+    });
+
+    test('GET never retries a server decision (500)', () async {
+      var attempts = 0;
+      adapter.onGet('/eld/status', (server) {
+        server.replyCallback(500, (options) {
+          attempts++;
+          return {'message': 'Internal error'};
+        });
+      });
+
+      final result = await client.get<dynamic>('/eld/status');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<ServerError>());
+      expect(attempts, 1);
+    });
+
+    test('POST is never retried, even on a transient timeout', () async {
+      var attempts = 0;
+      adapter.onPost('/eld/duty-status', (server) {
+        server.replyCallback(200, (options) {
+          attempts++;
+          throw transientTimeout('/eld/duty-status');
+        });
+      }, data: Matchers.any);
+
+      final result = await client.post<dynamic>(
+        '/eld/duty-status',
+        data: {'status': 'DRIVING'},
+      );
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<NetworkError>());
+      expect(attempts, 1);
+    });
+
+    test('a cancelled request maps to a NetworkError', () async {
+      final token = CancelToken()..cancel();
+      adapter.onGet(
+        '/eld/status',
+        (server) => server.reply(200, {'driver': 'Ahmed'}),
+      );
+
+      final result = await client.get<dynamic>(
+        '/eld/status',
+        cancelToken: token,
+      );
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<NetworkError>());
     });
   });
 }

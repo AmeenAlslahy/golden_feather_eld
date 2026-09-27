@@ -28,8 +28,21 @@ class ApiClient {
   final Dio _dio;
   final ApiConfig _config;
 
-  ApiClient({required ApiConfig config, Dio? dio})
-      : _config = config.normalized(),
+  /// Max automatic retries for idempotent requests (GET) after a
+  /// transient network failure (timeout / connection error). Mutating
+  /// methods (POST/PUT/DELETE/uploads) are never retried — a retry could
+  /// repeat a side effect the server already applied.
+  final int maxRetries;
+
+  /// Base delay before the first retry; doubles with each further attempt.
+  final Duration retryBackoff;
+
+  ApiClient({
+    required ApiConfig config,
+    Dio? dio,
+    this.maxRetries = 2,
+    this.retryBackoff = const Duration(milliseconds: 400),
+  })  : _config = config.normalized(),
         _dio = dio ?? Dio() {
     _dio.transformer = LenientJsonTransformer();
     _dio.options
@@ -57,6 +70,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    CancelToken? cancelToken,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -64,8 +78,12 @@ class ApiClient {
         path,
         queryParameters: queryParameters,
         options: _buildOptions(headers: headers),
+        cancelToken: cancelToken,
       ),
       parser: parser,
+      // GET is idempotent → eligible for transient-failure retries.
+      idempotent: true,
+      cancelToken: cancelToken,
     );
   }
 
@@ -75,6 +93,7 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
     ResponseType? responseType,
+    CancelToken? cancelToken,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -83,8 +102,10 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(headers: headers, responseType: responseType),
+        cancelToken: cancelToken,
       ),
       parser: parser,
+      cancelToken: cancelToken,
     );
   }
 
@@ -93,6 +114,7 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    CancelToken? cancelToken,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -101,8 +123,10 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(headers: headers),
+        cancelToken: cancelToken,
       ),
       parser: parser,
+      cancelToken: cancelToken,
     );
   }
 
@@ -111,6 +135,7 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    CancelToken? cancelToken,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -119,8 +144,10 @@ class ApiClient {
         data: data,
         queryParameters: queryParameters,
         options: _buildOptions(headers: headers),
+        cancelToken: cancelToken,
       ),
       parser: parser,
+      cancelToken: cancelToken,
     );
   }
 
@@ -141,6 +168,7 @@ class ApiClient {
     required String fileName,
     Map<String, String>? additionalFields,
     Map<String, String>? headers,
+    CancelToken? cancelToken,
     T Function(dynamic)? parser,
   }) {
     return _execute<T>(
@@ -160,9 +188,11 @@ class ApiClient {
             headers: headers,
             contentType: 'multipart/form-data',
           ),
+          cancelToken: cancelToken,
         );
       },
       parser: parser,
+      cancelToken: cancelToken,
     );
   }
 
@@ -175,6 +205,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _dio.get<List<int>>(
@@ -184,6 +215,7 @@ class ApiClient {
           headers: headers,
           responseType: ResponseType.bytes,
         ),
+        cancelToken: cancelToken,
       );
 
       final bytes = response.data;
@@ -225,25 +257,58 @@ class ApiClient {
   Future<Result<ApiResponse<T>>> _execute<T>(
     Future<Response<dynamic>> Function() request, {
     T Function(dynamic)? parser,
+    bool idempotent = false,
+    CancelToken? cancelToken,
   }) async {
-    try {
-      final response = await request();
+    var attempt = 0;
+    while (true) {
+      attempt++;
+      try {
+        final response = await request();
 
-      final apiResponse = ApiResponse.fromBody<T>(
-        statusCode: response.statusCode ?? 0,
-        rawBody: response.data,
-        parser: parser,
-      );
+        final apiResponse = ApiResponse.fromBody<T>(
+          statusCode: response.statusCode ?? 0,
+          rawBody: response.data,
+          parser: parser,
+        );
 
-      return fp.Right(apiResponse);
-    } on DioException catch (e) {
-      return fp.Left(mapDioException(e));
-    } catch (e, st) {
-      return fp.Left(UnknownError(
-        code: 'client.requestUnexpected',
-        cause: e,
-        stackTrace: st,
-      ));
+        return fp.Right(apiResponse);
+      } on DioException catch (e) {
+        // Retry only idempotent requests after a transient transport
+        // failure, up to [maxRetries] times, and never once the caller
+        // has cancelled the request.
+        final transient = _isTransient(e);
+        if (!idempotent ||
+            !transient ||
+            attempt > maxRetries ||
+            (cancelToken?.isCancelled ?? false)) {
+          return fp.Left(mapDioException(e));
+        }
+        if (retryBackoff > Duration.zero) {
+          await Future<void>.delayed(retryBackoff * attempt);
+        }
+      } catch (e, st) {
+        return fp.Left(UnknownError(
+          code: 'client.requestUnexpected',
+          cause: e,
+          stackTrace: st,
+        ));
+      }
+    }
+  }
+
+  /// Whether a [DioException] is a transient transport failure worth
+  /// retrying for an idempotent request. Server decisions (4xx/5xx) and
+  /// cancellations are never retried.
+  bool _isTransient(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.connectionError:
+        return true;
+      default:
+        return false;
     }
   }
 }
