@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/error/app_error.dart';
-import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
-import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
 
-/// Email Logs (recipient only) vs Send Logs (comment 4–60 + Email type).
+/// FMCSA ELD submission mailbox (49 CFR §395 Appendix A, telematics email
+/// option). Shown pre-filled; the officer can replace it.
+const String kFmcsaEldEmail = 'fmcsaeldsub@dot.gov';
+
+/// Default output-file comment for the email channel (4–60 chars).
+const String kDefaultEmailComment = 'Email logs transfer';
+
+/// Email Logs (preset recipient + comment) vs Send Logs (comment 4–60 + Email type).
 class SendLogsPage extends ConsumerStatefulWidget {
   final bool isEmailMode;
 
@@ -26,7 +29,6 @@ class SendLogsPage extends ConsumerStatefulWidget {
 class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   final _emailController = TextEditingController();
   final _commentController = TextEditingController();
-  final _routingController = TextEditingController();
   bool _isSending = false;
   bool _sent = false;
 
@@ -35,6 +37,11 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.isEmailMode) {
+      // SRS 8.4: the output-file comment (4–60) is always sent; the
+      // reference layout shows only the recipient field on this screen.
+      _commentController.text = kDefaultEmailComment;
+    }
     _emailController.addListener(() => setState(() {}));
     _commentController.addListener(() => setState(() {}));
   }
@@ -43,7 +50,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   void dispose() {
     _emailController.dispose();
     _commentController.dispose();
-    _routingController.dispose();
     super.dispose();
   }
 
@@ -54,37 +60,34 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
   bool get _canSend {
     if (_isSending) return false;
-    if (widget.isEmailMode) return _emailValid;
+    if (widget.isEmailMode && !_emailValid) return false;
     return inspectionCommentError(_commentController.text) == null;
   }
 
   Future<void> _handleSend() async {
-    if (widget.isEmailMode) {
-      if (!_emailValid) {
-        _snack(_arabic ? 'أدخل بريداً صالحاً.' : 'Enter a valid email.');
-        return;
-      }
-    } else {
-      final commentError = inspectionCommentError(
-        _commentController.text,
-        isArabic: _arabic,
-      );
-      if (commentError != null) {
-        _snack(commentError);
-        return;
-      }
+    if (widget.isEmailMode && !_emailValid) {
+      _snack(_arabic ? 'أدخل بريداً صالحاً.' : 'Enter a valid email.');
+      return;
+    }
+    // SRS 8.4: output-file comment 4–60 on both channels (the email screen
+    // starts with a default the officer may replace).
+    final commentError = inspectionCommentError(
+      _commentController.text,
+      isArabic: _arabic,
+    );
+    if (commentError != null) {
+      _snack(commentError);
+      return;
     }
 
     setState(() => _isSending = true);
-    final comment = widget.isEmailMode
-        ? 'Email logs transfer'
-        : _commentController.text;
-    final routing = _routingController.text.trim();
+    final comment = _commentController.text;
     final success = await ref.read(inspectionProvider.notifier).sendLogs(
+          // Both screens use the server's EMAIL channel (openapi: EMAIL is the
+          // default; the Send screen shows "Data Transfer Type: Email").
           TransferMethod.email,
           email: widget.isEmailMode ? _emailController.text.trim() : null,
           comment: comment,
-          routingCode: routing.isEmpty ? null : routing,
         );
     if (!mounted) return;
     setState(() {
@@ -94,8 +97,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     if (!success) {
       final error = ref.read(inspectionProvider).error;
       if (error != null) _snack(error);
-    } else {
-      ref.invalidate(transferAuditProvider);
     }
   }
 
@@ -113,7 +114,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
         : (_arabic ? 'إرسال السجلات' : 'Send Logs');
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
@@ -143,6 +143,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Reference layout (screenshots 3 / 9): one heading line,
+                  // one or two labelled underline fields, one SEND button.
                   Text(
                     widget.isEmailMode
                         ? (_arabic
@@ -150,62 +152,49 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                             : 'Send logs via email')
                         : (_arabic ? 'إرسال 8 سجلات' : 'Send 8 Logs'),
                     style: const TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   if (widget.isEmailMode) ...[
+                    _FieldLabel(_arabic ? 'بريد المستلم' : 'Recipient Email'),
                     AppTextField(
                       controller: _emailController,
-                      label: _arabic ? 'بريد المستلم' : 'Recipient Email',
-                      hint: '',
+                      hint: 'some@email.com',
                       keyboardType: TextInputType.emailAddress,
                       isUnderlined: true,
                     ),
                   ] else ...[
+                    _FieldLabel(_arabic ? 'تعليق' : 'Comment'),
                     AppTextField(
                       controller: _commentController,
-                      label: _arabic ? 'تعليق' : 'Comment',
                       hint: '',
                       isUnderlined: true,
-                      maxLines: 2,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Text(
+                    _FieldLabel(
                       _arabic ? 'نوع نقل البيانات' : 'Data Transfer Type',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 10),
+                      child: Text(
+                        _arabic ? 'بريد إلكتروني' : 'Email',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _arabic ? 'بريد إلكتروني' : 'Email',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const Divider(height: 24),
+                    const Divider(height: 1),
                   ],
-                  const SizedBox(height: AppSpacing.xl),
-                  AppTextField(
-                    controller: _routingController,
-                    label: _arabic ? 'رمز التوجيه' : 'Routing Code',
-                    hint: '',
-                    isUnderlined: true,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: 40),
                   AppButton(
                     label: _arabic ? 'إرسال' : 'SEND',
                     type: _canSend ? EldButtonType.agree : EldButtonType.send,
                     isLoading: _isSending,
                     onPressed: _handleSend,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  _TransferHistory(isArabic: _arabic),
                 ],
               ),
             ),
@@ -213,57 +202,20 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   }
 }
 
-class _TransferHistory extends ConsumerWidget {
-  const _TransferHistory({required this.isArabic});
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
 
-  final bool isArabic;
+  final String text;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audit = ref.watch(transferAuditProvider);
-    return audit.when(
-      loading: () => const SizedBox.shrink(),
-      error: (error, _) => Text(
-        error is AppError
-            ? appErrorUserMessage(error, isArabic: isArabic)
-            : (isArabic
-                ? 'تعذر جلب سجل النقل.'
-                : 'Could not load transfer history.'),
-        style: context.styles.muted,
-        textAlign: TextAlign.center,
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
       ),
-      data: (rows) {
-        if (rows.isEmpty) {
-          return Text(
-            isArabic ? 'لا يوجد سجل نقل بعد.' : 'No transfer history yet.',
-            style: context.styles.muted,
-            textAlign: TextAlign.center,
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              isArabic ? 'آخر عمليات النقل' : 'Recent transfers',
-              style: context.styles.sectionTitle,
-            ),
-            const SizedBox(height: 8),
-            for (final row in rows.take(3))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  [
-                    row.channel,
-                    row.status,
-                    row.recipient,
-                    row.transferredAt,
-                  ].where((part) => part.isNotEmpty).join(' · '),
-                  style: context.styles.caption,
-                ),
-              ),
-          ],
-        );
-      },
     );
   }
 }

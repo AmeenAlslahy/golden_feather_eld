@@ -3,13 +3,15 @@ import 'package:logger/logger.dart';
 /// مسجل التطبيق
 class AppLogger {
   static final Logger _logger = Logger(
+    // methodCount 0: capturing StackTrace.current on every debug line was
+    // measurable on device (one per HTTP request/response). Errors keep it.
     printer: PrettyPrinter(
-      methodCount: 2,
+      methodCount: 0,
       errorMethodCount: 8,
-      lineLength: 120,
+      lineLength: 100,
       colors: true,
       printEmojis: true,
-      dateTimeFormat: DateTimeFormat.dateAndTime,
+      dateTimeFormat: DateTimeFormat.onlyTime,
     ),
   );
 

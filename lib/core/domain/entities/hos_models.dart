@@ -34,19 +34,14 @@ enum DutyStatus {
   static DutyStatus fromShortCode(String code) {
     switch (code.toUpperCase()) {
       case 'OFF':
-      case '1':
         return DutyStatus.offDuty;
       case 'SB':
-      case '2':
         return DutyStatus.sleeperBerth;
       case 'ON':
-      case '4':
         return DutyStatus.onDutyNotDriving;
       case 'D':
-      case '3':
         return DutyStatus.driving;
       case 'PC':
-      case '6':
         return DutyStatus.personalUse;
       default:
         return DutyStatus.offDuty;

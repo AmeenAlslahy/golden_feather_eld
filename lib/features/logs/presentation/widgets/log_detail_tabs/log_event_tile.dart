@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
-
-import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
-import '../../../../../core/utils/status_color_helper.dart';
 import '../../../domain/entities/daily_log.dart';
+import '../../../../../core/utils/status_color_helper.dart';
 import 'expanded_content.dart';
 
 /// 'HH:mm' + اختصار منطقة توقيت الحدث (3 أحرف إن توفرت)،
 /// دون اعتماد على DateTime.now() ودون رمي استثناء لاسم توقيت فارغ.
 String _formatTimeWithZone(DateTime time) {
-  final h = time.hour.toString().padLeft(2, '0');
+  final h24 = time.hour;
+  final h12 = h24 > 12 ? h24 - 12 : (h24 == 0 ? 12 : h24);
+  final h = h12.toString().padLeft(2, '0');
   final m = time.minute.toString().padLeft(2, '0');
+  final period = h24 < 12 ? 'AM' : 'PM';
   final name = time.timeZoneName.trim();
-  if (name.isEmpty) return '$h:$m';
+  if (name.isEmpty) return '$h:$m $period';
   final short = name.length >= 3 ? name.substring(0, 3) : name;
-  return '$h:$m ${short.toUpperCase()}';
+  return '$h:$m $period ${short.toUpperCase()}';
 }
 
 class LogEventTile extends StatelessWidget {
@@ -22,93 +24,162 @@ class LogEventTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onEdit;
 
+  /// The day the log belongs to. When the event started on a different
+  /// calendar day (e.g. an OFF period that began the evening before) the
+  /// start date is shown under the time (SRS 5.2).
+  final DateTime? logDate;
+
   const LogEventTile({
     super.key,
     required this.event,
     required this.onTap,
     this.onEdit,
+    this.logDate,
   });
+
+  bool get _startedOnAnotherDay {
+    final d = logDate;
+    if (d == null) return false;
+    final t = event.startTime.toLocal();
+    return t.year != d.year || t.month != d.month || t.day != d.day;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isExpanded = event.isExpanded;
     final color = StatusColorHelper.getStatusColor(event.status);
+    final isExpanded = event.isExpanded;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return InkWell(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-              bottom:
-                  BorderSide(color: Theme.of(context).dividerColor, width: 1)),
-        ),
-        padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.sm, horizontal: AppSpacing.md),
-        child: Column(
-          children: [
-            // Main row
-            Row(
-              children: [
-                // Color bar
-                Container(
-                  width: 4,
-                  height: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            children: [
+              Positioned.directional(
+                textDirection: Directionality.of(context),
+                start: AppSpacing.md,
+                top: AppSpacing.md,
+                bottom: AppSpacing.sm,
+                child: Container(
+                  width: 3,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-                SizedBox(
-                  width: 32,
-                  child: Text(
-                    event.status,
-                    style: context.styles.bodyBold,
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: AppSpacing.md + 3 + AppSpacing.md, // start margin + width + inner spacing
                 ),
-
-                // Time (من وقت الحدث نفسه، مع اختصار آمن لمنطقة التوقيت)
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    _formatTimeWithZone(event.startTime),
-                    style: context.styles.body,
-                  ),
-                ),
-
-                // Duration
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    event.formattedDuration,
-                    style: context.styles.body,
-                  ),
-                ),
-
-                if (onEdit != null)
-                  IconButton(
-                    onPressed: onEdit,
-                    icon: const Icon(
-                      Icons.edit,
-                      size: 22,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top Row
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.md,
+                        right: AppSpacing.md,
+                        bottom: AppSpacing.xs,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 36,
+                            child: Text(
+                              event.status,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 110,
+                            child: Text(
+                              _formatTimeWithZone(event.startTime),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  event.formattedDuration,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                if (_startedOnAnotherDay)
+                                  Flexible(
+                                    child: Text(
+                                      isArabic
+                                          ? 'بدأ: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'
+                                          : 'Started: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (onEdit != null)
+                            IconButton(
+                              onPressed: onEdit,
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 22,
+                                color: AppColors.textPrimary,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                        ],
+                      ),
                     ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-              ],
-            ),
-            // Expanded content
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: ExpandedContent(event: event),
-              crossFadeState: isExpanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 300),
-            ),
-          ],
-        ),
+                    
+                    // Expanded content
+                    AnimatedCrossFade(
+                      firstChild: const SizedBox(height: AppSpacing.sm),
+                      secondChild: Padding(
+                        padding: const EdgeInsets.only(
+                          left: 36, // Indent to align with Time
+                          right: AppSpacing.md,
+                          bottom: AppSpacing.md,
+                        ),
+                        child: ExpandedContent(event: event),
+                      ),
+                      crossFadeState: isExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 300),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          // Faint Divider
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
+        ],
       ),
     );
   }

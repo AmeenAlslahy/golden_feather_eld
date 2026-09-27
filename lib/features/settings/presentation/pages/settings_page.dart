@@ -15,6 +15,7 @@ import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 final fleetSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final result = await ref.watch(configBackendProvider).getSettings();
@@ -49,10 +50,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _saveUrl() async {
     final raw = _url.text.trim();
     if (raw.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_arabic ? 'أدخل عنوان الخادم.' : 'Enter the server URL.'),
-        ),
+      AppFeedback.error(
+          context, _arabic ? 'أدخل عنوان الخادم.' : 'Enter the server URL.');
+      return;
+    }
+    final uri = Uri.tryParse(raw);
+    final validHttp = uri != null &&
+        uri.hasAuthority &&
+        uri.host.isNotEmpty &&
+        (uri.scheme == 'http' || uri.scheme == 'https');
+    if (!validHttp) {
+      AppFeedback.error(
+        context,
+        _arabic
+            ? 'عنوان غير صالح. مثال: https://server.example.com'
+            : 'Invalid URL. Example: https://server.example.com',
       );
       return;
     }
@@ -62,11 +74,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await prefs.setBackendType('eld');
     if (!mounted) return;
     setState(() => _saving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_arabic ? 'تم حفظ عنوان الخادم.' : 'Server URL saved.'),
-      ),
-    );
+    AppFeedback.success(
+        context, _arabic ? 'تم حفظ عنوان الخادم.' : 'Server URL saved.');
   }
 
   @override
@@ -213,6 +222,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           message: _arabic
                               ? 'لا توجد إعدادات معروضة.'
                               : 'No settings returned.',
+                          isError: false,
                           onRetry: () => ref.invalidate(fleetSettingsProvider),
                         );
                       }

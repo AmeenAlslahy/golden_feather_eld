@@ -52,6 +52,18 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       throw UnimplementedError('MockDailyLogsBackend.getById — Phase 2');
 
   @override
+  Future<Result<RawJson>> getTeamStatus(DailyLogId logId) async {
+    // Live shape 2026-09-25 (no co-driver linked).
+    return ok(<String, dynamic>{
+      'dailyLogId': logId.value,
+      'primaryDriver': {'id': 101, 'name': 'Demo Driver'},
+      'teamModeActive': false,
+      'hosRecordsIsolated': true,
+      'complianceNote': 'HOS records are fully isolated (SRS 5.8 / FMCSA).',
+    });
+  }
+
+  @override
   Future<Result<RawJson>> proposeCarrierEdit({
     required DailyLogId logId,
     required RawJson edit,
@@ -101,8 +113,8 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       throw UnimplementedError('MockDailyLogsBackend.saveForm — Phase 2');
 
   @override
-  Future<Result<RawJson>> getGraphGrid(DailyLogId logId) =>
-      throw UnimplementedError('MockDailyLogsBackend.getGraphGrid — Phase 2');
+  Future<Result<RawJson>> getGraphGrid(DailyLogId logId) async =>
+      ok(<String, dynamic>{'dailyLogId': logId.value, 'events': <dynamic>[]});
 
   @override
   Future<Result<void>> lock(DailyLogId logId) =>
@@ -120,16 +132,5 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       legalStatement: 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
       availableActions: ['CERTIFY'],
     ));
-  }
-
-  @override
-  Future<Result<List<dynamic>>> getLegacyDutyStatusLogs(
-      int driverId, DateTime date) async {
-    return ok([]);
-  }
-
-  @override
-  Future<Result<List<dynamic>>> getLegacySyncLogs(int driverId) async {
-    return ok([]);
   }
 }

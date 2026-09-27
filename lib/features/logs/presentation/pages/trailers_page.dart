@@ -1,33 +1,14 @@
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_text_field.dart';
-// import '../../../../l10n/app_localizations.dart';
-
-/// مزود قائمة المقطورات
-final trailersProvider =
-    StateNotifierProvider<TrailersNotifier, List<String>>((ref) {
-  return TrailersNotifier();
-});
-
-class TrailersNotifier extends StateNotifier<List<String>> {
-  TrailersNotifier() : super(['1402']); // افتراضية
-
-  void add(String trailer) {
-    if (trailer.isNotEmpty && !state.contains(trailer)) {
-      state = [...state, trailer];
-    }
-  }
-
-  void remove(String trailer) {
-    state = state.where((t) => t != trailer).toList();
-  }
-}
+import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/daily_form_rules.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 /// شاشة المقطورات
 class TrailersPage extends ConsumerStatefulWidget {
@@ -37,8 +18,13 @@ class TrailersPage extends ConsumerStatefulWidget {
   ConsumerState<TrailersPage> createState() => _TrailersPageState();
 }
 
+/// Edits the Form tab's trailer list (SRS 5.5–5.13). The list lives on
+/// `dashboardDataProvider` — the same value the daily-form SAVE sends — so
+/// there is no second copy and nothing is invented.
 class _TrailersPageState extends ConsumerState<TrailersPage> {
   final _controller = TextEditingController();
+
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
 
   @override
   void dispose() {
@@ -46,21 +32,36 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
     super.dispose();
   }
 
+  List<String> get _trailers =>
+      splitFormList(ref.read(dashboardDataProvider).trailerId);
+
   void _addTrailer() {
     final text = _controller.text.trim();
-    if (text.isNotEmpty) {
-      ref.read(trailersProvider.notifier).add(text);
-      _controller.clear();
+    final error = trailerNumberError(text, isArabic: _isArabic);
+    if (error != null) {
+      AppFeedback.error(context, error);
+      return;
     }
+    final current = _trailers;
+    if (current.contains(text)) {
+      _controller.clear();
+      return;
+    }
+    ref
+        .read(dashboardDataProvider.notifier)
+        .updateTrailers([...current, text]);
+    _controller.clear();
   }
 
   void _removeTrailer(String trailer) {
-    ref.read(trailersProvider.notifier).remove(trailer);
+    ref
+        .read(dashboardDataProvider.notifier)
+        .updateTrailers(_trailers.where((t) => t != trailer).toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    final trailers = ref.watch(trailersProvider);
+    final trailers = splitFormList(ref.watch(dashboardDataProvider).trailerId);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -70,8 +71,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Trailers', style: context.styles.appBarTitle,
-        ),
+        title: Text(context.loc.trailers, style: context.styles.appBarTitle),
         centerTitle: true,
       ),
       body: Column(
@@ -89,7 +89,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                 Expanded(
                   child: AppTextField(
                     controller: _controller,
-                    hint: 'Type here',
+                    hint: _isArabic ? 'اكتب هنا' : 'Type here',
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _addTrailer(),
                   ),
@@ -126,7 +126,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
             child: trailers.isEmpty
                 ? Center(
                     child: Text(
-                      'No trailers added',
+                      _isArabic ? 'لا توجد مقطورات' : 'No trailers added',
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.outline),
                     ),
@@ -160,9 +160,9 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                                   BorderRadius.circular(AppRadius.button),
                             ),
                           ),
-                          child: const Text(
-                            'DELETE',
-                            style: TextStyle(
+                          child: Text(
+                            _isArabic ? 'حذف' : 'DELETE',
+                            style: const TextStyle(
                               fontSize: AppTypography.smallSize,
                               fontWeight: AppTypography.bold,
                             ),

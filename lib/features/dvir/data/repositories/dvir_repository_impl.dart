@@ -1,14 +1,15 @@
 import 'package:fpdart/fpdart.dart';
-
-import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
-import '../../../../backend/contracts/dvir_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../domain/dvir_catalog.dart';
 import '../../domain/dvir_submission.dart';
+import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
+import '../../../../backend/contracts/dvir_backend.dart';
+import '../../../../backend/contracts/raw_json.dart';
+import '../../../../core/result/result.dart';
+import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
+import '../../../../domain/shared/value_objects.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
@@ -38,6 +39,53 @@ class DvirRepositoryImpl implements DvirRepository {
         return Right(reports);
       }
     );
+  }
+
+  @override
+  Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
+    if (!networkInfo.isConnected) return const Left(NetworkFailure());
+    final id = vehicleId.trim();
+    if (id.isEmpty || id == 'unknown_vehicle' || id == 'No Vehicle') {
+      return const Right(null);
+    }
+    final Result<RawJson> result;
+    try {
+      result = await dvirBackend.getPreviousDvir(id);
+    } catch (_) {
+      return const Left(ServerFailure(message: 'pre-trip read failed'));
+    }
+    return result.fold(
+      (error) => Left(ServerFailure(message: error.code)),
+      (raw) {
+        final nested = raw['data'];
+        final body = nested is Map ? Map<String, dynamic>.from(nested) : raw;
+        // Live shape with no record: {message:"No Records", hasPreviousDvir:false}.
+        if (body['hasPreviousDvir'] == false) return const Right(null);
+        final candidate = _previousDvirObject(body);
+        if (candidate == null) {
+          // Caller falls back to the vehicle list; never guess a report.
+          return const Left(ServerFailure(message: 'pre-trip body has no DVIR'));
+        }
+        try {
+          return Right(_mapDtoToEntity(DvirDto.fromJson(candidate)));
+        } catch (_) {
+          return const Left(ServerFailure(message: 'pre-trip body unreadable'));
+        }
+      },
+    );
+  }
+
+  /// The record may be the body itself or nested under a documented-looking
+  /// key; anything without an `id` is not a DVIR.
+  static Map<String, dynamic>? _previousDvirObject(Map<String, dynamic> body) {
+    if (body['id'] is num) return body;
+    for (final key in const ['dvir', 'previousDvir', 'report', 'lastDvir']) {
+      final value = body[key];
+      if (value is Map && value['id'] is num) {
+        return Map<String, dynamic>.from(value);
+      }
+    }
+    return null;
   }
 
   @override

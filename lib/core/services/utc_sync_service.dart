@@ -3,7 +3,6 @@ import '../utils/logger.dart';
 
 /// خدمة مزامنة التوقيت مع UTC
 class UtcSyncService {
-  DateTime? _lastSyncTime;
   Duration? _drift; // انحراف الوقت المحلي
 
   /// مزامنة الوقت مع مرجع الخادم.
@@ -22,7 +21,6 @@ class UtcSyncService {
     }
     try {
       _drift = serverTime.toUtc().difference(now);
-      _lastSyncTime = now;
 
       AppLogger.info(
           '🕐 UTC Sync: server=${serverTime.toUtc().toIso8601String()}');
@@ -44,27 +42,6 @@ class UtcSyncService {
 
   /// الحصول على الوقت بصيغة UTC
   DateTime get utcNow => syncedTime.toUtc();
-
-  /// تنسيق الوقت للتخزين
-  String formatForStorage(DateTime time) {
-    return time.toUtc().toIso8601String();
-  }
-
-  /// استخراج الوقت من التخزين
-  DateTime parseFromStorage(String stored) {
-    return DateTime.parse(stored).toLocal();
-  }
-
-  /// معلومات المزامنة للتقرير
-  Map<String, dynamic> getSyncInfo() {
-    return {
-      'last_sync': _lastSyncTime?.toIso8601String(),
-      'drift_seconds': _drift?.inSeconds,
-      'is_synced': _lastSyncTime != null,
-      'timezone': DateTime.now().timeZoneName,
-      'utc_offset': DateTime.now().timeZoneOffset.inHours,
-    };
-  }
 }
 
 /// مزود خدمة UTC

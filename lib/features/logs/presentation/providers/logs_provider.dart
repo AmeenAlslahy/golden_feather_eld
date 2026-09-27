@@ -1,13 +1,14 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fpdart/fpdart.dart';
+import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/daily_log.dart';
+import '../../domain/repositories/log_repository.dart';
+import '../../data/repositories/log_repository_impl.dart';
+import '../../domain/entities/audit_entry.dart';
+import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../data/repositories/log_repository_impl.dart';
-import '../../domain/entities/audit_entry.dart';
-import '../../domain/entities/daily_log.dart';
-import '../../domain/repositories/log_repository.dart';
 
 /// حالة شاشة السجلات
 class LogsState {
@@ -18,6 +19,13 @@ class LogsState {
   final int offset;
   final bool hasReachedMax;
 
+  /// True while the events of [selectedLog] are being fetched.
+  final bool isLoadingEvents;
+
+  /// Set when fetching the events of [selectedLog] failed (raw failure
+  /// message; sanitize before display).
+  final String? eventsError;
+
   const LogsState({
     this.logs = const [],
     this.selectedLog,
@@ -25,6 +33,8 @@ class LogsState {
     this.error,
     this.offset = 0,
     this.hasReachedMax = false,
+    this.isLoadingEvents = false,
+    this.eventsError,
   });
 
   LogsState copyWith({
@@ -35,6 +45,9 @@ class LogsState {
     bool clearError = false,
     int? offset,
     bool? hasReachedMax,
+    bool? isLoadingEvents,
+    String? eventsError,
+    bool clearEventsError = false,
   }) {
     return LogsState(
       logs: logs ?? this.logs,
@@ -43,6 +56,9 @@ class LogsState {
       error: clearError ? null : (error ?? this.error),
       offset: offset ?? this.offset,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
+      eventsError:
+          clearEventsError ? null : (eventsError ?? this.eventsError),
     );
   }
 }
@@ -113,39 +129,56 @@ class LogsNotifier extends StateNotifier<LogsState> {
     );
   }
 
-  /// تحديد سجل محدد للتفاصيل
-  Future<void> selectLog(DailyLog log) async {
-    // تعيين السجل مبدئياً لكي تفتح الشاشة فوراً
-    state = state.copyWith(selectedLog: log);
+  /// تحديد سجل محدد للتفاصيل ثم جلب أحداثه.
+  ///
+  /// قائمة `GET /eld/daily-logs` لا تتضمن الأحداث؛ لذلك تُجلب عند فتح اليوم
+  /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
+  void selectLog(DailyLog log) {
+    state = state.copyWith(selectedLog: log, clearEventsError: true);
+    loadSelectedLogEvents();
+  }
 
-    if (log.events.isNotEmpty) return; // قد تكون جُلبت مسبقاً
+  /// (إعادة) جلب أحداث السجل المحدد. آمنة للاستدعاء من زر «إعادة المحاولة».
+  Future<void> loadSelectedLogEvents() async {
+    final log = state.selectedLog;
+    if (log == null) return;
 
-    // جلب الأحداث التفصيلية من السيرفر
-    final eventsResult = await _repository.getEvents(log.date);
-    
+    state = state.copyWith(isLoadingEvents: true, clearEventsError: true);
+    final result = await _repository.getEvents(log.id, log.date);
     if (!mounted) return;
+    // المستخدم قد يكون فتح يوماً آخر أثناء الانتظار.
+    if (state.selectedLog?.id != log.id) return;
 
-    eventsResult.match(
+    result.match(
       (failure) {
-        // يمكنك إظهار خطأ أو طباعته
+        state = state.copyWith(
+          isLoadingEvents: false,
+          eventsError: failure.message,
+        );
       },
       (events) {
-        // تحديث السجل بالأحداث الجديدة
-        final updatedLog = log.copyWith(events: events);
-        
-        // تحديث السجل المحدد
-        if (state.selectedLog?.id == updatedLog.id) {
-           state = state.copyWith(selectedLog: updatedLog);
-        }
-        
-        // تحديث القائمة الرئيسية
-        final updatedLogs = state.logs.map((l) {
-          if (l.id == updatedLog.id) return updatedLog;
-          return l;
-        }).toList();
-        
-        state = state.copyWith(logs: updatedLogs);
+        // نحافظ على حالة التوسيع الحالية للأحداث ذات المعرّف نفسه.
+        final expanded = {
+          for (final e in state.selectedLog!.events)
+            if (e.isExpanded) e.id,
+        };
+        final merged = events
+            .map((e) =>
+                expanded.contains(e.id) ? e.copyWith(isExpanded: true) : e)
+            .toList();
+        _replaceSelected(state.selectedLog!.copyWith(events: merged));
+        state = state.copyWith(isLoadingEvents: false, clearEventsError: true);
       },
+    );
+  }
+
+  /// يحدّث السجل المحدد ونسخته داخل القائمة معاً (مصدر حقيقة واحد).
+  void _replaceSelected(DailyLog updatedLog) {
+    state = state.copyWith(
+      selectedLog: updatedLog,
+      logs: state.logs
+          .map((l) => l.id == updatedLog.id ? updatedLog : l)
+          .toList(),
     );
   }
 
@@ -179,74 +212,51 @@ class LogsNotifier extends StateNotifier<LogsState> {
     state = state.copyWith(logs: updatedLogs);
   }
 
-  /// إضافة حدث جديد للسجل المحدد
-  Future<bool> addEvent(LogEvent event) async {
+  /// إضافة حدث جديد للسجل المحدد (POST /eld/duty-status، أو محلياً دون اتصال).
+  Future<bool> addEvent(LogEvent event, {String? reason}) async {
     if (state.selectedLog == null) return false;
 
     // الحفظ في المستودع أولاً؛ لا تحديث للواجهة عند فشل الحفظ.
-    final persisted =
-        (await _repository.addEvent(event)).fold((_) => false, (ok) => ok);
-    if (!persisted) return false;
+    final persisted = (await _repository.addEvent(event, reason: reason))
+        .fold((_) => false, (ok) => ok);
+    if (!persisted || !mounted) return persisted;
 
-    final updatedEvents = <LogEvent>[...state.selectedLog!.events, event];
-
-    final updatedLog = state.selectedLog!.copyWith(
-      events: updatedEvents,
-    );
-
-    // Update the selected log
-    state = state.copyWith(selectedLog: updatedLog);
-
-    // Update the log in the main logs list
-    final updatedLogs = state.logs.map((log) {
-      if (log.id == updatedLog.id) return updatedLog;
-      return log;
-    }).toList();
-
-    state = state.copyWith(logs: updatedLogs);
+    _replaceSelected(state.selectedLog!.copyWith(
+      events: <LogEvent>[...state.selectedLog!.events, event],
+    ));
+    // الخادم يعيد حساب المدد والمعرّفات — أعد الجلب لتطابق الشبكة الرسمية.
+    unawaited(loadSelectedLogEvents());
     return true;
   }
 
-  Future<bool> updateEvent(LogEvent event) async {
+  /// تعديل حدث (PUT /eld/duty-status/{id} مع سبب إلزامي).
+  Future<bool> updateEvent(LogEvent event, {required String reason}) async {
     if (state.selectedLog == null) return false;
 
-    final persisted =
-        (await _repository.updateEvent(event)).fold((_) => false, (ok) => ok);
-    if (!persisted) return false;
+    final persisted = (await _repository.updateEvent(event, reason: reason))
+        .fold((_) => false, (ok) => ok);
+    if (!persisted || !mounted) return persisted;
 
-    final updatedEvents = state.selectedLog!.events
-        .map((e) => e.id == event.id ? event : e)
-        .toList();
-
-    final updatedLog = state.selectedLog!.copyWith(
-      events: updatedEvents,
-    );
-
-    state = state.copyWith(selectedLog: updatedLog);
-
-    final updatedLogs = state.logs.map((log) {
-      if (log.id == updatedLog.id) return updatedLog;
-      return log;
-    }).toList();
-
-    state = state.copyWith(logs: updatedLogs);
+    _replaceSelected(state.selectedLog!.copyWith(
+      events: state.selectedLog!.events
+          .map((e) => e.id == event.id ? event : e)
+          .toList(),
+    ));
+    unawaited(loadSelectedLogEvents());
     return true;
   }
 
   /// تحديث سجل بالكامل (مثل إكمال النموذج)
   void updateLog(DailyLog updatedLog) {
-    // Update the selected log if it matches
     if (state.selectedLog?.id == updatedLog.id) {
-      state = state.copyWith(selectedLog: updatedLog);
+      _replaceSelected(updatedLog);
+      return;
     }
-
-    // Update the log in the main logs list
-    final updatedLogs = state.logs.map((log) {
-      if (log.id == updatedLog.id) return updatedLog;
-      return log;
-    }).toList();
-
-    state = state.copyWith(logs: updatedLogs);
+    state = state.copyWith(
+      logs: state.logs
+          .map((log) => log.id == updatedLog.id ? updatedLog : log)
+          .toList(),
+    );
   }
 
   /// جلب سجل التدقيق ليوم محدد

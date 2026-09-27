@@ -1,10 +1,9 @@
 import 'package:go_router/go_router.dart';
-
-import '../features/codriver/presentation/pages/codriver_page.dart';
+import '../routes.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/hos/presentation/pages/status_dashboard_page.dart';
 import '../features/vehicle/presentation/pages/select_vehicle_page.dart';
-import '../routes.dart';
+import '../features/codriver/presentation/pages/codriver_page.dart';
 
 class HomeRoutes {
   HomeRoutes._();

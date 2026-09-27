@@ -1,39 +1,40 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-
-import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
-import '../../../../backend/contracts/daily_logs_backend.dart';
-import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/error/failure.dart';
-import '../../../../core/network/core_providers.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/services/tracking_config_storage_service.dart';
-import '../../../../core/utils/repository_helper.dart';
-import '../../domain/entities/audit_entry.dart';
-import '../../domain/entities/daily_log.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/daily_logs_backend.dart';
+import '../../../../backend/contracts/duty_status_backend.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../datasources/log_local_data_source.dart';
-import '../models/daily_log_dto.dart';
 import '../models/log_model.dart';
+import '../../domain/entities/daily_log.dart';
+import '../../domain/entities/audit_entry.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/daily_log_dto.dart';
+import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
+import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import '../../../../core/utils/repository_helper.dart';
 
 class LogRepositoryImpl implements LogRepository {
   final LogLocalDataSource _localDataSource;
   final DailyLogsBackend _dailyLogsBackend;
+  final DutyStatusBackend _dutyStatusBackend;
   final NetworkInfo _networkInfo;
-  final TrackingConfigStorageService _storageService;
 
   LogRepositoryImpl({
     required LogLocalDataSource localDataSource,
     required DailyLogsBackend dailyLogsBackend,
+    required DutyStatusBackend dutyStatusBackend,
     required NetworkInfo networkInfo,
-    required TrackingConfigStorageService storageService,
   })  : _localDataSource = localDataSource,
         _dailyLogsBackend = dailyLogsBackend,
-        _networkInfo = networkInfo,
-        _storageService = storageService;
+        _dutyStatusBackend = dutyStatusBackend,
+        _networkInfo = networkInfo;
 
   @override
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -42,7 +43,15 @@ class LogRepositoryImpl implements LogRepository {
     int offset = 0,
   }) async {
     if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
+      // SRS 6.8 — offline: serve the last server snapshot read-only
+      // (first page only; nothing is invented and nothing is re-owned).
+      if (offset == 0) {
+        final cached = await _localDataSource.getCachedDailyLogs(driverId);
+        if (cached != null) {
+          return Right(_toDailyLogs(cached));
+        }
+      }
+      return const Left(NetworkFailure());
     }
 
     return executeWithHandling(
@@ -56,11 +65,14 @@ class LogRepositoryImpl implements LogRepository {
         return result.match(
           (failure) => throw Exception(failure.l10nKey),
           (data) {
-            final logsJson = data['data'] as List<dynamic>? ?? [];
-            return logsJson
-                .map((json) =>
-                    DailyLogDto.fromJson(json as Map<String, dynamic>).toEntity())
+            final logsJson = (data['data'] as List<dynamic>? ?? const [])
+                .whereType<Map<String, dynamic>>()
                 .toList();
+            if (offset == 0) {
+              // Fire-and-forget; a cache failure must not fail the read.
+              _cacheQuietly(_localDataSource.cacheDailyLogs(driverId, logsJson));
+            }
+            return _toDailyLogs(logsJson);
           },
         );
       },
@@ -68,53 +80,106 @@ class LogRepositoryImpl implements LogRepository {
     );
   }
 
-  @override
-  Future<Either<Failure, List<LogEvent>>> getEvents(DateTime date) async {
-    if (_networkInfo.isConnected) {
-      try {
-        final driverId = int.tryParse(_storageService.deviceId) ?? 100;
-        final result = await _dailyLogsBackend.getLegacyDutyStatusLogs(driverId, date);
-        
-        final remoteLogs = result.fold(
-          (error) => <LogEvent>[],
-          (data) => data.map((json) => LogEventModel.fromJson(json as Map<String, dynamic>)).toList()
-        );
+  /// Snapshot writes are best-effort: they never delay or fail a read.
+  void _cacheQuietly(Future<void> write) =>
+      unawaited(write.catchError((Object _) {}));
 
-        if (remoteLogs.isNotEmpty) {
-          // الخادم هو مصدر الحقيقة؛ المحلي احتياطي عند غياب الرد.
-          return Right(remoteLogs.toList());
-        }
-      } catch (_) {
-        // Fallback to local on any error
+  List<DailyLog> _toDailyLogs(List<Map<String, dynamic>> logsJson) => logsJson
+      .map((json) => DailyLogDto.fromJson(json).toEntity())
+      .toList();
+
+  @override
+  Future<Either<Failure, List<LogEvent>>> getEvents(
+      DailyLogId logId, DateTime date) async {
+    if (_networkInfo.isConnected) {
+      final result = await _dailyLogsBackend.getGraphGrid(logId);
+      final remoteJson = result.fold(
+        (_) => null,
+        (data) => (data['events'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .toList(),
+      );
+      // الخادم هو مصدر الحقيقة؛ المحلي احتياطي عند غياب الرد فقط.
+      if (remoteJson != null) {
+        _cacheQuietly(_localDataSource.cacheLogEvents(logId, remoteJson));
+        return Right(remoteJson.map(LogEventModel.fromJson).toList());
       }
     }
 
+    // SRS 6.8 — offline / no answer: last server snapshot for this day,
+    // then any events recorded locally while disconnected.
     return executeWithHandling(
-      () => _localDataSource.getEvents(date),
+      () async {
+        final cached = await _localDataSource.getCachedLogEvents(logId);
+        final local = await _localDataSource.getEvents(date);
+        if (cached == null) return local;
+        final cachedIds = cached.map((e) => '${e['id']}').toSet();
+        return [
+          ...cached.map(LogEventModel.fromJson),
+          ...local.where((e) => !cachedIds.contains(e.id)),
+        ];
+      },
       tag: 'LogRepositoryImpl.getEvents',
     );
   }
 
   @override
-  Future<Either<Failure, bool>> addEvent(LogEvent event) {
-    return executeWithHandling(
-      () => _localDataSource.addEvent(event),
-      tag: 'LogRepositoryImpl.addEvent',
+  Future<Either<Failure, bool>> addEvent(LogEvent event,
+      {String? reason}) async {
+    if (!_networkInfo.isConnected) {
+      // SRS 6.8 — offline: keep it on the device, never lose it.
+      return executeWithHandling(
+        () => _localDataSource.addEvent(event),
+        tag: 'LogRepositoryImpl.addEvent(offline)',
+      );
+    }
+    final wire = DutyStatusCode.fromShortCode(event.status)?.wire ??
+        DutyStatusCode.offDuty.wire;
+    final result = await _dutyStatusBackend.record({
+      'status': wire,
+      'startTime': event.startTime.toUtc().toIso8601String(),
+      if (event.location.isNotEmpty) 'locationText': event.location,
+      if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
+      'origin': 'DRIVER',
+    });
+    return result.fold(
+      (error) => Left(ServerFailure(message: error.l10nKey)),
+      (_) => const Right(true),
     );
   }
 
   @override
-  Future<Either<Failure, bool>> updateEvent(LogEvent event) {
-    return executeWithHandling(
-      () => _localDataSource.updateEvent(event),
-      tag: 'LogRepositoryImpl.updateEvent',
+  Future<Either<Failure, bool>> updateEvent(LogEvent event,
+      {required String reason}) async {
+    final statusId = int.tryParse(event.id);
+    if (!_networkInfo.isConnected || statusId == null) {
+      // Local-only event (never reached the server) or offline: local store.
+      return executeWithHandling(
+        () => _localDataSource.updateEvent(event),
+        tag: 'LogRepositoryImpl.updateEvent(local)',
+      );
+    }
+    final wire = DutyStatusCode.fromShortCode(event.status)?.wire ??
+        DutyStatusCode.offDuty.wire;
+    final result = await _dutyStatusBackend.update(
+      statusId: DutyStatusId(statusId),
+      update: {
+        'status': wire,
+        'startTime': event.startTime.toUtc().toIso8601String(),
+        if (event.location.isNotEmpty) 'locationText': event.location,
+        'editReason': reason.trim(),
+      },
+    );
+    return result.fold(
+      (error) => Left(ServerFailure(message: error.l10nKey)),
+      (_) => const Right(true),
     );
   }
 
   @override
   Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
+      return const Left(NetworkFailure());
     }
     return executeWithHandling(
       () async {
@@ -144,7 +209,7 @@ class LogRepositoryImpl implements LogRepository {
       return const Left(ServerFailure(message: 'Log date must be YYYY-MM-DD'));
     }
     if (!_networkInfo.isConnected) {
-      return const Left(ServerFailure(message: 'No internet connection'));
+      return const Left(NetworkFailure());
     }
     return executeWithHandling(
       () async {
@@ -252,7 +317,7 @@ final logRepositoryProvider = Provider<LogRepository>((ref) {
   return LogRepositoryImpl(
     localDataSource: ref.watch(logLocalDataSourceProvider),
     dailyLogsBackend: ref.watch(dailyLogsBackendProvider),
+    dutyStatusBackend: ref.watch(dutyStatusBackendProvider),
     networkInfo: ref.watch(networkInfoProvider),
-    storageService: ref.watch(trackingConfigStorageProvider),
   );
 });

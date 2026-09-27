@@ -48,7 +48,11 @@ class _InspectionGraphPainter extends CustomPainter {
   final Color textColor;
   final Color gridColor;
 
-  static const _rows = ['OFF', 'SB', 'D', 'ON', 'PC', 'YM'];
+  /// SRS 8.3 / FMCSA graph-grid: exactly four duty rows. Personal
+  /// Conveyance is drawn on the OFF row and Yard Move on the ON row, each
+  /// with a distinct colour plus a "PC"/"YM" tag so special categories stay
+  /// visually distinct from the base statuses.
+  static const _rows = ['OFF', 'SB', 'D', 'ON'];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -91,11 +95,16 @@ class _InspectionGraphPainter extends CustomPainter {
 
     if (events.isEmpty) return;
 
-    final points = <({double hour, String row})>[];
+    final points = <({double hour, String row, String? special})>[];
     for (final event in events) {
       final hour = _hourOf(event.timeEt);
       if (hour == null) continue;
-      points.add((hour: hour, row: _rowOf(event)));
+      final code = _rowOf(event);
+      points.add((
+        hour: hour,
+        row: switch (code) { 'PC' => 'OFF', 'YM' => 'ON', _ => code },
+        special: code == 'PC' || code == 'YM' ? code : null,
+      ));
     }
     if (points.isEmpty) return;
     points.sort((a, b) => a.hour.compareTo(b.hour));
@@ -104,7 +113,12 @@ class _InspectionGraphPainter extends CustomPainter {
       ..color = AppColors.primaryGold
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeCap = StrokeCap.round;
+    final specialLine = Paint()
+      ..color = AppColors.infoBlue
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
     double yFor(String row) {
       final index = _rows.indexOf(row);
@@ -112,21 +126,44 @@ class _InspectionGraphPainter extends CustomPainter {
       return i * rowHeight + rowHeight / 2;
     }
 
-    final path = Path();
-    var x = labelWidth + (points.first.hour / 24) * chartWidth;
-    var y = yFor(points.first.row);
-    path.moveTo(labelWidth, y);
-    path.lineTo(x, y);
-    for (var i = 1; i < points.length; i++) {
-      final nextX = labelWidth + (points[i].hour / 24) * chartWidth;
-      final nextY = yFor(points[i].row);
-      path.lineTo(nextX, y);
-      path.lineTo(nextX, nextY);
-      x = nextX;
-      y = nextY;
+    void tag(String text, double x1, double x2, double y) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            fontSize: 8,
+            color: AppColors.infoBlue,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (x2 - x1 < tp.width) return;
+      tp.paint(canvas, Offset((x1 + x2) / 2 - tp.width / 2, y - tp.height - 2));
     }
-    path.lineTo(labelWidth + chartWidth, y);
-    canvas.drawPath(path, line);
+
+    // Horizontal segment per status interval; vertical joins between rows.
+    final firstX = labelWidth + (points.first.hour / 24) * chartWidth;
+    var y = yFor(points.first.row);
+    canvas.drawLine(Offset(labelWidth, y), Offset(firstX, y), line);
+    for (var i = 0; i < points.length; i++) {
+      final startX = labelWidth + (points[i].hour / 24) * chartWidth;
+      final endX = i + 1 < points.length
+          ? labelWidth + (points[i + 1].hour / 24) * chartWidth
+          : labelWidth + chartWidth;
+      final rowY = yFor(points[i].row);
+      if (i > 0 && rowY != y) {
+        canvas.drawLine(Offset(startX, y), Offset(startX, rowY), line);
+      }
+      final special = points[i].special;
+      canvas.drawLine(
+        Offset(startX, rowY),
+        Offset(endX, rowY),
+        special == null ? line : specialLine,
+      );
+      if (special != null) tag(special, startX, endX, rowY);
+      y = rowY;
+    }
   }
 
   static double? _hourOf(String timeEt) {
@@ -141,6 +178,26 @@ class _InspectionGraphPainter extends CustomPainter {
   }
 
   static String _rowOf(DotInspectionEvent event) {
+    // The standard duty code is authoritative; free-text matching below is
+    // only a fallback for servers that send descriptive codes.
+    switch (event.eventCode.trim().toUpperCase()) {
+      case '1':
+      case 'OFF':
+        return 'OFF';
+      case '2':
+      case 'SB':
+        return 'SB';
+      case '3':
+      case 'D':
+        return 'D';
+      case '4':
+      case 'ON':
+        return 'ON';
+      case 'PC':
+        return 'PC';
+      case 'YM':
+        return 'YM';
+    }
     final raw = '${event.eventCode} ${event.eventType} ${event.description}'
         .toUpperCase();
     if (raw.contains('PC') || raw.contains('PERSONAL')) return 'PC';

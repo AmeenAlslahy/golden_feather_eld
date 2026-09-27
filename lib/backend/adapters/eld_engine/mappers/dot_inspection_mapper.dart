@@ -102,7 +102,31 @@ class DotInspectionMapper {
           _asStringList(json['activeDeviceMalfunctions']),
       events: _parseEvents(json['events']),
       readOnly: _asBool(json['readOnly']),
+      period24HourStartTime: _asLocalTime(json['period24HourStartTime']),
+      driverLicenseNumber: _asStringOrNull(json['driver']?['licenseNumber']),
+      driverLicenseState: _asStringOrNull(json['driver']?['licenseState']),
+      coDriverName: _asStringOrNull(json['coDriver']?['name']),
+      coDriverId: json['coDriver']?['id'] is num
+          ? (json['coDriver']['id'] as num).toInt()
+          : null,
     );
+  }
+
+  static String? _asStringOrNull(Object? v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  /// `LocalTime` = `{hour, minute, second, nano}` (or an `HH:mm[:ss]` string).
+  static String? _asLocalTime(Object? raw) {
+    if (raw is Map) {
+      final h = _asInt(raw['hour']);
+      final m = _asInt(raw['minute']);
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+    }
+    if (raw is String && raw.length >= 5) return raw.substring(0, 5);
+    return null;
   }
 
   static List<DotInspectionEvent> _parseEvents(Object? raw) {

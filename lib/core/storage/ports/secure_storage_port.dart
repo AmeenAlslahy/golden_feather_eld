@@ -2,7 +2,7 @@
 ///
 /// Implementations encrypt data at rest (e.g. Keychain, Keystore).
 ///
-/// **Rule:** Never store secrets in `KeyValuePort` — only in
+/// **Rule:** Never store secrets in plain preferences — only in
 /// `SecureStoragePort`.
 abstract interface class SecureStoragePort {
   Future<String?> read(String key);

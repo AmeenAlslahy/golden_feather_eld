@@ -98,6 +98,7 @@ AppError _mapBadResponse(DioException e) {
 
   switch (statusCode) {
     case 400:
+      // DEBUG: print detailed errors array if present
       return ValidationError(
         code: serverErrorCode ?? 'validation.badRequest',
         l10nKey: 'validationError',

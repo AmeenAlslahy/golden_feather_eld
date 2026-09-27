@@ -1,34 +1,15 @@
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/daily_form_rules.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
-/// مزود قائمة وثائق الشحن
-final shippingDocsProvider =
-    StateNotifierProvider<ShippingDocsNotifier, List<String>>((ref) {
-  return ShippingDocsNotifier();
-});
-
-class ShippingDocsNotifier extends StateNotifier<List<String>> {
-  ShippingDocsNotifier() : super(['BOL-2024-001']); // افتراضية
-
-  void add(String doc) {
-    if (doc.isNotEmpty && !state.contains(doc)) {
-      state = [...state, doc];
-    }
-  }
-
-  void remove(String doc) {
-    state = state.where((d) => d != doc).toList();
-  }
-}
-
-/// شاشة وثائق الشحن
 class ShippingDocumentsPage extends ConsumerStatefulWidget {
   const ShippingDocumentsPage({super.key});
 
@@ -37,8 +18,12 @@ class ShippingDocumentsPage extends ConsumerStatefulWidget {
       _ShippingDocumentsPageState();
 }
 
+/// Edits the Form tab's shipping-document list (SRS 5.5–5.13). Backed by
+/// `dashboardDataProvider` — the value the daily-form SAVE sends.
 class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
   final _controller = TextEditingController();
+
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
 
   @override
   void dispose() {
@@ -46,21 +31,37 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
     super.dispose();
   }
 
+  List<String> get _documents =>
+      splitFormList(ref.read(dashboardDataProvider).shippingDocuments);
+
   void _addDocument() {
     final text = _controller.text.trim();
-    if (text.isNotEmpty) {
-      ref.read(shippingDocsProvider.notifier).add(text);
-      _controller.clear();
+    final error = shippingDocumentError(text, isArabic: _isArabic);
+    if (error != null) {
+      AppFeedback.error(context, error);
+      return;
     }
+    final current = _documents;
+    if (current.contains(text)) {
+      _controller.clear();
+      return;
+    }
+    ref
+        .read(dashboardDataProvider.notifier)
+        .updateShippingDocuments([...current, text]);
+    _controller.clear();
   }
 
   void _removeDocument(String doc) {
-    ref.read(shippingDocsProvider.notifier).remove(doc);
+    ref
+        .read(dashboardDataProvider.notifier)
+        .updateShippingDocuments(_documents.where((d) => d != doc).toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    final docs = ref.watch(shippingDocsProvider);
+    final docs =
+        splitFormList(ref.watch(dashboardDataProvider).shippingDocuments);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -70,8 +71,8 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Shipping Documents', style: context.styles.appBarTitle,
-        ),
+        title: Text(context.loc.shippingDocuments,
+            style: context.styles.appBarTitle),
         centerTitle: true,
       ),
       body: Column(
@@ -89,7 +90,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                 Expanded(
                   child: AppTextField(
                     controller: _controller,
-                    hint: 'Type here',
+                    hint: _isArabic ? 'اكتب هنا' : 'Type here',
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _addDocument(),
                   ),
@@ -126,7 +127,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
             child: docs.isEmpty
                 ? Center(
                     child: Text(
-                      'No documents added',
+                      _isArabic ? 'لا توجد مستندات' : 'No documents added',
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.outline),
                     ),
@@ -160,9 +161,9 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                                   BorderRadius.circular(AppRadius.button),
                             ),
                           ),
-                          child: const Text(
-                            'DELETE',
-                            style: TextStyle(
+                          child: Text(
+                            _isArabic ? 'حذف' : 'DELETE',
+                            style: const TextStyle(
                               fontSize: AppTypography.smallSize,
                               fontWeight: AppTypography.bold,
                             ),

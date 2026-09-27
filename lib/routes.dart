@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/auth/presentation/providers/auth_state_provider.dart';
-import 'routes/account_routes.dart';
+
 import 'routes/auth_routes.dart';
-import 'routes/dvir_routes.dart';
 import 'routes/home_routes.dart';
 import 'routes/logs_routes.dart';
+import 'routes/dvir_routes.dart';
+import 'routes/account_routes.dart';
 
 /// مسارات التطبيق (مطابقة لقائمة التنقل في SRS §4)
 class AppRoutes {

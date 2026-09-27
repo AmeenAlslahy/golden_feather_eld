@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/contracts/vehicle_backend.dart';
-import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../data/repositories/vehicle_repository_impl.dart';
-import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
+import '../../domain/entities/vehicle.dart';
 import '../../domain/vehicle_selection.dart';
 
 /// حالة شاشة المركبات
@@ -73,7 +72,6 @@ final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
 
   return VehicleRepositoryImpl(
     vehicleBackend: vehicleBackend,
-    hardwareBackend: ref.watch(hardwareBackendProvider),
     networkInfo: networkInfo,
   );
 });

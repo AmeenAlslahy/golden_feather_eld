@@ -5,6 +5,13 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entities/native_location_event.dart';
 
 class NativeLocationQualityValidator {
+  /// [nowUtc] defaults to the device clock; production wires the trusted
+  /// `TimeAuthority.nowUtc` so freshness checks survive a skewed device clock.
+  NativeLocationQualityValidator({DateTime Function()? nowUtc})
+      : _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
+
+  final DateTime Function() _nowUtc;
+
   NativeLocationEvent validate(
       NativeLocationEvent event, DateTime? lastRecordedAt) {
     // Basic coordinate bounds
@@ -27,7 +34,7 @@ class NativeLocationQualityValidator {
     }
 
     // Time validation
-    final now = DateTime.now().toUtc();
+    final now = _nowUtc();
     final timeDiff = event.recordedAt.difference(now).inMinutes;
     if (timeDiff > 5) {
       // Future timestamp (suspicious)

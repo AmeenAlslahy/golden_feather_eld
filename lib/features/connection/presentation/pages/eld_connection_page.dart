@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/error/app_error.dart';
-import '../../../../core/error/user_facing_message.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/network/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../providers/hardware_status_provider.dart';
+
+import '../../../../core/error/app_error.dart';
+import '../../../../core/error/user_facing_message.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 class EldConnectionState {
   final bool isConnecting;
@@ -128,7 +129,7 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
             enable: enable,
             reason: trimmed,
           );
-      return result.fold(
+      return await result.fold(
         (error) => anyErrorUserMessage(error, isArabic: isArabic),
         (_) => null,
       );
@@ -219,9 +220,13 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
     super.dispose();
   }
 
+  final _macFormKey = GlobalKey<FormState>();
+
   Future<void> _attemptConnection() async {
+    // Required + MAC-shaped before any Bluetooth/server attempt.
+    if (!(_macFormKey.currentState?.validate() ?? false)) return;
     final notifier = ref.read(eldConnectionProvider.notifier);
-    await notifier.attemptConnection(_macController.text);
+    await notifier.attemptConnection(_macController.text.trim());
   }
 
   @override
@@ -245,14 +250,11 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           !current.hasFailed) {
         if (current.infoMessage == 'disconnected_accepted') {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isArabic
-                    ? 'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.'
-                    : 'The server accepted disconnected mode. No local duty event was created.',
-              ),
-            ),
+          AppFeedback.info(
+            context,
+            isArabic
+                ? 'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.'
+                : 'The server accepted disconnected mode. No local duty event was created.',
           );
         }
         context.go(AppRoutes.home);
@@ -286,22 +288,11 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         ),
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.airport_shuttle_outlined,
-                color: AppColors.surface),
-            tooltip: Localizations.localeOf(context).languageCode == 'ar'
-                ? 'اختيار المركبة'
-                : 'Select vehicle',
-            onPressed: () => context.push(AppRoutes.selectVehicle),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _ConnectivityPanel(),
             // شريط التنبيه الأحمر
             if (connectionState.hasFailed)
               Container(
@@ -327,10 +318,12 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // SRS 9.3 step 5: the five-item checklist is part of the
+                  // connection screen itself, not only of the failure state.
                   if (connectionState.hasFailed) ...[
-                    // عنوان قائمة التحقق
                     Text(
                       context.loc.verifyFollowingItems,
+                      key: const Key('connection_checklist_title'),
                       style: context.styles.body,
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -342,11 +335,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     const SizedBox(height: AppSpacing.lg),
                     Divider(color: Theme.of(context).dividerColor, height: 1),
                     const SizedBox(height: AppSpacing.lg),
-                  ] else ...[
-                    const SizedBox(height: AppSpacing.xl),
                   ],
-
-                  const _ManualRecordingSection(),
 
                   // عنوان حقل MAC
                   Text(
@@ -356,11 +345,22 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                   const SizedBox(height: AppSpacing.md),
 
                   // ✅ حقل إدخال موحد
-                  AppTextField(
-                    controller: _macController,
-                    hint: 'AA:BB:CC:DD:EE:FF',
-                    isUnderlined: true,
-                    keyboardType: TextInputType.text,
+                  Form(
+                    key: _macFormKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: AppTextField(
+                      controller: _macController,
+                      hint: 'AA:BB:CC:DD:EE:FF',
+                      isUnderlined: true,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _attemptConnection(),
+                      validator: (v) => macAddressError(
+                        v,
+                        isArabic:
+                            Localizations.localeOf(context).languageCode == 'ar',
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: AppSpacing.xl),
@@ -446,220 +446,6 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ConnectivityPanel extends ConsumerWidget {
-  const _ConnectivityPanel();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final status = ref.watch(hardwareStatusProvider);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-      child: status.when(
-        loading: () => Text(
-          isArabic ? 'جارٍ قراءة حالة الاتصال...' : 'Reading connection status...',
-          style: context.styles.body,
-        ),
-        error: (error, _) => Text(
-          anyErrorUserMessage(error, isArabic: isArabic),
-          style: context.styles.error,
-        ),
-        data: (data) => _statusBody(context, data, isArabic),
-      ),
-    );
-  }
-
-  Widget _statusBody(BuildContext context, ConnectivityStatus data, bool isArabic) {
-    final lines = <String>[
-      _statusLine(data, isArabic),
-      if (data.hasDiagnostic)
-        isArabic
-            ? 'تشخيص: ${data.diagnostics.join(', ')}'
-            : 'Diagnostic: ${data.diagnostics.join(', ')}',
-      if (data.malfunctions.isNotEmpty)
-        isArabic
-            ? 'عطل: ${data.malfunctions.join(', ')}'
-            : 'Malfunction: ${data.malfunctions.join(', ')}',
-      if (data.lastHeartbeat != null && data.lastHeartbeat!.isNotEmpty)
-        isArabic
-            ? 'آخر بيانات صالحة: ${data.lastHeartbeat}'
-            : 'Last valid data: ${data.lastHeartbeat}',
-      if (data.dataAgeSeconds != null)
-        isArabic
-            ? 'عمر البيانات: ${data.dataAgeSeconds} ثانية'
-            : 'Data age: ${data.dataAgeSeconds} seconds',
-      if (data.normalOperationAllowed == false)
-        isArabic ? 'غير جاهز للتشغيل الطبيعي.' : 'Not ready for normal operation.',
-      if (data.isReliable == false)
-        isArabic ? 'البيانات غير موثوقة.' : 'Data is not reliable.',
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final line in lines)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Text(line, style: context.styles.body),
-          ),
-      ],
-    );
-  }
-
-  String _statusLine(ConnectivityStatus data, bool isArabic) {
-    switch (data.connectionStatus?.toUpperCase()) {
-      case 'CONNECTED':
-        return isArabic ? 'متصل' : 'Connected';
-      case 'DISCONNECTED':
-        return isArabic ? 'غير متصل' : 'Disconnected';
-      case 'UNAVAILABLE':
-        return isArabic ? 'غير متاح' : 'Unavailable';
-      case 'MALFUNCTION':
-        return isArabic ? 'عطل' : 'Malfunction';
-      case null:
-        return isArabic
-            ? 'الخادم لم يُرجع حالة اتصال.'
-            : 'The server did not return a connection status.';
-      default:
-        return data.connectionStatus!;
-    }
-  }
-}
-
-/// §395.34 instructions and the manual-recording toggle.
-/// Shown only when the server reports a non-connected state or the connect attempt failed.
-class _ManualRecordingSection extends ConsumerWidget {
-  const _ManualRecordingSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final status = ref.watch(hardwareStatusProvider).asData?.value;
-    final failed = ref.watch(eldConnectionProvider).hasFailed;
-    final serverState = status?.connectionStatus?.toUpperCase();
-    final degraded = failed ||
-        status?.hasMalfunction == true ||
-        serverState == 'MALFUNCTION' ||
-        serverState == 'DISCONNECTED' ||
-        serverState == 'UNAVAILABLE';
-    if (!degraded) return const SizedBox.shrink();
-
-    final steps = isArabic
-        ? const [
-            'دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.',
-            'أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.',
-            'استمر بالتسجيل الورقي حتى إصلاح الجهاز.',
-          ]
-        : const [
-            'Note the malfunction and notify the carrier in writing within 24 hours.',
-            'Reconstruct the current 24 hours and the previous 7 days on paper if the ELD cannot provide them.',
-            'Continue paper logs until the device is repaired.',
-          ];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isArabic ? 'في حال العطل (§395.34)' : 'If the ELD malfunctions (§395.34)',
-            style: context.styles.body,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (final step in steps)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs, left: AppSpacing.sm),
-              child: Text('• $step', style: context.styles.subtitle),
-            ),
-          const SizedBox(height: AppSpacing.sm),
-          AppButton(
-            label: isArabic ? 'بدء التسجيل اليدوي' : 'START MANUAL RECORDING',
-            type: EldButtonType.dark,
-            onPressed: () => _promptManualMode(context, ref, isArabic),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _promptManualMode(
-    BuildContext context,
-    WidgetRef ref,
-    bool isArabic,
-  ) async {
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (_) => _ManualModeReasonDialog(isArabic: isArabic),
-    );
-    if (reason == null || !context.mounted) return;
-
-    final error = await ref.read(eldConnectionProvider.notifier).setManualMode(
-          enable: true,
-          reason: reason,
-          isArabic: isArabic,
-        );
-    if (!context.mounted) return;
-    if (error == null) ref.invalidate(hardwareStatusProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          error ??
-              (isArabic
-                  ? 'تم تسجيل بداية فترة التسجيل اليدوي على الخادم.'
-                  : 'Manual recording start was recorded on the server.'),
-        ),
-      ),
-    );
-  }
-}
-
-/// Owns its text controller so it is disposed with the route, after the
-/// dialog's exit animation — not while the TextField is still attached.
-class _ManualModeReasonDialog extends StatefulWidget {
-  const _ManualModeReasonDialog({required this.isArabic});
-
-  final bool isArabic;
-
-  @override
-  State<_ManualModeReasonDialog> createState() => _ManualModeReasonDialogState();
-}
-
-class _ManualModeReasonDialogState extends State<_ManualModeReasonDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = widget.isArabic;
-    return AlertDialog(
-      title: Text(isArabic ? 'سبب التسجيل اليدوي' : 'Manual recording reason'),
-      content: TextField(
-        controller: _controller,
-        maxLines: 2,
-        decoration: InputDecoration(
-          hintText: isArabic
-              ? 'مثال: انقطاع الاتصال بالجهاز'
-              : 'e.g. lost connection to the ELD',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(isArabic ? 'إلغاء' : 'CANCEL'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _controller.text),
-          child: Text(isArabic ? 'موافق' : 'OK'),
-        ),
-      ],
     );
   }
 }

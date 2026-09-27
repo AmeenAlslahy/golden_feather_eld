@@ -1,17 +1,18 @@
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
-
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../providers/logs_provider.dart';
+import '../widgets/log_graph.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../inspection/domain/transfer_audit.dart';
 import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
 import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
-import '../providers/logs_provider.dart';
-import '../widgets/log_graph.dart';
 
 /// صفحة معاينة التفتيش الكاملة
 class InspectionPreviewPage extends ConsumerStatefulWidget {
@@ -35,7 +36,21 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
 
     return screenAsync.when(
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: EldRetryView(
+          message: anyErrorUserMessage(
+            e,
+            isArabic: Localizations.localeOf(context).languageCode == 'ar',
+          ),
+          onRetry: () => ref.invalidate(dotInspectionScreenProvider),
+        ),
+      ),
       data: (screen) {
         // تهيئة المؤشر لليوم المحدد حالياً عند فتح الشاشة
         if (!_isInitialized && logsState.selectedLog != null && logs.isNotEmpty) {

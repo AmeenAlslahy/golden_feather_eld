@@ -12,6 +12,7 @@ class TrackingEvent extends Equatable {
   final String? driverId;
   final double latitude;
   final double longitude;
+  /// Metres per second (OS / OsmAnd raw). Convert at the consumer (×2.23694 mph, ×3.6 km/h).
   final double speed;
   final double bearing;
   final double altitude;

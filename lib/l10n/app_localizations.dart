@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,2572 +86,2572 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
-    Locale('en')
+    Locale('en'),
   ];
 
   /// No description provided for @driverName.
   ///
-  /// In en, this message translates to:
-  /// **'Driver Name'**
+  /// In ar, this message translates to:
+  /// **'اسم السائق'**
   String get driverName;
 
   /// No description provided for @driverId.
   ///
-  /// In en, this message translates to:
-  /// **'Driver ID'**
+  /// In ar, this message translates to:
+  /// **'معرف السائق'**
   String get driverId;
 
   /// No description provided for @license.
   ///
-  /// In en, this message translates to:
-  /// **'License'**
+  /// In ar, this message translates to:
+  /// **'الرخصة'**
   String get license;
 
   /// No description provided for @licenseState.
   ///
-  /// In en, this message translates to:
-  /// **'License State'**
+  /// In ar, this message translates to:
+  /// **'ولاية الرخصة'**
   String get licenseState;
 
   /// No description provided for @exemptDriver.
   ///
-  /// In en, this message translates to:
-  /// **'Exempt Driver'**
+  /// In ar, this message translates to:
+  /// **'حالة الإعفاء'**
   String get exemptDriver;
 
   /// No description provided for @unidentifiedDriving.
   ///
-  /// In en, this message translates to:
-  /// **'Unidentified Driving'**
+  /// In ar, this message translates to:
+  /// **'قيادة غير محددة'**
   String get unidentifiedDriving;
 
   /// No description provided for @coDriverId.
   ///
-  /// In en, this message translates to:
-  /// **'Co-Driver ID'**
+  /// In ar, this message translates to:
+  /// **'معرف المساعد'**
   String get coDriverId;
 
   /// No description provided for @logDate.
   ///
-  /// In en, this message translates to:
-  /// **'Log Date'**
+  /// In ar, this message translates to:
+  /// **'تاريخ السجل'**
   String get logDate;
 
   /// No description provided for @displayDate.
   ///
-  /// In en, this message translates to:
-  /// **'Display Date'**
+  /// In ar, this message translates to:
+  /// **'تاريخ العرض'**
   String get displayDate;
 
   /// No description provided for @displayLocation.
   ///
-  /// In en, this message translates to:
-  /// **'Display Location'**
+  /// In ar, this message translates to:
+  /// **'موقع العرض'**
   String get displayLocation;
 
   /// No description provided for @eldRegId.
   ///
-  /// In en, this message translates to:
-  /// **'ELD Registration ID'**
+  /// In ar, this message translates to:
+  /// **'معرف تسجيل ELD'**
   String get eldRegId;
 
   /// No description provided for @eldIdentifier.
   ///
-  /// In en, this message translates to:
-  /// **'ELD Identifier'**
+  /// In ar, this message translates to:
+  /// **'معرف ELD'**
   String get eldIdentifier;
 
   /// No description provided for @provider.
   ///
-  /// In en, this message translates to:
-  /// **'Provider'**
+  /// In ar, this message translates to:
+  /// **'المزود'**
   String get provider;
 
   /// No description provided for @periodStart.
   ///
-  /// In en, this message translates to:
-  /// **'Period Start'**
+  /// In ar, this message translates to:
+  /// **'بداية الفترة'**
   String get periodStart;
 
   /// No description provided for @dataDiag.
   ///
-  /// In en, this message translates to:
-  /// **'Data Diag.'**
+  /// In ar, this message translates to:
+  /// **'تشخيص البيانات'**
   String get dataDiag;
 
   /// No description provided for @deviceMalf.
   ///
-  /// In en, this message translates to:
-  /// **'Device Malf.'**
+  /// In ar, this message translates to:
+  /// **'أعطال الجهاز'**
   String get deviceMalf;
 
   /// No description provided for @vin.
   ///
-  /// In en, this message translates to:
-  /// **'VIN'**
+  /// In ar, this message translates to:
+  /// **'رقم الهيكل'**
   String get vin;
 
   /// No description provided for @carrier.
   ///
-  /// In en, this message translates to:
-  /// **'Carrier'**
+  /// In ar, this message translates to:
+  /// **'الناقل'**
   String get carrier;
 
   /// No description provided for @mainOffice.
   ///
-  /// In en, this message translates to:
-  /// **'Main Office'**
+  /// In ar, this message translates to:
+  /// **'المكتب الرئيسي'**
   String get mainOffice;
 
   /// No description provided for @homeTerminal.
   ///
-  /// In en, this message translates to:
-  /// **'Home Terminal'**
+  /// In ar, this message translates to:
+  /// **'المحطة الرئيسية'**
   String get homeTerminal;
 
   /// No description provided for @insertDutyStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Insert Duty Status'**
+  /// In ar, this message translates to:
+  /// **'إدخال حالة'**
   String get insertDutyStatus;
 
   /// No description provided for @addButton.
   ///
-  /// In en, this message translates to:
-  /// **'ADD'**
+  /// In ar, this message translates to:
+  /// **'إضافة'**
   String get addButton;
 
   /// No description provided for @eventAddedSuccess.
   ///
-  /// In en, this message translates to:
-  /// **'Event added successfully'**
+  /// In ar, this message translates to:
+  /// **'تمت إضافة الحدث بنجاح'**
   String get eventAddedSuccess;
 
   /// No description provided for @appName.
   ///
-  /// In en, this message translates to:
+  /// In ar, this message translates to:
   /// **'Golden Feather ELD'**
   String get appName;
 
   /// No description provided for @appSlogan.
   ///
-  /// In en, this message translates to:
-  /// **'Golden Feather - Field Compliance Tracking'**
+  /// In ar, this message translates to:
+  /// **'الريشة الذهبية - تتبع الامتثال الميداني'**
   String get appSlogan;
 
   /// No description provided for @trackingTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Tracking'**
+  /// In ar, this message translates to:
+  /// **'التتبع'**
   String get trackingTitle;
 
   /// No description provided for @settingsTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Settings'**
+  /// In ar, this message translates to:
+  /// **'الإعدادات'**
   String get settingsTitle;
 
   /// No description provided for @statusTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Logs'**
+  /// In ar, this message translates to:
+  /// **'السجلات'**
   String get statusTitle;
 
   /// No description provided for @saveButton.
   ///
-  /// In en, this message translates to:
-  /// **'Save'**
+  /// In ar, this message translates to:
+  /// **'حفظ'**
   String get saveButton;
 
   /// No description provided for @cancelButton.
   ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
   String get cancelButton;
 
   /// No description provided for @okButton.
   ///
-  /// In en, this message translates to:
-  /// **'OK'**
+  /// In ar, this message translates to:
+  /// **'موافق'**
   String get okButton;
 
   /// No description provided for @deleteButton.
   ///
-  /// In en, this message translates to:
-  /// **'Delete'**
+  /// In ar, this message translates to:
+  /// **'حذف'**
   String get deleteButton;
 
   /// No description provided for @retryButton.
   ///
-  /// In en, this message translates to:
-  /// **'Retry'**
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
   String get retryButton;
 
   /// No description provided for @closeButton.
   ///
-  /// In en, this message translates to:
-  /// **'Close'**
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
   String get closeButton;
 
   /// No description provided for @shareButton.
   ///
-  /// In en, this message translates to:
-  /// **'Share'**
+  /// In ar, this message translates to:
+  /// **'مشاركة'**
   String get shareButton;
 
   /// No description provided for @clearButton.
   ///
-  /// In en, this message translates to:
-  /// **'Clear'**
+  /// In ar, this message translates to:
+  /// **'مسح'**
   String get clearButton;
 
   /// No description provided for @refreshButton.
   ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
+  /// In ar, this message translates to:
+  /// **'تحديث'**
   String get refreshButton;
 
   /// No description provided for @locationButton.
   ///
-  /// In en, this message translates to:
-  /// **'Send location'**
+  /// In ar, this message translates to:
+  /// **'إرسال الموقع'**
   String get locationButton;
 
   /// No description provided for @statusButton.
   ///
-  /// In en, this message translates to:
-  /// **'Show status'**
+  /// In ar, this message translates to:
+  /// **'عرض الحالة'**
   String get statusButton;
 
   /// No description provided for @settingsButton.
   ///
-  /// In en, this message translates to:
-  /// **'Change settings'**
+  /// In ar, this message translates to:
+  /// **'تغيير الإعدادات'**
   String get settingsButton;
 
   /// No description provided for @invalidValue.
   ///
-  /// In en, this message translates to:
-  /// **'Invalid value'**
+  /// In ar, this message translates to:
+  /// **'قيمة غير صالحة'**
   String get invalidValue;
 
   /// No description provided for @disabledValue.
   ///
-  /// In en, this message translates to:
-  /// **'Disabled'**
+  /// In ar, this message translates to:
+  /// **'معطل'**
   String get disabledValue;
 
   /// No description provided for @idLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Device identifier'**
+  /// In ar, this message translates to:
+  /// **'معرّف الجهاز'**
   String get idLabel;
 
   /// No description provided for @urlLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Server URL'**
+  /// In ar, this message translates to:
+  /// **'عنوان الخادم'**
   String get urlLabel;
 
   /// No description provided for @accuracyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Location accuracy'**
+  /// In ar, this message translates to:
+  /// **'دقة الموقع'**
   String get accuracyLabel;
 
   /// No description provided for @highestAccuracyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Highest'**
+  /// In ar, this message translates to:
+  /// **'أعلى'**
   String get highestAccuracyLabel;
 
   /// No description provided for @highAccuracyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'High'**
+  /// In ar, this message translates to:
+  /// **'عالية'**
   String get highAccuracyLabel;
 
   /// No description provided for @mediumAccuracyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Medium'**
+  /// In ar, this message translates to:
+  /// **'متوسطة'**
   String get mediumAccuracyLabel;
 
   /// No description provided for @lowAccuracyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Low'**
+  /// In ar, this message translates to:
+  /// **'منخفضة'**
   String get lowAccuracyLabel;
 
   /// No description provided for @intervalLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Interval (seconds)'**
+  /// In ar, this message translates to:
+  /// **'الفاصل الزمني (ثوانٍ)'**
   String get intervalLabel;
 
   /// No description provided for @fastestIntervalLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Fastest interval (seconds)'**
+  /// In ar, this message translates to:
+  /// **'أسرع فاصل زمني (ثوانٍ)'**
   String get fastestIntervalLabel;
 
   /// No description provided for @distanceLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Distance (meters)'**
+  /// In ar, this message translates to:
+  /// **'المسافة (أمتار)'**
   String get distanceLabel;
 
   /// No description provided for @angleLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Angle (degrees)'**
+  /// In ar, this message translates to:
+  /// **'الزاوية (درجات)'**
   String get angleLabel;
 
   /// No description provided for @heartbeatLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Stationary heartbeat (seconds)'**
+  /// In ar, this message translates to:
+  /// **'نبض الثبات (ثوانٍ)'**
   String get heartbeatLabel;
 
   /// No description provided for @bufferLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Offline buffering'**
+  /// In ar, this message translates to:
+  /// **'تخزين مؤقت دون اتصال'**
   String get bufferLabel;
 
   /// No description provided for @wakelockLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Wake lock'**
+  /// In ar, this message translates to:
+  /// **'قفل التنبيه'**
   String get wakelockLabel;
 
   /// No description provided for @stopDetectionLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Stop detection'**
+  /// In ar, this message translates to:
+  /// **'اكتشاف التوقف'**
   String get stopDetectionLabel;
 
   /// No description provided for @preferPlatformProvidersLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Use system location'**
+  /// In ar, this message translates to:
+  /// **'استخدام مزودي الموقع الأصليين'**
   String get preferPlatformProvidersLabel;
 
   /// No description provided for @serverNotConfigured.
   ///
-  /// In en, this message translates to:
-  /// **'Server Not Configured'**
+  /// In ar, this message translates to:
+  /// **'إعدادات الخادم مفقودة'**
   String get serverNotConfigured;
 
   /// No description provided for @trackingLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Continuous tracking'**
+  /// In ar, this message translates to:
+  /// **'تتبع مستمر'**
   String get trackingLabel;
 
   /// No description provided for @advancedLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Advanced settings'**
+  /// In ar, this message translates to:
+  /// **'إعدادات متقدمة'**
   String get advancedLabel;
 
   /// No description provided for @passwordLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Password'**
+  /// In ar, this message translates to:
+  /// **'كلمة المرور'**
   String get passwordLabel;
 
   /// No description provided for @optimizationMessage.
   ///
-  /// In en, this message translates to:
-  /// **'To ensure reliable tracking, please disable battery optimization for this app.'**
+  /// In ar, this message translates to:
+  /// **'لضمان تتبع موثوق، يرجى تعطيل تحسين البطارية لهذا التطبيق.'**
   String get optimizationMessage;
 
   /// No description provided for @passwordError.
   ///
-  /// In en, this message translates to:
-  /// **'Wrong password'**
+  /// In ar, this message translates to:
+  /// **'كلمة المرور خاطئة'**
   String get passwordError;
 
   /// No description provided for @disclosureMessage.
   ///
-  /// In en, this message translates to:
-  /// **'This app collects location and activity data in the background and sends it to the configured server.'**
+  /// In ar, this message translates to:
+  /// **'يقوم هذا التطبيق بجمع بيانات الموقع والنشاط في الخلفية وإرسالها إلى الخادم المحدد.'**
   String get disclosureMessage;
 
   /// No description provided for @configurationMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Apply new configuration?'**
+  /// In ar, this message translates to:
+  /// **'هل تريد تطبيق الإعدادات الجديدة؟'**
   String get configurationMessage;
 
   /// No description provided for @startAction.
   ///
-  /// In en, this message translates to:
-  /// **'Start service'**
+  /// In ar, this message translates to:
+  /// **'بدء الخدمة'**
   String get startAction;
 
   /// No description provided for @stopAction.
   ///
-  /// In en, this message translates to:
-  /// **'Stop service'**
+  /// In ar, this message translates to:
+  /// **'إيقاف الخدمة'**
   String get stopAction;
 
   /// No description provided for @sosAction.
   ///
-  /// In en, this message translates to:
-  /// **'Send SOS'**
+  /// In ar, this message translates to:
+  /// **'ارسال استغاثة'**
   String get sosAction;
 
   /// No description provided for @home.
   ///
-  /// In en, this message translates to:
-  /// **'Home'**
+  /// In ar, this message translates to:
+  /// **'الرئيسية'**
   String get home;
 
   /// No description provided for @inspection.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection'**
+  /// In ar, this message translates to:
+  /// **'التفتيش'**
   String get inspection;
 
   /// No description provided for @checklist.
   ///
-  /// In en, this message translates to:
-  /// **'Checklist'**
+  /// In ar, this message translates to:
+  /// **'قائمة التحقق'**
   String get checklist;
 
   /// No description provided for @reports.
   ///
-  /// In en, this message translates to:
-  /// **'Reports'**
+  /// In ar, this message translates to:
+  /// **'التقارير'**
   String get reports;
 
   /// No description provided for @settings.
   ///
-  /// In en, this message translates to:
-  /// **'Settings'**
+  /// In ar, this message translates to:
+  /// **'الإعدادات'**
   String get settings;
 
   /// No description provided for @welcome.
   ///
-  /// In en, this message translates to:
-  /// **'Welcome'**
+  /// In ar, this message translates to:
+  /// **'مرحباً'**
   String get welcome;
 
   /// No description provided for @login.
   ///
-  /// In en, this message translates to:
-  /// **'Login'**
+  /// In ar, this message translates to:
+  /// **'تسجيل الدخول'**
   String get login;
 
   /// No description provided for @logout.
   ///
-  /// In en, this message translates to:
-  /// **'Logout'**
+  /// In ar, this message translates to:
+  /// **'تسجيل الخروج'**
   String get logout;
 
   /// No description provided for @register.
   ///
-  /// In en, this message translates to:
-  /// **'Register'**
+  /// In ar, this message translates to:
+  /// **'إنشاء حساب'**
   String get register;
 
   /// No description provided for @username.
   ///
-  /// In en, this message translates to:
-  /// **'Username'**
+  /// In ar, this message translates to:
+  /// **'اسم المستخدم'**
   String get username;
 
   /// No description provided for @password.
   ///
-  /// In en, this message translates to:
-  /// **'Password'**
+  /// In ar, this message translates to:
+  /// **'كلمة المرور'**
   String get password;
 
   /// No description provided for @confirmPassword.
   ///
-  /// In en, this message translates to:
-  /// **'Confirm Password'**
+  /// In ar, this message translates to:
+  /// **'تأكيد كلمة المرور'**
   String get confirmPassword;
 
   /// No description provided for @rememberMe.
   ///
-  /// In en, this message translates to:
-  /// **'Remember Me'**
+  /// In ar, this message translates to:
+  /// **'تذكرني'**
   String get rememberMe;
 
   /// No description provided for @forgotPassword.
   ///
-  /// In en, this message translates to:
-  /// **'Forgot Password?'**
+  /// In ar, this message translates to:
+  /// **'نسيت كلمة المرور؟'**
   String get forgotPassword;
 
   /// No description provided for @startInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Start Inspection'**
+  /// In ar, this message translates to:
+  /// **'بدء التفتيش'**
   String get startInspection;
 
   /// No description provided for @stopInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Stop Inspection'**
+  /// In ar, this message translates to:
+  /// **'إيقاف التفتيش'**
   String get stopInspection;
 
   /// No description provided for @pauseInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Pause'**
+  /// In ar, this message translates to:
+  /// **'إيقاف مؤقت'**
   String get pauseInspection;
 
   /// No description provided for @resumeInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Resume'**
+  /// In ar, this message translates to:
+  /// **'استئناف'**
   String get resumeInspection;
 
   /// No description provided for @submitReport.
   ///
-  /// In en, this message translates to:
-  /// **'Submit Report'**
+  /// In ar, this message translates to:
+  /// **'إرسال التقرير'**
   String get submitReport;
 
   /// No description provided for @saveDraft.
   ///
-  /// In en, this message translates to:
-  /// **'Save as Draft'**
+  /// In ar, this message translates to:
+  /// **'حفظ كمسودة'**
   String get saveDraft;
 
   /// No description provided for @discardDraft.
   ///
-  /// In en, this message translates to:
-  /// **'Discard Draft'**
+  /// In ar, this message translates to:
+  /// **'تجاهل المسودة'**
   String get discardDraft;
 
   /// No description provided for @inspectionTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Title'**
+  /// In ar, this message translates to:
+  /// **'عنوان التفتيش'**
   String get inspectionTitle;
 
   /// No description provided for @inspectionLocation.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Location'**
+  /// In ar, this message translates to:
+  /// **'موقع التفتيش'**
   String get inspectionLocation;
 
   /// No description provided for @inspectionDate.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Date'**
+  /// In ar, this message translates to:
+  /// **'تاريخ التفتيش'**
   String get inspectionDate;
 
   /// No description provided for @inspectionTime.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Time'**
+  /// In ar, this message translates to:
+  /// **'وقت التفتيش'**
   String get inspectionTime;
 
   /// No description provided for @inspectionDuration.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Duration'**
+  /// In ar, this message translates to:
+  /// **'مدة التفتيش'**
   String get inspectionDuration;
 
   /// No description provided for @inspectorName.
   ///
-  /// In en, this message translates to:
-  /// **'Inspector Name'**
+  /// In ar, this message translates to:
+  /// **'اسم المفتش'**
   String get inspectorName;
 
   /// No description provided for @inspectionStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Status'**
+  /// In ar, this message translates to:
+  /// **'حالة التفتيش'**
   String get inspectionStatus;
 
   /// No description provided for @statusPending.
   ///
-  /// In en, this message translates to:
-  /// **'Pending'**
+  /// In ar, this message translates to:
+  /// **'قيد الانتظار'**
   String get statusPending;
 
   /// No description provided for @statusInProgress.
   ///
-  /// In en, this message translates to:
-  /// **'In Progress'**
+  /// In ar, this message translates to:
+  /// **'قيد التنفيذ'**
   String get statusInProgress;
 
   /// No description provided for @statusCompleted.
   ///
-  /// In en, this message translates to:
-  /// **'Completed'**
+  /// In ar, this message translates to:
+  /// **'مكتمل'**
   String get statusCompleted;
 
   /// No description provided for @statusFailed.
   ///
-  /// In en, this message translates to:
-  /// **'Failed'**
+  /// In ar, this message translates to:
+  /// **'فشل'**
   String get statusFailed;
 
   /// No description provided for @statusRequiresReview.
   ///
-  /// In en, this message translates to:
-  /// **'Requires Review'**
+  /// In ar, this message translates to:
+  /// **'يحتاج مراجعة'**
   String get statusRequiresReview;
 
   /// No description provided for @statusScheduled.
   ///
-  /// In en, this message translates to:
-  /// **'Scheduled'**
+  /// In ar, this message translates to:
+  /// **'مجدول'**
   String get statusScheduled;
 
   /// No description provided for @statusCancelled.
   ///
-  /// In en, this message translates to:
-  /// **'Cancelled'**
+  /// In ar, this message translates to:
+  /// **'ملغي'**
   String get statusCancelled;
 
   /// No description provided for @checklistTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Checklist Title'**
+  /// In ar, this message translates to:
+  /// **'عنوان القائمة'**
   String get checklistTitle;
 
   /// No description provided for @checklistCategory.
   ///
-  /// In en, this message translates to:
-  /// **'Checklist Category'**
+  /// In ar, this message translates to:
+  /// **'تصنيف القائمة'**
   String get checklistCategory;
 
   /// No description provided for @addChecklist.
   ///
-  /// In en, this message translates to:
-  /// **'Add Checklist'**
+  /// In ar, this message translates to:
+  /// **'إضافة قائمة'**
   String get addChecklist;
 
   /// No description provided for @editChecklist.
   ///
-  /// In en, this message translates to:
-  /// **'Edit Checklist'**
+  /// In ar, this message translates to:
+  /// **'تعديل القائمة'**
   String get editChecklist;
 
   /// No description provided for @deleteChecklist.
   ///
-  /// In en, this message translates to:
-  /// **'Delete Checklist'**
+  /// In ar, this message translates to:
+  /// **'حذف القائمة'**
   String get deleteChecklist;
 
   /// No description provided for @checklistItems.
   ///
-  /// In en, this message translates to:
-  /// **'Checklist Items'**
+  /// In ar, this message translates to:
+  /// **'عناصر القائمة'**
   String get checklistItems;
 
   /// No description provided for @addItem.
   ///
-  /// In en, this message translates to:
-  /// **'Add Item'**
+  /// In ar, this message translates to:
+  /// **'إضافة عنصر'**
   String get addItem;
 
   /// No description provided for @removeItem.
   ///
-  /// In en, this message translates to:
-  /// **'Remove Item'**
+  /// In ar, this message translates to:
+  /// **'إزالة عنصر'**
   String get removeItem;
 
   /// No description provided for @itemTypeText.
   ///
-  /// In en, this message translates to:
-  /// **'Text'**
+  /// In ar, this message translates to:
+  /// **'نص'**
   String get itemTypeText;
 
   /// No description provided for @itemTypeNumber.
   ///
-  /// In en, this message translates to:
-  /// **'Number'**
+  /// In ar, this message translates to:
+  /// **'رقم'**
   String get itemTypeNumber;
 
   /// No description provided for @itemTypeYesNo.
   ///
-  /// In en, this message translates to:
-  /// **'Yes / No'**
+  /// In ar, this message translates to:
+  /// **'نعم / لا'**
   String get itemTypeYesNo;
 
   /// No description provided for @itemTypeMultipleChoice.
   ///
-  /// In en, this message translates to:
-  /// **'Multiple Choice'**
+  /// In ar, this message translates to:
+  /// **'اختيار من متعدد'**
   String get itemTypeMultipleChoice;
 
   /// No description provided for @itemTypePhoto.
   ///
-  /// In en, this message translates to:
-  /// **'Photo'**
+  /// In ar, this message translates to:
+  /// **'صورة'**
   String get itemTypePhoto;
 
   /// No description provided for @itemTypeSignature.
   ///
-  /// In en, this message translates to:
-  /// **'Signature'**
+  /// In ar, this message translates to:
+  /// **'توقيع'**
   String get itemTypeSignature;
 
   /// No description provided for @itemTypeDate.
   ///
-  /// In en, this message translates to:
-  /// **'Date'**
+  /// In ar, this message translates to:
+  /// **'تاريخ'**
   String get itemTypeDate;
 
   /// No description provided for @itemTypeTime.
   ///
-  /// In en, this message translates to:
-  /// **'Time'**
+  /// In ar, this message translates to:
+  /// **'وقت'**
   String get itemTypeTime;
 
   /// No description provided for @itemTypeBarcode.
   ///
-  /// In en, this message translates to:
-  /// **'Barcode'**
+  /// In ar, this message translates to:
+  /// **'باركود'**
   String get itemTypeBarcode;
 
   /// No description provided for @photoRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Photo required'**
+  /// In ar, this message translates to:
+  /// **'الصورة مطلوبة'**
   String get photoRequired;
 
   /// No description provided for @signatureRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Signature required'**
+  /// In ar, this message translates to:
+  /// **'التوقيع مطلوب'**
   String get signatureRequired;
 
   /// No description provided for @notesRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Notes required'**
+  /// In ar, this message translates to:
+  /// **'الملاحظات مطلوبة'**
   String get notesRequired;
 
   /// No description provided for @takePhoto.
   ///
-  /// In en, this message translates to:
-  /// **'Take Photo'**
+  /// In ar, this message translates to:
+  /// **'التقاط صورة'**
   String get takePhoto;
 
   /// No description provided for @chooseFromGallery.
   ///
-  /// In en, this message translates to:
-  /// **'Choose from Gallery'**
+  /// In ar, this message translates to:
+  /// **'اختيار من المعرض'**
   String get chooseFromGallery;
 
   /// No description provided for @retakePhoto.
   ///
-  /// In en, this message translates to:
-  /// **'Retake Photo'**
+  /// In ar, this message translates to:
+  /// **'إعادة التصوير'**
   String get retakePhoto;
 
   /// No description provided for @photoPreview.
   ///
-  /// In en, this message translates to:
-  /// **'Photo Preview'**
+  /// In ar, this message translates to:
+  /// **'معاينة الصورة'**
   String get photoPreview;
 
   /// No description provided for @signHere.
   ///
-  /// In en, this message translates to:
-  /// **'Sign Here'**
+  /// In ar, this message translates to:
+  /// **'وقع هنا'**
   String get signHere;
 
   /// No description provided for @clearSignature.
   ///
-  /// In en, this message translates to:
-  /// **'Clear Signature'**
+  /// In ar, this message translates to:
+  /// **'مسح التوقيع'**
   String get clearSignature;
 
   /// No description provided for @signaturePreview.
   ///
-  /// In en, this message translates to:
-  /// **'Signature Preview'**
+  /// In ar, this message translates to:
+  /// **'معاينة التوقيع'**
   String get signaturePreview;
 
   /// No description provided for @addNote.
   ///
-  /// In en, this message translates to:
-  /// **'Add Note'**
+  /// In ar, this message translates to:
+  /// **'إضافة ملاحظة'**
   String get addNote;
 
   /// No description provided for @editNote.
   ///
-  /// In en, this message translates to:
-  /// **'Edit Note'**
+  /// In ar, this message translates to:
+  /// **'تعديل الملاحظة'**
   String get editNote;
 
   /// No description provided for @deleteNote.
   ///
-  /// In en, this message translates to:
-  /// **'Delete Note'**
+  /// In ar, this message translates to:
+  /// **'حذف الملاحظة'**
   String get deleteNote;
 
   /// No description provided for @syncStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Sync Status'**
+  /// In ar, this message translates to:
+  /// **'حالة المزامنة'**
   String get syncStatus;
 
   /// No description provided for @synced.
   ///
-  /// In en, this message translates to:
-  /// **'Synced'**
+  /// In ar, this message translates to:
+  /// **'متزامن'**
   String get synced;
 
   /// No description provided for @syncing.
   ///
-  /// In en, this message translates to:
-  /// **'Syncing...'**
+  /// In ar, this message translates to:
+  /// **'جاري المزامنة...'**
   String get syncing;
 
   /// No description provided for @syncPending.
   ///
-  /// In en, this message translates to:
-  /// **'{count} pending'**
+  /// In ar, this message translates to:
+  /// **'{count} معلقة'**
   String syncPending(String count);
 
   /// No description provided for @syncFailed.
   ///
-  /// In en, this message translates to:
-  /// **'{count} failed'**
+  /// In ar, this message translates to:
+  /// **'{count} فشلت'**
   String syncFailed(String count);
 
   /// No description provided for @offline.
   ///
-  /// In en, this message translates to:
-  /// **'Offline'**
+  /// In ar, this message translates to:
+  /// **'غير متصل'**
   String get offline;
 
   /// No description provided for @lastSync.
   ///
-  /// In en, this message translates to:
-  /// **'Last Sync'**
+  /// In ar, this message translates to:
+  /// **'آخر مزامنة'**
   String get lastSync;
 
   /// No description provided for @syncNow.
   ///
-  /// In en, this message translates to:
-  /// **'Sync Now'**
+  /// In ar, this message translates to:
+  /// **'مزامنة الآن'**
   String get syncNow;
 
   /// No description provided for @autoSync.
   ///
-  /// In en, this message translates to:
-  /// **'Auto Sync'**
+  /// In ar, this message translates to:
+  /// **'مزامنة تلقائية'**
   String get autoSync;
 
   /// No description provided for @errorMessage.
   ///
-  /// In en, this message translates to:
-  /// **'An error occurred'**
+  /// In ar, this message translates to:
+  /// **'حدث خطأ ما'**
   String get errorMessage;
 
   /// No description provided for @successMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Operation completed successfully'**
+  /// In ar, this message translates to:
+  /// **'تمت العملية بنجاح'**
   String get successMessage;
 
   /// No description provided for @warningMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Warning'**
+  /// In ar, this message translates to:
+  /// **'تحذير'**
   String get warningMessage;
 
   /// No description provided for @infoMessage.
   ///
-  /// In en, this message translates to:
-  /// **'Information'**
+  /// In ar, this message translates to:
+  /// **'معلومة'**
   String get infoMessage;
 
   /// No description provided for @loading.
   ///
-  /// In en, this message translates to:
-  /// **'Loading...'**
+  /// In ar, this message translates to:
+  /// **'جاري التحميل...'**
   String get loading;
 
   /// No description provided for @noData.
   ///
-  /// In en, this message translates to:
-  /// **'No data'**
+  /// In ar, this message translates to:
+  /// **'لا توجد بيانات'**
   String get noData;
 
   /// No description provided for @noInternet.
   ///
-  /// In en, this message translates to:
-  /// **'No internet connection'**
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالإنترنت'**
   String get noInternet;
 
   /// No description provided for @noResults.
   ///
-  /// In en, this message translates to:
-  /// **'No results found'**
+  /// In ar, this message translates to:
+  /// **'لا توجد نتائج'**
   String get noResults;
 
   /// No description provided for @permissionDenied.
   ///
-  /// In en, this message translates to:
-  /// **'Permission denied'**
+  /// In ar, this message translates to:
+  /// **'تم رفض الإذن'**
   String get permissionDenied;
 
   /// No description provided for @locationPermissionDenied.
   ///
-  /// In en, this message translates to:
-  /// **'Please grant location permission'**
+  /// In ar, this message translates to:
+  /// **'يرجى منح إذن الوصول إلى الموقع'**
   String get locationPermissionDenied;
 
   /// No description provided for @cameraPermissionDenied.
   ///
-  /// In en, this message translates to:
-  /// **'Please grant camera permission'**
+  /// In ar, this message translates to:
+  /// **'يرجى منح إذن الوصول إلى الكاميرا'**
   String get cameraPermissionDenied;
 
   /// No description provided for @storagePermissionDenied.
   ///
-  /// In en, this message translates to:
-  /// **'Please grant storage permission'**
+  /// In ar, this message translates to:
+  /// **'يرجى منح إذن الوصول إلى التخزين'**
   String get storagePermissionDenied;
 
   /// No description provided for @confirmDelete.
   ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete?'**
+  /// In ar, this message translates to:
+  /// **'هل أنت متأكد من الحذف؟'**
   String get confirmDelete;
 
   /// No description provided for @confirmLogout.
   ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to logout?'**
+  /// In ar, this message translates to:
+  /// **'هل أنت متأكد من تسجيل الخروج؟'**
   String get confirmLogout;
 
   /// No description provided for @confirmSubmit.
   ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to submit the report?'**
+  /// In ar, this message translates to:
+  /// **'هل أنت متأكد من إرسال التقرير؟'**
   String get confirmSubmit;
 
   /// No description provided for @confirmDiscard.
   ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to discard changes?'**
+  /// In ar, this message translates to:
+  /// **'هل أنت متأكد من تجاهل التغييرات؟'**
   String get confirmDiscard;
 
   /// No description provided for @unsavedChanges.
   ///
-  /// In en, this message translates to:
-  /// **'You have unsaved changes'**
+  /// In ar, this message translates to:
+  /// **'لديك تغييرات غير محفوظة'**
   String get unsavedChanges;
 
   /// No description provided for @changesWillBeLost.
   ///
-  /// In en, this message translates to:
-  /// **'Changes will be lost if you continue'**
+  /// In ar, this message translates to:
+  /// **'سيتم فقدان التغييرات إذا واصلت'**
   String get changesWillBeLost;
 
   /// No description provided for @languageLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Language'**
+  /// In ar, this message translates to:
+  /// **'اللغة'**
   String get languageLabel;
 
   /// No description provided for @arabic.
   ///
-  /// In en, this message translates to:
+  /// In ar, this message translates to:
   /// **'العربية'**
   String get arabic;
 
   /// No description provided for @english.
   ///
-  /// In en, this message translates to:
+  /// In ar, this message translates to:
   /// **'English'**
   String get english;
 
   /// No description provided for @darkMode.
   ///
-  /// In en, this message translates to:
-  /// **'Dark Mode'**
+  /// In ar, this message translates to:
+  /// **'الوضع الداكن'**
   String get darkMode;
 
   /// No description provided for @lightMode.
   ///
-  /// In en, this message translates to:
-  /// **'Light Mode'**
+  /// In ar, this message translates to:
+  /// **'الوضع الفاتح'**
   String get lightMode;
 
   /// No description provided for @systemMode.
   ///
-  /// In en, this message translates to:
-  /// **'System Mode'**
+  /// In ar, this message translates to:
+  /// **'وضع النظام'**
   String get systemMode;
 
   /// No description provided for @themeLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Theme'**
+  /// In ar, this message translates to:
+  /// **'المظهر'**
   String get themeLabel;
 
   /// No description provided for @aboutLabel.
   ///
-  /// In en, this message translates to:
-  /// **'About'**
+  /// In ar, this message translates to:
+  /// **'حول التطبيق'**
   String get aboutLabel;
 
   /// No description provided for @versionLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Version'**
+  /// In ar, this message translates to:
+  /// **'الإصدار'**
   String get versionLabel;
 
   /// No description provided for @privacyPolicy.
   ///
-  /// In en, this message translates to:
-  /// **'Privacy Policy'**
+  /// In ar, this message translates to:
+  /// **'سياسة الخصوصية'**
   String get privacyPolicy;
 
   /// No description provided for @termsOfService.
   ///
-  /// In en, this message translates to:
-  /// **'Terms of Service'**
+  /// In ar, this message translates to:
+  /// **'شروط الخدمة'**
   String get termsOfService;
 
   /// No description provided for @contactUs.
   ///
-  /// In en, this message translates to:
-  /// **'Contact Us'**
+  /// In ar, this message translates to:
+  /// **'اتصل بنا'**
   String get contactUs;
 
   /// No description provided for @help.
   ///
-  /// In en, this message translates to:
-  /// **'Help'**
+  /// In ar, this message translates to:
+  /// **'المساعدة'**
   String get help;
 
   /// No description provided for @faq.
   ///
-  /// In en, this message translates to:
-  /// **'FAQ'**
+  /// In ar, this message translates to:
+  /// **'الأسئلة الشائعة'**
   String get faq;
 
   /// No description provided for @qrCodeScanner.
   ///
-  /// In en, this message translates to:
-  /// **'QR Scanner'**
+  /// In ar, this message translates to:
+  /// **'مسح الرمز'**
   String get qrCodeScanner;
 
   /// No description provided for @scanQRCode.
   ///
-  /// In en, this message translates to:
-  /// **'Scan QR Code'**
+  /// In ar, this message translates to:
+  /// **'مسح رمز QR'**
   String get scanQRCode;
 
   /// No description provided for @scanningInstructions.
   ///
-  /// In en, this message translates to:
-  /// **'Point the camera at a QR code'**
+  /// In ar, this message translates to:
+  /// **'وجه الكاميرا نحو رمز QR'**
   String get scanningInstructions;
 
   /// No description provided for @search.
   ///
-  /// In en, this message translates to:
-  /// **'Search'**
+  /// In ar, this message translates to:
+  /// **'بحث'**
   String get search;
 
   /// No description provided for @filter.
   ///
-  /// In en, this message translates to:
-  /// **'Filter'**
+  /// In ar, this message translates to:
+  /// **'تصفية'**
   String get filter;
 
   /// No description provided for @sort.
   ///
-  /// In en, this message translates to:
-  /// **'Sort'**
+  /// In ar, this message translates to:
+  /// **'ترتيب'**
   String get sort;
 
   /// No description provided for @sortBy.
   ///
-  /// In en, this message translates to:
-  /// **'Sort By'**
+  /// In ar, this message translates to:
+  /// **'ترتيب حسب'**
   String get sortBy;
 
   /// No description provided for @sortByName.
   ///
-  /// In en, this message translates to:
-  /// **'Name'**
+  /// In ar, this message translates to:
+  /// **'الاسم'**
   String get sortByName;
 
   /// No description provided for @sortByDate.
   ///
-  /// In en, this message translates to:
-  /// **'Date'**
+  /// In ar, this message translates to:
+  /// **'التاريخ'**
   String get sortByDate;
 
   /// No description provided for @sortByStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Status'**
+  /// In ar, this message translates to:
+  /// **'الحالة'**
   String get sortByStatus;
 
   /// No description provided for @exportPDF.
   ///
-  /// In en, this message translates to:
-  /// **'Export PDF'**
+  /// In ar, this message translates to:
+  /// **'تصدير PDF'**
   String get exportPDF;
 
   /// No description provided for @exportExcel.
   ///
-  /// In en, this message translates to:
-  /// **'Export Excel'**
+  /// In ar, this message translates to:
+  /// **'تصدير Excel'**
   String get exportExcel;
 
   /// No description provided for @print.
   ///
-  /// In en, this message translates to:
-  /// **'Print'**
+  /// In ar, this message translates to:
+  /// **'طباعة'**
   String get print;
 
   /// No description provided for @notifications.
   ///
-  /// In en, this message translates to:
-  /// **'Notifications'**
+  /// In ar, this message translates to:
+  /// **'الإشعارات'**
   String get notifications;
 
   /// No description provided for @newInspectionAssigned.
   ///
-  /// In en, this message translates to:
-  /// **'New inspection assigned'**
+  /// In ar, this message translates to:
+  /// **'تم تعيين تفتيش جديد'**
   String get newInspectionAssigned;
 
   /// No description provided for @inspectionReminder.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection reminder'**
+  /// In ar, this message translates to:
+  /// **'تذكير بالتفتيش'**
   String get inspectionReminder;
 
   /// No description provided for @inspectionOverdue.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection overdue'**
+  /// In ar, this message translates to:
+  /// **'تفتيش متأخر'**
   String get inspectionOverdue;
 
   /// No description provided for @syncComplete.
   ///
-  /// In en, this message translates to:
-  /// **'Sync completed'**
+  /// In ar, this message translates to:
+  /// **'اكتملت المزامنة'**
   String get syncComplete;
 
   /// No description provided for @yes.
   ///
-  /// In en, this message translates to:
-  /// **'Yes'**
+  /// In ar, this message translates to:
+  /// **'نعم'**
   String get yes;
 
   /// No description provided for @no.
   ///
-  /// In en, this message translates to:
-  /// **'No'**
+  /// In ar, this message translates to:
+  /// **'لا'**
   String get no;
 
   /// No description provided for @na.
   ///
-  /// In en, this message translates to:
-  /// **'N/A'**
+  /// In ar, this message translates to:
+  /// **'غير متاح'**
   String get na;
 
   /// No description provided for @pass.
   ///
-  /// In en, this message translates to:
-  /// **'Pass'**
+  /// In ar, this message translates to:
+  /// **'ناجح'**
   String get pass;
 
   /// No description provided for @fail.
   ///
-  /// In en, this message translates to:
-  /// **'Fail'**
+  /// In ar, this message translates to:
+  /// **'راسب'**
   String get fail;
 
   /// No description provided for @monday.
   ///
-  /// In en, this message translates to:
-  /// **'Monday'**
+  /// In ar, this message translates to:
+  /// **'الاثنين'**
   String get monday;
 
   /// No description provided for @tuesday.
   ///
-  /// In en, this message translates to:
-  /// **'Tuesday'**
+  /// In ar, this message translates to:
+  /// **'الثلاثاء'**
   String get tuesday;
 
   /// No description provided for @wednesday.
   ///
-  /// In en, this message translates to:
-  /// **'Wednesday'**
+  /// In ar, this message translates to:
+  /// **'الأربعاء'**
   String get wednesday;
 
   /// No description provided for @thursday.
   ///
-  /// In en, this message translates to:
-  /// **'Thursday'**
+  /// In ar, this message translates to:
+  /// **'الخميس'**
   String get thursday;
 
   /// No description provided for @friday.
   ///
-  /// In en, this message translates to:
-  /// **'Friday'**
+  /// In ar, this message translates to:
+  /// **'الجمعة'**
   String get friday;
 
   /// No description provided for @saturday.
   ///
-  /// In en, this message translates to:
-  /// **'Saturday'**
+  /// In ar, this message translates to:
+  /// **'السبت'**
   String get saturday;
 
   /// No description provided for @sunday.
   ///
-  /// In en, this message translates to:
-  /// **'Sunday'**
+  /// In ar, this message translates to:
+  /// **'الأحد'**
   String get sunday;
 
   /// No description provided for @january.
   ///
-  /// In en, this message translates to:
-  /// **'January'**
+  /// In ar, this message translates to:
+  /// **'يناير'**
   String get january;
 
   /// No description provided for @february.
   ///
-  /// In en, this message translates to:
-  /// **'February'**
+  /// In ar, this message translates to:
+  /// **'فبراير'**
   String get february;
 
   /// No description provided for @march.
   ///
-  /// In en, this message translates to:
-  /// **'March'**
+  /// In ar, this message translates to:
+  /// **'مارس'**
   String get march;
 
   /// No description provided for @april.
   ///
-  /// In en, this message translates to:
-  /// **'April'**
+  /// In ar, this message translates to:
+  /// **'أبريل'**
   String get april;
 
   /// No description provided for @may.
   ///
-  /// In en, this message translates to:
-  /// **'May'**
+  /// In ar, this message translates to:
+  /// **'مايو'**
   String get may;
 
   /// No description provided for @june.
   ///
-  /// In en, this message translates to:
-  /// **'June'**
+  /// In ar, this message translates to:
+  /// **'يونيو'**
   String get june;
 
   /// No description provided for @july.
   ///
-  /// In en, this message translates to:
-  /// **'July'**
+  /// In ar, this message translates to:
+  /// **'يوليو'**
   String get july;
 
   /// No description provided for @august.
   ///
-  /// In en, this message translates to:
-  /// **'August'**
+  /// In ar, this message translates to:
+  /// **'أغسطس'**
   String get august;
 
   /// No description provided for @september.
   ///
-  /// In en, this message translates to:
-  /// **'September'**
+  /// In ar, this message translates to:
+  /// **'سبتمبر'**
   String get september;
 
   /// No description provided for @october.
   ///
-  /// In en, this message translates to:
-  /// **'October'**
+  /// In ar, this message translates to:
+  /// **'أكتوبر'**
   String get october;
 
   /// No description provided for @november.
   ///
-  /// In en, this message translates to:
-  /// **'November'**
+  /// In ar, this message translates to:
+  /// **'نوفمبر'**
   String get november;
 
   /// No description provided for @december.
   ///
-  /// In en, this message translates to:
-  /// **'December'**
+  /// In ar, this message translates to:
+  /// **'ديسمبر'**
   String get december;
 
   /// No description provided for @unableToConnect.
   ///
-  /// In en, this message translates to:
-  /// **'Unable to connect to ELD with MAC'**
+  /// In ar, this message translates to:
+  /// **'تعذر الاتصال بجهاز ELD بالعنوان'**
   String get unableToConnect;
 
   /// No description provided for @verifyFollowingItems.
   ///
-  /// In en, this message translates to:
-  /// **'Please verify the following items:'**
+  /// In ar, this message translates to:
+  /// **'يرجى التحقق من العناصر التالية:'**
   String get verifyFollowingItems;
 
   /// No description provided for @macEnteredCorrectly.
   ///
-  /// In en, this message translates to:
-  /// **'ELD MAC address is entered correctly.'**
+  /// In ar, this message translates to:
+  /// **'تم إدخال عنوان MAC بشكل صحيح.'**
   String get macEnteredCorrectly;
 
   /// No description provided for @hardwareProperlyInstalled.
   ///
-  /// In en, this message translates to:
-  /// **'ELD hardware is properly installed.'**
+  /// In ar, this message translates to:
+  /// **'تم تركيب جهاز ELD بشكل صحيح.'**
   String get hardwareProperlyInstalled;
 
   /// No description provided for @vehiclePowerOn.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle power is ON.'**
+  /// In ar, this message translates to:
+  /// **'طاقة المركبة قيد التشغيل.'**
   String get vehiclePowerOn;
 
   /// No description provided for @bluetoothEnabled.
   ///
-  /// In en, this message translates to:
-  /// **'Bluetooth is enabled on the mobile device.'**
+  /// In ar, this message translates to:
+  /// **'البلوتوث مفعل في الجهاز المحمول.'**
   String get bluetoothEnabled;
 
   /// No description provided for @gpsEnabled.
   ///
-  /// In en, this message translates to:
-  /// **'GPS is enabled on the mobile device.'**
+  /// In ar, this message translates to:
+  /// **'نظام تحديد المواقع GPS مفعل في الجهاز المحمول.'**
   String get gpsEnabled;
 
   /// No description provided for @enterMacAddress.
   ///
-  /// In en, this message translates to:
-  /// **'Enter ELD MAC address listed on the device:'**
+  /// In ar, this message translates to:
+  /// **'أدخل عنوان MAC الخاص بـ ELD والموجود على الجهاز:'**
   String get enterMacAddress;
 
   /// No description provided for @connect.
   ///
-  /// In en, this message translates to:
-  /// **'CONNECT'**
+  /// In ar, this message translates to:
+  /// **'اتصال'**
   String get connect;
 
   /// No description provided for @continueDisconnected.
   ///
-  /// In en, this message translates to:
-  /// **'CONTINUE DISCONNECTED'**
+  /// In ar, this message translates to:
+  /// **'متابعة بدون اتصال'**
   String get continueDisconnected;
 
   /// No description provided for @usernameRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Username is required'**
+  /// In ar, this message translates to:
+  /// **'اسم المستخدم مطلوب'**
   String get usernameRequired;
 
   /// No description provided for @passwordRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Password is required'**
+  /// In ar, this message translates to:
+  /// **'كلمة المرور مطلوبة'**
   String get passwordRequired;
 
   /// No description provided for @hoursRecap.
   ///
-  /// In en, this message translates to:
-  /// **'Hours Recap'**
+  /// In ar, this message translates to:
+  /// **'ملخص الساعات'**
   String get hoursRecap;
 
   /// No description provided for @suggestedEvents.
   ///
-  /// In en, this message translates to:
-  /// **'Suggested Events'**
+  /// In ar, this message translates to:
+  /// **'الأحداث المقترحة'**
   String get suggestedEvents;
 
   /// No description provided for @unidentifiedEvents.
   ///
-  /// In en, this message translates to:
-  /// **'Unidentified Events'**
+  /// In ar, this message translates to:
+  /// **'الأحداث غير المحددة'**
   String get unidentifiedEvents;
 
   /// No description provided for @unclaimed.
   ///
-  /// In en, this message translates to:
-  /// **'UNCLAIMED'**
+  /// In ar, this message translates to:
+  /// **'غير مطالب بها'**
   String get unclaimed;
 
   /// No description provided for @rejected.
   ///
-  /// In en, this message translates to:
-  /// **'REJECTED'**
+  /// In ar, this message translates to:
+  /// **'مرفوضة'**
   String get rejected;
 
   /// No description provided for @noRecords.
   ///
-  /// In en, this message translates to:
-  /// **'No Records'**
+  /// In ar, this message translates to:
+  /// **'لا توجد سجلات'**
   String get noRecords;
 
   /// No description provided for @drawSignatureHere.
   ///
-  /// In en, this message translates to:
-  /// **'Draw your signature here'**
+  /// In ar, this message translates to:
+  /// **'ارسم توقيعك هنا'**
   String get drawSignatureHere;
 
   /// No description provided for @fillFormFirst.
   ///
-  /// In en, this message translates to:
-  /// **'You need to fill and save form first.'**
+  /// In ar, this message translates to:
+  /// **'يجب تعبئة النموذج وحفظه أولاً.'**
   String get fillFormFirst;
 
   /// No description provided for @formLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Form'**
+  /// In ar, this message translates to:
+  /// **'النموذج'**
   String get formLabel;
 
   /// No description provided for @certifyLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Certify'**
+  /// In ar, this message translates to:
+  /// **'التوثيق'**
   String get certifyLabel;
 
   /// No description provided for @editDutyStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Edit Duty Status'**
+  /// In ar, this message translates to:
+  /// **'تعديل حالة الخدمة'**
   String get editDutyStatus;
 
   /// No description provided for @startTime.
   ///
-  /// In en, this message translates to:
-  /// **'Start Time'**
+  /// In ar, this message translates to:
+  /// **'وقت البداية'**
   String get startTime;
 
   /// No description provided for @duration.
   ///
-  /// In en, this message translates to:
-  /// **'Duration'**
+  /// In ar, this message translates to:
+  /// **'المدة'**
   String get duration;
 
   /// No description provided for @status.
   ///
-  /// In en, this message translates to:
-  /// **'Status'**
+  /// In ar, this message translates to:
+  /// **'الحالة'**
   String get status;
 
   /// No description provided for @vehicle.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle'**
+  /// In ar, this message translates to:
+  /// **'المركبة'**
   String get vehicle;
 
   /// No description provided for @location.
   ///
-  /// In en, this message translates to:
-  /// **'Location'**
+  /// In ar, this message translates to:
+  /// **'الموقع'**
   String get location;
 
   /// No description provided for @manualLocation.
   ///
-  /// In en, this message translates to:
-  /// **'Manual Location'**
+  /// In ar, this message translates to:
+  /// **'موقع يدوي'**
   String get manualLocation;
 
   /// No description provided for @events.
   ///
-  /// In en, this message translates to:
-  /// **'Events'**
+  /// In ar, this message translates to:
+  /// **'الأحداث'**
   String get events;
 
   /// No description provided for @form.
   ///
-  /// In en, this message translates to:
-  /// **'Form'**
+  /// In ar, this message translates to:
+  /// **'النموذج'**
   String get form;
 
   /// No description provided for @certify.
   ///
-  /// In en, this message translates to:
-  /// **'Certify'**
+  /// In ar, this message translates to:
+  /// **'التوثيق'**
   String get certify;
 
   /// No description provided for @driver.
   ///
-  /// In en, this message translates to:
-  /// **'Driver'**
+  /// In ar, this message translates to:
+  /// **'السائق'**
   String get driver;
 
   /// No description provided for @vehicles.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicles'**
+  /// In ar, this message translates to:
+  /// **'المركبات'**
   String get vehicles;
 
   /// No description provided for @trailers.
   ///
-  /// In en, this message translates to:
-  /// **'Trailers'**
+  /// In ar, this message translates to:
+  /// **'المقطورات'**
   String get trailers;
 
   /// No description provided for @shippingDocuments.
   ///
-  /// In en, this message translates to:
-  /// **'Shipping Documents'**
+  /// In ar, this message translates to:
+  /// **'وثائق الشحن'**
   String get shippingDocuments;
 
   /// No description provided for @coDriver.
   ///
-  /// In en, this message translates to:
-  /// **'Co-Driver'**
+  /// In ar, this message translates to:
+  /// **'سائق مساعد'**
   String get coDriver;
 
   /// No description provided for @imageNotAvailable.
   ///
-  /// In en, this message translates to:
-  /// **'Image not available'**
+  /// In ar, this message translates to:
+  /// **'الصورة غير متاحة'**
   String get imageNotAvailable;
 
   /// No description provided for @certifyDeclaration.
   ///
-  /// In en, this message translates to:
-  /// **'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.'**
+  /// In ar, this message translates to:
+  /// **'أشهد بموجب هذا أن بياناتي وسجل حالة الخدمة خلال فترة 24 ساعة هذه صحيحة ومضبوطة.'**
   String get certifyDeclaration;
 
   /// No description provided for @notReady.
   ///
-  /// In en, this message translates to:
-  /// **'NOT READY'**
+  /// In ar, this message translates to:
+  /// **'غير جاهز'**
   String get notReady;
 
   /// No description provided for @agree.
   ///
-  /// In en, this message translates to:
-  /// **'AGREE'**
+  /// In ar, this message translates to:
+  /// **'موافق'**
   String get agree;
 
   /// No description provided for @timeline24h.
   ///
-  /// In en, this message translates to:
-  /// **'24-Hour Timeline'**
+  /// In ar, this message translates to:
+  /// **'المخطط الزمني 24 ساعة'**
   String get timeline24h;
 
   /// No description provided for @settingsAppliedSuccess.
   ///
-  /// In en, this message translates to:
-  /// **'Settings applied successfully'**
+  /// In ar, this message translates to:
+  /// **'✅ تم تطبيق الإعدادات بنجاح'**
   String get settingsAppliedSuccess;
 
   /// No description provided for @deviceInformation.
   ///
-  /// In en, this message translates to:
-  /// **'Device Information'**
+  /// In ar, this message translates to:
+  /// **'معلومات الجهاز'**
   String get deviceInformation;
 
   /// No description provided for @confirmClearLogs.
   ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to clear all logs?'**
+  /// In ar, this message translates to:
+  /// **'هل تريد مسح جميع السجلات؟'**
   String get confirmClearLogs;
 
   /// No description provided for @trackingStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Tracking Status'**
+  /// In ar, this message translates to:
+  /// **'حالة التتبع'**
   String get trackingStatus;
 
   /// No description provided for @activeStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Active'**
+  /// In ar, this message translates to:
+  /// **'نشط'**
   String get activeStatus;
 
   /// No description provided for @stoppedStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Stopped'**
+  /// In ar, this message translates to:
+  /// **'متوقف'**
   String get stoppedStatus;
 
   /// No description provided for @coordinatesLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Coordinates'**
+  /// In ar, this message translates to:
+  /// **'الإحداثيات'**
   String get coordinatesLabel;
 
   /// No description provided for @lastUpdateLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Last Update'**
+  /// In ar, this message translates to:
+  /// **'آخر تحديث'**
   String get lastUpdateLabel;
 
   /// No description provided for @locationDisabled.
   ///
-  /// In en, this message translates to:
-  /// **'Location Disabled'**
+  /// In ar, this message translates to:
+  /// **'الموقع غير مفعل'**
   String get locationDisabled;
 
   /// No description provided for @openSettings.
   ///
-  /// In en, this message translates to:
-  /// **'Open Settings'**
+  /// In ar, this message translates to:
+  /// **'فتح الإعدادات'**
   String get openSettings;
 
   /// No description provided for @remainingLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Remaining'**
+  /// In ar, this message translates to:
+  /// **'متبقي'**
   String get remainingLabel;
 
   /// No description provided for @available.
   ///
-  /// In en, this message translates to:
-  /// **'Available'**
+  /// In ar, this message translates to:
+  /// **'المتاح'**
   String get available;
 
   /// No description provided for @recap.
   ///
-  /// In en, this message translates to:
-  /// **'Recap'**
+  /// In ar, this message translates to:
+  /// **'الملخص'**
   String get recap;
 
   /// No description provided for @changeStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Change Status'**
+  /// In ar, this message translates to:
+  /// **'تغيير الحالة'**
   String get changeStatus;
 
   /// No description provided for @errorCannotChangeStatusWhileMoving.
   ///
-  /// In en, this message translates to:
-  /// **'Cannot change status while the vehicle is moving.'**
+  /// In ar, this message translates to:
+  /// **'لا يمكن تغيير الحالة أثناء حركة المركبة.'**
   String get errorCannotChangeStatusWhileMoving;
 
   /// No description provided for @customLocation.
   ///
-  /// In en, this message translates to:
-  /// **'Custom location'**
+  /// In ar, this message translates to:
+  /// **'موقع مخصص'**
   String get customLocation;
 
   /// No description provided for @notes.
   ///
-  /// In en, this message translates to:
-  /// **'Notes'**
+  /// In ar, this message translates to:
+  /// **'ملاحظات'**
   String get notes;
 
   /// No description provided for @updateButton.
   ///
-  /// In en, this message translates to:
-  /// **'UPDATE'**
+  /// In ar, this message translates to:
+  /// **'تحديث'**
   String get updateButton;
 
   /// No description provided for @offDuty.
   ///
-  /// In en, this message translates to:
-  /// **'Off Duty'**
+  /// In ar, this message translates to:
+  /// **'خارج الخدمة'**
   String get offDuty;
 
   /// No description provided for @sleeperBerth.
   ///
-  /// In en, this message translates to:
-  /// **'Sleeper'**
+  /// In ar, this message translates to:
+  /// **'النوم'**
   String get sleeperBerth;
 
   /// No description provided for @drivingStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Driving'**
+  /// In ar, this message translates to:
+  /// **'القيادة'**
   String get drivingStatus;
 
   /// No description provided for @onDuty.
   ///
-  /// In en, this message translates to:
-  /// **'On Duty'**
+  /// In ar, this message translates to:
+  /// **'في الخدمة'**
   String get onDuty;
 
   /// No description provided for @personalUse.
   ///
-  /// In en, this message translates to:
-  /// **'Personal Use'**
+  /// In ar, this message translates to:
+  /// **'استخدام شخصي'**
   String get personalUse;
 
   /// No description provided for @yardMoves.
   ///
-  /// In en, this message translates to:
-  /// **'Yard Moves'**
+  /// In ar, this message translates to:
+  /// **'تحركات ساحة'**
   String get yardMoves;
 
   /// No description provided for @confirmTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
+  /// In ar, this message translates to:
+  /// **'تأكيد'**
   String get confirmTitle;
 
   /// No description provided for @qrScannerTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Scan QR Code'**
+  /// In ar, this message translates to:
+  /// **'مسح رمز QR'**
   String get qrScannerTitle;
 
   /// No description provided for @qrScannerInstructions.
   ///
-  /// In en, this message translates to:
-  /// **'Point the camera at the QR code'**
+  /// In ar, this message translates to:
+  /// **'وجه الكاميرا نحو رمز QR'**
   String get qrScannerInstructions;
 
   /// No description provided for @logsTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Logs'**
+  /// In ar, this message translates to:
+  /// **'السجلات'**
   String get logsTitle;
 
   /// No description provided for @total.
   ///
-  /// In en, this message translates to:
-  /// **'Total'**
+  /// In ar, this message translates to:
+  /// **'الإجمالي'**
   String get total;
 
   /// No description provided for @last7Days.
   ///
-  /// In en, this message translates to:
-  /// **'Last 7 Days'**
+  /// In ar, this message translates to:
+  /// **'آخر 7 أيام'**
   String get last7Days;
 
   /// No description provided for @hoursWorkedToday.
   ///
-  /// In en, this message translates to:
-  /// **'Hours Worked Today'**
+  /// In ar, this message translates to:
+  /// **'ساعات العمل اليوم'**
   String get hoursWorkedToday;
 
   /// No description provided for @hoursAvailableToday.
   ///
-  /// In en, this message translates to:
-  /// **'Hours Available Today'**
+  /// In ar, this message translates to:
+  /// **'الساعات المتاحة اليوم'**
   String get hoursAvailableToday;
 
   /// No description provided for @hoursAvailableTomorrow.
   ///
-  /// In en, this message translates to:
-  /// **'Hours Available Tomorrow'**
+  /// In ar, this message translates to:
+  /// **'الساعات المتاحة غداً'**
   String get hoursAvailableTomorrow;
 
   /// No description provided for @registerAction.
   ///
-  /// In en, this message translates to:
-  /// **'Register'**
+  /// In ar, this message translates to:
+  /// **'إنشاء حساب'**
   String get registerAction;
 
   /// No description provided for @fullName.
   ///
-  /// In en, this message translates to:
-  /// **'Full Name'**
+  /// In ar, this message translates to:
+  /// **'الاسم الكامل'**
   String get fullName;
 
   /// No description provided for @fullNameRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Full Name is required'**
+  /// In ar, this message translates to:
+  /// **'الاسم الكامل مطلوب'**
   String get fullNameRequired;
 
   /// No description provided for @passwordMismatch.
   ///
-  /// In en, this message translates to:
-  /// **'Passwords do not match'**
+  /// In ar, this message translates to:
+  /// **'كلمتا المرور غير متطابقتين'**
   String get passwordMismatch;
 
   /// No description provided for @haveAccount.
   ///
-  /// In en, this message translates to:
-  /// **'Already have an account?'**
+  /// In ar, this message translates to:
+  /// **'لديك حساب بالفعل؟'**
   String get haveAccount;
 
   /// No description provided for @loginHere.
   ///
-  /// In en, this message translates to:
-  /// **'Login here'**
+  /// In ar, this message translates to:
+  /// **'سجل دخولك هنا'**
   String get loginHere;
 
   /// No description provided for @resetPassword.
   ///
-  /// In en, this message translates to:
-  /// **'Reset Password'**
+  /// In ar, this message translates to:
+  /// **'استعادة كلمة المرور'**
   String get resetPassword;
 
   /// No description provided for @email.
   ///
-  /// In en, this message translates to:
-  /// **'Email / Username'**
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني / اسم المستخدم'**
   String get email;
 
   /// No description provided for @emailRequired.
   ///
-  /// In en, this message translates to:
-  /// **'Email is required'**
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني مطلوب'**
   String get emailRequired;
 
   /// No description provided for @invalidEmailFormat.
   ///
-  /// In en, this message translates to:
-  /// **'Invalid email format'**
+  /// In ar, this message translates to:
+  /// **'صيغة البريد الإلكتروني غير صحيحة'**
   String get invalidEmailFormat;
 
   /// No description provided for @sendResetLink.
   ///
-  /// In en, this message translates to:
-  /// **'Send Reset Link'**
+  /// In ar, this message translates to:
+  /// **'إرسال رابط الاستعادة'**
   String get sendResetLink;
 
   /// No description provided for @backToLogin.
   ///
-  /// In en, this message translates to:
-  /// **'Back to Login'**
+  /// In ar, this message translates to:
+  /// **'العودة لتسجيل الدخول'**
   String get backToLogin;
 
   /// No description provided for @notImplemented.
   ///
-  /// In en, this message translates to:
-  /// **'This feature is not implemented yet'**
+  /// In ar, this message translates to:
+  /// **'هذه الميزة غير متوفرة بعد'**
   String get notImplemented;
 
   /// No description provided for @dvirTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle Inspection (DVIR)'**
+  /// In ar, this message translates to:
+  /// **'فحص المركبة (DVIR)'**
   String get dvirTitle;
 
   /// No description provided for @inspectionType.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection Type'**
+  /// In ar, this message translates to:
+  /// **'نوع الفحص'**
   String get inspectionType;
 
   /// No description provided for @vehicleInfo.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle Information'**
+  /// In ar, this message translates to:
+  /// **'معلومات المركبة'**
   String get vehicleInfo;
 
   /// No description provided for @mechanicalChecklist.
   ///
-  /// In en, this message translates to:
-  /// **'Mechanical Checklist'**
+  /// In ar, this message translates to:
+  /// **'قائمة الفحص الميكانيكي'**
   String get mechanicalChecklist;
 
   /// No description provided for @additionalNotes.
   ///
-  /// In en, this message translates to:
-  /// **'Additional Notes'**
+  /// In ar, this message translates to:
+  /// **'ملاحظات إضافية'**
   String get additionalNotes;
 
   /// No description provided for @vehicleCondition.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle Condition Assessment'**
+  /// In ar, this message translates to:
+  /// **'تقييم حالة المركبة'**
   String get vehicleCondition;
 
   /// No description provided for @driverSignature.
   ///
-  /// In en, this message translates to:
-  /// **'Driver Signature'**
+  /// In ar, this message translates to:
+  /// **'توقيع السائق'**
   String get driverSignature;
 
   /// No description provided for @saveReport.
   ///
-  /// In en, this message translates to:
-  /// **'Save Report'**
+  /// In ar, this message translates to:
+  /// **'حفظ التقرير'**
   String get saveReport;
 
   /// No description provided for @updateReport.
   ///
-  /// In en, this message translates to:
-  /// **'Update Report'**
+  /// In ar, this message translates to:
+  /// **'تحديث التقرير'**
   String get updateReport;
 
   /// No description provided for @newReport.
   ///
-  /// In en, this message translates to:
-  /// **'New Inspection Report'**
+  /// In ar, this message translates to:
+  /// **'تقرير فحص جديد'**
   String get newReport;
 
   /// No description provided for @editReport.
   ///
-  /// In en, this message translates to:
-  /// **'Edit Report'**
+  /// In ar, this message translates to:
+  /// **'تعديل التقرير'**
   String get editReport;
 
   /// No description provided for @noDvirReports.
   ///
-  /// In en, this message translates to:
-  /// **'No Inspection Reports'**
+  /// In ar, this message translates to:
+  /// **'لا توجد تقارير فحص'**
   String get noDvirReports;
 
   /// No description provided for @createNewReport.
   ///
-  /// In en, this message translates to:
-  /// **'Create New Report'**
+  /// In ar, this message translates to:
+  /// **'إنشاء تقرير جديد'**
   String get createNewReport;
 
   /// No description provided for @reportSavedSuccess.
   ///
-  /// In en, this message translates to:
-  /// **'Inspection report saved successfully'**
+  /// In ar, this message translates to:
+  /// **'تم حفظ تقرير الفحص بنجاح'**
   String get reportSavedSuccess;
 
   /// No description provided for @defectsFound.
   ///
-  /// In en, this message translates to:
-  /// **'Defects Found'**
+  /// In ar, this message translates to:
+  /// **'أعطال مكتشفة'**
   String get defectsFound;
 
   /// No description provided for @submitted.
   ///
-  /// In en, this message translates to:
-  /// **'Submitted'**
+  /// In ar, this message translates to:
+  /// **'مقدم'**
   String get submitted;
 
   /// No description provided for @draft.
   ///
-  /// In en, this message translates to:
-  /// **'Draft'**
+  /// In ar, this message translates to:
+  /// **'مسودة'**
   String get draft;
 
   /// No description provided for @trailer.
   ///
-  /// In en, this message translates to:
-  /// **'Trailer'**
+  /// In ar, this message translates to:
+  /// **'المقطورة'**
   String get trailer;
 
   /// No description provided for @odometerReading.
   ///
-  /// In en, this message translates to:
-  /// **'Odometer Reading'**
+  /// In ar, this message translates to:
+  /// **'عداد المسافات'**
   String get odometerReading;
 
   /// No description provided for @dtcCodes.
   ///
-  /// In en, this message translates to:
-  /// **'Engine Diagnostic Codes (DTC)'**
+  /// In ar, this message translates to:
+  /// **'رموز أعطال المحرك (DTC)'**
   String get dtcCodes;
 
   /// No description provided for @notesHint.
   ///
-  /// In en, this message translates to:
-  /// **'Any additional notes about vehicle condition...'**
+  /// In ar, this message translates to:
+  /// **'أي ملاحظات إضافية عن حالة المركبة...'**
   String get notesHint;
 
   /// No description provided for @dateLabel.
   ///
-  /// In en, this message translates to:
-  /// **'Date'**
+  /// In ar, this message translates to:
+  /// **'التاريخ'**
   String get dateLabel;
 
   /// No description provided for @selectVehicle.
   ///
-  /// In en, this message translates to:
-  /// **'Select Vehicle'**
+  /// In ar, this message translates to:
+  /// **'اختيار المركبة'**
   String get selectVehicle;
 
   /// No description provided for @searchVehicle.
   ///
-  /// In en, this message translates to:
-  /// **'Search vehicles...'**
+  /// In ar, this message translates to:
+  /// **'بحث عن مركبة...'**
   String get searchVehicle;
 
   /// No description provided for @noVehiclesFound.
   ///
-  /// In en, this message translates to:
-  /// **'No vehicles available'**
+  /// In ar, this message translates to:
+  /// **'لا توجد مركبات متاحة'**
   String get noVehiclesFound;
 
   /// No description provided for @vehicleSelected.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle selected'**
+  /// In ar, this message translates to:
+  /// **'تم اختيار المركبة'**
   String get vehicleSelected;
 
   /// No description provided for @unassigned.
   ///
-  /// In en, this message translates to:
-  /// **'Unassigned'**
+  /// In ar, this message translates to:
+  /// **'غير مسندة'**
   String get unassigned;
 
   /// No description provided for @underDevelopment.
   ///
-  /// In en, this message translates to:
-  /// **'Under Development...'**
+  /// In ar, this message translates to:
+  /// **'قيد التطوير...'**
   String get underDevelopment;
 
   /// No description provided for @am.
   ///
-  /// In en, this message translates to:
-  /// **'AM'**
+  /// In ar, this message translates to:
+  /// **'ص'**
   String get am;
 
   /// No description provided for @pm.
   ///
-  /// In en, this message translates to:
-  /// **'PM'**
+  /// In ar, this message translates to:
+  /// **'م'**
   String get pm;
 
   /// No description provided for @miles.
   ///
-  /// In en, this message translates to:
-  /// **'miles'**
+  /// In ar, this message translates to:
+  /// **'ميل'**
   String get miles;
 
   /// No description provided for @hour.
   ///
-  /// In en, this message translates to:
-  /// **'hour'**
+  /// In ar, this message translates to:
+  /// **'ساعة'**
   String get hour;
 
   /// No description provided for @minute.
   ///
-  /// In en, this message translates to:
-  /// **'minute'**
+  /// In ar, this message translates to:
+  /// **'دقيقة'**
   String get minute;
 
   /// No description provided for @newInspectionReport.
   ///
-  /// In en, this message translates to:
-  /// **'New Inspection Report'**
+  /// In ar, this message translates to:
+  /// **'تقرير فحص جديد'**
   String get newInspectionReport;
 
   /// No description provided for @editInspectionReport.
   ///
-  /// In en, this message translates to:
-  /// **'Edit Inspection Report'**
+  /// In ar, this message translates to:
+  /// **'تعديل التقرير'**
   String get editInspectionReport;
 
   /// No description provided for @active.
   ///
-  /// In en, this message translates to:
-  /// **'Active'**
+  /// In ar, this message translates to:
+  /// **'نشط'**
   String get active;
 
   /// No description provided for @inactive.
   ///
-  /// In en, this message translates to:
-  /// **'Inactive'**
+  /// In ar, this message translates to:
+  /// **'متوقف'**
   String get inactive;
 
   /// No description provided for @notAvailable.
   ///
-  /// In en, this message translates to:
-  /// **'N/A'**
+  /// In ar, this message translates to:
+  /// **'لا يوجد'**
   String get notAvailable;
 
   /// No description provided for @deviceInfo.
   ///
-  /// In en, this message translates to:
-  /// **'Device Info'**
+  /// In ar, this message translates to:
+  /// **'معلومات الجهاز'**
   String get deviceInfo;
 
   /// No description provided for @account.
   ///
-  /// In en, this message translates to:
-  /// **'Account'**
+  /// In ar, this message translates to:
+  /// **'الحساب'**
   String get account;
 
   /// No description provided for @rules.
   ///
-  /// In en, this message translates to:
-  /// **'Rules'**
+  /// In ar, this message translates to:
+  /// **'القواعد'**
   String get rules;
 
   /// No description provided for @infoPacket.
   ///
-  /// In en, this message translates to:
-  /// **'Info Packet'**
+  /// In ar, this message translates to:
+  /// **'الوثائق'**
   String get infoPacket;
 
   /// No description provided for @odometer.
   ///
-  /// In en, this message translates to:
-  /// **'Odometer'**
+  /// In ar, this message translates to:
+  /// **'عداد المسافة'**
   String get odometer;
 
   /// No description provided for @engineHours.
   ///
-  /// In en, this message translates to:
-  /// **'Engine Hours'**
+  /// In ar, this message translates to:
+  /// **'ساعات المحرك'**
   String get engineHours;
 
   /// No description provided for @offlineMode.
   ///
-  /// In en, this message translates to:
-  /// **'Offline Mode'**
+  /// In ar, this message translates to:
+  /// **'وضع غير متصل'**
   String get offlineMode;
 
   /// No description provided for @dotInspection.
   ///
-  /// In en, this message translates to:
-  /// **'DOT Inspection'**
+  /// In ar, this message translates to:
+  /// **'تفتيش DOT'**
   String get dotInspection;
 
   /// No description provided for @setInspectionPin.
   ///
-  /// In en, this message translates to:
-  /// **'Set Inspection PIN'**
+  /// In ar, this message translates to:
+  /// **'تعيين رمز التفتيش'**
   String get setInspectionPin;
 
   /// No description provided for @enter4DigitPin.
   ///
-  /// In en, this message translates to:
-  /// **'Enter 4-digit PIN'**
+  /// In ar, this message translates to:
+  /// **'أدخل رمز من 4 أرقام'**
   String get enter4DigitPin;
 
   /// No description provided for @confirmPin.
   ///
-  /// In en, this message translates to:
-  /// **'Confirm PIN'**
+  /// In ar, this message translates to:
+  /// **'تأكيد الرمز'**
   String get confirmPin;
 
   /// No description provided for @enterPinToUnlock.
   ///
-  /// In en, this message translates to:
-  /// **'Enter PIN to Unlock'**
+  /// In ar, this message translates to:
+  /// **'أدخل الرمز لفك القفل'**
   String get enterPinToUnlock;
 
   /// No description provided for @unlock.
   ///
-  /// In en, this message translates to:
-  /// **'Unlock'**
+  /// In ar, this message translates to:
+  /// **'فك القفل'**
   String get unlock;
 
   /// No description provided for @dotInspectionMode.
   ///
-  /// In en, this message translates to:
-  /// **'DOT Inspection Mode'**
+  /// In ar, this message translates to:
+  /// **'وضع تفتيش DOT'**
   String get dotInspectionMode;
 
   /// No description provided for @screenLockedForOfficer.
   ///
-  /// In en, this message translates to:
-  /// **'Screen locked for officer review'**
+  /// In ar, this message translates to:
+  /// **'الشاشة مقفلة لمراجعة الضابط'**
   String get screenLockedForOfficer;
 
   /// No description provided for @unlockDriverOnly.
   ///
-  /// In en, this message translates to:
-  /// **'Unlock (Driver Only)'**
+  /// In ar, this message translates to:
+  /// **'فك القفل (للسائق فقط)'**
   String get unlockDriverOnly;
 
   /// No description provided for @startInspectionDesc.
   ///
-  /// In en, this message translates to:
-  /// **'Start inspection to display logs for the officer. The screen will be locked to prevent access to other apps.'**
+  /// In ar, this message translates to:
+  /// **'ابدأ التفتيش لعرض السجلات للضابط. سيتم قفل الشاشة لمنع الوصول للتطبيقات الأخرى.'**
   String get startInspectionDesc;
 
   /// No description provided for @sendLogs.
   ///
-  /// In en, this message translates to:
-  /// **'Send Logs'**
+  /// In ar, this message translates to:
+  /// **'إرسال السجلات'**
   String get sendLogs;
 
   /// No description provided for @emailLogs.
   ///
-  /// In en, this message translates to:
-  /// **'Email Logs'**
+  /// In ar, this message translates to:
+  /// **'إرسال عبر البريد'**
   String get emailLogs;
 
   /// No description provided for @endInspection.
   ///
-  /// In en, this message translates to:
-  /// **'End Inspection'**
+  /// In ar, this message translates to:
+  /// **'إنهاء التفتيش'**
   String get endInspection;
 
   /// No description provided for @certified.
   ///
-  /// In en, this message translates to:
-  /// **'Certified'**
+  /// In ar, this message translates to:
+  /// **'معتمد'**
   String get certified;
 
   /// No description provided for @eldReport.
   ///
-  /// In en, this message translates to:
-  /// **'ELD Report'**
+  /// In ar, this message translates to:
+  /// **'تقرير ELD'**
   String get eldReport;
 
   /// No description provided for @hosReport.
   ///
-  /// In en, this message translates to:
-  /// **'HOS Report'**
+  /// In ar, this message translates to:
+  /// **'تقرير HOS'**
   String get hosReport;
 
   /// No description provided for @compliant.
   ///
-  /// In en, this message translates to:
-  /// **'Compliant'**
+  /// In ar, this message translates to:
+  /// **'ممتثل'**
   String get compliant;
 
   /// No description provided for @nonCompliant.
   ///
-  /// In en, this message translates to:
-  /// **'Non-Compliant'**
+  /// In ar, this message translates to:
+  /// **'غير ممتثل'**
   String get nonCompliant;
 
   /// No description provided for @work.
   ///
-  /// In en, this message translates to:
-  /// **'Work'**
+  /// In ar, this message translates to:
+  /// **'العمل'**
   String get work;
 
   /// No description provided for @rest.
   ///
-  /// In en, this message translates to:
-  /// **'Rest'**
+  /// In ar, this message translates to:
+  /// **'الراحة'**
   String get rest;
 
   /// No description provided for @break_.
   ///
-  /// In en, this message translates to:
-  /// **'Break'**
+  /// In ar, this message translates to:
+  /// **'الاستراحة'**
   String get break_;
 
   /// No description provided for @distance.
   ///
-  /// In en, this message translates to:
-  /// **'Distance'**
+  /// In ar, this message translates to:
+  /// **'المسافة'**
   String get distance;
 
   /// No description provided for @malfunctionAlerts.
   ///
-  /// In en, this message translates to:
-  /// **'Malfunction Alerts'**
+  /// In ar, this message translates to:
+  /// **'تنبيهات الأعطال'**
   String get malfunctionAlerts;
 
   /// No description provided for @clearAll.
   ///
-  /// In en, this message translates to:
-  /// **'Clear All'**
+  /// In ar, this message translates to:
+  /// **'مسح الكل'**
   String get clearAll;
 
   /// No description provided for @pdfExportedSuccess.
   ///
-  /// In en, this message translates to:
-  /// **'PDF exported successfully'**
+  /// In ar, this message translates to:
+  /// **'تم تصدير PDF بنجاح'**
   String get pdfExportedSuccess;
 
   /// No description provided for @userManual.
   ///
-  /// In en, this message translates to:
-  /// **'User Manual'**
+  /// In ar, this message translates to:
+  /// **'دليل المستخدم'**
   String get userManual;
 
   /// No description provided for @instructions.
   ///
-  /// In en, this message translates to:
-  /// **'Instructions'**
+  /// In ar, this message translates to:
+  /// **'التعليمات'**
   String get instructions;
 
   /// No description provided for @malfunctionManual.
   ///
-  /// In en, this message translates to:
-  /// **'Malfunction Manual'**
+  /// In ar, this message translates to:
+  /// **'دليل الأعطال'**
   String get malfunctionManual;
 
   /// No description provided for @viewUserManual.
   ///
-  /// In en, this message translates to:
-  /// **'View User Manual'**
+  /// In ar, this message translates to:
+  /// **'عرض دليل المستخدم'**
   String get viewUserManual;
 
   /// No description provided for @viewInstructions.
   ///
-  /// In en, this message translates to:
-  /// **'View Instructions'**
+  /// In ar, this message translates to:
+  /// **'عرض التعليمات'**
   String get viewInstructions;
 
   /// No description provided for @viewMalfunctionManual.
   ///
-  /// In en, this message translates to:
-  /// **'View Malfunction Manual'**
+  /// In ar, this message translates to:
+  /// **'عرض دليل الأعطال'**
   String get viewMalfunctionManual;
 
   /// No description provided for @legalNotice.
   ///
-  /// In en, this message translates to:
-  /// **'These documents are required by approved fleet management standards. They must be available at all times while operating a commercial vehicle.'**
+  /// In ar, this message translates to:
+  /// **'هذه الوثائق مطلوبة ضمن معايير إدارة الأساطيل المعتمدة. يجب أن تكون متاحة في جميع الأوقات أثناء تشغيل المركبة التجارية.'**
   String get legalNotice;
 
   /// No description provided for @gettingStarted.
   ///
-  /// In en, this message translates to:
-  /// **'Getting Started'**
+  /// In ar, this message translates to:
+  /// **'بدء الاستخدام'**
   String get gettingStarted;
 
   /// No description provided for @connectingToVehicle.
   ///
-  /// In en, this message translates to:
-  /// **'Connecting to Vehicle'**
+  /// In ar, this message translates to:
+  /// **'الاتصال بالمركبة'**
   String get connectingToVehicle;
 
   /// No description provided for @changingDutyStatus.
   ///
-  /// In en, this message translates to:
-  /// **'Changing Duty Status'**
+  /// In ar, this message translates to:
+  /// **'تغيير حالة السائق'**
   String get changingDutyStatus;
 
   /// No description provided for @viewingLogs.
   ///
-  /// In en, this message translates to:
-  /// **'Viewing Logs & Certification'**
+  /// In ar, this message translates to:
+  /// **'عرض السجلات والتصديق'**
   String get viewingLogs;
 
   /// No description provided for @vehicleInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle Inspection (DVIR)'**
+  /// In ar, this message translates to:
+  /// **'فحص المركبة (DVIR)'**
   String get vehicleInspection;
 
   /// No description provided for @roadsideInspection.
   ///
-  /// In en, this message translates to:
-  /// **'Roadside Inspection'**
+  /// In ar, this message translates to:
+  /// **'التفتيش الميداني'**
   String get roadsideInspection;
 
   /// No description provided for @continueWithout.
   ///
-  /// In en, this message translates to:
-  /// **'Continue Without'**
+  /// In ar, this message translates to:
+  /// **'متابعة بدون'**
   String get continueWithout;
 
   /// No description provided for @grant.
   ///
-  /// In en, this message translates to:
-  /// **'Grant'**
+  /// In ar, this message translates to:
+  /// **'منح'**
   String get grant;
 
   /// No description provided for @time.
   ///
-  /// In en, this message translates to:
-  /// **'Time'**
+  /// In ar, this message translates to:
+  /// **'الوقت'**
   String get time;
 
   /// No description provided for @odom.
   ///
-  /// In en, this message translates to:
-  /// **'Odom.'**
+  /// In ar, this message translates to:
+  /// **'العداد'**
   String get odom;
 
   /// No description provided for @eng.
   ///
-  /// In en, this message translates to:
-  /// **'Eng.'**
+  /// In ar, this message translates to:
+  /// **'المحرك'**
   String get eng;
 
   /// No description provided for @src.
   ///
-  /// In en, this message translates to:
-  /// **'Src'**
+  /// In ar, this message translates to:
+  /// **'المصدر'**
   String get src;
 
   /// No description provided for @noManualModifications.
   ///
-  /// In en, this message translates to:
-  /// **'No manual modifications found for this date.'**
+  /// In ar, this message translates to:
+  /// **'لم يتم العثور على تعديلات يدوية لهذا التاريخ.'**
   String get noManualModifications;
 
   /// No description provided for @failedToLoadAudits.
   ///
-  /// In en, this message translates to:
-  /// **'Failed to load audits'**
+  /// In ar, this message translates to:
+  /// **'فشل تحميل السجلات'**
   String get failedToLoadAudits;
 
   /// No description provided for @exportErods.
   ///
-  /// In en, this message translates to:
-  /// **'Export as eRODS (XML/CSV)'**
+  /// In ar, this message translates to:
+  /// **'تصدير ملف eRODS'**
   String get exportErods;
 
   /// No description provided for @requiredForFmcsa.
   ///
-  /// In en, this message translates to:
-  /// **'Required for FMCSA inspection'**
+  /// In ar, this message translates to:
+  /// **'مطلوب لتفتيش FMCSA'**
   String get requiredForFmcsa;
 
   /// No description provided for @changeStatusTo.
   ///
-  /// In en, this message translates to:
-  /// **'Change status to {status}'**
+  /// In ar, this message translates to:
+  /// **'تغيير الحالة إلى {status}'**
   String changeStatusTo(String status);
 
   /// No description provided for @connected.
   ///
-  /// In en, this message translates to:
-  /// **'Connected'**
+  /// In ar, this message translates to:
+  /// **'متصل'**
   String get connected;
 
   /// No description provided for @connecting.
   ///
-  /// In en, this message translates to:
-  /// **'Connecting...'**
+  /// In ar, this message translates to:
+  /// **'جاري الاتصال...'**
   String get connecting;
 
   /// No description provided for @disconnected.
   ///
-  /// In en, this message translates to:
-  /// **'Disconnected'**
+  /// In ar, this message translates to:
+  /// **'غير متصل'**
   String get disconnected;
 
   /// No description provided for @noRecordsToday.
   ///
-  /// In en, this message translates to:
-  /// **'No records for today'**
+  /// In ar, this message translates to:
+  /// **'لا توجد سجلات لهذا اليوم'**
   String get noRecordsToday;
 
   /// No description provided for @trackingNotStarted.
   ///
-  /// In en, this message translates to:
-  /// **'Tracking has not started yet'**
+  /// In ar, this message translates to:
+  /// **'لم يبدأ التتبع بعد'**
   String get trackingNotStarted;
 
   /// No description provided for @gpsDisabled.
   ///
-  /// In en, this message translates to:
-  /// **'GPS is disabled'**
+  /// In ar, this message translates to:
+  /// **'GPS غير مفعل'**
   String get gpsDisabled;
 
   /// No description provided for @notConnectedToServer.
   ///
-  /// In en, this message translates to:
-  /// **'Not connected to server'**
+  /// In ar, this message translates to:
+  /// **'غير متصل بالخادم'**
   String get notConnectedToServer;
 
   /// No description provided for @unexpectedError.
   ///
-  /// In en, this message translates to:
-  /// **'An unexpected error occurred'**
+  /// In ar, this message translates to:
+  /// **'حدث خطأ غير متوقع'**
   String get unexpectedError;
 
   /// No description provided for @loadingRecords.
   ///
-  /// In en, this message translates to:
-  /// **'Loading records...'**
+  /// In ar, this message translates to:
+  /// **'جاري تحميل السجلات...'**
   String get loadingRecords;
 
   /// No description provided for @defectsTitle.
   ///
-  /// In en, this message translates to:
-  /// **'Defects'**
+  /// In ar, this message translates to:
+  /// **'الأعطال'**
   String get defectsTitle;
 
   /// No description provided for @vehicleConditionSatisfactory.
   ///
-  /// In en, this message translates to:
-  /// **'Vehicle Condition Satisfactory'**
+  /// In ar, this message translates to:
+  /// **'حالة المركبة مرضية'**
   String get vehicleConditionSatisfactory;
 
   /// No description provided for @auditReason.
   ///
-  /// In en, this message translates to:
-  /// **'Reason: {reason}'**
+  /// In ar, this message translates to:
+  /// **'السبب: {reason}'**
   String auditReason(String reason);
 
   /// No description provided for @auditStatusChange.
   ///
-  /// In en, this message translates to:
+  /// In ar, this message translates to:
   /// **'{oldStatus} -> {newStatus}'**
   String auditStatusChange(String oldStatus, String newStatus);
 
   /// No description provided for @calculatingLocation.
   ///
-  /// In en, this message translates to:
-  /// **'Calculating location...'**
+  /// In ar, this message translates to:
+  /// **'جاري حساب الموقع...'**
   String get calculatingLocation;
 
   /// No description provided for @driveLimitTitle.
   ///
-  /// In en, this message translates to:
-  /// **'DRIVE'**
+  /// In ar, this message translates to:
+  /// **'القيادة'**
   String get driveLimitTitle;
 
   /// No description provided for @driveLimitDesc.
   ///
-  /// In en, this message translates to:
-  /// **'11-Hour Driving Limit'**
+  /// In ar, this message translates to:
+  /// **'حد 11 ساعة للقيادة'**
   String get driveLimitDesc;
 
   /// No description provided for @shiftLimitTitle.
   ///
-  /// In en, this message translates to:
-  /// **'SHIFT'**
+  /// In ar, this message translates to:
+  /// **'الوردية'**
   String get shiftLimitTitle;
 
   /// No description provided for @shiftLimitDesc.
   ///
-  /// In en, this message translates to:
-  /// **'14-Hour On Duty Limit'**
+  /// In ar, this message translates to:
+  /// **'حد 14 ساعة للعمل'**
   String get shiftLimitDesc;
 
   /// No description provided for @breakLimitTitle.
   ///
-  /// In en, this message translates to:
-  /// **'BREAK'**
+  /// In ar, this message translates to:
+  /// **'الاستراحة'**
   String get breakLimitTitle;
 
   /// No description provided for @breakLimitDesc.
   ///
-  /// In en, this message translates to:
-  /// **'30 Minute Rest Break'**
+  /// In ar, this message translates to:
+  /// **'استراحة 30 دقيقة'**
   String get breakLimitDesc;
 
   /// No description provided for @cycleLimitTitle.
   ///
-  /// In en, this message translates to:
-  /// **'CYCLE'**
+  /// In ar, this message translates to:
+  /// **'الدورة'**
   String get cycleLimitTitle;
 
   /// No description provided for @cycleLimitDesc.
   ///
-  /// In en, this message translates to:
+  /// In ar, this message translates to:
   /// **'USA 70/8'**
   String get cycleLimitDesc;
 
   /// No description provided for @hoursOfService.
   ///
-  /// In en, this message translates to:
-  /// **'HOURS OF SERVICE'**
+  /// In ar, this message translates to:
+  /// **'ساعات الخدمة'**
   String get hoursOfService;
 
   /// No description provided for @sessionExpired.
   ///
-  /// In en, this message translates to:
-  /// **'Session expired, please login again'**
+  /// In ar, this message translates to:
+  /// **'انتهت صلاحية الجلسة'**
   String get sessionExpired;
 
   /// No description provided for @invalidConfiguration.
   ///
-  /// In en, this message translates to:
-  /// **'Invalid server configuration'**
+  /// In ar, this message translates to:
+  /// **'إعدادات الخادم غير صالحة'**
   String get invalidConfiguration;
 
   /// No description provided for @invalidCredentials.
   ///
-  /// In en, this message translates to:
-  /// **'Invalid username or password'**
+  /// In ar, this message translates to:
+  /// **'اسم المستخدم أو كلمة المرور غير صحيحة'**
   String get invalidCredentials;
 
   /// No description provided for @sessionMissing.
   ///
-  /// In en, this message translates to:
-  /// **'Session missing, please login again'**
+  /// In ar, this message translates to:
+  /// **'الجلسة غير موجودة، يرجى تسجيل الدخول'**
   String get sessionMissing;
 }
 
@@ -2682,8 +2682,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

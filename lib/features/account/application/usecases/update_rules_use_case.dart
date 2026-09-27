@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import '../../../../backend/contracts/rules_screen_backend.dart';
 import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/result/result.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/result/result.dart';
+import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../models/rules_screen_model.dart';

@@ -1,15 +1,15 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/core/data/models/user_model.dart';
-import 'package:golden_feather_eld/core/domain/entities/user.dart';
-
-import '../../../../backend/contracts/auth_backend.dart';
-import '../../../../core/config/server_config_provider.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
+import '../../../../core/config/server_config_provider.dart';
+
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import '../../domain/entities/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../backend/contracts/auth_backend.dart';
 import '../datasources/auth_local_data_source.dart';
 import '../models/auth_session_dto.dart';
+import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthBackend _authBackend;

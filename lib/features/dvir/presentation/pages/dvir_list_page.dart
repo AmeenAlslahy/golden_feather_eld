@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 // import '../../../../l10n/app_localizations.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/dvir_list_summary.dart';
@@ -55,24 +54,37 @@ class DvirListPage extends ConsumerWidget {
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          child: EldRetryView(
-                            message: dvirState.error != null
-                                ? anyErrorUserMessage(
-                                    dvirState.error!,
-                                    isArabic:
-                                        Localizations.localeOf(context).languageCode ==
-                                            'ar',
-                                  )
-                                : (Localizations.localeOf(context).languageCode ==
-                                        'ar'
-                                    ? 'لا توجد تقارير.'
-                                    : 'No records.'),
-                            onRetry: () =>
-                                ref.read(dvirProvider.notifier).refresh(),
+                        if (dvirState.error != null)
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            child: EldRetryView(
+                              message: anyErrorUserMessage(
+                                dvirState.error!,
+                                isArabic:
+                                    Localizations.localeOf(context).languageCode ==
+                                        'ar',
+                              ),
+                              onRetry: () =>
+                                  ref.read(dvirProvider.notifier).refresh(),
+                            ),
+                          )
+                        else
+                          // Reference layout (screenshot 21): plain grey
+                          // "No Records" near the top of an empty list.
+                          Padding(
+                            padding: const EdgeInsets.only(top: 40),
+                            child: Text(
+                              Localizations.localeOf(context).languageCode ==
+                                      'ar'
+                                  ? 'لا توجد سجلات'
+                                  : 'No Records',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ),
-                        ),
                       ],
                     )
                   : ListView.builder(

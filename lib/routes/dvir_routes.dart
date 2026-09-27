@@ -1,10 +1,9 @@
 import 'package:go_router/go_router.dart';
-
-import '../features/dvir/presentation/pages/dvir_form_page.dart';
+import '../routes.dart';
 import '../features/dvir/presentation/pages/dvir_list_page.dart';
+import '../features/dvir/presentation/pages/dvir_form_page.dart';
 import '../features/inspection/presentation/pages/dot_inspection_page.dart';
 import '../features/inspection/presentation/pages/send_logs_page.dart';
-import '../routes.dart';
 
 class DvirRoutes {
   DvirRoutes._();

@@ -1,11 +1,12 @@
-import 'dart:typed_data';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../data/repositories/log_repository_impl.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/error/user_facing_message.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../domain/repositories/log_repository.dart';
+import '../../data/repositories/log_repository_impl.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'dart:typed_data';
 
 class CertifyLogState {
   final bool isLoading;
@@ -41,13 +42,23 @@ class CertifyLogState {
 
 final certifyLogProvider = StateNotifierProvider<CertifyLogNotifier, CertifyLogState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
-  return CertifyLogNotifier(repository);
+  return CertifyLogNotifier(
+    repository,
+    isArabic: ref.watch(localeProvider).languageCode == 'ar',
+  );
 });
 
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
+  final bool _isArabic;
 
-  CertifyLogNotifier(this._repository) : super(const CertifyLogState());
+  /// Driver-facing text only — never the failure code or exception text.
+  String _message(Failure failure) =>
+      anyErrorUserMessage(failure, isArabic: _isArabic);
+
+  CertifyLogNotifier(this._repository, {bool isArabic = false})
+      : _isArabic = isArabic,
+        super(const CertifyLogState());
 
   Future<String?> respondToCarrierEdit({
     required DailyLogId logId,
@@ -62,8 +73,10 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
       action: action,
       driverNotes: driverNotes,
     );
-    if (!mounted) return 'Response was interrupted.';
-    final error = result.fold((failure) => failure.message, (_) => null);
+    if (!mounted) {
+      return _isArabic ? 'انقطعت العملية. أعد المحاولة.' : 'Response was interrupted.';
+    }
+    final error = result.fold(_message, (_) => null);
     if (error != null) {
       state = state.copyWith(isLoading: false, error: error);
       return error;
@@ -82,7 +95,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
       (failure) {
         state = state.copyWith(
           isLoading: false,
-          error: failure.message,
+          error: _message(failure),
         );
       },
       (data) {
@@ -106,7 +119,10 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     // remains the driver's confirmation on this device; the legal record is
     // POST /eld/daily-logs/{id}/certify.
     if (signatureBytes.isEmpty) {
-      state = state.copyWith(isLoading: false, error: 'Please draw a signature first.');
+      state = state.copyWith(
+        isLoading: false,
+        error: _isArabic ? 'ارسم التوقيع أولاً.' : 'Please draw a signature first.',
+      );
       return;
     }
 
@@ -123,7 +139,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
 
     certifyResult.match(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        state = state.copyWith(isLoading: false, error: _message(failure));
       },
       (success) {
         state = state.copyWith(isLoading: false, isSuccess: true);

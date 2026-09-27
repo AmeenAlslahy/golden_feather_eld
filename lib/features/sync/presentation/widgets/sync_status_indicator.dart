@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
+import '../../../../core/extensions/context_extensions.dart';
 
 /// مؤشر حالة المزامنة
 class SyncStatusIndicator extends ConsumerWidget {

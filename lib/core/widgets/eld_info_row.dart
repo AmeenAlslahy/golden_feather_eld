@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../extensions/context_extensions.dart';
+import '../theme/app_colors.dart';
 
 /// صف معلومات - عنوان رمادي على اليسار، قيمة سوداء على اليمين
 class EldInfoRow extends StatelessWidget {
@@ -28,22 +29,27 @@ class EldInfoRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
-            // العنوان - رمادي (يلتف بدل أن يفيض مع العناوين الطويلة)
-            Flexible(
+            // العنوان - رمادي
+            Expanded(
+              flex: 2,
               child: Text(
                 label,
-                style: context.styles.muted,
+                style: context.styles.body.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(width: 16),
-            // القيمة - أسود Bold
+            // القيمة - أسود
             Expanded(
+              flex: 3,
               child: Text(
                 value,
-                textAlign: TextAlign.end,
+                textAlign: TextAlign.start,
                 style: valueColor == null
-                    ? context.styles.bodyBold
-                    : context.styles.bodyBold.copyWith(color: valueColor),
+                    ? context.styles.body.copyWith(color: AppColors.textPrimary)
+                    : context.styles.body.copyWith(color: valueColor),
               ),
             ),
             if (trailing != null) ...[

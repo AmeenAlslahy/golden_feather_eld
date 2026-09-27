@@ -5,8 +5,8 @@ import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
 import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
-import '../mappers/rules_screen_mapper.dart';
 import '../models/rules_screen_dto.dart';
+import '../mappers/rules_screen_mapper.dart';
 
 /// ELD Engine implementation of [RulesScreenBackend].
 class EldRulesScreenBackend implements RulesScreenBackend {
@@ -18,7 +18,7 @@ class EldRulesScreenBackend implements RulesScreenBackend {
   Future<Result<RulesScreenModel>> getRulesScreen({DriverId? driverId}) async {
     final res = await _apiClient.get<RulesScreenDto>(
       EldEndpoints.rulesScreen,
-      queryParameters: driverId != null ? {'driverId': 201} : null, // TODO: Temporary workaround for driver 201
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: (data) => RulesScreenDto.fromJson(data as Map<String, dynamic>),
     );
     return res.mapValue((r) => RulesScreenMapper.toModel(r.data!));

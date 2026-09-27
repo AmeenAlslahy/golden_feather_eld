@@ -1,11 +1,10 @@
 import 'package:go_router/go_router.dart';
-
-import '../features/logs/presentation/pages/edit_log_page.dart';
-import '../features/logs/presentation/pages/log_detail_page.dart';
+import '../routes.dart';
 import '../features/logs/presentation/pages/logs_list_page.dart';
+import '../features/logs/presentation/pages/log_detail_page.dart';
+import '../features/logs/presentation/pages/edit_log_page.dart';
 import '../features/logs/presentation/pages/suggested_events_page.dart';
 import '../features/logs/presentation/pages/unidentified_events_page.dart';
-import '../routes.dart';
 
 class LogsRoutes {
   LogsRoutes._();

@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-
-import 'core/constants/app_constants.dart';
-import 'core/localization/locale_provider.dart';
-import 'core/services/quick_actions_initializer.dart';
+import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_provider.dart';
-import 'features/hos/domain/engine/hos_rules_engine.dart';
-import 'features/hos/presentation/providers/hos_provider.dart';
-import 'l10n/app_localizations.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/constants/app_constants.dart';
+import 'core/services/quick_actions_initializer.dart';
 import 'routes.dart';
+import 'features/hos/presentation/providers/hos_provider.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'features/hos/domain/engine/hos_rules_engine.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 

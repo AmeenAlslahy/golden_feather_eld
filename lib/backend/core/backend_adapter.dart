@@ -1,25 +1,17 @@
 import '../contracts/account_backend.dart';
-import '../contracts/auth_backend.dart';
-import '../contracts/compliance_backend.dart';
 import '../contracts/config_backend.dart';
 import '../contracts/daily_logs_backend.dart';
-import '../contracts/driver_rules_backend.dart';
 import '../contracts/driver_session_backend.dart';
 import '../contracts/duty_status_backend.dart';
 import '../contracts/dvir_backend.dart';
-import '../contracts/fleet_dashboard_backend.dart';
 import '../contracts/hardware_backend.dart';
-import '../contracts/health_backend.dart';
 import '../contracts/inspection_backend.dart';
-import '../contracts/log_transfer_backend.dart';
-import '../contracts/reports_backend.dart';
-import '../contracts/rules_engine_backend.dart';
 import '../contracts/rules_screen_backend.dart';
 import '../contracts/signature_backend.dart';
-import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
+import '../contracts/auth_backend.dart';
 import 'backend_identity.dart';
 
 /// Aggregator for all backend contracts.
@@ -61,23 +53,7 @@ abstract class BackendAdapter {
 
   HardwareBackend? get hardware;
 
-  RulesEngineBackend? get rulesEngine;
-
-  DriverRulesBackend? get driverRules;
-
-  LogTransferBackend? get logTransfer;
-
-  HealthBackend? get health;
-
-  ReportsBackend? get reports;
-
-  StatsBackend? get stats;
-
-  ComplianceBackend? get compliance;
-
   ConfigBackend? get config;
-
-  FleetDashboardBackend? get fleetDashboard;
 
   SignatureBackend? get signature;
 

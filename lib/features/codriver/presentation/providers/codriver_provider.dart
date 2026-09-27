@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/contracts/driver_session_backend.dart';
-import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/network/core_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../data/repositories/codriver_repository_impl.dart';
 import '../../domain/current_codriver.dart';
 import '../../domain/entities/codriver.dart';

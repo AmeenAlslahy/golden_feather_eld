@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../../backend/providers/backend_providers.dart';
-import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
+import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/error/user_facing_message.dart';
 import '../../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../vehicle/domain/entities/vehicle.dart';
 import '../../../../vehicle/domain/vehicle_selection.dart';
+import '../../widgets/vehicle_picker_dialog.dart';
+import '../../widgets/codriver_picker_dialog.dart';
+import '../../pages/trailers_page.dart';
+import '../../pages/shipping_documents_page.dart';
+import '../../providers/logs_provider.dart';
+import '../../../domain/daily_form_rules.dart';
 import '../../../domain/entities/daily_log.dart';
 import '../../../domain/saved_form_status.dart';
-import '../../pages/shipping_documents_page.dart';
-import '../../pages/trailers_page.dart';
-import '../../providers/logs_provider.dart';
-import '../../widgets/codriver_picker_dialog.dart';
-import '../../widgets/vehicle_picker_dialog.dart';
+import '../../../../../backend/providers/backend_providers.dart';
 
 class FormTab extends ConsumerWidget {
   const FormTab({super.key});
@@ -97,9 +98,11 @@ class FormTab extends ConsumerWidget {
               final selectedLog = ref.read(logsProvider).selectedLog;
               if (selectedLog == null) return;
 
+              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
               final form = _dailyFormPayload(
                 dashboard,
                 selectedLog.uniqueId,
+                isArabic: isArabic,
               );
               if (form.error != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -118,9 +121,12 @@ class FormTab extends ConsumerWidget {
               if (!context.mounted) return;
               saved.fold(
                 (error) {
+                  final isArabic =
+                      Localizations.localeOf(context).languageCode == 'ar';
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(error.code),
+                      content:
+                          Text(anyErrorUserMessage(error, isArabic: isArabic)),
                       backgroundColor: AppColors.dangerRed,
                     ),
                   );
@@ -213,38 +219,28 @@ class _DailyFormPayload {
 
 /// Builds `UpdateDailyFormRequest` from the live contract.
 /// Arrays are objects, never bare strings. `coDriverId` is an integer or null.
-_DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId) {
+_DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId, {required bool isArabic}) {
   final uniqueId = readOperableUniqueId(dashboard.vehicleId) ??
       readOperableUniqueId(logUniqueId) ??
       '';
   if (uniqueId.isEmpty) {
-    return const _DailyFormPayload({}, 'Select a vehicle before saving the form.');
+    return _DailyFormPayload(
+      const {}, 
+      isArabic ? 'يرجى اختيار المركبة قبل حفظ النموذج.' : 'Select a vehicle before saving the form.',
+    );
   }
 
   final trailers = <Map<String, String>>[];
-  final trailer = dashboard.trailerId?.trim();
-  if (trailer != null &&
-      trailer.isNotEmpty &&
-      trailer != 'None' &&
-      trailer != '-') {
-    if (!RegExp(r'^[A-Za-z0-9-]+$').hasMatch(trailer) || trailer.length > 50) {
-      return const _DailyFormPayload(
-        {},
-        'Trailer number must be letters, numbers, or hyphens.',
-      );
-    }
+  for (final trailer in splitFormList(dashboard.trailerId)) {
+    final error = trailerNumberError(trailer, isArabic: isArabic);
+    if (error != null) return _DailyFormPayload(const {}, error);
     trailers.add({'trailerNumber': trailer});
   }
 
   final documents = <Map<String, String>>[];
-  final document = dashboard.shippingDocuments?.trim();
-  if (document != null &&
-      document.isNotEmpty &&
-      document != 'None' &&
-      document != '-') {
-    if (document.length > 100) {
-      return const _DailyFormPayload({}, 'Shipping document number is too long.');
-    }
+  for (final document in splitFormList(dashboard.shippingDocuments)) {
+    final error = shippingDocumentError(document, isArabic: isArabic);
+    if (error != null) return _DailyFormPayload(const {}, error);
     documents.add({'documentNumber': document});
   }
 
@@ -253,16 +249,18 @@ _DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId)
   if (rawCoDriver != null && rawCoDriver.isNotEmpty && rawCoDriver != 'none') {
     coDriverId = int.tryParse(rawCoDriver);
     if (coDriverId == null) {
-      return const _DailyFormPayload(
-        {},
-        'Co-driver must be a server id before it can be saved.',
+      return _DailyFormPayload(
+        const {},
+        isArabic 
+          ? 'يجب أن يكون السائق المساعد صالحاً قبل الحفظ.' 
+          : 'Co-driver must be a server id before it can be saved.',
       );
     }
   }
 
   return _DailyFormPayload({
     'uniqueId': uniqueId,
-    'coDriverId': coDriverId,
+    if (coDriverId != null) 'coDriverId': coDriverId,
     'trailers': trailers,
     'shippingDocuments': documents,
   }, null);

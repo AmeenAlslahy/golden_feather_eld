@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
-import '../providers/auth_mode_provider.dart';
 import '../providers/auth_state_provider.dart';
-import '../widgets/forgot_password_form.dart';
+import '../providers/auth_mode_provider.dart';
 import '../widgets/login_form.dart';
+import '../widgets/forgot_password_form.dart';
 
 /// صفحة المصادقة الموحدة
 class AuthPage extends ConsumerStatefulWidget {

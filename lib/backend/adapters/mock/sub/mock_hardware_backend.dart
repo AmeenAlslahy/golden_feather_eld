@@ -44,7 +44,20 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     DriverId? driverId,
   }) async {
-    throw UnimplementedError('MockHardwareBackend.getReadiness — not implemented');
+    // Mirrors PreOperationReadinessResponse for the offline demo backend.
+    return ok(<String, dynamic>{
+      'uniqueId': uniqueId,
+      'ready': false,
+      'checklist': <String, bool>{
+        'device_paired': true,
+        'connection_active': false,
+        'motion_data': false,
+        'location_data': false,
+        'engine_telemetry': false,
+      },
+      'rejectionReasons': <String>['No ELD data received yet.'],
+      'recommendedAction': 'Start the engine and wait for the device to report.',
+    });
   }
 
   @override

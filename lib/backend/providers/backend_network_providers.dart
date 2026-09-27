@@ -1,19 +1,18 @@
 import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../core/config/app_environment.dart';
-import '../../core/di/auth_local_data_source_provider.dart';
-import '../../core/network/core_providers.dart';
-import '../../core/time/trusted_time_provider.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../http/api_client.dart';
 import '../http/api_config.dart';
 import '../http/interceptors/auth_interceptor.dart';
+import '../../core/di/auth_local_data_source_provider.dart';
 import '../http/interceptors/request_logger.dart';
 import '../http/interceptors/time_drift_interceptor.dart';
+import '../../core/time/trusted_time_provider.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
+import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
+import '../../core/config/app_environment.dart';
+import '../../core/network/core_providers.dart';
 
 final unauthenticatedEventProvider = Provider<StreamController<void>>((ref) {
   final controller = StreamController<void>.broadcast();
@@ -61,7 +60,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     },
   ));
   
-  dio.interceptors.add(RequestLogger());
+  if (kDebugMode) dio.interceptors.add(RequestLogger());
   // Added once per client. Do not add it again when the backend provider rebuilds.
   dio.interceptors.add(TimeDriftInterceptor(
     timeProvider: ref.read(trustedTimeProvider),

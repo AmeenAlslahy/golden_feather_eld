@@ -5,12 +5,19 @@ class TransferAuditRow {
   final String transferredAt;
   final String message;
 
+  /// SRS 8.10 — period covered and number of records (from
+  /// `LogTransferResponse.startDate/endDate/recordCount`); empty when absent.
+  final String period;
+  final String recordCount;
+
   const TransferAuditRow({
     required this.channel,
     required this.recipient,
     required this.status,
     required this.transferredAt,
     required this.message,
+    this.period = '',
+    this.recordCount = '',
   });
 
   bool get isEmpty =>
@@ -59,7 +66,16 @@ TransferAuditRow _row(Map<String, dynamic> json) {
     status: _text(json['status']),
     transferredAt: _text(json['transferredAt'] ?? json['createdAt']),
     message: _text(json['message']),
+    period: _period(json['startDate'], json['endDate']),
+    recordCount: _text(json['recordCount']),
   );
+}
+
+String _period(Object? start, Object? end) {
+  final a = _text(start), b = _text(end);
+  if (a.isEmpty && b.isEmpty) return '';
+  if (a.isEmpty || b.isEmpty || a == b) return a.isEmpty ? b : a;
+  return '$a – $b';
 }
 
 String _text(Object? value) {

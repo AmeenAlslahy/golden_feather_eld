@@ -1,5 +1,5 @@
-import '../../../../domain/shared/value_objects.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../../../domain/shared/value_objects.dart';
 import 'log_model.dart';
 
 class DailyLogDto {

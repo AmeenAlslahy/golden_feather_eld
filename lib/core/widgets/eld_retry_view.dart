@@ -9,10 +9,15 @@ class EldRetryView extends StatelessWidget {
     super.key,
     required this.message,
     required this.onRetry,
+    this.isError = true,
   });
 
   final String message;
   final VoidCallback onRetry;
+
+  /// Failures read in the error colour; empty states (`isError: false`)
+  /// stay in the neutral body colour.
+  final bool isError;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,7 @@ class EldRetryView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: context.styles.body,
+              style: isError ? context.styles.error : context.styles.body,
             ),
             const SizedBox(height: AppSpacing.md),
             IconButton(

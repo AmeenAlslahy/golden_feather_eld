@@ -1,20 +1,20 @@
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/widgets/eld_card.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../../account/presentation/providers/rules_screen_provider.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../../domain/engine/hos_rules_engine.dart';
 import '../duty_change_message.dart';
-import '../providers/hos_engine_provider.dart';
 import '../providers/hos_provider.dart';
-import '../widgets/location_display_widget.dart';
 import '../widgets/status_option_tiles.dart';
+import '../widgets/location_display_widget.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../providers/hos_engine_provider.dart';
+import '../../domain/engine/hos_rules_engine.dart';
+import '../../../account/presentation/providers/rules_screen_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 class ChangeStatusPage extends ConsumerStatefulWidget {
   const ChangeStatusPage({super.key});
@@ -88,12 +88,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(dutyChangeAcceptedMessage(context)),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    AppFeedback.success(context, dutyChangeAcceptedMessage(context));
     Navigator.pop(context);
   }
 
@@ -243,12 +238,9 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                   ? null
                   : () {
                       if (isMoving) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              context.loc.errorCannotChangeStatusWhileMoving,
-                            ),
-                          ),
+                        AppFeedback.error(
+                          context,
+                          context.loc.errorCannotChangeStatusWhileMoving,
                         );
                         return;
                       }

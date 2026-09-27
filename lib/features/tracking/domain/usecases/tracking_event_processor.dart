@@ -1,13 +1,12 @@
-import 'dart:async';
-
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import 'dart:async';
+import '../../../../core/utils/logger.dart';
 
+import '../entities/tracking_event.dart';
+import '../entities/connection_status.dart';
+import '../../data/datasources/tracking_data_source.dart';
 // For EldEvent
 import '../../../../core/domain/entities/location_point.dart';
-import '../../../../core/utils/logger.dart';
-import '../../data/datasources/tracking_data_source.dart';
-import '../entities/connection_status.dart';
-import '../entities/tracking_event.dart';
 
 /// المحرك المركزي الذي يستقبل أحداث التتبع (TrackingEvent) من المصدر
 /// ويقوم بتوزيعها على محركات التطبيق (HOS, Diagnostics, Distance)
@@ -93,7 +92,9 @@ class TrackingEventProcessor {
     return EldEvent(
       timestamp:
           event.timestampUtc, // يتم تحويله إلى التوقيت المناسب لاحقاً إذا لزم
-      speedMph: event.speed,
+      // TrackingEvent.speed is metres/second (OS + Traccar/OsmAnd path);
+      // EldEvent.speedMph is miles/hour. 1 m/s = 2.23694 mph.
+      speedMph: event.speed * 2.23694,
       speedDurationSeconds: 0,
       odometerMiles: event.odometer,
       engineHours: event.engineHours,

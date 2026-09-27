@@ -1,10 +1,9 @@
 import 'package:go_router/go_router.dart';
-
+import '../routes.dart';
 import '../features/auth/presentation/pages/auth_page.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
-import '../features/connection/presentation/pages/eld_connection_page.dart';
 import '../features/permissions/presentation/pages/permissions_page.dart';
-import '../routes.dart';
+import '../features/connection/presentation/pages/eld_connection_page.dart';
 
 class AuthRoutes {
   AuthRoutes._();

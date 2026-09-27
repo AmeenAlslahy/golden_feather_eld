@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -13,9 +12,10 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
+import '../../../tracking/presentation/providers/tracking_providers.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
-import '../../../tracking/presentation/providers/tracking_providers.dart';
+import '../../../connection/presentation/widgets/eld_diagnostics_section.dart';
 
 /// مزود معلومات حزمة التطبيق
 final packageInfoProvider = FutureProvider<PackageInfo>((ref) {
@@ -219,6 +219,39 @@ class AboutPage extends ConsumerWidget {
                   ],
                 );
               },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // ========== حالة اتصال ELD + التسجيل اليدوي (SRS 3.7 / 3.8) ==========
+          EldCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isArabic ? 'حالة اتصال ELD' : 'ELD Connection Status',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    // Retry for both server reads (data pages: retry + refresh).
+                    IconButton(
+                      tooltip: isArabic ? 'تحديث' : 'Refresh',
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        ref.invalidate(hardwareStatusProvider);
+                        ref.invalidate(hardwareReadinessProvider);
+                      },
+                    ),
+                  ],
+                ),
+                const EldConnectivityPanel(),
+                const EldReadinessPanel(),
+                const SizedBox(height: AppSpacing.sm),
+                const ManualRecordingSection(),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.md),

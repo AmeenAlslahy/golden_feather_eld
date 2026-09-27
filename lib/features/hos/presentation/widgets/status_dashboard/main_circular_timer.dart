@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_typography.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
 
 /// Large central circle showing remaining legal time.
@@ -56,8 +55,8 @@ class MainCircularTimer extends StatelessWidget {
                 Text(
                   timeString,
                   style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: AppTypography.bold,
+                    fontSize: 64,
+                    fontWeight: FontWeight.normal,
                     color: color,
                     letterSpacing: -1,
                   ),
@@ -67,8 +66,8 @@ class MainCircularTimer extends StatelessWidget {
                   statusLabel.toUpperCase(),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: AppTypography.semiBold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -82,6 +81,8 @@ class MainCircularTimer extends StatelessWidget {
   }
 
   Color _color() {
+    final status = statusLabel.toLowerCase();
+    if (status.contains('off') || status.contains('sleeper')) return AppColors.textSecondary;
     if (circle.isExpired) return AppColors.dangerRed;
     if (circle.isCritical) return AppColors.warningYellow;
     return AppColors.successGreen;
@@ -112,8 +113,8 @@ class _CirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2 - 12;
-    const strokeWidth = 12.0;
+    final radius = math.min(size.width, size.height) / 2 - 16;
+    const strokeWidth = 16.0;
 
     // Track
     canvas.drawCircle(
@@ -134,8 +135,7 @@ class _CirclePainter extends CustomPainter {
       Paint()
         ..color = progressColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = strokeWidth,
     );
   }
 

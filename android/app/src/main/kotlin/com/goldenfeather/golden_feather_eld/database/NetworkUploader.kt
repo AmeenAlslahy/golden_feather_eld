@@ -6,8 +6,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
 
-class NetworkUploader(private val dbHelper: LocationDatabaseHelper) {
+class NetworkUploader(private val context: Context) {
 
+    private val dbHelper = LocationDatabaseHelper(context)
     private val executor = Executors.newSingleThreadExecutor()
     private var isUploading = false
 

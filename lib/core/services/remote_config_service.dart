@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../backend/contracts/config_backend.dart';
 import '../../backend/providers/backend_providers.dart';
+import '../error/exception.dart';
+import 'local_storage_service.dart';
+import '../utils/logger.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import '../config/app_environment.dart';
-import '../error/exception.dart';
-import '../utils/logger.dart';
-import 'local_storage_service.dart';
 
 /// خدمة جلب الإعدادات عن بعد
 class RemoteConfigService {
@@ -112,11 +111,7 @@ class RemoteConfigService {
 
   /// جلب التكوين عند بدء التطبيق
   static Future<void> fetchOnStartup(ProviderContainer container) async {
-    final service = RemoteConfigService(
-      configBackend: container.read(configBackendProvider),
-      storage: container.read(localStorageProvider),
-      trackingService: container.read(trackingServiceProvider),
-    );
+    final service = container.read(remoteConfigServiceProvider);
 
     final success = await service.fetchRemoteConfig();
     if (success) {

@@ -3,20 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// حالة نموذج تسجيل الدخول
 class LoginFormState {
   final bool obscurePassword;
-  final bool showAdvanced;
 
   const LoginFormState({
     this.obscurePassword = true,
-    this.showAdvanced = false,
   });
 
   LoginFormState copyWith({
     bool? obscurePassword,
-    bool? showAdvanced,
   }) {
     return LoginFormState(
       obscurePassword: obscurePassword ?? this.obscurePassword,
-      showAdvanced: showAdvanced ?? this.showAdvanced,
     );
   }
 }
@@ -34,7 +30,4 @@ class LoginFormNotifier extends StateNotifier<LoginFormState> {
     state = state.copyWith(obscurePassword: !state.obscurePassword);
   }
 
-  void toggleAdvanced() {
-    state = state.copyWith(showAdvanced: !state.showAdvanced);
-  }
 }

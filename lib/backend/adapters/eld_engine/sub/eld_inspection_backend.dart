@@ -40,7 +40,7 @@ class EldInspectionBackend implements InspectionBackend {
         .get<List<dynamic>>(
           '${EldEndpoints.inspections}/cycle',
           queryParameters: {
-            if (driverId != null) 'driverId': 201, // TODO: Temporary workaround for driver 201
+            if (driverId != null) 'driverId': driverId.value,
             'days': days,
             if (endDate != null)
               'endDate': endDate.toIso8601String().split('T').first,
@@ -64,7 +64,7 @@ class EldInspectionBackend implements InspectionBackend {
         .get<Map<String, dynamic>>(
           '${EldEndpoints.inspections}/logs',
           queryParameters: {
-            if (driverId != null) 'driverId': 201, // TODO: Temporary workaround for driver 201
+            if (driverId != null) 'driverId': driverId.value,
             if (date != null)
               'date': date.toIso8601String().split('T').first,
           },
@@ -157,7 +157,6 @@ class EldInspectionBackend implements InspectionBackend {
       if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
       if (location != null) 'location': location,
       if (notes != null) 'notes': notes,
-      'photos': [], // Workaround for Traccar backend jsonb column bug
     });
   }
 

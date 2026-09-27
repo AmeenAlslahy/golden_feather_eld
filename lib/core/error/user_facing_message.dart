@@ -4,6 +4,16 @@ import 'failure.dart';
 /// Message shown to the driver. Never the exception, stack, or `toString()`.
 String anyErrorUserMessage(Object error, {required bool isArabic}) {
   if (error is AppError) return appErrorUserMessage(error, isArabic: isArabic);
+  if (error is Failure) {
+    if (error is NetworkFailure || error.message == 'noInternet') {
+      return isArabic
+          ? 'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.'
+          : 'No internet connection. Check the network and try again.';
+    }
+    return isArabic
+        ? 'تعذر إكمال الطلب. أعد المحاولة.'
+        : 'The request could not be completed. Try again.';
+  }
   if (error is String) {
     final text = error.trim();
     if (text == 'noInternet') {
@@ -39,13 +49,6 @@ String appErrorUserMessage(AppError error, {required bool isArabic}) {
     return nested.trim();
   }
 
-  // Support legacy NetworkFailure messages
-  if (error is NetworkFailure || (error is Failure && error.message == 'noInternet')) {
-    return isArabic
-        ? 'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.'
-        : 'No internet connection. Check the network and try again.';
-  }
-
   return switch (error) {
     NetworkError() => isArabic
         ? 'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.'
@@ -65,9 +68,6 @@ String appErrorUserMessage(AppError error, {required bool isArabic}) {
     ServerError() => isArabic
         ? 'حدث خطأ في الخادم. أعد المحاولة.'
         : 'The server returned an error. Try again.',
-    Failure() => isArabic
-        ? 'تعذر إكمال الطلب. أعد المحاولة.'
-        : 'The request could not be completed. Try again.',
     _ => isArabic
         ? 'تعذر إكمال الطلب.'
         : 'The request could not be completed.',

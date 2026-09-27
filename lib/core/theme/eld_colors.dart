@@ -126,20 +126,3 @@ class EldColors extends ThemeExtension<EldColors> {
     );
   }
 }
-
-/// ألوان الحالة من الثيم — لا تُنشئ طبقة ألوان ثانية.
-extension EldColorTokens on ThemeData {
-  EldColors get eld => extension<EldColors>()!;
-  Color get goldColor => eld.goldFg;
-  Color get goldLightBackground => eld.goldBg;
-  Color get onGoldColor => eld.onGold;
-  Color get onBlackColor => eld.onBlack;
-  Color get successColor => eld.successFg;
-  Color get successLightBackground => eld.successBg;
-  Color get warningColor => eld.warningFg;
-  Color get warningLightBackground => eld.warningBg;
-  Color get dangerColor => eld.dangerFg;
-  Color get errorLightBackground => eld.dangerBg;
-  Color get infoColor => eld.infoFg;
-  Color get infoLightBackground => eld.infoBg;
-}

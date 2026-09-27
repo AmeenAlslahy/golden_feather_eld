@@ -23,6 +23,9 @@ abstract interface class DailyLogsBackend {
   // TODO(P2): replace with DailyLog
   Future<Result<RawJson>> getById(DailyLogId logId);
 
+  /// GET /eld/daily-logs/{id}/team — team status + HOS isolation (§5.8).
+  Future<Result<RawJson>> getTeamStatus(DailyLogId logId);
+
   /// POST /eld/daily-logs/{id}/carrier-edits
   // TODO(P2): replace with CarrierEdit
   Future<Result<RawJson>> proposeCarrierEdit({
@@ -69,9 +72,4 @@ abstract interface class DailyLogsBackend {
 
   /// GET /eld/daily-logs/{id}/readiness
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId);
-
-  // --- Legacy methods for P5.5 ---
-  Future<Result<List<dynamic>>> getLegacyDutyStatusLogs(
-      int driverId, DateTime date);
-  Future<Result<List<dynamic>>> getLegacySyncLogs(int driverId);
 }

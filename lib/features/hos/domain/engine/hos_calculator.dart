@@ -1,6 +1,6 @@
 import '../../../../core/config/hos_configuration.dart';
-import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/domain/entities/hos_models.dart';
 
 sealed class CalculationResult {}
 
@@ -94,24 +94,6 @@ class HosCalculator {
     final elapsed = now.difference(shiftStartTime.toUtc()).inMinutes;
     return ShiftLimitSuccess((config.shiftLimitMinutes - elapsed)
         .clamp(0, config.shiftLimitMinutes));
-  }
-
-  /// حساب الأيام المتتالية
-  /// Needs: nothing (pure function on inputs)
-  int calculateConsecutiveDays(List<DateTime> workDays) {
-    if (workDays.isEmpty) return 0;
-
-    workDays.sort();
-    int consecutive = 1;
-    for (int i = 1; i < workDays.length; i++) {
-      final diff = workDays[i].difference(workDays[i - 1]).inDays;
-      if (diff == 1) {
-        consecutive++;
-      } else {
-        consecutive = 1;
-      }
-    }
-    return consecutive;
   }
 
   /// فحص الراحة الأسبوعية (34 ساعة)

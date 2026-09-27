@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
-
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../widgets/log_graph.dart';
+import '../providers/logs_provider.dart';
 import '../../domain/entities/audit_entry.dart';
 import '../../domain/entities/daily_log.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/log_edit.dart';
-import '../providers/logs_provider.dart';
-import '../widgets/log_graph.dart';
+import '../../../../core/time/time_authority_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 @visibleForTesting
 String? resolveDriverIdForAudit(WidgetRef ref) {
@@ -204,7 +204,7 @@ class EditLogPage extends ConsumerWidget {
                       ),
                     ),
                     value: status['value']!,
-                    activeColor: const Color(0xFF1565C0),
+                    activeColor: AppColors.primaryGold,
                     controlAffinity: ListTileControlAffinity.trailing,
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -225,14 +225,21 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.vehicle,
-                  style: context.styles.sectionTitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 4),
                 Text(
                   dashboard.vehicleId,
-                  style: context.styles.body,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 8),
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
@@ -241,20 +248,27 @@ class EditLogPage extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // 5. الموقع
+            // 5. الموقع (Location) - read only label
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   context.loc.location,
-                  style: context.styles.sectionTitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 4),
                 Text(
-                  formState.location,
-                  style: context.styles.body,
+                  formState.location.isEmpty ? ' ' : formState.location, // empty space to keep height if empty
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: 8),
                 Divider(
                     color:
                         Theme.of(context).dividerColor.withValues(alpha: 0.5),
@@ -269,10 +283,9 @@ class EditLogPage extends ConsumerWidget {
                 hintText: context.loc.manualLocation,
                 hintStyle: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                border: const UnderlineInputBorder(),
+                suffixIcon: const Icon(Icons.my_location, color: AppColors.textPrimary),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
               style: context.styles.body,
               onChanged: (value) {},
@@ -319,15 +332,11 @@ class EditLogPage extends ConsumerWidget {
               type: EldButtonType.agree,
               onPressed: () async {
                       if (formState.reason.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              Localizations.localeOf(context).languageCode ==
-                                      'ar'
-                                  ? 'سبب التعديل مطلوب.'
-                                  : 'A reason for the change is required.',
-                            ),
-                          ),
+                        AppFeedback.error(
+                          context,
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'سبب التعديل مطلوب.'
+                              : 'A reason for the change is required.',
                         );
                         return;
                       }
@@ -373,14 +382,11 @@ class EditLogPage extends ConsumerWidget {
                             final isArabic =
                                 Localizations.localeOf(context).languageCode ==
                                     'ar';
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isArabic
-                                      ? 'لا يمكن تقصير أو حذف وقت القيادة الآلي.'
-                                      : 'Automatic driving time cannot be shortened or removed.',
-                                ),
-                              ),
+                            AppFeedback.error(
+                              context,
+                              isArabic
+                                  ? 'لا يمكن تقصير أو حذف وقت القيادة الآلي.'
+                                  : 'Automatic driving time cannot be shortened or removed.',
                             );
                           }
                           return;
@@ -403,8 +409,10 @@ class EditLogPage extends ConsumerWidget {
 
                       // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
                       final saved = isNewEvent
-                          ? await notifier.addEvent(updatedEvent)
-                          : await notifier.updateEvent(updatedEvent);
+                          ? await notifier.addEvent(updatedEvent,
+                              reason: formState.reason)
+                          : await notifier.updateEvent(updatedEvent,
+                              reason: formState.reason);
                       if (!saved) {
                         if (context.mounted) {
                           final isArabic =
@@ -457,7 +465,15 @@ class EditLogPage extends ConsumerWidget {
                         return;
                       }
 
-                      if (context.mounted) Navigator.pop(context, true);
+                      if (context.mounted) {
+                        final isArabic =
+                            Localizations.localeOf(context).languageCode == 'ar';
+                        AppFeedback.success(
+                          context,
+                          isArabic ? 'تم حفظ الحدث بنجاح' : 'Event saved successfully',
+                        );
+                        Navigator.pop(context, true);
+                      }
                     },
             ),
             const SizedBox(height: AppSpacing.md),

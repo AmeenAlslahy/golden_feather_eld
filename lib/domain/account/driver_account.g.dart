@@ -18,11 +18,13 @@ _DriverAccount _$DriverAccountFromJson(Map<String, dynamic> json) =>
       timeZone: json['timeZone'] as String,
       language: json['language'] as String,
       odometer: json['odometer'] as String,
-      availableLanguages: (json['availableLanguages'] as List<dynamic>?)
+      availableLanguages:
+          (json['availableLanguages'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const ['English', 'Spanish', 'Arabic'],
-      availableOdometerUnits: (json['availableOdometerUnits'] as List<dynamic>?)
+      availableOdometerUnits:
+          (json['availableOdometerUnits'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const ['mi', 'km'],
@@ -47,10 +49,10 @@ Map<String, dynamic> _$DriverAccountToJson(_DriverAccount instance) =>
     };
 
 _LicenseInfo _$LicenseInfoFromJson(Map<String, dynamic> json) => _LicenseInfo(
-      state: json['state'] as String,
-      number: json['number'] as String,
-      formatted: json['formatted'] as String,
-    );
+  state: json['state'] as String,
+  number: json['number'] as String,
+  formatted: json['formatted'] as String,
+);
 
 Map<String, dynamic> _$LicenseInfoToJson(_LicenseInfo instance) =>
     <String, dynamic>{

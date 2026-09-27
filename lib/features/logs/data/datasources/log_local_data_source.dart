@@ -1,14 +1,13 @@
 import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
-import '../../../../core/constants/storage_constants.dart';
-import '../../../../core/utils/app_date_utils.dart';
 import '../../../../core/utils/logger.dart';
-import '../../domain/entities/audit_entry.dart';
+import '../../../../core/utils/app_date_utils.dart';
+import '../../../../core/constants/storage_constants.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../domain/entities/audit_entry.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 abstract class LogLocalDataSource {
   Future<List<LogEvent>> getEvents(DateTime date);
@@ -18,12 +17,65 @@ abstract class LogLocalDataSource {
   Future<bool> savePeriod(DutyPeriod period);
   Future<bool> logAudit(AuditEntry entry);
   Future<List<AuditEntry>> getAuditEntries(DateTime date);
+
+  /// SRS 6.8 — read-only snapshot of the last server answers so the Logs
+  /// list and a day's events stay available without a connection.
+  Future<void> cacheDailyLogs(int driverId, List<Map<String, dynamic>> logsJson);
+  Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId);
+  Future<void> cacheLogEvents(DailyLogId logId, List<Map<String, dynamic>> eventsJson);
+  Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
   Box<String> get _eventsBox => Hive.box<String>(StorageConstants.eventsBox);
   Box<String> get _periodsBox => Hive.box<String>(StorageConstants.periodsBox);
   Box<String> get _auditBox => Hive.box<String>(StorageConstants.auditBox);
+  Box<String> get _cacheBox =>
+      Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+
+  // --- SRS 6.8 offline snapshot ---
+
+  @override
+  Future<void> cacheDailyLogs(
+      int driverId, List<Map<String, dynamic>> logsJson) async {
+    try {
+      await _cacheBox.put('logs:$driverId', jsonEncode(logsJson));
+    } catch (e) {
+      AppLogger.warning('Daily-logs cache write skipped: $e');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId) async =>
+      _readCachedList('logs:$driverId');
+
+  @override
+  Future<void> cacheLogEvents(
+      DailyLogId logId, List<Map<String, dynamic>> eventsJson) async {
+    try {
+      await _cacheBox.put('events:${logId.value}', jsonEncode(eventsJson));
+    } catch (e) {
+      AppLogger.warning('Log-events cache write skipped: $e');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>?> getCachedLogEvents(
+          DailyLogId logId) async =>
+      _readCachedList('events:${logId.value}');
+
+  List<Map<String, dynamic>>? _readCachedList(String key) {
+    final raw = _cacheBox.get(key);
+    if (raw == null) return null;
+    try {
+      return (jsonDecode(raw) as List)
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (_) {
+      return null;
+    }
+  }
 
   // --- Helper Methods ---
 

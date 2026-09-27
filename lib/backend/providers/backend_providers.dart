@@ -5,28 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_environment.dart';
 import '../../core/config/runtime_selection.dart';
-import '../../core/network/core_providers.dart';
-import '../../core/services/local_storage_service.dart';
 import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
+import '../../core/services/local_storage_service.dart';
+import '../../core/network/core_providers.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';
-import '../contracts/compliance_backend.dart';
 import '../contracts/config_backend.dart';
 import '../contracts/daily_logs_backend.dart';
-import '../contracts/driver_rules_backend.dart';
 import '../contracts/driver_session_backend.dart';
 import '../contracts/duty_status_backend.dart';
 import '../contracts/dvir_backend.dart';
-import '../contracts/fleet_dashboard_backend.dart';
 import '../contracts/hardware_backend.dart';
-import '../contracts/health_backend.dart';
 import '../contracts/inspection_backend.dart';
-import '../contracts/log_transfer_backend.dart';
-import '../contracts/reports_backend.dart';
-import '../contracts/rules_engine_backend.dart';
 import '../contracts/rules_screen_backend.dart';
-import '../contracts/stats_backend.dart';
 import '../contracts/status_dashboard_backend.dart';
 import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
@@ -75,11 +67,6 @@ final accountBackendProvider = Provider<AccountBackend>((ref) {
   return adapter.account ?? (throw StateError('AccountBackend not supported by active adapter'));
 });
 
-final complianceBackendProvider = Provider<ComplianceBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.compliance ?? (throw StateError('ComplianceBackend not supported by active adapter'));
-});
-
 final configBackendProvider = Provider<ConfigBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
   return adapter.config ?? (throw StateError('ConfigBackend not supported by active adapter'));
@@ -88,11 +75,6 @@ final configBackendProvider = Provider<ConfigBackend>((ref) {
 final dailyLogsBackendProvider = Provider<DailyLogsBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
   return adapter.dailyLogs ?? (throw StateError('DailyLogsBackend not supported by active adapter'));
-});
-
-final driverRulesBackendProvider = Provider<DriverRulesBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.driverRules ?? (throw StateError('DriverRulesBackend not supported by active adapter'));
 });
 
 final driverSessionBackendProvider = Provider<DriverSessionBackend>((ref) {
@@ -110,19 +92,9 @@ final dvirBackendProvider = Provider<DvirBackend>((ref) {
   return adapter.dvir ?? (throw StateError('DvirBackend not supported by active adapter'));
 });
 
-final fleetDashboardBackendProvider = Provider<FleetDashboardBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.fleetDashboard ?? (throw StateError('FleetDashboardBackend not supported by active adapter'));
-});
-
 final hardwareBackendProvider = Provider<HardwareBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
   return adapter.hardware ?? (throw StateError('HardwareBackend not supported by active adapter'));
-});
-
-final healthBackendProvider = Provider<HealthBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.health ?? (throw StateError('HealthBackend not supported by active adapter'));
 });
 
 final inspectionBackendProvider = Provider<InspectionBackend>((ref) {
@@ -130,29 +102,9 @@ final inspectionBackendProvider = Provider<InspectionBackend>((ref) {
   return adapter.inspection ?? (throw StateError('InspectionBackend not supported by active adapter'));
 });
 
-final logTransferBackendProvider = Provider<LogTransferBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.logTransfer ?? (throw StateError('LogTransferBackend not supported by active adapter'));
-});
-
-final reportsBackendProvider = Provider<ReportsBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.reports ?? (throw StateError('ReportsBackend not supported by active adapter'));
-});
-
-final rulesEngineBackendProvider = Provider<RulesEngineBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.rulesEngine ?? (throw StateError('RulesEngineBackend not supported by active adapter'));
-});
-
 final rulesScreenBackendProvider = Provider<RulesScreenBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
   return adapter.rulesScreen ?? (throw StateError('RulesScreenBackend not supported by active adapter'));
-});
-
-final statsBackendProvider = Provider<StatsBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.stats ?? (throw StateError('StatsBackend not supported by active adapter'));
 });
 
 final statusDashboardBackendProvider = Provider<StatusDashboardBackend>((ref) {

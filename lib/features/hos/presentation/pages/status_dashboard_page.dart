@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/error/user_facing_message.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../extensions/duty_status_l10n.dart';
@@ -11,7 +10,7 @@ import '../providers/status_dashboard_providers.dart';
 import '../widgets/status_dashboard/hos_indicators_card.dart';
 import '../widgets/status_dashboard/main_circular_timer.dart';
 import '../widgets/status_dashboard/operational_alerts_banner.dart';
-import '../widgets/status_dashboard/change_status_sheet.dart';
+import 'change_status_page.dart';
 
 /// Main driver dashboard — status, remaining time, HOS indicators.
 ///
@@ -55,39 +54,28 @@ class _DashboardView extends ConsumerWidget {
               onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),
               child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
               child: Column(
                 children: [
-                  const SizedBox(height: AppSpacing.md),
-                  if (dashboard.regulatoryConstraints.ruleSet !=
-                          CycleRule.unknown)
-                    Chip(
-                      label: Text(
-                        dashboard.regulatoryConstraints.ruleSet.wire.toUpperCase(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      backgroundColor: AppColors.background,
-                      side: const BorderSide(color: AppColors.border),
-                    ),
                   const SizedBox(height: AppSpacing.md),
                   MainCircularTimer(
                     circle: dashboard.remainingCircle,
                     statusLabel: dashboard.currentDutyStatus.displayName(context),
                     onTap: () {
-                      ChangeStatusSheet.show(
-                        context,
-                        currentStatus: dashboard.currentDutyStatus,
-                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const ChangeStatusPage(),
+                        ),
+                      ).then((_) {
+                        ref.read(statusDashboardProvider.notifier).refresh();
+                      });
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: HosIndicatorsCard(
-                      indicators: dashboard.hosIndicators,
-                    ),
+                  // Reference layout: full-width table, no card inset.
+                  HosIndicatorsCard(
+                    indicators: dashboard.hosIndicators,
+                    constraints: dashboard.regulatoryConstraints,
                   ),
                 ],
               ),

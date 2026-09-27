@@ -1,9 +1,8 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:quick_actions/quick_actions.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import '../../l10n/app_localizations.dart';
 

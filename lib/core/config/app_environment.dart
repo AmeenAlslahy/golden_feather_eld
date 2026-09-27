@@ -12,6 +12,11 @@ enum AppEnvironment {
 enum ApiBackendType { traccar, eldServer, mock }
 
 class AppEnvironmentConfig {
+  /// Traccar OsmAnd protocol port used by the native tracking client.
+  /// The Web/API base URL is on a different port, so tracking URLs are
+  /// re-pointed here (see `TrackingService`).
+  static const int osmAndPort = 5055;
+
   static AppEnvironment _current = AppEnvironment.development;
   static AppEnvironment get current => _current;
 

@@ -1,15 +1,14 @@
-import 'dart:async';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-
-import '../../../../core/services/live_tracking_data_source.dart';
-import '../../../../core/utils/logger.dart';
+import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
-import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import 'hos_engine_provider.dart';
+import '../../../../core/utils/logger.dart';
+
+import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
+import '../../../../core/services/live_tracking_data_source.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// مزود حالة HOS
 final hosStatusProvider =

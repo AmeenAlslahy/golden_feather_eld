@@ -1,13 +1,12 @@
 import 'package:fpdart/fpdart.dart';
-
-import '../../../../backend/contracts/contract_enums.dart';
-import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../domain/current_codriver.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
+import '../../../../backend/contracts/contract_enums.dart';
+import '../../../../backend/contracts/driver_session_backend.dart';
+import '../../../../domain/shared/value_objects.dart';
 
 class CoDriverRepositoryImpl implements CoDriverRepository {
   final DriverSessionBackend driverSessionBackend;
@@ -23,7 +22,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
     if (networkInfo.isConnected) {
       try {
         final result = await driverSessionBackend.getAvailableDrivers();
-        return result.fold(
+        return await result.fold(
           (error) => Left(ServerFailure(message: error.code)),
           (rawDrivers) {
             final drivers = rawDrivers
@@ -50,7 +49,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
     if (!networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final result = await driverSessionBackend.getCurrentCoDriver();
-      return result.fold(
+      return await result.fold(
         (error) => Left(ServerFailure(message: error.code)),
         (json) {
           final read = parseCurrentCoDriver(json);

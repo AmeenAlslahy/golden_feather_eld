@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'app_colors.dart';
+import 'app_typography.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
 import 'app_styles.dart';
-import 'app_typography.dart';
 import 'eld_colors.dart';
 import 'press_feedback.dart';
-
 export 'app_styles.dart';
 export 'eld_colors.dart';
 
@@ -21,14 +19,17 @@ class AppTheme {
     extensions: [EldColors.light(), AppStyles.light()],
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGold,
-      onPrimary: AppColors.black,
-      secondary: AppColors.black,
+      onPrimary: AppColors.surface,
+      // الهوية: ذهبي رئيسي / أسود ثانوي. الأخضر/الأحمر ألوان حالة فقط.
+      secondary: AppColors.secondary,
       onSecondary: AppColors.primaryGold,
       error: AppColors.dangerRed,
       onError: AppColors.surface,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
     ),
+    // خلفية واحدة لكل الصفحات؛ البطاقات والحاويات بيضاء فوقها بحدّ `border`.
+    // لا تضع `backgroundColor` على Scaffold في الشاشات.
     scaffoldBackgroundColor: AppColors.background,
     splashFactory: PressFeedback.splashFactory,
     splashColor: PressFeedback.ink,
@@ -37,12 +38,12 @@ class AppTheme {
 
     // ========== شريط العنوان ==========
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.primaryGold, // Gold is Primary
-      foregroundColor: AppColors.black, // Text/icons on Gold should be Black
+      backgroundColor: AppColors.primaryGold,
+      foregroundColor: AppColors.surface,
       elevation: 0,
-      centerTitle: false,
-      titleTextStyle: AppStyles.light().appBarTitle.copyWith(color: AppColors.black),
-      iconTheme: const IconThemeData(color: AppColors.black),
+      centerTitle: true,
+      titleTextStyle: AppStyles.light().appBarTitle,
+      iconTheme: const IconThemeData(color: AppColors.surface),
     ),
 
     // ========== البطاقات ==========
@@ -129,6 +130,19 @@ class AppTheme {
       ),
     ),
 
+    // ========== الرسائل السفلية ==========
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: AppColors.secondary,
+      contentTextStyle: AppTypography.lightTextTheme.bodyMedium?.copyWith(
+        color: AppColors.surface,
+      ),
+      actionTextColor: AppColors.goldAccent,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+    ),
+
     // ========== القوائم ==========
     dividerTheme: const DividerThemeData(
       color: AppColors.border,
@@ -162,10 +176,10 @@ class AppTheme {
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.black,
-      secondary: AppColors.surfaceDark,
+      secondary: AppColors.darkTextPrimary,
       onSecondary: AppColors.primaryGold,
       error: AppColors.dangerOnDark,
-      onError: AppColors.black,
+      onError: AppColors.surfaceDark,
       surface: AppColors.surfaceDark,
       onSurface: AppColors.darkTextPrimary,
     ),

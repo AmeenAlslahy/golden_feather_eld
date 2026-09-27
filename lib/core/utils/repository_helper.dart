@@ -1,7 +1,6 @@
 import 'package:fpdart/fpdart.dart';
-
-import '../error/exception.dart';
 import '../error/failure.dart';
+import '../error/exception.dart';
 import '../network/network_info.dart';
 import 'logger.dart';
 

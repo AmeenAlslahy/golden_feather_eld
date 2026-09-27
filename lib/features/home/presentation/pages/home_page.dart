@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
-
+import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/network/core_providers.dart';
+import '../../../../routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/connection_status_indicator.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../hos/presentation/pages/change_status_page.dart';
 import '../../../hos/presentation/pages/recap_page.dart';
-import '../../../hos/presentation/pages/status_dashboard_page.dart';
-import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 import '../../../hos/presentation/widgets/driving_lock_screen.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
-import '../../../tracking/presentation/providers/tracking_providers.dart';
-import '../providers/dashboard_provider.dart';
-import '../widgets/eld_bottom_nav.dart';
+import '../../../../core/widgets/connection_status_indicator.dart';
 import '../widgets/eld_drawer.dart';
+import '../widgets/eld_bottom_nav.dart';
+import '../providers/dashboard_provider.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../tracking/presentation/providers/tracking_providers.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../hos/presentation/pages/status_dashboard_page.dart';
+import '../../../hos/presentation/pages/change_status_page.dart';
+import '../../../hos/presentation/providers/status_dashboard_providers.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
+final developerBypassDrivingScreenProvider = StateProvider<bool>((ref) => false);
 
 /// الشاشة الرئيسية لتطبيق ELD
 class HomePage extends ConsumerWidget {
@@ -40,13 +42,17 @@ class HomePage extends ConsumerWidget {
 
     // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
     final driverText = statusDashboardState.valueOrNull?.driver.displayText ??
+        // SRS 4.2 — `Name - <driver id>`; the vehicle is not part of the header.
         (dashboard.driverName != 'Unknown'
-            ? '${dashboard.driverName} - ${dashboard.vehicleDisplayName}'
+            ? (ref.watch(currentDriverIdProvider) != null
+                ? '${dashboard.driverName} - ${ref.watch(currentDriverIdProvider)}'
+                : dashboard.driverName)
             : null) ??
         ref.watch(authStateProvider).user?.fullName ??
         '';
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
+    final developerBypass = ref.watch(developerBypassDrivingScreenProvider);
 
     return Stack(
       children: [
@@ -75,44 +81,74 @@ class HomePage extends ConsumerWidget {
                       child: ConnectionStatusIndicator(),
                     ),
                     const SyncStatusIndicator(),
+                    // SRS 4.2 operational alerts: server-driven tool icon +
+                    // yellow triangle (`operationalAlerts`), plus the local
+                    // GPS-off condition on the tool icon.
                     Consumer(
                       builder: (context, ref, child) {
                         final gpsStatus = ref.watch(gpsStatusProvider);
                         final isGpsOff = gpsStatus.value == ServiceStatus.disabled;
-                        if (isGpsOff) {
-                          return IconButton(
-                            icon: const Icon(
-                              Icons.build,
-                              color: AppColors.warningYellow,
-                              size: 28,
-                            ),
-                            onPressed: () {
-                              final isArabic =
-                                  Localizations.localeOf(context).languageCode ==
-                                      'ar';
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text(
-                                    isArabic ? 'تنبيه' : 'Notice',
-                                  ),
-                                  content: Text(
-                                    isArabic
-                                        ? 'نظام تحديد المواقع مغلق.'
-                                        : 'GPS is turned off.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text(isArabic ? 'حسناً' : 'OK'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
+                        final alerts = ref
+                            .watch(statusDashboardProvider)
+                            .valueOrNull
+                            ?.operationalAlerts;
+                        final showTool = isGpsOff || (alerts?.toolIcon ?? false);
+                        final showTriangle = alerts?.warningTriangleIcon ?? false;
+                        if (!showTool && !showTriangle) {
+                          return const SizedBox.shrink();
                         }
-                        return const SizedBox.shrink();
+                        final isArabic =
+                            Localizations.localeOf(context).languageCode == 'ar';
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (showTool)
+                              IconButton(
+                                key: const Key('home_tool_alert'),
+                                icon: const Icon(
+                                  Icons.build,
+                                  color: AppColors.warningYellow,
+                                  size: 28,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(
+                                        isArabic ? 'تنبيه' : 'Notice',
+                                      ),
+                                      content: Text(
+                                        isGpsOff
+                                            ? (isArabic
+                                                ? 'نظام تحديد المواقع مغلق.'
+                                                : 'GPS is turned off.')
+                                            : (isArabic
+                                                ? 'الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.'
+                                                : 'The server reports an ELD operational alert. Open the Connection screen for details.'),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: Text(isArabic ? 'حسناً' : 'OK'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            if (showTriangle)
+                              IconButton(
+                                key: const Key('home_warning_triangle'),
+                                tooltip: isArabic ? 'تنبيه تشغيلي' : 'Operational alert',
+                                icon: const Icon(
+                                  Icons.warning_amber,
+                                  color: AppColors.warningYellow,
+                                  size: 28,
+                                ),
+                                onPressed: () => context.push(AppRoutes.connection),
+                              ),
+                          ],
+                        );
                       },
                     ),
                   ]
@@ -166,7 +202,7 @@ class HomePage extends ConsumerWidget {
             },
           ),
         ),
-        if (isDriving)
+        if (isDriving && !developerBypass)
           const Positioned.fill(
             child: DrivingLockScreen(),
           ),

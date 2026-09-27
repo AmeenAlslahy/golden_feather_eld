@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../logs/domain/daily_form_rules.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/domain/vehicle_selection.dart';
@@ -95,6 +96,17 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       vehicleId: vehicle.id?.toString() ?? '',
       vehicleDisplayName: vehicle.name ?? vehicle.year ?? '',
     );
+  }
+
+  /// Form tab → Trailers page. Stored as the comma-separated form value that
+  /// the daily-form SAVE payload reads (SRS 5.5–5.13, one source of truth).
+  void updateTrailers(List<String> trailers) {
+    state = state.copyWith(trailerId: joinFormList(trailers));
+  }
+
+  /// Form tab → Shipping Documents page.
+  void updateShippingDocuments(List<String> documents) {
+    state = state.copyWith(shippingDocuments: joinFormList(documents));
   }
 
   void updateCoDriver(dynamic coDriver) {

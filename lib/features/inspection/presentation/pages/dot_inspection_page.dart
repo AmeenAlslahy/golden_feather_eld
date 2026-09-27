@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../core/services/local_storage_service.dart';
+import '../../../../routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../routes.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../account/presentation/providers/account_provider.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/dot_inspection_providers.dart';
@@ -108,130 +103,167 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
         ? 'غير متاح لهذا الحساب حسب الخادم.'
         : 'Not available for this account per the server.';
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      padding: EdgeInsets.zero,
       children: [
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text(error, textAlign: TextAlign.center),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          child: Column(
+            children: [
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(error,
+                      textAlign: TextAlign.center, style: context.styles.error),
+                ),
+              Text(
+                guidance,
+                textAlign: TextAlign.center,
+                style: context.styles.body,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                handOver,
+                textAlign: TextAlign.center,
+                style: context.styles.muted,
+              ),
+              const SizedBox(height: 16),
+              AppButton(
+                label: isArabic ? 'بدء التفتيش' : 'START INSPECTION',
+                type: EldButtonType.dark,
+                onPressed: canStart ? _startWithPin : null,
+              ),
+              if (!canStart) ...[
+                const SizedBox(height: 8),
+                Text(
+                  isArabic
+                      ? 'الخادم لا يسمح ببدء التفتيش الآن.'
+                      : 'The server does not allow starting an inspection right now.',
+                  textAlign: TextAlign.center,
+                  style: context.styles.muted,
+                ),
+              ],
+            ],
           ),
-        Text(
-          guidance,
-          textAlign: TextAlign.center,
-          style: context.styles.body,
         ),
-        const SizedBox(height: 8),
-        Text(
-          handOver,
-          textAlign: TextAlign.center,
-          style: context.styles.muted,
-        ),
-        const SizedBox(height: 16),
-        AppButton(
-          label: isArabic ? 'بدء التفتيش' : 'START INSPECTION',
-          type: EldButtonType.dark,
-          onPressed: canStart ? _startWithPin : null,
-        ),
-        if (!canStart) ...[
-          const SizedBox(height: 8),
-          Text(
-            isArabic
-                ? 'الخادم لا يسمح ببدء التفتيش الآن.'
-                : 'The server does not allow starting an inspection right now.',
-            textAlign: TextAlign.center,
-            style: context.styles.muted,
+        
+        const Divider(height: 1, thickness: 1),
+        
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            children: [
+              Text(
+                isArabic
+                    ? 'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة'
+                    : 'Send logs for the 24-hour period and the previous days for one HOS cycle',
+                textAlign: TextAlign.center,
+                style: context.styles.body,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isArabic
+                    ? 'أرسل سجلاتك للضابط إذا طلب ذلك'
+                    : 'Send your logs to the officer if they request',
+                textAlign: TextAlign.center,
+                style: context.styles.muted,
+              ),
+              const SizedBox(height: 16),
+              AppButton(
+                label: isArabic ? 'إرسال السجلات' : 'SEND LOGS',
+                type: EldButtonType.dark,
+                onPressed: canSend
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SendLogsPage()),
+                        );
+                      }
+                    : null,
+              ),
+              if (!canSend) ...[
+                const SizedBox(height: 8),
+                Text(notAllowed,
+                    textAlign: TextAlign.center, style: context.styles.muted),
+              ],
+            ],
           ),
-        ],
-        const SizedBox(height: 28),
-        const Divider(height: 1),
-        const SizedBox(height: 28),
-        Text(
-          isArabic
-              ? 'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة'
-              : 'Send logs for the 24-hour period and the previous days for one HOS cycle',
-          textAlign: TextAlign.center,
-          style: context.styles.body,
         ),
-        const SizedBox(height: 8),
-        Text(
-          isArabic
-              ? 'أرسل سجلاتك للضابط إذا طلب ذلك'
-              : 'Send your logs to the officer if they request',
-          textAlign: TextAlign.center,
-          style: context.styles.muted,
+        
+        const Divider(height: 1, thickness: 1),
+        
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            children: [
+              Text(
+                isArabic
+                    ? 'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF'
+                    : 'Email logs for the 24-hour period and the previous days for one HOS cycle as PDF',
+                textAlign: TextAlign.center,
+                style: context.styles.body,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isArabic
+                    ? 'أرسل سجلاتك بصيغة PDF'
+                    : 'Email your logs in the PDF format',
+                textAlign: TextAlign.center,
+                style: context.styles.muted,
+              ),
+              const SizedBox(height: 16),
+              AppButton(
+                label: isArabic ? 'بريد السجلات' : 'EMAIL LOGS',
+                type: EldButtonType.dark,
+                onPressed: canEmail
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const SendLogsPage(isEmailMode: true),
+                          ),
+                        );
+                      }
+                    : null,
+              ),
+              if (!canEmail) ...[
+                const SizedBox(height: 8),
+                Text(notAllowed,
+                    textAlign: TextAlign.center, style: context.styles.muted),
+              ],
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
-        AppButton(
-          label: isArabic ? 'إرسال السجلات' : 'SEND LOGS',
-          type: EldButtonType.dark,
-          onPressed: canSend
-              ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SendLogsPage()),
-                  );
-                }
-              : null,
+        
+        const Divider(height: 1, thickness: 1),
+        
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            children: [
+              Text(
+                compliance,
+                textAlign: TextAlign.center,
+                style: context.styles.body,
+              ),
+              const SizedBox(height: 16),
+              AppButton(
+                label: isArabic ? 'حزمة المعلومات' : 'INFORMATION PACKET',
+                type: EldButtonType.dark,
+                onPressed: canPacket
+                    ? () => context.push(AppRoutes.infoPacket)
+                    : null,
+              ),
+              if (!canPacket) ...[
+                const SizedBox(height: 8),
+                Text(notAllowed,
+                    textAlign: TextAlign.center, style: context.styles.muted),
+              ],
+            ],
+          ),
         ),
-        if (!canSend) ...[
-          const SizedBox(height: 8),
-          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
-        ],
-        const SizedBox(height: 28),
-        const Divider(height: 1),
-        const SizedBox(height: 28),
-        Text(
-          isArabic
-              ? 'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF'
-              : 'Email logs for the 24-hour period and the previous days for one HOS cycle as PDF',
-          textAlign: TextAlign.center,
-          style: context.styles.body,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          isArabic
-              ? 'أرسل سجلاتك بصيغة PDF'
-              : 'Email your logs in the PDF format',
-          textAlign: TextAlign.center,
-          style: context.styles.muted,
-        ),
-        const SizedBox(height: 16),
-        AppButton(
-          label: isArabic ? 'بريد السجلات' : 'EMAIL LOGS',
-          type: EldButtonType.dark,
-          onPressed: canEmail
-              ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SendLogsPage(isEmailMode: true),
-                    ),
-                  );
-                }
-              : null,
-        ),
-        if (!canEmail) ...[
-          const SizedBox(height: 8),
-          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
-        ],
-        const SizedBox(height: 28),
-        const Divider(height: 1),
-        const SizedBox(height: 28),
-        Text(
-          compliance,
-          textAlign: TextAlign.center,
-          style: context.styles.body,
-        ),
-        const SizedBox(height: 16),
-        AppButton(
-          label: isArabic ? 'حزمة المعلومات' : 'INFORMATION PACKET',
-          type: EldButtonType.dark,
-          onPressed: canPacket ? () => context.push(AppRoutes.infoPacket) : null,
-        ),
-        if (!canPacket) ...[
-          const SizedBox(height: 8),
-          Text(notAllowed, textAlign: TextAlign.center, style: context.styles.muted),
-        ],
+        const SizedBox(height: 32),
       ],
     );
   }
@@ -251,7 +283,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
             color: AppColors.warningYellow.withValues(alpha: 0.15),
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(state.error!, textAlign: TextAlign.center),
+              child: Text(state.error!,
+                  textAlign: TextAlign.center, style: context.styles.warning),
             ),
           ),
         Container(
@@ -296,7 +329,15 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
         const Divider(height: 1),
         Expanded(
           child: log == null
-              ? Center(child: Text(state.error ?? context.loc.noData))
+              ? Center(
+                  child: Text(
+                    state.error ?? context.loc.noData,
+                    textAlign: TextAlign.center,
+                    style: state.error != null
+                        ? context.styles.error
+                        : context.styles.muted,
+                  ),
+                )
               : SingleChildScrollView(
                   child: Column(
                     children: [
@@ -341,207 +382,212 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     setState(() => _currentDayIndex = 0);
   }
 
-  Future<String?> _askNewPin() async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final pin = TextEditingController();
-    final confirm = TextEditingController();
-    String? error;
-    final result = await showDialog<String>(
+  Future<String?> _askNewPin() {
+    // The dialog owns its controllers: disposing them right after
+    // `showDialog` returns throws during the exit animation.
+    return showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(
-                isArabic ? 'رمز التفتيش' : 'Inspection PIN',
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isArabic
-                        ? 'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.'
-                        : 'Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.',
-                    style: context.styles.muted,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: pin,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: isArabic ? 'الرمز' : 'PIN',
-                      counterText: '',
-                    ),
-                  ),
-                  TextField(
-                    controller: confirm,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: isArabic ? 'تأكيد الرمز' : 'Confirm PIN',
-                      counterText: '',
-                    ),
-                  ),
-                  if (error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(error!, style: context.styles.error),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: Text(isArabic ? 'إلغاء' : 'Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (pin.text.length != 4) {
-                      setDialogState(() {
-                        error = isArabic
-                            ? 'الرمز يجب أن يكون 4 أرقام.'
-                            : 'PIN must be 4 digits.';
-                      });
-                      return;
-                    }
-                    if (pin.text != confirm.text) {
-                      setDialogState(() {
-                        error = isArabic
-                            ? 'الرمزان غير متطابقين.'
-                            : 'The PINs do not match.';
-                      });
-                      return;
-                    }
-                    Navigator.pop(dialogContext, pin.text);
-                  },
-                  child: Text(isArabic ? 'بدء' : 'Start'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => const _InspectionPinDialog(),
     );
-    Future.delayed(const Duration(milliseconds: 400), () {
-      pin.dispose();
-      confirm.dispose();
-    });
-    return result;
   }
 
   Future<void> _promptDriverExit() async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final password = TextEditingController();
-    String? error;
-    var busy = false;
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(isArabic ? 'كلمة مرور السائق' : 'Driver password'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isArabic
-                        ? 'أدخل كلمة مرور حساب السائق للخروج. المفتش لا يخرج من هنا.'
-                        : 'Enter the driver account password to exit. The officer cannot leave here.',
-                    style: context.styles.muted,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: password,
-                    obscureText: true,
-                    autofocus: true,
-                    enabled: !busy,
-                    decoration: InputDecoration(
-                      labelText: isArabic ? 'كلمة المرور' : 'Password',
-                    ),
-                  ),
-                  if (error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(error!, style: context.styles.error),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: busy
-                      ? null
-                      : () => Navigator.pop(dialogContext, false),
-                  child: Text(isArabic ? 'إلغاء' : 'Cancel'),
-                ),
-                TextButton(
-                  onPressed: busy
-                      ? null
-                      : () async {
-                          final user = ref.read(authStateProvider).user;
-                          final identifier =
-                              user?.username.trim().isNotEmpty == true
-                                  ? user!.username.trim()
-                                  : (user?.email.trim() ?? '');
-                          if (identifier.isEmpty || password.text.isEmpty) {
-                            setDialogState(() {
-                              error = isArabic
-                                  ? 'أدخل كلمة مرور السائق.'
-                                  : 'Enter the driver password.';
-                            });
-                            return;
-                          }
-                          setDialogState(() {
-                            busy = true;
-                            error = null;
-                          });
-                          final result =
-                              await ref.read(authBackendProvider).login(
-                                    identifier: identifier,
-                                    password: password.text,
-                                    serverUrl: ref.read(serverUrlProvider),
-                                    backendType: ref
-                                        .read(localStorageProvider)
-                                        .backendType,
-                                  );
-                          if (!dialogContext.mounted) return;
-                          final accepted =
-                              result.fold((_) => false, (_) => true);
-                          if (!accepted) {
-                            setDialogState(() {
-                              busy = false;
-                              error = isArabic
-                                  ? 'كلمة المرور غير صحيحة.'
-                                  : 'Incorrect password.';
-                            });
-                            return;
-                          }
-                          ref
-                              .read(inspectionProvider.notifier)
-                              .exitAfterDriverVerified();
-                          Navigator.pop(dialogContext, true);
-                        },
-                  child: Text(isArabic ? 'خروج' : 'Exit'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => const _DriverExitDialog(),
     );
-    Future.delayed(const Duration(milliseconds: 400), () {
-      password.dispose();
-    });
     if (ok == true && mounted) {
       setState(() => _currentDayIndex = 0);
     }
+  }
+}
+
+/// Sets the 4-digit inspection PIN (SRS 7.5). Pops with the PIN or null.
+class _InspectionPinDialog extends StatefulWidget {
+  const _InspectionPinDialog();
+
+  @override
+  State<_InspectionPinDialog> createState() => _InspectionPinDialogState();
+}
+
+class _InspectionPinDialogState extends State<_InspectionPinDialog> {
+  final _pin = TextEditingController();
+  final _confirm = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _pin.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  void _submit(bool isArabic) {
+    if (_pin.text.length != 4) {
+      setState(() {
+        _error = isArabic ? 'الرمز يجب أن يكون 4 أرقام.' : 'PIN must be 4 digits.';
+      });
+      return;
+    }
+    if (_pin.text != _confirm.text) {
+      setState(() {
+        _error = isArabic ? 'الرمزان غير متطابقين.' : 'The PINs do not match.';
+      });
+      return;
+    }
+    Navigator.pop(context, _pin.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return AlertDialog(
+      title: Text(isArabic ? 'رمز التفتيش' : 'Inspection PIN'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isArabic
+                  ? 'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.'
+                  : 'Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.',
+              style: context.styles.muted,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pin,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                labelText: isArabic ? 'الرمز' : 'PIN',
+                counterText: '',
+              ),
+            ),
+            TextField(
+              controller: _confirm,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onSubmitted: (_) => _submit(isArabic),
+              decoration: InputDecoration(
+                labelText: isArabic ? 'تأكيد الرمز' : 'Confirm PIN',
+                counterText: '',
+              ),
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_error!, style: context.styles.error),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+        ),
+        TextButton(
+          onPressed: () => _submit(isArabic),
+          child: Text(isArabic ? 'بدء' : 'Start'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Exit gate for inspection mode (SRS 7.5): the driver re-enters the PIN he
+/// composed when the inspection started. Checked locally against the PIN held
+/// in `inspectionProvider` — no network call, so the driver can always leave
+/// at the roadside, and the login password is never re-sent to the server.
+class _DriverExitDialog extends ConsumerStatefulWidget {
+  const _DriverExitDialog();
+
+  @override
+  ConsumerState<_DriverExitDialog> createState() => _DriverExitDialogState();
+}
+
+class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
+  final _pin = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _pin.dispose();
+    super.dispose();
+  }
+
+  void _submit(bool isArabic) {
+    final pin = _pin.text.trim();
+    if (pin.isEmpty) {
+      setState(() {
+        _error = isArabic ? 'أدخل رمز التفتيش.' : 'Enter the inspection PIN.';
+      });
+      return;
+    }
+    final accepted = ref.read(inspectionProvider.notifier).exitWithPin(pin);
+    if (!accepted) {
+      setState(() {
+        _error = isArabic ? 'الرمز غير صحيح.' : 'Incorrect PIN.';
+      });
+      return;
+    }
+    Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return AlertDialog(
+      title: Text(isArabic ? 'خروج السائق' : 'Driver exit'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isArabic
+                  ? 'أدخل رمز التفتيش الذي عيّنته عند البدء. المفتش لا يخرج من هنا.'
+                  : 'Enter the inspection PIN you set when starting. The officer cannot leave here.',
+              style: context.styles.muted,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pin,
+              obscureText: true,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onSubmitted: (_) => _submit(isArabic),
+              decoration: InputDecoration(
+                labelText: isArabic ? 'الرمز' : 'PIN',
+                counterText: '',
+              ),
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_error!, style: context.styles.error),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+        ),
+        TextButton(
+          onPressed: () => _submit(isArabic),
+          child: Text(isArabic ? 'خروج' : 'Exit'),
+        ),
+      ],
+    );
   }
 }
 

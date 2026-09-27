@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
-import '../../../../core/error/user_facing_message.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
-import '../../application/models/rules_screen_model.dart';
-import '../../application/usecases/update_rules_use_case.dart';
 import '../providers/rules_screen_provider.dart';
+import '../../application/usecases/update_rules_use_case.dart';
+import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
+import '../../application/models/rules_screen_model.dart';
+import '../../../../core/error/user_facing_message.dart';
 
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key});
@@ -155,40 +154,61 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       }
 
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: DropdownButtonFormField<String>(
-          initialValue: currentValue,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-          ),
-          items: options.map((String opt) {
-            return DropdownMenuItem<String>(
-              value: opt,
-              child: Text(opt, overflow: TextOverflow.ellipsis),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                switch (fieldName) {
-                  case 'cycleRule':
-                    _cycleRule = newValue;
-                    break;
-                  case 'cargoType':
-                    _cargoType = newValue;
-                    break;
-                  case 'restart':
-                    _restart = newValue;
-                    break;
-                  case 'restBreak':
-                    _restBreak = newValue;
-                    break;
-                }
-              });
-            }
-          },
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                label,
+                style: context.styles.body.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: AppTypography.semiBold,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: currentValue,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        switch (fieldName) {
+                          case 'cycleRule':
+                            _cycleRule = newValue;
+                            break;
+                          case 'cargoType':
+                            _cargoType = newValue;
+                            break;
+                          case 'restart':
+                            _restart = newValue;
+                            break;
+                          case 'restBreak':
+                            _restBreak = newValue;
+                            break;
+                        }
+                      });
+                    }
+                  },
+                  style: const TextStyle(
+                    fontSize: AppTypography.bodySize,
+                    color: AppColors.textPrimary,
+                  ),
+                  items: options.map((String opt) {
+                    return DropdownMenuItem<String>(
+                      value: opt,
+                      child: Text(opt, overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     } else {
@@ -239,11 +259,12 @@ class _RulesPageState extends ConsumerState<RulesPage> {
             return isArabic ? '$h س $m د' : '${h}h ${m}m';
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          return Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 if (model.notice.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -272,107 +293,148 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
                 Column(
                   children: [
-                    if (model.ruleSource.trim().isNotEmpty)
+                    if (model.ruleSource.trim().isNotEmpty) ...[
                       _buildDropdownOrInfo('ruleSource', isArabic ? 'مصدر القاعدة' : 'Rule Source', model.ruleSource, const [], editable),
+                      const Divider(height: 1, thickness: 1),
+                    ],
                     _buildDropdownOrInfo('cycleRule', isArabic ? 'قاعدة الدورة' : 'Cycle Rule', model.cycleRule, optionsFor('cycleRule'), editable),
+                    const Divider(height: 1, thickness: 1),
                     _buildDropdownOrInfo('cargoType', isArabic ? 'نوع الحمولة' : 'Cargo Type', model.cargoType, optionsFor('cargoType'), editable),
+                    const Divider(height: 1, thickness: 1),
                     _buildDropdownOrInfo('restart', isArabic ? 'إعادة التشغيل' : 'Restart', model.restart, optionsFor('restart'), editable),
+                    const Divider(height: 1, thickness: 1),
                     _buildDropdownOrInfo('restBreak', isArabic ? 'الاستراحة' : 'Rest Break', model.restBreak, optionsFor('restBreak'), editable),
+                    const Divider(height: 1, thickness: 1),
+                    
                     if (editable.contains('sixteenHourException'))
-                      SwitchListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(isArabic
-                            ? 'استثناء 16 ساعة'
-                            : '16-Hour Short-Haul Exception'),
-                        value: _sixteenHourException ?? false,
-                        onChanged: (val) {
-                          setState(() => _sixteenHourException = val);
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                isArabic ? 'استثناء 16 ساعة' : '16-Hour Short-Haul Exception',
+                                style: context.styles.body.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: AppTypography.semiBold,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Align(
+                                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                                child: Switch(
+                                  value: _sixteenHourException ?? false,
+                                  onChanged: (val) {
+                                    setState(() => _sixteenHourException = val);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       )
                     else
                       EldInfoRow(
-                        label: isArabic
-                            ? 'استثناء 16 ساعة'
-                            : '16-Hour Short-Haul Exception',
+                        label: isArabic ? 'استثناء 16 ساعة' : '16-Hour Short-Haul Exception',
                         value: model.sixteenHourException ? 'Yes' : 'No',
                       ),
+                    const Divider(height: 1, thickness: 1),
+                    
                     EldInfoRow(
                       label: 'Personal Conveyance',
-                      value: _serverSetting(model.fixedSettings, const [
-                        'personalConveyance',
-                        'personalConveyanceEnabled',
-                      ]),
+                      value: _serverSetting(model.fixedSettings, const ['personalConveyance', 'personalConveyanceEnabled']),
                     ),
+                    const Divider(height: 1, thickness: 1),
+                    
                     EldInfoRow(
                       label: 'Yard Moves',
-                      value: _serverSetting(model.fixedSettings, const [
-                        'yardMoves',
-                        'yardMoveEnabled',
-                      ]),
+                      value: _serverSetting(model.fixedSettings, const ['yardMoves', 'yardMoveEnabled']),
                     ),
+                    const Divider(height: 1, thickness: 1),
+                    
                     EldInfoRow(
                       label: 'Unlimited Trailers',
-                      value: _serverSetting(model.fixedSettings, const [
-                        'unlimitedTrailers',
-                        'unlimitedTrailerEnabled',
-                      ]),
+                      value: _serverSetting(model.fixedSettings, const ['unlimitedTrailers', 'unlimitedTrailerEnabled']),
                     ),
+                    const Divider(height: 1, thickness: 1),
+                    
                     EldInfoRow(
                       label: 'Unlimited Shipping Documents',
-                      value: _serverSetting(model.fixedSettings, const [
-                        'unlimitedShippingDocuments',
-                        'unlimitedShippingEnabled',
-                      ]),
+                      value: _serverSetting(model.fixedSettings, const ['unlimitedShippingDocuments', 'unlimitedShippingEnabled']),
                     ),
+                    const Divider(height: 1, thickness: 1),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.xl),
 
-                AppButton(
-                  label: 'SAVE',
-                  type: EldButtonType.send,
-                  isLoading: _isSaving,
-                  onPressed: _isSaving ? null : () => _saveRules(model),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: AppButton(
+                    label: 'SAVE',
+                    type: EldButtonType.send,
+                    isLoading: _isSaving,
+                    onPressed: _isSaving ? null : () => _saveRules(model),
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  isArabic
-                      ? 'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.'
-                      : 'Please contact your fleet manager to change rules or to add exceptions.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-                  
-                const SizedBox(height: AppSpacing.md),
-
-                EldCard(
-                  child: Column(
+                const SizedBox(height: AppSpacing.xl),
+                
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isArabic ? 'الحدود اليومية' : 'Daily Limits',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      EldInfoRow(
-                        label: isArabic ? 'القيادة' : 'Driving',
-                        value: hours(config.drivingLimitMinutes),
-                      ),
-                      EldInfoRow(
-                        label: isArabic ? 'نافذة العمل' : 'Shift window',
-                        value: hours(config.shiftLimitMinutes),
-                      ),
-                      EldInfoRow(
-                        label: isArabic ? 'دورة العمل' : 'Cycle',
-                        value: '${config.cycleLimitHours} / ${config.maxConsecutiveDays}',
+                      const Icon(Icons.info, color: AppColors.textSecondary, size: 18),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isArabic
+                              ? 'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.'
+                              : 'Please contact your fleet manager to change rules\nor to add exceptions.',
+                          textAlign: TextAlign.center,
+                          style: context.styles.body.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 48),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                      child: Text(
+                        isArabic ? 'الحدود اليومية' : 'Daily Limits',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    EldInfoRow(
+                      label: isArabic ? 'القيادة' : 'Driving',
+                      value: hours(config.drivingLimitMinutes),
+                    ),
+                    const Divider(height: 1, thickness: 1),
+                    EldInfoRow(
+                      label: isArabic ? 'نافذة العمل' : 'Shift window',
+                      value: hours(config.shiftLimitMinutes),
+                    ),
+                    const Divider(height: 1, thickness: 1),
+                    EldInfoRow(
+                      label: isArabic ? 'دورة العمل' : 'Cycle',
+                      value: '${config.cycleLimitHours} / ${config.maxConsecutiveDays}',
+                    ),
+                    const Divider(height: 1, thickness: 1),
+                  ],
+                ),
               ],
             ),
+           ),
           );
         },
       ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../inspection/domain/inspection_transfer.dart';
@@ -30,7 +29,6 @@ class InfoPacketPage extends ConsumerWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.eldAppBar,
         title: Text(
@@ -73,6 +71,7 @@ class InfoPacketPage extends ConsumerWidget {
               );
             },
           ),
+          const Divider(height: 1),
         ],
       ),
     );
@@ -91,6 +90,9 @@ class _PacketStatus extends StatelessWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (view) {
+        // Reference layout shows nothing here when the packet is fine;
+        // only an incomplete packet (SRS 8.2) gets a warning line.
+        if (view.complete) return const SizedBox.shrink();
         final missing = view.missing.join(', ');
         return Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -100,20 +102,13 @@ class _PacketStatus extends StatelessWidget {
             AppSpacing.md,
           ),
           child: Text(
-            view.complete
-                ? (isArabic ? 'الحزمة مكتملة.' : 'The packet is complete.')
-                : (missing.isEmpty
-                    ? (isArabic ? 'الحزمة غير مكتملة.' : 'The packet is incomplete.')
-                    : (isArabic
-                        ? 'الحزمة غير مكتملة: $missing'
-                        : 'Packet incomplete: $missing')),
+            missing.isEmpty
+                ? (isArabic ? 'الحزمة غير مكتملة.' : 'The packet is incomplete.')
+                : (isArabic
+                    ? 'الحزمة غير مكتملة: $missing'
+                    : 'Packet incomplete: $missing'),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: view.complete
-                  ? AppColors.textSecondary
-                  : AppColors.dangerRed,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppColors.dangerRed),
           ),
         );
       },

@@ -57,24 +57,36 @@ class InspectionLogHeaderTable extends StatelessWidget {
   bool get _diag =>
       (day?.activeDataDiagnostics ?? log?.activeDataDiagnostics ?? const <String>[])
           .isNotEmpty;
+  // 395.8(k)/8.3 — an indicator that is ON must say which code(s) are active.
+  String get _diagCodes =>
+      (day?.activeDataDiagnostics ?? log?.activeDataDiagnostics ?? const <String>[])
+          .join(', ');
+  String get _malfCodes =>
+      (day?.activeDeviceMalfunctions ?? log?.activeDeviceMalfunctions ?? const <String>[])
+          .join(', ');
+
   bool get _malf =>
       (day?.activeDeviceMalfunctions ?? log?.activeDeviceMalfunctions ?? const <String>[])
           .isNotEmpty;
+
+  // 49 CFR 395.8 / SRS 8.3 — the roadside display is in miles.
+  static const double _kmPerMile = 1.609344;
+  static String _mi(double km) => (km / _kmPerMile).toStringAsFixed(0);
 
   String get _odometer {
     final start = day?.startOdometerKm ?? log?.startOdometerKm;
     final end = day?.endOdometerKm ?? log?.endOdometerKm;
     if (start == null && end == null) return '';
     if (start != null && end != null && start != end) {
-      return '${start.toStringAsFixed(0)} - ${end.toStringAsFixed(0)}';
+      return '${_mi(start)} - ${_mi(end)} mi';
     }
-    return (end ?? start)!.toStringAsFixed(0);
+    return '${_mi((end ?? start)!)} mi';
   }
 
   String get _distance {
     final d = day?.totalDistanceKm ?? log?.totalDistanceKm;
     if (d == null) return '';
-    return d.toStringAsFixed(0);
+    return '${_mi(d)} mi';
   }
 
   String get _engine {
@@ -93,7 +105,12 @@ class InspectionLogHeaderTable extends StatelessWidget {
           'Driver License',
           'Driver License State',
         ]),
-        _valueRow([_driverName, _driverId, driverLicense, driverLicenseState]),
+        _valueRow([
+          _driverName,
+          _driverId,
+          log?.driverLicenseNumber ?? driverLicense,
+          log?.driverLicenseState ?? driverLicenseState,
+        ]),
         _headerRow(const [
           'Exempt Driver Status',
           'Unidentified Driving Records',
@@ -103,8 +120,8 @@ class InspectionLogHeaderTable extends StatelessWidget {
         _valueRow([
           _exempt ? 'Yes' : 'No',
           _unidentified ? 'Yes' : 'No',
-          coDriver.isEmpty ? '' : coDriver,
-          coDriverId,
+          log?.coDriverName ?? coDriver,
+          log?.coDriverId?.toString() ?? coDriverId,
         ]),
         _headerRow(const [
           'Log Date',
@@ -130,9 +147,9 @@ class InspectionLogHeaderTable extends StatelessWidget {
           'Device Malfn. Indicators',
         ]),
         _valueRow([
-          '—',
-          _diag ? 'Yes' : 'No',
-          _malf ? 'Yes' : 'No',
+          log?.period24HourStartTime ?? '—',
+          _diag ? _diagCodes : 'No',
+          _malf ? _malfCodes : 'No',
         ]),
         _headerRow(const [
           'Vehicle',

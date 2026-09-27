@@ -1,6 +1,6 @@
 import '../../core/result/result.dart';
-import '../../domain/account/driver_account.dart';
 import '../../domain/shared/value_objects.dart';
+import '../../domain/account/driver_account.dart';
 import 'raw_json.dart';
 
 abstract interface class AccountBackend {

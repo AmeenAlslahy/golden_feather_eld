@@ -1,7 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'local_storage_service.dart';
 
 class UserPreferencesStorageService {
   final SharedPreferencesWithCache _prefs;
@@ -36,10 +33,3 @@ class UserPreferencesStorageService {
       _prefs.setString(_selectedVehicleKey, id);
   Future<void> clearSelectedVehicle() => _prefs.remove(_selectedVehicleKey);
 }
-
-final userPreferencesStorageProvider =
-    Provider<UserPreferencesStorageService>((ref) {
-  // We temporarily read from the existing local storage provider to get the shared prefs instance.
-  final localStorage = ref.watch(localStorageProvider);
-  return UserPreferencesStorageService(localStorage.prefs);
-});

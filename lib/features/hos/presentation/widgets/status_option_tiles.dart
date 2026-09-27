@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/extensions/context_extensions.dart';
 
 class StatusOptionTile extends StatelessWidget {
   final DutyStatus status;
@@ -54,7 +54,7 @@ class StatusOptionTile extends StatelessWidget {
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                   color: isSelected
-                      ? const Color(0xFF1565C0)
+                      ? AppColors.primaryGold
                       : theme.dividerColor,
                   size: 22,
                 ),
@@ -118,7 +118,7 @@ class YardMovesOptionTile extends StatelessWidget {
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                   color: isYardMoves
-                      ? const Color(0xFF1565C0)
+                      ? AppColors.primaryGold
                       : theme.dividerColor,
                   size: 22,
                 ),

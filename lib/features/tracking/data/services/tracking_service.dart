@@ -1,12 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/config/app_environment.dart';
+import '../datasources/traccar_sdk/traccar_native_client.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/config/app_environment.dart';
 import '../../../../core/utils/logger.dart';
-import '../datasources/traccar_sdk/traccar_native_client.dart';
 
 /// خدمة التتبع - متكاملة مع Traccar Client SDK
 class TrackingService {
@@ -63,11 +61,12 @@ class TrackingService {
       }
     }
 
-    // Ensure tracking uses port 5055 (OsmAnd default) instead of Web port
+    // Ensure tracking uses the OsmAnd port instead of the Web/API port.
+    const osmAndPort = AppEnvironmentConfig.osmAndPort;
     try {
       final uri = Uri.parse(serverUrl);
-      if (uri.port != 5055 && !serverUrl.contains('5055')) {
-        serverUrl = uri.replace(port: 5055, path: '/').toString();
+      if (uri.port != osmAndPort) {
+        serverUrl = uri.replace(port: osmAndPort, path: '/').toString();
       }
     } catch (_) {}
 

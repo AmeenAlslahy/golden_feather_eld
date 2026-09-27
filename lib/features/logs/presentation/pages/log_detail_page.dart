@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/daily_log.dart';
-import '../providers/log_detail_tab_provider.dart';
 import '../providers/logs_provider.dart';
-import '../widgets/log_detail_tabs/certify_tab.dart';
-import '../widgets/log_detail_tabs/events_tab.dart';
-import '../widgets/log_detail_tabs/form_tab.dart';
+import '../providers/log_detail_tab_provider.dart';
+import '../../domain/entities/daily_log.dart';
 import 'edit_log_page.dart';
 import 'inspection_preview_page.dart';
+import '../widgets/log_detail_tabs/events_tab.dart';
+import '../widgets/log_detail_tabs/form_tab.dart';
+import '../widgets/log_detail_tabs/certify_tab.dart';
 
 /// شاشة تفاصيل اليوم (Shell)
 class LogDetailPage extends ConsumerWidget {

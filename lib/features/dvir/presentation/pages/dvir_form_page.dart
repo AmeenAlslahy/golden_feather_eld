@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../account/presentation/providers/account_provider.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../account/presentation/providers/account_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../../core/time/trusted_time_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 class DvirFormPage extends ConsumerStatefulWidget {
   final DvirReport? existingReport;
@@ -56,10 +56,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       _trailerDefectsController.text.trim().isNotEmpty ||
       _selectedDefects.isNotEmpty;
 
+  /// The report shown in read-only mode: the list summary first, then the
+  /// full server detail once `loadDvirDetails` returns.
+  DvirReport? _report;
+
   @override
   void initState() {
     super.initState();
     final r = widget.existingReport;
+    _report = r;
     _locationController = TextEditingController(text: r?.location ?? '');
     _odometerController =
         TextEditingController(text: r?.odometer?.toString() ?? '');
@@ -69,11 +74,47 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         TextEditingController(text: r?.trailerDefects ?? '');
     _companyController = TextEditingController(text: r?.companyName ?? '');
     _remarksController = TextEditingController(text: r?.notes ?? '');
+    if (r == null) {
+      // New report: ask the server which previous DVIR (if any) this vehicle
+      // still owes a §396.13 review for.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final vehicleId = ref.read(dashboardDataProvider).vehicleId;
+        ref.read(dvirProvider.notifier).loadPreviousDvir(vehicleId);
+      });
+    }
     if (r != null) {
-      _selectedStatus = r.condition == VehicleCondition.safe
-          ? 'Vehicle Condition Satisfactory'
-          : 'Has Defects';
-      _signed = r.signature != null;
+      _applyReport(r);
+      // SRS 7.12: the list row is a summary. Read the full report
+      // (`GET /eld/dvir/{id}`) through the existing notifier and refresh the
+      // read-only view when it arrives; the summary stays if the read fails.
+      final serverId = int.tryParse(r.id);
+      if (serverId != null && serverId > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ref.read(dvirProvider.notifier).loadDvirDetails(r.id);
+        });
+      }
+    }
+  }
+
+  /// Fills the read-only view from a report (list summary or full detail).
+  void _applyReport(DvirReport r) {
+    _report = r;
+    _locationController.text = r.location ?? _locationController.text;
+    _odometerController.text =
+        r.odometer?.toString() ?? _odometerController.text;
+    _vehicleDefectsController.text =
+        r.vehicleDefects ?? _vehicleDefectsController.text;
+    _trailerDefectsController.text =
+        r.trailerDefects ?? _trailerDefectsController.text;
+    _companyController.text = r.companyName ?? _companyController.text;
+    _remarksController.text = r.notes ?? _remarksController.text;
+    _selectedStatus = r.condition == VehicleCondition.safe
+        ? 'Vehicle Condition Satisfactory'
+        : 'Has Defects';
+    _signed = r.signature != null;
+    if (r.selectedDefects.isNotEmpty || _selectedDefects.isEmpty) {
       _selectedDefects = r.selectedDefects;
     }
   }
@@ -186,7 +227,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   String _automaticLocation() {
-    final existing = widget.existingReport?.location;
+    final existing = _report?.location;
     final point = ref.read(trackingStateProvider).currentLocation;
     if (point != null) {
       return '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
@@ -196,7 +237,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   String _companyName() {
-    final existing = widget.existingReport?.companyName;
+    final existing = _report?.companyName;
     if (existing != null && existing.isNotEmpty) return existing;
     return ref.read(accountProvider).accountData?.carrier ??
         'Company unavailable';
@@ -206,20 +247,18 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (!_formKey.currentState!.validate()) return;
     final time = ref.read(trustedTimeProvider).currentTime;
     if (time is! TrustedTimeAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Inspection time is unavailable. Connect and try again.'),
-        ),
+      AppFeedback.error(
+        context,
+        _isAr
+            ? 'وقت الفحص غير متاح. اتصل ثم أعد المحاولة.'
+            : 'Inspection time is unavailable. Connect and try again.',
       );
       return;
     }
 
     final dashboard = ref.read(dashboardDataProvider);
-    final previous = ref
-        .read(dvirProvider)
-        .reports
-        .where((report) => report.vehicleId == dashboard.vehicleId)
-        .toList();
+    final previousToReview =
+        ref.read(dvirProvider).previousToReview(dashboard.vehicleId);
 
     if (widget.existingReport != null) {
       _snack(_isAr ? 'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.' : 'A saved report cannot be edited on this device.');
@@ -242,8 +281,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       return;
     }
 
-    if (previous.isNotEmpty && previous.first.nextDriverReviewed != true) {
-      final latest = previous.first;
+    if (previousToReview != null) {
+      final latest = previousToReview;
       final previousId = int.tryParse(latest.id);
       if (previousId == null) {
         _snack(_isAr ? 'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.' : 'The previous report has no server id and cannot be reviewed.');
@@ -377,41 +416,50 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     Navigator.pop(context);
   }
 
-  void _snack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
+  /// Every `_snack` call in this page reports a refusal or failure.
+  void _snack(String message) => AppFeedback.error(context, message);
 
   @override
   Widget build(BuildContext context) {
+    final existingId = widget.existingReport?.id;
+    if (existingId != null) {
+      ref.listen<DvirReport?>(
+        dvirProvider.select((s) => s.currentReport),
+        (previous, next) {
+          if (next == null || next.id != existingId || identical(next, previous)) {
+            return;
+          }
+          setState(() => _applyReport(next));
+        },
+      );
+    }
     final dashboard = ref.watch(dashboardDataProvider);
     final account = ref.watch(accountProvider).accountData;
     final location = ref.watch(trackingStateProvider).currentLocation;
     final trusted = ref.watch(trustedTimeProvider).currentTime;
     final timeAvailable = trusted is TrustedTimeAvailable;
     final automaticLocation = location == null
-        ? (widget.existingReport?.location ?? 'Location unavailable')
+        ? (_report?.location ?? (_isAr ? 'الموقع غير متاح' : 'Location unavailable'))
         : '${location.latitude.toStringAsFixed(5)}, ${location.longitude.toStringAsFixed(5)}';
-    final companyName = widget.existingReport?.companyName ??
+    final companyName = _report?.companyName ??
         account?.carrier ??
-        'Company unavailable';
+        (_isAr ? 'الشركة غير متاحة' : 'Company unavailable');
     final brightness = Theme.of(context).brightness;
-    final surfaceColor = AppColors.surfaceFor(brightness);
     final textColor = AppColors.textPrimaryFor(brightness);
     final borderColor = AppColors.borderFor(brightness);
 
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
-        : 'Time unavailable';
+        : (_isAr ? 'الوقت غير متاح' : 'Time unavailable');
 
     return Scaffold(
-      backgroundColor: surfaceColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Insert DVIR',
+          _isAr ? 'إدراج تقرير فحص (DVIR)' : 'Insert DVIR',
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
@@ -421,126 +469,109 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            if (ref.watch(dvirProvider).reports.any((report) =>
-                report.vehicleId == dashboard.vehicleId &&
-                report.id != widget.existingReport?.id))
+            if (widget.existingReport == null &&
+                ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) != null)
               Container(
                 width: double.infinity,
                 color: AppColors.warningYellow.withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(AppSpacing.md),
-                child: const Text(
-                  'Previous DVIR Review — §396.13. Opening the report is not a review.',
+                child: Text(
+                  _isAr
+                      ? 'مراجعة التقرير السابق — فتح التقرير لا يعد مراجعة له.'
+                      : 'Previous DVIR Review — §396.13. Opening the report is not a review.',
                 ),
               ),
             _buildFieldGroup(
-              title: 'Time',
+              title: _isAr ? 'الوقت' : 'Time (ET)',
               child: Text(currentTime,
-                  style: TextStyle(color: textColor, fontSize: 14)),
+                  style: TextStyle(color: textColor, fontSize: 16)),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: 'Location',
+              title: _isAr ? 'الموقع' : 'Location',
               child: Text(automaticLocation,
-                  style: TextStyle(color: textColor, fontSize: 14)),
+                  style: TextStyle(color: textColor, fontSize: 16)),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: 'Odometer (mi)',
+              title: _isAr ? 'المسافة' : 'Odometer (mi)',
               child: _buildFlatTextField(
-                  _odometerController, 'Odometer', textColor,
+                  _odometerController, _isAr ? 'المسافة' : 'Odometer', textColor,
                   keyboardType: TextInputType.number),
               borderColor: borderColor,
               textColor: textColor,
             ),
 
-            // Grid for Vehicle and Trailers
-            Container(
-              decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: borderColor))),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(context.loc.vehicle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        const SizedBox(height: 4),
-                        Text(dashboard.vehicleDisplayName,
-                            style: TextStyle(color: textColor, fontSize: 14)),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(context.loc.trailers,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        const SizedBox(height: 4),
-                        Text(dashboard.trailerId ?? context.loc.trailers,
-                            style: TextStyle(
-                                color: AppColors.textSecondaryFor(
-                                    brightness),
-                                fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(context.loc.defectsTitle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        _buildFlatTextField(_vehicleDefectsController,
-                            context.loc.defectsTitle, textColor),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(context.loc.defectsTitle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor)),
-                        _buildFlatTextField(_trailerDefectsController,
-                            context.loc.defectsTitle, textColor),
-                        const SizedBox(height: AppSpacing.sm),
-                        _buildCatalogDefects(textColor),
-                      ],
-                    ),
-                  ),
-                ],
+            // Reference layout (screenshots 15/19): Vehicle | Defects and
+            // Trailers | Defects as two side-by-side underlined cells each.
+            _buildTwoColumn(
+              left: _buildCell(
+                title: context.loc.vehicle,
+                child: Text(dashboard.vehicleDisplayName,
+                    style: TextStyle(color: textColor, fontSize: 16)),
+                borderColor: borderColor,
+                textColor: textColor,
               ),
+              right: _buildCell(
+                title: context.loc.defectsTitle,
+                child: _buildFlatTextField(_vehicleDefectsController,
+                    context.loc.defectsTitle, textColor),
+                borderColor: borderColor,
+                textColor: textColor,
+              ),
+            ),
+            _buildTwoColumn(
+              left: _buildCell(
+                title: context.loc.trailers,
+                child: Text(dashboard.trailerId ?? context.loc.trailers,
+                    style: TextStyle(
+                        color: dashboard.trailerId == null
+                            ? AppColors.textSecondaryFor(brightness)
+                            : textColor,
+                        fontSize: 16)),
+                borderColor: borderColor,
+                textColor: textColor,
+              ),
+              right: _buildCell(
+                title: context.loc.defectsTitle,
+                child: _buildFlatTextField(_trailerDefectsController,
+                    context.loc.defectsTitle, textColor),
+                borderColor: borderColor,
+                textColor: textColor,
+              ),
+            ),
+            // §396.11 catalog picks stay functional; rendered as plain lines
+            // under the grid so the reference layout is unchanged.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildCatalogDefects(textColor),
             ),
 
             _buildFieldGroup(
-              title: 'Company',
+              title: _isAr ? 'الشركة' : 'Company',
               child: Text(companyName,
-                  style: TextStyle(color: textColor, fontSize: 14)),
+                  style: TextStyle(color: textColor, fontSize: 16)),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: 'Remarks',
+              title: _isAr ? 'ملاحظات' : 'Remarks',
               child:
-                  _buildFlatTextField(_remarksController, 'Remarks', textColor),
+                  _buildFlatTextField(_remarksController, _isAr ? 'ملاحظات' : 'Remarks', textColor),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: 'Status',
+              title: _isAr ? 'الحالة' : 'Status',
               child: InkWell(
                 onTap: _openStatusModal,
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(_statusLabel(_selectedStatus),
-                          style: TextStyle(color: textColor, fontSize: 14)),
+                          style: TextStyle(color: textColor, fontSize: 16)),
                     ),
                     Icon(Icons.arrow_drop_down, color: textColor),
                   ],
@@ -568,7 +599,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       children: [
                         Center(
                           child: Text(
-                            'Image not available.',
+                            _isAr ? 'الصورة غير متاحة.' : 'Image not available.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 32,
@@ -587,9 +618,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   const SizedBox(height: AppSpacing.sm),
                   InkWell(
                     onTap: () => _signatureController.clear(),
-                    child: const Text(
-                      'Clear signature',
-                      style: TextStyle(
+                    child: Text(
+                      _isAr ? 'مسح التوقيع' : 'Clear signature',
+                      style: const TextStyle(
                         fontSize: 14,
                         decoration: TextDecoration.underline,
                         decorationStyle: TextDecorationStyle.dotted,
@@ -602,9 +633,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  horizontal: 28, vertical: AppSpacing.sm),
               child: AppButton(
-                label: _signed ? 'SIGNED' : 'SIGN',
+                label: _signed ? (_isAr ? 'تم التوقيع' : 'SIGNED') : (_isAr ? 'توقيع' : 'SIGN'),
                 type: EldButtonType.agree,
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting || !timeAvailable || _signed
@@ -629,49 +660,117 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: borderColor)),
       ),
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
+          _cellTitle(title, textColor),
+          const SizedBox(height: 12),
           child,
         ],
       ),
     );
   }
 
-  /// §396.11 catalog picks: chips plus "+ Add Defects". Free-text fields above stay as they were.
+  Widget _cellTitle(String title, Color textColor) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+    );
+  }
+
+  Widget _buildCell({
+    required String title,
+    required Widget child,
+    required Color borderColor,
+    required Color textColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: borderColor)),
+      ),
+      padding: const EdgeInsets.only(top: 16, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _cellTitle(title, textColor),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTwoColumn({required Widget left, required Widget right}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: left),
+          const SizedBox(width: 32),
+          Expanded(child: right),
+        ],
+      ),
+    );
+  }
+
+  /// §396.11 catalog picks: defect cards plus "+ Add Defects". Free-text fields above stay as they were.
   Widget _buildCatalogDefects(Color textColor) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // SRS 7.6: one card per defect (name, note, remove). The wire item
+        // (`itemCode/itemName/category/note`) has no photo field, so no
+        // photo control is offered.
         if (_selectedDefects.isNotEmpty)
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
+          Column(
+            key: const Key('dvir_defect_cards'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final d in _selectedDefects)
-                Chip(
-                  label: Text(d.item.label(isArabic),
-                      style: const TextStyle(fontSize: 11)),
-                  avatar: d.item.critical
-                      ? const Icon(Icons.warning_amber_rounded,
-                          size: 14, color: AppColors.dangerRed)
-                      : null,
-                  onDeleted: _readOnly
-                      ? null
-                      : () => setState(() => _selectedDefects =
-                          _selectedDefects.where((x) => x != d).toList()),
+                Padding(
+                  key: Key('dvir_defect_card_${d.item.code}'),
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        d.item.critical
+                            ? Icons.warning_amber_rounded
+                            : Icons.build_outlined,
+                        size: 16,
+                        color: d.item.critical
+                            ? AppColors.dangerRed
+                            : textColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          (d.description ?? '').trim().isEmpty
+                              ? d.item.label(isArabic)
+                              : '${d.item.label(isArabic)} — ${d.description!.trim()}',
+                          style: TextStyle(fontSize: 14, color: textColor),
+                        ),
+                      ),
+                      if (!_readOnly)
+                        IconButton(
+                          tooltip: isArabic ? 'إزالة' : 'Remove',
+                          icon: const Icon(Icons.close, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                              minWidth: 32, minHeight: 32),
+                          onPressed: () => setState(() =>
+                              _selectedDefects = _selectedDefects
+                                  .where((x) => x != d)
+                                  .toList()),
+                        ),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -697,10 +796,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor, fontSize: 14),
+      style: TextStyle(color: textColor, fontSize: 16),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+        hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
         border: InputBorder.none,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),

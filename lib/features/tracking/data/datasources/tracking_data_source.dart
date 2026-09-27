@@ -1,5 +1,5 @@
-import '../../domain/entities/connection_status.dart';
 import '../../domain/entities/tracking_event.dart';
+import '../../domain/entities/connection_status.dart';
 
 /// واجهة موحدة لجميع مصادر التتبع
 /// (مثل TraccarDataSource أو Backend الشركة مستقبلاً).

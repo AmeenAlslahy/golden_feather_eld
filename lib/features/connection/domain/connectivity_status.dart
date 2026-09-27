@@ -11,6 +11,14 @@ class ConnectivityStatus {
   final String? deviceVersion;
   final String? eldIdentifier;
 
+  /// `manualModeActive` — server-side §395.34 paper-log fallback flag.
+  /// Null when the server did not report it (never assumed active).
+  final bool? manualModeActive;
+  final String? manualModeReason;
+
+  /// `manualRecordingAllowed` — false means the server refuses the toggle.
+  final bool? manualRecordingAllowed;
+
   const ConnectivityStatus({
     this.connectionStatus,
     this.vehicleName,
@@ -23,14 +31,16 @@ class ConnectivityStatus {
     this.engineVersion,
     this.deviceVersion,
     this.eldIdentifier,
+    this.manualModeActive,
+    this.manualModeReason,
+    this.manualRecordingAllowed,
   });
 
   /// Prefill only a MAC-shaped identifier. Other ELD ids are not invented as MAC.
   String? get macAddress {
     final value = eldIdentifier?.trim();
     if (value == null) return null;
-    final mac = RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$');
-    return mac.hasMatch(value) ? value : null;
+    return isMacAddress(value) ? value : null;
   }
 
   bool get hasDiagnostic => diagnostics.isNotEmpty;
@@ -61,6 +71,9 @@ ConnectivityStatus? parseConnectivityStatus(dynamic data) {
     engineVersion: _text(body['engineVersion']),
     deviceVersion: _text(body['deviceVersion']),
     eldIdentifier: _text(body['eldIdentifier'] ?? body['macAddress']),
+    manualModeActive: _bool(body['manualModeActive']),
+    manualModeReason: _text(body['manualModeReason']),
+    manualRecordingAllowed: _bool(body['manualRecordingAllowed']),
   );
 }
 
@@ -93,4 +106,19 @@ List<String>? _strings(dynamic value) {
   if (value == null) return const [];
   if (value is! List) return null;
   return value.map((item) => item.toString().trim()).where((item) => item.isNotEmpty).toList();
+}
+
+/// `AA:BB:CC:DD:EE:FF` (or `-` separated). Shared by prefill and the
+/// connection form so both agree on what a MAC looks like.
+bool isMacAddress(String value) =>
+    RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$').hasMatch(value.trim());
+
+/// Field error for the ELD MAC input, or null when acceptable.
+/// Only "required" is enforced: the identifier printed on real devices is not
+/// always colon-separated, so the format is not rejected client-side.
+String? macAddressError(String? value, {required bool isArabic}) {
+  if ((value?.trim() ?? '').isEmpty) {
+    return isArabic ? 'عنوان MAC مطلوب.' : 'MAC address is required.';
+  }
+  return null;
 }

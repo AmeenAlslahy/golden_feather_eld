@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:signature/signature.dart';
-
-import '../../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
-import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
-import '../../../../../domain/shared/value_objects.dart';
-import '../../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../domain/entities/daily_log.dart';
+import '../../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../../domain/shared/value_objects.dart';
+import 'package:intl/intl.dart';
+import '../../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/logs_provider.dart';
 
@@ -25,6 +24,7 @@ class CertifyTab extends ConsumerStatefulWidget {
 
 class _CertifyTabState extends ConsumerState<CertifyTab> {
   late SignatureController _signatureController;
+  bool _signatureReady = false;
 
   @override
   void initState() {
@@ -37,15 +37,29 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Theme is needed for the pen colour, so the controller is built here —
+    // but only once: rebuilding it on every dependency change (locale/theme)
+    // would silently drop a signature in progress.
+    if (_signatureReady) return;
+    _signatureReady = true;
     _signatureController = SignatureController(
       penStrokeWidth: 3,
       penColor: Theme.of(context).colorScheme.primary,
       exportBackgroundColor: Theme.of(context).colorScheme.surface,
+      // SRS 7.11 — the placeholder must disappear as soon as the driver
+      // draws (and come back after Clear).
+      onDrawStart: () => setState(() {}),
     );
+    _signatureController.addListener(_onSignatureChanged);
+  }
+
+  void _onSignatureChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _signatureController.removeListener(_onSignatureChanged);
     _signatureController.dispose();
     super.dispose();
   }
@@ -101,7 +115,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
 
     final driverId = ref.read(authStateProvider).user?.id;
     if (driverId == null || driverId.isEmpty) {
-      _showError('Session missing. Please log in again.');
+      _showError(isArabic
+          ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.'
+          : 'Session missing. Please log in again.');
       return;
     }
 
@@ -210,7 +226,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
               const SizedBox(height: AppSpacing.md),
             ],
             AppButton(
-              label: 'NOT READY',
+              label: context.loc.notReady,
               type: EldButtonType.send,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -232,14 +248,15 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             ),
             child: Stack(
               children: [
-                Center(
+                if (_signatureController.isEmpty)
+                const Center(
                   child: Text(
-                    context.loc.imageNotAvailable,
+                    'Draw your signature here',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFD0D0D0),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFB0B0B0),
                     ),
                   ),
                 ),
@@ -302,7 +319,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
               ),
             ),
           AppButton(
-            label: 'NOT READY',
+            label: context.loc.notReady,
             type: EldButtonType.muted,
             onPressed: () => Navigator.of(context).maybePop(),
           ),

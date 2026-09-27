@@ -1,10 +1,10 @@
 name: Verify
 
+# Phase C: verification runs on every reviewed branch, not only main/develop.
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
-    branches: [main, develop]
 
 jobs:
   verify:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.41.9'
           channel: 'stable'
           cache: true
 

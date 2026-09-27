@@ -1,10 +1,9 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/core/domain/entities/user.dart';
-
 import '../../../../core/error/failure.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import '../repositories/auth_repository.dart';
 import '../entities/value_objects/login_identifier.dart';
 import '../entities/value_objects/password.dart';
-import '../repositories/auth_repository.dart';
 
 class LoginUseCase {
   final AuthRepository repository;

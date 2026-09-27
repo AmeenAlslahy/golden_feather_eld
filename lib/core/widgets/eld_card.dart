@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_radius.dart';
 
 /// بطاقة بيانات ELD - خلفية بيضاء مع ظل خفيف
 class EldCard extends StatelessWidget {
@@ -19,6 +18,7 @@ class EldCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      clipBehavior: Clip.antiAlias,
       color: Theme.of(context).cardTheme.color ??
           Theme.of(context).colorScheme.surface,
       elevation: 0.5,

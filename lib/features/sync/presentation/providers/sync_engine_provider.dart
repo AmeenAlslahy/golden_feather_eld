@@ -1,19 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fpdart/fpdart.dart';
-
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/config/app_environment.dart';
-import '../../../../core/di/auth_local_data_source_provider.dart';
-import '../../../../core/error/failure.dart';
-import '../../../../core/services/live_tracking_data_source.dart';
-import '../../../../core/time/time_authority_provider.dart';
-import '../../../tracking/domain/entities/connection_status.dart';
+import '../../domain/usecases/sync_engine.dart';
 import '../../data/repositories/memory_offline_queue.dart';
 import '../../data/repositories/sqlite_offline_queue.dart';
-import '../../data/repositories/traccar_remote_event_dispatcher.dart';
-import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/offline_queue.dart';
-import '../../domain/usecases/sync_engine.dart';
+import '../../../../core/services/live_tracking_data_source.dart';
+import '../../../tracking/domain/entities/connection_status.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failure.dart';
+import '../../domain/entities/pending_event.dart';
+import '../../../../core/config/app_environment.dart';
+import '../../../../backend/providers/backend_providers.dart';
+import '../../data/repositories/traccar_remote_event_dispatcher.dart';
+import '../../../../core/di/auth_local_data_source_provider.dart';
+import '../../../../core/time/time_authority_provider.dart';
+import '../../../../core/network/core_providers.dart';
 
 class MockRemoteEventDispatcher implements RemoteEventDispatcher {
   @override
@@ -74,8 +74,16 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
     }
   });
 
+  // SRS 6.8 — also flush the queue when *network* connectivity returns,
+  // not only when the vehicle link reconnects.
+  final networkSubscription =
+      ref.watch(networkInfoProvider).onConnectionChange.listen((online) {
+    if (online) engine.triggerSync();
+  });
+
   ref.onDispose(() {
     subscription.cancel();
+    networkSubscription.cancel();
   });
 
   return engine;

@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_status_badge.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../domain/entities/codriver.dart';
+import '../providers/codriver_provider.dart';
+import '../providers/team_status_provider.dart';
+import '../../domain/role_switch_guard.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../hos/domain/engine/hos_rules_engine.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
-import '../../domain/entities/codriver.dart';
-import '../../domain/role_switch_guard.dart';
-import '../providers/codriver_provider.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 class CoDriverPage extends ConsumerStatefulWidget {
   const CoDriverPage({super.key});
@@ -35,7 +36,6 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final loc = context.loc;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final brightness = Theme.of(context).brightness;
-    final bgColor = AppColors.backgroundFor(brightness);
     final surfaceColor = AppColors.surfaceFor(brightness);
     final textColor = AppColors.textPrimaryFor(brightness);
     final textSecondaryColor = AppColors.textSecondaryFor(brightness);
@@ -50,28 +50,26 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
         _selectedId ?? codriverState.selectedCoDriver?.id ?? 'none';
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
           loc.coDriver,
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
+        // Back arrow when pushed on top of another screen; drawer menu when
+        // this is the root destination.
         leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.surface),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+          builder: (context) => Navigator.of(context).canPop()
+              ? IconButton(
+                  key: const Key('codriver_back'),
+                  icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+                  onPressed: () => Navigator.of(context).pop(),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.menu, color: AppColors.surface),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
         ),
-        actions: [
-          IconButton(
-            tooltip: isArabic ? 'تحديث' : 'Refresh',
-            icon: const Icon(Icons.refresh, color: AppColors.surface),
-            onPressed: codriverState.isLoading
-                ? null
-                : () => ref.read(codriverProvider.notifier).reload(),
-          ),
-        ],
       ),
       drawer: const EldDrawer(),
       body: codriverState.isLoading
@@ -80,11 +78,17 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               onRefresh: () => ref.read(codriverProvider.notifier).reload(),
               child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, vertical: 48.0),
+              padding: EdgeInsets.zero,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Reference layout (screenshot 12): centred heading + hint,
+                  // dropdown row, full-width divider, second heading + hint,
+                  // SWITCH, full-width divider.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
+                    child: Column(
+                      children: [
                   Text(
                     isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
                     style: TextStyle(
@@ -93,13 +97,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     isArabic
                         ? 'الرجاء اختيار مساعد السائق الخاص بك'
                         : 'Select your co-driver',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       color: textSecondaryColor,
                     ),
                   ),
@@ -131,19 +135,25 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 isArabic,
                               ).toUpperCase(),
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 color: textColor,
                               ),
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down, color: textColor),
+                          Icon(Icons.keyboard_arrow_down,
+                              color: textColor, size: 28),
                         ],
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 60),
-
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
+                    child: Column(
+                      children: [
                   Text(
                     isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
                     style: TextStyle(
@@ -152,19 +162,17 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     isArabic
-                        ? 'ستصبح السائق المساعد. سيصبح مساعدك السائق.'
-                        : 'You will become the co-driver. Your co-driver will become the driver.',
+                        ? 'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.'
+                        : 'You will become co-driver. Your co-driver will stay driver.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       color: textSecondaryColor,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  _LinkedCoDriver(state: codriverState, isArabic: isArabic),
                   if (codriverState.error != null) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Text(
@@ -173,8 +181,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       style: context.styles.error,
                     ),
                   ],
-
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: 28),
                   if (codriverState.isSwitching)
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -206,11 +213,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                               currentStatusIsDriving: driving,
                             );
                             if (refusal != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(_refusalText(refusal, isArabic)),
-                                ),
-                              );
+                              AppFeedback.error(
+                                  context, _refusalText(refusal, isArabic));
                               return;
                             }
                             final confirm = await showDialog<bool>(
@@ -244,29 +248,60 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                             );
 
                             if (confirm == true && mounted) {
+                              final newPrimary = ref
+                                  .read(codriverProvider)
+                                  .selectedCoDriver
+                                  ?.name;
                               final error = await ref
                                   .read(codriverProvider.notifier)
                                   .switchDrivers();
                               if (!context.mounted) return;
                               if (error != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(error)),
-                                );
+                                AppFeedback.error(context, error);
                                 return;
                               }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                              // SRS 10.4: show the new roles before leaving
+                              // (current → co-driver, co-driver → primary).
+                              await showDialog<void>(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  key: const Key('switch_result_dialog'),
+                                  title: Text(isArabic
+                                      ? 'تم تبديل الأدوار'
+                                      : 'Roles switched'),
                                   content: Text(
                                     isArabic
-                                        ? 'قبل الخادم التبديل. لم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
-                                        : 'The server accepted the switch. Hours were not copied and duty status was not changed. The new driver sets duty before moving.',
+                                        ? 'أنت الآن السائق المساعد.\n${newPrimary ?? 'السائق المساعد'} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
+                                        : 'You are now the co-driver.\n${newPrimary ?? 'The co-driver'} is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.',
+                                    style: const TextStyle(
+                                        color: AppColors.successGreen),
                                   ),
-                                  backgroundColor: AppColors.successGreen,
+                                  actions: [
+                                    FilledButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: Text(
+                                          MaterialLocalizations.of(dialogContext)
+                                              .okButtonLabel),
+                                    ),
+                                  ],
                                 ),
                               );
+                              if (!context.mounted) return;
                               context.go('/home');
                             }
                           },
+                  ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  // SRS 10.3: server team state (informational, below the
+                  // reference layout so it does not change it).
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
+                    child: _LinkedCoDriver(
+                        state: codriverState, isArabic: isArabic),
                   ),
                 ],
               ),
@@ -352,9 +387,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                               ? 'اختر مركبة قبل ربط السائق المساعد.'
                               : 'Select a vehicle before linking a co-driver.')
                           : error;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(text)),
-                      );
+                      AppFeedback.error(context, text);
                       return;
                     }
                     setState(() {
@@ -469,7 +502,61 @@ class _LinkedCoDriver extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           teamBadge,
         ],
+        _HosIsolationLine(isArabic: isArabic),
       ],
+    );
+  }
+}
+
+/// SRS 5.8 — server statement that both drivers' HOS records are isolated
+/// (`GET /eld/daily-logs/{id}/team`). Shown only when today's log exists;
+/// the note is the server's own text.
+class _HosIsolationLine extends ConsumerWidget {
+  const _HosIsolationLine({required this.isArabic});
+
+  final bool isArabic;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final team = ref.watch(teamStatusProvider);
+    return team.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.xs),
+        child: Text(
+          isArabic
+              ? 'تعذر قراءة حالة عزل سجلات HOS.'
+              : 'HOS isolation status could not be read.',
+          textAlign: TextAlign.center,
+          style: context.styles.muted,
+        ),
+      ),
+      data: (data) {
+        if (data == null || data.hosRecordsIsolated == null) {
+          return const SizedBox.shrink();
+        }
+        final isolated = data.hosRecordsIsolated!;
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: Column(
+            children: [
+              Text(
+                isolated
+                    ? (isArabic ? 'سجلات HOS معزولة' : 'HOS records isolated')
+                    : (isArabic ? 'سجلات HOS غير معزولة' : 'HOS records not isolated'),
+                textAlign: TextAlign.center,
+                style: isolated ? context.styles.success : context.styles.error,
+              ),
+              if (data.complianceNote != null)
+                Text(
+                  data.complianceNote!,
+                  textAlign: TextAlign.center,
+                  style: context.styles.caption,
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -61,6 +61,7 @@ class MockDvirBackend implements DvirBackend {
       });
 
   @override
-  Future<Result<RawJson>> getPreviousDvir(String uniqueId) =>
-      throw UnimplementedError('MockDvirBackend.getPreviousDvir — Phase 2');
+  Future<Result<RawJson>> getPreviousDvir(String uniqueId) async =>
+      // Live shape when the vehicle has no DVIR yet (2026-09-25).
+      ok(<String, dynamic>{'message': 'No Records', 'hasPreviousDvir': false});
 }

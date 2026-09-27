@@ -9,6 +9,8 @@ import '../../../hos/presentation/providers/recap_provider.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 import '../providers/logs_provider.dart';
 import '../providers/unidentified_events_provider.dart';
+import '../../../vehicle/presentation/providers/vehicle_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 class UnidentifiedEventsPage extends ConsumerStatefulWidget {
   const UnidentifiedEventsPage({super.key});
@@ -24,6 +26,11 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
   // Owned by the page: disposing a controller right after `showDialog`
   // returns crashes the dialog's exit animation, which still reads it.
   final _annotation = TextEditingController();
+
+  // SRS 11.2 — filters: status = tabs; vehicle = server `uniqueId` of the
+  // vehicle in use; date = local match on the event's start day.
+  bool _currentVehicleOnly = false;
+  DateTime? _dateFilter;
 
   @override
   void initState() {
@@ -45,8 +52,74 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
   UnidentifiedTab get _tab =>
       _tabs.index == 0 ? UnidentifiedTab.unclaimed : UnidentifiedTab.rejected;
 
+  String? get _vehicleFilterUniqueId {
+    if (!_currentVehicleOnly) return null;
+    final v = ref.read(vehicleProvider).selectedVehicle;
+    final uid = v?.uniqueId ?? v?.id;
+    return (uid == null || uid.isEmpty) ? null : uid;
+  }
+
   void _load() {
-    ref.read(unidentifiedEventsProvider.notifier).load(_tab);
+    ref
+        .read(unidentifiedEventsProvider.notifier)
+        .load(_tab, uniqueId: _vehicleFilterUniqueId);
+  }
+
+  bool get _hasFilters => _currentVehicleOnly || _dateFilter != null;
+
+  List<Map<String, dynamic>> _applyDateFilter(List<Map<String, dynamic>> items) {
+    final day = _dateFilter;
+    if (day == null) return items;
+    return items.where((item) {
+      final raw = item['startTime'];
+      final when = raw == null ? null : DateTime.tryParse('$raw')?.toLocal();
+      return when != null &&
+          when.year == day.year &&
+          when.month == day.month &&
+          when.day == day.day;
+    }).toList();
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateFilter ?? now,
+      firstDate: now.subtract(const Duration(days: 190)),
+      lastDate: now,
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _dateFilter = picked);
+  }
+
+  Future<void> _toggleVehicleFilter() async {
+    final turningOn = !_currentVehicleOnly;
+    if (turningOn) {
+      // The vehicle state loads lazily; wait for it once so the filter
+      // carries the real uniqueId rather than silently matching nothing.
+      var vehicle = ref.read(vehicleProvider);
+      if (vehicle.selectedVehicle == null && !vehicle.isInitialized) {
+        await ref.read(vehicleProvider.notifier).loadVehicles();
+        if (!mounted) return;
+        vehicle = ref.read(vehicleProvider);
+      }
+      if (vehicle.selectedVehicle == null) {
+        _snack(Localizations.localeOf(context).languageCode == 'ar'
+            ? 'لا توجد مركبة محددة.'
+            : 'No vehicle is selected.');
+        return;
+      }
+    }
+    setState(() => _currentVehicleOnly = turningOn);
+    _load();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _currentVehicleOnly = false;
+      _dateFilter = null;
+    });
+    _load();
   }
 
   Future<void> _annotate({
@@ -88,7 +161,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
     final error = await action(text);
     if (!mounted) return;
     if (error != null) {
-      _snack(error);
+      AppFeedback.error(context, error);
       return;
     }
     _load();
@@ -98,20 +171,21 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
     ref.read(logsProvider.notifier).loadLogs(refresh: true);
     ref.invalidate(statusDashboardProvider);
     ref.invalidate(recapProvider);
-    _snack(
+    AppFeedback.success(
+      context,
       Localizations.localeOf(context).languageCode == 'ar'
           ? 'تم تحديث سجلك. راجع السجل اليومي؛ قد يلزم إعادة التصديق.'
           : 'Your record was updated. Review the daily log; it may need re-certification.',
     );
   }
 
-  void _snack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
+  void _snack(String message) => AppFeedback.error(context, message);
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(unidentifiedEventsProvider);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final items = _applyDateFilter(state.items);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -125,6 +199,40 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          PopupMenuButton<String>(
+            tooltip: isArabic ? 'تصفية' : 'Filter',
+            icon: Icon(
+              _hasFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+              color: AppColors.surface,
+            ),
+            onSelected: (key) {
+              switch (key) {
+                case 'date':
+                  _pickDate();
+                case 'vehicle':
+                  _toggleVehicleFilter();
+                case 'clear':
+                  _clearFilters();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'date',
+                child: Text(isArabic ? 'حسب التاريخ…' : 'By date…'),
+              ),
+              CheckedPopupMenuItem(
+                value: 'vehicle',
+                checked: _currentVehicleOnly,
+                child: Text(
+                    isArabic ? 'المركبة الحالية فقط' : 'Current vehicle only'),
+              ),
+              if (_hasFilters)
+                PopupMenuItem(
+                  value: 'clear',
+                  child: Text(isArabic ? 'مسح التصفية' : 'Clear filters'),
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: AppColors.surface),
             onPressed: _load,
@@ -147,7 +255,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
               children: [
                 if (state.error != null)
                   MaterialBanner(
-                    content: Text(state.error!),
+                    content: Text(state.error!, style: context.styles.error),
                     actions: [
                       TextButton(
                         onPressed: _load,
@@ -159,10 +267,39 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
                       ),
                     ],
                   ),
-                _StatsRow(items: state.items, tab: _tab),
+                if (_hasFilters)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm),
+                    child: Wrap(
+                      spacing: AppSpacing.xs,
+                      children: [
+                        if (_dateFilter != null)
+                          InputChip(
+                            label: Text(MaterialLocalizations.of(context)
+                                .formatMediumDate(_dateFilter!)),
+                            onDeleted: () =>
+                                setState(() => _dateFilter = null),
+                          ),
+                        if (_currentVehicleOnly)
+                          InputChip(
+                            label: Text(isArabic
+                                ? 'المركبة الحالية'
+                                : 'Current vehicle'),
+                            onDeleted: _toggleVehicleFilter,
+                          ),
+                      ],
+                    ),
+                  ),
+                _StatsRow(
+                  items: items,
+                  tab: _tab,
+                  unclaimedCount: state.unclaimedCount,
+                  rejectedCount: state.rejectedCount,
+                ),
                 Expanded(
                   child: _EventList(
-              items: state.items,
+              items: items,
               error: state.error,
               canAct: _tab == UnidentifiedTab.unclaimed,
               onClaim: (id) => _annotate(
@@ -195,13 +332,21 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
 }
 
 class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.items, required this.tab});
+  const _StatsRow({
+    required this.items,
+    required this.tab,
+    this.unclaimedCount,
+    this.rejectedCount,
+  });
 
   final List<Map<String, dynamic>> items;
   final UnidentifiedTab tab;
+  final int? unclaimedCount;
+  final int? rejectedCount;
 
   @override
   Widget build(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
     // SRS 11.6 counts unidentified *driving* inside a rolling 24-hour window,
     // not every driving row the server ever returned. A row without a
     // parseable time is still counted rather than silently hidden.
@@ -213,15 +358,24 @@ class _StatsRow extends StatelessWidget {
       final when = raw == null ? null : DateTime.tryParse('$raw');
       return when == null || !when.toUtc().isBefore(since);
     }).length;
-    final count = '${items.length}';
+    // SRS 11.2 — counters across both statuses; the current tab's count is
+    // the (possibly date-filtered) visible list, the other tab's count comes
+    // from the parallel fetch. '—' only when that fetch failed.
+    final unclaimed =
+        tab == UnidentifiedTab.unclaimed ? items.length : unclaimedCount;
+    final rejected =
+        tab == UnidentifiedTab.rejected ? items.length : rejectedCount;
+    final total = (unclaimed == null || rejected == null)
+        ? items.length
+        : unclaimed + rejected;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         children: [
-          _Stat('TOTAL', count),
-          _Stat('UNCLAIMED', tab == UnidentifiedTab.unclaimed ? count : '—'),
-          _Stat('REJECTED', tab == UnidentifiedTab.rejected ? count : '—'),
-          _Stat('DRIVING 24H', '$driving'),
+          _Stat(ar ? 'الإجمالي' : 'TOTAL', '$total'),
+          _Stat(ar ? 'غير مُسندة' : 'UNCLAIMED', '${unclaimed ?? '—'}'),
+          _Stat(ar ? 'مرفوضة' : 'REJECTED', '${rejected ?? '—'}'),
+          _Stat(ar ? 'قيادة 24 ساعة' : 'DRIVING 24H', '$driving'),
         ],
       ),
     );
@@ -292,6 +446,8 @@ class _EventList extends StatelessWidget {
         final status = '${item['dutyStatus'] ?? 'DRIVING'}';
         final duration = '${item['formattedDuration'] ?? ''}';
         final vehicle = '${item['vehicleName'] ?? ''}';
+        final eldId = '${item['uniqueId'] ?? ''}';
+        final allocation = '${item['allocationStatus'] ?? ''}';
         final reason = '${item['rejectionReason'] ?? ''}';
         final pending = item['daysPending'];
         final overdue = item['overdue'] == true;
@@ -301,11 +457,28 @@ class _EventList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(status, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(status,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    // SRS 11.2 — allocation state chip from the server.
+                    if (allocation.isNotEmpty)
+                      Chip(
+                        label: Text(allocation.replaceAll('_', ' ')),
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 Text(end.isEmpty ? when : '$when – $end'),
                 if (duration.isNotEmpty) Text(duration),
                 if (vehicle.isNotEmpty) Text(vehicle),
+                // SRS 11.2 — ELD / vehicle identifier of the record.
+                if (eldId.isNotEmpty) Text('ELD: $eldId'),
                 if (where.isNotEmpty) Text(where),
                 if (pending != null)
                   Text(

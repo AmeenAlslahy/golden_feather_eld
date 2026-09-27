@@ -9,15 +9,15 @@ class MockDutyStatusBackend implements DutyStatusBackend {
   const MockDutyStatusBackend();
 
   @override
-  Future<Result<RawJson>> record(RawJson event) =>
-      throw UnimplementedError('MockDutyStatusBackend.record — Phase 2');
+  Future<Result<RawJson>> record(RawJson event) async =>
+      ok(<String, dynamic>{'id': DateTime.now().millisecondsSinceEpoch, ...event});
 
   @override
   Future<Result<RawJson>> update({
     required DutyStatusId statusId,
     required RawJson update,
-  }) =>
-      throw UnimplementedError('MockDutyStatusBackend.update — Phase 2');
+  }) async =>
+      ok(<String, dynamic>{'id': statusId.value, ...update});
 
   @override
   Future<Result<RawJson>> getEditForm(DutyStatusId statusId) =>

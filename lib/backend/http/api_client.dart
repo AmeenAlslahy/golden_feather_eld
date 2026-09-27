@@ -13,8 +13,8 @@
 library;
 
 
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart' as fp;
 
 import '../../core/error/app_error.dart';
@@ -40,17 +40,9 @@ class ApiClient {
       ..headers = Map.of(_config.defaultHeaders)
       ..responseType = ResponseType.json;
 
-    if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        request: true,
-        // لا نسجّل رؤوس الطلب: قد تحمل Cookie JSESSIONID (مهلة الجلسة).
-        requestHeader: false,
-        requestBody: true,
-        responseHeader: false,
-        responseBody: true,
-        error: true,
-      ));
-    }
+    // Logging lives in one interceptor (`RequestLogger`, debug only, redacted).
+    // The former `LogInterceptor(requestBody: true, responseBody: true)` was a
+    // second logger that printed the login body and every response twice.
   }
 
   /// Exposes the raw [Dio] instance for advanced use cases

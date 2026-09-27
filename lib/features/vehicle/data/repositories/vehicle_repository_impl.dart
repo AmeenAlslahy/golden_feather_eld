@@ -1,27 +1,25 @@
 import 'package:fpdart/fpdart.dart';
-
-import '../../../../backend/contracts/hardware_backend.dart';
-import '../../../../backend/contracts/raw_json.dart';
-import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/result/result.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/vehicle_selection.dart';
+import '../../../../backend/contracts/raw_json.dart';
+import '../../../../backend/contracts/vehicle_backend.dart';
+import '../../../../core/result/result.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleBackend _vehicleBackend;
-  final HardwareBackend _hardwareBackend;
   final NetworkInfo _networkInfo;
 
+  /// The repository only lists/reads vehicles. Operating a vehicle
+  /// (`POST /eld/hardware/connect`) has exactly one owner: the connection
+  /// screen (`ConnectionNotifier.connect`). No second `connectSession` path.
   VehicleRepositoryImpl({
     required VehicleBackend vehicleBackend,
-    required HardwareBackend hardwareBackend,
     required NetworkInfo networkInfo,
   })  : _vehicleBackend = vehicleBackend,
-        _hardwareBackend = hardwareBackend,
         _networkInfo = networkInfo;
 
   @override
@@ -40,7 +38,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
     if (!_networkInfo.isConnected) return const Left(NetworkFailure());
     try {
       final result = await request;
-      return result.fold(
+      return await result.fold(
         (error) => Left(ServerFailure(message: _message(error))),
         (data) {
           final vehicles = parseVehicleList(data);
@@ -52,24 +50,6 @@ class VehicleRepositoryImpl implements VehicleRepository {
       );
     } catch (_) {
       return const Left(ServerFailure(message: 'vehicle_list_unreadable'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> selectVehicle(String uniqueId) async {
-    if (!_networkInfo.isConnected) return const Left(NetworkFailure());
-    final id = uniqueId.trim();
-    if (id.isEmpty || id == 'unknown' || id == 'No Vehicle') {
-      return const Left(ServerFailure(message: 'vehicle_identifier_missing'));
-    }
-    try {
-      final result = await _hardwareBackend.connectSession(uniqueId: id);
-      return result.fold(
-        (error) => Left(ServerFailure(message: _message(error))),
-        (_) => const Right(true),
-      );
-    } catch (_) {
-      return const Left(ServerFailure(message: 'rejected'));
     }
   }
 

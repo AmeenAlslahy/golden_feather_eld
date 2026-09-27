@@ -1,9 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/error/failure.dart';
-import '../../../../core/services/battery_optimization_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/location_entity.dart';
 import '../../domain/repositories/tracking_repository.dart';
@@ -23,7 +20,6 @@ class TrackingState {
   final String? arabicErrorMessage;
   final TrackingErrorType? errorType;
   final bool isTracking;
-  final bool showBatteryDialog; // 🆕
 
   const TrackingState({
     this.status = TrackingStatus.initial,
@@ -33,7 +29,6 @@ class TrackingState {
     this.arabicErrorMessage,
     this.errorType,
     this.isTracking = false,
-    this.showBatteryDialog = false, // 🆕
   });
 
   TrackingState copyWith({
@@ -43,7 +38,6 @@ class TrackingState {
     String? errorMessage,
     TrackingErrorType? errorType,
     bool? isTracking,
-    bool? showBatteryDialog,
   }) {
     return TrackingState(
       status: status ?? this.status,
@@ -52,7 +46,6 @@ class TrackingState {
       errorMessage: errorMessage,
       errorType: errorType,
       isTracking: isTracking ?? this.isTracking,
-      showBatteryDialog: showBatteryDialog ?? this.showBatteryDialog,
     );
   }
 }
@@ -92,24 +85,11 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   }
 
   /// بدء التتبع
-  Future<void> startTracking({bool skipBatteryCheck = false}) async {
+  ///
+  /// Battery-optimisation exemption is requested on the Permissions page
+  /// (permission_handler); no second dialog path lives here.
+  Future<void> startTracking() async {
     state = state.copyWith(status: TrackingStatus.loading);
-
-    // ✅ فحص تحسين البطارية
-    if (!skipBatteryCheck) {
-      final batteryService = ref.read(batteryOptimizationServiceProvider);
-      final isBatteryOptimized =
-          await batteryService.isBatteryOptimizationEnabled();
-
-      if (isBatteryOptimized) {
-        // نحتاج context لإظهار الحوار - نمرر إشارة للـ UI
-        state = state.copyWith(
-          status: TrackingStatus.initial,
-          showBatteryDialog: true,
-        );
-        return; // نوقف التتبع مؤقتاً حتى يستجيب المستخدم للحوار
-      }
-    }
 
     // بدء الاستماع لتدفق المواقع قبل بدء الخدمة لتجنب فقدان أول موقع (Race Condition)
     _listenToLocationStream();
@@ -186,16 +166,16 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   }
 
   /// إيقاف التتبع
-  Future<void> stopTracking({bool force = false}) async {
-    if (!force) {
-      final isDriving = isDrivingChecker?.call() ?? false;
-      if (isDriving) {
-        state = state.copyWith(
-          errorMessage: 'Cannot stop tracking while driving',
-          errorType: TrackingErrorType.technical,
-        );
-        return;
-      }
+  /// Stops tracking unless the driver is currently DRIVING (§395 guard).
+  /// Sign-out does not call this — tracking continues as Unidentified Driver.
+  Future<void> stopTracking() async {
+    final isDriving = isDrivingChecker?.call() ?? false;
+    if (isDriving) {
+      state = state.copyWith(
+        errorMessage: 'Cannot stop tracking while driving',
+        errorType: TrackingErrorType.technical,
+      );
+      return;
     }
 
     state = state.copyWith(status: TrackingStatus.loading);
@@ -268,7 +248,4 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     );
   }
 
-  void clearBatteryDialog() {
-    state = state.copyWith(showBatteryDialog: false);
-  }
 }

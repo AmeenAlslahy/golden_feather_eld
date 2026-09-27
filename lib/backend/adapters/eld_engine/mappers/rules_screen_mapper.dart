@@ -1,5 +1,5 @@
-import '../../../../core/config/hos_configuration.dart';
 import '../../../../features/account/application/models/rules_screen_model.dart';
+import '../../../../core/config/hos_configuration.dart';
 import '../models/rules_screen_dto.dart';
 
 class RulesScreenMapper {

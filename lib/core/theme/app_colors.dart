@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 /// القيم الخام للهوية الذهبية/السوداء.
 ///
-/// **ملاحظة:** يفضل استخدام ألوان الثيم `Theme.of(context).colorScheme` 
-/// أو `context.eld` لدعم الوضع الداكن/الفاتح، 
-/// لكن يمكن استخدام ألوان `AppColors` المباشرة للألوان الثابتة (مثل الألوان التحذيرية).
+/// **قاعدة الاستخدام:**
+/// - للنصوص: `context.styles.error/success/warning/muted` (لون + خط معًا).
+/// - لأزواج خلفية/نص متباينة: `context.eld.successFg/successBg` …
+/// - `AppColors` مباشرة مقبول للأسطح والحدود والأيقونات (`surface`, `border`,
+///   `primaryGold`, `dangerRed`) — لا تُنشئ `Color(0x…)` جديدًا في الواجهات؛
+///   أضِف الرمز هنا أولاً.
 class AppColors {
   AppColors._();
 
@@ -13,11 +16,12 @@ class AppColors {
   /// الذهبي — لون الهوية الأساسي.
   static const Color primaryGold = Color(0xFFD4AF37);
 
-  /// SRS §25.1 — شريط التطبيق.
-  static const Color eldAppBar = Color(0xFF2196F3);
+  /// شريط التطبيق — الذهبي هو اللون الرئيسي في كل الشاشات (قرار المالك
+  /// 2026-09-24: ذهبي رئيسي / أسود ثانوي). يبقى الاسم لتوافق الشاشات القديمة.
+  static const Color eldAppBar = primaryGold;
 
-  /// Alias used by the original driver screens (blue app bar).
-  static const Color primaryBlue = eldAppBar;
+  /// Alias kept for the original driver screens; resolves to the gold primary.
+  static const Color primaryBlue = primaryGold;
 
   /// SRS §25.1 — زر التوقيع.
   static const Color signGreen = Color(0xFF4CAF50);

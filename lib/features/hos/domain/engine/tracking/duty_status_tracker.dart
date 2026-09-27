@@ -1,15 +1,15 @@
 import 'dart:async';
 
-/// متتبع حالة السائق (Domain Pure)
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../../../../core/services/local_storage_service.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../../logs/domain/repositories/log_repository.dart';
-import '../../../../sync/domain/entities/pending_event.dart';
+import '../../../../../core/services/local_storage_service.dart';
+
+/// متتبع حالة السائق (Domain Pure)
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../sync/domain/usecases/sync_engine.dart';
+import '../../../../sync/domain/entities/pending_event.dart';
+import 'package:uuid/uuid.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 
 
 

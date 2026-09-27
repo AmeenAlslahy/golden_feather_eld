@@ -13,7 +13,6 @@ class EldEndpoints {
   // ==========================================================================
   
   static const String session = '/session';
-  static const String users = '/users';
   static const String devices = '/devices';
 
   // ==========================================================================
@@ -68,10 +67,6 @@ class EldEndpoints {
   static const String dvirCatalog = '/eld/dvir/catalog';
   static String dvirPrevious(String uniqueId) => '/eld/dvir/pre-trip/$uniqueId';
 
-  // 8. Compliance Engine
-  static String evaluateCompliance(int driverId) => '/eld/compliance/evaluate/$driverId';
-  static String complianceRemaining(int driverId) => '/eld/compliance/remaining/$driverId';
-
   // 9. System Configuration
   static const String config = '/eld/config';
   /// Live contract: `GET /eld/config/settings`.
@@ -79,22 +74,9 @@ class EldEndpoints {
   /// Live contract: `GET /eld/config/rules`.
   static const String configRegulations = '/eld/config/rules';
 
-  // 10. Dashboard
-  static const String dashboardSummary = '/eld/dashboard/summary';
-  static const String dashboardStream = '/eld/dashboard/stream';
-
-  // 13. System Health
-  static const String healthDetailed = '/eld/health/detailed';
-  static const String health = '/eld/health';
-
   // 14. Roadside Inspection
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
   static const String inspections = '/eld/dot-inspection';
-
-  // 15. ELD Reports
-  static const String generateReport = '/eld/reports/generate';
-  static String csvReport(int driverId) => '/eld/reports/$driverId/csv';
-  static String dailyReport(int driverId) => '/eld/reports/$driverId/daily';
 
   // 17. Hardware
   static const String hardwareAlerts = '/eld/hardware/alerts';

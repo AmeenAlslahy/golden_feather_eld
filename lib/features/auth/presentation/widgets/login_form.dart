@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../domain/entities/value_objects/login_identifier.dart';
-import '../../domain/entities/value_objects/password.dart';
-import '../providers/auth_mode_provider.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../providers/auth_state_provider.dart';
 import '../providers/login_form_provider.dart';
+import '../providers/auth_mode_provider.dart';
+import '../../../../core/utils/localization_helper.dart';
+import '../../domain/entities/value_objects/login_identifier.dart';
+import '../../domain/entities/value_objects/password.dart';
 
 /// نموذج تسجيل الدخول
 class LoginForm extends ConsumerStatefulWidget {
@@ -115,7 +114,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 ref.read(authModeProvider.notifier).state =
                     AuthMode.forgotPassword;
               },
-              child: Text(context.loc.resetPassword),
+              child: Text(context.loc.forgotPassword),
             ),
           ),
 

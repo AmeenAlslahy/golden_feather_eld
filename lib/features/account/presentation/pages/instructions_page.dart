@@ -3,17 +3,33 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
+/// Which packet item this screen shows (SRS 8.2: the Information Packet has
+/// three separate items). `all` keeps the combined Instructions view.
+enum InstructionsSection { all, inspection, sendLogs, malfunction }
+
 class InstructionsPage extends StatelessWidget {
-  const InstructionsPage({super.key});
+  const InstructionsPage({super.key, this.section = InstructionsSection.all});
+
+  final InstructionsSection section;
+
+  String _title(bool isArabic) => switch (section) {
+        InstructionsSection.all => isArabic ? 'التعليمات' : 'Instructions',
+        InstructionsSection.inspection =>
+          isArabic ? 'وضع التفتيش' : 'Inspection Mode',
+        InstructionsSection.sendLogs => isArabic
+            ? 'ورقة تعليمات نقل البيانات'
+            : 'Data Transfer Instruction Sheet',
+        InstructionsSection.malfunction =>
+          isArabic ? 'دليل الأعطال (395.34)' : 'Malfunction Manual (395.34)',
+      };
 
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final brightness = Theme.of(context).brightness;
-    final bgColor = AppColors.backgroundFor(brightness);
+    final showAll = section == InstructionsSection.all;
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: AppColors.eldAppBar,
         leading: IconButton(
@@ -21,22 +37,26 @@ class InstructionsPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isArabic ? 'التعليمات' : 'Instructions',
+          _title(isArabic),
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
       ),
       body: ListView(
+        key: Key('instructions_${section.name}'),
         padding: EdgeInsets.zero,
         children: [
           // Section 1: Inspection Mode
-          _buildInspectionModeSection(isArabic, brightness),
+          if (showAll || section == InstructionsSection.inspection)
+            _buildInspectionModeSection(isArabic, brightness),
 
-          // Section 2: Send Logs
-          _buildSendLogsSection(isArabic, brightness),
+          // Section 2: Send Logs (Data Transfer Instruction Sheet)
+          if (showAll || section == InstructionsSection.sendLogs)
+            _buildSendLogsSection(isArabic, brightness),
 
           // Section 3: Malfunction Manual
-          _buildMalfunctionManualSection(isArabic, brightness),
+          if (showAll || section == InstructionsSection.malfunction)
+            _buildMalfunctionManualSection(isArabic, brightness),
         ],
       ),
     );
@@ -133,36 +153,40 @@ class InstructionsPage extends StatelessWidget {
       color: sectionColor,
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
-      child: Row(
+      child: Column(
         children: [
-          // Empty space to align with the text above
-          const Expanded(flex: 4, child: SizedBox()),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isArabic ? 'إرسال السجلات' : 'Send Logs',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor),
+          Row(
+            children: [
+              // Empty space to align with the text above
+              const Expanded(flex: 4, child: SizedBox()),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'إرسال السجلات' : 'Send Logs',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      isArabic
+                          ? 'جهاز Golden Feather ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
+                          : 'Golden Feather ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
+                      style: TextStyle(
+                          fontSize: 10, color: textSecondaryColor, height: 1.5),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  isArabic
-                      ? 'جهاز Golden Feather ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
-                      : 'Golden Feather ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
-                  style: TextStyle(
-                      fontSize: 10, color: textSecondaryColor, height: 1.5),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                _buildContactInfo(isArabic, textSecondaryColor),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: AppSpacing.xl),
+          Center(child: _buildContactInfo(isArabic, textSecondaryColor)),
         ],
       ),
     );
@@ -179,99 +203,103 @@ class InstructionsPage extends StatelessWidget {
     return Container(
       color: sectionColor,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          // Placeholder for Hardware Image
-          Expanded(
-            flex: 4,
-            child: Column(
-              children: [
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade800,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                      child: Icon(Icons.router, color: Colors.white, size: 48)),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Placeholder for Hardware Image
+              Expanded(
+                flex: 4,
+                child: Column(
                   children: [
-                    _buildSmallHardwarePlaceholder(),
-                    _buildSmallHardwarePlaceholder(),
-                    _buildSmallHardwarePlaceholder(),
+                    Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade800,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                          child: Icon(Icons.router, color: Colors.white, size: 48)),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildSmallHardwarePlaceholder(),
+                        _buildSmallHardwarePlaceholder(),
+                        _buildSmallHardwarePlaceholder(),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              // Text Content
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic
+                          ? 'دليل الأعطال لـ Golden Feather ELD'
+                          : 'Golden Feather ELD Malfunction Manual',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                          height: 1.2),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      isArabic
+                          ? 'وفقاً للإرشادات المحددة في 395.34'
+                          : 'In accordance with the guidelines set forth in 395.34',
+                      style: TextStyle(fontSize: 11, color: textSecondaryColor),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _buildSquareChecklistItem(
+                      title: isArabic ? 'مؤشر العطل' : 'Malfunction indication',
+                      desc: isArabic
+                          ? 'اتصل بالدعم فوراً إذا انطفأ ضوء LED عند التوصيل بالمركبة أو إذا أبلغ التطبيق عن عطل.'
+                          : 'Immediately contact the support if LED light on the device is off when the device is plugged into the diagnostic port or if the malfunction reported by the app.',
+                      textColor: textColor,
+                      secondaryColor: textSecondaryColor,
+                    ),
+                    _buildSquareChecklistItem(
+                      title: isArabic ? 'تسجيل العطل' : 'Note the malfunction',
+                      desc: isArabic
+                          ? 'سجل العطل وقدم إشعاراً خطياً لشركتك خلال 24 ساعة.'
+                          : 'Note the malfunction and provide a written notice to your fleet within 24 hours.',
+                      textColor: textColor,
+                      secondaryColor: textSecondaryColor,
+                    ),
+                    _buildSquareChecklistItem(
+                      title: isArabic
+                          ? 'التبديل للسجلات الورقية'
+                          : 'Switch to paper logs',
+                      desc: isArabic
+                          ? 'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.'
+                          : 'Keep a paper log for that day and until the device is repaired or replaced. In the event of an inspection, display the previous 7 days from the app.',
+                      textColor: textColor,
+                      secondaryColor: textSecondaryColor,
+                    ),
+                    _buildSquareChecklistItem(
+                      title: isArabic ? 'قاعدة 8 أيام' : '8 days rule',
+                      desc: isArabic
+                          ? 'في حال عطل ELD، يجب على الشركة اتخاذ إجراءات لإصلاح العطل خلال 8 أيام من اكتشافه.'
+                          : 'In the event of an ELD malfunction, the motor carrier must take actions to correct the malfunction within 8 days of discovery.',
+                      textColor: textColor,
+                      secondaryColor: textSecondaryColor,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.lg),
-          // Text Content
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isArabic
-                      ? 'دليل الأعطال لـ Golden Feather ELD'
-                      : 'Golden Feather ELD Malfunction Manual',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                      height: 1.2),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  isArabic
-                      ? 'وفقاً للإرشادات المحددة في 395.34'
-                      : 'In accordance with the guidelines set forth in 395.34',
-                  style: TextStyle(fontSize: 11, color: textSecondaryColor),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildSquareChecklistItem(
-                  title: isArabic ? 'مؤشر العطل' : 'Malfunction indication',
-                  desc: isArabic
-                      ? 'اتصل بالدعم فوراً إذا انطفأ ضوء LED عند التوصيل بالمركبة أو إذا أبلغ التطبيق عن عطل.'
-                      : 'Immediately contact the support if LED light on the device is off when the device is plugged into the diagnostic port or if the malfunction reported by the app.',
-                  textColor: textColor,
-                  secondaryColor: textSecondaryColor,
-                ),
-                _buildSquareChecklistItem(
-                  title: isArabic ? 'تسجيل العطل' : 'Note the malfunction',
-                  desc: isArabic
-                      ? 'سجل العطل وقدم إشعاراً خطياً لشركتك خلال 24 ساعة.'
-                      : 'Note the malfunction and provide a written notice to your fleet within 24 hours.',
-                  textColor: textColor,
-                  secondaryColor: textSecondaryColor,
-                ),
-                _buildSquareChecklistItem(
-                  title: isArabic
-                      ? 'التبديل للسجلات الورقية'
-                      : 'Switch to paper logs',
-                  desc: isArabic
-                      ? 'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.'
-                      : 'Keep a paper log for that day and until the device is repaired or replaced. In the event of an inspection, display the previous 7 days from the app.',
-                  textColor: textColor,
-                  secondaryColor: textSecondaryColor,
-                ),
-                _buildSquareChecklistItem(
-                  title: isArabic ? 'قاعدة 8 أيام' : '8 days rule',
-                  desc: isArabic
-                      ? 'في حال عطل ELD، يجب على الشركة اتخاذ إجراءات لإصلاح العطل خلال 8 أيام من اكتشافه.'
-                      : 'In the event of an ELD malfunction, the motor carrier must take actions to correct the malfunction within 8 days of discovery.',
-                  textColor: textColor,
-                  secondaryColor: textSecondaryColor,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                _buildContactInfo(isArabic, textSecondaryColor),
-              ],
-            ),
-          ),
+          const SizedBox(height: AppSpacing.xl),
+          Center(child: _buildContactInfo(isArabic, textSecondaryColor)),
         ],
       ),
     );
@@ -343,7 +371,7 @@ class InstructionsPage extends StatelessWidget {
 
   Widget _buildContactInfo(bool isArabic, Color secondaryColor) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           'www.topceld.com',
@@ -355,6 +383,7 @@ class InstructionsPage extends StatelessWidget {
               ? 'تواصل مع الدعم عبر topceld@gmail.com'
               : 'Contact the support team at topceld@gmail.com',
           style: TextStyle(fontSize: 9, color: secondaryColor),
+          textAlign: TextAlign.center,
         ),
       ],
     );

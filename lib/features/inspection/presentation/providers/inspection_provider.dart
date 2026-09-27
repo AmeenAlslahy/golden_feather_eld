@@ -1,32 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/contracts/inspection_backend.dart';
+import '../../../../core/result/result.dart';
 import '../../../../backend/providers/backend_providers.dart';
+import '../../../../backend/contracts/inspection_backend.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/localization/locale_provider.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../core/result/result.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../data/repositories/inspection_repository_impl.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
-import '../../domain/repositories/inspection_repository.dart';
+import '../../../../core/utils/provider_cache.dart';
 
 // --- Dependency Injection Providers ---
-
-final inspectionBackendProviderAlias = Provider<InspectionBackend>((ref) {
-  return ref.watch(inspectionBackendProvider);
-});
-
-final inspectionRepositoryProvider = Provider<InspectionRepository>((ref) {
-  return InspectionRepositoryImpl(
-    inspectionBackend: ref.watch(inspectionBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 
@@ -94,6 +80,7 @@ final inspectionProvider =
 
 final informationPacketProvider =
     FutureProvider.autoDispose<InformationPacketView>((ref) async {
+  cacheFor(ref, const Duration(minutes: 5));
   final driverId = ref.watch(currentDriverIdProvider);
   final result = await ref.watch(inspectionBackendProvider).getInformationPacket(
         driverId: driverId == null || driverId <= 0 ? null : DriverId(driverId),
@@ -179,10 +166,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     return true;
   }
 
-  void exitAfterDriverVerified() {
-    endInspection();
-  }
-
   Future<void> loadLog(DateTime date) async {
     if (_driverId <= 0) return;
     state = state.copyWith(isLoading: true, error: null);
@@ -199,25 +182,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       ),
       (log) => state = state.copyWith(isLoading: false, log: log, error: null),
     );
-  }
-
-  /// تعيين رمز PIN
-  void setPinCode(String pin) {
-    state = state.copyWith(pinCode: pin);
-  }
-
-  /// فتح القفل
-  bool unlock(String pin) {
-    if (pin == state.pinCode) {
-      state = state.copyWith(isPinLocked: false);
-      return true;
-    }
-    return false;
-  }
-
-  /// قفل الشاشة
-  void lock() {
-    state = state.copyWith(isPinLocked: true);
   }
 
   /// إنهاء التفتيش

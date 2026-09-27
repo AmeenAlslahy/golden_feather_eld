@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/contracts/contract_enums.dart';
-import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/error/app_error.dart';
+import '../../../../backend/providers/backend_providers.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
@@ -29,6 +29,8 @@ Map<String, dynamic> normalizeUnidentifiedItem(Map<dynamic, dynamic> raw) {
     'formattedDuration': item['formattedDuration'],
     'location': item['locationText'] ?? item['location'] ?? item['locationDescription'] ?? '',
     'vehicleName': item['vehicleName'],
+    'uniqueId': item['uniqueId'],
+    'allocationStatus': item['allocationStatus'],
     'rejectionReason': item['rejectionReason'],
     'daysPending': item['daysPending'],
     'overdue': item['overdue'] == true,
@@ -40,22 +42,34 @@ class UnidentifiedListState {
   final String? error;
   final List<Map<String, dynamic>> items;
 
+  /// SRS 11.2 counters — size of the *other* tab, fetched alongside the
+  /// current one so TOTAL / UNCLAIMED / REJECTED are real, not "—".
+  /// `null` when that count could not be fetched.
+  final int? unclaimedCount;
+  final int? rejectedCount;
+
   const UnidentifiedListState({
     this.loading = false,
     this.error,
     this.items = const [],
+    this.unclaimedCount,
+    this.rejectedCount,
   });
 
   UnidentifiedListState copyWith({
     bool? loading,
     String? error,
     List<Map<String, dynamic>>? items,
+    int? unclaimedCount,
+    int? rejectedCount,
     bool clearError = false,
   }) {
     return UnidentifiedListState(
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
       items: items ?? this.items,
+      unclaimedCount: unclaimedCount ?? this.unclaimedCount,
+      rejectedCount: rejectedCount ?? this.rejectedCount,
     );
   }
 }
@@ -74,14 +88,23 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     return 'The server did not accept this request.';
   }
 
-  Future<void> load(UnidentifiedTab tab) async {
+  /// [uniqueId] — SRS 11.2 vehicle filter, passed through to the server
+  /// (`GET /eld/unidentified-events?uniqueId=`); null = all vehicles.
+  Future<void> load(UnidentifiedTab tab, {String? uniqueId}) async {
     state = state.copyWith(loading: true, clearError: true);
     final driverId = _ref.read(currentDriverIdProvider);
-    final result = await _ref.read(unidentifiedEventsBackendProvider).list(
-          tab: tab,
-          driverId: driverId == null ? null : DriverId(driverId),
-        );
-    result.fold(
+    final backend = _ref.read(unidentifiedEventsBackendProvider);
+    final driver = driverId == null ? null : DriverId(driverId);
+    final other = tab == UnidentifiedTab.unclaimed
+        ? UnidentifiedTab.rejected
+        : UnidentifiedTab.unclaimed;
+    final results = await Future.wait([
+      backend.list(tab: tab, uniqueId: uniqueId, driverId: driver),
+      backend.list(tab: other, uniqueId: uniqueId, driverId: driver),
+    ]);
+    final otherCount =
+        results[1].fold<int?>((_) => null, (json) => _parse(json).length);
+    results[0].fold(
       (error) {
         state = UnidentifiedListState(
           loading: false,
@@ -90,9 +113,16 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
         );
       },
       (json) {
+        final items = _parse(json);
+        final unclaimed =
+            tab == UnidentifiedTab.unclaimed ? items.length : otherCount;
+        final rejected =
+            tab == UnidentifiedTab.rejected ? items.length : otherCount;
         state = UnidentifiedListState(
           loading: false,
-          items: _parse(json),
+          items: items,
+          unclaimedCount: unclaimed,
+          rejectedCount: rejected,
         );
       },
     );

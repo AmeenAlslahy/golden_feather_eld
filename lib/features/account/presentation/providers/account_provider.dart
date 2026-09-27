@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../backend/contracts/account_backend.dart';
 import '../../../../backend/providers/backend_providers.dart';
-import '../../../../domain/account/driver_account.dart';
+import '../../../../backend/contracts/account_backend.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../domain/account/driver_account.dart';
 
 class AccountState {
   final DriverAccount? accountData;
@@ -71,7 +70,7 @@ class AccountNotifier extends StateNotifier<AccountState> {
         odometerUnit: odometerUnit,
       );
 
-      return result.fold(
+      return await result.fold(
         (failure) {
           state = state.copyWith(isLoading: false, error: failure.l10nKey);
           return false;

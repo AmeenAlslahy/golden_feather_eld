@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import '../error/user_facing_message.dart';
 import '../../l10n/app_localizations.dart';
 
 extension LocalizationHelper on BuildContext {
@@ -31,8 +32,21 @@ extension LocalizationHelper on BuildContext {
       case 'permissionDenied':
         return loc.permissionDenied;
       default:
-        // Return the key itself as a fallback
-        return key;
+        // Not an l10n key: a backend error code such as
+        // `network.connectionFailed`, `server.unavailable`, `server_error`.
+        // The driver never sees the code itself.
+        final isArabic = Localizations.localeOf(this).languageCode == 'ar';
+        final lower = key.toLowerCase();
+        if (lower.startsWith('network.') || lower.contains('connection')) {
+          return anyErrorUserMessage('noInternet', isArabic: isArabic);
+        }
+        if (lower.startsWith('server') ||
+            lower.endsWith('_error') ||
+            lower.contains('.') ||
+            lower.contains('_')) {
+          return anyErrorUserMessage(Object(), isArabic: isArabic);
+        }
+        return anyErrorUserMessage(key, isArabic: isArabic);
     }
   }
 }

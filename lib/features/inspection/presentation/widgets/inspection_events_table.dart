@@ -38,7 +38,8 @@ class InspectionEventsTable extends StatelessWidget {
               SizedBox(
                 width: 56,
                 child: Text(
-                  isArabic ? 'الوقت' : 'Time',
+                  // SRS 8.3 column label; the server field is `timeEt`.
+                  isArabic ? 'الوقت ET' : 'Time ET',
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -56,17 +57,20 @@ class InspectionEventsTable extends StatelessWidget {
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
+              // SRS 8.3 column names; two lines keep the fixed widths.
               SizedBox(
                 width: 52,
                 child: Text(
-                  isArabic ? 'عداد' : 'Odom',
+                  isArabic ? 'العداد' : 'Odometer',
+                  maxLines: 2,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               SizedBox(
                 width: 44,
                 child: Text(
-                  isArabic ? 'محرك' : 'Eng',
+                  isArabic ? 'ساعات\nالمحرك' : 'Engine\nHours',
+                  maxLines: 2,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -94,6 +98,8 @@ class _EventRow extends StatelessWidget {
         ? (isArabic ? 'اعتماد · $status' : 'Cert · $status')
         : status;
     final extras = <String>[
+      if (event.eventCode.trim().isNotEmpty && event.eventCode != status)
+        isArabic ? 'الرمز: ${event.eventCode}' : 'Code: ${event.eventCode}',
       if (event.origin.trim().isNotEmpty)
         isArabic ? 'المصدر: ${event.origin}' : 'Origin: ${event.origin}',
       if (event.notes.trim().isNotEmpty)

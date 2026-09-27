@@ -33,14 +33,32 @@ class SuggestedEventsPage extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // SRS 6.6 / §395.30: carrier-proposed edits are reviewed per log
+            // (Certify tab); unidentified driving is reviewed in Unidentified
+            // Events. This screen only routes the driver to the right place.
             Text(
               isArabic
-                  ? 'الخادم لا يوفّر أحداثاً مقترحة منفصلة. استخدم الأحداث غير المحددة.'
-                  : 'The server has no separate suggested-events API. Use Unidentified Events.',
+                  ? 'تعديلات الناقل المقترحة (§395.30) تُراجَع داخل كل سجل في تبويب Certify (قبول / رفض).'
+                  : 'Carrier-proposed edits (§395.30) are reviewed inside each log on the Certify tab (Accept / Reject).',
+              key: const Key('suggested_events_carrier_hint'),
+              textAlign: TextAlign.center,
+              style: context.styles.body,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              isArabic
+                  ? 'القيادة غير المحددة تُراجَع في شاشة الأحداث غير المحددة.'
+                  : 'Unidentified driving is reviewed in Unidentified Events.',
               textAlign: TextAlign.center,
               style: context.styles.body,
             ),
             const SizedBox(height: AppSpacing.xl),
+            AppButton(
+              label: isArabic ? 'السجلات' : 'Logs',
+              type: EldButtonType.dark,
+              onPressed: () => context.go(AppRoutes.logs),
+            ),
+            const SizedBox(height: AppSpacing.md),
             AppButton(
               label: context.loc.unidentifiedEvents,
               type: EldButtonType.dark,

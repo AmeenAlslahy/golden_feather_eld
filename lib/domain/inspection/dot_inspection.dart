@@ -110,6 +110,17 @@ abstract class DotInspectionLog with _$DotInspectionLog {
     required List<String> activeDeviceMalfunctions,
     required List<DotInspectionEvent> events,
     required bool readOnly,
+
+    /// Home-terminal 24-hour period start (`period24HourStartTime`, `HH:mm`).
+    /// Optional in the wire contract; `null` renders as "—".
+    String? period24HourStartTime,
+
+    /// From the log's own `driver` / `coDriver` (`DriverResponse`) — the
+    /// roadside header must come from the record, not the live account.
+    String? driverLicenseNumber,
+    String? driverLicenseState,
+    String? coDriverName,
+    int? coDriverId,
   }) = _DotInspectionLog;
 }
 

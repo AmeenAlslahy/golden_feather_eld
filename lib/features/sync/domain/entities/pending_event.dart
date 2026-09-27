@@ -68,7 +68,7 @@ class RetryPolicy {
       return nowUtc.add(Duration(seconds: maxDelaySeconds.toInt()));
     }
 
-    // Exponential backoff
+    // Linear backoff: base × factor × (retries + 1) — locked by pending_event_test.
     final delaySeconds =
         baseDelay.inSeconds * (backoffFactor * (currentRetries + 1));
     return nowUtc.add(Duration(seconds: delaySeconds.toInt()));

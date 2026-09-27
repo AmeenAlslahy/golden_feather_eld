@@ -1,13 +1,12 @@
+import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import 'package:go_router/go_router.dart';
 
 /// صفحة طلب الصلاحيات الأولية
 class PermissionsPage extends ConsumerStatefulWidget {
@@ -31,7 +30,10 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
   }
 
   Future<void> _checkPermissions() async {
-    final locationStatus = await Permission.location.status;
+    // Background ("Always") location is what keeps the vehicle tracked after
+    // logout as Unidentified Driver (SRS §1 / 49 CFR 395.32); "While in use"
+    // alone is not enough.
+    final locationStatus = await Permission.locationAlways.status;
     final bluetoothStatus = await Permission.bluetooth.status;
     final notificationStatus = await Permission.notification.status;
     final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
@@ -48,11 +50,13 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
 
   Future<void> _requestLocation() async {
     final status = await Permission.location.request();
-    final alwaysStatus = await Permission.locationAlways.request();
-    setState(
-        () => _locationGranted = alwaysStatus.isGranted || status.isGranted);
+    final alwaysStatus = status.isGranted
+        ? await Permission.locationAlways.request()
+        : status;
+    if (!mounted) return;
+    setState(() => _locationGranted = alwaysStatus.isGranted);
 
-    if (!status.isGranted) {
+    if (!alwaysStatus.isGranted) {
       _showRequiredPermissionDialog(
         title: 'صلاحية الموقع مطلوبة',
         message: 'يحتاج تطبيق ELD إلى الوصول للموقع الجغرافي بشكل دائم '

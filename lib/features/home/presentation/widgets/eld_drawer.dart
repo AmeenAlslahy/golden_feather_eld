@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/press_feedback.dart';
 import '../../../../routes.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../providers/home_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/extensions/context_extensions.dart';
 
 /// الدرج الجانبي — مطابق للقطة Menu (بدون رأس ذهبي، بدون أسهم).
 class EldDrawer extends ConsumerWidget {

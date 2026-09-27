@@ -1,22 +1,14 @@
 import '../../contracts/account_backend.dart';
 import '../../contracts/auth_backend.dart';
-import '../../contracts/compliance_backend.dart';
 import '../../contracts/config_backend.dart';
 import '../../contracts/daily_logs_backend.dart';
-import '../../contracts/driver_rules_backend.dart';
 import '../../contracts/driver_session_backend.dart';
 import '../../contracts/duty_status_backend.dart';
 import '../../contracts/dvir_backend.dart';
-import '../../contracts/fleet_dashboard_backend.dart';
 import '../../contracts/hardware_backend.dart';
-import '../../contracts/health_backend.dart';
 import '../../contracts/inspection_backend.dart';
-import '../../contracts/log_transfer_backend.dart';
-import '../../contracts/reports_backend.dart';
-import '../../contracts/rules_engine_backend.dart';
 import '../../contracts/rules_screen_backend.dart';
 import '../../contracts/signature_backend.dart';
-import '../../contracts/stats_backend.dart';
 import '../../contracts/status_dashboard_backend.dart';
 import '../../contracts/unidentified_events_backend.dart';
 import '../../contracts/vehicle_backend.dart';
@@ -25,23 +17,15 @@ import '../../core/backend_identity.dart';
 import '../../http/api_client.dart';
 import 'sub/eld_account_backend.dart';
 import 'sub/eld_auth_backend.dart';
-import 'sub/eld_compliance_backend.dart';
 import 'sub/eld_config_backend.dart';
 import 'sub/eld_daily_logs_backend.dart';
-import 'sub/eld_driver_rules_backend.dart';
 import 'sub/eld_driver_session_backend.dart';
 import 'sub/eld_duty_status_backend.dart';
 import 'sub/eld_dvir_backend.dart';
-import 'sub/eld_fleet_dashboard_backend.dart';
 import 'sub/eld_hardware_backend.dart';
-import 'sub/eld_health_backend.dart';
 import 'sub/eld_inspection_backend.dart';
-import 'sub/eld_log_transfer_backend.dart';
-import 'sub/eld_reports_backend.dart';
-import 'sub/eld_rules_engine_backend.dart';
 import 'sub/eld_rules_screen_backend.dart';
 import 'sub/eld_signature_backend.dart';
-import 'sub/eld_stats_backend.dart';
 import 'sub/eld_status_dashboard_backend.dart';
 import 'sub/eld_unidentified_events_backend.dart';
 import 'sub/eld_vehicle_backend.dart';
@@ -59,7 +43,6 @@ class EldEngineAdapter implements BackendAdapter {
 
   @override
   bool get isMock => identity.isMock;
-
 
   final ApiClient _apiClient;
 
@@ -112,36 +95,7 @@ class EldEngineAdapter implements BackendAdapter {
   late final HardwareBackend hardware = EldHardwareBackend(_apiClient);
 
   @override
-  late final RulesEngineBackend rulesEngine =
-      EldRulesEngineBackend(_apiClient);
-
-  @override
-  late final DriverRulesBackend driverRules =
-      EldDriverRulesBackend(_apiClient);
-
-  @override
-  late final LogTransferBackend logTransfer =
-      EldLogTransferBackend(_apiClient);
-
-  @override
-  late final HealthBackend health = EldHealthBackend(_apiClient);
-
-  @override
-  late final ReportsBackend reports = EldReportsBackend(_apiClient);
-
-  @override
-  late final StatsBackend stats = EldStatsBackend(_apiClient);
-
-  @override
-  late final ComplianceBackend compliance =
-      EldComplianceBackend(_apiClient);
-
-  @override
   late final ConfigBackend config = EldConfigBackend(_apiClient);
-
-  @override
-  late final FleetDashboardBackend fleetDashboard =
-      EldFleetDashboardBackend(_apiClient);
 
   // ==========================================================================
 

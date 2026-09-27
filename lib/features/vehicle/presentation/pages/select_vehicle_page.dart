@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_status_badge.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
-import '../../../hos/presentation/providers/hos_engine_provider.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/vehicle_selection.dart';
 import '../providers/vehicle_provider.dart';
+import '../../../hos/presentation/providers/hos_engine_provider.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
 
 /// شاشة اختيار المركبة
 class SelectVehiclePage extends ConsumerStatefulWidget {
@@ -46,7 +46,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             vehicle.inUseByOther == true ? 'in_use' : 'unauthorized',
             isArabic,
           )),
-          backgroundColor: context.colors.error,
+          backgroundColor: AppColors.dangerRed,
         ),
       );
       return;
@@ -64,7 +64,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isArabic ? 'مركبات غير معيّنة' : 'Unassigned Vehicles'),
+        title: Text(isArabic ? 'لا توجد مركبات معيّنة' : 'No Vehicles Assigned'),
         content: Text.rich(
           TextSpan(
             children: [
@@ -127,15 +127,18 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_vehicleErrorText(current.error!, isArabic)),
-            backgroundColor: context.colors.error,
+            backgroundColor: AppColors.dangerRed,
           ),
         );
       }
 
+      // SRS 9.1 — the "No Vehicles Assigned" prompt is for drivers with no
+      // assigned vehicle at all, not merely "nothing selected yet".
       if (!_askedUnassigned &&
           current.isInitialized &&
           !current.isLoading &&
-          current.selectedVehicle == null) {
+          current.selectedVehicle == null &&
+          current.vehicles.where((v) => v.isAssigned).isEmpty) {
         _askedUnassigned = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _showUnassignedDialog(context);
@@ -154,7 +157,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                   ? 'تم اختيار $name. اتصل بجهاز ELD لتشغيلها. لم تُنقل ساعات الخدمة.'
                   : 'Selected $name. Connect to the ELD to operate it. Hours were not copied.',
             ),
-            backgroundColor: context.eld.successFg,
+            backgroundColor: AppColors.successGreen,
           ),
         );
         // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
@@ -174,7 +177,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.close, color: context.colors.onPrimary),
+          icon: const Icon(Icons.close, color: AppColors.surface),
           onPressed: () {
             if (GoRouter.of(context).canPop()) {
               GoRouter.of(context).pop();
@@ -186,7 +189,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: Icon(Icons.menu, color: context.colors.onPrimary),
+              icon: const Icon(Icons.menu, color: AppColors.surface),
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
@@ -237,6 +240,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                                           'ar',
                                     )
                                   : context.loc.noVehiclesFound,
+                              isError: vehicleState.error != null,
                               onRetry: () {
                                 if (_browsingCompany) {
                                   ref
@@ -397,10 +401,10 @@ String _vehicleErrorText(String raw, bool isArabic) {
           : 'The motion threshold is not available.';
     case 'unauthorized':
       return isArabic
-          ? 'غير مصرح بتشغيل هذه المركبة.'
-          : 'Not authorized to operate this vehicle.';
+          ? 'غير مصرح لك بتشغيل هذه المركبة.'
+          : 'You are not authorized to operate this vehicle.';
     case 'unavailable':
-      return isArabic ? 'المركبة غير متاحة.' : 'The vehicle is unavailable.';
+      return isArabic ? 'المركبة غير متاحة.' : 'Vehicle unavailable.';
     case 'in_use':
       return isArabic ? 'المركبة قيد الاستخدام.' : 'The vehicle is in use.';
     case 'rejected':

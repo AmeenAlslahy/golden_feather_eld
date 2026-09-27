@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_theme.dart';
+import '../theme/eld_colors.dart';
 import '../theme/app_typography.dart';
 
 enum AppStatusBadgeType {
@@ -28,15 +28,16 @@ class AppStatusBadge extends StatelessWidget {
   });
 
   Color _getBackgroundColor(ThemeData theme) {
+    final eld = theme.extension<EldColors>()!;
     switch (type) {
       case AppStatusBadgeType.success:
-        return theme.successLightBackground;
+        return eld.successBg;
       case AppStatusBadgeType.error:
-        return theme.errorLightBackground;
+        return eld.dangerBg;
       case AppStatusBadgeType.warning:
-        return theme.warningLightBackground;
+        return eld.warningBg;
       case AppStatusBadgeType.info:
-        return theme.infoLightBackground;
+        return eld.infoBg;
     }
   }
 
@@ -49,7 +50,8 @@ class AppStatusBadge extends StatelessWidget {
       case AppStatusBadgeType.warning:
         return AppColors.warningYellow;
       case AppStatusBadgeType.info:
-        return AppColors.primaryGold;
+        // Gold on the pale info background is ~2.5:1; infoText is 8.6:1.
+        return AppColors.infoText;
     }
   }
 

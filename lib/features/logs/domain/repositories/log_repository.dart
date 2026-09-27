@@ -1,11 +1,10 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../../../core/error/failure.dart';
+import '../entities/daily_log.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../entities/audit_entry.dart';
-import '../entities/daily_log.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 
 abstract class LogRepository {
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -13,9 +12,23 @@ abstract class LogRepository {
     int limit = 50,
     int offset = 0,
   });
-  Future<Either<Failure, List<LogEvent>>> getEvents(DateTime date);
-  Future<Either<Failure, bool>> addEvent(LogEvent event);
-  Future<Either<Failure, bool>> updateEvent(LogEvent event);
+  /// Duty-status events of one daily log.
+  ///
+  /// Online: the official `GET /eld/daily-logs/{id}/graph-grid` (server is the
+  /// source of truth). Offline / on failure: the locally recorded events of
+  /// [date] so the driver still sees what was captured on the device.
+  Future<Either<Failure, List<LogEvent>>> getEvents(
+      DailyLogId logId, DateTime date);
+
+  /// Records a new manual duty-status event (`POST /eld/duty-status`).
+  /// Falls back to the local store when offline so nothing is lost (SRS 6.8).
+  Future<Either<Failure, bool>> addEvent(LogEvent event, {String? reason});
+
+  /// Edits an existing manual event (`PUT /eld/duty-status/{statusId}`,
+  /// `editReason` mandatory). Server-rejected edits (automatic driving) are
+  /// surfaced as a failure, never silently kept locally.
+  Future<Either<Failure, bool>> updateEvent(LogEvent event,
+      {required String reason});
   Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({
     required DailyLogId logId,
