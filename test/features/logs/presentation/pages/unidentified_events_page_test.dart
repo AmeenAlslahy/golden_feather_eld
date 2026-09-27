@@ -208,6 +208,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'I was driving, forgot to log in');
     await tester.tap(find.text('OK'));
+    await tester.pump();
+    // The success overlay is inserted immediately; assert before any
+    // further pumping can let its 3s auto-dismiss expire.
+    expect(
+      find.text(
+        'Your record was updated. Review the daily log; it may need re-certification.',
+      ),
+      findsOneWidget,
+    );
     await tester.pumpAndSettle();
 
     expect(backend.calls, ['claim:501:106:I was driving, forgot to log in']);
@@ -221,15 +230,9 @@ void main() {
           limit: any(named: 'limit'),
           offset: any(named: 'offset'),
         )).called(greaterThanOrEqualTo(1));
-    // The earlier refusal snackbar must expire before the queued one shows.
-    await tester.pump(const Duration(seconds: 5));
+    // Expire any remaining feedback timers so nothing is left pending.
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'Your record was updated. Review the daily log; it may need re-certification.',
-      ),
-      findsOneWidget,
-    );
   });
 
   testWidgets('NOT MINE sends the rejection reason through reject',
@@ -246,6 +249,9 @@ void main() {
 
     expect(backend.calls, ['reject:502:106:Vehicle was with the mechanic']);
     expect(find.text('Yard'), findsNothing);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('a server refusal is shown as a plain message, row stays',
@@ -266,6 +272,9 @@ void main() {
 
     expect(find.text('This event was already assigned.'), findsOneWidget);
     expect(find.text('I-80 mile 12'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('SRS 11.2 filters: current vehicle goes to the server, date is local',

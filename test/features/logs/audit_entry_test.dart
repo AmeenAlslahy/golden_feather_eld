@@ -36,7 +36,10 @@ void main() {
   test('fromMap never throws on a corrupt row', () {
     final read = AuditEntry.fromMap(const {'timestamp': 'not-a-date'});
     expect(read.id, '');
-    expect(read.timestamp, DateTime(1970));
+    // epoch zero — expressed timezone-independently: production parses
+    // without isUtc, so a local-midnight DateTime(1970) would only match
+    // on UTC machines.
+    expect(read.timestamp, DateTime.fromMillisecondsSinceEpoch(0));
     expect(read.newStatus, '');
   });
 }

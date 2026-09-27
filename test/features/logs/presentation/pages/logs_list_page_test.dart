@@ -94,7 +94,8 @@ void main() {
     await pump(tester);
 
     expect(find.text('Logs'), findsOneWidget);
-    expect(find.text('Today'), findsOneWidget);
+    // The row renders the marker as 'Today - <date>'.
+    expect(find.textContaining('Today'), findsOneWidget);
     // Not part of the SRS 5.1 row design — must not be rendered.
     expect(find.text('Action'), findsNothing);
     expect(find.text('3h 15m'), findsOneWidget);

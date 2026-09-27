@@ -150,6 +150,9 @@ void main() {
     expect(hardware.calls, ['manual-mode:true:Lost connection to the ELD']);
     expect(find.text('Manual recording start was recorded on the server.'),
         findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('CONNECTED keeps the manual recording section hidden', (tester) async {
@@ -201,6 +204,9 @@ void main() {
     expect(hardware.calls, ['manual-mode:false:ELD connection restored']);
     expect(find.text('Manual recording ended; electronic recording resumed.'),
         findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('server manualRecordingAllowed=false: no START, explanation shown',

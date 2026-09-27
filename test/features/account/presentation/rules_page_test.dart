@@ -144,7 +144,7 @@ void main() {
     await pump(tester);
 
     expect(find.text('Rules are managed by your carrier.'), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.byType(DropdownButton<String>), findsNothing);
 
     final rows = tester
         .widgetList<EldInfoRow>(find.byType(EldInfoRow))
@@ -157,7 +157,7 @@ void main() {
     expect(rows, contains('Personal Conveyance=Allowed'));
     expect(rows, contains('Yard Moves=Forbidden'));
     expect(rows, contains('Unlimited Trailers=Not provided by the server'));
-    expect(find.byType(SwitchListTile), findsNothing);
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('editable account: dropdowns + switch, SAVE sends the selection',
@@ -173,7 +173,7 @@ void main() {
     ));
     await pump(tester);
 
-    expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(4));
+    expect(find.byType(DropdownButton<String>), findsNWidgets(4));
     // Rule source is never editable — still an info row.
     expect(
       tester
@@ -189,12 +189,12 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enable the 16-hour exception (allowed because the server lists it).
-    final toggle = find.byType(SwitchListTile);
+    final toggle = find.byType(Switch);
     await tester.ensureVisible(toggle);
     await tester.tap(toggle);
     await tester.pump();
 
-    final save = find.widgetWithText(AppButton, 'SAVE');
+    final save = find.widgetWithText(AppButton, 'Save');
     await tester.ensureVisible(save);
     await tester.tap(save);
     await tester.pump();
@@ -205,5 +205,9 @@ void main() {
     expect(backend.lastUpdate!['cargoType'], 'Property');
     expect(backend.lastUpdate!['sixteenHourException'], isTrue);
     expect(find.text('Rules updated successfully'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s) so no pending
+    // timer is left when the widget tree is disposed.
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 }

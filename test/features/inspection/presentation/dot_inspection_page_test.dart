@@ -126,11 +126,24 @@ void main() {
       expect(finder, findsOneWidget, reason: label);
       expect(tester.widget<AppButton>(finder).onPressed, isNull, reason: label);
     }
-    // All four notes exist in the (lazily built) list once scrolled through.
-    expect(
-      find.text('Not available for this account per the server.', skipOffstage: false),
-      findsNWidgets(3),
-    );
+    // Each disabled generic action shows the server-refusal note. The list
+    // is lazily built, so assert per section while it is on screen instead
+    // of a global count (scrolled-past sections get discarded).
+    for (final label in const [
+      'SEND LOGS',
+      'EMAIL LOGS',
+      'INFORMATION PACKET',
+    ]) {
+      final finder = find.widgetWithText(AppButton, label);
+      await tester.scrollUntilVisible(finder, 200,
+          scrollable: find.byType(Scrollable).first);
+      expect(
+        find.text('Not available for this account per the server.',
+            skipOffstage: false),
+        findsAtLeastNWidgets(1),
+        reason: label,
+      );
+    }
     final startNote =
         find.text('The server does not allow starting an inspection right now.');
     await tester.scrollUntilVisible(startNote, -200,

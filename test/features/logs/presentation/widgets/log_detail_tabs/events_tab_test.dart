@@ -106,7 +106,9 @@ void main() {
     expect(inTotals('8h 45m'), findsOneWidget); // OFF + PC
     expect(inTotals('0h 30m'), findsOneWidget); // D
     expect(inTotals('0h 00m'), findsNWidgets(2)); // SB, ON
-    expect(find.text('Sep 23'), findsOneWidget);
+    // The OFF event starts the evening before the log date — the tile
+    // marks the other-day start next to the duration.
+    expect(find.text('Started: 9/23/2026'), findsOneWidget);
   });
 
   testWidgets('server-locked manual event has no pencil either',
