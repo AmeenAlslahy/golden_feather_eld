@@ -2,28 +2,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/logger.dart';
 
-import '../../../../core/network/core_providers.dart';
-import '../../data/datasources/sync_local_data_source.dart';
-import '../../data/repositories/sync_repository_impl.dart';
+import '../../data/providers/sync_providers.dart';
 import '../../domain/entities/sync_item.dart';
 import '../../domain/repositories/sync_repository.dart';
-import 'sync_engine_provider.dart';
-
-/// مزودات المزامنة
-final syncLocalDataSourceProvider = Provider<SyncLocalDataSource>((ref) {
-  return SyncLocalDataSourceImpl();
-});
-
-final syncRepositoryProvider = Provider<SyncRepository>((ref) {
-  final localDataSource = ref.watch(syncLocalDataSourceProvider);
-  final networkInfo = ref.watch(networkInfoProvider);
-  final dispatcher = ref.watch(remoteEventDispatcherProvider);
-  return SyncRepositoryImpl(
-    localDataSource: localDataSource,
-    networkInfo: networkInfo,
-    dispatcher: dispatcher,
-  );
-});
 
 /// مزود حالة المزامنة
 final syncStateProvider = StateNotifierProvider<SyncNotifier, SyncState>((ref) {

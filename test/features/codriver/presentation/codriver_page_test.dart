@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/codriver/data/providers/codriver_repository_providers.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
@@ -13,14 +15,12 @@ import 'package:golden_feather_eld/features/codriver/domain/current_codriver.dar
 import 'package:golden_feather_eld/features/codriver/domain/entities/codriver.dart';
 import 'package:golden_feather_eld/features/codriver/domain/repositories/codriver_repository.dart';
 import 'package:golden_feather_eld/features/codriver/presentation/pages/codriver_page.dart';
-import 'package:golden_feather_eld/features/codriver/presentation/providers/codriver_provider.dart';
 import 'package:golden_feather_eld/features/codriver/presentation/providers/team_status_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 

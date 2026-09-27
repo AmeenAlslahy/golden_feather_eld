@@ -3,7 +3,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../domain/repositories/log_repository.dart';
-import '../../data/repositories/log_repository_impl.dart';
+import '../../data/providers/log_repository_providers.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import 'dart:typed_data';

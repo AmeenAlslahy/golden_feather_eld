@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
@@ -12,7 +13,6 @@ import 'package:golden_feather_eld/features/tracking/presentation/providers/trac
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 
 // Fake Repository

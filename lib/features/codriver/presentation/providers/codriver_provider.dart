@@ -1,24 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/driver_session_backend.dart';
-import '../../data/repositories/codriver_repository_impl.dart';
+import '../../data/providers/codriver_repository_providers.dart';
 import '../../domain/current_codriver.dart';
 import '../../domain/entities/codriver.dart';
 import '../../domain/repositories/codriver_repository.dart';
-
-// --- Dependency Injection Providers ---
-
-final driverSessionBackendProviderAlias = Provider<DriverSessionBackend>((ref) {
-  return ref.watch(driverSessionBackendProvider);
-});
-
-final coDriverRepositoryProvider = Provider<CoDriverRepository>((ref) {
-  return CoDriverRepositoryImpl(
-    driverSessionBackend: ref.watch(driverSessionBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 

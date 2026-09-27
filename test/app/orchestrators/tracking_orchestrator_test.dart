@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/app/orchestrators/tracking_orchestrator.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';

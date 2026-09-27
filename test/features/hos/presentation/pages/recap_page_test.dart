@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/hos/data/providers/status_dashboard_repository_providers.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
@@ -9,7 +10,6 @@ import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/features/hos/domain/repositories/status_dashboard_repository.dart';
 import 'package:golden_feather_eld/features/hos/presentation/pages/recap_page.dart';
-import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 

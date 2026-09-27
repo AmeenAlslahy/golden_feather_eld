@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/dvir/data/providers/dvir_repository_providers.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_dvir_backend.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -13,7 +14,6 @@ import 'package:golden_feather_eld/core/services/tracking_config_storage_service
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/pages/dvir_list_page.dart';
-import 'package:golden_feather_eld/features/dvir/presentation/providers/dvir_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';

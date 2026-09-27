@@ -1,25 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/dvir_backend.dart';
-import '../../data/repositories/dvir_repository_impl.dart';
+import '../../data/providers/dvir_repository_providers.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
-
-// --- Dependency Injection Providers ---
-
-final dvirBackendProviderAlias = Provider<DvirBackend>((ref) {
-  return ref.watch(dvirBackendProvider);
-});
-
-final dvirRepositoryProvider = Provider<DvirRepository>((ref) {
-  return DvirRepositoryImpl(
-    dvirBackend: ref.watch(dvirBackendProviderAlias),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});
 
 // --- State and Notifier ---
 

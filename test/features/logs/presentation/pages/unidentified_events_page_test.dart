@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
 import 'package:golden_feather_eld/backend/contracts/unidentified_events_backend.dart';
@@ -17,7 +18,6 @@ import 'package:golden_feather_eld/features/logs/presentation/pages/unidentified
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Logs extends Mock implements LogRepository {}

@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../core/network/core_providers.dart';
-import '../../../../backend/providers/backend_providers.dart';
 import '../../../../backend/contracts/daily_logs_backend.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
@@ -14,10 +12,14 @@ import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/daily_log_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+
+// جسر توافق (المرحلة 3b): تعريف logRepositoryProvider انتقل إلى
+// data/providers/log_repository_providers.dart — التصدير هنا يبقي
+// الاختبارات القائمة التي تستورد هذا الملف تعمل.
+export '../providers/log_repository_providers.dart';
 import '../../../../core/utils/repository_helper.dart';
 
 class LogRepositoryImpl implements LogRepository {
@@ -312,12 +314,3 @@ class LogRepositoryImpl implements LogRepository {
     );
   }
 }
-
-final logRepositoryProvider = Provider<LogRepository>((ref) {
-  return LogRepositoryImpl(
-    localDataSource: ref.watch(logLocalDataSourceProvider),
-    dailyLogsBackend: ref.watch(dailyLogsBackendProvider),
-    dutyStatusBackend: ref.watch(dutyStatusBackendProvider),
-    networkInfo: ref.watch(networkInfoProvider),
-  );
-});

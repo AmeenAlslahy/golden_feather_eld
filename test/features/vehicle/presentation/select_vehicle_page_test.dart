@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
@@ -10,7 +11,6 @@ import 'package:golden_feather_eld/features/tracking/presentation/providers/trac
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:golden_feather_eld/features/vehicle/presentation/pages/select_vehicle_page.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 

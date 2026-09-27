@@ -1,22 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/network/core_providers.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
-import '../../data/repositories/status_dashboard_repository_impl.dart';
-import '../../domain/repositories/status_dashboard_repository.dart';
+import '../../data/providers/status_dashboard_repository_providers.dart';
 import '../../domain/usecases/get_status_dashboard_use_case.dart';
 import '../../domain/usecases/update_duty_status_use_case.dart';
 
 // --- Clean Architecture Providers ---
-
-final statusDashboardRepositoryProvider = Provider<StatusDashboardRepository>((ref) {
-  return StatusDashboardRepositoryImpl(
-    ref.watch(statusDashboardBackendProvider),
-    ref.watch(networkInfoProvider),
-  );
-});
 
 final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((ref) {
   return GetStatusDashboardUseCase(ref.watch(statusDashboardRepositoryProvider));

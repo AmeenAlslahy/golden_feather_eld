@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -19,7 +20,6 @@ import 'package:golden_feather_eld/features/tracking/domain/entities/connection_
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';

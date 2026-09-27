@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/repositories/log_repository.dart';
-import '../../data/repositories/log_repository_impl.dart';
+import '../../data/providers/log_repository_providers.dart';
 import '../../domain/entities/audit_entry.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';

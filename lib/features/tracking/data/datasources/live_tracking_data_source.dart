@@ -11,7 +11,7 @@ import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_da
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
 import 'package:golden_feather_eld/features/tracking/domain/usecases/tracking_event_processor.dart';
-import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
+import 'package:golden_feather_eld/features/tracking/data/providers/tracking_providers.dart';
 
 abstract class LiveTrackingDataSource {
   Stream<EldEvent> get events;

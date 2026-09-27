@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/duty_status/weekly_recap.dart';
+import '../../data/providers/status_dashboard_repository_providers.dart';
 import '../../domain/usecases/get_weekly_recap_use_case.dart';
-import 'status_dashboard_providers.dart';
 
 final getWeeklyRecapUseCaseProvider = Provider<GetWeeklyRecapUseCase>((ref) {
   return GetWeeklyRecapUseCase(ref.watch(statusDashboardRepositoryProvider));
