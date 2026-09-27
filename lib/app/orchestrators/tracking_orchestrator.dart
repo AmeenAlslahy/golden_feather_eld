@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/tracking/presentation/providers/tracking_provider.dart';
-import '../../features/tracking/presentation/providers/tracking_providers.dart';
+import '../../features/tracking/data/providers/tracking_providers.dart';
 import '../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
 import '../../features/hos/presentation/providers/hos_provider.dart';
