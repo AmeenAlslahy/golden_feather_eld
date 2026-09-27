@@ -1,4 +1,4 @@
-
+import 'package:equatable/equatable.dart';
 
 // ==========================================
 // 1. Duty Status & Tracking Models
@@ -181,7 +181,7 @@ enum AlertSeverity {
 }
 
 /// تنبيه
-class HosAlert {
+class HosAlert extends Equatable {
   final HosAlertType type;
   final String message;
   final AlertSeverity severity;
@@ -193,10 +193,13 @@ class HosAlert {
     required this.severity,
     required this.remainingMinutes,
   });
+
+  @override
+  List<Object?> get props => [type, message, severity, remainingMinutes];
 }
 
 /// تحديث حالة HOS
-class HosStatusUpdate {
+class HosStatusUpdate extends Equatable {
   final DutyStatus currentStatus;
   final HosLimits limits;
   final List<HosAlert> alerts;
@@ -222,6 +225,19 @@ class HosStatusUpdate {
   bool get hasViolations => violations.isNotEmpty;
   bool get hasCriticalAlerts =>
       alerts.any((a) => a.severity == AlertSeverity.critical);
+
+  @override
+  List<Object?> get props => [
+        currentStatus,
+        limits,
+        alerts,
+        violations,
+        remainingDriveMinutes,
+        remainingShiftMinutes,
+        remainingCycleHours,
+        breakRequired,
+        breakRemainingMinutes,
+      ];
 }
 
 // ==========================================
@@ -252,7 +268,7 @@ enum ViolationLevel {
 }
 
 /// نموذج انتهاك
-class HosViolation {
+class HosViolation extends Equatable {
   final HosViolationType type;
   final ViolationLevel level;
   final String message;
@@ -276,10 +292,13 @@ class HosViolation {
       'details': details,
     };
   }
+
+  @override
+  List<Object?> get props => [type, level, message, timestamp, details];
 }
 
 /// حدود ساعات الخدمة
-class HosLimits {
+class HosLimits extends Equatable {
   final int remainingDriveMinutes;
   final int remainingShiftMinutes;
   final double remainingCycleHours;
@@ -293,4 +312,13 @@ class HosLimits {
     required this.breakRequired,
     required this.breakRemainingMinutes,
   });
+
+  @override
+  List<Object?> get props => [
+        remainingDriveMinutes,
+        remainingShiftMinutes,
+        remainingCycleHours,
+        breakRequired,
+        breakRemainingMinutes,
+      ];
 }

@@ -11,6 +11,15 @@ sealed class HosEngineResult {}
 class HosEngineReady extends HosEngineResult {
   final HosStatusUpdate update;
   HosEngineReady(this.update);
+
+  // قيمة واحدة تُقارن قيمياً حتى لا يُبثّ state جديد عند ثبات الأرقام
+  // بين نبضات ELD/GPS المتتالية (تخفيف الحمل في HosNotifier).
+  @override
+  bool operator ==(Object other) =>
+      other is HosEngineReady && other.update == update;
+
+  @override
+  int get hashCode => update.hashCode;
 }
 
 class HosEngineTimeUnavailable extends HosEngineResult {

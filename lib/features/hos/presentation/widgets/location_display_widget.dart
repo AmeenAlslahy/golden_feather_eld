@@ -12,10 +12,14 @@ class LocationDisplayWidget extends ConsumerWidget {
     final theme = Theme.of(context);
     final loc = context.loc;
 
-    final trackingState = ref.watch(trackingStateProvider);
-    final locString = trackingState.currentLocation != null
-        ? '${trackingState.currentLocation!.latitude.toStringAsFixed(4)}, ${trackingState.currentLocation!.longitude.toStringAsFixed(4)}'
-        : loc.calculatingLocation;
+    // select على النص المعروض فقط حتى لا تعاد بناء الويدجت كل نبضة GPS.
+    final coords = ref.watch(trackingStateProvider.select((s) {
+      final l = s.currentLocation;
+      return l == null
+          ? null
+          : '${l.latitude.toStringAsFixed(4)}, ${l.longitude.toStringAsFixed(4)}';
+    }));
+    final locString = coords ?? loc.calculatingLocation;
 
     return Row(
       children: [

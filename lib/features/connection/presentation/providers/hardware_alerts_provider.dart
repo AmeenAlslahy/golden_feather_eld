@@ -28,7 +28,7 @@ class HardwareAlert {
   }
 }
 
-class HardwareAlertsNotifier extends AsyncNotifier<List<HardwareAlert>> {
+class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert>> {
   Timer? _timer;
 
   @override
@@ -38,8 +38,9 @@ class HardwareAlertsNotifier extends AsyncNotifier<List<HardwareAlert>> {
     _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       fetchAlerts();
     });
-    
-    // عند إغلاق الـ Provider نقوم بإلغاء المؤقت
+
+    // المزوّد autoDispose: عند اختفاء آخر مستمع يُلغى المؤقت ويقف
+    // الاستقصاء الدوري بدل أن يستمر طوال عمر التطبيق.
     ref.onDispose(() {
       _timer?.cancel();
     });
@@ -47,13 +48,16 @@ class HardwareAlertsNotifier extends AsyncNotifier<List<HardwareAlert>> {
     return _fetchFromBackend();
   }
 
+  /// تحديث دوري صامت: لا تمر عبر AsyncLoading حتى لا يومض العرض كل
+  /// 30 ثانية، وعند الفشل تبقى البيانات الصالحة السابقة معروضة.
   Future<void> fetchAlerts() async {
-    state = const AsyncLoading();
     try {
       final alerts = await _fetchFromBackend();
       state = AsyncData(alerts);
     } catch (e, st) {
-      state = AsyncError(e, st);
+      if (!state.hasValue) {
+        state = AsyncError(e, st);
+      }
     }
   }
 
@@ -102,6 +106,7 @@ List<dynamic>? _alertList(Map<String, dynamic> json) {
   return null;
 }
 
-final hardwareAlertsProvider = AsyncNotifierProvider<HardwareAlertsNotifier, List<HardwareAlert>>(() {
+final hardwareAlertsProvider =
+    AsyncNotifierProvider.autoDispose<HardwareAlertsNotifier, List<HardwareAlert>>(() {
   return HardwareAlertsNotifier();
 });

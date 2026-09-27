@@ -47,7 +47,9 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       if (!_ref.read(authStateProvider).isAuthenticated) return;
       if (event.timestamp.millisecondsSinceEpoch == 0) return;
       final result = _engine.processEvent(event);
-      if (mounted) state = result;
+      // لا تنشر state جديد إذا لم تتغير القيم فعلياً (كل نبضة GPS كانت
+      // تُنشئ كائناً جديداً وتُعيد بناء المستمعين بلا فائدة).
+      if (mounted && result != state) state = result;
     });
   }
 
@@ -124,7 +126,8 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
   /// تحديث الحالة
   void refresh() {
-    state = _engine.currentStatus;
+    final next = _engine.currentStatus;
+    if (mounted && next != state) state = next;
   }
 
   @override

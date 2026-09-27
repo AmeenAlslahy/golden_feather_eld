@@ -435,12 +435,19 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
     final dashboard = ref.watch(dashboardDataProvider);
     final account = ref.watch(accountProvider).accountData;
-    final location = ref.watch(trackingStateProvider).currentLocation;
     final trusted = ref.watch(trustedTimeProvider).currentTime;
     final timeAvailable = trusted is TrustedTimeAvailable;
-    final automaticLocation = location == null
-        ? (_report?.location ?? (_isAr ? 'الموقع غير متاح' : 'Location unavailable'))
-        : '${location.latitude.toStringAsFixed(5)}, ${location.longitude.toStringAsFixed(5)}';
+    // select على النص النهائي فقط: كيان الموقع يحمل timestamp يتغير كل
+    // نبضة GPS، لذا مراقبة الكيان نفسه كانت تعيد بناء الصفحة كاملة كل ثانية.
+    final automaticLocation =
+        ref.watch(trackingStateProvider.select((s) {
+          final l = s.currentLocation;
+          return l == null
+              ? null
+              : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
+        })) ??
+        (_report?.location ??
+            (_isAr ? 'الموقع غير متاح' : 'Location unavailable'));
     final companyName = _report?.companyName ??
         account?.carrier ??
         (_isAr ? 'الشركة غير متاحة' : 'Company unavailable');
@@ -463,6 +470,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
+        actions: [
+          // SRS 7.2: إعادة جلب بيانات الخادم دون فقدان ما أدخله السائق.
+          IconButton(
+            key: const Key('dvir_form_refresh'),
+            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            onPressed: () => ref.read(dvirProvider.notifier).refresh(),
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
