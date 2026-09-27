@@ -355,7 +355,7 @@ class EditLogPage extends ConsumerWidget {
                                     ? 'جلسة السائق غير موجودة. لا يمكن الحفظ.'
                                     : 'Cannot save: driver session not found.',
                               ),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.dangerRed,
                             ),
                           );
                         }
@@ -425,7 +425,7 @@ class EditLogPage extends ConsumerWidget {
                                     ? 'تعذر حفظ الحدث.'
                                     : 'The event could not be saved.',
                               ),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.dangerRed,
                             ),
                           );
                         }
@@ -458,7 +458,7 @@ class EditLogPage extends ConsumerWidget {
                                     ? 'حُفظ الحدث لكن تعذر تسجيل سبب التعديل.'
                                     : 'The event was saved but the change audit could not be recorded.',
                               ),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.dangerRed,
                             ),
                           );
                         }
