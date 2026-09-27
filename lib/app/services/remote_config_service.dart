@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../backend/contracts/config_backend.dart';
 import '../../backend/providers/backend_providers.dart';
-import '../error/exception.dart';
-import 'local_storage_service.dart';
-import '../utils/logger.dart';
+import '../../core/error/exception.dart';
+import '../../core/services/local_storage_service.dart';
+import '../../core/utils/logger.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
-import '../config/app_environment.dart';
+import '../../core/config/app_environment.dart';
 
 /// خدمة جلب الإعدادات عن بعد
 class RemoteConfigService {

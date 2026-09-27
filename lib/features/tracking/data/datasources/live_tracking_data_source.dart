@@ -5,8 +5,8 @@ import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart'; // For LocationPoint
 import 'package:golden_feather_eld/core/network/core_providers.dart';
-import 'package:golden_feather_eld/core/network/traccar/traccar_api_client_impl.dart';
-import 'package:golden_feather_eld/core/network/traccar/traccar_websocket_client_impl.dart';
+import 'traccar_sdk/traccar_api_client_impl.dart';
+import 'traccar_sdk/traccar_websocket_client_impl.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';

@@ -4,8 +4,8 @@ import '../features/tracking/data/datasources/traccar_sdk/traccar_native_client_
 import '../features/tracking/data/services/tracking_service.dart';
 import '../core/services/local_database_service.dart';
 import '../core/services/local_storage_service.dart';
-import '../core/services/push_notification_service.dart';
-import '../core/services/remote_config_service.dart';
+import 'services/push_notification_service.dart';
+import 'services/remote_config_service.dart';
 import '../core/services/utc_sync_service.dart';
 import '../core/config/app_environment.dart';
 import '../core/utils/logger.dart';

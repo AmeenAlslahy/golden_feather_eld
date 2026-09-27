@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../../../features/tracking/data/datasources/traccar_sdk/traccar_websocket_client.dart';
+import 'traccar_websocket_client.dart';
 
 /// تنفيذ عميل WebSocket الخاص بـ Traccar عبر /api/socket.
 /// يدعم إعادة الاتصال التلقائي مع تراجع أسي وبث حالة الاتصال.
