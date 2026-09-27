@@ -17,7 +17,6 @@ class TrackingState {
   final LocationEntity? currentLocation;
   final List<TrackingLogEntity> logs;
   final String? errorMessage;
-  final String? arabicErrorMessage;
   final TrackingErrorType? errorType;
   final bool isTracking;
 
@@ -26,11 +25,13 @@ class TrackingState {
     this.currentLocation,
     this.logs = const [],
     this.errorMessage,
-    this.arabicErrorMessage,
     this.errorType,
     this.isTracking = false,
   });
 
+  /// دلالات موحّدة (نمط `LogsState`/`AuthState`): الحقول تُحافظ على قيمتها
+  /// عند تمرير null، ومسح الخطأ صريح عبر [clearError] حتى لا يمسح نداء
+  /// عرضي خطأ قائماً بالمناسبة.
   TrackingState copyWith({
     TrackingStatus? status,
     LocationEntity? currentLocation,
@@ -38,13 +39,14 @@ class TrackingState {
     String? errorMessage,
     TrackingErrorType? errorType,
     bool? isTracking,
+    bool clearError = false,
   }) {
     return TrackingState(
       status: status ?? this.status,
       currentLocation: currentLocation ?? this.currentLocation,
       logs: logs ?? this.logs,
-      errorMessage: errorMessage,
-      errorType: errorType,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      errorType: clearError ? null : (errorType ?? this.errorType),
       isTracking: isTracking ?? this.isTracking,
     );
   }
@@ -148,8 +150,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
           status: TrackingStatus.active,
           isTracking: true,
           currentLocation: location,
-          errorMessage: null,
-          errorType: null,
+          clearError: true,
         );
         ref.read(currentVehicleSpeedProvider.notifier).state = location.speed;
       },
@@ -242,10 +243,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
 
   /// مسح الخطأ
   void clearError() {
-    state = state.copyWith(
-      errorMessage: null,
-      errorType: null,
-    );
+    state = state.copyWith(clearError: true);
   }
 
 }
