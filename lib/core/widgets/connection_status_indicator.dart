@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import '../../features/tracking/domain/entities/connection_status.dart';
 import '../theme/app_colors.dart';
 import '../extensions/context_extensions.dart';

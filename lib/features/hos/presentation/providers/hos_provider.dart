@@ -7,7 +7,7 @@ import '../../../../core/utils/logger.dart';
 
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import '../../../../core/services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// مزود حالة HOS

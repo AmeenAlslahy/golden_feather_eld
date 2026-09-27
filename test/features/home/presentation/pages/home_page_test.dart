@@ -14,7 +14,7 @@ import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
-import 'package:golden_feather_eld/core/services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';

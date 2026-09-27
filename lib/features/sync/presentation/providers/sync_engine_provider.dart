@@ -3,7 +3,7 @@ import '../../domain/usecases/sync_engine.dart';
 import '../../data/repositories/memory_offline_queue.dart';
 import '../../data/repositories/sqlite_offline_queue.dart';
 import '../../domain/repositories/offline_queue.dart';
-import '../../../../core/services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import '../../../tracking/domain/entities/connection_status.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/hos_configuration.dart';
 import '../../../../core/time/trusted_time_provider.dart';
-import '../../../../core/services/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../logs/data/repositories/log_repository_impl.dart';
