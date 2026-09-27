@@ -228,7 +228,10 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
     final result = await _repository.getLogs();
 
     result.match(
-      (_) {},
+      (failure) {
+        // كان الفشل يُبتلع بصمت — يُسجَّل الآن ليظهر في التشخيص.
+        AppLogger.warning('Tracking logs load failed: ${failure.message}');
+      },
       (logs) {
         state = state.copyWith(logs: logs);
       },
