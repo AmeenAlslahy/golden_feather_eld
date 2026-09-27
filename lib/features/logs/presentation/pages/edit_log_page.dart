@@ -536,6 +536,12 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   int _selectedSecond = 0;
   String _selectedPeriod = 'AM';
 
+  // تُنشأ مرة واحدة مع الـ State وتُدمَّر معه — كانت سابقاً تُنشأ داخل
+  // كل build (تسريب متحكمات جديد مع كل setState) وبلا أي dispose.
+  late final FixedExtentScrollController _hourWheel;
+  late final FixedExtentScrollController _minuteWheel;
+  late final FixedExtentScrollController _secondWheel;
+
   @override
   void initState() {
     super.initState();
@@ -545,6 +551,17 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     _selectedMinute = now.minute;
     _selectedSecond = now.second;
     _selectedPeriod = now.hour < 12 ? 'AM' : 'PM';
+    _hourWheel = FixedExtentScrollController(initialItem: _selectedHour);
+    _minuteWheel = FixedExtentScrollController(initialItem: _selectedMinute);
+    _secondWheel = FixedExtentScrollController(initialItem: _selectedSecond);
+  }
+
+  @override
+  void dispose() {
+    _hourWheel.dispose();
+    _minuteWheel.dispose();
+    _secondWheel.dispose();
+    super.dispose();
   }
 
   @override
@@ -579,11 +596,11 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           Expanded(
             child: Row(
               children: [
-                _buildWheel(24, _selectedHour,
+                _buildWheel(24, _hourWheel, _selectedHour,
                     (v) => setState(() => _selectedHour = v)),
-                _buildWheel(60, _selectedMinute,
+                _buildWheel(60, _minuteWheel, _selectedMinute,
                     (v) => setState(() => _selectedMinute = v)),
-                _buildWheel(60, _selectedSecond,
+                _buildWheel(60, _secondWheel, _selectedSecond,
                     (v) => setState(() => _selectedSecond = v)),
                 _buildPeriodWheel(),
               ],
@@ -594,13 +611,14 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     );
   }
 
-  Widget _buildWheel(int max, int selected, Function(int) onChanged) {
+  Widget _buildWheel(int max, FixedExtentScrollController controller,
+      int selected, Function(int) onChanged) {
     return Expanded(
       child: ListWheelScrollView.useDelegate(
         itemExtent: 40,
         diameterRatio: 1.5,
         onSelectedItemChanged: onChanged,
-        controller: FixedExtentScrollController(initialItem: selected),
+        controller: controller,
         childDelegate: ListWheelChildBuilderDelegate(
           builder: (context, index) => Center(
             child: Text(
