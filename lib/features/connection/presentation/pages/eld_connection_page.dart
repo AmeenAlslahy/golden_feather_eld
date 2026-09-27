@@ -320,22 +320,20 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                 children: [
                   // SRS 9.3 step 5: the five-item checklist is part of the
                   // connection screen itself, not only of the failure state.
-                  if (connectionState.hasFailed) ...[
-                    Text(
-                      context.loc.verifyFollowingItems,
-                      key: const Key('connection_checklist_title'),
-                      style: context.styles.body,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildChecklistItem(context.loc.macEnteredCorrectly),
-                    _buildChecklistItem(context.loc.hardwareProperlyInstalled),
-                    _buildChecklistItem(context.loc.vehiclePowerOn),
-                    _buildChecklistItem(context.loc.bluetoothEnabled),
-                    _buildChecklistItem(context.loc.gpsEnabled),
-                    const SizedBox(height: AppSpacing.lg),
-                    Divider(color: Theme.of(context).dividerColor, height: 1),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
+                  Text(
+                    context.loc.verifyFollowingItems,
+                    key: const Key('connection_checklist_title'),
+                    style: context.styles.body,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildChecklistItem(context.loc.macEnteredCorrectly),
+                  _buildChecklistItem(context.loc.hardwareProperlyInstalled),
+                  _buildChecklistItem(context.loc.vehiclePowerOn),
+                  _buildChecklistItem(context.loc.bluetoothEnabled),
+                  _buildChecklistItem(context.loc.gpsEnabled),
+                  const SizedBox(height: AppSpacing.lg),
+                  Divider(color: Theme.of(context).dividerColor, height: 1),
+                  const SizedBox(height: AppSpacing.lg),
 
                   // عنوان حقل MAC
                   Text(
