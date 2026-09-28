@@ -301,7 +301,7 @@ class _DvirCard extends StatelessWidget {
                           const Icon(Icons.build, color: AppColors.textSecondary, size: 14),
                           const SizedBox(width: 8),
                           Text(
-                            'Repair: ${report.repairStatus}',
+                            'Repair Cert · ${report.repairStatus}',
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
@@ -328,7 +328,7 @@ class _DvirCard extends StatelessWidget {
                         color: AppColors.successGreen, size: 16),
                     SizedBox(width: 8),
                     Text(
-                      'Reviewed by next driver',
+                      'Reviewed §396.13',
                       style: TextStyle(
                           color: AppColors.successGreen, fontSize: 13),
                     ),
