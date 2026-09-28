@@ -18,6 +18,9 @@ abstract class LogLocalDataSource {
   Future<bool> logAudit(AuditEntry entry);
   Future<List<AuditEntry>> getAuditEntries(DateTime date);
 
+  /// SRS 7.16: أحدث الأحداث عبر كل الأيام (قراءة فقط).
+  Future<List<AuditEntry>> getRecentAuditEntries({int limit = 100});
+
   /// SRS 6.8 — read-only snapshot of the last server answers so the Logs
   /// list and a day's events stay available without a connection.
   Future<void> cacheDailyLogs(int driverId, List<Map<String, dynamic>> logsJson);
@@ -236,6 +239,28 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   Future<List<AuditEntry>> getAuditEntries(DateTime date) async {
     final data = await _getFromBox(_auditBox, date, 'audit');
     return data.map((e) => AuditEntry.fromMap(e)).toList();
+  }
+
+  @override
+  Future<List<AuditEntry>> getRecentAuditEntries({int limit = 100}) async {
+    // الصندوق مجزأ بمفاتيح الأيام؛ نجمع كل الأيام ثم نرتب تنازلياً.
+    final all = <AuditEntry>[];
+    for (final key in _auditBox.keys) {
+      final raw = _auditBox.get(key);
+      if (raw == null) continue;
+      try {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        for (final item in list) {
+          all.add(AuditEntry.fromMap(item));
+        }
+      } catch (_) {
+        // سجل تالف: يُتخطى ولا يُحذف (SRS 1.3 — لا حذف من سجل التدقيق).
+      }
+    }
+    all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return all.take(limit).toList();
   }
 }
 

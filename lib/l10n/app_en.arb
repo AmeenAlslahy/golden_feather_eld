@@ -1,4 +1,8 @@
 {
+    "auditTrail": "Audit Trail",
+    "auditTrailNote": "This log confirms every action is kept with the user, time, and previous/new values. It cannot be edited or deleted.",
+    "auditNoRecords": "No Records",
+    "auditLoadFailed": "Could not load the audit trail.",
     "vehicleStatusOutOfService": "OUT_OF_SERVICE",
     "vehicleStatusRestricted": "RESTRICTED",
     "vehicleStatusAvailable": "AVAILABLE",

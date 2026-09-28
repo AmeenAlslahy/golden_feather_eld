@@ -313,4 +313,14 @@ class LogRepositoryImpl implements LogRepository {
       tag: 'LogRepositoryImpl.getAuditEntries',
     );
   }
+
+  @override
+  Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({
+    int limit = 100,
+  }) {
+    return executeWithHandling(
+      () => _localDataSource.getRecentAuditEntries(limit: limit),
+      tag: 'LogRepositoryImpl.getRecentAuditEntries',
+    );
+  }
 }

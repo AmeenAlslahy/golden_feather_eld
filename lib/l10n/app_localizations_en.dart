@@ -9,6 +9,19 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get auditTrail => 'Audit Trail';
+
+  @override
+  String get auditTrailNote =>
+      'This log confirms every action is kept with the user, time, and previous/new values. It cannot be edited or deleted.';
+
+  @override
+  String get auditNoRecords => 'No Records';
+
+  @override
+  String get auditLoadFailed => 'Could not load the audit trail.';
+
+  @override
   String get vehicleStatusOutOfService => 'OUT_OF_SERVICE';
 
   @override

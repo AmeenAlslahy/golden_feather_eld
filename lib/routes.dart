@@ -38,6 +38,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String suggestedEvents = '/logs/suggested-events';
   static const String unidentifiedEvents = '/logs/unidentified-events';
+  static const String auditTrail = '/logs/audit-trail';
 
   /// مسارات متاحة بدون تسجيل دخول
   static const Set<String> publicRoutes = {

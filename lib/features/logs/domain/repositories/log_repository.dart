@@ -54,4 +54,9 @@ abstract class LogRepository {
   Future<Either<Failure, bool>> savePeriod(DutyPeriod period);
   Future<Either<Failure, bool>> logAudit(AuditEntry entry);
   Future<Either<Failure, List<AuditEntry>>> getAuditEntries(DateTime date);
+
+  /// SRS 7.16: أحدث الأحداث للعرض في شاشة سجل التدقيق (قراءة فقط).
+  Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({
+    int limit = 100,
+  });
 }

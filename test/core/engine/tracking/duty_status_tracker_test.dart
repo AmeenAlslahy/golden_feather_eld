@@ -119,11 +119,16 @@ class MockLogRepository implements LogRepository {
     required String annotation,
   }) async =>
       throw UnimplementedError();
+
+
+  @override
+  Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({int limit = 100}) async => const Right([]);
 }
 
 // Replaced FakeClock with FakeTrustedTimeProvider inline in setUp
 
 class FakeLocalStorage implements LocalStorageService {
+  @override
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 

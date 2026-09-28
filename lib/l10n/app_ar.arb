@@ -1,4 +1,8 @@
 {
+    "auditTrail": "سجل التدقيق",
+    "auditTrailNote": "يؤكد هذا السجل حفظ كل إجراء مع المستخدم والوقت والقيم السابقة والجديدة. لا يمكن تعديل هذا السجل أو حذفه.",
+    "auditNoRecords": "لا توجد سجلات",
+    "auditLoadFailed": "تعذر تحميل سجل التدقيق.",
     "vehicleStatusOutOfService": "خارج الخدمة",
     "vehicleStatusRestricted": "مقيّدة",
     "vehicleStatusAvailable": "متاحة",

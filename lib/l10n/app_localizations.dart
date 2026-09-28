@@ -98,6 +98,30 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @auditTrail.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل التدقيق'**
+  String get auditTrail;
+
+  /// No description provided for @auditTrailNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'يؤكد هذا السجل حفظ كل إجراء مع المستخدم والوقت والقيم السابقة والجديدة. لا يمكن تعديل هذا السجل أو حذفه.'**
+  String get auditTrailNote;
+
+  /// No description provided for @auditNoRecords.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد سجلات'**
+  String get auditNoRecords;
+
+  /// No description provided for @auditLoadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل سجل التدقيق.'**
+  String get auditLoadFailed;
+
   /// No description provided for @vehicleStatusOutOfService.
   ///
   /// In ar, this message translates to:

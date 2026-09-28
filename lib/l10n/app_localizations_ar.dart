@@ -9,6 +9,19 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get auditTrail => 'سجل التدقيق';
+
+  @override
+  String get auditTrailNote =>
+      'يؤكد هذا السجل حفظ كل إجراء مع المستخدم والوقت والقيم السابقة والجديدة. لا يمكن تعديل هذا السجل أو حذفه.';
+
+  @override
+  String get auditNoRecords => 'لا توجد سجلات';
+
+  @override
+  String get auditLoadFailed => 'تعذر تحميل سجل التدقيق.';
+
+  @override
   String get vehicleStatusOutOfService => 'خارج الخدمة';
 
   @override
