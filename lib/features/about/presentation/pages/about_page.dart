@@ -32,13 +32,15 @@ class AboutPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final packageInfo = ref.watch(packageInfoProvider);
     final isConnected = ref.watch(isConnectedProvider);
     final gpsStatus = ref.watch(gpsStatusProvider);
     final storage = ref.watch(localStorageProvider);
 
-    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
+    final loc = context.loc;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final notAvailable = loc.notAvailable;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -46,7 +48,7 @@ class AboutPage extends ConsumerWidget {
         backgroundColor: AppColors.primaryGold,
         centerTitle: true,
         title: Text(
-          isArabic ? 'حول التطبيق' : 'About',
+          loc.aboutTitle,
           style: context.styles.appBarTitle,
         ),
       ),
@@ -59,38 +61,38 @@ class AboutPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic ? 'معلومات التطبيق' : 'Application',
+                  loc.applicationInfo,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 EldInfoRow(
-                  label: isArabic ? 'الاسم' : 'Name',
+                  label: loc.appNameLabel,
                   value: AppConstants.appName,
                 ),
                 packageInfo.when(
                   data: (info) => Column(
                     children: [
                       EldInfoRow(
-                        label: isArabic ? 'الإصدار' : 'Version',
+                        label: loc.appVersionLabel,
                         value: '${info.version} (${info.buildNumber})',
                       ),
                       EldInfoRow(
-                        label: isArabic ? 'معرّف الحزمة' : 'Package',
+                        label: loc.appPackageLabel,
                         value: info.packageName,
                       ),
                     ],
                   ),
                   loading: () => EldInfoRow(
-                    label: isArabic ? 'الإصدار' : 'Version',
+                    label: loc.appVersionLabel,
                     value: '...',
                   ),
                   error: (_, __) => EldInfoRow(
-                    label: isArabic ? 'الإصدار' : 'Version',
+                    label: loc.appVersionLabel,
                     value: AppConstants.appVersion,
                   ),
                 ),
                 EldInfoRow(
-                  label: isArabic ? 'معرّف الجهاز' : 'Device ID',
+                  label: loc.deviceIdLabel,
                   value: storage.deviceId.isNotEmpty
                       ? storage.deviceId
                       : notAvailable,
@@ -106,24 +108,24 @@ class AboutPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic ? 'التشخيص والاتصال' : 'Diagnostics',
+                  loc.diagnosticsAndConnection,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _StatusTile(
                   icon: Icons.cloud_outlined,
-                  label: isArabic ? 'الخادم المركزي' : 'Central server',
+                  label: loc.centralServer,
                   isOk: isConnected.valueOrNull ?? false,
-                  okText: isArabic ? 'متصل' : 'Connected',
-                  badText: isArabic ? 'غير متصل' : 'Disconnected',
+                  okText: loc.connected,
+                  badText: loc.disconnected,
                 ),
                 const Divider(color: AppColors.border),
                 _StatusTile(
                   icon: Icons.gps_fixed,
-                  label: isArabic ? 'خدمة الموقع (GPS)' : 'Location service (GPS)',
+                  label: loc.locationService,
                   isOk: gpsStatus.valueOrNull == ServiceStatus.enabled,
-                  okText: isArabic ? 'مفعّل' : 'Enabled',
-                  badText: isArabic ? 'معطّل' : 'Disabled',
+                  okText: loc.enabled,
+                  badText: loc.disabled,
                 ),
                 
                 // إضافة حالة اتصال الـ ELD 
@@ -139,10 +141,10 @@ class AboutPage extends ConsumerWidget {
                             const Divider(color: AppColors.border),
                             _StatusTile(
                               icon: Icons.developer_board,
-                              label: isArabic ? 'تنبيهات الجهاز' : 'Hardware alerts',
+                              label: loc.hardwareAlerts,
                               isOk: alerts.isEmpty,
-                              okText: isArabic ? 'لا توجد تنبيهات' : 'No active alerts',
-                              badText: isArabic ? 'يوجد تنبيهات' : 'Active alerts',
+                              okText: loc.noActiveAlerts,
+                              badText: loc.activeAlerts,
                             ),
                             if (alerts.isNotEmpty)
                               Padding(
@@ -188,7 +190,7 @@ class AboutPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isArabic ? 'المعلومات التقنية' : 'Technical Info',
+                      context.loc.technicalInfo,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -196,15 +198,15 @@ class AboutPage extends ConsumerWidget {
                       data: (data) => Column(
                         children: [
                           EldInfoRow(
-                            label: isArabic ? 'إصدار محرك ELD' : 'ELD Engine Version',
+                            label: context.loc.eldEngineVersion,
                             value: data.engineVersion ?? notAvailable,
                           ),
                           EldInfoRow(
-                            label: isArabic ? 'إصدار الجهاز (Hardware)' : 'Hardware Version',
+                            label: context.loc.hardwareVersion,
                             value: data.deviceVersion ?? notAvailable,
                           ),
                           EldInfoRow(
-                            label: isArabic ? 'توقيت آخر بيانات' : 'Last Data Received',
+                            label: context.loc.lastDataReceived,
                             value: data.lastHeartbeat ?? notAvailable,
                           ),
                         ],
@@ -232,13 +234,13 @@ class AboutPage extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        isArabic ? 'حالة اتصال ELD' : 'ELD Connection Status',
+                        loc.eldConnectionStatus,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                     // Retry for both server reads (data pages: retry + refresh).
                     IconButton(
-                      tooltip: isArabic ? 'تحديث' : 'Refresh',
+                      tooltip: loc.refresh,
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
                         ref.invalidate(hardwareStatusProvider);
@@ -257,9 +259,7 @@ class AboutPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
 
           Text(
-            isArabic
-                ? 'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.'
-                : 'For technical support, provide the device ID and version shown above.',
+            loc.supportText,
             style: context.textTheme.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),

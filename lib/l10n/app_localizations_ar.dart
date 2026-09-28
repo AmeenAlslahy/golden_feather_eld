@@ -864,7 +864,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get personalUse => 'استخدام شخصي';
 
   @override
-  String get yardMoves => 'تحركات ساحة';
+  String get yardMoves => 'تحركات الساحة';
 
   @override
   String get confirmTitle => 'تأكيد';
@@ -1044,7 +1044,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get inactive => 'متوقف';
 
   @override
-  String get notAvailable => 'لا يوجد';
+  String get notAvailable => 'غير متوفر';
 
   @override
   String get deviceInfo => 'معلومات الجهاز';
@@ -1303,4 +1303,171 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sessionMissing => 'الجلسة غير موجودة، يرجى تسجيل الدخول';
+
+  @override
+  String get interfaceLanguage => 'لغة الواجهة';
+
+  @override
+  String get languageArabic => 'العربية';
+
+  @override
+  String get languageEnglish => 'الإنجليزية';
+
+  @override
+  String get appearance => 'المظهر';
+
+  @override
+  String get themeSystem => 'النظام';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
+
+  @override
+  String get serverUrl => 'عنوان الخادم';
+
+  @override
+  String get enterServerUrl => 'أدخل عنوان الخادم.';
+
+  @override
+  String get invalidServerUrl =>
+      'عنوان غير صالح. مثال: https://server.example.com';
+
+  @override
+  String get serverUrlSaved => 'تم حفظ عنوان الخادم.';
+
+  @override
+  String get formIncomplete =>
+      'البيانات غير مكتملة، يرجى ملء جميع الحقول أولاً.';
+
+  @override
+  String get sixteenHourCondition =>
+      'لا يمكن تفعيل استثناء 16 ساعة إلا إذا تحققت شروطه.';
+
+  @override
+  String get rulesUpdated => 'تم تحديث القواعد.';
+
+  @override
+  String get allowed => 'مسموح';
+
+  @override
+  String get forbidden => 'ممنوع';
+
+  @override
+  String get notProvidedByServer => 'غير متوفرة من الخادم';
+
+  @override
+  String get ruleSource => 'مصدر القاعدة';
+
+  @override
+  String get cycleRule => 'قاعدة الدورة';
+
+  @override
+  String get cargoType => 'نوع الحمولة';
+
+  @override
+  String get restartRule => 'إعادة التشغيل';
+
+  @override
+  String get restBreakRule => 'الاستراحة';
+
+  @override
+  String get sixteenHourException => 'استثناء 16 ساعة';
+
+  @override
+  String get dailyLimits => 'الحدود اليومية';
+
+  @override
+  String get drivingLimit => 'القيادة';
+
+  @override
+  String get shiftWindowLimit => 'نافذة العمل';
+
+  @override
+  String get cycleLimit => 'دورة العمل';
+
+  @override
+  String get hourAbbr => 'ساعة';
+
+  @override
+  String get minAbbr => 'د';
+
+  @override
+  String get contactFleetManager =>
+      'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.';
+
+  @override
+  String get personalConveyance => 'الاستخدام الشخصي';
+
+  @override
+  String get unlimitedTrailers => 'مقطورات غير محدودة';
+
+  @override
+  String get unlimitedShippingDocs => 'مستندات شحن غير محدودة';
+
+  @override
+  String get aboutTitle => 'حول التطبيق';
+
+  @override
+  String get applicationInfo => 'معلومات التطبيق';
+
+  @override
+  String get appNameLabel => 'الاسم';
+
+  @override
+  String get appVersionLabel => 'الإصدار';
+
+  @override
+  String get appPackageLabel => 'معرّف الحزمة';
+
+  @override
+  String get deviceIdLabel => 'معرّف الجهاز';
+
+  @override
+  String get diagnosticsAndConnection => 'التشخيص والاتصال';
+
+  @override
+  String get centralServer => 'الخادم المركزي';
+
+  @override
+  String get locationService => 'خدمة الموقع (GPS)';
+
+  @override
+  String get enabled => 'مفعّل';
+
+  @override
+  String get disabled => 'معطّل';
+
+  @override
+  String get hardwareAlerts => 'تنبيهات الجهاز';
+
+  @override
+  String get noActiveAlerts => 'لا توجد تنبيهات';
+
+  @override
+  String get activeAlerts => 'يوجد تنبيهات';
+
+  @override
+  String get technicalInfo => 'المعلومات التقنية';
+
+  @override
+  String get eldEngineVersion => 'إصدار محرك ELD';
+
+  @override
+  String get hardwareVersion => 'إصدار الجهاز';
+
+  @override
+  String get lastDataReceived => 'توقيت آخر بيانات';
+
+  @override
+  String get eldConnectionStatus => 'حالة اتصال ELD';
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
+  String get supportText =>
+      'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.';
 }

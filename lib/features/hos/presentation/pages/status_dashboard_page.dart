@@ -9,7 +9,6 @@ import '../extensions/duty_status_l10n.dart';
 import '../providers/status_dashboard_providers.dart';
 import '../widgets/status_dashboard/hos_indicators_card.dart';
 import '../widgets/status_dashboard/main_circular_timer.dart';
-import '../widgets/status_dashboard/operational_alerts_banner.dart';
 import 'change_status_page.dart';
 
 /// Main driver dashboard — status, remaining time, HOS indicators.
@@ -48,7 +47,6 @@ class _DashboardView extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surface,
       child: Column(
         children: [
-          OperationalAlertsBanner(alerts: dashboard.operationalAlerts),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),

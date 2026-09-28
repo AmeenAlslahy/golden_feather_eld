@@ -17,7 +17,12 @@ final connectionStatusStreamProvider =
 });
 
 class ConnectionStatusIndicator extends ConsumerWidget {
-  const ConnectionStatusIndicator({super.key});
+  final bool showWarningTriangle;
+
+  const ConnectionStatusIndicator({
+    super.key,
+    this.showWarningTriangle = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,6 +38,9 @@ class ConnectionStatusIndicator extends ConsumerWidget {
     if (status == ConnectionStatus.disconnected ||
         status == ConnectionStatus.error ||
         status == ConnectionStatus.unconfigured) {
+      if (!showWarningTriangle) {
+        return const SizedBox.shrink();
+      }
       return IconButton(
         icon: const Icon(Icons.warning_amber,
             color: AppColors.warningYellow, size: 28),

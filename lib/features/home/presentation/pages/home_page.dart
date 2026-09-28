@@ -78,7 +78,7 @@ class HomePage extends ConsumerWidget {
                   ? [
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ConnectionStatusIndicator(),
+                      child: ConnectionStatusIndicator(showWarningTriangle: false),
                     ),
                     const SyncStatusIndicator(),
                     // SRS 4.2 operational alerts: server-driven tool icon +
@@ -92,8 +92,11 @@ class HomePage extends ConsumerWidget {
                             .watch(statusDashboardProvider)
                             .valueOrNull
                             ?.operationalAlerts;
+                        final isDisconnected = (ref.watch(isConnectedProvider).value ?? true) == false;
+                        
                         final showTool = isGpsOff || (alerts?.toolIcon ?? false);
-                        final showTriangle = alerts?.warningTriangleIcon ?? false;
+                        final showTriangle = isDisconnected || (alerts?.warningTriangleIcon ?? false);
+                        
                         if (!showTool && !showTriangle) {
                           return const SizedBox.shrink();
                         }

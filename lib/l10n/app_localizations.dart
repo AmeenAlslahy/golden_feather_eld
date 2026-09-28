@@ -1793,7 +1793,7 @@ abstract class AppLocalizations {
   /// No description provided for @yardMoves.
   ///
   /// In ar, this message translates to:
-  /// **'تحركات ساحة'**
+  /// **'تحركات الساحة'**
   String get yardMoves;
 
   /// No description provided for @confirmTitle.
@@ -2153,7 +2153,7 @@ abstract class AppLocalizations {
   /// No description provided for @notAvailable.
   ///
   /// In ar, this message translates to:
-  /// **'لا يوجد'**
+  /// **'غير متوفر'**
   String get notAvailable;
 
   /// No description provided for @deviceInfo.
@@ -2653,6 +2653,330 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الجلسة غير موجودة، يرجى تسجيل الدخول'**
   String get sessionMissing;
+
+  /// No description provided for @interfaceLanguage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لغة الواجهة'**
+  String get interfaceLanguage;
+
+  /// No description provided for @languageArabic.
+  ///
+  /// In ar, this message translates to:
+  /// **'العربية'**
+  String get languageArabic;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإنجليزية'**
+  String get languageEnglish;
+
+  /// No description provided for @appearance.
+  ///
+  /// In ar, this message translates to:
+  /// **'المظهر'**
+  String get appearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In ar, this message translates to:
+  /// **'النظام'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In ar, this message translates to:
+  /// **'فاتح'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In ar, this message translates to:
+  /// **'داكن'**
+  String get themeDark;
+
+  /// No description provided for @serverUrl.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان الخادم'**
+  String get serverUrl;
+
+  /// No description provided for @enterServerUrl.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عنوان الخادم.'**
+  String get enterServerUrl;
+
+  /// No description provided for @invalidServerUrl.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان غير صالح. مثال: https://server.example.com'**
+  String get invalidServerUrl;
+
+  /// No description provided for @serverUrlSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ عنوان الخادم.'**
+  String get serverUrlSaved;
+
+  /// No description provided for @formIncomplete.
+  ///
+  /// In ar, this message translates to:
+  /// **'البيانات غير مكتملة، يرجى ملء جميع الحقول أولاً.'**
+  String get formIncomplete;
+
+  /// No description provided for @sixteenHourCondition.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تفعيل استثناء 16 ساعة إلا إذا تحققت شروطه.'**
+  String get sixteenHourCondition;
+
+  /// No description provided for @rulesUpdated.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث القواعد.'**
+  String get rulesUpdated;
+
+  /// No description provided for @allowed.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسموح'**
+  String get allowed;
+
+  /// No description provided for @forbidden.
+  ///
+  /// In ar, this message translates to:
+  /// **'ممنوع'**
+  String get forbidden;
+
+  /// No description provided for @notProvidedByServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متوفرة من الخادم'**
+  String get notProvidedByServer;
+
+  /// No description provided for @ruleSource.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصدر القاعدة'**
+  String get ruleSource;
+
+  /// No description provided for @cycleRule.
+  ///
+  /// In ar, this message translates to:
+  /// **'قاعدة الدورة'**
+  String get cycleRule;
+
+  /// No description provided for @cargoType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع الحمولة'**
+  String get cargoType;
+
+  /// No description provided for @restartRule.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة التشغيل'**
+  String get restartRule;
+
+  /// No description provided for @restBreakRule.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستراحة'**
+  String get restBreakRule;
+
+  /// No description provided for @sixteenHourException.
+  ///
+  /// In ar, this message translates to:
+  /// **'استثناء 16 ساعة'**
+  String get sixteenHourException;
+
+  /// No description provided for @dailyLimits.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحدود اليومية'**
+  String get dailyLimits;
+
+  /// No description provided for @drivingLimit.
+  ///
+  /// In ar, this message translates to:
+  /// **'القيادة'**
+  String get drivingLimit;
+
+  /// No description provided for @shiftWindowLimit.
+  ///
+  /// In ar, this message translates to:
+  /// **'نافذة العمل'**
+  String get shiftWindowLimit;
+
+  /// No description provided for @cycleLimit.
+  ///
+  /// In ar, this message translates to:
+  /// **'دورة العمل'**
+  String get cycleLimit;
+
+  /// No description provided for @hourAbbr.
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعة'**
+  String get hourAbbr;
+
+  /// No description provided for @minAbbr.
+  ///
+  /// In ar, this message translates to:
+  /// **'د'**
+  String get minAbbr;
+
+  /// No description provided for @contactFleetManager.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.'**
+  String get contactFleetManager;
+
+  /// No description provided for @personalConveyance.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستخدام الشخصي'**
+  String get personalConveyance;
+
+  /// No description provided for @unlimitedTrailers.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقطورات غير محدودة'**
+  String get unlimitedTrailers;
+
+  /// No description provided for @unlimitedShippingDocs.
+  ///
+  /// In ar, this message translates to:
+  /// **'مستندات شحن غير محدودة'**
+  String get unlimitedShippingDocs;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حول التطبيق'**
+  String get aboutTitle;
+
+  /// No description provided for @applicationInfo.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلومات التطبيق'**
+  String get applicationInfo;
+
+  /// No description provided for @appNameLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم'**
+  String get appNameLabel;
+
+  /// No description provided for @appVersionLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإصدار'**
+  String get appVersionLabel;
+
+  /// No description provided for @appPackageLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'معرّف الحزمة'**
+  String get appPackageLabel;
+
+  /// No description provided for @deviceIdLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'معرّف الجهاز'**
+  String get deviceIdLabel;
+
+  /// No description provided for @diagnosticsAndConnection.
+  ///
+  /// In ar, this message translates to:
+  /// **'التشخيص والاتصال'**
+  String get diagnosticsAndConnection;
+
+  /// No description provided for @centralServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم المركزي'**
+  String get centralServer;
+
+  /// No description provided for @locationService.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدمة الموقع (GPS)'**
+  String get locationService;
+
+  /// No description provided for @enabled.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفعّل'**
+  String get enabled;
+
+  /// No description provided for @disabled.
+  ///
+  /// In ar, this message translates to:
+  /// **'معطّل'**
+  String get disabled;
+
+  /// No description provided for @hardwareAlerts.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهات الجهاز'**
+  String get hardwareAlerts;
+
+  /// No description provided for @noActiveAlerts.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد تنبيهات'**
+  String get noActiveAlerts;
+
+  /// No description provided for @activeAlerts.
+  ///
+  /// In ar, this message translates to:
+  /// **'يوجد تنبيهات'**
+  String get activeAlerts;
+
+  /// No description provided for @technicalInfo.
+  ///
+  /// In ar, this message translates to:
+  /// **'المعلومات التقنية'**
+  String get technicalInfo;
+
+  /// No description provided for @eldEngineVersion.
+  ///
+  /// In ar, this message translates to:
+  /// **'إصدار محرك ELD'**
+  String get eldEngineVersion;
+
+  /// No description provided for @hardwareVersion.
+  ///
+  /// In ar, this message translates to:
+  /// **'إصدار الجهاز'**
+  String get hardwareVersion;
+
+  /// No description provided for @lastDataReceived.
+  ///
+  /// In ar, this message translates to:
+  /// **'توقيت آخر بيانات'**
+  String get lastDataReceived;
+
+  /// No description provided for @eldConnectionStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة اتصال ELD'**
+  String get eldConnectionStatus;
+
+  /// No description provided for @refresh.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث'**
+  String get refresh;
+
+  /// No description provided for @supportText.
+  ///
+  /// In ar, this message translates to:
+  /// **'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.'**
+  String get supportText;
 }
 
 class _AppLocalizationsDelegate

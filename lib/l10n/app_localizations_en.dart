@@ -1302,4 +1302,170 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionMissing => 'Session missing, please login again';
+
+  @override
+  String get interfaceLanguage => 'Interface language';
+
+  @override
+  String get languageArabic => 'Arabic';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get serverUrl => 'Server URL';
+
+  @override
+  String get enterServerUrl => 'Enter the server URL.';
+
+  @override
+  String get invalidServerUrl =>
+      'Invalid URL. Example: https://server.example.com';
+
+  @override
+  String get serverUrlSaved => 'Server URL saved.';
+
+  @override
+  String get formIncomplete => 'Form is incomplete, please fill all fields.';
+
+  @override
+  String get sixteenHourCondition =>
+      'The 16-hour exception cannot be enabled unless its conditions are met.';
+
+  @override
+  String get rulesUpdated => 'Rules updated successfully';
+
+  @override
+  String get allowed => 'Allowed';
+
+  @override
+  String get forbidden => 'Forbidden';
+
+  @override
+  String get notProvidedByServer => 'Not provided by the server';
+
+  @override
+  String get ruleSource => 'Rule Source';
+
+  @override
+  String get cycleRule => 'Cycle Rule';
+
+  @override
+  String get cargoType => 'Cargo Type';
+
+  @override
+  String get restartRule => 'Restart';
+
+  @override
+  String get restBreakRule => 'Rest Break';
+
+  @override
+  String get sixteenHourException => '16-Hour Short-Haul Exception';
+
+  @override
+  String get dailyLimits => 'Daily Limits';
+
+  @override
+  String get drivingLimit => 'Driving';
+
+  @override
+  String get shiftWindowLimit => 'Shift window';
+
+  @override
+  String get cycleLimit => 'Cycle';
+
+  @override
+  String get hourAbbr => 'h';
+
+  @override
+  String get minAbbr => 'm';
+
+  @override
+  String get contactFleetManager =>
+      'Please contact your fleet manager to change rules\nor to add exceptions.';
+
+  @override
+  String get personalConveyance => 'Personal Conveyance';
+
+  @override
+  String get unlimitedTrailers => 'Unlimited Trailers';
+
+  @override
+  String get unlimitedShippingDocs => 'Unlimited Shipping Documents';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get applicationInfo => 'Application';
+
+  @override
+  String get appNameLabel => 'Name';
+
+  @override
+  String get appVersionLabel => 'Version';
+
+  @override
+  String get appPackageLabel => 'Package';
+
+  @override
+  String get deviceIdLabel => 'Device ID';
+
+  @override
+  String get diagnosticsAndConnection => 'Diagnostics';
+
+  @override
+  String get centralServer => 'Central server';
+
+  @override
+  String get locationService => 'Location service (GPS)';
+
+  @override
+  String get enabled => 'Enabled';
+
+  @override
+  String get disabled => 'Disabled';
+
+  @override
+  String get hardwareAlerts => 'Hardware alerts';
+
+  @override
+  String get noActiveAlerts => 'No active alerts';
+
+  @override
+  String get activeAlerts => 'Active alerts';
+
+  @override
+  String get technicalInfo => 'Technical Info';
+
+  @override
+  String get eldEngineVersion => 'ELD Engine Version';
+
+  @override
+  String get hardwareVersion => 'Hardware Version';
+
+  @override
+  String get lastDataReceived => 'Last Data Received';
+
+  @override
+  String get eldConnectionStatus => 'ELD Connection Status';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get supportText =>
+      'For technical support, provide the device ID and version shown above.';
 }

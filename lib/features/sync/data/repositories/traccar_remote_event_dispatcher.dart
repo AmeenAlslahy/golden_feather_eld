@@ -23,6 +23,22 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         }
         final payload = Map<String, dynamic>.from(event.payload);
         payload['driverId'] = driverId;
+
+        // Fix for old queued events in SQLite that have snake_case statuses
+        if (payload['status'] is String) {
+          final s = payload['status'] as String;
+          switch (s) {
+            case 'driving': payload['status'] = 'DRIVING'; break;
+            case 'on_duty': payload['status'] = 'ON_DUTY'; break;
+            case 'off_duty': payload['status'] = 'OFF_DUTY'; break;
+            case 'sleeper':
+            case 'sleeper_berth': payload['status'] = 'SLEEPER'; break;
+            case 'yard_move': payload['status'] = 'YARD_MOVE'; break;
+            case 'personal_use':
+            case 'personal_conveyance': payload['status'] = 'PERSONAL_CONVEYANCE'; break;
+          }
+        }
+
         final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(driverId, payload);
         return await result.fold(
           (error) => Left(ServerFailure(message: error.code)),

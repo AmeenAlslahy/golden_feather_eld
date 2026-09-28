@@ -13,7 +13,7 @@ import '../../application/usecases/update_rules_use_case.dart';
 import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import '../../application/models/rules_screen_model.dart';
 import '../../../../core/error/user_facing_message.dart';
-
+import '../../../../core/widgets/app_feedback.dart';
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key});
 
@@ -55,12 +55,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   Future<void> _saveRules(RulesScreenModel model) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!_isFormValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isArabic ? 'البيانات غير مكتملة، يرجى ملء جميع الحقول أولاً.' : 'Form is incomplete, please fill all fields.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppFeedback.error(context, context.loc.formIncomplete);
       return;
     }
     setState(() => _isSaving = true);
@@ -69,14 +64,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       final sixteenEligible =
           model.editableFields.contains('sixteenHourException');
       if ((_sixteenHourException ?? false) && !sixteenEligible) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isArabic
-                ? 'لا يمكن تفعيل استثناء 16 ساعة إلا إذا تحققت شروطه.'
-                : 'The 16-hour exception cannot be enabled unless its conditions are met.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppFeedback.error(context, context.loc.sixteenHourCondition);
         return;
       }
       final request = RulesScreenUpdateRequest(
@@ -92,22 +80,10 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       if (mounted) {
         result.fold(
           (failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(appErrorUserMessage(failure, isArabic: isArabic)),
-                backgroundColor: Colors.red,
-              ),
-            );
+            AppFeedback.error(context, appErrorUserMessage(failure, isArabic: isArabic));
           },
           (_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isArabic ? 'تم تحديث القواعد.' : 'Rules updated successfully',
-                ),
-                backgroundColor: Colors.green,
-              ),
-            );
+            AppFeedback.success(context, context.loc.rulesUpdated);
             ref.invalidate(rulesScreenProvider);
           },
         );
@@ -119,15 +95,15 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     }
   }
 
-  String _serverSetting(Map<String, dynamic> settings, List<String> keys) {
+  String _serverSetting(BuildContext context, Map<String, dynamic> settings, List<String> keys) {
     for (final key in keys) {
       final value = settings[key];
       if (value == null) continue;
-      if (value is bool) return value ? 'Allowed' : 'Forbidden';
+      if (value is bool) return value ? context.loc.allowed : context.loc.forbidden;
       final text = value.toString().trim();
       if (text.isNotEmpty) return text;
     }
-    return 'Not provided by the server';
+    return context.loc.notProvidedByServer;
   }
 
   Widget _buildDropdownOrInfo(String fieldName, String label, String value, List<String> options, Set<String> editable) {
@@ -255,8 +231,8 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           String hours(int minutes) {
             final h = minutes ~/ 60;
             final m = minutes % 60;
-            if (m == 0) return isArabic ? '$h ساعة' : '$h h';
-            return isArabic ? '$h س $m د' : '${h}h ${m}m';
+            if (m == 0) return '$h ${loc.hourAbbr}';
+            return '$h ${loc.hourAbbr} $m ${loc.minAbbr}';
           }
 
           return Container(
@@ -294,16 +270,16 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 Column(
                   children: [
                     if (model.ruleSource.trim().isNotEmpty) ...[
-                      _buildDropdownOrInfo('ruleSource', isArabic ? 'مصدر القاعدة' : 'Rule Source', model.ruleSource, const [], editable),
+                      _buildDropdownOrInfo('ruleSource', loc.ruleSource, model.ruleSource, const [], editable),
                       const Divider(height: 1, thickness: 1),
                     ],
-                    _buildDropdownOrInfo('cycleRule', isArabic ? 'قاعدة الدورة' : 'Cycle Rule', model.cycleRule, optionsFor('cycleRule'), editable),
+                    _buildDropdownOrInfo('cycleRule', loc.cycleRule, model.cycleRule, optionsFor('cycleRule'), editable),
                     const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('cargoType', isArabic ? 'نوع الحمولة' : 'Cargo Type', model.cargoType, optionsFor('cargoType'), editable),
+                    _buildDropdownOrInfo('cargoType', loc.cargoType, model.cargoType, optionsFor('cargoType'), editable),
                     const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('restart', isArabic ? 'إعادة التشغيل' : 'Restart', model.restart, optionsFor('restart'), editable),
+                    _buildDropdownOrInfo('restart', loc.restartRule, model.restart, optionsFor('restart'), editable),
                     const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('restBreak', isArabic ? 'الاستراحة' : 'Rest Break', model.restBreak, optionsFor('restBreak'), editable),
+                    _buildDropdownOrInfo('restBreak', loc.restBreakRule, model.restBreak, optionsFor('restBreak'), editable),
                     const Divider(height: 1, thickness: 1),
                     
                     if (editable.contains('sixteenHourException'))
@@ -314,7 +290,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                             Expanded(
                               flex: 2,
                               child: Text(
-                                isArabic ? 'استثناء 16 ساعة' : '16-Hour Short-Haul Exception',
+                                loc.sixteenHourException,
                                 style: context.styles.body.copyWith(
                                   color: AppColors.textSecondary,
                                   fontWeight: AppTypography.semiBold,
@@ -338,32 +314,32 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       )
                     else
                       EldInfoRow(
-                        label: isArabic ? 'استثناء 16 ساعة' : '16-Hour Short-Haul Exception',
-                        value: model.sixteenHourException ? 'Yes' : 'No',
+                        label: loc.sixteenHourException,
+                        value: model.sixteenHourException ? loc.yes : loc.no,
                       ),
                     const Divider(height: 1, thickness: 1),
                     
                     EldInfoRow(
-                      label: 'Personal Conveyance',
-                      value: _serverSetting(model.fixedSettings, const ['personalConveyance', 'personalConveyanceEnabled']),
+                      label: loc.personalConveyance,
+                      value: _serverSetting(context, model.fixedSettings, const ['personalConveyance', 'personalConveyanceEnabled']),
                     ),
                     const Divider(height: 1, thickness: 1),
                     
                     EldInfoRow(
-                      label: 'Yard Moves',
-                      value: _serverSetting(model.fixedSettings, const ['yardMoves', 'yardMoveEnabled']),
+                      label: loc.yardMoves,
+                      value: _serverSetting(context, model.fixedSettings, const ['yardMoves', 'yardMoveEnabled']),
                     ),
                     const Divider(height: 1, thickness: 1),
                     
                     EldInfoRow(
-                      label: 'Unlimited Trailers',
-                      value: _serverSetting(model.fixedSettings, const ['unlimitedTrailers', 'unlimitedTrailerEnabled']),
+                      label: loc.unlimitedTrailers,
+                      value: _serverSetting(context, model.fixedSettings, const ['unlimitedTrailers', 'unlimitedTrailerEnabled']),
                     ),
                     const Divider(height: 1, thickness: 1),
                     
                     EldInfoRow(
-                      label: 'Unlimited Shipping Documents',
-                      value: _serverSetting(model.fixedSettings, const ['unlimitedShippingDocuments', 'unlimitedShippingEnabled']),
+                      label: loc.unlimitedShippingDocs,
+                      value: _serverSetting(context, model.fixedSettings, const ['unlimitedShippingDocuments', 'unlimitedShippingEnabled']),
                     ),
                     const Divider(height: 1, thickness: 1),
                   ],
@@ -373,7 +349,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                   child: AppButton(
-                    label: 'SAVE',
+                    label: loc.saveButton,
                     type: EldButtonType.send,
                     isLoading: _isSaving,
                     onPressed: _isSaving ? null : () => _saveRules(model),
@@ -391,9 +367,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
-                          isArabic
-                              ? 'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.'
-                              : 'Please contact your fleet manager to change rules\nor to add exceptions.',
+                          loc.contactFleetManager,
                           textAlign: TextAlign.center,
                           style: context.styles.body.copyWith(
                             color: AppColors.textSecondary,
@@ -411,22 +385,22 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                       child: Text(
-                        isArabic ? 'الحدود اليومية' : 'Daily Limits',
+                        loc.dailyLimits,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                     EldInfoRow(
-                      label: isArabic ? 'القيادة' : 'Driving',
+                      label: loc.drivingLimit,
                       value: hours(config.drivingLimitMinutes),
                     ),
                     const Divider(height: 1, thickness: 1),
                     EldInfoRow(
-                      label: isArabic ? 'نافذة العمل' : 'Shift window',
+                      label: loc.shiftWindowLimit,
                       value: hours(config.shiftLimitMinutes),
                     ),
                     const Divider(height: 1, thickness: 1),
                     EldInfoRow(
-                      label: isArabic ? 'دورة العمل' : 'Cycle',
+                      label: loc.cycleLimit,
                       value: '${config.cycleLimitHours} / ${config.maxConsecutiveDays}',
                     ),
                     const Divider(height: 1, thickness: 1),
