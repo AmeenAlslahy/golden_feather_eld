@@ -1,4 +1,7 @@
 {
+    "vehicleStatusOutOfService": "خارج الخدمة",
+    "vehicleStatusRestricted": "مقيّدة",
+    "vehicleStatusAvailable": "متاحة",
   "@@locale": "ar",
   "driverName": "اسم السائق",
   "driverId": "معرف السائق",

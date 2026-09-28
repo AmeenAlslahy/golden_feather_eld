@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @vehicleStatusOutOfService.
+  ///
+  /// In ar, this message translates to:
+  /// **'خارج الخدمة'**
+  String get vehicleStatusOutOfService;
+
+  /// No description provided for @vehicleStatusRestricted.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقيّدة'**
+  String get vehicleStatusRestricted;
+
+  /// No description provided for @vehicleStatusAvailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'متاحة'**
+  String get vehicleStatusAvailable;
+
   /// No description provided for @driverName.
   ///
   /// In ar, this message translates to:

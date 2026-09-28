@@ -227,6 +227,50 @@ class _DvirCard extends StatelessWidget {
               _infoRow(context, context.loc.trailer, report.trailerId!),
             _infoRow(context, context.loc.odometerReading,
                 '${report.odometer?.toStringAsFixed(0) ?? "-"} mi'),
+            // SRS 7.1: حالة تشغيل المركبة المحسوبة من العيوب غير المُعالجة.
+            Builder(
+              builder: (context) {
+                final status = report.vehicleOperationalStatus;
+                final (label, color) = switch (status) {
+                  VehicleOperationalStatus.outOfService => (
+                      context.loc.vehicleStatusOutOfService,
+                      AppColors.dangerRed,
+                    ),
+                  VehicleOperationalStatus.restricted => (
+                      context.loc.vehicleStatusRestricted,
+                      AppColors.warningYellow,
+                    ),
+                  VehicleOperationalStatus.available => (
+                      context.loc.vehicleStatusAvailable,
+                      AppColors.successGreen,
+                    ),
+                };
+                return Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, size: 8, color: color),
+                      const SizedBox(width: 6),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             // عدد الأعطال وحالة الإصلاح
             if (report.hasDefects)
               Container(

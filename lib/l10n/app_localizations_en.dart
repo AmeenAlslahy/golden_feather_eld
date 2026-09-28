@@ -9,6 +9,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get vehicleStatusOutOfService => 'OUT_OF_SERVICE';
+
+  @override
+  String get vehicleStatusRestricted => 'RESTRICTED';
+
+  @override
+  String get vehicleStatusAvailable => 'AVAILABLE';
+
+  @override
   String get driverName => 'Driver Name';
 
   @override

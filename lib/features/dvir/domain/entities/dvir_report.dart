@@ -71,6 +71,19 @@ class ItemInspectionResult extends Equatable {
 }
 
 /// كيان تقرير DVIR
+/// حالة تشغيل المركبة المشتقة من عيوب التقرير (SRS 7.1).
+///
+/// تُحسب من العيوب **غير المُعالجة** فقط:
+/// - `outOfService`: عيب يستوجب إيقاف الخدمة ولم يُعالج (server flag).
+/// - `restricted`: عيوب أخرى غير مُعالجة.
+/// - `available`: لا عيوب أو كلها مُعالجة.
+/// لا يُدمج هذا الحقل مع حالة العيب في حقل واحد.
+enum VehicleOperationalStatus {
+  outOfService,
+  restricted,
+  available,
+}
+
 class DvirReport extends Equatable {
   final String id;
   final InspectionType type;
@@ -104,6 +117,14 @@ class DvirReport extends Equatable {
 
   /// §396.11 catalog items marked defective on this report.
   final List<DvirDefectSelection> selectedDefects;
+
+  /// SRS 7.1: حالة تشغيل المركبة المشترقة من عيوب هذا التقرير.
+  /// الإيقاف (`outOfService` من الخادم) يرجح على التقييد، والتقييد على التوفر.
+  VehicleOperationalStatus get vehicleOperationalStatus {
+    if (outOfService) return VehicleOperationalStatus.outOfService;
+    if (hasDefects) return VehicleOperationalStatus.restricted;
+    return VehicleOperationalStatus.available;
+  }
 
   const DvirReport({
     required this.id,

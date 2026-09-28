@@ -9,6 +9,15 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get vehicleStatusOutOfService => 'خارج الخدمة';
+
+  @override
+  String get vehicleStatusRestricted => 'مقيّدة';
+
+  @override
+  String get vehicleStatusAvailable => 'متاحة';
+
+  @override
   String get driverName => 'اسم السائق';
 
   @override

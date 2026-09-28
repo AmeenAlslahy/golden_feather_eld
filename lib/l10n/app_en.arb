@@ -1,4 +1,7 @@
 {
+    "vehicleStatusOutOfService": "OUT_OF_SERVICE",
+    "vehicleStatusRestricted": "RESTRICTED",
+    "vehicleStatusAvailable": "AVAILABLE",
   "@@locale": "en",
   "driverName": "Driver Name",
   "driverId": "Driver ID",
