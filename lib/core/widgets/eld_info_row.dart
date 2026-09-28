@@ -35,7 +35,7 @@ class EldInfoRow extends StatelessWidget {
               child: Text(
                 label,
                 style: context.styles.body.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -48,7 +48,7 @@ class EldInfoRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.start,
                 style: valueColor == null
-                    ? context.styles.body.copyWith(color: AppColors.textPrimary)
+                    ? context.styles.body.copyWith(color: AppColors.textPrimaryFor(Theme.of(context).brightness))
                     : context.styles.body.copyWith(color: valueColor),
               ),
             ),

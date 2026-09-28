@@ -160,7 +160,7 @@ class UserManualPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md, vertical: AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: brightness == Brightness.light ? Colors.white : AppColors.surface,
+                        color: brightness == Brightness.light ? AppColors.white : AppColors.surface,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           if (brightness == Brightness.light)
@@ -176,8 +176,8 @@ class UserManualPage extends StatelessWidget {
                             ? 'جهاز التسجيل الإلكتروني (ELD)'
                             : 'Electronic Logging Device (ELD)',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.textPrimary),
+                        style:  TextStyle(
+                            fontSize: 11, color: AppColors.textPrimaryFor(brightness)),
                       ),
                     ),
                   ],

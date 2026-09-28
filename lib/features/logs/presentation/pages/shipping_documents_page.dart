@@ -143,9 +143,9 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                           horizontal: AppSpacing.md,
                           vertical: AppSpacing.xs,
                         ),
-                        leading: const Icon(
+                        leading:  Icon(
                           Icons.description,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                           size: 28,
                         ),
                         title: Text(

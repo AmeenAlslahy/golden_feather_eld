@@ -225,18 +225,18 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.vehicle,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   dashboard.vehicleId,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 16,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -254,18 +254,18 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.location,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   formState.location.isEmpty ? ' ' : formState.location, // empty space to keep height if empty
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 16,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -284,7 +284,7 @@ class EditLogPage extends ConsumerWidget {
                 hintStyle: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant),
                 border: const UnderlineInputBorder(),
-                suffixIcon: const Icon(Icons.my_location, color: AppColors.textPrimary),
+                suffixIcon:  Icon(Icons.my_location, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
               style: context.styles.body,
@@ -613,7 +613,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     : AppTypography.regular,
                 color: index == selected
                     ? AppColors.primaryGold
-                    : AppColors.textSecondary,
+                    : AppColors.textSecondaryFor(Theme.of(context).brightness),
               ),
             ),
           ),
@@ -642,7 +642,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     : AppTypography.regular,
                 color: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
                     ? AppColors.primaryGold
-                    : AppColors.textSecondary,
+                    : AppColors.textSecondaryFor(Theme.of(context).brightness),
               ),
             ),
           ),

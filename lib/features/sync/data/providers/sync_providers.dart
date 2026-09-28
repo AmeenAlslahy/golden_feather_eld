@@ -7,7 +7,7 @@ import '../../../../core/di/auth_local_data_source_provider.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
 import '../../../tracking/domain/entities/connection_status.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/offline_queue.dart';

@@ -76,8 +76,8 @@ class AuditTrailPage extends ConsumerWidget {
                     ];
                     return ListTile(
                       dense: true,
-                      leading: const Icon(Icons.history,
-                          color: AppColors.textSecondary, size: 20),
+                      leading:  Icon(Icons.history,
+                          color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 20),
                       title: Text(
                         e.action.isNotEmpty ? e.action : e.newStatus,
                         style: context.styles.body,

@@ -23,7 +23,7 @@ class MainCircularTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _color();
+    final color = _color(context);
     final timeString = _formatDuration(circle.remaining);
 
     return Semantics(
@@ -65,10 +65,10 @@ class MainCircularTimer extends StatelessWidget {
                 Text(
                   statusLabel.toUpperCase(),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const Icon(Icons.keyboard_arrow_down, size: 22),
@@ -80,9 +80,9 @@ class MainCircularTimer extends StatelessWidget {
     );
   }
 
-  Color _color() {
+  Color _color(BuildContext context) {
     final status = statusLabel.toLowerCase();
-    if (status.contains('off') || status.contains('sleeper')) return AppColors.textSecondary;
+    if (status.contains('off') || status.contains('sleeper')) return AppColors.textSecondaryFor(Theme.of(context).brightness);
     if (circle.isExpired) return AppColors.dangerRed;
     if (circle.isCritical) return AppColors.warningYellow;
     return AppColors.successGreen;

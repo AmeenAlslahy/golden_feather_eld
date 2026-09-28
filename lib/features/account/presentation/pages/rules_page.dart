@@ -139,7 +139,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
               child: Text(
                 label,
                 style: context.styles.body.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                   fontWeight: AppTypography.semiBold,
                 ),
               ),
@@ -150,7 +150,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   value: currentValue,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+                  icon:  Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       setState(() {
@@ -171,9 +171,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       });
                     }
                   },
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: AppTypography.bodySize,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                   items: options.map((String opt) {
                     return DropdownMenuItem<String>(
@@ -254,7 +254,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline, color: AppColors.textPrimary),
+                         Icon(Icons.info_outline, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
@@ -292,7 +292,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                               child: Text(
                                 loc.sixteenHourException,
                                 style: context.styles.body.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                                   fontWeight: AppTypography.semiBold,
                                 ),
                               ),
@@ -363,14 +363,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.info, color: AppColors.textSecondary, size: 18),
+                       Icon(Icons.info, color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 18),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           loc.contactFleetManager,
                           textAlign: TextAlign.center,
                           style: context.styles.body.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                           ),
                         ),
                       ),

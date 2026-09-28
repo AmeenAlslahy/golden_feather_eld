@@ -143,10 +143,10 @@ class _PacketBlock extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style:  TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryFor(Theme.of(context).brightness),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

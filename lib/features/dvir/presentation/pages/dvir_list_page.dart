@@ -79,9 +79,9 @@ class DvirListPage extends ConsumerWidget {
                                   ? 'لا توجد سجلات'
                                   : 'No Records',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style:  TextStyle(
                                 fontSize: 18,
-                                color: AppColors.textSecondary,
+                                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                               ),
                             ),
                           ),
@@ -298,12 +298,12 @@ class _DvirCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.build, color: AppColors.textSecondary, size: 14),
+                           Icon(Icons.build, color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 14),
                           const SizedBox(width: 8),
                           Text(
                             'Repair Cert · ${report.repairStatus}',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style:  TextStyle(
+                              color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                               fontSize: 12,
                             ),
                           ),

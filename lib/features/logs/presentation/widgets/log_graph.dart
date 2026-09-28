@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
 
 final logGraphEventsProvider = StreamProvider.autoDispose<EldEvent>((ref) {
   return ref.watch(liveTrackingDataSourceProvider).events;

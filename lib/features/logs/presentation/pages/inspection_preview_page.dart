@@ -259,7 +259,7 @@ class _EventRow extends StatelessWidget {
             child: Text(
               event.statusArabic ?? event.status ?? '',
               style: _valueStyle(context).copyWith(
-                color: _getStatusColor(event.status),
+                color: _getStatusColor(context, event.status),
                 fontWeight: AppTypography.semiBold,
               ),
             ),
@@ -310,7 +310,7 @@ class _EventRow extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String? status) {
+  Color _getStatusColor(BuildContext context, String? status) {
     switch (status) {
       case 'D':
         return AppColors.successGreen;
@@ -319,9 +319,9 @@ class _EventRow extends StatelessWidget {
       case 'SB':
         return AppColors.primaryGold;
       case 'OFF':
-        return AppColors.textSecondary;
+        return AppColors.textSecondaryFor(Theme.of(context).brightness);
       default:
-        return AppColors.textSecondary;
+        return AppColors.textSecondaryFor(Theme.of(context).brightness);
     }
   }
 }

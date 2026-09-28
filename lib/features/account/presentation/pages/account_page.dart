@@ -204,8 +204,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.info,
-                              color: AppColors.textSecondary, size: 18),
+                           Icon(Icons.info,
+                              color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 18),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
@@ -214,7 +214,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                   ? 'يرجى الاتصال بمدير الأسطول لتغيير معلومات الحساب.'
                                   : 'Please contact your fleet manager to change your\naccount information.'),
                               style: context.styles.body.copyWith(
-                                color: AppColors.textSecondary,
+                                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -245,7 +245,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             child: Text(
               label,
               style: context.styles.body.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                 fontWeight: AppTypography.semiBold,
               ),
             ),
@@ -256,7 +256,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               value,
               textAlign: TextAlign.start,
               style: context.styles.body.copyWith(
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
               ),
             ),
           ),
@@ -288,7 +288,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             child: Text(
               title,
               style: context.styles.body.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                 fontWeight: AppTypography.semiBold,
               ),
             ),
@@ -299,11 +299,11 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: safeValue.isEmpty ? null : safeValue,
-                icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+                icon:  Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
                 onChanged: onChanged,
-                style: const TextStyle(
+                style:  TextStyle(
                   fontSize: AppTypography.bodySize,
-                  color: AppColors.textPrimary,
+                  color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                 ),
                 items: items.map((String item) {
                   return DropdownMenuItem<String>(

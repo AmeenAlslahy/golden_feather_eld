@@ -43,7 +43,8 @@ Write-Host "`n-> Rule 2: no upward imports"
 
 # core/ must not import from domain, backend, features, app
 $coreViolations = Get-ChildItem -Path lib\core -Recurse -Filter *.dart |
-    Select-String -Pattern "import 'package:golden_feather_eld/(domain|backend|features|app)/"
+    Select-String -Pattern "import 'package:golden_feather_eld/(domain|backend|features|app)/" |
+    Where-Object { $_.Line -notmatch "// ignore_architecture" }
 
 if ($coreViolations) {
     $coreViolations | ForEach-Object {

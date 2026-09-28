@@ -92,10 +92,10 @@ class LogEventTile extends StatelessWidget {
                             width: 36,
                             child: Text(
                               event.status,
-                              style: const TextStyle(
+                              style:  TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                               ),
                             ),
                           ),
@@ -103,9 +103,9 @@ class LogEventTile extends StatelessWidget {
                             width: 110,
                             child: Text(
                               _formatTimeWithZone(event.startTime),
-                              style: const TextStyle(
+                              style:  TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textPrimary,
+                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                               ),
                             ),
                           ),
@@ -114,9 +114,9 @@ class LogEventTile extends StatelessWidget {
                               children: [
                                 Text(
                                   event.formattedDuration,
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                     fontSize: 14,
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                                   ),
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
@@ -126,9 +126,9 @@ class LogEventTile extends StatelessWidget {
                                       isArabic
                                           ? 'بدأ: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'
                                           : 'Started: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
-                                      style: const TextStyle(
+                                      style:  TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.textSecondary,
+                                        color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -139,10 +139,10 @@ class LogEventTile extends StatelessWidget {
                           if (onEdit != null)
                             IconButton(
                               onPressed: onEdit,
-                              icon: const Icon(
+                              icon:  Icon(
                                 Icons.edit,
                                 size: 22,
-                                color: AppColors.textPrimary,
+                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                               ),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),

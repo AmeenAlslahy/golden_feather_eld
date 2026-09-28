@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
-import '../../features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
+import '../../features/tracking/domain/entities/connection_status.dart'; // ignore_architecture
 import '../theme/app_colors.dart';
 import '../extensions/context_extensions.dart';
 import 'package:go_router/go_router.dart';

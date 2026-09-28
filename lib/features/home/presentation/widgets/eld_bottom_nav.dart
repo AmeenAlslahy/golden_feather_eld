@@ -38,7 +38,7 @@ class EldBottomNav extends StatelessWidget {
         selectedItemColor: AppColors.navBarInactive,
         unselectedItemColor: AppColors.navBarInactive,
         selectedIconTheme: IconThemeData(
-          color: showingRecap ? AppColors.navBarInactive : AppColors.textPrimary,
+          color: showingRecap ? AppColors.navBarInactive : AppColors.textPrimaryFor(Theme.of(context).brightness),
         ),
         type: BottomNavigationBarType.fixed,
         selectedFontSize: AppTypography.captionSize,

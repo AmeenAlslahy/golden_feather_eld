@@ -53,7 +53,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
               : 'No internet connection.',
         ),
       ConnectionStatus.unknown => (
-          AppColors.textSecondary,
+          AppColors.textSecondaryFor(Theme.of(context).brightness),
           Icons.info_outline,
           isArabic
               ? 'حالة الاتصال غير معروفة.'

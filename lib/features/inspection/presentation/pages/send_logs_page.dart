@@ -150,9 +150,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                             ? 'إرسال السجلات عبر البريد'
                             : 'Send logs via email')
                         : (_arabic ? 'إرسال 8 سجلات' : 'Send 8 Logs'),
-                    style: const TextStyle(
+                    style:  TextStyle(
                       fontSize: 18,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -179,9 +179,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       padding: const EdgeInsets.only(top: 6, bottom: 10),
                       child: Text(
                         _arabic ? 'بريد إلكتروني' : 'Email',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontSize: 16,
-                          color: AppColors.textPrimary,
+                          color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                         ),
                       ),
                     ),
@@ -210,10 +210,10 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style:  TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+        color: AppColors.textPrimaryFor(Theme.of(context).brightness),
       ),
     );
   }

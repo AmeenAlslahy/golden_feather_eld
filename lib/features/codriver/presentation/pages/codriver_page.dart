@@ -494,7 +494,7 @@ class _LinkedCoDriver extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             color: state.currentError == null
-                ? AppColors.textSecondary
+                ? AppColors.textSecondaryFor(Theme.of(context).brightness)
                 : AppColors.dangerRed,
           ),
         ),

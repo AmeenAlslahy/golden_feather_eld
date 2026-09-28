@@ -140,14 +140,14 @@ class _LogListItem extends StatelessWidget {
                         : log.formattedDate,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style:  TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                     ),
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 24, color: AppColors.textSecondary),
+                 Icon(Icons.chevron_right, size: 24, color: AppColors.textSecondaryFor(Theme.of(context).brightness)),
               ],
             ),
 

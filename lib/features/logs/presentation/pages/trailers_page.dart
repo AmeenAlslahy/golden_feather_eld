@@ -142,9 +142,9 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                           horizontal: AppSpacing.md,
                           vertical: AppSpacing.xs,
                         ),
-                        leading: const Icon(
+                        leading:  Icon(
                           Icons.local_shipping,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryFor(Theme.of(context).brightness),
                           size: 28,
                         ),
                         title: Text(
