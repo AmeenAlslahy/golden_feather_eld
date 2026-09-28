@@ -20,9 +20,11 @@ class LogGraph extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final latestEldEvent = ref.watch(logGraphEventsProvider).valueOrNull;
 
+    final brightness = Theme.of(context).brightness;
+
     return Container(
       height: 190,
-      color: Colors.white,
+      color: AppColors.surfaceFor(brightness),
       padding: const EdgeInsets.only(
         top: AppSpacing.md,
         bottom: AppSpacing.md,
@@ -35,8 +37,8 @@ class LogGraph extends ConsumerWidget {
               events: events,
               logDate: logDate,
               latestEldEvent: latestEldEvent,
-              textColor: Colors.black87,
-              gridColor: Colors.black54,
+              textColor: AppColors.textPrimaryFor(brightness),
+              gridColor: AppColors.borderFor(brightness),
             ),
           );
         },
