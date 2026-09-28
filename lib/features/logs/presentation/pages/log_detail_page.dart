@@ -10,6 +10,7 @@ import 'inspection_preview_page.dart';
 import '../widgets/log_detail_tabs/events_tab.dart';
 import '../widgets/log_detail_tabs/form_tab.dart';
 import '../widgets/log_detail_tabs/certify_tab.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 /// شاشة تفاصيل اليوم (Shell)
 class LogDetailPage extends ConsumerWidget {
@@ -80,12 +81,7 @@ class LogDetailPage extends ConsumerWidget {
               if (result == true && context.mounted) {
                 // الحفظ يتم من داخل EditLogPage (حدث المستخدم المعدّل وليس الافتراضي)
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(successMsg),
-                      backgroundColor: AppColors.successGreen,
-                    ),
-                  );
+                  AppFeedback.success(context, successMsg);
                 }
               }
             },

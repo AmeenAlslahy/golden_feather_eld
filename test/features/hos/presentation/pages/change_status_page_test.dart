@@ -233,6 +233,9 @@ void main() {
 
     expect(hos.calls, ['sleeperBerth||ym=false']);
     expect(find.byType(ChangeStatusPage), findsOneWidget);
-    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.text('Session missing, please login again'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 }

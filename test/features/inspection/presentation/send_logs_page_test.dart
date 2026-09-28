@@ -131,6 +131,9 @@ void main() {
     await tapSend(tester);
     expect(find.text('The comment must be 4 to 60 characters.'), findsOneWidget);
     expect(backend.calls, isEmpty);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('send mode: valid comment → send-logs (EMAIL), server text shown',
@@ -164,6 +167,9 @@ void main() {
 
     expect(backend.calls, ['email:106:officer@dot.gov:Email logs transfer:']);
     expect(find.text('Transfer queued.'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('server FAILED status is a refusal, not a success screen',
@@ -177,6 +183,9 @@ void main() {
     expect(find.text('Routing code unknown.'), findsOneWidget);
     // Form stays; nothing is claimed as sent.
     expect(find.widgetWithText(AppButton, 'SEND'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('a transport error never leaks raw text to the driver', (tester) async {
@@ -191,7 +200,11 @@ void main() {
 
     expect(find.textContaining('Dio'), findsNothing);
     expect(find.textContaining('Hibernate'), findsNothing);
-    expect(find.byType(SnackBar), findsOneWidget);
+    // Feedback now renders as the AppFeedback top overlay, not a SnackBar.
+    expect(find.byType(SnackBar), findsNothing);
     expect(find.widgetWithText(AppButton, 'SEND'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 }

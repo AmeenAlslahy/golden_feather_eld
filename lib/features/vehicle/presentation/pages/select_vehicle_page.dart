@@ -14,6 +14,7 @@ import '../../domain/vehicle_selection.dart';
 import '../providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 /// شاشة اختيار المركبة
 class SelectVehiclePage extends ConsumerStatefulWidget {
@@ -40,15 +41,10 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       browsingCompanyFleet: _browsingCompany,
       vehicle: vehicle,
     )) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_vehicleErrorText(
+      AppFeedback.error(context, _vehicleErrorText(
             vehicle.inUseByOther == true ? 'in_use' : 'unauthorized',
             isArabic,
-          )),
-          backgroundColor: AppColors.dangerRed,
-        ),
-      );
+          ));
       return;
     }
     await ref.read(vehicleProvider.notifier).selectVehicle(
@@ -124,12 +120,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     ref.listen<VehicleState>(vehicleProvider, (previous, current) {
       if (current.error != null && (previous?.error != current.error)) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_vehicleErrorText(current.error!, isArabic)),
-            backgroundColor: AppColors.dangerRed,
-          ),
-        );
+        AppFeedback.error(context, _vehicleErrorText(current.error!, isArabic));
       }
 
       // SRS 9.1 — the "No Vehicles Assigned" prompt is for drivers with no
@@ -148,18 +139,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       if (current.isSuccess && !(previous?.isSuccess ?? false)) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final name = current.selectedVehicle?.displayName ?? '';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        AppFeedback.success(context, 
               // Select ≠ Operate: the server session is opened on the
               // Connection page, so nothing is claimed as accepted here.
               isArabic
                   ? 'تم اختيار $name. اتصل بجهاز ELD لتشغيلها. لم تُنقل ساعات الخدمة.'
-                  : 'Selected $name. Connect to the ELD to operate it. Hours were not copied.',
-            ),
-            backgroundColor: AppColors.successGreen,
-          ),
-        );
+                  : 'Selected $name. Connect to the ELD to operate it. Hours were not copied.');
         // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
         context.go(AppRoutes.connection);
       }

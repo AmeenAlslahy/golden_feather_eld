@@ -17,6 +17,9 @@ class AppFeedback {
   static void info(BuildContext context, String message) =>
       _show(context, message, null);
 
+  static void warn(BuildContext context, String message) =>
+      _show(context, message, AppColors.warningYellow);
+
   static void _show(BuildContext context, String message, Color? color) {
     final overlay = Overlay.maybeOf(context);
     if (overlay == null) return;

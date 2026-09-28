@@ -347,17 +347,11 @@ class EditLogPage extends ConsumerWidget {
 
                       if (driverId == null || driverId.isEmpty) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
+                          AppFeedback.error(context, 
                                 Localizations.localeOf(context).languageCode ==
                                         'ar'
                                     ? 'جلسة السائق غير موجودة. لا يمكن الحفظ.'
-                                    : 'Cannot save: driver session not found.',
-                              ),
-                              backgroundColor: AppColors.dangerRed,
-                            ),
-                          );
+                                    : 'Cannot save: driver session not found.');
                         }
                         return;
                       }
@@ -418,16 +412,10 @@ class EditLogPage extends ConsumerWidget {
                           final isArabic =
                               Localizations.localeOf(context).languageCode ==
                                   'ar';
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
+                          AppFeedback.error(context, 
                                 isArabic
                                     ? 'تعذر حفظ الحدث.'
-                                    : 'The event could not be saved.',
-                              ),
-                              backgroundColor: AppColors.dangerRed,
-                            ),
-                          );
+                                    : 'The event could not be saved.');
                         }
                         return;
                       }
@@ -451,16 +439,10 @@ class EditLogPage extends ConsumerWidget {
                           final isArabic =
                               Localizations.localeOf(context).languageCode ==
                                   'ar';
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
+                          AppFeedback.error(context, 
                                 isArabic
                                     ? 'حُفظ الحدث لكن تعذر تسجيل سبب التعديل.'
-                                    : 'The event was saved but the change audit could not be recorded.',
-                              ),
-                              backgroundColor: AppColors.dangerRed,
-                            ),
-                          );
+                                    : 'The event was saved but the change audit could not be recorded.');
                         }
                         return;
                       }

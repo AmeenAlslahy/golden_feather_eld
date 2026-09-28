@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import '../../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/logs_provider.dart';
+import '../../../../../core/widgets/app_feedback.dart';
 
 class CertifyTab extends ConsumerStatefulWidget {
   final DailyLog selectedLog;
@@ -66,16 +67,12 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.dangerRed),
-    );
+    AppFeedback.error(context, message);
   }
 
   void _showSuccess(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.successGreen),
-    );
+    AppFeedback.success(context, message);
   }
 
   String _formatDate(DateTime date) {

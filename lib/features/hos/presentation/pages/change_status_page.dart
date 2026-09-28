@@ -54,17 +54,10 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     if ((_selectedStatus == DutyStatus.personalUse ||
             (_selectedStatus == DutyStatus.onDutyNotDriving && _isYardMoves)) &&
         annotation.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      AppFeedback.error(context, 
             Localizations.localeOf(context).languageCode == 'ar'
                 ? 'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.'
-                : 'An annotation is required for personal conveyance or yard moves.',
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+                : 'An annotation is required for personal conveyance or yard moves.');
       return;
     }
 
@@ -78,13 +71,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     setState(() => _saving = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(dutyChangeMessage(context, error)),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppFeedback.error(context, dutyChangeMessage(context, error));
       return;
     }
 

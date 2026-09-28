@@ -142,6 +142,9 @@ void main() {
 
       // The log is not certified without a signature; the driver is told why.
       expect(find.text('You need to fill and save form first.'), findsOneWidget);
+      // Pump past the AppFeedback auto-dismiss timer (3s).
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('carrier-proposed edits are shown and ACCEPT hits the respond API',
@@ -224,6 +227,9 @@ void main() {
       expect(find.textContaining('Fuel stop was logged as driving'), findsNothing);
       expect(find.widgetWithText(AppButton, 'ACCEPT'), findsNothing);
       expect(find.text('Carrier edit accepted. Re-certify the log.'), findsOneWidget);
+      // Pump past the AppFeedback auto-dismiss timer (3s).
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
     });
   });
 }

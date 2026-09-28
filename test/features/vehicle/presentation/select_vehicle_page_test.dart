@@ -125,6 +125,9 @@ void main() {
     expect(find.text('CONNECTION ROUTE'), findsOneWidget);
     // The list never opens the hardware session itself: the repository has
     // no operate call at all — only the connection screen owns it.
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('unknown motion refuses the selection and stays', (tester) async {
@@ -139,6 +142,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('CONNECTION ROUTE'), findsNothing);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('no assigned vehicle → Unassigned dialog; VIEW ALL is view-only for the fleet',
@@ -179,6 +185,9 @@ void main() {
     await tester.tap(find.text('TRK-102'));
     await tester.pumpAndSettle();
     expect(find.text('CONNECTION ROUTE'), findsOneWidget);
+    // Pump past the AppFeedback auto-dismiss timer (3s).
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('load failure shows a sanitized message with retry', (tester) async {

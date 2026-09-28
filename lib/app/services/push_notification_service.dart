@@ -3,11 +3,10 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../app.dart';
 import '../../routes.dart';
+import 'package:golden_feather_eld/core/widgets/app_feedback.dart';
 import '../../features/tracking/data/services/tracking_service.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../core/utils/logger.dart';
@@ -121,15 +120,9 @@ class PushNotificationService {
   }
 
   void _showInAppNotification(String title, String body) {
-    final context = scaffoldMessengerKey.currentContext;
+    final context = rootNavigatorKey.currentContext;
     if (context != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$title\n$body'),
-          duration: const Duration(seconds: 4),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      AppFeedback.info(context, '$title\n$body');
     }
   }
 

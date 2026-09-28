@@ -215,6 +215,9 @@ void main() {
         {'documentNumber': 'BOL 2026/09-1'},
       ]);
       expect(find.text('server.500'), findsNothing);
+      // Pump past the AppFeedback auto-dismiss timer (3s).
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('server failure is shown sanitized, never the raw code',
@@ -237,9 +240,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('server.500'), findsNothing);
-      expect(find.byType(SnackBar), findsOneWidget);
-      final shown = tester.widget<SnackBar>(find.byType(SnackBar));
-      expect((shown.content as Text).data, isNot(contains('server.')));
+      // Feedback now renders as the AppFeedback top overlay.
+      expect(find.byType(SnackBar), findsNothing);
+      expect(find.textContaining('server.'), findsNothing);
       await settleSnackBar(tester);
     });
   });

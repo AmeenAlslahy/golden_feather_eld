@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/extensions/context_extensions.dart';
@@ -17,6 +16,7 @@ import '../../../domain/daily_form_rules.dart';
 import '../../../domain/entities/daily_log.dart';
 import '../../../domain/saved_form_status.dart';
 import '../../../../../backend/providers/backend_providers.dart';
+import '../../../../../core/widgets/app_feedback.dart';
 
 class FormTab extends ConsumerWidget {
   const FormTab({super.key});
@@ -105,12 +105,7 @@ class FormTab extends ConsumerWidget {
                 isArabic: isArabic,
               );
               if (form.error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(form.error!),
-                    backgroundColor: AppColors.dangerRed,
-                  ),
-                );
+                AppFeedback.error(context, form.error!);
                 return;
               }
 
@@ -123,13 +118,7 @@ class FormTab extends ConsumerWidget {
                 (error) {
                   final isArabic =
                       Localizations.localeOf(context).languageCode == 'ar';
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          Text(anyErrorUserMessage(error, isArabic: isArabic)),
-                      backgroundColor: AppColors.dangerRed,
-                    ),
-                  );
+                  AppFeedback.error(context, anyErrorUserMessage(error, isArabic: isArabic));
                 },
                 (json) {
                   final read = readSavedForm(json);
@@ -155,14 +144,7 @@ class FormTab extends ConsumerWidget {
                               : (arabic
                                   ? 'حفظ الخادم النموذج ولم يُرجع حالة الاكتمال.'
                                   : 'The server saved the form but did not return a form status.'));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(text),
-                      backgroundColor: read.complete == false
-                          ? AppColors.warningYellow
-                          : AppColors.successGreen,
-                    ),
-                  );
+                  AppFeedback.info(context, text);
                 },
               );
             },

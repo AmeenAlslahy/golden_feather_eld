@@ -407,12 +407,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       return;
     }
     setState(() => _signed = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.loc.reportSavedSuccess),
-        backgroundColor: AppColors.successGreen,
-      ),
-    );
+    AppFeedback.success(context, context.loc.reportSavedSuccess);
     Navigator.pop(context);
   }
 

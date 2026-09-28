@@ -8,6 +8,7 @@ import 'core/localization/locale_provider.dart';
 import 'core/constants/app_constants.dart';
 import 'app/services/quick_actions_initializer.dart';
 import 'routes.dart';
+import 'core/widgets/app_feedback.dart';
 import 'features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'features/hos/domain/engine/hos_rules_engine.dart';
@@ -27,14 +28,13 @@ class GoldenFeatherApp extends ConsumerWidget {
             (previous is HosEngineReady) ? previous.update.currentStatus : null;
         if (next.update.currentStatus == DutyStatus.driving &&
             prevStatus != DutyStatus.driving) {
-          scaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(
-              content: Text('بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
-            ),
-          );
+          final feedbackContext = rootNavigatorKey.currentContext;
+          if (feedbackContext != null) {
+            AppFeedback.success(
+              feedbackContext,
+              'بدأت خدمة التتبع تلقائياً لتسجيل حالة القيادة',
+            );
+          }
         }
       }
     });

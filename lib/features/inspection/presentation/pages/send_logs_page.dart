@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
 import '../providers/inspection_provider.dart';
+import '../../../../core/widgets/app_feedback.dart';
 
 /// FMCSA ELD submission mailbox (49 CFR §395 Appendix A, telematics email
 /// option). Shown pre-filled; the officer can replace it.
@@ -101,9 +102,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   }
 
   void _snack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.dangerRed),
-    );
+    AppFeedback.error(context, message);
   }
 
   @override
