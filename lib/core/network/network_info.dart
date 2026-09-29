@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 abstract class NetworkInfo {
   Stream<bool> get onConnectionChange;
@@ -16,10 +17,16 @@ class NetworkInfoImpl implements NetworkInfo {
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   final _controller = StreamController<bool>.broadcast();
 
+  /// فحص الوصول الفعلي: connectivity_plus يرى "واجهة شبكة" فقط —
+  /// واي فاي بلا إنترنت كان يُعدّ متصلاً فتدخل كل الطلبات مهلات كاملة
+  /// (إحساس التجمد). الفحص الحقيقي يصحح الحالة خلال ثوانٍ.
+  bool _platformAlive = true;
+  bool _probing = false;
+  Timer? _recoverTimer;
+
   NetworkInfoImpl() : _connectivity = Connectivity() {
     _subscription = _connectivity.onConnectivityChanged.listen((result) {
-      _currentStatus = !result.contains(ConnectivityResult.none);
-      _controller.add(_currentStatus);
+      _setStatus(!result.contains(ConnectivityResult.none));
     });
     _readInitial();
   }
@@ -27,10 +34,48 @@ class NetworkInfoImpl implements NetworkInfo {
   Future<void> _readInitial() async {
     try {
       final result = await _connectivity.checkConnectivity();
-      _currentStatus = !result.contains(ConnectivityResult.none);
-      if (!_controller.isClosed) _controller.add(_currentStatus);
+      _setStatus(!result.contains(ConnectivityResult.none));
+      unawaited(_confirmRealInternet());
     } catch (_) {
-      // No platform channel (tests / unsupported host): keep the optimistic value.
+      // No platform channel (tests / unsupported host): keep the optimistic
+      // value and disable real-reachability probing.
+      _platformAlive = false;
+    }
+  }
+
+  void _setStatus(bool online) {
+    if (online == _currentStatus) return;
+    _currentStatus = online;
+    if (!_controller.isClosed) _controller.add(_currentStatus);
+    _syncRecoveryProbe();
+  }
+
+  /// عند الوهلة "واجهة متاحة لكن لا إنترنت" نعيد الفحص دورياً حتى يرجع
+  /// الوصول — العودة للاتصال تشغّل مزامنة الطابور تلقائياً عبر البث.
+  void _syncRecoveryProbe() {
+    if (_currentStatus || !_platformAlive) {
+      _recoverTimer?.cancel();
+      _recoverTimer = null;
+      return;
+    }
+    _recoverTimer ??= Timer.periodic(const Duration(seconds: 15), (_) {
+      unawaited(_confirmRealInternet());
+    });
+  }
+
+  Future<void> _confirmRealInternet() async {
+    if (_probing || !_platformAlive) return;
+    _probing = true;
+    try {
+      final real = await InternetConnectionChecker.instance
+          .hasConnection
+          .timeout(const Duration(seconds: 6), onTimeout: () => false);
+      _setStatus(real);
+    } catch (_) {
+      // فشل الفحص نفسه: نبقي قيمة connectivity ولا نضع حالة خاطئة.
+    } finally {
+      _probing = false;
+      _syncRecoveryProbe();
     }
   }
 
@@ -42,6 +87,7 @@ class NetworkInfoImpl implements NetworkInfo {
 
   void dispose() {
     _subscription?.cancel();
+    _recoverTimer?.cancel();
     _controller.close();
   }
 }

@@ -14,6 +14,7 @@ import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import '../../application/models/rules_screen_model.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/app_feedback.dart';
+
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key});
 
@@ -36,10 +37,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   RulesScreenModel? _initializedModel;
 
   bool get _isFormValid {
-    return _cycleRule != null && _cycleRule!.isNotEmpty &&
-           _cargoType != null && _cargoType!.isNotEmpty &&
-           _restart != null && _restart!.isNotEmpty &&
-           _restBreak != null && _restBreak!.isNotEmpty;
+    return _cycleRule != null &&
+        _cycleRule!.isNotEmpty &&
+        _cargoType != null &&
+        _cargoType!.isNotEmpty &&
+        _restart != null &&
+        _restart!.isNotEmpty &&
+        _restBreak != null &&
+        _restBreak!.isNotEmpty;
   }
 
   void _initForm(RulesScreenModel model) {
@@ -61,8 +66,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     setState(() => _isSaving = true);
     try {
       final useCase = ref.read(updateRulesUseCaseProvider);
-      final sixteenEligible =
-          model.editableFields.contains('sixteenHourException');
+      final sixteenEligible = model.editableFields.contains(
+        'sixteenHourException',
+      );
       if ((_sixteenHourException ?? false) && !sixteenEligible) {
         AppFeedback.error(context, context.loc.sixteenHourCondition);
         return;
@@ -72,15 +78,19 @@ class _RulesPageState extends ConsumerState<RulesPage> {
         cargoType: _cargoType!,
         restart: _restart!,
         restBreak: _restBreak!,
-        sixteenHourException:
-            sixteenEligible ? _sixteenHourException! : model.sixteenHourException,
+        sixteenHourException: sixteenEligible
+            ? _sixteenHourException!
+            : model.sixteenHourException,
       );
 
       final result = await useCase.execute(request);
       if (mounted) {
         result.fold(
           (failure) {
-            AppFeedback.error(context, appErrorUserMessage(failure, isArabic: isArabic));
+            AppFeedback.error(
+              context,
+              appErrorUserMessage(failure, isArabic: isArabic),
+            );
           },
           (_) {
             AppFeedback.success(context, context.loc.rulesUpdated);
@@ -95,18 +105,30 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     }
   }
 
-  String _serverSetting(BuildContext context, Map<String, dynamic> settings, List<String> keys) {
+  String _serverSetting(
+    BuildContext context,
+    Map<String, dynamic> settings,
+    List<String> keys,
+  ) {
     for (final key in keys) {
       final value = settings[key];
       if (value == null) continue;
-      if (value is bool) return value ? context.loc.allowed : context.loc.forbidden;
+      if (value is bool) {
+        return value ? context.loc.allowed : context.loc.forbidden;
+      }
       final text = value.toString().trim();
       if (text.isNotEmpty) return text;
     }
     return context.loc.notProvidedByServer;
   }
 
-  Widget _buildDropdownOrInfo(String fieldName, String label, String value, List<String> options, Set<String> editable) {
+  Widget _buildDropdownOrInfo(
+    String fieldName,
+    String label,
+    String value,
+    List<String> options,
+    Set<String> editable,
+  ) {
     if (editable.contains(fieldName) && options.isNotEmpty) {
       String currentValue = value;
       switch (fieldName) {
@@ -139,7 +161,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
               child: Text(
                 label,
                 style: context.styles.body.copyWith(
-                  color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                  color: AppColors.textSecondaryFor(
+                    Theme.of(context).brightness,
+                  ),
                   fontWeight: AppTypography.semiBold,
                 ),
               ),
@@ -150,7 +174,12 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   value: currentValue,
-                  icon:  Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.textPrimaryFor(
+                      Theme.of(context).brightness,
+                    ),
+                  ),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       setState(() {
@@ -171,9 +200,11 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       });
                     }
                   },
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: AppTypography.bodySize,
-                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                    color: AppColors.textPrimaryFor(
+                      Theme.of(context).brightness,
+                    ),
                   ),
                   items: options.map((String opt) {
                     return DropdownMenuItem<String>(
@@ -201,10 +232,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          loc.rules,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(loc.rules, style: context.styles.appBarTitle),
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
@@ -226,6 +254,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           List<String> optionsFor(String field) {
             return List<String>.from(model.options[field] ?? const <String>[]);
           }
+
           final editable = model.editableFields;
 
           String hours(int minutes) {
@@ -241,174 +270,256 @@ class _RulesPageState extends ConsumerState<RulesPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                if (model.notice.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.warningYellow.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.warningYellow.withValues(alpha: 0.6),
+                  if (model.notice.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.warningYellow.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.warningYellow.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.textPrimaryFor(
+                              Theme.of(context).brightness,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              model.notice,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  Column(
+                    children: [
+                      if (model.ruleSource.trim().isNotEmpty) ...[
+                        _buildDropdownOrInfo(
+                          'ruleSource',
+                          loc.ruleSource,
+                          model.ruleSource,
+                          const [],
+                          editable,
+                        ),
+                        const Divider(height: 1, thickness: 1),
+                      ],
+                      _buildDropdownOrInfo(
+                        'cycleRule',
+                        loc.cycleRule,
+                        model.cycleRule,
+                        optionsFor('cycleRule'),
+                        editable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildDropdownOrInfo(
+                        'cargoType',
+                        loc.cargoType,
+                        model.cargoType,
+                        optionsFor('cargoType'),
+                        editable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildDropdownOrInfo(
+                        'restart',
+                        loc.restartRule,
+                        model.restart,
+                        optionsFor('restart'),
+                        editable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildDropdownOrInfo(
+                        'restBreak',
+                        loc.restBreakRule,
+                        model.restBreak,
+                        optionsFor('restBreak'),
+                        editable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+
+                      if (editable.contains('sixteenHourException'))
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  loc.sixteenHourException,
+                                  style: context.styles.body.copyWith(
+                                    color: AppColors.textSecondaryFor(
+                                      Theme.of(context).brightness,
+                                    ),
+                                    fontWeight: AppTypography.semiBold,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Align(
+                                  alignment: isArabic
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: Switch(
+                                    value: _sixteenHourException ?? false,
+                                    onChanged: (val) {
+                                      setState(
+                                        () => _sixteenHourException = val,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        EldInfoRow(
+                          label: loc.sixteenHourException,
+                          value: model.sixteenHourException ? loc.yes : loc.no,
+                        ),
+                      const Divider(height: 1, thickness: 1),
+
+                      EldInfoRow(
+                        label: loc.personalConveyance,
+                        value: _serverSetting(
+                          context,
+                          model.fixedSettings,
+                          const [
+                            'personalConveyance',
+                            'personalConveyanceEnabled',
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+
+                      EldInfoRow(
+                        label: loc.yardMoves,
+                        value: _serverSetting(
+                          context,
+                          model.fixedSettings,
+                          const ['yardMoves', 'yardMoveEnabled'],
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+
+                      EldInfoRow(
+                        label: loc.unlimitedTrailers,
+                        value: _serverSetting(
+                          context,
+                          model.fixedSettings,
+                          const [
+                            'unlimitedTrailers',
+                            'unlimitedTrailerEnabled',
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+
+                      EldInfoRow(
+                        label: loc.unlimitedShippingDocs,
+                        value:
+                            _serverSetting(context, model.fixedSettings, const [
+                              'unlimitedShippingDocuments',
+                              'unlimitedShippingEnabled',
+                            ]),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
+                    child: AppButton(
+                      label: loc.saveButton,
+                      type: EldButtonType.send,
+                      isLoading: _isSaving,
+                      onPressed: _isSaving ? null : () => _saveRules(model),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Icon(Icons.info_outline, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
+                        Icon(
+                          Icons.info,
+                          color: AppColors.textSecondaryFor(
+                            Theme.of(context).brightness,
+                          ),
+                          size: 18,
+                        ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
-                            model.notice,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            loc.contactFleetManager,
+                            textAlign: TextAlign.center,
+                            style: context.styles.body.copyWith(
+                              color: AppColors.textSecondaryFor(
+                                Theme.of(context).brightness,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: 48),
 
-                Column(
-                  children: [
-                    if (model.ruleSource.trim().isNotEmpty) ...[
-                      _buildDropdownOrInfo('ruleSource', loc.ruleSource, model.ruleSource, const [], editable),
-                      const Divider(height: 1, thickness: 1),
-                    ],
-                    _buildDropdownOrInfo('cycleRule', loc.cycleRule, model.cycleRule, optionsFor('cycleRule'), editable),
-                    const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('cargoType', loc.cargoType, model.cargoType, optionsFor('cargoType'), editable),
-                    const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('restart', loc.restartRule, model.restart, optionsFor('restart'), editable),
-                    const Divider(height: 1, thickness: 1),
-                    _buildDropdownOrInfo('restBreak', loc.restBreakRule, model.restBreak, optionsFor('restBreak'), editable),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    if (editable.contains('sixteenHourException'))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                loc.sixteenHourException,
-                                style: context.styles.body.copyWith(
-                                  color: AppColors.textSecondaryFor(Theme.of(context).brightness),
-                                  fontWeight: AppTypography.semiBold,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 3,
-                              child: Align(
-                                alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-                                child: Switch(
-                                  value: _sixteenHourException ?? false,
-                                  onChanged: (val) {
-                                    setState(() => _sixteenHourException = val);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      EldInfoRow(
-                        label: loc.sixteenHourException,
-                        value: model.sixteenHourException ? loc.yes : loc.no,
-                      ),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    EldInfoRow(
-                      label: loc.personalConveyance,
-                      value: _serverSetting(context, model.fixedSettings, const ['personalConveyance', 'personalConveyanceEnabled']),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    EldInfoRow(
-                      label: loc.yardMoves,
-                      value: _serverSetting(context, model.fixedSettings, const ['yardMoves', 'yardMoveEnabled']),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    EldInfoRow(
-                      label: loc.unlimitedTrailers,
-                      value: _serverSetting(context, model.fixedSettings, const ['unlimitedTrailers', 'unlimitedTrailerEnabled']),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    EldInfoRow(
-                      label: loc.unlimitedShippingDocs,
-                      value: _serverSetting(context, model.fixedSettings, const ['unlimitedShippingDocuments', 'unlimitedShippingEnabled']),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xl),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                  child: AppButton(
-                    label: loc.saveButton,
-                    type: EldButtonType.send,
-                    isLoading: _isSaving,
-                    onPressed: _isSaving ? null : () => _saveRules(model),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Icon(Icons.info, color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 18),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
+                        ),
                         child: Text(
-                          loc.contactFleetManager,
-                          textAlign: TextAlign.center,
-                          style: context.styles.body.copyWith(
-                            color: AppColors.textSecondaryFor(Theme.of(context).brightness),
-                          ),
+                          loc.dailyLimits,
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
+                      EldInfoRow(
+                        label: loc.drivingLimit,
+                        value: hours(config.drivingLimitMinutes),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      EldInfoRow(
+                        label: loc.shiftWindowLimit,
+                        value: hours(config.shiftLimitMinutes),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      EldInfoRow(
+                        label: loc.cycleLimit,
+                        value:
+                            '${config.cycleLimitHours} / ${config.maxConsecutiveDays}',
+                      ),
+                      const Divider(height: 1, thickness: 1),
                     ],
                   ),
-                ),
-                const SizedBox(height: 48),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-                      child: Text(
-                        loc.dailyLimits,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    EldInfoRow(
-                      label: loc.drivingLimit,
-                      value: hours(config.drivingLimitMinutes),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    EldInfoRow(
-                      label: loc.shiftWindowLimit,
-                      value: hours(config.shiftLimitMinutes),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    EldInfoRow(
-                      label: loc.cycleLimit,
-                      value: '${config.cycleLimitHours} / ${config.maxConsecutiveDays}',
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-           ),
           );
         },
       ),

@@ -5,7 +5,7 @@ void main() {
   group('ApiConfig — construction', () {
     test('has sensible defaults', () {
       const config = ApiConfig(baseUrl: 'https://api.example.com');
-      expect(config.connectTimeout, const Duration(seconds: 30));
+      expect(config.connectTimeout, const Duration(seconds: 12));
       expect(config.receiveTimeout, const Duration(seconds: 30));
       expect(config.sendTimeout, const Duration(seconds: 30));
       expect(config.defaultHeaders, {'Accept': 'application/json'});

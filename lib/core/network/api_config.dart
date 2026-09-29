@@ -35,7 +35,7 @@ class ApiConfig {
 
   const ApiConfig({
     required this.baseUrl,
-    this.connectTimeout = const Duration(seconds: 30),
+    this.connectTimeout = const Duration(seconds: 12),
     this.receiveTimeout = const Duration(seconds: 30),
     this.sendTimeout = const Duration(seconds: 30),
     this.defaultHeaders = const {

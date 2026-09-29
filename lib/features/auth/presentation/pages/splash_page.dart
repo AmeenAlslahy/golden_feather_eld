@@ -21,7 +21,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _checkFirstLaunch() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // لا تأخير صناعي: كان ثابتاً ثانيتين على كل إقلاع بلا أي غرض —
+    // القرار يعتمد على الصلاحيات والجلسة فقط، وكلاهما محلي وفوري.
     if (!mounted) return;
 
     // التحقق من الصلاحيات

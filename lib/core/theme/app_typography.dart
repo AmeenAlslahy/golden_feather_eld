@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// أنماط الخطوط حسب دليل التصميم.
@@ -23,8 +22,27 @@ class AppTypography {
   static const FontWeight regular = FontWeight.w400;
   static const FontWeight light = FontWeight.w300;
 
-  /// نخزّن الأساس مرة واحدة — أداء أفضل بكثير من getter.
-  static final TextTheme _base = GoogleFonts.robotoTextTheme();
+  /// الأساس من خط Roboto **المضمّن محلياً** (pubspec fonts) — كان سابقاً
+  /// GoogleFonts.robotoTextTheme() الذي يجلب الخط عبر الشبكة عند أول
+  /// استخدام (قفزة إقلاع + سلوك مختلف أوفلاين). أنماطنا تتجاوز الأحجام
+  /// والأوزان والألوان على أي حال، فالأساس يحتاج عائلة الخط فقط.
+  static const TextTheme _base = TextTheme(
+    displayLarge: TextStyle(fontFamily: fontFamily),
+    displayMedium: TextStyle(fontFamily: fontFamily),
+    displaySmall: TextStyle(fontFamily: fontFamily),
+    headlineLarge: TextStyle(fontFamily: fontFamily),
+    headlineMedium: TextStyle(fontFamily: fontFamily),
+    headlineSmall: TextStyle(fontFamily: fontFamily),
+    titleLarge: TextStyle(fontFamily: fontFamily),
+    titleMedium: TextStyle(fontFamily: fontFamily),
+    titleSmall: TextStyle(fontFamily: fontFamily),
+    bodyLarge: TextStyle(fontFamily: fontFamily),
+    bodyMedium: TextStyle(fontFamily: fontFamily),
+    bodySmall: TextStyle(fontFamily: fontFamily),
+    labelLarge: TextStyle(fontFamily: fontFamily),
+    labelMedium: TextStyle(fontFamily: fontFamily),
+    labelSmall: TextStyle(fontFamily: fontFamily),
+  );
 
   static final TextTheme lightTextTheme = _base.copyWith(
     headlineLarge: const TextStyle(

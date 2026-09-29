@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
@@ -88,11 +90,16 @@ class AppInitializer {
     // from it would let a device clock become a legal duty stamp. Only a
     // server Date header, through TimeDriftInterceptor, may anchor the clock.
 
-    try {
-      await RemoteConfigService.fetchOnStartup(container);
-    } catch (e) {
-      AppLogger.error('Failed to fetch remote config on startup', e);
-    }
+    // جلب إعدادات الخادم لم يعد يحجب الإقلاع: كان أول إطار ينتظر دورة
+    // شبكة كاملة (حتى 30 ثانية على شبكة ضعيفة). يعمل الآن بالخلفية،
+    // والواجهة تُفتح فوراً على القيم المخزنة محلياً.
+    unawaited(() async {
+      try {
+        await RemoteConfigService.fetchOnStartup(container);
+      } catch (e) {
+        AppLogger.error('Background remote-config fetch failed', e);
+      }
+    }());
 
     Future.microtask(() {
       container.read(syncStateProvider.notifier);
