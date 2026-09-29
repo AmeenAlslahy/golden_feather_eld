@@ -5,6 +5,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../../../features/logs/domain/entities/audit_entry.dart';
@@ -108,23 +109,28 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     }
 
     // SRS 8.10: كل عملية نقل تُدوَّن في سجل التدقيق — القناة والنتيجة
-    // ورسالة الخطأ عند الفشل. لا يُحذف الإدخال أبداً.
-    final driverId = ref.read(currentDriverIdProvider);
-    final userName = ref.read(authStateProvider).user?.fullName;
-    final errorText =
-        success ? null : ref.read(inspectionProvider).error;
-    unawaited(ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
-      id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
-      timestamp: DateTime.now(),
-      driverId: driverId?.toString() ?? '',
-      newStatus: success ? 'SENT' : 'FAILED',
-      reason: errorText ?? _commentController.text,
-      action: widget.isEmailMode ? 'email_logs' : 'send_logs',
-      entityType: 'transfer',
-      entityId: driverId?.toString(),
-      userName: userName,
-      userRole: 'driver',
-    )));
+    // ورسالة الخطأ عند الفشل. لا يُحذف الإدخال أبداً. فشل التدقيق نفسه
+    // لا يمس تجربة النقل إطلاقاً (يُسجَّل ولا يُرمى للواجهة).
+    try {
+      final driverId = ref.read(currentDriverIdProvider);
+      final userName = ref.read(authStateProvider).user?.fullName;
+      final errorText =
+          success ? null : ref.read(inspectionProvider).error;
+      unawaited(ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
+            id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
+            timestamp: DateTime.now(),
+            driverId: driverId?.toString() ?? '',
+            newStatus: success ? 'SENT' : 'FAILED',
+            reason: errorText ?? _commentController.text,
+            action: widget.isEmailMode ? 'email_logs' : 'send_logs',
+            entityType: 'transfer',
+            entityId: driverId?.toString(),
+            userName: userName,
+            userRole: 'driver',
+          )));
+    } catch (e) {
+      AppLogger.error('Transfer audit entry failed', e);
+    }
   }
 
   void _snack(String message) {
