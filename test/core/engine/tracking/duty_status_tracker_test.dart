@@ -65,7 +65,7 @@ class MockLogRepository implements LogRepository {
       throw UnimplementedError();
 
   @override
-  Future<Either<Failure, bool>> updateEvent(LogEvent event,
+  Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
           {required String reason}) async =>
       throw UnimplementedError();
 

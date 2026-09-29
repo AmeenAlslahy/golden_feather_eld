@@ -27,7 +27,10 @@ abstract class LogRepository {
   /// Edits an existing manual event (`PUT /eld/duty-status/{statusId}`,
   /// `editReason` mandatory). Server-rejected edits (automatic driving) are
   /// surfaced as a failure, never silently kept locally.
-  Future<Either<Failure, bool>> updateEvent(LogEvent event,
+  /// تعديل حدث: يعيد الحدث **كما أكده الخادم** (DutyEventDto من عقد
+  /// PUT /eld/duty-status/{id})، أو null إذا لم يُعِد الخادم جسماً
+  /// (أحداث محلية/أوفلاين — حُفظت محلياً).
+  Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
       {required String reason});
   Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({

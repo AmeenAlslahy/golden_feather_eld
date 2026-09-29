@@ -230,16 +230,29 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// تعديل حدث (PUT /eld/duty-status/{id} مع سبب إلزامي).
+  ///
+  /// الخادم يعيد DutyEventDto المعدّل — يُعتمد مرجعاً للواجهة بدل
+  /// التخمين المحلي، ثم إعادة جلب للتأكيد (الخادم يعيد حساب المدد).
   Future<bool> updateEvent(LogEvent event, {required String reason}) async {
     if (state.selectedLog == null) return false;
 
-    final persisted = (await _repository.updateEvent(event, reason: reason))
-        .fold((_) => false, (ok) => ok);
-    if (!persisted || !mounted) return persisted;
+    final confirmed = await _repository.updateEvent(event, reason: reason);
+    if (!mounted) return false;
+    final persistedEvent = confirmed.fold((_) => null, (e) => e);
+    if (persistedEvent == null) {
+      // حدث محلي/أوفلاين أو استجابة بلا جسم: السلوك الاحتياطي السابق.
+      _replaceSelected(state.selectedLog!.copyWith(
+        events: state.selectedLog!.events
+            .map((e) => e.id == event.id ? event : e)
+            .toList(),
+      ));
+      unawaited(loadSelectedLogEvents());
+      return true;
+    }
 
     _replaceSelected(state.selectedLog!.copyWith(
       events: state.selectedLog!.events
-          .map((e) => e.id == event.id ? event : e)
+          .map((e) => e.id == persistedEvent.id ? persistedEvent : e)
           .toList(),
     ));
     unawaited(loadSelectedLogEvents());

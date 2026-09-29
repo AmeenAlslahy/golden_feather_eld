@@ -151,14 +151,18 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> updateEvent(LogEvent event,
+  Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
       {required String reason}) async {
     final statusId = int.tryParse(event.id);
     if (!_networkInfo.isConnected || statusId == null) {
       // Local-only event (never reached the server) or offline: local store.
-      return executeWithHandling(
+      final localResult = await executeWithHandling(
         () => _localDataSource.updateEvent(event),
         tag: 'LogRepositoryImpl.updateEvent(local)',
+      );
+      return localResult.fold(
+        (failure) => Left(failure),
+        (_) => Right(event),
       );
     }
     final wire = DutyStatusCode.fromShortCode(event.status)?.wire ??
@@ -174,7 +178,17 @@ class LogRepositoryImpl implements LogRepository {
     );
     return result.fold(
       (error) => Left(ServerFailure(message: error.l10nKey)),
-      (_) => const Right(true),
+      (raw) {
+        // العقد: 200 يعيد DutyEventDto المعدّل — نعتمده مرجعاً للواجهة
+        // بدل إعادة الجلب عبر graph-grid (كان يرمي الاستجابة فيرتد
+        // التعديل عند أي تأخير/فشل في الجلب التالي).
+        try {
+          final confirmed = LogEventModel.fromJson(raw);
+          return Right(confirmed);
+        } catch (_) {
+          return const Right(null);
+        }
+      },
     );
   }
 

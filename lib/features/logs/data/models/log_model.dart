@@ -34,6 +34,10 @@ class LogEventModel extends LogEvent {
     if (json['durationMinutes'] != null) {
       duration = Duration(
           minutes: int.tryParse(json['durationMinutes'].toString()) ?? 0);
+    } else if (json['durationSeconds'] != null) {
+      // DutyEventDto (استجابة PUT التعديل) يقدم المدة بالثواني.
+      duration = Duration(
+          seconds: int.tryParse(json['durationSeconds'].toString()) ?? 0);
     } else {
       duration =
           Duration(seconds: int.tryParse(json['duration']?.toString() ?? '') ?? 0);

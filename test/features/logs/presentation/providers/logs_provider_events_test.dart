@@ -108,8 +108,9 @@ void main() {
       () async {
     when(() => repo.getEvents(any(), any()))
         .thenAnswer((_) async => Right([ev('7', 'OFF', 60)]));
+    // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
     when(() => repo.updateEvent(any(), reason: any(named: 'reason')))
-        .thenAnswer((_) async => const Right(true));
+        .thenAnswer((_) async => Right(ev('7', 'SB', 60)));
 
     final notifier = container.read(logsProvider.notifier);
     await Future<void>.delayed(Duration.zero);

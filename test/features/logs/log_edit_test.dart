@@ -12,10 +12,18 @@ void main() {
       expect(statusFromEditValue('Personal Use').code, 'PC');
     });
 
-    test('does not invent a code for an unmapped status', () {
+    test('Yard Moves maps to its real short code (SRS wire YARD_MOVE)', () {
+      // كان سابقاً يُعاد النص كما هو — فيتعذر على fromShortCode
+      // التعرف عليه وكان الـ PUT يرسل OFF_DUTY بدل YARD_MOVE.
       final v = statusFromEditValue('Yard Moves');
-      expect(v.code, 'Yard Moves');
-      expect(v.arabic, 'Yard Moves');
+      expect(v.code, 'YM');
+      expect(editValueForStatus('YM'), 'Yard Moves');
+    });
+
+    test('does not invent a code for a genuinely unmapped status', () {
+      final v = statusFromEditValue('Some New Status');
+      expect(v.code, 'Some New Status');
+      expect(v.arabic, 'Some New Status');
     });
   });
 
