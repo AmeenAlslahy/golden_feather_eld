@@ -70,9 +70,15 @@ class NetworkInfoImpl implements NetworkInfo {
       final real = await InternetConnectionChecker.instance
           .hasConnection
           .timeout(const Duration(seconds: 6), onTimeout: () => false);
-      _setStatus(real);
+      // المسبار **للترقية فقط**: فشل فحص جهة خارجية (حجب google/cloudflare
+      // على شبكات بعينها) لا يجعل الجهاز أوفلاين — كان يقلب الحالة رغم أن
+      // خادم ELD نفسه متاح. التخفيض يبقى حكراً على connectivity الفعلي،
+      // والشبكة الوهمية تُعالجها مهلة الاتصال المحدودة (12ث) لا المسبار.
+      if (real && !_currentStatus) {
+        _setStatus(true);
+      }
     } catch (_) {
-      // فشل الفحص نفسه: نبقي قيمة connectivity ولا نضع حالة خاطئة.
+      // فشل الفحص نفسه: نبقي قيمة connectivity كما هي.
     } finally {
       _probing = false;
       _syncRecoveryProbe();
