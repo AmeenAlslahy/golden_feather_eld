@@ -29,7 +29,9 @@ class HosIndicatorsCard extends StatelessWidget {
       children: [
         Container(
           width: double.infinity,
-          color: AppColors.background,
+          // الشريط تحت دائرة الوقت: كان يستخدم رمز الخلفية الفاتحة فيظهر
+          // أبيض في الوضع الداكن (بلاغ المالك).
+          color: AppColors.backgroundFor(Theme.of(context).brightness),
           padding: const EdgeInsets.symmetric(vertical: 18),
           child: Text(
             loc.hoursOfService,

@@ -200,6 +200,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             child: vehicleState.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
+                        color: Theme.of(context).colorScheme.primary,
+                        backgroundColor: AppColors.surfaceFor(Theme.of(context).brightness),
                     onRefresh: () {
                       if (_browsingCompany) {
                         return ref

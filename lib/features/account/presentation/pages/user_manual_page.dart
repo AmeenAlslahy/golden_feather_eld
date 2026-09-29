@@ -93,7 +93,7 @@ class UserManualPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(color: Colors.grey.shade400, thickness: 1, height: 1),
+          Divider(color: textColor.withValues(alpha: 0.3), thickness: 1, height: 1),
         ],
       ),
     );
@@ -113,11 +113,11 @@ class UserManualPage extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: textColor.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Center(
-                  child: Icon(Icons.local_shipping, size: 64, color: Colors.grey),
+                child: Center(
+                  child: Icon(Icons.local_shipping, size: 64, color: secondaryColor),
                 ),
               ),
             ),
@@ -143,7 +143,7 @@ class UserManualPage extends StatelessWidget {
                               fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 8),
-                        Expanded(child: Divider(color: Colors.grey.shade400)),
+                        Expanded(child: Divider(color: textColor.withValues(alpha: 0.3))),
                       ],
                     ),
                     const Spacer(),
@@ -374,7 +374,7 @@ class UserManualPage extends StatelessWidget {
             child: Container(
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.grey.shade800,
+                color: textColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
@@ -448,12 +448,12 @@ class UserManualPage extends StatelessWidget {
                 child: Container(
                   height: 160,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: textColor.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade400, width: 2),
+                    border: Border.all(color: textColor.withValues(alpha: 0.3), width: 2),
                   ),
-                  child: const Center(
-                      child: Icon(Icons.smartphone, color: Colors.grey, size: 48)),
+                  child: Center(
+                      child: Icon(Icons.smartphone, color: secondaryColor, size: 48)),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -635,7 +635,7 @@ class UserManualPage extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 1,
-                color: Colors.grey.shade300,
+                color: textColor.withValues(alpha: 0.06),
               ),
             ),
           ],
