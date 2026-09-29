@@ -25,8 +25,9 @@ class AuthInterceptor extends Interceptor {
       RequestOptions options, RequestInterceptorHandler handler) async {
     // لا نستثني إلا نقطة إنشاء الجلسة نفسها؛ contains('/session') كانت
     // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
-    if (options.path == EldEndpoints.session ||
-        options.path.contains('/users') && options.method.toUpperCase() == 'POST') {
+    // (حُذف استثناء POST /users — لم يعد له مستدعٍ وكان يسمح بمرور
+    // طلبات إنشاء مستخدمين بلا جلسة، توسيعاً غير مبرر لسطح الهجوم.)
+    if (options.path == EldEndpoints.session) {
       return super.onRequest(options, handler);
     }
 

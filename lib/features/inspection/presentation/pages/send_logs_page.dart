@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
+import '../../../../features/logs/domain/entities/audit_entry.dart';
+import '../../../../features/logs/presentation/providers/logs_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
@@ -83,7 +88,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
     setState(() => _isSending = true);
     final comment = _commentController.text;
-    final success = await ref.read(inspectionProvider.notifier).sendLogs(
+    final success = await ref
+        .read(inspectionProvider.notifier)
+        .sendLogs(
           // Both screens use the server's EMAIL channel (openapi: EMAIL is the
           // default; the Send screen shows "Data Transfer Type: Email").
           TransferMethod.email,
@@ -99,6 +106,25 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
       final error = ref.read(inspectionProvider).error;
       if (error != null) _snack(error);
     }
+
+    // SRS 8.10: كل عملية نقل تُدوَّن في سجل التدقيق — القناة والنتيجة
+    // ورسالة الخطأ عند الفشل. لا يُحذف الإدخال أبداً.
+    final driverId = ref.read(currentDriverIdProvider);
+    final userName = ref.read(authStateProvider).user?.fullName;
+    final errorText =
+        success ? null : ref.read(inspectionProvider).error;
+    unawaited(ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
+      id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
+      timestamp: DateTime.now(),
+      driverId: driverId?.toString() ?? '',
+      newStatus: success ? 'SENT' : 'FAILED',
+      reason: errorText ?? _commentController.text,
+      action: widget.isEmailMode ? 'email_logs' : 'send_logs',
+      entityType: 'transfer',
+      entityId: driverId?.toString(),
+      userName: userName,
+      userRole: 'driver',
+    )));
   }
 
   void _snack(String message) {
@@ -118,10 +144,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          title,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(title, style: context.styles.appBarTitle),
       ),
       body: _sent
           ? Center(
@@ -147,12 +170,14 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   Text(
                     widget.isEmailMode
                         ? (_arabic
-                            ? 'إرسال السجلات عبر البريد'
-                            : 'Send logs via email')
+                              ? 'إرسال السجلات عبر البريد'
+                              : 'Send logs via email')
                         : (_arabic ? 'إرسال 8 سجلات' : 'Send 8 Logs'),
-                    style:  TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
-                      color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                      color: AppColors.textSecondaryFor(
+                        Theme.of(context).brightness,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -179,9 +204,11 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       padding: const EdgeInsets.only(top: 6, bottom: 10),
                       child: Text(
                         _arabic ? 'بريد إلكتروني' : 'Email',
-                        style:  TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                          color: AppColors.textPrimaryFor(
+                            Theme.of(context).brightness,
+                          ),
                         ),
                       ),
                     ),
@@ -210,7 +237,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style:  TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimaryFor(Theme.of(context).brightness),
