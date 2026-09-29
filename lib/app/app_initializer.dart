@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../features/tracking/data/services/tracking_service.dart';
+import '../core/di/auth_local_data_source_provider.dart';
 import '../core/services/local_database_service.dart';
 import '../core/services/local_storage_service.dart';
 import 'services/push_notification_service.dart';
@@ -48,8 +49,13 @@ class AppInitializer {
     localStorageService = LocalStorageService();
     await localStorageService.init();
 
+    // Hive (1 ثانية على الأجهزة المتوسطة) لا يحجب الإقلاع: يُفتح بالتوازي
+    // مع بقية التهيئة — المستودعات لا تقرأه إلا بعد اكتمال runApp.
     localDatabaseService = LocalDatabaseService();
-    await localDatabaseService.init();
+    final dbFuture = localDatabaseService.init();
+
+    await _initDependentServices();
+    await dbFuture;
   }
 
   Future<void> _initDependentServices() async {
@@ -100,6 +106,10 @@ class AppInitializer {
         AppLogger.error('Background remote-config fetch failed', e);
       }
     }());
+
+    // تدفئة كاش الجلسة: أول قراءة من Android Keystore مكلفة (ثوانٍ على
+    // بعض الأجهزة) — تُدفأ هنا بالتوازي بدل أن تحجب أول طلب HTTP.
+    unawaited(container.read(authLocalDataSourceProvider).getSession());
 
     Future.microtask(() {
       container.read(syncStateProvider.notifier);
