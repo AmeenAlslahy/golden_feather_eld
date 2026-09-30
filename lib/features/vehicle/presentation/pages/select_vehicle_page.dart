@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/vehicle.dart';
@@ -36,15 +37,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   }
 
   Future<void> _handleVehicleSelected(Vehicle vehicle) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
     if (!listedVehicleIsOperable(
       browsingCompanyFleet: _browsingCompany,
       vehicle: vehicle,
     )) {
-      AppFeedback.error(context, _vehicleErrorText(
-            vehicle.inUseByOther == true ? 'in_use' : 'unauthorized',
-            isArabic,
-          ));
+      AppFeedback.error(context, _vehicleErrorText(vehicle.inUseByOther == true ? 'in_use' : 'unauthorized', context.loc));
       return;
     }
     await ref.read(vehicleProvider.notifier).selectVehicle(
@@ -56,23 +54,19 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   }
 
   void _showUnassignedDialog(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isArabic ? 'لا توجد مركبات معيّنة' : 'No Vehicles Assigned'),
+        title: Text(context.loc.noVehiclesAssigned),
         content: Text.rich(
           TextSpan(
             children: [
               TextSpan(
-                text: isArabic
-                    ? 'تُعيَّن المركبات عبر البوابة. '
-                    : 'Vehicles are assigned via the portal. ',
+                text: context.loc.vehiclesAssignedViaPortal,
               ),
               TextSpan(
-                text: isArabic
-                    ? 'تواصل مع مدير الأسطول للمزيد.'
-                    : 'Contact your fleet manager for more info.',
+                text: context.loc.contactFleetManager,
                 style: const TextStyle(color: Color(0xFFE53935)),
               ),
             ],
@@ -92,7 +86,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                       .loadVehicles(forceRefresh: true);
                 },
                 child: Text(
-                  isArabic ? 'عرض مركباتي' : 'VIEW MY VEHICLES',
+                  context.loc.viewMyVehicles,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -103,7 +97,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                   ref.read(vehicleProvider.notifier).loadCompanyVehicles();
                 },
                 child: Text(
-                  isArabic ? 'عرض كل المركبات' : 'VIEW ALL VEHICLES',
+                  context.loc.viewAllVehicles,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -119,8 +113,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     // الاستماع لتغييرات الحالة من Provider للانتقال أو إظهار خطأ
     ref.listen<VehicleState>(vehicleProvider, (previous, current) {
       if (current.error != null && (previous?.error != current.error)) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        AppFeedback.error(context, _vehicleErrorText(current.error!, isArabic));
+        
+        AppFeedback.error(context, _vehicleErrorText(current.error!, context.loc));
       }
 
       // SRS 9.1 — the "No Vehicles Assigned" prompt is for drivers with no
@@ -137,14 +131,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       }
 
       if (current.isSuccess && !(previous?.isSuccess ?? false)) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        
         final name = current.selectedVehicle?.displayName ?? '';
         AppFeedback.success(context, 
               // Select ≠ Operate: the server session is opened on the
               // Connection page, so nothing is claimed as accepted here.
-              isArabic
-                  ? 'تم اختيار $name. اتصل بجهاز ELD لتشغيلها. لم تُنقل ساعات الخدمة.'
-                  : 'Selected $name. Connect to the ELD to operate it. Hours were not copied.');
+              context.loc.vehicleSelectedConnect(name));
         // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
         context.go(AppRoutes.connection);
       }
@@ -220,12 +212,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                             height: MediaQuery.of(context).size.height * 0.45,
                             child: EldRetryView(
                               message: vehicleState.error != null
-                                  ? _vehicleErrorText(
-                                      vehicleState.error!,
-                                      Localizations.localeOf(context)
-                                              .languageCode ==
-                                          'ar',
-                                    )
+                                  ? _vehicleErrorText(vehicleState.error!, context.loc)
                                   : context.loc.noVehiclesFound,
                               isError: vehicleState.error != null,
                               onRetry: () {
@@ -291,12 +278,12 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
     final subtitleBits = <String>[
       if (vehicle.year.isNotEmpty) vehicle.year,
       if (vehicle.name.isNotEmpty) vehicle.name,
     ];
-    final badge = _rowBadge(isArabic);
+    final badge = _rowBadge(context.loc);
     final reason = vehicle.statusReason?.trim() ?? '';
     return InkWell(
       onTap: onTap,
@@ -344,22 +331,22 @@ class _VehicleCard extends StatelessWidget {
     );
   }
 
-  AppStatusBadge? _rowBadge(bool isArabic) {
+  AppStatusBadge? _rowBadge(AppLocalizations loc) {
     if (vehicle.inUseByOther == true) {
       return AppStatusBadge(
-        label: isArabic ? 'قيد الاستخدام' : 'In use',
+        label: loc.inUse,
         type: AppStatusBadgeType.error,
       );
     }
     if (!operable) {
       return AppStatusBadge(
-        label: isArabic ? 'عرض فقط' : 'View only',
+        label: loc.viewOnly,
         type: AppStatusBadgeType.warning,
       );
     }
     if (vehicle.isAssigned) {
       return AppStatusBadge(
-        label: isArabic ? 'معيّنة لك' : 'Assigned to you',
+        label: loc.assignedToYou,
         type: AppStatusBadgeType.success,
       );
     }
@@ -367,41 +354,27 @@ class _VehicleCard extends StatelessWidget {
   }
 }
 
-String _vehicleErrorText(String raw, bool isArabic) {
+String _vehicleErrorText(String raw, AppLocalizations loc) {
   switch (raw) {
     case 'motionUnknown':
-      return isArabic
-          ? 'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.'
-          : 'Vehicle motion is unknown. That is not treated as stopped.';
+      return loc.errMotionUnknown;
     case 'vehicleMoving':
-      return isArabic
-          ? 'لا يمكن تبديل المركبة وهي تتحرك. لم تُنقل الساعات.'
-          : 'The vehicle cannot be changed while moving. Hours were not copied.';
+      return loc.errVehicleMoving;
     case 'identifierMissing':
     case 'vehicle_identifier_missing':
-      return isArabic
-          ? 'الخادم لم يُرجع معرف المركبة. لن يُخترع معرف.'
-          : 'The server did not return a vehicle identifier. One will not be invented.';
+      return loc.errIdentifierMissing;
     case 'thresholdMissing':
-      return isArabic
-          ? 'عتبة الحركة غير متوفرة من الإعداد.'
-          : 'The motion threshold is not available.';
+      return loc.errThresholdMissing;
     case 'unauthorized':
-      return isArabic
-          ? 'غير مصرح لك بتشغيل هذه المركبة.'
-          : 'You are not authorized to operate this vehicle.';
+      return loc.errUnauthorized;
     case 'unavailable':
-      return isArabic ? 'المركبة غير متاحة.' : 'Vehicle unavailable.';
+      return loc.errUnavailable;
     case 'in_use':
-      return isArabic ? 'المركبة قيد الاستخدام.' : 'The vehicle is in use.';
+      return loc.errInUse;
     case 'rejected':
-      return isArabic
-          ? 'رفض الخادم تشغيل المركبة.'
-          : 'The server rejected vehicle operation.';
+      return loc.errRejected;
     case 'vehicle_list_unreadable':
-      return isArabic
-          ? 'تعذر قراءة قائمة المركبات.'
-          : 'The vehicle list could not be read.';
+      return loc.errListUnreadable;
     default:
       return raw;
   }

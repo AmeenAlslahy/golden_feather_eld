@@ -15,6 +15,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String splash = '/';
+  static const String onboarding = '/onboarding';
   static const String permissions = '/permissions';
   static const String connection = '/connection';
   static const String login = '/login';
@@ -43,6 +44,7 @@ class AppRoutes {
   /// مسارات متاحة بدون تسجيل دخول
   static const Set<String> publicRoutes = {
     splash,
+    onboarding,
     permissions,
     login,
     about, // SRS §17: حول التطبيق والتشخيص متاحة بدون مصادقة

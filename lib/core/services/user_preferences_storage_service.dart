@@ -13,6 +13,11 @@ class UserPreferencesStorageService {
   static const String _stationarySinceKey = 'stationary_since';
 
   // Getters
+  static const String _onboardingSeenKey = 'onboarding_seen';
+
+  bool get onboardingSeen => _prefs.getBool(_onboardingSeenKey) ?? false;
+  Future<void> setOnboardingSeen() => _prefs.setBool(_onboardingSeenKey, true);
+
   String get language => _prefs.getString(_languageKey) ?? 'ar';
   String get theme => _prefs.getString(_themeKey) ?? 'system';
   String get currentDutyStatus =>

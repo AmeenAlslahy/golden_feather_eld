@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/features/auth/presentation/pages/splash_page.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 /// Records `checkAuthStatus` calls and lands on the state the test chose.
+class _LocalStorage extends Mock implements LocalStorageService {}
+
 class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   _AuthNotifier(this._after) : super(const AuthState());
   final AuthState _after;
@@ -46,9 +50,13 @@ void main() {
   // permission_handler: Permission.location = 3, Permission.bluetooth = 21;
   // PermissionStatus.denied = 0, granted = 1.
   late Map<int, int> statuses;
+  late _LocalStorage storage;
 
   setUp(() {
     statuses = {3: 1, 21: 1};
+    storage = _LocalStorage();
+    // التدفق القائم يفترض أن الـ Onboarding شُوهد سابقاً.
+    when(() => storage.onboardingSeen).thenReturn(true);
     TestWidgetsFlutterBinding.ensureInitialized();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
@@ -84,6 +92,10 @@ void main() {
       GoRoute(
           path: '/', name: 'splash', builder: (_, __) => const SplashPage()),
       GoRoute(
+          path: '/onboarding',
+          name: 'onboarding',
+          builder: (_, __) => const Scaffold(body: Text('ONBOARDING PAGE'))),
+      GoRoute(
           path: '/permissions',
           name: 'permissions',
           builder: (_, __) => const Scaffold(body: Text('PERMISSIONS PAGE'))),
@@ -100,7 +112,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authStateProvider.overrideWith((ref) => notifier)],
+        overrides: [
+          authStateProvider.overrideWith((ref) => notifier),
+          localStorageProvider.overrideWithValue(storage),
+        ],
         child: MaterialApp.router(
           theme: AppTheme.light,
           locale: const Locale('en'),
@@ -151,6 +166,16 @@ void main() {
     await pump(tester, AuthState(status: AuthStatus.offline, user: user));
     await passSplashDelay(tester);
     expect(find.text('CONNECTION PAGE'), findsOneWidget);
+  });
+
+  testWidgets('first launch → Onboarding page before anything else',
+      (tester) async {
+    when(() => storage.onboardingSeen).thenReturn(false);
+    final auth =
+        await pump(tester, AuthState(status: AuthStatus.authenticated, user: user));
+    await passSplashDelay(tester);
+    expect(find.text('ONBOARDING PAGE'), findsOneWidget);
+    expect(auth.checks, 0);
   });
 
   testWidgets('permissions granted + no session → Login', (tester) async {

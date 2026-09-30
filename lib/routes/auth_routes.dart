@@ -3,6 +3,7 @@ import '../routes.dart';
 import '../features/auth/presentation/pages/auth_page.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/permissions/presentation/pages/permissions_page.dart';
+import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/connection/presentation/pages/eld_connection_page.dart';
 
 class AuthRoutes {
@@ -13,6 +14,11 @@ class AuthRoutes {
           path: AppRoutes.splash,
           name: 'splash',
           builder: (context, state) => const SplashPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.onboarding,
+          name: 'onboarding',
+          builder: (context, state) => const OnboardingPage(),
         ),
         GoRoute(
           path: AppRoutes.permissions,

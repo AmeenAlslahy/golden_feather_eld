@@ -297,18 +297,14 @@ class EditLogPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  Localizations.localeOf(context).languageCode == 'ar'
-                      ? 'سبب التعديل'
-                      : 'Reason for Change',
+                  context.loc.reasonForChange,
                   style: context.styles.sectionTitle,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   decoration: InputDecoration(
                     hintText:
-                        Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'أدخل السبب (مطلوب)'
-                            : 'Enter reason (Required)',
+                        context.loc.enterReasonRequired,
                     hintStyle: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant),
                     border: const UnderlineInputBorder(),
@@ -334,9 +330,7 @@ class EditLogPage extends ConsumerWidget {
                       if (formState.reason.trim().isEmpty) {
                         AppFeedback.error(
                           context,
-                          Localizations.localeOf(context).languageCode == 'ar'
-                              ? 'سبب التعديل مطلوب.'
-                              : 'A reason for the change is required.',
+                          context.loc.aReasonForTheChangeIs,
                         );
                         return;
                       }
@@ -348,10 +342,7 @@ class EditLogPage extends ConsumerWidget {
                       if (driverId == null || driverId.isEmpty) {
                         if (context.mounted) {
                           AppFeedback.error(context, 
-                                Localizations.localeOf(context).languageCode ==
-                                        'ar'
-                                    ? 'جلسة السائق غير موجودة. لا يمكن الحفظ.'
-                                    : 'Cannot save: driver session not found.');
+                                context.loc.cannotSaveDriverSessionNotFound);
                         }
                         return;
                       }
@@ -373,14 +364,9 @@ class EditLogPage extends ConsumerWidget {
                         );
                         if (refusal != null) {
                           if (context.mounted) {
-                            final isArabic =
-                                Localizations.localeOf(context).languageCode ==
-                                    'ar';
-                            AppFeedback.error(
+AppFeedback.error(
                               context,
-                              isArabic
-                                  ? 'لا يمكن تقصير أو حذف وقت القيادة الآلي.'
-                                  : 'Automatic driving time cannot be shortened or removed.',
+                              context.loc.automaticDrivingTimeCannotBeShortened,
                             );
                           }
                           return;
@@ -409,13 +395,8 @@ class EditLogPage extends ConsumerWidget {
                               reason: formState.reason);
                       if (!saved) {
                         if (context.mounted) {
-                          final isArabic =
-                              Localizations.localeOf(context).languageCode ==
-                                  'ar';
-                          AppFeedback.error(context, 
-                                isArabic
-                                    ? 'تعذر حفظ الحدث.'
-                                    : 'The event could not be saved.');
+AppFeedback.error(context, 
+                                context.loc.theEventCouldNotBeSaved);
                         }
                         return;
                       }
@@ -436,23 +417,16 @@ class EditLogPage extends ConsumerWidget {
                           .fold((_) => false, (ok) => ok);
                       if (!auditSaved) {
                         if (context.mounted) {
-                          final isArabic =
-                              Localizations.localeOf(context).languageCode ==
-                                  'ar';
-                          AppFeedback.error(context, 
-                                isArabic
-                                    ? 'حُفظ الحدث لكن تعذر تسجيل سبب التعديل.'
-                                    : 'The event was saved but the change audit could not be recorded.');
+AppFeedback.error(context, 
+                                context.loc.theEventWasSavedButThe);
                         }
                         return;
                       }
 
                       if (context.mounted) {
-                        final isArabic =
-                            Localizations.localeOf(context).languageCode == 'ar';
-                        AppFeedback.success(
+AppFeedback.success(
                           context,
-                          isArabic ? 'تم حفظ الحدث بنجاح' : 'Event saved successfully',
+                          context.loc.eventSavedSuccessfully,
                         );
                         Navigator.pop(context, true);
                       }

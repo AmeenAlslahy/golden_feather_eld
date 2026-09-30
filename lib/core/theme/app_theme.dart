@@ -7,7 +7,6 @@ import 'app_styles.dart';
 import 'eld_colors.dart';
 import 'press_feedback.dart';
 export 'app_styles.dart';
-export 'eld_colors.dart';
 
 /// ثيم تطبيق ELD
 class AppTheme {

@@ -1116,10 +1116,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockDriverOnly => 'Unlock (Driver Only)';
 
   @override
-  String get startInspectionDesc =>
-      'Start inspection to display logs for the officer. The screen will be locked to prevent access to other apps.';
-
-  @override
   String get sendLogs => 'Send Logs';
 
   @override
@@ -1415,8 +1411,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minAbbr => 'm';
 
   @override
-  String get contactFleetManager =>
-      'Please contact your fleet manager to change rules\nor to add exceptions.';
+  String get contactFleetManager => 'Contact your fleet manager for more info.';
 
   @override
   String get personalConveyance => 'Personal Conveyance';
@@ -1490,4 +1485,640 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get supportText =>
       'For technical support, provide the device ID and version shown above.';
+
+  @override
+  String get noVehiclesAssigned => 'No Vehicles Assigned';
+
+  @override
+  String get vehiclesAssignedViaPortal =>
+      'Vehicles are assigned via the portal. ';
+
+  @override
+  String get viewMyVehicles => 'VIEW MY VEHICLES';
+
+  @override
+  String get viewAllVehicles => 'VIEW ALL VEHICLES';
+
+  @override
+  String vehicleSelectedConnect(String name) {
+    return 'Selected $name. Connect to the ELD to operate it. Hours were not copied.';
+  }
+
+  @override
+  String get inUse => 'In use';
+
+  @override
+  String get viewOnly => 'View only';
+
+  @override
+  String get assignedToYou => 'Assigned to you';
+
+  @override
+  String get errMotionUnknown =>
+      'Vehicle motion is unknown. That is not treated as stopped.';
+
+  @override
+  String get errVehicleMoving =>
+      'The vehicle cannot be changed while moving. Hours were not copied.';
+
+  @override
+  String get errIdentifierMissing =>
+      'The server did not return a vehicle identifier. One will not be invented.';
+
+  @override
+  String get errThresholdMissing => 'The motion threshold is not available.';
+
+  @override
+  String get errUnauthorized =>
+      'You are not authorized to operate this vehicle.';
+
+  @override
+  String get errUnavailable => 'Vehicle unavailable.';
+
+  @override
+  String get errInUse => 'The vehicle is in use.';
+
+  @override
+  String get errRejected => 'The server rejected vehicle operation.';
+
+  @override
+  String get errListUnreadable => 'The vehicle list could not be read.';
+
+  @override
+  String get nA => 'N/A';
+
+  @override
+  String get email1 => 'Email';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get mainOfficeAddress => 'Main Office Address';
+
+  @override
+  String get homeTerminalAddress => 'Home Terminal Address';
+
+  @override
+  String get timeZone => 'Time Zone';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get languageUpdatedSuccessfully => 'Language updated successfully';
+
+  @override
+  String get odometerUnitUpdatedSuccessfull =>
+      'Odometer unit updated successfully';
+
+  @override
+  String get pleaseContactYourFleetManagerT =>
+      'Please contact your fleet manager to change your\\naccount information.';
+
+  @override
+  String get thePacketIsIncomplete => 'The packet is incomplete.';
+
+  @override
+  String get inspectionMode => 'Inspection Mode';
+
+  @override
+  String get dataTransferInstructionSheet => 'Data Transfer Instruction Sheet';
+
+  @override
+  String get malfunctionManual39534 => 'Malfunction Manual (395.34)';
+
+  @override
+  String get goldenFeatherEldInspectionMode =>
+      'Golden Feather ELD Inspection Mode';
+
+  @override
+  String get tapDotInspectionInTheMenuPress =>
+      'Tap \"DOT Inspection\" in the menu & press \"Start Inspection\". Let an officer to view your logs directly from your mobile device. Show this instruction card if requested.';
+
+  @override
+  String get anInspectorMayPressArrowsToVie =>
+      'An inspector may press arrows to view previous or next day\\';
+
+  @override
+  String get theOfficerCannotLeaveInspectio =>
+      'The officer cannot leave inspection. The driver exits with Driver Exit after entering the account password.';
+
+  @override
+  String get goldenFeatherEldIsCapableOfPro =>
+      'Golden Feather ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press \"DOT Inspection\" menu item and then press \"Send Logs\" button. In order to send the ELD records via Email a driver must press \"DOT Inspection\" menu item, press \"Email Logs\", enter an email provided by an authorized safety official and press \"Send\" button.';
+
+  @override
+  String get goldenFeatherEldMalfunctionMan =>
+      'Golden Feather ELD Malfunction Manual';
+
+  @override
+  String get inAccordanceWithTheGuidelinesS =>
+      'In accordance with the guidelines set forth in 395.34';
+
+  @override
+  String get malfunctionIndication => 'Malfunction indication';
+
+  @override
+  String get immediatelyContactTheSupportIf =>
+      'Immediately contact the support if LED light on the device is off when the device is plugged into the diagnostic port or if the malfunction reported by the app.';
+
+  @override
+  String get noteTheMalfunction => 'Note the malfunction';
+
+  @override
+  String get noteTheMalfunctionAndProvideAW =>
+      'Note the malfunction and provide a written notice to your fleet within 24 hours.';
+
+  @override
+  String get switchToPaperLogs => 'Switch to paper logs';
+
+  @override
+  String get k8DaysRule => '8 days rule';
+
+  @override
+  String get contactTheSupportTeamAtTopceld =>
+      'Contact the support team at topceld@gmail.com';
+
+  @override
+  String get eldUserManual => 'ELD User Manual';
+
+  @override
+  String get features => 'Features';
+
+  @override
+  String get installationAndSetup => 'Installation and Setup';
+
+  @override
+  String get logManagement => 'Log Management';
+
+  @override
+  String get roadsideInspections => 'Roadside Inspections';
+
+  @override
+  String get electronicDriverVehicleInspect =>
+      'Electronic Driver Vehicle Inspection Reports (DVIR)';
+
+  @override
+  String get fleetManagerPortal => 'Fleet Manager Portal';
+
+  @override
+  String get electronicLoggingDeviceEld => 'Electronic Logging Device (ELD)';
+
+  @override
+  String get recordsOfNdutyStatus => 'Records of\\nDuty Status';
+
+  @override
+  String get easilyManageYourDutyStatusChan =>
+      'Easily manage your duty status changes with our user-friendly ELD app. View, edit, and certify your logs for accurate and compliant records.';
+
+  @override
+  String get availableHoursAndNrequiredBrea =>
+      'Available Hours and\\nRequired Breaks';
+
+  @override
+  String get stayInformedAboutYourAvailable =>
+      'Stay informed about your available driving hours and mandatory rest breaks to ensure compliance with HOS regulations.';
+
+  @override
+  String get interAndIntrastateNhosRules => 'Inter- and Intrastate\\nHOS Rules';
+
+  @override
+  String get ourAppSupportsBothInterAndIntr =>
+      'Our app supports both inter- and intrastate HOS rules, providing you with the flexibility to comply with specific regulations.';
+
+  @override
+  String get roadsideInspectionNfunction => 'Roadside Inspection\\nFunction';
+
+  @override
+  String get duringRoadsideInspectionsUseTh =>
+      'During roadside inspections, use the DOT Inspection mode in the app to share your logs with ease.';
+
+  @override
+  String get vehicleInspectionNreports => 'Vehicle Inspection\\nReports';
+
+  @override
+  String get generatePreOrPostTripDvirsWith =>
+      'Generate pre- or post-trip DVIRs within the app, notifying mechanics of any vehicle defects promptly.';
+
+  @override
+  String get onlineFleetNmanagerPortal => 'Online Fleet\\nManager Portal';
+
+  @override
+  String get accessTheFleetManagerPortalToM =>
+      'Access the Fleet Manager Portal to monitor HOS compliance, view real-time data on driver duty status, and receive notifications on HOS violations.';
+
+  @override
+  String get gpsTracking => 'GPS Tracking';
+
+  @override
+  String get trackYourVehicle => 'Track your vehicle\\';
+
+  @override
+  String get iftaCalculations => 'IFTA Calculations';
+
+  @override
+  String get automaticallyCalculateIftaData =>
+      'Automatically calculate IFTA data to simplify fuel tax reporting for interstate carriers.';
+
+  @override
+  String get setUpFleetNmanagerPortal => 'Set Up Fleet\\nManager Portal';
+
+  @override
+  String get useYourCredentialsToSignIntoTh =>
+      'Use your credentials to sign into the online portal, providing essential information about your company, portal users, drivers, and vehicles.';
+
+  @override
+  String get monitorHosAndNfmcsaCompliance =>
+      'Monitor HOS and\\nFMCSA-Compliance';
+
+  @override
+  String get stayOnTopOfDrivers => 'Stay on top of drivers\\';
+
+  @override
+  String get preconfiguredStatuses => 'Preconfigured Statuses';
+
+  @override
+  String get customizeDutyStatusesAccessByS =>
+      'Customize duty statuses access by setting Yard Move and Personal Use as valid options.';
+
+  @override
+  String get driverAndVehicleInformation => 'Driver and Vehicle Information';
+
+  @override
+  String get trackYourDrivers => 'Track your drivers\\';
+
+  @override
+  String get downloadAndTransferLogs => 'Download and Transfer Logs';
+
+  @override
+  String get downloadAnyDrivers => 'Download any drivers\\';
+
+  @override
+  String get filterLogs => 'Filter Logs';
+
+  @override
+  String get saveTimeByQuicklyFindingLogsBy =>
+      'Save time by quickly finding logs by date, driver, or vehicle using the filter option.';
+
+  @override
+  String get installEldHardware => 'Install ELD Hardware';
+
+  @override
+  String get beginByLocatingTheEcmDiagnosti =>
+      'Begin by locating the ECM (diagnostic) port in your vehicle. This port is typically found on or near the dashboard, under the steering column, or close to the driver\\';
+
+  @override
+  String get installEldSoftware => 'Install ELD Software';
+
+  @override
+  String get beforeYouStartUsingTheEldEnsur =>
+      'Before you start using the ELD, ensure that your mobile device is connected to the internet and Bluetooth is enabled:\\n\\n• Installing the ELD Software: Download the ELD app from your device\\';
+
+  @override
+  String get hoursOfService1 => 'Hours of Service';
+
+  @override
+  String get onceTheEldIsSetUpItAutomatical =>
+      'Once the ELD is set up, it automatically records driving time. Any movement at 5 mph or faster is logged as driving. When stationary, the driver can select a different duty status. The system calculates and displays:\\n\\n• On-Duty Limits\\n• Available Driving Time\\n• Required Breaks and Off-Duty Periods\\n\\nThis information is shown in the app\\';
+
+  @override
+  String get accessingLogs => 'Accessing Logs';
+
+  @override
+  String get logInToTheEldAppWithYourUnique =>
+      'Log in to the ELD app with your unique credentials and navigate to the \"Logs\" section to access your electronic HOS records.';
+
+  @override
+  String get viewingLogs1 => 'Viewing Logs';
+
+  @override
+  String get viewDetailedRodsForDifferentDa =>
+      'View detailed RODS for different dates, including time, duration, and location of each duty status change.';
+
+  @override
+  String get editingLogs => 'Editing Logs';
+
+  @override
+  String get editDutyStatusEntriesExceptFor =>
+      'Edit duty status entries (except for the automatically recorded driving logs) to ensure accuracy. Simply tap on a date, use the pencil icon to make changes, and save your edits.';
+
+  @override
+  String get certifyingLogs => 'Certifying Logs';
+
+  @override
+  String get certifyingLogsEndYourShiftByDi =>
+      'Certifying Logs: End your shift by digitally certifying your logs for accuracy and compliance with the tap of a button.';
+
+  @override
+  String get duringARoadsideInspectionFollo =>
+      'During a roadside inspection, follow these steps:\\n\\n• Access \"DOT Inspection\" mode from the Main Menu.\\n• Tap \"Start Inspection\" to display your Records of Duty Status (RODS) to the officer.\\n• Use the navigation arrows to review logs by date.\\n• If requested, send your RODS via web services or email by selecting the \"Send\" button.\\n• Once the inspection is complete, tap \"Back\" to return to your regular logs.';
+
+  @override
+  String get hosComplianceAlerts => 'HOS Compliance Alerts';
+
+  @override
+  String get stayCompliantWithHosRegulation =>
+      'Stay compliant with HOS regulations by monitoring alerts:\\n\\n• On the main logs screen, watch for the red exclamation icon, which signals an HOS violation or Form/Certification warning.\\n• Review a list of HOS violations by scrolling below the log graph. Tapping on a violation provides more details.';
+
+  @override
+  String get createDvir => 'Create DVIR';
+
+  @override
+  String get createANewInspectionReportNNAc =>
+      'Create a New Inspection Report:\\n\\n• Access the Menu and select DVIR.\\n• Tap the plus sign to start a new inspection.\\n• Review the list of vehicle components and mark any with detected defects.\\n• Add notes in the Remarks section if needed.\\n• Tap Sign to finalize and save the report in the DVIR history.';
+
+  @override
+  String get editDvir => 'Edit DVIR';
+
+  @override
+  String get editAnExistingReportNNGoToDvir =>
+      'Edit an existing Report:\\n\\n• Go to DVIR History and select the report you wish to edit.\\n• Click the \"...\" button.\\n• Choose Edit to make changes.';
+
+  @override
+  String get deleteDvir => 'Delete DVIR';
+
+  @override
+  String get deleteAnExistingReportNNInDvir =>
+      'Delete an existing Report:\\n\\n• In DVIR History, select the report to delete.\\n• Click the \"...\" button.\\n• Choose Remove and confirm the deletion.';
+
+  @override
+  String get infoPacketManualBlurb =>
+      'The user\'s manual, instruction sheet, and malfunction instruction sheet can be in electronic form. This is in accordance with the federal register titled \"Regulatory Guidance Concerning Electronic Signatures and Documents\" (76 FR 411).';
+
+  @override
+  String get infoPacketInstructionsBlurb =>
+      'In addition to the above, a supply of blank driver\'s records of duty status (RODS) graph-grids sufficient to record the driver\'s duty status and other related information for a minimum of 8 days must be onboard the commercial motor vehicle (CMV).';
+
+  @override
+  String packetIncompleteMissing(String missing) {
+    return 'Packet incomplete: $missing';
+  }
+
+  @override
+  String get recordsOfDutyStatus => 'Records of\nDuty Status';
+
+  @override
+  String get availableHoursAndRequiredBreaks =>
+      'Available Hours and\nRequired Breaks';
+
+  @override
+  String get interAndIntrastateHosRules => 'Inter- and Intrastate\nHOS Rules';
+
+  @override
+  String get roadsideInspectionFunction => 'Roadside Inspection\nFunction';
+
+  @override
+  String get vehicleInspectionReports => 'Vehicle Inspection\nReports';
+
+  @override
+  String get onlineFleetManagerPortal => 'Online Fleet\nManager Portal';
+
+  @override
+  String get trackYourVehicleSLocationIn =>
+      'Track your vehicle\'s location in real-time for improved fleet management and security.';
+
+  @override
+  String get setUpFleetManagerPortal => 'Set Up Fleet\nManager Portal';
+
+  @override
+  String get monitorHosAndFmcsaCompliance =>
+      'Monitor HOS and\nFMCSA-Compliance';
+
+  @override
+  String get stayOnTopOfDriversDuty =>
+      'Stay on top of drivers\' duty status and remaining hours in real-time. Receive notifications about HOS violations and access archived violation records.';
+
+  @override
+  String get trackYourDriversCurrentOrLast =>
+      'Track your drivers\' current or last location, the vehicle driven, and their contact information effortlessly.';
+
+  @override
+  String get downloadAnyDriversLogsInPdf =>
+      'Download any drivers\' logs in PDF format with a few clicks. In case of a roadside inspection, easily send logs to an FMCSA officer from the online portal.';
+
+  @override
+  String get beginByLocatingTheEcmDiagnostic =>
+      'Begin by locating the ECM (diagnostic) port in your vehicle. This port is typically found on or near the dashboard, under the steering column, or close to the driver\'s seat. Depending on your vehicle type, use the appropriate connection:\n\n• 6-pin Connector: Common in older commercial vehicles.\n• 9-pin Connector: Standard in most modern commercial trucks.\n• OBDII Connector: Typically found in light commercial vehicles and passenger cars.\n\nOnce you\'ve identified the correct connector, securely attach the ELD hardware to the port using the appropriate cable provided. Ensure the ELD device is firmly mounted on your dashboard where it remains visible and accessible for operation. This placement is crucial for ease of use during your driving and inspection processes.';
+
+  @override
+  String get beforeYouStartUsingTheEld =>
+      'Before you start using the ELD, ensure that your mobile device is connected to the internet and Bluetooth is enabled:\n\n• Installing the ELD Software: Download the ELD app from your device\'s app store and follow the on-screen instructions to complete the installation.\n• Logging In: Use your provided credentials to access the app. If you encounter login issues, verify your credentials with your fleet manager or contact customer support.\n• Syncing Your Device with ELD Hardware: After logging in, select your vehicle from the list to sync your mobile device with the ELD hardware.';
+
+  @override
+  String get onceTheEldIsSetUp =>
+      'Once the ELD is set up, it automatically records driving time. Any movement at 5 mph or faster is logged as driving. When stationary, the driver can select a different duty status. The system calculates and displays:\n\n• On-Duty Limits\n• Available Driving Time\n• Required Breaks and Off-Duty Periods\n\nThis information is shown in the app\'s Status section for drivers and in the online portal for fleet managers, ensuring compliance with HOS regulations.';
+
+  @override
+  String get duringARoadsideInspectionFollowThese =>
+      'During a roadside inspection, follow these steps:\n\n• Access \"DOT Inspection\" mode from the Main Menu.\n• Tap \"Start Inspection\" to display your Records of Duty Status (RODS) to the officer.\n• Use the navigation arrows to review logs by date.\n• If requested, send your RODS via web services or email by selecting the \"Send\" button.\n• Once the inspection is complete, tap \"Back\" to return to your regular logs.';
+
+  @override
+  String get stayCompliantWithHosRegulationsBy =>
+      'Stay compliant with HOS regulations by monitoring alerts:\n\n• On the main logs screen, watch for the red exclamation icon, which signals an HOS violation or Form/Certification warning.\n• Review a list of HOS violations by scrolling below the log graph. Tapping on a violation provides more details.';
+
+  @override
+  String get createANewInspectionReportAccess =>
+      'Create a New Inspection Report:\n\n• Access the Menu and select DVIR.\n• Tap the plus sign to start a new inspection.\n• Review the list of vehicle components and mark any with detected defects.\n• Add notes in the Remarks section if needed.\n• Tap Sign to finalize and save the report in the DVIR history.';
+
+  @override
+  String get editAnExistingReportGoTo =>
+      'Edit an existing Report:\n\n• Go to DVIR History and select the report you wish to edit.\n• Click the \"...\" button.\n• Choose Edit to make changes.';
+
+  @override
+  String get deleteAnExistingReportInDvir =>
+      'Delete an existing Report:\n\n• In DVIR History, select the report to delete.\n• Click the \"...\" button.\n• Choose Remove and confirm the deletion.';
+
+  @override
+  String get pleaseContactYourFleetManagerTo =>
+      'Please contact your fleet manager to change your\naccount information.';
+
+  @override
+  String todayLogDate(Object date) {
+    return 'Today - $date';
+  }
+
+  @override
+  String get enterTheTrailerNumber => 'Enter the trailer number.';
+
+  @override
+  String get trailerNumberMustBeLettersNumbers =>
+      'Trailer number must be letters, numbers, or hyphens (max 50).';
+
+  @override
+  String get enterTheDocumentNumber => 'Enter the document number.';
+
+  @override
+  String get shippingDocumentNumberIsTooLong =>
+      'Shipping document number is too long (max 100).';
+
+  @override
+  String get enterOneDocumentAtATime =>
+      'Enter one document at a time (no comma).';
+
+  @override
+  String get reasonForChange => 'Reason for Change';
+
+  @override
+  String get enterReasonRequired => 'Enter reason (Required)';
+
+  @override
+  String get aReasonForTheChangeIs => 'A reason for the change is required.';
+
+  @override
+  String get cannotSaveDriverSessionNotFound =>
+      'Cannot save: driver session not found.';
+
+  @override
+  String get automaticDrivingTimeCannotBeShortened =>
+      'Automatic driving time cannot be shortened or removed.';
+
+  @override
+  String get eventSavedSuccessfully => 'Event saved successfully';
+
+  @override
+  String get reCertificationRequiredEditsWereMade =>
+      'Re-certification Required: Edits were made after your last signature.';
+
+  @override
+  String get typeHere => 'Type here';
+
+  @override
+  String get noDocumentsAdded => 'No documents added';
+
+  @override
+  String get delete => 'DELETE';
+
+  @override
+  String get carrierProposedEdits39530Are =>
+      'Carrier-proposed edits (§395.30) are reviewed inside each log on the Certify tab (Accept / Reject).';
+
+  @override
+  String get unidentifiedDrivingIsReviewedInUnidentified =>
+      'Unidentified driving is reviewed in Unidentified Events.';
+
+  @override
+  String get noTrailersAdded => 'No trailers added';
+
+  @override
+  String get noVehicleIsSelected => 'No vehicle is selected.';
+
+  @override
+  String get anAnnotationIsRequired => 'An annotation is required.';
+
+  @override
+  String get yourRecordWasUpdatedReviewThe =>
+      'Your record was updated. Review the daily log; it may need re-certification.';
+
+  @override
+  String get assume => 'ASSUME';
+
+  @override
+  String get requiredAnnotationThisTimeIsAssumed =>
+      'Required annotation. This time is assumed as driving.';
+
+  @override
+  String get notMine => 'NOT MINE';
+
+  @override
+  String get requiredRejectionReason => 'Required rejection reason';
+
+  @override
+  String get overdue => 'Overdue';
+
+  @override
+  String get originalRecordPreserved => 'Original record preserved';
+
+  @override
+  String get byDate => 'By date…';
+
+  @override
+  String get currentVehicleOnly => 'Current vehicle only';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get currentVehicle => 'Current vehicle';
+
+  @override
+  String get responseWasInterrupted => 'Response was interrupted.';
+
+  @override
+  String get pleaseDrawASignatureFirst => 'Please draw a signature first.';
+
+  @override
+  String get logSuccessfullyCertified => 'Log successfully certified.';
+
+  @override
+  String get notReadyForCertification => 'Not Ready for Certification';
+
+  @override
+  String get pleaseResolveTheFollowingIssuesBefore =>
+      'Please resolve the following issues before certifying your log:';
+
+  @override
+  String get carrierEditsMustBeAcceptedOr =>
+      'Carrier edits must be accepted or rejected before certification.';
+
+  @override
+  String get carrierEditAcceptedReCertifyThe =>
+      'Carrier edit accepted. Re-certify the log.';
+
+  @override
+  String get carrierEditRejected => 'Carrier edit rejected.';
+
+  @override
+  String get sessionMissingPleaseLogInAgain =>
+      'Session missing. Please log in again.';
+
+  @override
+  String get carrierProposedEdit => 'Carrier proposed edit';
+
+  @override
+  String get reject => 'REJECT';
+
+  @override
+  String get accept => 'ACCEPT';
+
+  @override
+  String get selectAVehicleBeforeSavingThe =>
+      'Select a vehicle before saving the form.';
+
+  @override
+  String get coDriverMustBeAServer =>
+      'Co-driver must be a server id before it can be saved.';
+
+  @override
+  String get keepAPaperLogForThatDayAndUnti =>
+      'Keep a paper log for that day and until the device is repaired or replaced. In the event of an inspection, display the previous 7 days from the app.';
+
+  @override
+  String get inTheEventOfAnEldMalfunctionTh =>
+      'In the event of an ELD malfunction, the motor carrier must take actions to correct the malfunction within 8 days of discovery.';
+
+  @override
+  String get anInspectorMayViewTheLogFormTh =>
+      'An inspector may view the log form, the log graph and the log events with notes.';
+
+  @override
+  String get theEventCouldNotBeSaved => 'The event could not be saved.';
+
+  @override
+  String get theEventWasSavedButThe =>
+      'The event was saved but the change audit could not be recorded.';
+
+  @override
+  String get transferAuditTitle => 'Transfer audit';
+
+  @override
+  String get noTransfersFromServer => 'The server returned no transfers.';
+
+  @override
+  String transferAuditNotLoaded(Object error) {
+    return 'Transfer audit was not loaded: $error';
+  }
 }

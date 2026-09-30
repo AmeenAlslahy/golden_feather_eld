@@ -136,6 +136,7 @@ class LocalStorageService implements ServerConfigProvider {
   bool get stopDetection => _trackingStorage.stopDetection;
   bool get preferPlatformProviders => _trackingStorage.preferPlatformProviders;
 
+  bool get onboardingSeen => _preferencesStorage.onboardingSeen;
   String get language => _preferencesStorage.language;
   String get theme => _preferencesStorage.theme;
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
@@ -161,6 +162,8 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> setBackendType(String value) =>
       _trackingStorage.setBackendType(value);
 
+  Future<void> setOnboardingSeen() =>
+      _preferencesStorage.setOnboardingSeen();
   Future<void> setLanguage(String value) =>
       _preferencesStorage.setLanguage(value);
   Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);

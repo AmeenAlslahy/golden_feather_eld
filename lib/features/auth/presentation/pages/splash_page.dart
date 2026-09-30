@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../providers/auth_state_provider.dart';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -24,6 +25,18 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     // لا تأخير صناعي: كان ثابتاً ثانيتين على كل إقلاع بلا أي غرض —
     // القرار يعتمد على الصلاحيات والجلسة فقط، وكلاهما محلي وفوري.
     if (!mounted) return;
+
+    // Onboarding لأول تشغيل فقط (SRS 2 — ترحيب تعريفي)، ثم يعاد
+    // التوجيه عبر '/' لتدفق الأذونات/الجلسة الطبيعي.
+    if (!ref.read(localStorageProvider).onboardingSeen) {
+      if (!mounted) return;
+      // التوجيه بعد اكتمال الإطار: goNamed أثناء البناء يرمي
+      // setState-during-build (Router لا يقبل markNeedsBuild منتحلاً).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.goNamed('onboarding');
+      });
+      return;
+    }
 
     // التحقق من الصلاحيات
     final locationGranted = await Permission.location.isGranted;

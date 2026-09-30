@@ -2225,7 +2225,7 @@ abstract class AppLocalizations {
   /// No description provided for @odometer.
   ///
   /// In ar, this message translates to:
-  /// **'عداد المسافة'**
+  /// **'وحدة المسافة'**
   String get odometer;
 
   /// No description provided for @engineHours.
@@ -2293,12 +2293,6 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فك القفل (للسائق فقط)'**
   String get unlockDriverOnly;
-
-  /// No description provided for @startInspectionDesc.
-  ///
-  /// In ar, this message translates to:
-  /// **'ابدأ التفتيش لعرض السجلات للضابط. سيتم قفل الشاشة لمنع الوصول للتطبيقات الأخرى.'**
-  String get startInspectionDesc;
 
   /// No description provided for @sendLogs.
   ///
@@ -2873,7 +2867,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactFleetManager.
   ///
   /// In ar, this message translates to:
-  /// **'يرجى الاتصال بمدير الأسطول لتغيير القواعد أو إضافة استثناءات.'**
+  /// **'تواصل مع مدير الأسطول للمزيد.'**
   String get contactFleetManager;
 
   /// No description provided for @personalConveyance.
@@ -3019,6 +3013,1104 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'للدعم الفني يرجى تزويد فريق الدعم بمعرّف الجهاز ورقم الإصدار أعلاه.'**
   String get supportText;
+
+  /// No description provided for @noVehiclesAssigned.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مركبات معيّنة'**
+  String get noVehiclesAssigned;
+
+  /// No description provided for @vehiclesAssignedViaPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُعيَّن المركبات عبر البوابة. '**
+  String get vehiclesAssignedViaPortal;
+
+  /// No description provided for @viewMyVehicles.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض مركباتي'**
+  String get viewMyVehicles;
+
+  /// No description provided for @viewAllVehicles.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض كل المركبات'**
+  String get viewAllVehicles;
+
+  /// No description provided for @vehicleSelectedConnect.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم اختيار {name}. اتصل بجهاز ELD لتشغيلها. لم تُنقل ساعات الخدمة.'**
+  String vehicleSelectedConnect(String name);
+
+  /// No description provided for @inUse.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيد الاستخدام'**
+  String get inUse;
+
+  /// No description provided for @viewOnly.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض فقط'**
+  String get viewOnly;
+
+  /// No description provided for @assignedToYou.
+  ///
+  /// In ar, this message translates to:
+  /// **'معيّنة لك'**
+  String get assignedToYou;
+
+  /// No description provided for @errMotionUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.'**
+  String get errMotionUnknown;
+
+  /// No description provided for @errVehicleMoving.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تبديل المركبة وهي تتحرك. لم تُنقل الساعات.'**
+  String get errVehicleMoving;
+
+  /// No description provided for @errIdentifierMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم لم يُرجع معرف المركبة. لن يُخترع معرف.'**
+  String get errIdentifierMissing;
+
+  /// No description provided for @errThresholdMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'عتبة الحركة غير متوفرة من الإعداد.'**
+  String get errThresholdMissing;
+
+  /// No description provided for @errUnauthorized.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير مصرح لك بتشغيل هذه المركبة.'**
+  String get errUnauthorized;
+
+  /// No description provided for @errUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة غير متاحة.'**
+  String get errUnavailable;
+
+  /// No description provided for @errInUse.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة قيد الاستخدام.'**
+  String get errInUse;
+
+  /// No description provided for @errRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم تشغيل المركبة.'**
+  String get errRejected;
+
+  /// No description provided for @errListUnreadable.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر قراءة قائمة المركبات.'**
+  String get errListUnreadable;
+
+  /// No description provided for @nA.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متوفر'**
+  String get nA;
+
+  /// No description provided for @email1.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني'**
+  String get email1;
+
+  /// No description provided for @name.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاسم'**
+  String get name;
+
+  /// No description provided for @phone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم الهاتف'**
+  String get phone;
+
+  /// No description provided for @mainOfficeAddress.
+  ///
+  /// In ar, this message translates to:
+  /// **'المكتب الرئيسي'**
+  String get mainOfficeAddress;
+
+  /// No description provided for @homeTerminalAddress.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحطة الرئيسية'**
+  String get homeTerminalAddress;
+
+  /// No description provided for @timeZone.
+  ///
+  /// In ar, this message translates to:
+  /// **'المنطقة الزمنية'**
+  String get timeZone;
+
+  /// No description provided for @language.
+  ///
+  /// In ar, this message translates to:
+  /// **'لغة التطبيق'**
+  String get language;
+
+  /// No description provided for @languageUpdatedSuccessfully.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث اللغة بنجاح'**
+  String get languageUpdatedSuccessfully;
+
+  /// No description provided for @odometerUnitUpdatedSuccessfull.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث وحدة المسافة بنجاح'**
+  String get odometerUnitUpdatedSuccessfull;
+
+  /// No description provided for @pleaseContactYourFleetManagerT.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى الاتصال بمدير الأسطول لتغيير معلومات الحساب.'**
+  String get pleaseContactYourFleetManagerT;
+
+  /// No description provided for @thePacketIsIncomplete.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحزمة غير مكتملة.'**
+  String get thePacketIsIncomplete;
+
+  /// No description provided for @inspectionMode.
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع التفتيش'**
+  String get inspectionMode;
+
+  /// No description provided for @dataTransferInstructionSheet.
+  ///
+  /// In ar, this message translates to:
+  /// **'ورقة تعليمات نقل البيانات'**
+  String get dataTransferInstructionSheet;
+
+  /// No description provided for @malfunctionManual39534.
+  ///
+  /// In ar, this message translates to:
+  /// **'دليل الأعطال (395.34)'**
+  String get malfunctionManual39534;
+
+  /// No description provided for @goldenFeatherEldInspectionMode.
+  ///
+  /// In ar, this message translates to:
+  /// **'وضع التفتيش لـ Golden Feather ELD'**
+  String get goldenFeatherEldInspectionMode;
+
+  /// No description provided for @tapDotInspectionInTheMenuPress.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط \"وضع التفتيش\" في القائمة واضغط \"بدء التفتيش\". دع الضابط يعرض السجلات من جهازك. اعرض بطاقة التعليمات هذه إذا طلب.'**
+  String get tapDotInspectionInTheMenuPress;
+
+  /// No description provided for @anInspectorMayPressArrowsToVie.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكن للمفتش الضغط على الأسهم لعرض السجلات السابقة أو التالية.'**
+  String get anInspectorMayPressArrowsToVie;
+
+  /// No description provided for @theOfficerCannotLeaveInspectio.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يخرج المفتش من وضع التفتيش. يخرج السائق بزر خروج السائق بعد إدخال كلمة مرور حسابه.'**
+  String get theOfficerCannotLeaveInspectio;
+
+  /// No description provided for @goldenFeatherEldIsCapableOfPro.
+  ///
+  /// In ar, this message translates to:
+  /// **'جهاز Golden Feather ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر \"DOT Inspection\" ثم \"Send Logs\". لإرسالها عبر البريد، اختر \"Email Logs\" وأدخل البريد.'**
+  String get goldenFeatherEldIsCapableOfPro;
+
+  /// No description provided for @goldenFeatherEldMalfunctionMan.
+  ///
+  /// In ar, this message translates to:
+  /// **'دليل الأعطال لـ Golden Feather ELD'**
+  String get goldenFeatherEldMalfunctionMan;
+
+  /// No description provided for @inAccordanceWithTheGuidelinesS.
+  ///
+  /// In ar, this message translates to:
+  /// **'وفقاً للإرشادات المحددة في 395.34'**
+  String get inAccordanceWithTheGuidelinesS;
+
+  /// No description provided for @malfunctionIndication.
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤشر العطل'**
+  String get malfunctionIndication;
+
+  /// No description provided for @immediatelyContactTheSupportIf.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصل بالدعم فوراً إذا انطفأ ضوء LED عند التوصيل بالمركبة أو إذا أبلغ التطبيق عن عطل.'**
+  String get immediatelyContactTheSupportIf;
+
+  /// No description provided for @noteTheMalfunction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل العطل'**
+  String get noteTheMalfunction;
+
+  /// No description provided for @noteTheMalfunctionAndProvideAW.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل العطل وقدم إشعاراً خطياً لشركتك خلال 24 ساعة.'**
+  String get noteTheMalfunctionAndProvideAW;
+
+  /// No description provided for @switchToPaperLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'التبديل للسجلات الورقية'**
+  String get switchToPaperLogs;
+
+  /// No description provided for @k8DaysRule.
+  ///
+  /// In ar, this message translates to:
+  /// **'قاعدة 8 أيام'**
+  String get k8DaysRule;
+
+  /// No description provided for @contactTheSupportTeamAtTopceld.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل مع الدعم عبر topceld@gmail.com'**
+  String get contactTheSupportTeamAtTopceld;
+
+  /// No description provided for @eldUserManual.
+  ///
+  /// In ar, this message translates to:
+  /// **'دليل المستخدم'**
+  String get eldUserManual;
+
+  /// No description provided for @features.
+  ///
+  /// In ar, this message translates to:
+  /// **'الميزات'**
+  String get features;
+
+  /// No description provided for @installationAndSetup.
+  ///
+  /// In ar, this message translates to:
+  /// **'التثبيت والإعداد'**
+  String get installationAndSetup;
+
+  /// No description provided for @logManagement.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدارة السجلات'**
+  String get logManagement;
+
+  /// No description provided for @roadsideInspections.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفتيش الطريق'**
+  String get roadsideInspections;
+
+  /// No description provided for @electronicDriverVehicleInspect.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقارير فحص المركبة (DVIR)'**
+  String get electronicDriverVehicleInspect;
+
+  /// No description provided for @fleetManagerPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'بوابة مدير الأسطول'**
+  String get fleetManagerPortal;
+
+  /// No description provided for @electronicLoggingDeviceEld.
+  ///
+  /// In ar, this message translates to:
+  /// **'جهاز التسجيل الإلكتروني (ELD)'**
+  String get electronicLoggingDeviceEld;
+
+  /// No description provided for @recordsOfNdutyStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلات حالة الخدمة'**
+  String get recordsOfNdutyStatus;
+
+  /// No description provided for @easilyManageYourDutyStatusChan.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدارة الحالات بسهولة مع إمكانية عرض، وتعديل، وتوقيع السجلات بدقة.'**
+  String get easilyManageYourDutyStatusChan;
+
+  /// No description provided for @availableHoursAndNrequiredBrea.
+  ///
+  /// In ar, this message translates to:
+  /// **'الساعات المتاحة\\nوالفترات المطلوبة'**
+  String get availableHoursAndNrequiredBrea;
+
+  /// No description provided for @stayInformedAboutYourAvailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابقَ على اطلاع بساعات القيادة المتاحة وفترات الراحة الإلزامية لضمان الامتثال.'**
+  String get stayInformedAboutYourAvailable;
+
+  /// No description provided for @interAndIntrastateNhosRules.
+  ///
+  /// In ar, this message translates to:
+  /// **'قواعد HOS'**
+  String get interAndIntrastateNhosRules;
+
+  /// No description provided for @ourAppSupportsBothInterAndIntr.
+  ///
+  /// In ar, this message translates to:
+  /// **'يدعم تطبيقنا قواعد القيادة بين الولايات وداخلها.'**
+  String get ourAppSupportsBothInterAndIntr;
+
+  /// No description provided for @roadsideInspectionNfunction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفتيش الطريق'**
+  String get roadsideInspectionNfunction;
+
+  /// No description provided for @duringRoadsideInspectionsUseTh.
+  ///
+  /// In ar, this message translates to:
+  /// **'أثناء التفتيش الأمني، استخدم وضع التفتيش في التطبيق لمشاركة السجلات.'**
+  String get duringRoadsideInspectionsUseTh;
+
+  /// No description provided for @vehicleInspectionNreports.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقارير فحص المركبة'**
+  String get vehicleInspectionNreports;
+
+  /// No description provided for @generatePreOrPostTripDvirsWith.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنشئ تقارير DVIR قبل أو بعد الرحلة لإشعار الميكانيكيين بأي أعطال فوراً.'**
+  String get generatePreOrPostTripDvirsWith;
+
+  /// No description provided for @onlineFleetNmanagerPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'بوابة مدير الأسطول'**
+  String get onlineFleetNmanagerPortal;
+
+  /// No description provided for @accessTheFleetManagerPortalToM.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوصول لبوابة المدير لمراقبة الامتثال وعرض البيانات في الوقت الفعلي.'**
+  String get accessTheFleetManagerPortalToM;
+
+  /// No description provided for @gpsTracking.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع GPS'**
+  String get gpsTracking;
+
+  /// No description provided for @trackYourVehicle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع موقع مركبتك في الوقت الفعلي لتحسين الإدارة والأمان.'**
+  String get trackYourVehicle;
+
+  /// No description provided for @iftaCalculations.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابات IFTA'**
+  String get iftaCalculations;
+
+  /// No description provided for @automaticallyCalculateIftaData.
+  ///
+  /// In ar, this message translates to:
+  /// **'حساب بيانات IFTA آلياً لتبسيط تقارير ضرائب الوقود.'**
+  String get automaticallyCalculateIftaData;
+
+  /// No description provided for @setUpFleetNmanagerPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعداد البوابة'**
+  String get setUpFleetNmanagerPortal;
+
+  /// No description provided for @useYourCredentialsToSignIntoTh.
+  ///
+  /// In ar, this message translates to:
+  /// **'استخدم بيانات الدخول للوصول إلى البوابة وتوفير معلومات شركتك والسائقين.'**
+  String get useYourCredentialsToSignIntoTh;
+
+  /// No description provided for @monitorHosAndNfmcsaCompliance.
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة الامتثال'**
+  String get monitorHosAndNfmcsaCompliance;
+
+  /// No description provided for @stayOnTopOfDrivers.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع حالة السائقين وساعاتهم المتبقية في الوقت الفعلي واستقبل التنبيهات.'**
+  String get stayOnTopOfDrivers;
+
+  /// No description provided for @preconfiguredStatuses.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالات مسبقة الإعداد'**
+  String get preconfiguredStatuses;
+
+  /// No description provided for @customizeDutyStatusesAccessByS.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخصيص الوصول للحالات عبر تفعيل تحرك الساحة والاستخدام الشخصي كخيارات متاحة.'**
+  String get customizeDutyStatusesAccessByS;
+
+  /// No description provided for @driverAndVehicleInformation.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلومات السائق والمركبة'**
+  String get driverAndVehicleInformation;
+
+  /// No description provided for @trackYourDrivers.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع موقع السائقين الحالي أو الأخير، المركبة، ومعلومات الاتصال بسهولة.'**
+  String get trackYourDrivers;
+
+  /// No description provided for @downloadAndTransferLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل ونقل السجلات'**
+  String get downloadAndTransferLogs;
+
+  /// No description provided for @downloadAnyDrivers.
+  ///
+  /// In ar, this message translates to:
+  /// **'حمل أي سجل للسائقين بصيغة PDF بنقرات قليلة. في حال التفتيش يمكن إرسالها بسهولة للضابط.'**
+  String get downloadAnyDrivers;
+
+  /// No description provided for @filterLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفية السجلات'**
+  String get filterLogs;
+
+  /// No description provided for @saveTimeByQuicklyFindingLogsBy.
+  ///
+  /// In ar, this message translates to:
+  /// **'وفر الوقت بإيجاد السجلات بسرعة حسب التاريخ، السائق، أو المركبة باستخدام خيار التصفية.'**
+  String get saveTimeByQuicklyFindingLogsBy;
+
+  /// No description provided for @installEldHardware.
+  ///
+  /// In ar, this message translates to:
+  /// **'تثبيت الجهاز'**
+  String get installEldHardware;
+
+  /// No description provided for @beginByLocatingTheEcmDiagnosti.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بتحديد موقع منفذ (ECM) في مركبتك. يتواجد عادة بالقرب من عجلة القيادة. بناءً على مركبتك استخدم الاتصال المناسب:\\n\\n• وصلة 6-pin\\n• وصلة 9-pin\\n• وصلة OBDII\\n\\nبمجرد تحديد الوصلة، ركب الجهاز وثبته بإحكام.'**
+  String get beginByLocatingTheEcmDiagnosti;
+
+  /// No description provided for @installEldSoftware.
+  ///
+  /// In ar, this message translates to:
+  /// **'تثبيت البرنامج'**
+  String get installEldSoftware;
+
+  /// No description provided for @beforeYouStartUsingTheEldEnsur.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكد من أن جهازك متصل بالإنترنت والبلوتوث مفعل.\\n\\n• قم بتثبيت التطبيق.\\n• سجل الدخول ببياناتك.\\n• زامن الجهاز من خلال اختيار مركبتك من القائمة.'**
+  String get beforeYouStartUsingTheEldEnsur;
+
+  /// No description provided for @hoursOfService1.
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعات الخدمة'**
+  String get hoursOfService1;
+
+  /// No description provided for @onceTheEldIsSetUpItAutomatical.
+  ///
+  /// In ar, this message translates to:
+  /// **'بمجرد الإعداد، يسجل الجهاز وقت القيادة آلياً، ويحسب الساعات المتاحة وفترات الراحة.'**
+  String get onceTheEldIsSetUpItAutomatical;
+
+  /// No description provided for @accessingLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوصول للسجلات'**
+  String get accessingLogs;
+
+  /// No description provided for @logInToTheEldAppWithYourUnique.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الدخول وانتقل لقسم \"السجلات\" للوصول للبيانات.'**
+  String get logInToTheEldAppWithYourUnique;
+
+  /// No description provided for @viewingLogs1.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض السجلات'**
+  String get viewingLogs1;
+
+  /// No description provided for @viewDetailedRodsForDifferentDa.
+  ///
+  /// In ar, this message translates to:
+  /// **'شاهد التفاصيل اليومية لكل تغيير حالة يتضمن الوقت والمدة والمكان.'**
+  String get viewDetailedRodsForDifferentDa;
+
+  /// No description provided for @editingLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل السجلات'**
+  String get editingLogs;
+
+  /// No description provided for @editDutyStatusEntriesExceptFor.
+  ///
+  /// In ar, this message translates to:
+  /// **'عدّل الإدخالات (باستثناء وقت القيادة الآلي). اضغط على التاريخ وعدل واحفظ.'**
+  String get editDutyStatusEntriesExceptFor;
+
+  /// No description provided for @certifyingLogs.
+  ///
+  /// In ar, this message translates to:
+  /// **'توقيع السجلات'**
+  String get certifyingLogs;
+
+  /// No description provided for @certifyingLogsEndYourShiftByDi.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنهِ ورديتك بتوقيع سجلاتك رقمياً للتأكيد على دقتها والامتثال بضغطة زر.'**
+  String get certifyingLogsEndYourShiftByDi;
+
+  /// No description provided for @duringARoadsideInspectionFollo.
+  ///
+  /// In ar, this message translates to:
+  /// **'أثناء التفتيش الأمني، اتبع الخطوات:\\n\\n• ادخل لوضع تفتيش DOT من القائمة الرئيسية.\\n• اضغط \"بدء التفتيش\" لعرض سجلات (RODS) للضابط.\\n• استخدم أسهم التنقل لمراجعة السجلات حسب التاريخ.\\n• إذا طلب منك، أرسل السجلات عبر الويب أو البريد.\\n• بعد الانتهاء، اضغط \"رجوع\" للعودة.'**
+  String get duringARoadsideInspectionFollo;
+
+  /// No description provided for @hosComplianceAlerts.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهات الامتثال'**
+  String get hosComplianceAlerts;
+
+  /// No description provided for @stayCompliantWithHosRegulation.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابقَ ممتثلاً لمراقبة التنبيهات:\\n\\n• على شاشة السجلات الرئيسية، راقب الأيقونة الحمراء التي تشير لمخالفة HOS أو تحذير النموذج.\\n• راجع قائمة الانتهاكات أسفل المخطط لمعرفة التفاصيل عبر الضغط عليها.'**
+  String get stayCompliantWithHosRegulation;
+
+  /// No description provided for @createDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء فحص'**
+  String get createDvir;
+
+  /// No description provided for @createANewInspectionReportNNAc.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء تقرير فحص جديد:\\n\\n• افتح القائمة واختر DVIR.\\n• اضغط على علامة الزائد لبدء فحص جديد.\\n• راجع المكونات وحدد أي أعطال.\\n• أضف ملاحظات إذا لزم الأمر.\\n• اضغط توقيع للحفظ في السجل.'**
+  String get createANewInspectionReportNNAc;
+
+  /// No description provided for @editDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الفحص'**
+  String get editDvir;
+
+  /// No description provided for @editAnExistingReportNNGoToDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل تقرير سابق:\\n\\n• اذهب للسجل واختر التقرير.\\n• اضغط زر التعديل لإجراء التغييرات.'**
+  String get editAnExistingReportNNGoToDvir;
+
+  /// No description provided for @deleteDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف الفحص'**
+  String get deleteDvir;
+
+  /// No description provided for @deleteAnExistingReportNNInDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف تقرير سابق:\\n\\n• اذهب للسجل واختر التقرير.\\n• اضغط زر الحذف وتأكد.'**
+  String get deleteAnExistingReportNNInDvir;
+
+  /// No description provided for @infoPacketManualBlurb.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجوز أن يكون دليل المستخدم وورقة التعليمات وورقة تعليمات الأعطال بصيغة إلكترونية، وفق السجل الفيدرالي بعنوان \"إرشاد تنظيمي بشأن التوقيعات والمستندات الإلكترونية\" (76 FR 411).'**
+  String get infoPacketManualBlurb;
+
+  /// No description provided for @infoPacketInstructionsBlurb.
+  ///
+  /// In ar, this message translates to:
+  /// **'بالإضافة إلى ما سبق، يجب أن تكون في المركبة التجارية نماذج فارغة لسجلات حالة الخدمة (RODS) تكفي لتسجيل حالة السائق والمعلومات ذات الصلة لمدة لا تقل عن 8 أيام.'**
+  String get infoPacketInstructionsBlurb;
+
+  /// No description provided for @packetIncompleteMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحزمة غير مكتملة: {missing}'**
+  String packetIncompleteMissing(String missing);
+
+  /// No description provided for @recordsOfDutyStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلات حالة الخدمة'**
+  String get recordsOfDutyStatus;
+
+  /// No description provided for @availableHoursAndRequiredBreaks.
+  ///
+  /// In ar, this message translates to:
+  /// **'الساعات المتاحة\nوالفترات المطلوبة'**
+  String get availableHoursAndRequiredBreaks;
+
+  /// No description provided for @interAndIntrastateHosRules.
+  ///
+  /// In ar, this message translates to:
+  /// **'قواعد HOS'**
+  String get interAndIntrastateHosRules;
+
+  /// No description provided for @roadsideInspectionFunction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفتيش الطريق'**
+  String get roadsideInspectionFunction;
+
+  /// No description provided for @vehicleInspectionReports.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقارير فحص المركبة'**
+  String get vehicleInspectionReports;
+
+  /// No description provided for @onlineFleetManagerPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'بوابة مدير الأسطول'**
+  String get onlineFleetManagerPortal;
+
+  /// No description provided for @trackYourVehicleSLocationIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع موقع مركبتك في الوقت الفعلي لتحسين الإدارة والأمان.'**
+  String get trackYourVehicleSLocationIn;
+
+  /// No description provided for @setUpFleetManagerPortal.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعداد البوابة'**
+  String get setUpFleetManagerPortal;
+
+  /// No description provided for @monitorHosAndFmcsaCompliance.
+  ///
+  /// In ar, this message translates to:
+  /// **'مراقبة الامتثال'**
+  String get monitorHosAndFmcsaCompliance;
+
+  /// No description provided for @stayOnTopOfDriversDuty.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع حالة السائقين وساعاتهم المتبقية في الوقت الفعلي واستقبل التنبيهات.'**
+  String get stayOnTopOfDriversDuty;
+
+  /// No description provided for @trackYourDriversCurrentOrLast.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتبع موقع السائقين الحالي أو الأخير، المركبة، ومعلومات الاتصال بسهولة.'**
+  String get trackYourDriversCurrentOrLast;
+
+  /// No description provided for @downloadAnyDriversLogsInPdf.
+  ///
+  /// In ar, this message translates to:
+  /// **'حمل أي سجل للسائقين بصيغة PDF بنقرات قليلة. في حال التفتيش يمكن إرسالها بسهولة للضابط.'**
+  String get downloadAnyDriversLogsInPdf;
+
+  /// No description provided for @beginByLocatingTheEcmDiagnostic.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بتحديد موقع منفذ (ECM) في مركبتك. يتواجد عادة بالقرب من عجلة القيادة. بناءً على مركبتك استخدم الاتصال المناسب:\n\n• وصلة 6-pin\n• وصلة 9-pin\n• وصلة OBDII\n\nبمجرد تحديد الوصلة، ركب الجهاز وثبته بإحكام.'**
+  String get beginByLocatingTheEcmDiagnostic;
+
+  /// No description provided for @beforeYouStartUsingTheEld.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكد من أن جهازك متصل بالإنترنت والبلوتوث مفعل.\n\n• قم بتثبيت التطبيق.\n• سجل الدخول ببياناتك.\n• زامن الجهاز من خلال اختيار مركبتك من القائمة.'**
+  String get beforeYouStartUsingTheEld;
+
+  /// No description provided for @onceTheEldIsSetUp.
+  ///
+  /// In ar, this message translates to:
+  /// **'بمجرد الإعداد، يسجل الجهاز وقت القيادة آلياً، ويحسب الساعات المتاحة وفترات الراحة.'**
+  String get onceTheEldIsSetUp;
+
+  /// No description provided for @duringARoadsideInspectionFollowThese.
+  ///
+  /// In ar, this message translates to:
+  /// **'أثناء التفتيش الأمني، اتبع الخطوات:\n\n• ادخل لوضع تفتيش DOT من القائمة الرئيسية.\n• اضغط \"بدء التفتيش\" لعرض سجلات (RODS) للضابط.\n• استخدم أسهم التنقل لمراجعة السجلات حسب التاريخ.\n• إذا طلب منك، أرسل السجلات عبر الويب أو البريد.\n• بعد الانتهاء، اضغط \"رجوع\" للعودة.'**
+  String get duringARoadsideInspectionFollowThese;
+
+  /// No description provided for @stayCompliantWithHosRegulationsBy.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابقَ ممتثلاً لمراقبة التنبيهات:\n\n• على شاشة السجلات الرئيسية، راقب الأيقونة الحمراء التي تشير لمخالفة HOS أو تحذير النموذج.\n• راجع قائمة الانتهاكات أسفل المخطط لمعرفة التفاصيل عبر الضغط عليها.'**
+  String get stayCompliantWithHosRegulationsBy;
+
+  /// No description provided for @createANewInspectionReportAccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنشاء تقرير فحص جديد:\n\n• افتح القائمة واختر DVIR.\n• اضغط على علامة الزائد لبدء فحص جديد.\n• راجع المكونات وحدد أي أعطال.\n• أضف ملاحظات إذا لزم الأمر.\n• اضغط توقيع للحفظ في السجل.'**
+  String get createANewInspectionReportAccess;
+
+  /// No description provided for @editAnExistingReportGoTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل تقرير سابق:\n\n• اذهب للسجل واختر التقرير.\n• اضغط زر التعديل لإجراء التغييرات.'**
+  String get editAnExistingReportGoTo;
+
+  /// No description provided for @deleteAnExistingReportInDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف تقرير سابق:\n\n• اذهب للسجل واختر التقرير.\n• اضغط زر الحذف وتأكد.'**
+  String get deleteAnExistingReportInDvir;
+
+  /// No description provided for @pleaseContactYourFleetManagerTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى الاتصال بمدير الأسطول لتغيير معلومات الحساب.'**
+  String get pleaseContactYourFleetManagerTo;
+
+  /// No description provided for @todayLogDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'اليوم - {date}'**
+  String todayLogDate(Object date);
+
+  /// No description provided for @enterTheTrailerNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رقم المقطورة.'**
+  String get enterTheTrailerNumber;
+
+  /// No description provided for @trailerNumberMustBeLettersNumbers.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).'**
+  String get trailerNumberMustBeLettersNumbers;
+
+  /// No description provided for @enterTheDocumentNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رقم المستند.'**
+  String get enterTheDocumentNumber;
+
+  /// No description provided for @shippingDocumentNumberIsTooLong.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم مستند الشحن طويل جداً (حتى 100).'**
+  String get shippingDocumentNumberIsTooLong;
+
+  /// No description provided for @enterOneDocumentAtATime.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).'**
+  String get enterOneDocumentAtATime;
+
+  /// No description provided for @reasonForChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب التعديل'**
+  String get reasonForChange;
+
+  /// No description provided for @enterReasonRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل السبب (مطلوب)'**
+  String get enterReasonRequired;
+
+  /// No description provided for @aReasonForTheChangeIs.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب التعديل مطلوب.'**
+  String get aReasonForTheChangeIs;
+
+  /// No description provided for @cannotSaveDriverSessionNotFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة السائق غير موجودة. لا يمكن الحفظ.'**
+  String get cannotSaveDriverSessionNotFound;
+
+  /// No description provided for @automaticDrivingTimeCannotBeShortened.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تقصير أو حذف وقت القيادة الآلي.'**
+  String get automaticDrivingTimeCannotBeShortened;
+
+  /// No description provided for @eventSavedSuccessfully.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ الحدث بنجاح'**
+  String get eventSavedSuccessfully;
+
+  /// No description provided for @reCertificationRequiredEditsWereMade.
+  ///
+  /// In ar, this message translates to:
+  /// **'يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.'**
+  String get reCertificationRequiredEditsWereMade;
+
+  /// No description provided for @typeHere.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب هنا'**
+  String get typeHere;
+
+  /// No description provided for @noDocumentsAdded.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مستندات'**
+  String get noDocumentsAdded;
+
+  /// No description provided for @delete.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get delete;
+
+  /// No description provided for @carrierProposedEdits39530Are.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديلات الناقل المقترحة (§395.30) تُراجَع داخل كل سجل في تبويب Certify (قبول / رفض).'**
+  String get carrierProposedEdits39530Are;
+
+  /// No description provided for @unidentifiedDrivingIsReviewedInUnidentified.
+  ///
+  /// In ar, this message translates to:
+  /// **'القيادة غير المحددة تُراجَع في شاشة الأحداث غير المحددة.'**
+  String get unidentifiedDrivingIsReviewedInUnidentified;
+
+  /// No description provided for @noTrailersAdded.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مقطورات'**
+  String get noTrailersAdded;
+
+  /// No description provided for @noVehicleIsSelected.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد مركبة محددة.'**
+  String get noVehicleIsSelected;
+
+  /// No description provided for @anAnnotationIsRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'التعليق مطلوب.'**
+  String get anAnnotationIsRequired;
+
+  /// No description provided for @yourRecordWasUpdatedReviewThe.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديث سجلك. راجع السجل اليومي؛ قد يلزم إعادة التصديق.'**
+  String get yourRecordWasUpdatedReviewThe;
+
+  /// No description provided for @assume.
+  ///
+  /// In ar, this message translates to:
+  /// **'افتراض'**
+  String get assume;
+
+  /// No description provided for @requiredAnnotationThisTimeIsAssumed.
+  ///
+  /// In ar, this message translates to:
+  /// **'التعليق مطلوب. تُحتسب هذه المدة قيادة.'**
+  String get requiredAnnotationThisTimeIsAssumed;
+
+  /// No description provided for @notMine.
+  ///
+  /// In ar, this message translates to:
+  /// **'ليست لي'**
+  String get notMine;
+
+  /// No description provided for @requiredRejectionReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الرفض مطلوب'**
+  String get requiredRejectionReason;
+
+  /// No description provided for @overdue.
+  ///
+  /// In ar, this message translates to:
+  /// **'متأخر'**
+  String get overdue;
+
+  /// No description provided for @originalRecordPreserved.
+  ///
+  /// In ar, this message translates to:
+  /// **'النسخة الأصلية محفوظة'**
+  String get originalRecordPreserved;
+
+  /// No description provided for @byDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسب التاريخ…'**
+  String get byDate;
+
+  /// No description provided for @currentVehicleOnly.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة الحالية فقط'**
+  String get currentVehicleOnly;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح التصفية'**
+  String get clearFilters;
+
+  /// No description provided for @currentVehicle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة الحالية'**
+  String get currentVehicle;
+
+  /// No description provided for @responseWasInterrupted.
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطعت العملية. أعد المحاولة.'**
+  String get responseWasInterrupted;
+
+  /// No description provided for @pleaseDrawASignatureFirst.
+  ///
+  /// In ar, this message translates to:
+  /// **'ارسم التوقيع أولاً.'**
+  String get pleaseDrawASignatureFirst;
+
+  /// No description provided for @logSuccessfullyCertified.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم اعتماد السجل.'**
+  String get logSuccessfullyCertified;
+
+  /// No description provided for @notReadyForCertification.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير جاهز للاعتماد'**
+  String get notReadyForCertification;
+
+  /// No description provided for @pleaseResolveTheFollowingIssuesBefore.
+  ///
+  /// In ar, this message translates to:
+  /// **'عالج النواقص التالية قبل اعتماد السجل:'**
+  String get pleaseResolveTheFollowingIssuesBefore;
+
+  /// No description provided for @carrierEditsMustBeAcceptedOr.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديلات الناقل بانتظار ردك قبل الاعتماد.'**
+  String get carrierEditsMustBeAcceptedOr;
+
+  /// No description provided for @carrierEditAcceptedReCertifyThe.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم قبول تعديل الناقل. أعد التصديق.'**
+  String get carrierEditAcceptedReCertifyThe;
+
+  /// No description provided for @carrierEditRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم رفض تعديل الناقل.'**
+  String get carrierEditRejected;
+
+  /// No description provided for @sessionMissingPleaseLogInAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الجلسة. سجّل الدخول مرة أخرى.'**
+  String get sessionMissingPleaseLogInAgain;
+
+  /// No description provided for @carrierProposedEdit.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل من الناقل'**
+  String get carrierProposedEdit;
+
+  /// No description provided for @reject.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض'**
+  String get reject;
+
+  /// No description provided for @accept.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبول'**
+  String get accept;
+
+  /// No description provided for @selectAVehicleBeforeSavingThe.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى اختيار المركبة قبل حفظ النموذج.'**
+  String get selectAVehicleBeforeSavingThe;
+
+  /// No description provided for @coDriverMustBeAServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب أن يكون السائق المساعد صالحاً قبل الحفظ.'**
+  String get coDriverMustBeAServer;
+
+  /// No description provided for @keepAPaperLogForThatDayAndUnti.
+  ///
+  /// In ar, this message translates to:
+  /// **'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.'**
+  String get keepAPaperLogForThatDayAndUnti;
+
+  /// No description provided for @inTheEventOfAnEldMalfunctionTh.
+  ///
+  /// In ar, this message translates to:
+  /// **'في حال عطل ELD، يجب على الشركة اتخاذ إجراءات لإصلاح العطل خلال 8 أيام من اكتشافه.'**
+  String get inTheEventOfAnEldMalfunctionTh;
+
+  /// No description provided for @anInspectorMayViewTheLogFormTh.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكن للمفتش عرض نموذج السجل، المخطط الشبكي، والأحداث مع الملاحظات.'**
+  String get anInspectorMayViewTheLogFormTh;
+
+  /// No description provided for @theEventCouldNotBeSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر حفظ الحدث.'**
+  String get theEventCouldNotBeSaved;
+
+  /// No description provided for @theEventWasSavedButThe.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ الحدث لكن تعذر تسجيل سبب التعديل.'**
+  String get theEventWasSavedButThe;
+
+  /// No description provided for @transferAuditTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل نقل السجلات'**
+  String get transferAuditTitle;
+
+  /// No description provided for @noTransfersFromServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد عمليات نقل في رد الخادم.'**
+  String get noTransfersFromServer;
+
+  /// No description provided for @transferAuditNotLoaded.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر قراءة سجل النقل: {error}'**
+  String transferAuditNotLoaded(Object error);
 }
 
 class _AppLocalizationsDelegate

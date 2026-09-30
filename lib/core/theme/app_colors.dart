@@ -24,7 +24,6 @@ class AppColors {
   static const Color primaryBlue = primaryGold;
 
   /// SRS §25.1 — زر التوقيع.
-  static const Color signGreen = Color(0xFF4CAF50);
 
   /// أسود الهوية — الخلفية الفاخرة.
   static const Color secondary = Color(0xFF0D0D0D);
@@ -91,11 +90,7 @@ class AppColors {
 
   // ========== عناصر خاصة ==========
 
-  /// زر "متابعة بدون اتصال".
-  static const Color darkButton = Color(0xFF0D0D0D);
-
   /// لون خفيف مكمل.
-  static const Color paleGreen = Color(0xFFE8DFC0);
 
   // ========== شريط التنقل السفلي ==========
 
