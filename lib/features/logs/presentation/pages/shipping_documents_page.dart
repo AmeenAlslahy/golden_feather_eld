@@ -23,7 +23,6 @@ class ShippingDocumentsPage extends ConsumerStatefulWidget {
 class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
   final _controller = TextEditingController();
 
-  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
 
   @override
   void dispose() {
@@ -36,7 +35,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
 
   void _addDocument() {
     final text = _controller.text.trim();
-    final error = shippingDocumentError(text, isArabic: _isArabic);
+    final error = shippingDocumentError(text, context.loc);
     if (error != null) {
       AppFeedback.error(context, error);
       return;
@@ -90,7 +89,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                 Expanded(
                   child: AppTextField(
                     controller: _controller,
-                    hint: _isArabic ? 'اكتب هنا' : 'Type here',
+                    hint: context.loc.typeHere,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _addDocument(),
                   ),
@@ -127,7 +126,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
             child: docs.isEmpty
                 ? Center(
                     child: Text(
-                      _isArabic ? 'لا توجد مستندات' : 'No documents added',
+                      context.loc.noDocumentsAdded,
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.outline),
                     ),
@@ -162,7 +161,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                             ),
                           ),
                           child: Text(
-                            _isArabic ? 'حذف' : 'DELETE',
+                            context.loc.deleteButton,
                             style: const TextStyle(
                               fontSize: AppTypography.smallSize,
                               fontWeight: AppTypography.bold,

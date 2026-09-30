@@ -66,12 +66,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final r = widget.existingReport;
     _report = r;
     _locationController = TextEditingController(text: r?.location ?? '');
-    _odometerController =
-        TextEditingController(text: r?.odometer?.toString() ?? '');
-    _vehicleDefectsController =
-        TextEditingController(text: r?.vehicleDefects ?? '');
-    _trailerDefectsController =
-        TextEditingController(text: r?.trailerDefects ?? '');
+    _odometerController = TextEditingController(
+      text: r?.odometer?.toString() ?? '',
+    );
+    _vehicleDefectsController = TextEditingController(
+      text: r?.vehicleDefects ?? '',
+    );
+    _trailerDefectsController = TextEditingController(
+      text: r?.trailerDefects ?? '',
+    );
     _companyController = TextEditingController(text: r?.companyName ?? '');
     _remarksController = TextEditingController(text: r?.notes ?? '');
     if (r == null) {
@@ -143,10 +146,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
-      builder: (_) => _DefectCatalogDialog(
-        initial: _selectedDefects,
-        isArabic: isArabic,
-      ),
+      builder: (_) =>
+          _DefectCatalogDialog(initial: _selectedDefects, isArabic: isArabic),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -180,7 +181,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
-              title: Text(ar ? 'حالة المركبة مرضية' : 'Vehicle Condition Satisfactory'),
+              title: Text(
+                ar ? 'حالة المركبة مرضية' : 'Vehicle Condition Satisfactory',
+              ),
               enabled: !hasDefect,
               subtitle: hasDefect
                   ? Text(ar ? '— يوجد عيب مسجّل' : '— a defect is recorded')
@@ -188,7 +191,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               onTap: hasDefect
                   ? null
                   : () => Navigator.pop(
-                      context, 'Vehicle Condition Satisfactory'),
+                      context,
+                      'Vehicle Condition Satisfactory',
+                    ),
             ),
             ListTile(
               title: Text(ar ? 'توجد عيوب' : 'Has Defects'),
@@ -197,12 +202,22 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ListTile(
               enabled: false,
               title: Text(ar ? 'تم إصلاح العيوب' : 'Defects Corrected'),
-              subtitle: Text(ar ? 'لا يوجد تصديق إصلاح بعد' : 'No repair certification yet'),
+              subtitle: Text(
+                ar ? 'لا يوجد تصديق إصلاح بعد' : 'No repair certification yet',
+              ),
             ),
             ListTile(
               enabled: false,
-              title: Text(ar ? 'العيوب لا تستوجب الإصلاح' : 'Defects Need Not Be Corrected'),
-              subtitle: Text(ar ? 'يحدّدها الناقل لا السائق' : 'Set by the carrier, not the driver'),
+              title: Text(
+                ar
+                    ? 'العيوب لا تستوجب الإصلاح'
+                    : 'Defects Need Not Be Corrected',
+              ),
+              subtitle: Text(
+                ar
+                    ? 'يحدّدها الناقل لا السائق'
+                    : 'Set by the carrier, not the driver',
+              ),
             ),
           ],
         ),
@@ -257,15 +272,22 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
 
     final dashboard = ref.read(dashboardDataProvider);
-    final previousToReview =
-        ref.read(dvirProvider).previousToReview(dashboard.vehicleId);
+    final previousToReview = ref
+        .read(dvirProvider)
+        .previousToReview(dashboard.vehicleId);
 
     if (widget.existingReport != null) {
-      _snack(_isAr ? 'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.' : 'A saved report cannot be edited on this device.');
+      _snack(
+        _isAr
+            ? 'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.'
+            : 'A saved report cannot be edited on this device.',
+      );
       return;
     }
 
-    final signatureData = dvirSignatureData(await _signatureController.toPngBytes());
+    final signatureData = dvirSignatureData(
+      await _signatureController.toPngBytes(),
+    );
     if (!mounted) return;
     if (signatureData == null) {
       _snack(_isAr ? 'التوقيع مطلوب.' : 'A signature is required.');
@@ -273,11 +295,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
     final driverId = ref.read(currentDriverIdProvider);
     if (driverId == null || driverId <= 0) {
-      _snack(_isAr ? 'جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.' : 'Driver session is missing. Sign in again before signing the report.');
+      _snack(
+        _isAr
+            ? 'جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.'
+            : 'Driver session is missing. Sign in again before signing the report.',
+      );
       return;
     }
-    if (dashboard.vehicleId.trim().isEmpty || dashboard.vehicleId == 'No Vehicle') {
-      _snack(_isAr ? 'معرّف المركبة مفقود. اختر مركبة قبل التوقيع.' : 'Vehicle id is missing. Select a vehicle before signing.');
+    if (dashboard.vehicleId.trim().isEmpty ||
+        dashboard.vehicleId == 'No Vehicle') {
+      _snack(
+        _isAr
+            ? 'معرّف المركبة مفقود. اختر مركبة قبل التوقيع.'
+            : 'Vehicle id is missing. Select a vehicle before signing.',
+      );
       return;
     }
 
@@ -285,16 +316,24 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       final latest = previousToReview;
       final previousId = int.tryParse(latest.id);
       if (previousId == null) {
-        _snack(_isAr ? 'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.' : 'The previous report has no server id and cannot be reviewed.');
+        _snack(
+          _isAr
+              ? 'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.'
+              : 'The previous report has no server id and cannot be reviewed.',
+        );
         return;
       }
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final previousDefects = <String>[
         for (final d in latest.selectedDefects)
           d.item.label(isArabic) +
-              ((d.description?.trim().isNotEmpty ?? false) ? ' — ${d.description!.trim()}' : ''),
-        if ((latest.vehicleDefects ?? '').trim().isNotEmpty) latest.vehicleDefects!.trim(),
-        if ((latest.trailerDefects ?? '').trim().isNotEmpty) latest.trailerDefects!.trim(),
+              ((d.description?.trim().isNotEmpty ?? false)
+                  ? ' — ${d.description!.trim()}'
+                  : ''),
+        if ((latest.vehicleDefects ?? '').trim().isNotEmpty)
+          latest.vehicleDefects!.trim(),
+        if ((latest.trailerDefects ?? '').trim().isNotEmpty)
+          latest.trailerDefects!.trim(),
         if (latest.selectedDefects.isEmpty &&
             (latest.vehicleDefects ?? '').trim().isEmpty &&
             (latest.trailerDefects ?? '').trim().isEmpty &&
@@ -357,7 +396,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         ),
       );
       if (reviewed != true || !mounted) return;
-      final reviewError = await ref.read(dvirProvider.notifier).reviewDvir(
+      final reviewError = await ref
+          .read(dvirProvider.notifier)
+          .reviewDvir(
             dvirId: '$previousId',
             reviewingDriverId: driverId,
             reviewingDriverName: dashboard.driverName,
@@ -382,7 +423,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       trailerId: dashboard.trailerId,
       odometer: double.tryParse(_odometerController.text),
       items: const [],
-      notes: _remarksController.text.isNotEmpty ? _remarksController.text : null,
+      notes: _remarksController.text.isNotEmpty
+          ? _remarksController.text
+          : null,
       signature: signatureData,
       condition: hasDefects || _selectedStatus == 'Has Defects'
           ? VehicleCondition.needsRepair
@@ -395,15 +438,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       hasDefects: hasDefects || _selectedStatus == 'Has Defects',
       selectedDefects: _selectedDefects,
     );
-    final saved = await ref.read(dvirProvider.notifier).createReport(
-          report,
-          driverId: driverId,
-          status: _selectedStatus,
-        );
+    final saved = await ref
+        .read(dvirProvider.notifier)
+        .createReport(report, driverId: driverId, status: _selectedStatus);
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     if (!saved) {
-      _snack(ref.read(dvirProvider).error ?? 'The server did not accept the report.');
+      _snack(
+        ref.read(dvirProvider).error ?? 'The server did not accept the report.',
+      );
       return;
     }
     setState(() => _signed = true);
@@ -418,15 +461,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   Widget build(BuildContext context) {
     final existingId = widget.existingReport?.id;
     if (existingId != null) {
-      ref.listen<DvirReport?>(
-        dvirProvider.select((s) => s.currentReport),
-        (previous, next) {
-          if (next == null || next.id != existingId || identical(next, previous)) {
-            return;
-          }
-          setState(() => _applyReport(next));
-        },
-      );
+      ref.listen<DvirReport?>(dvirProvider.select((s) => s.currentReport), (
+        previous,
+        next,
+      ) {
+        if (next == null ||
+            next.id != existingId ||
+            identical(next, previous)) {
+          return;
+        }
+        setState(() => _applyReport(next));
+      });
     }
     final dashboard = ref.watch(dashboardDataProvider);
     final account = ref.watch(accountProvider).accountData;
@@ -435,15 +480,18 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     // select على النص النهائي فقط: كيان الموقع يحمل timestamp يتغير كل
     // نبضة GPS، لذا مراقبة الكيان نفسه كانت تعيد بناء الصفحة كاملة كل ثانية.
     final automaticLocation =
-        ref.watch(trackingStateProvider.select((s) {
-          final l = s.currentLocation;
-          return l == null
-              ? null
-              : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
-        })) ??
+        ref.watch(
+          trackingStateProvider.select((s) {
+            final l = s.currentLocation;
+            return l == null
+                ? null
+                : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
+          }),
+        ) ??
         (_report?.location ??
             (_isAr ? 'الموقع غير متاح' : 'Location unavailable'));
-    final companyName = _report?.companyName ??
+    final companyName =
+        _report?.companyName ??
         account?.carrier ??
         (_isAr ? 'الشركة غير متاحة' : 'Company unavailable');
     final brightness = Theme.of(context).brightness;
@@ -480,7 +528,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           padding: EdgeInsets.zero,
           children: [
             if (widget.existingReport == null &&
-                ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) != null)
+                ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) !=
+                    null)
               Container(
                 width: double.infinity,
                 color: AppColors.warningYellow.withValues(alpha: 0.2),
@@ -493,23 +542,30 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               ),
             _buildFieldGroup(
               title: _isAr ? 'الوقت' : 'Time (ET)',
-              child: Text(currentTime,
-                  style: TextStyle(color: textColor, fontSize: 16)),
+              child: Text(
+                currentTime,
+                style: TextStyle(color: textColor, fontSize: 16),
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: _isAr ? 'الموقع' : 'Location',
-              child: Text(automaticLocation,
-                  style: TextStyle(color: textColor, fontSize: 16)),
+              child: Text(
+                automaticLocation,
+                style: TextStyle(color: textColor, fontSize: 16),
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: _isAr ? 'المسافة' : 'Odometer (mi)',
               child: _buildFlatTextField(
-                  _odometerController, _isAr ? 'المسافة' : 'Odometer', textColor,
-                  keyboardType: TextInputType.number),
+                _odometerController,
+                _isAr ? 'المسافة' : 'Odometer',
+                textColor,
+                keyboardType: TextInputType.number,
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),
@@ -519,15 +575,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             _buildTwoColumn(
               left: _buildCell(
                 title: context.loc.vehicle,
-                child: Text(dashboard.vehicleDisplayName,
-                    style: TextStyle(color: textColor, fontSize: 16)),
+                child: Text(
+                  dashboard.vehicleDisplayName,
+                  style: TextStyle(color: textColor, fontSize: 16),
+                ),
                 borderColor: borderColor,
                 textColor: textColor,
               ),
               right: _buildCell(
                 title: context.loc.defectsTitle,
-                child: _buildFlatTextField(_vehicleDefectsController,
-                    context.loc.defectsTitle, textColor),
+                child: _buildFlatTextField(
+                  _vehicleDefectsController,
+                  context.loc.defectsTitle,
+                  textColor,
+                ),
                 borderColor: borderColor,
                 textColor: textColor,
               ),
@@ -535,19 +596,25 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             _buildTwoColumn(
               left: _buildCell(
                 title: context.loc.trailers,
-                child: Text(dashboard.trailerId ?? context.loc.trailers,
-                    style: TextStyle(
-                        color: dashboard.trailerId == null
-                            ? AppColors.textSecondaryFor(brightness)
-                            : textColor,
-                        fontSize: 16)),
+                child: Text(
+                  dashboard.trailerId ?? context.loc.trailers,
+                  style: TextStyle(
+                    color: dashboard.trailerId == null
+                        ? AppColors.textSecondaryFor(brightness)
+                        : textColor,
+                    fontSize: 16,
+                  ),
+                ),
                 borderColor: borderColor,
                 textColor: textColor,
               ),
               right: _buildCell(
                 title: context.loc.defectsTitle,
-                child: _buildFlatTextField(_trailerDefectsController,
-                    context.loc.defectsTitle, textColor),
+                child: _buildFlatTextField(
+                  _trailerDefectsController,
+                  context.loc.defectsTitle,
+                  textColor,
+                ),
                 borderColor: borderColor,
                 textColor: textColor,
               ),
@@ -561,15 +628,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
             _buildFieldGroup(
               title: _isAr ? 'الشركة' : 'Company',
-              child: Text(companyName,
-                  style: TextStyle(color: textColor, fontSize: 16)),
+              child: Text(
+                companyName,
+                style: TextStyle(color: textColor, fontSize: 16),
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
               title: _isAr ? 'ملاحظات' : 'Remarks',
-              child:
-                  _buildFlatTextField(_remarksController, _isAr ? 'ملاحظات' : 'Remarks', textColor),
+              child: _buildFlatTextField(
+                _remarksController,
+                _isAr ? 'ملاحظات' : 'Remarks',
+                textColor,
+              ),
               borderColor: borderColor,
               textColor: textColor,
             ),
@@ -580,8 +652,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(_statusLabel(_selectedStatus),
-                          style: TextStyle(color: textColor, fontSize: 16)),
+                      child: Text(
+                        _statusLabel(_selectedStatus),
+                        style: TextStyle(color: textColor, fontSize: 16),
+                      ),
                     ),
                     Icon(Icons.arrow_drop_down, color: textColor),
                   ],
@@ -600,8 +674,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     height: 200,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      border:
-                          Border.all(color: borderColor.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: borderColor.withValues(alpha: 0.5),
+                      ),
                       color: Colors
                           .white, // Ensure signature pad is visible against white
                     ),
@@ -609,7 +684,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       children: [
                         Center(
                           child: Text(
-                            _isAr ? 'الصورة غير متاحة.' : 'Image not available.',
+                            _isAr
+                                ? 'الصورة غير متاحة.'
+                                : 'Image not available.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 32,
@@ -643,9 +720,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: 28, vertical: AppSpacing.sm),
+                horizontal: 28,
+                vertical: AppSpacing.sm,
+              ),
               child: AppButton(
-                label: _signed ? (_isAr ? 'تم التوقيع' : 'SIGNED') : (_isAr ? 'توقيع' : 'SIGN'),
+                label: _signed
+                    ? (_isAr ? 'تم التوقيع' : 'SIGNED')
+                    : (_isAr ? 'توقيع' : 'SIGN'),
                 type: EldButtonType.agree,
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting || !timeAvailable || _signed
@@ -773,11 +854,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                           icon: const Icon(Icons.close, size: 18),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
-                              minWidth: 32, minHeight: 32),
-                          onPressed: () => setState(() =>
-                              _selectedDefects = _selectedDefects
-                                  .where((x) => x != d)
-                                  .toList()),
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          onPressed: () => setState(
+                            () => _selectedDefects = _selectedDefects
+                                .where((x) => x != d)
+                                .toList(),
+                          ),
                         ),
                     ],
                   ),
@@ -788,8 +872,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           TextButton.icon(
             onPressed: _openDefectCatalog,
             icon: const Icon(Icons.add, size: 16),
-            label: Text(isArabic ? 'إضافة عيوب' : 'Add Defects',
-                style: TextStyle(fontSize: 12, color: textColor)),
+            label: Text(
+              isArabic ? 'إضافة عيوب' : 'Add Defects',
+              style: TextStyle(fontSize: 12, color: textColor),
+            ),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: const Size(0, 32),
@@ -801,8 +887,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   Widget _buildFlatTextField(
-      TextEditingController controller, String hint, Color textColor,
-      {TextInputType keyboardType = TextInputType.text}) {
+    TextEditingController controller,
+    String hint,
+    Color textColor, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -816,9 +905,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       ),
     );
   }
-
 }
-
 
 /// Checkbox list of the live §396.11 catalog with an optional note per item.
 class _DefectCatalogDialog extends ConsumerStatefulWidget {
@@ -828,7 +915,8 @@ class _DefectCatalogDialog extends ConsumerStatefulWidget {
   final bool isArabic;
 
   @override
-  ConsumerState<_DefectCatalogDialog> createState() => _DefectCatalogDialogState();
+  ConsumerState<_DefectCatalogDialog> createState() =>
+      _DefectCatalogDialogState();
 }
 
 class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
@@ -845,9 +933,10 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
     super.dispose();
   }
 
-  TextEditingController _noteFor(DvirCatalogItem item) =>
-      _notes.putIfAbsent(item.code,
-          () => TextEditingController(text: _picked[item.code]?.description ?? ''));
+  TextEditingController _noteFor(DvirCatalogItem item) => _notes.putIfAbsent(
+    item.code,
+    () => TextEditingController(text: _picked[item.code]?.description ?? ''),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -895,9 +984,13 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                           title: Text(item.label(isArabic)),
                           subtitle: item.critical
                               ? Text(
-                                  isArabic ? 'يؤثر على السلامة' : 'Safety affecting',
+                                  isArabic
+                                      ? 'يؤثر على السلامة'
+                                      : 'Safety affecting',
                                   style: const TextStyle(
-                                      fontSize: 11, color: AppColors.dangerRed),
+                                    fontSize: 11,
+                                    color: AppColors.dangerRed,
+                                  ),
                                 )
                               : null,
                           onChanged: (v) => setState(() {
@@ -919,10 +1012,15 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                               style: const TextStyle(fontSize: 12),
                               decoration: InputDecoration(
                                 isDense: true,
-                                hintText: isArabic ? 'وصف (اختياري)' : 'Description (optional)',
+                                hintText: isArabic
+                                    ? 'وصف (اختياري)'
+                                    : 'Description (optional)',
                               ),
-                              onChanged: (text) => _picked[item.code] =
-                                  DvirDefectSelection(item: item, description: text),
+                              onChanged: (text) =>
+                                  _picked[item.code] = DvirDefectSelection(
+                                    item: item,
+                                    description: text,
+                                  ),
                             ),
                           ),
                       ],

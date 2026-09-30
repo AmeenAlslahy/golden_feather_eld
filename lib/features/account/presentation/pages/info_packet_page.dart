@@ -14,25 +14,17 @@ import 'user_manual_page.dart';
 class InfoPacketPage extends ConsumerWidget {
   const InfoPacketPage({super.key});
 
-  static const _manualBlurbEn =
-      'The user\'s manual, instruction sheet, and malfunction instruction sheet can be in electronic form. This is in accordance with the federal register titled "Regulatory Guidance Concerning Electronic Signatures and Documents" (76 FR 411).';
-  static const _manualBlurbAr =
-      'يجوز أن يكون دليل المستخدم وورقة التعليمات وورقة تعليمات الأعطال بصيغة إلكترونية، وفق السجل الفيدرالي بعنوان "إرشاد تنظيمي بشأن التوقيعات والمستندات الإلكترونية" (76 FR 411).';
-  static const _instructionsBlurbEn =
-      'In addition to the above, a supply of blank driver\'s records of duty status (RODS) graph-grids sufficient to record the driver\'s duty status and other related information for a minimum of 8 days must be onboard the commercial motor vehicle (CMV).';
-  static const _instructionsBlurbAr =
-      'بالإضافة إلى ما سبق، يجب أن تكون في المركبة التجارية نماذج فارغة لسجلات حالة الخدمة (RODS) تكفي لتسجيل حالة السائق والمعلومات ذات الصلة لمدة لا تقل عن 8 أيام.';
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = context.loc;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.eldAppBar,
         title: Text(
-          isArabic ? loc.infoPacket : 'Information Packet',
+          loc.infoPacket,
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
@@ -50,7 +42,7 @@ class InfoPacketPage extends ConsumerWidget {
           _PacketStatus(packet: ref.watch(informationPacketProvider)),
           _PacketBlock(
             title: loc.userManual,
-            body: isArabic ? _manualBlurbAr : _manualBlurbEn,
+            body: loc.infoPacketManualBlurb,
             buttonLabel: loc.viewUserManual.toUpperCase(),
             onPressed: () {
               Navigator.push(
@@ -62,7 +54,7 @@ class InfoPacketPage extends ConsumerWidget {
           const Divider(height: 1),
           _PacketBlock(
             title: loc.instructions,
-            body: isArabic ? _instructionsBlurbAr : _instructionsBlurbEn,
+            body: loc.infoPacketInstructionsBlurb,
             buttonLabel: loc.viewInstructions.toUpperCase(),
             onPressed: () {
               Navigator.push(
@@ -85,7 +77,6 @@ class _PacketStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return packet.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
@@ -103,10 +94,8 @@ class _PacketStatus extends StatelessWidget {
           ),
           child: Text(
             missing.isEmpty
-                ? (isArabic ? 'الحزمة غير مكتملة.' : 'The packet is incomplete.')
-                : (isArabic
-                    ? 'الحزمة غير مكتملة: $missing'
-                    : 'Packet incomplete: $missing'),
+                ? context.loc.thePacketIsIncomplete
+                : context.loc.packetIncompleteMissing(missing),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: AppColors.dangerRed),
           ),

@@ -4,6 +4,7 @@
 /// string on the dashboard state; the Trailers / Shipping Documents pages and
 /// the SAVE payload all go through these helpers so they never disagree.
 library;
+import '../../../../l10n/app_localizations.dart';
 
 const _placeholders = {'', 'None', '-', 'none'};
 
@@ -22,34 +23,28 @@ String joinFormList(List<String> items) =>
     items.isEmpty ? 'None' : items.join(', ');
 
 /// `UpdateDailyFormRequest.trailers[].trailerNumber` rule.
-String? trailerNumberError(String value, {required bool isArabic}) {
+String? trailerNumberError(String value, AppLocalizations loc) {
   final v = value.trim();
   if (v.isEmpty) {
-    return isArabic ? 'أدخل رقم المقطورة.' : 'Enter the trailer number.';
+    return loc.enterTrailerNumber;
   }
   if (v.length > 50 || !RegExp(r'^[A-Za-z0-9-]+$').hasMatch(v)) {
-    return isArabic
-        ? 'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).'
-        : 'Trailer number must be letters, numbers, or hyphens (max 50).';
+    return loc.trailerNumberFormatError;
   }
   return null;
 }
 
 /// `UpdateDailyFormRequest.shippingDocuments[].documentNumber` rule.
-String? shippingDocumentError(String value, {required bool isArabic}) {
+String? shippingDocumentError(String value, AppLocalizations loc) {
   final v = value.trim();
   if (v.isEmpty) {
-    return isArabic ? 'أدخل رقم المستند.' : 'Enter the document number.';
+    return loc.enterDocumentNumber;
   }
   if (v.length > 100) {
-    return isArabic
-        ? 'رقم مستند الشحن طويل جداً (حتى 100).'
-        : 'Shipping document number is too long (max 100).';
+    return loc.documentNumberTooLong;
   }
   if (v.contains(',')) {
-    return isArabic
-        ? 'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).'
-        : 'Enter one document at a time (no comma).';
+    return loc.oneDocumentAtATime;
   }
   return null;
 }

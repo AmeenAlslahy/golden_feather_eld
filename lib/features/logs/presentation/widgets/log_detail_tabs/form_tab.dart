@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/extensions/context_extensions.dart';
@@ -98,11 +99,10 @@ class FormTab extends ConsumerWidget {
               final selectedLog = ref.read(logsProvider).selectedLog;
               if (selectedLog == null) return;
 
-              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
               final form = _dailyFormPayload(
                 dashboard,
                 selectedLog.uniqueId,
-                isArabic: isArabic,
+                context.loc,
               );
               if (form.error != null) {
                 AppFeedback.error(context, form.error!);
@@ -132,18 +132,12 @@ class FormTab extends ConsumerWidget {
                           ),
                         );
                   }
-                  final arabic =
-                      Localizations.localeOf(context).languageCode == 'ar';
                   final text = read.message ??
                       (read.complete == true
                           ? context.loc.successMessage
                           : read.complete == false
-                              ? (arabic
-                                  ? 'حفظ الخادم النموذج وتركه غير مكتمل.'
-                                  : 'The server saved the form and left it incomplete.')
-                              : (arabic
-                                  ? 'حفظ الخادم النموذج ولم يُرجع حالة الاكتمال.'
-                                  : 'The server saved the form but did not return a form status.'));
+                              ? context.loc.serverSavedFormIncomplete
+                              : context.loc.serverSavedFormNoStatus);
                   AppFeedback.info(context, text);
                 },
               );
@@ -201,27 +195,27 @@ class _DailyFormPayload {
 
 /// Builds `UpdateDailyFormRequest` from the live contract.
 /// Arrays are objects, never bare strings. `coDriverId` is an integer or null.
-_DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId, {required bool isArabic}) {
+_DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId, AppLocalizations loc) {
   final uniqueId = readOperableUniqueId(dashboard.vehicleId) ??
       readOperableUniqueId(logUniqueId) ??
       '';
   if (uniqueId.isEmpty) {
     return _DailyFormPayload(
       const {}, 
-      isArabic ? 'يرجى اختيار المركبة قبل حفظ النموذج.' : 'Select a vehicle before saving the form.',
+      loc.selectVehicleBeforeSavingForm,
     );
   }
 
   final trailers = <Map<String, String>>[];
   for (final trailer in splitFormList(dashboard.trailerId)) {
-    final error = trailerNumberError(trailer, isArabic: isArabic);
+    final error = trailerNumberError(trailer, loc);
     if (error != null) return _DailyFormPayload(const {}, error);
     trailers.add({'trailerNumber': trailer});
   }
 
   final documents = <Map<String, String>>[];
   for (final document in splitFormList(dashboard.shippingDocuments)) {
-    final error = shippingDocumentError(document, isArabic: isArabic);
+    final error = shippingDocumentError(document, loc);
     if (error != null) return _DailyFormPayload(const {}, error);
     documents.add({'documentNumber': document});
   }
@@ -233,9 +227,7 @@ _DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId,
     if (coDriverId == null) {
       return _DailyFormPayload(
         const {},
-        isArabic 
-          ? 'يجب أن يكون السائق المساعد صالحاً قبل الحفظ.' 
-          : 'Co-driver must be a server id before it can be saved.',
+        loc.coDriverMustBeServerId,
       );
     }
   }

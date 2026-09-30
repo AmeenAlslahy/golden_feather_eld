@@ -31,24 +31,23 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final dashboard = ref.watch(dashboardDataProvider);
     final accountState = ref.watch(accountProvider);
     final account = accountState.accountData;
-    
-    final loc = context.loc;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final notAvailable = isArabic ? 'غير متوفر' : 'N/A';
 
-    final availableLanguages = account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
-    final availableOdometerUnits = account?.availableOdometerUnits ?? ['mi', 'km'];
-    
+    final loc = context.loc;
+
+    final notAvailable = loc.na;
+
+    final availableLanguages =
+        account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
+    final availableOdometerUnits =
+        account?.availableOdometerUnits ?? ['mi', 'km'];
+
     final currentLanguage = account?.language ?? 'English';
     final currentOdometer = account?.odometer ?? 'mi';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          isArabic ? loc.account : 'My Account',
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(loc.account, style: context.styles.appBarTitle),
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
@@ -83,151 +82,177 @@ class _AccountPageState extends ConsumerState<AccountPage> {
       body: accountState.isLoading && account == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () => ref.read(accountProvider.notifier).fetchMyAccount(),
+              onRefresh: () =>
+                  ref.read(accountProvider.notifier).fetchMyAccount(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Container(
-                  color: Theme.of(context).colorScheme.surface, // Typically white
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface, // Typically white
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (accountState.error != null)
+                    children: [
+                      if (accountState.error != null)
+                        Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Text(
+                            accountState.error!,
+                            style: context.styles.error,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                      // ========== معلومات الحساب ==========
+                      _buildInfoRow(
+                        context,
+                        loc.email1,
+                        account?.email ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.sortByName,
+                        dashboard.driverName,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.phone,
+                        account?.phone ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.license,
+                        account == null
+                            ? notAvailable
+                            : (account.license.formatted.contains(',')
+                                  ? account.license.formatted
+                                  : '${account.license.state}, ${account.license.number}'),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.carrier,
+                        account?.carrier ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.mainOfficeAddress,
+                        account?.mainOfficeAddress ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.homeTerminalAddress,
+                        account?.homeTerminalAddress ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildInfoRow(
+                        context,
+                        loc.timeZone,
+                        account?.timeZone ?? notAvailable,
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildDropdownRow(
+                        context: context,
+                        title: loc.languageLabel,
+                        value: currentLanguage,
+                        items: availableLanguages,
+                        onChanged: accountState.isLoading
+                            ? null
+                            : (newValue) async {
+                                if (newValue != null &&
+                                    newValue != currentLanguage) {
+                                  final success = await ref
+                                      .read(accountProvider.notifier)
+                                      .updatePreferences(
+                                        language: newValue,
+                                        odometerUnit: currentOdometer,
+                                      );
+                                  if (context.mounted) {
+                                    if (success) {
+                                      AppFeedback.success(
+                                        context,
+                                        loc.languageUpdatedSuccessfully,
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      _buildDropdownRow(
+                        context: context,
+                        title: loc.odometer,
+                        value: currentOdometer,
+                        items: availableOdometerUnits,
+                        onChanged: accountState.isLoading
+                            ? null
+                            : (newValue) async {
+                                if (newValue != null &&
+                                    newValue != currentOdometer) {
+                                  final success = await ref
+                                      .read(accountProvider.notifier)
+                                      .updatePreferences(
+                                        language: currentLanguage,
+                                        odometerUnit: newValue,
+                                      );
+                                  if (context.mounted) {
+                                    if (success) {
+                                      AppFeedback.success(
+                                        context,
+                                        loc.odometerUnitUpdatedSuccessfull,
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                      ),
+                      const Divider(height: 1, thickness: 1),
+
+                      const SizedBox(height: 48),
+
+                      // ========== رسالة تنبيه ==========
                       Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Text(
-                          accountState.error!,
-                          style: context.styles.error,
-                          textAlign: TextAlign.center,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info,
+                              color: AppColors.textSecondaryFor(
+                                Theme.of(context).brightness,
+                              ),
+                              size: 18,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                account?.notice ??
+                                    (loc.pleaseContactYourFleetManagerTo),
+                                style: context.styles.body.copyWith(
+                                  color: AppColors.textSecondaryFor(
+                                    Theme.of(context).brightness,
+                                  ),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-  
-                    // ========== معلومات الحساب ==========
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'البريد الإلكتروني' : 'Email',
-                      account?.email ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'الاسم' : 'Name',
-                      dashboard.driverName,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'رقم الهاتف' : 'Phone',
-                      account?.phone ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'الرخصة' : 'License',
-                      account == null
-                          ? notAvailable
-                          : (account.license.formatted.contains(',')
-                              ? account.license.formatted
-                              : '${account.license.state}, ${account.license.number}'),
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'الناقل' : 'Carrier',
-                      account?.carrier ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'المكتب الرئيسي' : 'Main Office Address',
-                      account?.mainOfficeAddress ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'المحطة الرئيسية' : 'Home Terminal Address',
-                      account?.homeTerminalAddress ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildInfoRow(
-                      context,
-                      isArabic ? 'المنطقة الزمنية' : 'Time Zone',
-                      account?.timeZone ?? notAvailable,
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildDropdownRow(
-                      context: context,
-                      title: isArabic ? 'لغة التطبيق' : 'Language',
-                      value: currentLanguage,
-                      items: availableLanguages,
-                      onChanged: accountState.isLoading ? null : (newValue) async {
-                        if (newValue != null && newValue != currentLanguage) {
-                          final success = await ref.read(accountProvider.notifier).updatePreferences(
-                            language: newValue,
-                            odometerUnit: currentOdometer,
-                          );
-                          if (context.mounted) {
-                            if (success) {
-                              AppFeedback.success(context, isArabic ? 'تم تحديث اللغة بنجاح' : 'Language updated successfully');
-                            }
-                          }
-                        }
-                      },
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    _buildDropdownRow(
-                      context: context,
-                      title: isArabic ? 'وحدة المسافة' : 'Odometer',
-                      value: currentOdometer,
-                      items: availableOdometerUnits,
-                      onChanged: accountState.isLoading ? null : (newValue) async {
-                        if (newValue != null && newValue != currentOdometer) {
-                          final success = await ref.read(accountProvider.notifier).updatePreferences(
-                            language: currentLanguage,
-                            odometerUnit: newValue,
-                          );
-                          if (context.mounted) {
-                            if (success) {
-                              AppFeedback.success(context, isArabic ? 'تم تحديث وحدة المسافة بنجاح' : 'Odometer unit updated successfully');
-                            }
-                          }
-                        }
-                      },
-                    ),
-                    const Divider(height: 1, thickness: 1),
-                    
-                    const SizedBox(height: 48),
-  
-                    // ========== رسالة تنبيه ==========
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                           Icon(Icons.info,
-                              color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 18),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              account?.notice ?? 
-                              (isArabic
-                                  ? 'يرجى الاتصال بمدير الأسطول لتغيير معلومات الحساب.'
-                                  : 'Please contact your fleet manager to change your\naccount information.'),
-                              style: context.styles.body.copyWith(
-                                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                  ],
+                      const SizedBox(height: 48),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
     );
   }
 
@@ -273,7 +298,9 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     required ValueChanged<String?>? onChanged,
   }) {
     // التأكد من أن القيمة الحالية موجودة في قائمة الخيارات
-    final safeValue = items.contains(value) ? value : (items.isNotEmpty ? items.first : '');
+    final safeValue = items.contains(value)
+        ? value
+        : (items.isNotEmpty ? items.first : '');
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -299,9 +326,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: safeValue.isEmpty ? null : safeValue,
-                icon:  Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                ),
                 onChanged: onChanged,
-                style:  TextStyle(
+                style: TextStyle(
                   fontSize: AppTypography.bodySize,
                   color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                 ),

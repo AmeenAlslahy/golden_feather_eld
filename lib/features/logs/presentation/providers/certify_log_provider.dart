@@ -6,6 +6,7 @@ import '../../domain/repositories/log_repository.dart';
 import '../../data/providers/log_repository_providers.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'dart:typed_data';
 
 class CertifyLogState {
@@ -42,23 +43,25 @@ class CertifyLogState {
 
 final certifyLogProvider = StateNotifierProvider<CertifyLogNotifier, CertifyLogState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
+  final locale = ref.watch(localeProvider);
+  final loc = lookupAppLocalizations(locale);
   return CertifyLogNotifier(
     repository,
-    isArabic: ref.watch(localeProvider).languageCode == 'ar',
+    loc,
   );
 });
 
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
-  final bool _isArabic;
+  final AppLocalizations _loc;
+  bool get _isArabic => _loc.localeName == 'ar';
 
   /// Driver-facing text only — never the failure code or exception text.
   String _message(Failure failure) =>
       anyErrorUserMessage(failure, isArabic: _isArabic);
 
-  CertifyLogNotifier(this._repository, {bool isArabic = false})
-      : _isArabic = isArabic,
-        super(const CertifyLogState());
+  CertifyLogNotifier(this._repository, this._loc)
+      : super(const CertifyLogState());
 
   Future<String?> respondToCarrierEdit({
     required DailyLogId logId,
@@ -74,7 +77,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
       driverNotes: driverNotes,
     );
     if (!mounted) {
-      return _isArabic ? 'انقطعت العملية. أعد المحاولة.' : 'Response was interrupted.';
+      return _loc.responseInterrupted;
     }
     final error = result.fold(_message, (_) => null);
     if (error != null) {
@@ -121,7 +124,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     if (signatureBytes.isEmpty) {
       state = state.copyWith(
         isLoading: false,
-        error: _isArabic ? 'ارسم التوقيع أولاً.' : 'Please draw a signature first.',
+        error: _loc.drawSignatureFirst,
       );
       return;
     }

@@ -81,8 +81,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
 
   /// Accept / reject one carrier-proposed edit through the existing respond API.
   Future<void> _respondToEdit(String editId, String action) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final error = await ref.read(certifyLogProvider.notifier).respondToCarrierEdit(
+final error = await ref.read(certifyLogProvider.notifier).respondToCarrierEdit(
           logId: widget.selectedLog.id,
           editId: editId,
           action: action,
@@ -94,27 +93,24 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     }
     _showSuccess(
       action.toUpperCase() == 'ACCEPT'
-          ? (isArabic ? 'تم قبول تعديل الناقل. أعد التصديق.' : 'Carrier edit accepted. Re-certify the log.')
-          : (isArabic ? 'تم رفض تعديل الناقل.' : 'Carrier edit rejected.'),
+          ? (context.loc.carrierEditAcceptedReCertifyThe)
+          : (context.loc.carrierEditRejected),
     );
   }
 
   Future<void> _onAgree() async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final signatureBytes = await _signatureController.toPngBytes();
+final signatureBytes = await _signatureController.toPngBytes();
     if (!mounted) return;
     if (signatureBytes == null || signatureBytes.isEmpty) {
       _showError(
-        isArabic ? 'ارسم التوقيع أولاً.' : 'Please draw a signature first.',
+        context.loc.pleaseDrawASignatureFirst,
       );
       return;
     }
 
     final driverId = ref.read(authStateProvider).user?.id;
     if (driverId == null || driverId.isEmpty) {
-      _showError(isArabic
-          ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.'
-          : 'Session missing. Please log in again.');
+      _showError(context.loc.sessionMissingPleaseLogInAgain);
       return;
     }
 
@@ -132,9 +128,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     final certifyState = ref.read(certifyLogProvider);
     if (certifyState.isSuccess) {
       _showSuccess(
-        Localizations.localeOf(context).languageCode == 'ar'
-            ? 'تم اعتماد السجل.'
-            : 'Log successfully certified.',
+        context.loc.logSuccessfullyCertified,
       );
       ref.read(logsProvider.notifier).loadLogs(refresh: true);
       if (mounted) Navigator.of(context).pop();
@@ -166,7 +160,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             Text(state.error!, textAlign: TextAlign.center, style: context.styles.error),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: 'RETRY',
+              label: context.loc.retryButton,
               onPressed: () => ref.read(certifyLogProvider.notifier).checkReadiness(widget.selectedLog.id),
             )
           ],
@@ -188,17 +182,13 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             const Icon(Icons.warning_amber_rounded, size: 64, color: AppColors.warningYellow),
             const SizedBox(height: AppSpacing.md),
             Text(
-              Localizations.localeOf(context).languageCode == 'ar'
-                  ? 'غير جاهز للاعتماد'
-                  : 'Not Ready for Certification',
+              context.loc.notReadyForCertification,
               textAlign: TextAlign.center,
               style: context.styles.pageTitle,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              Localizations.localeOf(context).languageCode == 'ar'
-                  ? 'عالج النواقص التالية قبل اعتماد السجل:'
-                  : 'Please resolve the following issues before certifying your log:',
+              context.loc.pleaseResolveTheFollowingIssuesBefore,
               style: context.styles.body,
             ),
             const SizedBox(height: AppSpacing.md),
@@ -246,9 +236,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             child: Stack(
               children: [
                 if (_signatureController.isEmpty)
-                const Center(
+                Center(
                   child: Text(
-                    'Draw your signature here',
+                    context.loc.drawYourSignatureHere,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -268,10 +258,10 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           const SizedBox(height: AppSpacing.sm),
           InkWell(
             onTap: () => _signatureController.clear(),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Clear signature',
+                context.loc.clearSignature,
                 style: TextStyle(
                   fontSize: 14,
                   decoration: TextDecoration.underline,
@@ -283,7 +273,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           const SizedBox(height: AppSpacing.xl),
           Text(
             readinessData.legalStatement.trim().isEmpty
-                ? 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.'
+                ? context.loc.certifyLegalStatement
                 : readinessData.legalStatement,
             textAlign: TextAlign.center,
             style: context.styles.body.copyWith(height: 1.5, fontWeight: FontWeight.w500),
@@ -291,9 +281,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           const SizedBox(height: AppSpacing.md),
           if (readinessData.pendingCarrierEdits.isNotEmpty) ...[
             Text(
-              Localizations.localeOf(context).languageCode == 'ar'
-                  ? 'تعديلات الناقل بانتظار ردك قبل الاعتماد.'
-                  : 'Carrier edits must be accepted or rejected before certification.',
+              context.loc.carrierEditsMustBeAcceptedOr,
               textAlign: TextAlign.center,
               style: context.styles.error,
             ),
@@ -359,8 +347,7 @@ class _CarrierEditCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final summary = [
+final summary = [
       if (edit.carrierName != null && edit.carrierName!.trim().isNotEmpty)
         edit.carrierName!.trim(),
       if (edit.proposedStatus != null && edit.proposedStatus!.trim().isNotEmpty)
@@ -378,7 +365,7 @@ class _CarrierEditCard extends StatelessWidget {
         children: [
           Text(
             summary.isEmpty
-                ? (isArabic ? 'تعديل من الناقل' : 'Carrier proposed edit')
+                ? (context.loc.carrierProposedEdit)
                 : summary,
             textAlign: TextAlign.center,
             style: context.styles.body,
@@ -388,7 +375,7 @@ class _CarrierEditCard extends StatelessWidget {
             children: [
               Expanded(
                 child: AppButton(
-                  label: isArabic ? 'رفض' : 'REJECT',
+                  label: context.loc.reject,
                   type: EldButtonType.danger,
                   onPressed: busy ? null : () => onRespond('REJECT'),
                 ),
@@ -396,7 +383,7 @@ class _CarrierEditCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: AppButton(
-                  label: isArabic ? 'قبول' : 'ACCEPT',
+                  label: context.loc.accept,
                   type: EldButtonType.agree,
                   onPressed: busy ? null : () => onRespond('ACCEPT'),
                 ),

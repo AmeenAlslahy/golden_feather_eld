@@ -1,3 +1,4 @@
+import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -12,20 +13,18 @@ class InstructionsPage extends StatelessWidget {
 
   final InstructionsSection section;
 
-  String _title(bool isArabic) => switch (section) {
-        InstructionsSection.all => isArabic ? 'التعليمات' : 'Instructions',
+  String _title(AppLocalizations loc) => switch (section) {
+        InstructionsSection.all => loc.instructions,
         InstructionsSection.inspection =>
-          isArabic ? 'وضع التفتيش' : 'Inspection Mode',
-        InstructionsSection.sendLogs => isArabic
-            ? 'ورقة تعليمات نقل البيانات'
-            : 'Data Transfer Instruction Sheet',
+          loc.inspectionMode,
+        InstructionsSection.sendLogs => loc.dataTransferInstructionSheet,
         InstructionsSection.malfunction =>
-          isArabic ? 'دليل الأعطال (395.34)' : 'Malfunction Manual (395.34)',
+          loc.malfunctionManual39534,
       };
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
     final brightness = Theme.of(context).brightness;
     final showAll = section == InstructionsSection.all;
 
@@ -37,7 +36,7 @@ class InstructionsPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _title(isArabic),
+          _title(context.loc),
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
@@ -48,21 +47,21 @@ class InstructionsPage extends StatelessWidget {
         children: [
           // Section 1: Inspection Mode
           if (showAll || section == InstructionsSection.inspection)
-            _buildInspectionModeSection(isArabic, brightness),
+            _buildInspectionModeSection(context.loc, brightness),
 
           // Section 2: Send Logs (Data Transfer Instruction Sheet)
           if (showAll || section == InstructionsSection.sendLogs)
-            _buildSendLogsSection(isArabic, brightness),
+            _buildSendLogsSection(context.loc, brightness),
 
           // Section 3: Malfunction Manual
           if (showAll || section == InstructionsSection.malfunction)
-            _buildMalfunctionManualSection(isArabic, brightness),
+            _buildMalfunctionManualSection(context.loc, brightness),
         ],
       ),
     );
   }
 
-  Widget _buildInspectionModeSection(bool isArabic, Brightness brightness) {
+  Widget _buildInspectionModeSection(AppLocalizations loc, Brightness brightness) {
     // Dark background for this section as per design
     final sectionColor = brightness == Brightness.light
         ? const Color(0xFF333A45)
@@ -97,9 +96,7 @@ class InstructionsPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic
-                      ? 'وضع التفتيش لـ Golden Feather ELD'
-                      : 'Golden Feather ELD Inspection Mode',
+                  loc.goldenFeatherEldInspectionMode,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -109,30 +106,22 @@ class InstructionsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _buildChecklistItem(
-                  text: isArabic
-                      ? 'اضغط "وضع التفتيش" في القائمة واضغط "بدء التفتيش". دع الضابط يعرض السجلات من جهازك. اعرض بطاقة التعليمات هذه إذا طلب.'
-                      : 'Tap "DOT Inspection" in the menu & press "Start Inspection". Let an officer to view your logs directly from your mobile device. Show this instruction card if requested.',
+                  text: loc.tapDotInspectionInTheMenuPress,
                   textColor: textColor,
                   iconColor: Colors.white,
                 ),
                 _buildChecklistItem(
-                  text: isArabic
-                      ? 'يمكن للمفتش الضغط على الأسهم لعرض السجلات السابقة أو التالية.'
-                      : 'An inspector may press arrows to view previous or next day\'s logs.',
+                  text: loc.anInspectorMayPressArrowsToVie,
                   textColor: textColor,
                   iconColor: Colors.white,
                 ),
                 _buildChecklistItem(
-                  text: isArabic
-                      ? 'يمكن للمفتش عرض نموذج السجل، المخطط الشبكي، والأحداث مع الملاحظات.'
-                      : 'An inspector may view the log form, the log graph and the log events with notes.',
+                  text: loc.anInspectorMayViewTheLogFormTh,
                   textColor: textColor,
                   iconColor: Colors.white,
                 ),
                 _buildChecklistItem(
-                  text: isArabic
-                      ? 'لا يخرج المفتش من وضع التفتيش. يخرج السائق بزر خروج السائق بعد إدخال كلمة مرور حسابه.'
-                      : 'The officer cannot leave inspection. The driver exits with Driver Exit after entering the account password.',
+                  text: loc.theOfficerCannotLeaveInspectio,
                   textColor: textColor,
                   iconColor: Colors.white,
                 ),
@@ -144,7 +133,7 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSendLogsSection(bool isArabic, Brightness brightness) {
+  Widget _buildSendLogsSection(AppLocalizations loc, Brightness brightness) {
     final sectionColor = AppColors.surfaceFor(brightness);
     final textColor = AppColors.textPrimaryFor(brightness);
     final textSecondaryColor = AppColors.textSecondaryFor(brightness);
@@ -166,7 +155,7 @@ class InstructionsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isArabic ? 'إرسال السجلات' : 'Send Logs',
+                      loc.sendLogs,
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -174,9 +163,7 @@ class InstructionsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      isArabic
-                          ? 'جهاز Golden Feather ELD قادر على إنتاج ونقل سجلات ELD عبر طرق النقل التليماتية: الويب اللاسلكي والبريد الإلكتروني. لإرسال السجلات عبر الويب، اضغط زر "DOT Inspection" ثم "Send Logs". لإرسالها عبر البريد، اختر "Email Logs" وأدخل البريد.'
-                          : 'Golden Feather ELD is capable of producing and transferring the ELD records via telematics transfer methods: Wireless Web services and Email. In order to send the ELD records via Web services a driver must press "DOT Inspection" menu item and then press "Send Logs" button. In order to send the ELD records via Email a driver must press "DOT Inspection" menu item, press "Email Logs", enter an email provided by an authorized safety official and press "Send" button.',
+                      loc.goldenFeatherEldIsCapableOfPro,
                       style: TextStyle(
                           fontSize: 10, color: textSecondaryColor, height: 1.5),
                     ),
@@ -186,13 +173,13 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(isArabic, textSecondaryColor)),
+          Center(child: _buildContactInfo(loc, textSecondaryColor)),
         ],
       ),
     );
   }
 
-  Widget _buildMalfunctionManualSection(bool isArabic, Brightness brightness) {
+  Widget _buildMalfunctionManualSection(AppLocalizations loc, Brightness brightness) {
     // Light gray background
     final sectionColor = brightness == Brightness.light
         ? const Color(0xFFF7F7F7)
@@ -242,9 +229,7 @@ class InstructionsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isArabic
-                          ? 'دليل الأعطال لـ Golden Feather ELD'
-                          : 'Golden Feather ELD Malfunction Manual',
+                      loc.goldenFeatherEldMalfunctionMan,
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -253,43 +238,31 @@ class InstructionsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      isArabic
-                          ? 'وفقاً للإرشادات المحددة في 395.34'
-                          : 'In accordance with the guidelines set forth in 395.34',
+                      loc.inAccordanceWithTheGuidelinesS,
                       style: TextStyle(fontSize: 11, color: textSecondaryColor),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _buildSquareChecklistItem(
-                      title: isArabic ? 'مؤشر العطل' : 'Malfunction indication',
-                      desc: isArabic
-                          ? 'اتصل بالدعم فوراً إذا انطفأ ضوء LED عند التوصيل بالمركبة أو إذا أبلغ التطبيق عن عطل.'
-                          : 'Immediately contact the support if LED light on the device is off when the device is plugged into the diagnostic port or if the malfunction reported by the app.',
+                      title: loc.malfunctionIndication,
+                      desc: loc.immediatelyContactTheSupportIf,
                       textColor: textColor,
                       secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
-                      title: isArabic ? 'تسجيل العطل' : 'Note the malfunction',
-                      desc: isArabic
-                          ? 'سجل العطل وقدم إشعاراً خطياً لشركتك خلال 24 ساعة.'
-                          : 'Note the malfunction and provide a written notice to your fleet within 24 hours.',
+                      title: loc.noteTheMalfunction,
+                      desc: loc.noteTheMalfunctionAndProvideAW,
                       textColor: textColor,
                       secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
-                      title: isArabic
-                          ? 'التبديل للسجلات الورقية'
-                          : 'Switch to paper logs',
-                      desc: isArabic
-                          ? 'احتفظ بسجل ورقي لذلك اليوم وحتى يتم إصلاح الجهاز. في حال التفتيش، اعرض الأيام السبعة السابقة من التطبيق.'
-                          : 'Keep a paper log for that day and until the device is repaired or replaced. In the event of an inspection, display the previous 7 days from the app.',
+                      title: loc.switchToPaperLogs,
+                      desc: loc.keepAPaperLogForThatDayAndUnti,
                       textColor: textColor,
                       secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
-                      title: isArabic ? 'قاعدة 8 أيام' : '8 days rule',
-                      desc: isArabic
-                          ? 'في حال عطل ELD، يجب على الشركة اتخاذ إجراءات لإصلاح العطل خلال 8 أيام من اكتشافه.'
-                          : 'In the event of an ELD malfunction, the motor carrier must take actions to correct the malfunction within 8 days of discovery.',
+                      title: loc.k8DaysRule,
+                      desc: loc.inTheEventOfAnEldMalfunctionTh,
                       textColor: textColor,
                       secondaryColor: textSecondaryColor,
                     ),
@@ -299,7 +272,7 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(isArabic, textSecondaryColor)),
+          Center(child: _buildContactInfo(loc, textSecondaryColor)),
         ],
       ),
     );
@@ -369,7 +342,7 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactInfo(bool isArabic, Color secondaryColor) {
+  Widget _buildContactInfo(AppLocalizations loc, Color secondaryColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -379,9 +352,7 @@ class InstructionsPage extends StatelessWidget {
               fontSize: 10, color: secondaryColor, fontWeight: FontWeight.bold),
         ),
         Text(
-          isArabic
-              ? 'تواصل مع الدعم عبر topceld@gmail.com'
-              : 'Contact the support team at topceld@gmail.com',
+          loc.contactTheSupportTeamAtTopceld,
           style: TextStyle(fontSize: 9, color: secondaryColor),
           textAlign: TextAlign.center,
         ),

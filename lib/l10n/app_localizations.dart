@@ -4111,6 +4111,96 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذر قراءة سجل النقل: {error}'**
   String transferAuditNotLoaded(Object error);
+
+  /// No description provided for @driving24h.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيادة 24 ساعة'**
+  String get driving24h;
+
+  /// No description provided for @pendingDays.
+  ///
+  /// In ar, this message translates to:
+  /// **'معلّق {days} يوم'**
+  String pendingDays(Object days);
+
+  /// No description provided for @enterTrailerNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رقم المقطورة.'**
+  String get enterTrailerNumber;
+
+  /// No description provided for @trailerNumberFormatError.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).'**
+  String get trailerNumberFormatError;
+
+  /// No description provided for @enterDocumentNumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رقم المستند.'**
+  String get enterDocumentNumber;
+
+  /// No description provided for @documentNumberTooLong.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم مستند الشحن طويل جداً (حتى 100).'**
+  String get documentNumberTooLong;
+
+  /// No description provided for @oneDocumentAtATime.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).'**
+  String get oneDocumentAtATime;
+
+  /// No description provided for @selectVehicleBeforeSavingForm.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى اختيار المركبة قبل حفظ النموذج.'**
+  String get selectVehicleBeforeSavingForm;
+
+  /// No description provided for @coDriverMustBeServerId.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب أن يكون السائق المساعد صالحاً قبل الحفظ.'**
+  String get coDriverMustBeServerId;
+
+  /// No description provided for @serverSavedFormIncomplete.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الخادم النموذج وتركه غير مكتمل.'**
+  String get serverSavedFormIncomplete;
+
+  /// No description provided for @serverSavedFormNoStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ الخادم النموذج ولم يُرجع حالة الاكتمال.'**
+  String get serverSavedFormNoStatus;
+
+  /// No description provided for @responseInterrupted.
+  ///
+  /// In ar, this message translates to:
+  /// **'انقطعت العملية. أعد المحاولة.'**
+  String get responseInterrupted;
+
+  /// No description provided for @drawSignatureFirst.
+  ///
+  /// In ar, this message translates to:
+  /// **'ارسم التوقيع أولاً.'**
+  String get drawSignatureFirst;
+
+  /// No description provided for @drawYourSignatureHere.
+  ///
+  /// In ar, this message translates to:
+  /// **'ارسم توقيعك هنا'**
+  String get drawYourSignatureHere;
+
+  /// No description provided for @certifyLegalStatement.
+  ///
+  /// In ar, this message translates to:
+  /// **'أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة.'**
+  String get certifyLegalStatement;
 }
 
 class _AppLocalizationsDelegate

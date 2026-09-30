@@ -134,9 +134,7 @@ class _LogListItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     log.today
-                        ? (Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'اليوم - ${log.formattedDate}'
-                            : 'Today - ${log.formattedDate}')
+                        ? context.loc.todayLogDate(log.formattedDate)
                         : log.formattedDate,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

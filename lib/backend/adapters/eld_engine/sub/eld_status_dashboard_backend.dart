@@ -39,7 +39,7 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
   }) {
     return _apiClient
         .post<Map<String, dynamic>>(
-          EldEndpoints.dutyStatusPost,
+          EldEndpoints.updateDutyStatus,
           data: {
             'dutyStatus': status.wire,
             if (notes != null) 'notes': notes,

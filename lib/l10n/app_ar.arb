@@ -720,5 +720,20 @@
   "theEventWasSavedButThe": "حُفظ الحدث لكن تعذر تسجيل سبب التعديل.",
   "transferAuditTitle": "سجل نقل السجلات",
   "noTransfersFromServer": "لا توجد عمليات نقل في رد الخادم.",
-  "transferAuditNotLoaded": "تعذر قراءة سجل النقل: {error}"
+  "transferAuditNotLoaded": "تعذر قراءة سجل النقل: {error}",
+  "driving24h": "قيادة 24 ساعة",
+  "pendingDays": "معلّق {days} يوم",
+  "enterTrailerNumber": "أدخل رقم المقطورة.",
+  "trailerNumberFormatError": "رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).",
+  "enterDocumentNumber": "أدخل رقم المستند.",
+  "documentNumberTooLong": "رقم مستند الشحن طويل جداً (حتى 100).",
+  "oneDocumentAtATime": "أدخل مستنداً واحداً في كل مرة (بدون فاصلة).",
+  "selectVehicleBeforeSavingForm": "يرجى اختيار المركبة قبل حفظ النموذج.",
+  "coDriverMustBeServerId": "يجب أن يكون السائق المساعد صالحاً قبل الحفظ.",
+  "serverSavedFormIncomplete": "حفظ الخادم النموذج وتركه غير مكتمل.",
+  "serverSavedFormNoStatus": "حفظ الخادم النموذج ولم يُرجع حالة الاكتمال.",
+  "responseInterrupted": "انقطعت العملية. أعد المحاولة.",
+  "drawSignatureFirst": "ارسم التوقيع أولاً.",
+  "drawYourSignatureHere": "ارسم توقيعك هنا",
+  "certifyLegalStatement": "أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة."
 }

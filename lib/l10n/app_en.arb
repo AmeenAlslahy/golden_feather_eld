@@ -136,7 +136,7 @@
   "retakePhoto": "Retake Photo",
   "photoPreview": "Photo Preview",
   "signHere": "Sign Here",
-  "clearSignature": "Clear Signature",
+  "clearSignature": "Clear signature",
   "signaturePreview": "Signature Preview",
   "addNote": "Add Note",
   "editNote": "Edit Note",
@@ -720,5 +720,27 @@
   "theEventWasSavedButThe": "The event was saved but the change audit could not be recorded.",
   "transferAuditTitle": "Transfer audit",
   "noTransfersFromServer": "The server returned no transfers.",
-  "transferAuditNotLoaded": "Transfer audit was not loaded: {error}"
+  "transferAuditNotLoaded": "Transfer audit was not loaded: {error}",
+  "driving24h": "DRIVING 24H",
+  "pendingDays": "Pending {days} day(s)",
+  "@pendingDays": {
+    "placeholders": {
+      "days": {
+        "type": "Object"
+      }
+    }
+  },
+  "enterTrailerNumber": "Enter the trailer number.",
+  "trailerNumberFormatError": "Trailer number must be letters, numbers, or hyphens (max 50).",
+  "enterDocumentNumber": "Enter the document number.",
+  "documentNumberTooLong": "Shipping document number is too long (max 100).",
+  "oneDocumentAtATime": "Enter one document at a time (no comma).",
+  "selectVehicleBeforeSavingForm": "Select a vehicle before saving the form.",
+  "coDriverMustBeServerId": "Co-driver must be a server id before it can be saved.",
+  "serverSavedFormIncomplete": "The server saved the form and left it incomplete.",
+  "serverSavedFormNoStatus": "The server saved the form but did not return a form status.",
+  "responseInterrupted": "Response was interrupted.",
+  "drawSignatureFirst": "Please draw a signature first.",
+  "drawYourSignatureHere": "Draw your signature here",
+  "certifyLegalStatement": "I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct."
 }

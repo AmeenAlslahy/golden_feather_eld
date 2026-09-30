@@ -2120,4 +2120,57 @@ class AppLocalizationsAr extends AppLocalizations {
   String transferAuditNotLoaded(Object error) {
     return 'تعذر قراءة سجل النقل: $error';
   }
+
+  @override
+  String get driving24h => 'قيادة 24 ساعة';
+
+  @override
+  String pendingDays(Object days) {
+    return 'معلّق $days يوم';
+  }
+
+  @override
+  String get enterTrailerNumber => 'أدخل رقم المقطورة.';
+
+  @override
+  String get trailerNumberFormatError =>
+      'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).';
+
+  @override
+  String get enterDocumentNumber => 'أدخل رقم المستند.';
+
+  @override
+  String get documentNumberTooLong => 'رقم مستند الشحن طويل جداً (حتى 100).';
+
+  @override
+  String get oneDocumentAtATime =>
+      'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).';
+
+  @override
+  String get selectVehicleBeforeSavingForm =>
+      'يرجى اختيار المركبة قبل حفظ النموذج.';
+
+  @override
+  String get coDriverMustBeServerId =>
+      'يجب أن يكون السائق المساعد صالحاً قبل الحفظ.';
+
+  @override
+  String get serverSavedFormIncomplete => 'حفظ الخادم النموذج وتركه غير مكتمل.';
+
+  @override
+  String get serverSavedFormNoStatus =>
+      'حفظ الخادم النموذج ولم يُرجع حالة الاكتمال.';
+
+  @override
+  String get responseInterrupted => 'انقطعت العملية. أعد المحاولة.';
+
+  @override
+  String get drawSignatureFirst => 'ارسم التوقيع أولاً.';
+
+  @override
+  String get drawYourSignatureHere => 'ارسم توقيعك هنا';
+
+  @override
+  String get certifyLegalStatement =>
+      'أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة.';
 }

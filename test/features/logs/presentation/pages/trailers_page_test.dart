@@ -22,6 +22,8 @@ class _Logs extends Mock implements DailyLogsBackend {}
 
 class _Repo extends Mock implements LogRepository {}
 
+class _MockLoc extends Mock implements AppLocalizations {}
+
 /// SRS 5.5–5.13 — trailers / shipping documents are edited on their pages,
 /// stored once on the dashboard form state, and sent by the Form SAVE.
 void main() {
@@ -41,13 +43,20 @@ void main() {
     });
 
     test('trailer and document rules', () {
-      expect(trailerNumberError('TR-1402', isArabic: false), isNull);
-      expect(trailerNumberError('TR 1402', isArabic: false), isNotNull);
-      expect(trailerNumberError('', isArabic: false), isNotNull);
-      expect(trailerNumberError('a' * 51, isArabic: false), isNotNull);
-      expect(shippingDocumentError('BOL 2026/01', isArabic: false), isNull);
-      expect(shippingDocumentError('a,b', isArabic: false), isNotNull);
-      expect(shippingDocumentError('a' * 101, isArabic: false), isNotNull);
+      final loc = _MockLoc();
+      when(() => loc.enterTrailerNumber).thenReturn('Enter the trailer number.');
+      when(() => loc.trailerNumberFormatError).thenReturn('Trailer number must be letters, numbers, or hyphens (max 50).');
+      when(() => loc.enterDocumentNumber).thenReturn('Enter the document number.');
+      when(() => loc.documentNumberTooLong).thenReturn('Shipping document number is too long (max 100).');
+      when(() => loc.oneDocumentAtATime).thenReturn('Enter one document at a time (no comma).');
+
+      expect(trailerNumberError('TR-1402', loc), isNull);
+      expect(trailerNumberError('TR 1402', loc), isNotNull);
+      expect(trailerNumberError('', loc), isNotNull);
+      expect(trailerNumberError('a' * 51, loc), isNotNull);
+      expect(shippingDocumentError('BOL 2026/01', loc), isNull);
+      expect(shippingDocumentError('a,b', loc), isNotNull);
+      expect(shippingDocumentError('a' * 101, loc), isNotNull);
     });
   });
 

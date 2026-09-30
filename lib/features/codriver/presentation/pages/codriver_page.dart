@@ -51,10 +51,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          loc.coDriver,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(loc.coDriver, style: context.styles.appBarTitle),
         centerTitle: true,
         // Back arrow when pushed on top of another screen; drawer menu when
         // this is the root destination.
@@ -77,241 +74,285 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
           : RefreshIndicator(
               onRefresh: () => ref.read(codriverProvider.notifier).reload(),
               child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Reference layout (screenshot 12): centred heading + hint,
-                  // dropdown row, full-width divider, second heading + hint,
-                  // SWITCH, full-width divider.
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
-                    child: Column(
-                      children: [
-                  Text(
-                    isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    isArabic
-                        ? 'الرجاء اختيار مساعد السائق الخاص بك'
-                        : 'Select your co-driver',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: textSecondaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 32.0),
-
-                  // Selector Row
-                  InkWell(
-                    onTap: () => _showDriverSelectionDialog(context, drivers,
-                        currentSelectedId, isArabic, textColor, surfaceColor),
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      decoration: BoxDecoration(
-                        border: Border(
-                            bottom: BorderSide(
-                                color:
-                                    AppColors.borderFor(brightness))),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Reference layout (screenshot 12): centred heading + hint,
+                    // dropdown row, full-width divider, second heading + hint,
+                    // SWITCH, full-width divider.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: Text(
-                              _driverLabel(
-                                drivers.firstWhere(
-                                  (d) => d.id == currentSelectedId,
-                                  orElse: () => CoDriver.none,
-                                ),
-                                isArabic,
-                              ).toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: textColor,
-                              ),
+                          Text(
+                            isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down,
-                              color: textColor, size: 28),
-                        ],
-                      ),
-                    ),
-                  ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
-                    child: Column(
-                      children: [
-                  Text(
-                    isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    isArabic
-                        ? 'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.'
-                        : 'You will become co-driver. Your co-driver will stay driver.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: textSecondaryColor,
-                    ),
-                  ),
-                  if (codriverState.error != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      codriverState.error!,
-                      textAlign: TextAlign.center,
-                      style: context.styles.error,
-                    ),
-                  ],
-                  const SizedBox(height: 28),
-                  if (codriverState.isSwitching)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Text(
-                        isArabic ? 'جاري التبديل...' : 'Switching...',
-                      ),
-                    ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            isArabic
+                                ? 'الرجاء اختيار مساعد السائق الخاص بك'
+                                : 'Select your co-driver',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textSecondaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 32.0),
 
-                  // Switch Button
-                  AppButton(
-                    label: isArabic ? 'تبديل' : 'SWITCH',
-                    type: EldButtonType.agree,
-                    isLoading: codriverState.isSwitching,
-                    onPressed: (codriverState.isSwitching ||
-                            codriverState.selectedCoDriver == null)
-                        ? null
-                        : () async {
-                            final hos = ref.read(hosStatusProvider);
-                            final driving = hos is HosEngineReady
-                                ? hos.update.currentStatus == DutyStatus.driving
-                                : null;
-                            final refusal = refuseRoleSwitch(
-                              currentDriverId: ref.read(currentDriverIdProvider),
-                              coDriverId: codriverState.selectedCoDriver?.id,
-                              speedMps: ref.read(currentVehicleSpeedProvider),
-                              thresholdKmh: ref
-                                  .read(hosConfigurationProvider)
-                                  .movingSpeedThresholdKmh,
-                              currentStatusIsDriving: driving,
-                            );
-                            if (refusal != null) {
-                              AppFeedback.error(
-                                  context, _refusalText(refusal, isArabic));
-                              return;
-                            }
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text(isArabic
-                                    ? 'تأكيد التبديل'
-                                    : 'Confirm Switch'),
-                                content: Text(
-                                  isArabic
-                                      ? 'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.'
-                                      : 'This asks the server to switch roles. Hours are not copied and duty status is not changed.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: Text(
-                                        MaterialLocalizations.of(context)
-                                            .cancelButtonLabel),
+                          // Selector Row
+                          InkWell(
+                            onTap: () => _showDriverSelectionDialog(
+                              context,
+                              drivers,
+                              currentSelectedId,
+                              isArabic,
+                              textColor,
+                              surfaceColor,
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.md,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: AppColors.borderFor(brightness),
                                   ),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
                                     child: Text(
-                                        MaterialLocalizations.of(context)
-                                            .okButtonLabel),
+                                      _driverLabel(
+                                        drivers.firstWhere(
+                                          (d) => d.id == currentSelectedId,
+                                          orElse: () => CoDriver.none,
+                                        ),
+                                        isArabic,
+                                      ).toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: textColor,
+                                    size: 28,
                                   ),
                                 ],
                               ),
-                            );
-
-                            if (confirm == true && mounted) {
-                              final newPrimary = ref
-                                  .read(codriverProvider)
-                                  .selectedCoDriver
-                                  ?.name;
-                              final error = await ref
-                                  .read(codriverProvider.notifier)
-                                  .switchDrivers();
-                              if (!context.mounted) return;
-                              if (error != null) {
-                                AppFeedback.error(context, error);
-                                return;
-                              }
-                              // SRS 10.4: show the new roles before leaving
-                              // (current → co-driver, co-driver → primary).
-                              await showDialog<void>(
-                                context: context,
-                                builder: (dialogContext) => AlertDialog(
-                                  key: const Key('switch_result_dialog'),
-                                  title: Text(isArabic
-                                      ? 'تم تبديل الأدوار'
-                                      : 'Roles switched'),
-                                  content: Text(
-                                    isArabic
-                                        ? 'أنت الآن السائق المساعد.\n${newPrimary ?? 'السائق المساعد'} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
-                                        : 'You are now the co-driver.\n${newPrimary ?? 'The co-driver'} is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.',
-                                    style: const TextStyle(
-                                        color: AppColors.successGreen),
-                                  ),
-                                  actions: [
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.pop(dialogContext),
-                                      child: Text(
-                                          MaterialLocalizations.of(dialogContext)
-                                              .okButtonLabel),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (!context.mounted) return;
-                              context.go('/home');
-                            }
-                          },
-                  ),
-                      ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1),
-                  // SRS 10.3: server team state (informational, below the
-                  // reference layout so it does not change it).
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
-                    child: _LinkedCoDriver(
-                        state: codriverState, isArabic: isArabic),
-                  ),
-                ],
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
+                      child: Column(
+                        children: [
+                          Text(
+                            isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            isArabic
+                                ? 'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.'
+                                : 'You will become co-driver. Your co-driver will stay driver.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textSecondaryColor,
+                            ),
+                          ),
+                          if (codriverState.error != null) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              codriverState.error!,
+                              textAlign: TextAlign.center,
+                              style: context.styles.error,
+                            ),
+                          ],
+                          const SizedBox(height: 28),
+                          if (codriverState.isSwitching)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.md,
+                              ),
+                              child: Text(
+                                isArabic ? 'جاري التبديل...' : 'Switching...',
+                              ),
+                            ),
+
+                          // Switch Button
+                          AppButton(
+                            label: isArabic ? 'تبديل' : 'SWITCH',
+                            type: EldButtonType.agree,
+                            isLoading: codriverState.isSwitching,
+                            onPressed:
+                                (codriverState.isSwitching ||
+                                    codriverState.selectedCoDriver == null)
+                                ? null
+                                : () async {
+                                    final hos = ref.read(hosStatusProvider);
+                                    final driving = hos is HosEngineReady
+                                        ? hos.update.currentStatus ==
+                                              DutyStatus.driving
+                                        : null;
+                                    final refusal = refuseRoleSwitch(
+                                      currentDriverId: ref.read(
+                                        currentDriverIdProvider,
+                                      ),
+                                      coDriverId:
+                                          codriverState.selectedCoDriver?.id,
+                                      speedMps: ref.read(
+                                        currentVehicleSpeedProvider,
+                                      ),
+                                      thresholdKmh: ref
+                                          .read(hosConfigurationProvider)
+                                          .movingSpeedThresholdKmh,
+                                      currentStatusIsDriving: driving,
+                                    );
+                                    if (refusal != null) {
+                                      AppFeedback.error(
+                                        context,
+                                        _refusalText(refusal, isArabic),
+                                      );
+                                      return;
+                                    }
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text(
+                                          isArabic
+                                              ? 'تأكيد التبديل'
+                                              : 'Confirm Switch',
+                                        ),
+                                        content: Text(
+                                          isArabic
+                                              ? 'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.'
+                                              : 'This asks the server to switch roles. Hours are not copied and duty status is not changed.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: Text(
+                                              MaterialLocalizations.of(
+                                                context,
+                                              ).cancelButtonLabel,
+                                            ),
+                                          ),
+                                          FilledButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: Text(
+                                              MaterialLocalizations.of(
+                                                context,
+                                              ).okButtonLabel,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true && mounted) {
+                                      final newPrimary = ref
+                                          .read(codriverProvider)
+                                          .selectedCoDriver
+                                          ?.name;
+                                      final error = await ref
+                                          .read(codriverProvider.notifier)
+                                          .switchDrivers();
+                                      if (!context.mounted) return;
+                                      if (error != null) {
+                                        AppFeedback.error(context, error);
+                                        return;
+                                      }
+                                      // SRS 10.4: show the new roles before leaving
+                                      // (current → co-driver, co-driver → primary).
+                                      await showDialog<void>(
+                                        context: context,
+                                        builder: (dialogContext) => AlertDialog(
+                                          key: const Key(
+                                            'switch_result_dialog',
+                                          ),
+                                          title: Text(
+                                            isArabic
+                                                ? 'تم تبديل الأدوار'
+                                                : 'Roles switched',
+                                          ),
+                                          content: Text(
+                                            isArabic
+                                                ? 'أنت الآن السائق المساعد.\n${newPrimary ?? 'السائق المساعد'} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
+                                                : 'You are now the co-driver.\n${newPrimary ?? 'The co-driver'} is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.',
+                                            style: const TextStyle(
+                                              color: AppColors.successGreen,
+                                            ),
+                                          ),
+                                          actions: [
+                                            FilledButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(dialogContext),
+                                              child: Text(
+                                                MaterialLocalizations.of(
+                                                  dialogContext,
+                                                ).okButtonLabel,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (!context.mounted) return;
+                                      context.go('/home');
+                                    }
+                                  },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    // SRS 10.3: server team state (informational, below the
+                    // reference layout so it does not change it).
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
+                      child: _LinkedCoDriver(
+                        state: codriverState,
+                        isArabic: isArabic,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
     );
   }
 
-  void _showDriverSelectionDialog(BuildContext context, List<CoDriver> drivers,
-      String currentId, bool isArabic, Color textColor, Color surfaceColor) {
+  void _showDriverSelectionDialog(
+    BuildContext context,
+    List<CoDriver> drivers,
+    String currentId,
+    bool isArabic,
+    Color textColor,
+    Color surfaceColor,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -324,8 +365,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               backgroundColor: surfaceColor,
               title: Text(
                 isArabic ? 'مساعد السائق' : 'Co-driver',
-                style:
-                    TextStyle(color: textColor, fontWeight: FontWeight.normal),
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.normal,
+                ),
               ),
               contentPadding: const EdgeInsets.only(top: 16),
               content: SizedBox(
@@ -370,10 +413,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    final selected =
-                        drivers.firstWhere((d) => d.id == dialogSelectedId);
-                    final uniqueId =
-                        ref.read(vehicleProvider).selectedVehicle?.uniqueId;
+                    final selected = drivers.firstWhere(
+                      (d) => d.id == dialogSelectedId,
+                    );
+                    final uniqueId = ref
+                        .read(vehicleProvider)
+                        .selectedVehicle
+                        ?.uniqueId;
                     final error = await ref
                         .read(codriverProvider.notifier)
                         .applySessionCoDriver(
@@ -384,8 +430,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     if (error != null) {
                       final text = error == 'vehicle_identifier_missing'
                           ? (isArabic
-                              ? 'اختر مركبة قبل ربط السائق المساعد.'
-                              : 'Select a vehicle before linking a co-driver.')
+                                ? 'اختر مركبة قبل ربط السائق المساعد.'
+                                : 'Select a vehicle before linking a co-driver.')
                           : error;
                       AppFeedback.error(context, text);
                       return;
@@ -462,7 +508,9 @@ class _LinkedCoDriver extends StatelessWidget {
     if (state.currentError != null) {
       value = state.currentError!;
     } else if (linked == null) {
-      value = isArabic ? 'لم يُقرأ الارتباط بعد.' : 'The link has not been read.';
+      value = isArabic
+          ? 'لم يُقرأ الارتباط بعد.'
+          : 'The link has not been read.';
     } else if (!linked.isLinked) {
       value = isArabic ? 'لا سائق مساعد مرتبط.' : 'No linked co-driver.';
     } else {
@@ -472,14 +520,16 @@ class _LinkedCoDriver extends StatelessWidget {
     // (`teamDrivingActive`); the app does not infer who is driving.
     final AppStatusBadge? teamBadge = (linked != null && linked.isLinked)
         ? (linked.teamDrivingActive
-            ? AppStatusBadge(
-                label: isArabic ? 'قيادة جماعية نشطة' : 'Team driving active',
-                type: AppStatusBadgeType.success,
-              )
-            : AppStatusBadge(
-                label: isArabic ? 'قيادة جماعية غير نشطة' : 'Team driving inactive',
-                type: AppStatusBadgeType.warning,
-              ))
+              ? AppStatusBadge(
+                  label: isArabic ? 'قيادة جماعية نشطة' : 'Team driving active',
+                  type: AppStatusBadgeType.success,
+                )
+              : AppStatusBadge(
+                  label: isArabic
+                      ? 'قيادة جماعية غير نشطة'
+                      : 'Team driving inactive',
+                  type: AppStatusBadgeType.warning,
+                ))
         : null;
     return Column(
       children: [
@@ -543,7 +593,9 @@ class _HosIsolationLine extends ConsumerWidget {
               Text(
                 isolated
                     ? (isArabic ? 'سجلات HOS معزولة' : 'HOS records isolated')
-                    : (isArabic ? 'سجلات HOS غير معزولة' : 'HOS records not isolated'),
+                    : (isArabic
+                          ? 'سجلات HOS غير معزولة'
+                          : 'HOS records not isolated'),
                 textAlign: TextAlign.center,
                 style: isolated ? context.styles.success : context.styles.error,
               ),

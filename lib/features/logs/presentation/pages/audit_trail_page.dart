@@ -20,8 +20,7 @@ class AuditTrailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final trail = ref.watch(auditTrailProvider);
+final trail = ref.watch(auditTrailProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -41,9 +40,7 @@ class AuditTrailPage extends ConsumerWidget {
             color: AppColors.successGreen.withValues(alpha: 0.1),
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
-              isArabic
-                  ? 'يؤكد هذا السجل حفظ كل إجراء مع المستخدم والوقت والقيم السابقة والجديدة. لا يمكن تعديل هذا السجل أو حذفه.'
-                  : 'This log confirms every action is kept with the user, time, and previous/new values. It cannot be edited or deleted.',
+              context.loc.auditTrailNote,
               textAlign: TextAlign.center,
               style: context.styles.muted,
             ),
@@ -53,13 +50,13 @@ class AuditTrailPage extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, __) => Center(
                 child: Text(
-                  isArabic ? 'تعذر تحميل سجل التدقيق.' : 'Could not load the audit trail.',
+                  context.loc.auditLoadFailed,
                 ),
               ),
               data: (entries) {
                 if (entries.isEmpty) {
                   return Center(
-                    child: Text(isArabic ? 'لا توجد سجلات' : 'No Records'),
+                    child: Text(context.loc.auditNoRecords),
                   );
                 }
                 return ListView.separated(

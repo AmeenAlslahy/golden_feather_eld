@@ -420,7 +420,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signHere => 'Sign Here';
 
   @override
-  String get clearSignature => 'Clear Signature';
+  String get clearSignature => 'Clear signature';
 
   @override
   String get signaturePreview => 'Signature Preview';
@@ -2121,4 +2121,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String transferAuditNotLoaded(Object error) {
     return 'Transfer audit was not loaded: $error';
   }
+
+  @override
+  String get driving24h => 'DRIVING 24H';
+
+  @override
+  String pendingDays(Object days) {
+    return 'Pending $days day(s)';
+  }
+
+  @override
+  String get enterTrailerNumber => 'Enter the trailer number.';
+
+  @override
+  String get trailerNumberFormatError =>
+      'Trailer number must be letters, numbers, or hyphens (max 50).';
+
+  @override
+  String get enterDocumentNumber => 'Enter the document number.';
+
+  @override
+  String get documentNumberTooLong =>
+      'Shipping document number is too long (max 100).';
+
+  @override
+  String get oneDocumentAtATime => 'Enter one document at a time (no comma).';
+
+  @override
+  String get selectVehicleBeforeSavingForm =>
+      'Select a vehicle before saving the form.';
+
+  @override
+  String get coDriverMustBeServerId =>
+      'Co-driver must be a server id before it can be saved.';
+
+  @override
+  String get serverSavedFormIncomplete =>
+      'The server saved the form and left it incomplete.';
+
+  @override
+  String get serverSavedFormNoStatus =>
+      'The server saved the form but did not return a form status.';
+
+  @override
+  String get responseInterrupted => 'Response was interrupted.';
+
+  @override
+  String get drawSignatureFirst => 'Please draw a signature first.';
+
+  @override
+  String get drawYourSignatureHere => 'Draw your signature here';
+
+  @override
+  String get certifyLegalStatement =>
+      'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.';
 }

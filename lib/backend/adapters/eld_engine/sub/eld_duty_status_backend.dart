@@ -14,7 +14,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   @override
   Future<Result<RawJson>> record(RawJson event) async {
     final res = await _apiClient.post<RawJson>(
-      EldEndpoints.dutyStatus,
+      EldEndpoints.recordDutyStatus,
       data: event,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
@@ -27,7 +27,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
     required RawJson update,
   }) async {
     final res = await _apiClient.put<RawJson>(
-      EldEndpoints.updateDutyStatus(statusId.value),
+      EldEndpoints.editDutyStatus(statusId.value),
       data: update,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );

@@ -365,15 +365,13 @@ class _AuditTrail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auditsAsync = ref.watch(transferAuditProvider);
-    final arabic = Localizations.localeOf(context).languageCode == 'ar';
-
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            arabic ? 'سجل نقل السجلات' : 'Transfer audit',
+            context.loc.transferAuditTitle,
             style: const TextStyle(
               fontSize: AppTypography.subtitleSize,
               fontWeight: AppTypography.bold,
@@ -384,9 +382,7 @@ class _AuditTrail extends ConsumerWidget {
             data: (audits) {
               if (audits.isEmpty) {
                 return Text(
-                  arabic
-                      ? 'لا توجد عمليات نقل في رد الخادم.'
-                      : 'The server returned no transfers.',
+                  context.loc.noTransfersFromServer,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -400,9 +396,7 @@ class _AuditTrail extends ConsumerWidget {
             },
             loading: () => const CircularProgressIndicator(),
             error: (error, _) => Text(
-              arabic
-                  ? 'تعذر قراءة سجل النقل: $error'
-                  : 'Transfer audit was not loaded: $error',
+              context.loc.transferAuditNotLoaded(error.toString()),
             ),
           ),
         ],

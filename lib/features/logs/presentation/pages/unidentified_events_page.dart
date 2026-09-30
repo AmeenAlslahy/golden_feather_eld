@@ -104,9 +104,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
         vehicle = ref.read(vehicleProvider);
       }
       if (vehicle.selectedVehicle == null) {
-        _snack(Localizations.localeOf(context).languageCode == 'ar'
-            ? 'لا توجد مركبة محددة.'
-            : 'No vehicle is selected.');
+        _snack(context.loc.noVehicleIsSelected);
         return;
       }
     }
@@ -152,9 +150,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
     if (text == null || !mounted) return;
     if (text.isEmpty) {
       _snack(
-        Localizations.localeOf(context).languageCode == 'ar'
-            ? 'التعليق مطلوب.'
-            : 'An annotation is required.',
+        context.loc.anAnnotationIsRequired,
       );
       return;
     }
@@ -173,9 +169,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
     ref.invalidate(recapProvider);
     AppFeedback.success(
       context,
-      Localizations.localeOf(context).languageCode == 'ar'
-          ? 'تم تحديث سجلك. راجع السجل اليومي؛ قد يلزم إعادة التصديق.'
-          : 'Your record was updated. Review the daily log; it may need re-certification.',
+      context.loc.yourRecordWasUpdatedReviewThe,
     );
   }
 
@@ -184,7 +178,6 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(unidentifiedEventsProvider);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final items = _applyDateFilter(state.items);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -200,7 +193,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
         ),
         actions: [
           PopupMenuButton<String>(
-            tooltip: isArabic ? 'تصفية' : 'Filter',
+            tooltip: context.loc.filter,
             icon: Icon(
               _hasFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
               color: AppColors.surface,
@@ -218,18 +211,18 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'date',
-                child: Text(isArabic ? 'حسب التاريخ…' : 'By date…'),
+                child: Text(context.loc.byDate),
               ),
               CheckedPopupMenuItem(
                 value: 'vehicle',
                 checked: _currentVehicleOnly,
                 child: Text(
-                    isArabic ? 'المركبة الحالية فقط' : 'Current vehicle only'),
+                    context.loc.currentVehicleOnly),
               ),
               if (_hasFilters)
                 PopupMenuItem(
                   value: 'clear',
-                  child: Text(isArabic ? 'مسح التصفية' : 'Clear filters'),
+                  child: Text(context.loc.clearFilters),
                 ),
             ],
           ),
@@ -260,9 +253,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
                       TextButton(
                         onPressed: _load,
                         child: Text(
-                          Localizations.localeOf(context).languageCode == 'ar'
-                              ? 'إعادة المحاولة'
-                              : 'Retry',
+                          context.loc.retryButton,
                         ),
                       ),
                     ],
@@ -283,9 +274,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
                           ),
                         if (_currentVehicleOnly)
                           InputChip(
-                            label: Text(isArabic
-                                ? 'المركبة الحالية'
-                                : 'Current vehicle'),
+                            label: Text(context.loc.currentVehicle),
                             onDeleted: _toggleVehicleFilter,
                           ),
                       ],
@@ -303,22 +292,14 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
               error: state.error,
               canAct: _tab == UnidentifiedTab.unclaimed,
               onClaim: (id) => _annotate(
-                title: Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'افتراض'
-                    : 'ASSUME',
-                hint: Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'التعليق مطلوب. تُحتسب هذه المدة قيادة.'
-                    : 'Required annotation. This time is assumed as driving.',
+                title: context.loc.assume,
+                hint: context.loc.requiredAnnotationThisTimeIsAssumed,
                 action: (text) =>
                     ref.read(unidentifiedEventsProvider.notifier).claim(id, text),
               ),
               onReject: (id) => _annotate(
-                title: Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'ليست لي'
-                    : 'NOT MINE',
-                hint: Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'سبب الرفض مطلوب'
-                    : 'Required rejection reason',
+                title: context.loc.notMine,
+                hint: context.loc.requiredRejectionReason,
                 action: (text) => ref
                     .read(unidentifiedEventsProvider.notifier)
                     .reject(id, text),
@@ -346,7 +327,6 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ar = Localizations.localeOf(context).languageCode == 'ar';
     // SRS 11.6 counts unidentified *driving* inside a rolling 24-hour window,
     // not every driving row the server ever returned. A row without a
     // parseable time is still counted rather than silently hidden.
@@ -372,10 +352,10 @@ class _StatsRow extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Row(
         children: [
-          _Stat(ar ? 'الإجمالي' : 'TOTAL', '$total'),
-          _Stat(ar ? 'غير مُسندة' : 'UNCLAIMED', '${unclaimed ?? '—'}'),
-          _Stat(ar ? 'مرفوضة' : 'REJECTED', '${rejected ?? '—'}'),
-          _Stat(ar ? 'قيادة 24 ساعة' : 'DRIVING 24H', '$driving'),
+          _Stat(context.loc.total, '$total'),
+          _Stat(context.loc.unclaimed, '${unclaimed ?? '—'}'),
+          _Stat(context.loc.rejected, '${rejected ?? '—'}'),
+          _Stat(context.loc.driving24h, '$driving'),
         ],
       ),
     );
@@ -482,15 +462,11 @@ class _EventList extends StatelessWidget {
                 if (where.isNotEmpty) Text(where),
                 if (pending != null)
                   Text(
-                    Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'معلّق $pending يوم'
-                        : 'Pending $pending day(s)',
+                    context.loc.pendingDays(pending),
                   ),
                 if (overdue)
                   Text(
-                    Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'متأخر'
-                        : 'Overdue',
+                    context.loc.overdue,
                     style: const TextStyle(
                         color: AppColors.dangerRed, fontWeight: FontWeight.bold),
                   ),
@@ -498,9 +474,7 @@ class _EventList extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'النسخة الأصلية محفوظة'
-                        : 'Original record preserved',
+                    context.loc.originalRecordPreserved,
                   ),
                 ),
                 if (canAct && id != null)
@@ -509,17 +483,13 @@ class _EventList extends StatelessWidget {
                       TextButton(
                         onPressed: () => onClaim(id),
                         child: Text(
-                          Localizations.localeOf(context).languageCode == 'ar'
-                              ? 'افتراض'
-                              : 'ASSUME',
+                          context.loc.assume,
                         ),
                       ),
                       TextButton(
                         onPressed: () => onReject(id),
                         child: Text(
-                          Localizations.localeOf(context).languageCode == 'ar'
-                              ? 'ليست لي'
-                              : 'NOT MINE',
+                          context.loc.notMine,
                         ),
                       ),
                     ],
