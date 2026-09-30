@@ -19,6 +19,7 @@ import 'orchestrators/tracking_orchestrator.dart';
 class AppInitializer {
   late final LocalStorageService localStorageService;
   late final LocalDatabaseService localDatabaseService;
+  Future<void>? _dbInitFuture;
   late final TrackingService trackingService;
   late final UtcSyncService utcSync;
 
@@ -35,13 +36,18 @@ class AppInitializer {
           'Firebase initialization failed (App will continue without Firebase services): $e');
     }
 
-    // 3. تهيئة الخدمات الأساسية
+    // 3. تهيئة الخدمات الأساسية (Hive يُفتح بالتوازي دون حجب الإقلاع)
     await _initCoreServices();
 
     // 4. تهيئة الخدمات المعتمدة
     await _initDependentServices();
 
-    // 5. تهيئة خدمات المزامنة
+    // 5. انتظار اكتمال فتح Hive قبل runApp (المستودعات ستقرؤه بعد ذلك)
+    if (_dbInitFuture != null) {
+      await _dbInitFuture;
+    }
+
+    // 6. تهيئة خدمات المزامنة
     await _initSyncServices();
   }
 
@@ -51,11 +57,10 @@ class AppInitializer {
 
     // Hive (1 ثانية على الأجهزة المتوسطة) لا يحجب الإقلاع: يُفتح بالتوازي
     // مع بقية التهيئة — المستودعات لا تقرأه إلا بعد اكتمال runApp.
+    // تنبيه: يُستدعى من initialize() مرة واحدة فقط — إسناد late final
+    // مزدوج يرمي LateInitializationError (حدث فعلياً في 2026-09-30).
     localDatabaseService = LocalDatabaseService();
-    final dbFuture = localDatabaseService.init();
-
-    await _initDependentServices();
-    await dbFuture;
+    _dbInitFuture = localDatabaseService.init();
   }
 
   Future<void> _initDependentServices() async {
