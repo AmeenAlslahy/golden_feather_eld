@@ -50,11 +50,23 @@ class AppStyles extends ThemeExtension<AppStyles> {
   final TextStyle number;
   final TextStyle timer;
 
-  static AppStyles light() {
-    const primary = AppColors.textPrimary;
-    const secondary = AppColors.textSecondary;
-    return const AppStyles(
-      appBarTitle: TextStyle(
+  /// المصدر الوحيد لبناء الأنماط (SRS — خطة التصميم، اليوم 2):
+  /// كان سابقاً `dark()` يعيد نسخ `light()` بأكملها (14 copyWith لكل بناء)
+  /// — الآن كل نمط يُشتق من الرموز مباشرة حسب الإضاءة.
+  factory AppStyles.fromBrightness(Brightness brightness) {
+    final isLight = brightness == Brightness.light;
+    final primary =
+        isLight ? AppColors.textPrimary : AppColors.darkTextPrimary;
+    final secondary =
+        isLight ? AppColors.textSecondary : AppColors.darkTextSecondary;
+    final danger = isLight ? AppColors.dangerText : AppColors.dangerOnDark;
+    final success =
+        isLight ? AppColors.successText : AppColors.successOnDark;
+    final warning =
+        isLight ? AppColors.warningText : AppColors.warningOnDark;
+    final gold = isLight ? AppColors.goldDeep : AppColors.primaryGold;
+    return AppStyles(
+      appBarTitle: const TextStyle(
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.bold,
         color: AppColors.surface,
@@ -104,7 +116,7 @@ class AppStyles extends ThemeExtension<AppStyles> {
         letterSpacing: 0.2,
         height: 1.3,
       ),
-      button: TextStyle(
+      button: const TextStyle(
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.bold,
         color: AppColors.surface,
@@ -114,19 +126,19 @@ class AppStyles extends ThemeExtension<AppStyles> {
       error: TextStyle(
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
-        color: AppColors.dangerText,
+        color: danger,
         height: 1.4,
       ),
       success: TextStyle(
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
-        color: AppColors.successText,
+        color: success,
         height: 1.4,
       ),
       warning: TextStyle(
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
-        color: AppColors.warningText,
+        color: warning,
         height: 1.4,
       ),
       muted: TextStyle(
@@ -138,46 +150,32 @@ class AppStyles extends ThemeExtension<AppStyles> {
       gold: TextStyle(
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.regular,
-        color: AppColors.goldDeep,
+        color: gold,
         height: 1.5,
       ),
       number: TextStyle(
         fontSize: 18,
         fontWeight: AppTypography.bold,
         color: primary,
-        fontFeatures: [FontFeature.tabularFigures()],
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
       timer: TextStyle(
         fontSize: AppTypography.timerSize,
         fontWeight: AppTypography.bold,
-        color: AppColors.goldDeep,
+        color: gold,
         letterSpacing: 1,
         height: 1.1,
-        fontFeatures: [FontFeature.tabularFigures()],
+        fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
   }
 
-  static AppStyles dark() {
-    const primary = AppColors.darkTextPrimary;
-    const secondary = AppColors.darkTextSecondary;
-    return light().copyWith(
-      pageTitle: light().pageTitle.copyWith(color: primary),
-      sectionTitle: light().sectionTitle.copyWith(color: primary),
-      body: light().body.copyWith(color: primary),
-      bodyBold: light().bodyBold.copyWith(color: primary),
-      arabicBody: light().arabicBody.copyWith(color: primary),
-      subtitle: light().subtitle.copyWith(color: secondary),
-      caption: light().caption.copyWith(color: secondary),
-      error: light().error.copyWith(color: AppColors.dangerOnDark),
-      success: light().success.copyWith(color: AppColors.successOnDark),
-      warning: light().warning.copyWith(color: AppColors.warningOnDark),
-      muted: light().muted.copyWith(color: secondary),
-      gold: light().gold.copyWith(color: AppColors.primaryGold),
-      number: light().number.copyWith(color: primary),
-      timer: light().timer.copyWith(color: AppColors.primaryGold),
-    );
-  }
+  /// توافق خلفي — استخدم [AppStyles.fromBrightness].
+  // ignore: deprecated_member_use_from_same_package
+  static AppStyles light() => AppStyles.fromBrightness(Brightness.light);
+
+  /// توافق خلفي — استخدم [AppStyles.fromBrightness].
+  static AppStyles dark() => AppStyles.fromBrightness(Brightness.dark);
 
   @override
   AppStyles copyWith({

@@ -49,6 +49,13 @@ void main() {
       when(() => loc.enterDocumentNumber).thenReturn('Enter the document number.');
       when(() => loc.documentNumberTooLong).thenReturn('Shipping document number is too long (max 100).');
       when(() => loc.oneDocumentAtATime).thenReturn('Enter one document at a time (no comma).');
+      when(() => loc.trailers).thenReturn('Trailers');
+      when(() => loc.typeHere).thenReturn('Type here');
+      when(() => loc.addButton).thenReturn('ADD');
+      when(() => loc.deleteButton).thenReturn('DELETE');
+      when(() => loc.noTrailersAdded).thenReturn('No trailers added');
+      when(() => loc.shippingDocuments).thenReturn('Shipping Documents');
+      when(() => loc.noDocumentsAdded).thenReturn('No documents added');
 
       expect(trailerNumberError('TR-1402', loc), isNull);
       expect(trailerNumberError('TR 1402', loc), isNotNull);
@@ -126,12 +133,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(dashboardDataProvider).trailerId, 'TR-1402, AB12');
 
-    await tester.tap(find.text('DELETE').first);
+    await tester.tap(find.text('Delete').first);
     await tester.pumpAndSettle();
     expect(find.text('TR-1402'), findsNothing);
     expect(container.read(dashboardDataProvider).trailerId, 'AB12');
 
-    await tester.tap(find.text('DELETE'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(container.read(dashboardDataProvider).trailerId, 'None');
     expect(find.text('No trailers added'), findsOneWidget);
@@ -154,7 +161,7 @@ void main() {
       'BOL 2026/09-1',
     );
 
-    await tester.tap(find.text('DELETE'));
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(container.read(dashboardDataProvider).shippingDocuments, 'None');
   });

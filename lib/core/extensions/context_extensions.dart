@@ -17,3 +17,9 @@ extension ContextExtensions on BuildContext {
   double get screenWidth => screenSize.width;
   double get screenHeight => screenSize.height;
 }
+
+
+/// لغة الواجهة الحالية — بدل تكرار Localizations.localeOf في كل widget.
+extension LocaleContextX on BuildContext {
+  bool get isArabic => Localizations.localeOf(this).languageCode == 'ar';
+}

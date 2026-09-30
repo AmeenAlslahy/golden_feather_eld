@@ -83,7 +83,7 @@ void main() {
     await pump(tester, backend);
 
     expect(backend.askedFor, const DriverId(106));
-    expect(find.text('Information Packet'), findsOneWidget);
+    expect(find.text('Info Packet'), findsOneWidget);
     // Reference layout: nothing between the AppBar and the User Manual block.
     expect(find.textContaining('packet'), findsNothing);
     expect(find.text('User Manual'), findsOneWidget);

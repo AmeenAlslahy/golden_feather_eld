@@ -15,7 +15,7 @@ class AppTheme {
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    extensions: [EldColors.light(), AppStyles.light()],
+    extensions: [EldColors.light(), AppStyles.fromBrightness(Brightness.light)],
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.surface,
@@ -41,7 +41,7 @@ class AppTheme {
       foregroundColor: AppColors.surface,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: AppStyles.light().appBarTitle,
+      titleTextStyle: AppStyles.fromBrightness(Brightness.light).appBarTitle,
       iconTheme: const IconThemeData(color: AppColors.surface),
     ),
 
@@ -171,7 +171,7 @@ class AppTheme {
 
   static final ThemeData dark = light.copyWith(
     brightness: Brightness.dark,
-    extensions: [EldColors.dark(), AppStyles.dark()],
+    extensions: [EldColors.dark(), AppStyles.fromBrightness(Brightness.dark)],
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.black,
@@ -189,6 +189,9 @@ class AppTheme {
     ),
     inputDecorationTheme: light.inputDecorationTheme.copyWith(
       fillColor: AppColors.surfaceDark,
+      hintStyle: light.inputDecorationTheme.hintStyle?.copyWith(
+        color: AppColors.darkTextSecondary,
+      ),
     ),
     dividerTheme: light.dividerTheme.copyWith(
       color: const Color(0xFF48484A),
