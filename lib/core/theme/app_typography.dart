@@ -44,89 +44,32 @@ class AppTypography {
     labelSmall: TextStyle(fontFamily: fontFamily),
   );
 
-  static final TextTheme lightTextTheme = _base.copyWith(
-    headlineLarge: const TextStyle(
-      fontSize: headerSize,
-      fontWeight: bold,
-      color: AppColors.textPrimary,
-      letterSpacing: -0.5,
-      height: 1.2,
-    ),
-    headlineMedium: const TextStyle(
-      fontSize: 20,
-      fontWeight: bold,
-      color: AppColors.textPrimary,
-      letterSpacing: -0.3,
-      height: 1.25,
-    ),
-    headlineSmall: const TextStyle(
-      fontSize: bodySize,
-      fontWeight: bold,
-      color: AppColors.textPrimary,
-      height: 1.3,
-    ),
-    titleLarge: const TextStyle(
-      fontSize: largeButtonSize,
-      fontWeight: bold,
-      color: AppColors.textPrimary,
-      height: 1.3,
-    ),
-    bodyLarge: const TextStyle(
-      fontSize: bodySize,
-      fontWeight: regular,
-      color: AppColors.textPrimary,
-      height: 1.5,
-    ),
-    bodyMedium: const TextStyle(
-      fontSize: subtitleSize,
-      fontWeight: regular,
-      color: AppColors.textSecondary,
-      height: 1.4,
-    ),
-    bodySmall: const TextStyle(
-      fontSize: captionSize,
-      fontWeight: light,
-      color: AppColors.textSecondary,
-      height: 1.4,
-    ),
-    labelSmall: const TextStyle(
-      fontSize: smallSize,
-      fontWeight: regular,
-      color: AppColors.textSecondary,
-      letterSpacing: 0.2,
-      height: 1.3,
-    ),
-    // عداد الوقت — ذهبي عميق لضمان التباين على خلفية فاتحة (6.94:1)
-    displayMedium: const TextStyle(
-      fontSize: timerSize,
-      fontWeight: bold,
-      color: AppColors.goldDeep,
-      letterSpacing: 1.0,
-      fontFeatures: [FontFeature.tabularFigures()],
-      height: 1.1,
-    ),
+  /// يبني نسخة ملونة من الأساس — **مصدر واحد** يستخدمه الوضعان،
+  /// بدل كتلتَي copyWith متكررتين.
+  static TextTheme _colored(Color primary, Color secondary, Color gold) {
+    return _base.copyWith(
+      headlineLarge:
+          _base.headlineLarge!.copyWith(color: primary, letterSpacing: -0.5),
+      headlineMedium:
+          _base.headlineMedium!.copyWith(color: primary, letterSpacing: -0.3),
+      titleLarge: _base.titleLarge!.copyWith(color: primary),
+      bodyLarge: _base.bodyLarge!.copyWith(color: primary),
+      bodyMedium: _base.bodyMedium!.copyWith(color: secondary),
+      bodySmall: _base.bodySmall!.copyWith(color: secondary),
+      labelSmall: _base.labelSmall!.copyWith(color: secondary),
+      displayMedium: _base.displayMedium!.copyWith(color: gold),
+    );
+  }
+
+  static final TextTheme lightTextTheme = _colored(
+    AppColors.textPrimary,
+    AppColors.textSecondary,
+    AppColors.goldDeep,
   );
 
-  /// الوضع الداكن — يغطي كل الأنماط.
-  static final TextTheme darkTextTheme = lightTextTheme.copyWith(
-    headlineLarge: lightTextTheme.headlineLarge!
-        .copyWith(color: AppColors.darkTextPrimary),
-    headlineMedium: lightTextTheme.headlineMedium!
-        .copyWith(color: AppColors.darkTextPrimary),
-    headlineSmall: lightTextTheme.headlineSmall!
-        .copyWith(color: AppColors.darkTextPrimary),
-    titleLarge:
-        lightTextTheme.titleLarge!.copyWith(color: AppColors.darkTextPrimary),
-    bodyLarge:
-        lightTextTheme.bodyLarge!.copyWith(color: AppColors.darkTextPrimary),
-    bodyMedium:
-        lightTextTheme.bodyMedium!.copyWith(color: AppColors.darkTextSecondary),
-    bodySmall:
-        lightTextTheme.bodySmall!.copyWith(color: AppColors.darkTextSecondary),
-    labelSmall:
-        lightTextTheme.labelSmall!.copyWith(color: AppColors.darkTextSecondary),
-    // عداد الوقت — ذهبي لامع على أسود (9.24:1)
-    displayMedium:
-        lightTextTheme.displayMedium!.copyWith(color: AppColors.primaryGold),
+  static final TextTheme darkTextTheme = _colored(
+    AppColors.darkTextPrimary,
+    AppColors.darkTextSecondary,
+    AppColors.primaryGold,
   );
 }

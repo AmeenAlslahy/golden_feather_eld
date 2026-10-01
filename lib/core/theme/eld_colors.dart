@@ -47,9 +47,9 @@ class EldColors extends ThemeExtension<EldColors> {
   /// الوضع الفاتح — نصوص داكنة لضمان التباين على الخلفيات الفاتحة.
   factory EldColors.light() => const EldColors(
         goldFg: AppColors.goldDeep,
-        goldBg: Color(0xFFFDF8E7),
-        onGold: AppColors.black,
-        onBlack: AppColors.primaryGold,
+        goldBg: AppColors.goldBg,
+        onGold: AppColors.onGold,
+        onBlack: AppColors.onBlack,
         successFg: AppColors.successText,
         successBg: AppColors.successBg,
         warningFg: AppColors.warningText,
@@ -63,17 +63,17 @@ class EldColors extends ThemeExtension<EldColors> {
   /// الوضع الداكن — نصوص فاتحة لضمان التباين على الأسود.
   factory EldColors.dark() => const EldColors(
         goldFg: AppColors.primaryGold,
-        goldBg: Color(0xFF2A2410),
-        onGold: AppColors.black,
-        onBlack: AppColors.primaryGold,
+        goldBg: AppColors.darkGoldBg,
+        onGold: AppColors.onGold,
+        onBlack: AppColors.onBlack,
         successFg: AppColors.successOnDark,
-        successBg: Color(0xFF0F2417),
+        successBg: AppColors.darkSuccessBg,
         warningFg: AppColors.warningOnDark,
-        warningBg: Color(0xFF2A1F0A),
+        warningBg: AppColors.darkWarningBg,
         dangerFg: AppColors.dangerOnDark,
-        dangerBg: Color(0xFF2A0F0F),
+        dangerBg: AppColors.darkDangerBg,
         infoFg: AppColors.infoOnDark,
-        infoBg: Color(0xFF0A1F2A),
+        infoBg: AppColors.darkInfoBg,
       );
 
   @override

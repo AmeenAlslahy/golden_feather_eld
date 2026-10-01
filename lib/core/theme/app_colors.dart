@@ -88,6 +88,21 @@ class AppColors {
   /// رمادي فاتح — 8.98:1 مع `darkBackground`.
   static const Color darkTextSecondary = Color(0xFFB0B0B0);
 
+  // ========== خلفيات الحالات — الوضع الداكن (المصدر الوحيد) ==========
+
+  static const Color darkSuccessBg = Color(0xFF0F2417);
+  static const Color darkWarningBg = Color(0xFF2A1F0A);
+  static const Color darkDangerBg = Color(0xFF2A0F0F);
+  static const Color darkInfoBg = Color(0xFF0A1F2A);
+
+  // ========== الذهبي كخلفية ==========
+  static const Color goldBg = Color(0xFFFDF8E7);
+  static const Color darkGoldBg = Color(0xFF2A2410);
+
+  // ========== على الذهبي / على الأسود ==========
+  static const Color onGold = Color(0xFF0D0D0D);
+  static const Color onBlack = Color(0xFFD4AF37);
+
   // ========== عناصر خاصة ==========
 
   /// لون خفيف مكمل.

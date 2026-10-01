@@ -41,12 +41,13 @@ class AppStatusBadge extends StatelessWidget {
     }
   }
 
-  Color _getTextColor() {
+  Color _getTextColor(ThemeData theme) {
+    final eld = theme.extension<EldColors>()!;
     switch (type) {
       case AppStatusBadgeType.success:
-        return AppColors.successGreen;
+        return eld.successFg;
       case AppStatusBadgeType.error:
-        return AppColors.dangerRed;
+        return eld.dangerFg;
       case AppStatusBadgeType.warning:
         return AppColors.warningYellow;
       case AppStatusBadgeType.info:
@@ -58,7 +59,7 @@ class AppStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = _getTextColor();
+    final textColor = _getTextColor(theme);
 
     return Container(
       padding: const EdgeInsets.symmetric(
