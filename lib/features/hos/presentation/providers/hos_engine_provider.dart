@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/hos_configuration.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
+import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../logs/data/providers/log_repository_providers.dart';
@@ -65,4 +66,18 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
   });
 
   return tracker;
+});
+
+/// سرعة المركبة الحالية كم/س — 0 عند غياب القياس.
+final currentSpeedKmhProvider = Provider<double>((ref) {
+  final speedMs = ref.watch(currentVehicleSpeedProvider);
+  return (speedMs ?? 0) * 3.6;
+});
+
+/// هل المركبة متحركة الآن (السرعة ≥ عتبة الحركة من الإعداد)؟
+/// كان المنطق مكرراً في change_status_page وHosNotifier.changeStatus —
+/// هذا هو المصدر الوحيد للقرار.
+final isVehicleMovingProvider = Provider<bool>((ref) {
+  return ref.watch(currentSpeedKmhProvider) >=
+      ref.watch(hosConfigurationProvider).movingSpeedThresholdKmh;
 });

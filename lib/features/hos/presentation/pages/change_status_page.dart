@@ -10,7 +10,6 @@ import '../duty_change_message.dart';
 import '../providers/hos_provider.dart';
 import '../widgets/status_option_tiles.dart';
 import '../widgets/location_display_widget.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../providers/hos_engine_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import '../../../account/presentation/providers/rules_screen_provider.dart';
@@ -98,11 +97,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final currentSpeedMs = ref.watch(currentVehicleSpeedProvider);
-    final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
-    final speedThreshold =
-        ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
-    final isMoving = currentSpeedKmh >= speedThreshold;
+    final isMoving = ref.watch(isVehicleMovingProvider);
     final rules = ref.watch(rulesScreenProvider).asData?.value;
     final personalConveyanceEnabled =
         rules?.fixedSettings['personalConveyanceEnabled'] == true;

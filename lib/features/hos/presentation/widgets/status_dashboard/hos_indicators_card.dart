@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../../core/utils/duration_format.dart';
 
 /// "HOURS OF SERVICE" table with the four HOS indicators
 /// (drive, shift, break, cycle) — reference layout (screenshot 1):
@@ -145,7 +146,7 @@ class _IndicatorRow extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              _formatDuration(indicator.value),
+              DurationFormat.hhMm(indicator.value),
               textAlign: TextAlign.end,
               style: context.styles.body.copyWith(
                 fontSize: 34,
@@ -160,10 +161,4 @@ class _IndicatorRow extends StatelessWidget {
     );
   }
 
-  static String _formatDuration(Duration d) {
-    final hours = d.inHours;
-    final minutes = d.inMinutes.remainder(60);
-    return '${hours.toString().padLeft(2, '0')}:'
-        '${minutes.toString().padLeft(2, '0')}';
-  }
 }

@@ -2,6 +2,7 @@ import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../domain/shared/value_objects.dart';
+import 'json_primitives.dart';
 
 /// Maps `GET /eld/status`, `POST /eld/status/duty-status`,
 /// and `GET /eld/status/recap` JSON to typed domain models.
@@ -45,9 +46,9 @@ class StatusDashboardMapper {
       return const DriverRef(id: DriverId(0), name: '', displayText: '');
     }
     return DriverRef(
-      id: DriverId(_asInt(raw['id'])),
-      name: _asString(raw['name']),
-      displayText: _asString(raw['displayText']),
+      id: DriverId(JsonPrimitives.asInt(raw['id'])),
+      name: JsonPrimitives.asString(raw['name']),
+      displayText: JsonPrimitives.asString(raw['displayText']),
     );
   }
 
@@ -60,8 +61,8 @@ class StatusDashboardMapper {
       );
     }
     return OperationalAlerts(
-      toolIcon: _asBool(raw['toolIcon']),
-      warningTriangleIcon: _asBool(raw['warningTriangleIcon']),
+      toolIcon: JsonPrimitives.asBool(raw['toolIcon']),
+      warningTriangleIcon: JsonPrimitives.asBool(raw['warningTriangleIcon']),
       connectionStatus: raw['connectionStatus'] != null
           ? ConnectionStatus.fromWire(raw['connectionStatus'] as String?)
           : ConnectionStatus.ok,
@@ -78,8 +79,8 @@ class StatusDashboardMapper {
     }
     return RemainingCircle(
       remaining: _parseDuration(raw['time']),
-      label: _asString(raw['label'], fallback: 'Remaining'),
-      progress: _asDouble(raw['progress']).clamp(0.0, 1.0),
+      label: JsonPrimitives.asString(raw['label'], fallback: 'Remaining'),
+      progress: JsonPrimitives.asDouble(raw['progress']).clamp(0.0, 1.0),
     );
   }
 
@@ -105,7 +106,7 @@ class StatusDashboardMapper {
       );
     }
     return HosIndicator(
-      label: _asString(raw['label'], fallback: fallbackLabel),
+      label: JsonPrimitives.asString(raw['label'], fallback: fallbackLabel),
       value: _parseDuration(raw['value']),
       type: IndicatorType.fromWire(raw['type'] as String?),
     );
@@ -132,7 +133,7 @@ class StatusDashboardMapper {
   static RecapDay _parseRecapDay(Map<String, dynamic> json) {
     return RecapDay(
       date: _parseDate(json['date']),
-      dayOfWeek: _asString(json['dayOfWeek']),
+      dayOfWeek: JsonPrimitives.asString(json['dayOfWeek']),
       driving: _parseDuration(json['driving']),
       onDuty: _parseDuration(json['onDuty']),
       totalWork: _parseDuration(json['totalWork']),
@@ -143,32 +144,9 @@ class StatusDashboardMapper {
   // Primitive parsers
   // ==========================================================================
 
-  static String _asString(Object? v, {String fallback = ''}) {
-    if (v == null) return fallback;
-    final s = v.toString().trim();
-    return s.isEmpty ? fallback : s;
-  }
 
-  static int _asInt(Object? v, {int fallback = 0}) {
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    if (v is String) return int.tryParse(v) ?? fallback;
-    return fallback;
-  }
 
-  static double _asDouble(Object? v, {double fallback = 0.0}) {
-    if (v is double) return v;
-    if (v is num) return v.toDouble();
-    if (v is String) return double.tryParse(v) ?? fallback;
-    return fallback;
-  }
 
-  static bool _asBool(Object? v, {bool fallback = false}) {
-    if (v is bool) return v;
-    if (v is num) return v != 0;
-    if (v is String) return v.toLowerCase() == 'true';
-    return fallback;
-  }
 
   static List<String> _asStringList(Object? v) {
     if (v is! List) return const [];

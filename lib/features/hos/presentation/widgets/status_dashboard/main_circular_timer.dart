@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../../core/utils/duration_format.dart';
 
 /// Large central circle showing remaining legal time.
 ///
@@ -25,7 +26,7 @@ class MainCircularTimer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _color(context);
-    final timeString = _formatDuration(circle.remaining);
+    final timeString = DurationFormat.hhMm(circle.remaining, signed: true);
 
     return Semantics(
       button: onTap != null,
@@ -88,15 +89,6 @@ class MainCircularTimer extends StatelessWidget {
     return AppColors.successGreen;
   }
 
-  static String _formatDuration(Duration duration) {
-    final negative = duration.isNegative;
-    final abs = duration.abs();
-    final hours = abs.inHours;
-    final minutes = abs.inMinutes.remainder(60);
-    final sign = negative ? '-' : '';
-    return '$sign${hours.toString().padLeft(2, '0')}:'
-        '${minutes.toString().padLeft(2, '0')}';
-  }
 }
 
 class _CirclePainter extends CustomPainter {

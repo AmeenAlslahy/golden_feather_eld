@@ -6,7 +6,6 @@ import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 import 'hos_engine_provider.dart';
 import '../../../../core/utils/logger.dart';
 
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
 import '../../../auth/presentation/providers/auth_state_provider.dart';
@@ -81,16 +80,14 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     if (state is! HosEngineReady) return DutyStampRefusal.notReady;
     final currentHosStatus = (state as HosEngineReady).update.currentStatus;
 
-    final currentSpeedMs = _ref.read(currentVehicleSpeedProvider);
-    final currentSpeedKmh = currentSpeedMs != null ? currentSpeedMs * 3.6 : 0.0;
-    final speedThreshold =
-        _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh;
+    final currentSpeedKmh = _ref.read(currentSpeedKmhProvider);
 
     final validationResult = _engine.validateManualTransition(
       currentStatus: currentHosStatus,
       newStatus: newStatus,
       currentSpeedKmh: currentSpeedKmh,
-      speedThresholdKmh: speedThreshold,
+      speedThresholdKmh:
+          _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh,
     );
 
     if (validationResult.isLeft()) {
