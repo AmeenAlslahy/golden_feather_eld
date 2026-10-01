@@ -60,8 +60,4 @@ abstract interface class InspectionBackend {
   /// GET /eld/dot-inspection/transfers
   Future<Result<RawJson>> getTransfers({DriverId? driverId});
 
-  // --- Legacy methods for P5.5 ---
-  Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId);
-  Future<Result<void>> exportLegacyInspectionData(
-      int driverId, String method, String? email, bool isErods);
 }

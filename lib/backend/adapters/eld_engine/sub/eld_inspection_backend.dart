@@ -171,36 +171,4 @@ class EldInspectionBackend implements InspectionBackend {
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
-  @override
-  Future<Result<List<dynamic>>> getLegacyInspectionReport(int driverId) async {
-    final response = await _apiClient.get<dynamic>('/eld/report/inspection/$driverId');
-    return response.map((res) {
-      if (res.isSuccess && res.data != null) {
-        final data = res.data;
-        if (data is List) return data;
-        if (data is Map && data.containsKey('days')) return data['days'] as List<dynamic>;
-        return [];
-      }
-      throw Exception(res.message ?? 'Failed to fetch inspection report');
-    });
-  }
-
-  @override
-  Future<Result<void>> exportLegacyInspectionData(
-      int driverId, String method, String? email, bool isErods) async {
-    final response = await _apiClient.post<dynamic>(
-      '/eld/report/inspection/$driverId/export',
-      data: {
-        'method': method,
-        'email': email,
-        'isErods': isErods,
-      },
-    );
-    return response.map((res) {
-      if (!res.isSuccess) {
-        throw Exception(res.message ?? 'Failed to export inspection data');
-      }
-      return;
-    });
-  }
 }
