@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/result/result.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../backend/contracts/inspection_backend.dart';
+import '../../data/providers/inspection_repository_providers.dart';
+import '../../domain/repositories/inspection_repository.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../core/error/app_error.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
@@ -74,7 +73,7 @@ class InspectionState {
 final inspectionProvider =
     StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
   return InspectionNotifier(
-    backend: ref.watch(inspectionBackendProvider),
+    repository: ref.watch(inspectionRepositoryProvider),
     driverId: ref.watch(currentDriverIdProvider) ?? 0,
     loc: lookupAppLocalizations(ref.watch(localeProvider)),
   );
@@ -84,28 +83,28 @@ final informationPacketProvider =
     FutureProvider.autoDispose<InformationPacketView>((ref) async {
   cacheFor(ref, const Duration(minutes: 5));
   final driverId = ref.watch(currentDriverIdProvider);
-  final result = await ref.watch(inspectionBackendProvider).getInformationPacket(
+  final result = await ref.watch(inspectionRepositoryProvider).getInformationPacket(
         driverId: driverId == null || driverId <= 0 ? null : DriverId(driverId),
       );
-  return result.fold((error) => throw error, parseInformationPacket);
+  return result.fold((error) => throw error, (packet) => packet);
 });
 
 class InspectionNotifier extends StateNotifier<InspectionState> {
-  final InspectionBackend _backend;
+  final InspectionRepository _repository;
   final int _driverId;
   final AppLocalizations _loc;
 
   InspectionNotifier({
-    required InspectionBackend backend,
+    required InspectionRepository repository,
     required int driverId,
     required AppLocalizations loc,
-  })  : _backend = backend,
+  })  : _repository = repository,
         _driverId = driverId,
         _loc = loc,
         super(const InspectionState());
 
-  String _message(AppError error) {
-    return appErrorUserMessage(error, loc: _loc);
+  String _message(Failure error) {
+    return anyErrorUserMessage(error, loc: _loc);
   }
 
   /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
@@ -121,22 +120,21 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     }
 
     final driver = DriverId(_driverId);
-    final started = await _backend.startInspection(driverId: driver);
+    final started = await _repository.startInspection(driverId: driver);
     if (!mounted) return;
     final startWarning = started.fold(_message, (_) => null);
 
-    final cycleResult = await _backend.getCycle(driverId: driver, days: 8);
+    final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
     if (!mounted) return;
     final cycle =
         cycleResult.fold((_) => const <DotInspectionCycleDay>[], (days) => days);
     final logResult = cycle.isEmpty
-        ? await _backend.getLogs(driverId: driver)
-        : await _backend.getLogs(driverId: driver, date: cycle.first.logDate);
+        ? await _repository.getLogs(driverId: driver)
+        : await _repository.getLogs(driverId: driver, date: cycle.first.logDate);
     if (!mounted) return;
 
-    final log = logResult.valueOrNull;
-    final logError =
-        logResult.errorOrNull == null ? null : _message(logResult.errorOrNull!);
+    final log = logResult.fold((_) => null, (log) => log);
+    final logError = logResult.fold(_message, (_) => null);
     if (cycle.isEmpty && log == null) {
       state = state.copyWith(
         isLoading: false,
@@ -169,7 +167,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   Future<void> loadLog(DateTime date) async {
     if (_driverId <= 0) return;
     state = state.copyWith(isLoading: true, clearError: true);
-    final result = await _backend.getLogs(
+    final result = await _repository.getLogs(
       driverId: DriverId(_driverId),
       date: date,
     );
@@ -215,28 +213,21 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     final note = comment.trim();
     final route = routingCode?.trim();
     final recipient = email?.trim() ?? '';
-    final result = method == TransferMethod.email && recipient.isNotEmpty
-        ? await _backend.emailLogs(
-            driverId: driver,
-            recipientEmail: recipient,
-            comment: note,
-            routingCode: route == null || route.isEmpty ? null : route,
-          )
-        : await _backend.sendLogs(
-            driverId: driver,
-            transferType: transferTypeFor(method),
-            outputFileComment: note,
-            routingCode: route == null || route.isEmpty ? null : route,
-            recipientEmail: (email == null || email.trim().isEmpty) ? null : email.trim(),
-          );
+    final result = await _repository.sendLogs(
+        driverId: driver,
+        method: method,
+        email: recipient.isEmpty ? null : recipient,
+        comment: note,
+        routingCode: route,
+    );
+
     if (!mounted) return false;
     return result.fold(
       (error) {
         state = state.copyWith(isLoading: false, error: _message(error));
         return false;
       },
-      (json) {
-        final outcome = readTransferOutcome(json);
+      (outcome) {
         state = state.copyWith(
           isLoading: false,
           clearError: outcome.accepted,

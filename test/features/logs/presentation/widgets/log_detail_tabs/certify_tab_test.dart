@@ -9,7 +9,7 @@ import 'package:golden_feather_eld/features/auth/presentation/providers/auth_sta
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_readiness.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
@@ -52,7 +52,7 @@ void main() {
       mockAdapter = MockAdapter();
       logRepository = _ReadyLogRepository();
       when(() => logRepository.getReadiness(any())).thenAnswer(
-        (_) async => const Right(ReadinessDto(
+        (_) async => const Right(LogReadiness(
           dailyLogId: 123,
           driverId: 1,
           driverName: 'Test Driver',
@@ -61,6 +61,8 @@ void main() {
           missingRequirements: [],
           legalStatement: 'I certify that this record is true and correct.',
           availableActions: ['certify'],
+          carrierProposedEditsPending: false,
+          pendingCarrierEdits: [],
         )),
       );
     });
@@ -155,7 +157,7 @@ void main() {
       var readinessCalls = 0;
       when(() => logRepository.getReadiness(any())).thenAnswer((_) async {
         readinessCalls++;
-        return Right(ReadinessDto(
+        return Right(LogReadiness(
           dailyLogId: 123,
           driverId: 1,
           driverName: 'Test Driver',
@@ -167,7 +169,7 @@ void main() {
           carrierProposedEditsPending: readinessCalls == 1,
           pendingCarrierEdits: readinessCalls == 1
               ? const [
-                  CarrierProposedEdit(
+                  CarrierProposedEditEntity(
                     id: 'edit-77',
                     carrierName: 'Golden Feather Carrier',
                     carrierReason: 'Fuel stop was logged as driving',

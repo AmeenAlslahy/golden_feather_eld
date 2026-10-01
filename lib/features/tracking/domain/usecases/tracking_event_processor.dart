@@ -4,7 +4,7 @@ import '../../../../core/utils/logger.dart';
 
 import '../entities/tracking_event.dart';
 import '../entities/connection_status.dart';
-import '../../data/datasources/tracking_data_source.dart';
+import '../repositories/tracking_data_source_port.dart';
 // For EldEvent
 import '../../../../core/domain/entities/location_point.dart';
 
@@ -12,7 +12,7 @@ import '../../../../core/domain/entities/location_point.dart';
 /// ويقوم بتوزيعها على محركات التطبيق (HOS, Diagnostics, Distance)
 /// عبر محول (Mapper) داخلي بحيث لا تعرف هذه المحركات أي شيء عن Traccar.
 class TrackingEventProcessor {
-  final TrackingDataSource? _trackingDataSource;
+  final TrackingDataSourcePort? _trackingDataSource;
   final StreamController<EldEvent> _eldEventsController =
       StreamController<EldEvent>.broadcast();
   final StreamController<LocationPoint> _locationEventsController =
@@ -24,7 +24,7 @@ class TrackingEventProcessor {
   Timer? _mockTimer;
 
   TrackingEventProcessor({
-    TrackingDataSource? trackingDataSource,
+    TrackingDataSourcePort? trackingDataSource,
   }) : _trackingDataSource = trackingDataSource;
 
   Stream<EldEvent> get eldEventsStream => _eldEventsController.stream;

@@ -10,7 +10,7 @@ import '../../../domain/entities/daily_log.dart';
 import '../../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../../domain/shared/value_objects.dart';
 import 'package:intl/intl.dart';
-import '../../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import '../../../domain/entities/log_readiness.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/logs_provider.dart';
 import '../../../../../core/widgets/app_feedback.dart';
@@ -312,7 +312,7 @@ class _CarrierEditCard extends StatelessWidget {
     required this.onRespond,
   });
 
-  final CarrierProposedEdit edit;
+  final CarrierProposedEditEntity edit;
   final bool busy;
   final void Function(String action) onRespond;
 

@@ -1,8 +1,6 @@
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
-import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
-import 'package:golden_feather_eld/features/inspection/domain/entities/inspection_data.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
 
 void main() {
@@ -14,12 +12,6 @@ void main() {
     expect(inspectionCommentError('  road  ', loc: loc), isNull);
   });
 
-  test('every roadside method uses the live transfer type', () {
-    expect(transferTypeFor(TransferMethod.webService), InspectionTransferType.webServices);
-    expect(transferTypeFor(TransferMethod.email), InspectionTransferType.email);
-    expect(transferTypeFor(TransferMethod.usb).wire, 'USB');
-    expect(transferTypeFor(TransferMethod.bluetooth).wire, 'BLUETOOTH');
-  });
 
   test('a failed transfer status is not shown as accepted', () {
     final outcome = readTransferOutcome({

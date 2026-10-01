@@ -16,7 +16,7 @@ import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_readiness.dart';
 import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 
 class MockSyncEngine implements SyncEngine {
@@ -154,8 +154,8 @@ class MockLogRepository implements LogRepository {
   }) async => throw UnimplementedError();
 
   @override
-  Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId) async {
-    return Right(ReadinessDto(
+  Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId) async {
+    return Right(LogReadiness(
       dailyLogId: logId.value,
       driverId: 12345,
       driverName: 'Mock Driver',
@@ -164,6 +164,8 @@ class MockLogRepository implements LogRepository {
       missingRequirements: const [],
       availableActions: const [],
       legalStatement: 'Mock Legal Statement',
+      carrierProposedEditsPending: false,
+      pendingCarrierEdits: const [],
     ));
   }
 

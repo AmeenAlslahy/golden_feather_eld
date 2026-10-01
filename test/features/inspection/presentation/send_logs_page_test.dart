@@ -121,10 +121,11 @@ void main() {
     await pump(tester);
 
     expect(find.text('Send 8 Logs'), findsOneWidget);
-    // Reference layout (screenshot 9): Comment + Data Transfer Type: Email.
+    // Reference layout (screenshot 9): Comment + Data Transfer Type
+    // (SRS 8.4 Telematics: Web Services default, Email selectable).
     expect(find.text('Comment'), findsOneWidget);
     expect(find.text('Data Transfer Type'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Web Services'), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'abc');
@@ -136,14 +137,14 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('send mode: valid comment → send-logs (EMAIL), server text shown',
+  testWidgets('send mode: valid comment → send-logs (WEB SERVICES default)',
       (tester) async {
     await pump(tester);
 
     await tester.enterText(find.byType(TextField), 'Roadside check I-80');
     await tapSend(tester);
 
-    expect(backend.calls, ['send:106:email:Roadside check I-80:']);
+    expect(backend.calls, ['send:106:webServices:Roadside check I-80:']);
     // The server's own outcome text is what the driver sees.
     expect(find.text('Transfer queued.'), findsOneWidget);
     expect(find.widgetWithText(AppButton, 'SEND'), findsNothing);

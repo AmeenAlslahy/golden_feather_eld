@@ -5,7 +5,7 @@ import '../../../../core/localization/locale_provider.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../../data/providers/log_repository_providers.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import '../../domain/entities/log_readiness.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'dart:typed_data';
 
@@ -13,7 +13,7 @@ class CertifyLogState {
   final bool isLoading;
   final String? error;
   final bool isSuccess;
-  final ReadinessDto? readinessData;
+  final LogReadiness? readinessData;
 
   const CertifyLogState({
     this.isLoading = false,
@@ -30,7 +30,7 @@ class CertifyLogState {
     String? error,
     bool clearError = false,
     bool? isSuccess,
-    ReadinessDto? readinessData,
+    LogReadiness? readinessData,
   }) {
     return CertifyLogState(
       isLoading: isLoading ?? this.isLoading,

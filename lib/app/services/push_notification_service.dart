@@ -39,7 +39,7 @@ class PushNotificationService {
     );
 
     try {
-      await FirebaseMessaging.instance.requestPermission();
+      unawaited(FirebaseMessaging.instance.requestPermission());
 
       FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
       FirebaseMessaging.onMessage.listen(service._onMessage);

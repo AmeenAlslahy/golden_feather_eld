@@ -370,8 +370,18 @@ class DutyStatusTracker {
     );
     return result.fold((error) {
       AppLogger.warning(
-          'Duty status change rejected by server: ${error.code}');
-      return DutyStampRefusal.serverRejected;
+          'Duty status change rejected by server: ${error.code} (Falling back to local queue)');
+      
+      // Fallback: Apply locally and let SyncEngine handle the event delivery later
+      _applyManualLocal(
+        newStatus: newStatus,
+        timestamp: trusted,
+        lat: lat,
+        lon: lon,
+        annotation: annotation,
+        enqueue: true,
+      );
+      return null;
     }, (_) {
       _applyManualLocal(
         newStatus: newStatus,

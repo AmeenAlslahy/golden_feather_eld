@@ -26,8 +26,8 @@ class DotInspectionMapper {
       canViewInformationPacket: JsonPrimitives.asBool(json['canViewInformationPacket'], fallback: true), // absent flag must not lock the driver out
       inspectionActive: JsonPrimitives.asBool(json['inspectionActive']),
       readOnlyMode: JsonPrimitives.asBool(json['readOnlyMode']),
-      activeInspectionId: json['activeInspectionId'] as int?,
-      inspectorName: json['inspectorName'] as String?,
+      activeInspectionId: json['activeInspectionId'] != null ? JsonPrimitives.asInt(json['activeInspectionId']) : null,
+      inspectorName: JsonPrimitives.asStringOrNull(json['inspectorName']),
     );
   }
 
@@ -67,7 +67,7 @@ class DotInspectionMapper {
       activeDeviceMalfunctions:
           JsonPrimitives.asStringList(json['activeDeviceMalfunctions']),
       exemptDriver: JsonPrimitives.asBool(json['exemptDriver']),
-      exemptReason: json['exemptReason'] as String?,
+      exemptReason: JsonPrimitives.asStringOrNull(json['exemptReason']),
       hasUnidentifiedDriving: JsonPrimitives.asBool(json['hasUnidentifiedDriving']),
       unidentifiedDrivingCount: JsonPrimitives.asInt(json['unidentifiedDrivingCount']),
     );
@@ -107,8 +107,8 @@ class DotInspectionMapper {
       driverLicenseNumber: JsonPrimitives.asStringOrNull(json['driver']?['licenseNumber']),
       driverLicenseState: JsonPrimitives.asStringOrNull(json['driver']?['licenseState']),
       coDriverName: JsonPrimitives.asStringOrNull(json['coDriver']?['name']),
-      coDriverId: json['coDriver']?['id'] is num
-          ? (json['coDriver']['id'] as num).toInt()
+      coDriverId: json['coDriver']?['id'] != null
+          ? JsonPrimitives.asInt(json['coDriver']?['id'])
           : null,
     );
   }

@@ -38,6 +38,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   final _commentController = TextEditingController();
   bool _isSending = false;
   bool _sent = false;
+  TransferMethod _selectedMethod = TransferMethod.webService;
 
 
   @override
@@ -92,9 +93,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     final success = await ref
         .read(inspectionProvider.notifier)
         .sendLogs(
-          // Both screens use the server's EMAIL channel (openapi: EMAIL is the
-          // default; the Send screen shows "Data Transfer Type: Email").
-          TransferMethod.email,
+          widget.isEmailMode ? TransferMethod.email : _selectedMethod,
           email: widget.isEmailMode ? _emailController.text.trim() : null,
           routingCode: _routingCodeController.text.trim().isEmpty
               ? null
@@ -202,14 +201,29 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     _FieldLabel(loc.dataTransferType),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 10),
-                      child: Text(
-                        loc.email,
-                        style: context.styles.body,
+                    DropdownButtonFormField<TransferMethod>(
+                      initialValue: _selectedMethod,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
                       ),
+                      items: [
+                        DropdownMenuItem(
+                          value: TransferMethod.webService,
+                          child: Text('Web Services', style: context.styles.body),
+                        ),
+                        DropdownMenuItem(
+                          value: TransferMethod.email,
+                          child: Text('Email', style: context.styles.body),
+                        ),
+                      ],
+                      onChanged: (method) {
+                        if (method != null) {
+                          setState(() => _selectedMethod = method);
+                        }
+                      },
                     ),
-                    const Divider(height: 1),
+                    const SizedBox(height: AppSpacing.lg),
                   ],
                   const SizedBox(height: 40),
                   AppButton(

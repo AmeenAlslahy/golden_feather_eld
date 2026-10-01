@@ -80,11 +80,21 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
 
   Widget _buildStartInspection() {
     final error = ref.watch(inspectionProvider).error;
-    // Live GET /eld/dot-inspection. Server text wins when present; local copy is the fallback.
     final screen = ref.watch(dotInspectionScreenProvider).asData?.value;
-    final guidance = _nonEmpty(screen?.guidanceText) ?? context.loc.inspectLogs24;
-    final handOver = _nonEmpty(screen?.handOverDeviceNotice) ?? context.loc.setPinGuidance;
-    final compliance = _nonEmpty(screen?.carrierComplianceStatement) ?? context.loc.eldCertifies;
+    // نصوص الخادم إنجليزية فقط: في العربية نعرض الترجمات المحلية،
+    // وفي الإنجليزية نعرض نص الخادم (SRS 8.1: الخادم يخصص الإرشاد).
+    final useLocalText = context.isArabic;
+    String serverOrLocal(String? serverText, String local) {
+      final v = serverText?.trim() ?? '';
+      return (useLocalText || v.isEmpty) ? local : v;
+    }
+
+    final guidance = serverOrLocal(
+        screen?.guidanceText, context.loc.inspectLogs24);
+    final handOver = serverOrLocal(
+        screen?.handOverDeviceNotice, context.loc.setPinGuidance);
+    final compliance = serverOrLocal(
+        screen?.carrierComplianceStatement, context.loc.eldCertifies);
     final canStart = screen?.canStartInspection ?? true;
     final canSend = screen?.canSendLogs ?? true;
     final canEmail = screen?.canEmailLogs ?? true;
@@ -569,7 +579,4 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
   }
 }
 
-String? _nonEmpty(String? value) {
-  final v = value?.trim();
-  return (v == null || v.isEmpty) ? null : v;
-}
+

@@ -7,8 +7,9 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/inspection/dot_inspection.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/inspection/domain/repositories/inspection_repository.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/pages/dot_inspection_page.dart';
-import 'package:golden_feather_eld/backend/contracts/inspection_backend.dart';
+import 'package:golden_feather_eld/features/inspection/data/providers/inspection_repository_providers.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/providers/dot_inspection_providers.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/providers/inspection_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
@@ -52,13 +53,13 @@ class _StartAllowed extends DotInspectionScreenNotifier {
       );
 }
 
-class _InspectionBackend extends Mock implements InspectionBackend {}
+class _MockInspectionRepository extends Mock implements InspectionRepository {}
 
 /// An inspection already running and locked with PIN 1234 (no log loaded, so
 /// the page shows the empty body plus the lock icon in the app bar).
 class _LockedInspection extends InspectionNotifier {
-  _LockedInspection(InspectionBackend backend)
-      : super(backend: backend, driverId: 101, loc: lookupAppLocalizations(const Locale('en'))) {
+  _LockedInspection(InspectionRepository repository)
+      : super(repository: repository, driverId: 101, loc: lookupAppLocalizations(const Locale('en'))) {
     state = const InspectionState(
       isInspectionMode: true,
       isPinLocked: true,
@@ -185,7 +186,7 @@ void main() {
 
   testWidgets('driver exit checks the inspection PIN locally, no server call',
       (tester) async {
-    final backend = _InspectionBackend();
+    final repository = _MockInspectionRepository();
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -196,9 +197,9 @@ void main() {
         overrides: [
           activeBackendProvider.overrideWithValue(MockAdapter()),
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-          inspectionBackendProvider.overrideWithValue(backend),
+          inspectionRepositoryProvider.overrideWithValue(repository),
           inspectionProvider
-              .overrideWith((ref) => _LockedInspection(backend)),
+              .overrideWith((ref) => _LockedInspection(repository)),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -235,7 +236,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Driver exit'), findsNothing);
     expect(find.byIcon(Icons.lock), findsNothing);
-    verifyZeroInteractions(backend);
+    verifyZeroInteractions(repository);
     expect(tester.takeException(), isNull);
   });
 }

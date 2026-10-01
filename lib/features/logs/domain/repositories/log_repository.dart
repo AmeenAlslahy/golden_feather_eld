@@ -4,7 +4,7 @@ import '../entities/daily_log.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import '../entities/log_readiness.dart';
 
 abstract class LogRepository {
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -32,7 +32,7 @@ abstract class LogRepository {
   /// (أحداث محلية/أوفلاين — حُفظت محلياً).
   Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
       {required String reason});
-  Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId);
+  Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({
     required DailyLogId logId,
     required String editId,

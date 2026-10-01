@@ -14,7 +14,7 @@ import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import '../models/daily_log_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
-import '../../../../backend/adapters/eld_engine/models/readiness_dto.dart';
+import '../../domain/entities/log_readiness.dart';
 
 // جسر توافق (المرحلة 3b): تعريف logRepositoryProvider انتقل إلى
 // data/providers/log_repository_providers.dart — التصدير هنا يبقي
@@ -193,7 +193,7 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, ReadinessDto>> getReadiness(DailyLogId logId) async {
+  Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
@@ -202,7 +202,27 @@ class LogRepositoryImpl implements LogRepository {
         final result = await _dailyLogsBackend.getReadiness(logId);
         return result.match(
           (failure) => throw Exception(failure.l10nKey),
-          (data) => data,
+          (data) {
+             return LogReadiness(
+               dailyLogId: data.dailyLogId,
+               driverId: data.driverId,
+               driverName: data.driverName,
+               logDate: data.logDate,
+               readinessStatus: data.readinessStatus,
+               missingRequirements: data.missingRequirements,
+               legalStatement: data.legalStatement,
+               availableActions: data.availableActions,
+               carrierProposedEditsPending: data.carrierProposedEditsPending,
+               pendingCarrierEdits: data.pendingCarrierEdits.map((e) => CarrierProposedEditEntity(
+                 id: e.id,
+                 carrierName: e.carrierName,
+                 carrierReason: e.carrierReason,
+                 proposedStatus: e.proposedStatus,
+                 previousValuesSummary: e.previousValuesSummary,
+                 newValuesSummary: e.newValuesSummary,
+               )).toList(),
+             );
+          },
         );
       },
       tag: 'LogRepositoryImpl.getReadiness',

@@ -1,6 +1,4 @@
-import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../l10n/app_localizations.dart';
-import 'entities/inspection_data.dart';
 
 /// The live send path rejects a comment outside 4–60 characters.
 String? inspectionCommentError(String comment, {required AppLocalizations loc}) {
@@ -9,19 +7,6 @@ String? inspectionCommentError(String comment, {required AppLocalizations loc}) 
     return loc.inspectionCommentErrorLength;
   }
   return null;
-}
-
-InspectionTransferType transferTypeFor(TransferMethod method) {
-  switch (method) {
-    case TransferMethod.webService:
-      return InspectionTransferType.webServices;
-    case TransferMethod.email:
-      return InspectionTransferType.email;
-    case TransferMethod.usb:
-      return InspectionTransferType.usb;
-    case TransferMethod.bluetooth:
-      return InspectionTransferType.bluetooth;
-  }
 }
 
 class TransferOutcome {
