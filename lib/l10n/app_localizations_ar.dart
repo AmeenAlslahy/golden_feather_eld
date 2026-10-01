@@ -2915,4 +2915,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dvirWindshield => 'الزجاج الأمامي';
+
+  @override
+  String get routingCode => 'رمز التوجيه';
+
+  @override
+  String get routingCodeHint => 'أدخل رمز التوجيه من المفتش';
+
+  @override
+  String get tooManyPinAttempts =>
+      'محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.';
 }

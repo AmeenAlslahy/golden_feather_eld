@@ -276,6 +276,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                 onPressed: _currentDayIndex < state.cycle.length - 1
                     ? () {
                         final next = _currentDayIndex + 1;
+                        if (next >= state.cycle.length) return;
                         setState(() => _currentDayIndex = next);
                         ref
                             .read(inspectionProvider.notifier)
@@ -294,6 +295,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                 onPressed: _currentDayIndex > 0
                     ? () {
                         final next = _currentDayIndex - 1;
+                        if (next < 0) return;
                         setState(() => _currentDayIndex = next);
                         ref
                             .read(inspectionProvider.notifier)
@@ -489,6 +491,8 @@ class _DriverExitDialog extends ConsumerStatefulWidget {
 class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
   final _pin = TextEditingController();
   String? _error;
+  int _failedAttempts = 0;
+  static const _maxAttempts = 5;
 
   @override
   void dispose() {
@@ -506,8 +510,11 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
     }
     final accepted = ref.read(inspectionProvider.notifier).exitWithPin(pin);
     if (!accepted) {
+      _failedAttempts++;
       setState(() {
-        _error = context.loc.incorrectPin;
+        _error = _failedAttempts >= _maxAttempts
+            ? context.loc.tooManyPinAttempts
+            : context.loc.incorrectPin;
       });
       return;
     }

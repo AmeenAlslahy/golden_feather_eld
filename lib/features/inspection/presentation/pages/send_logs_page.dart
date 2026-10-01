@@ -34,6 +34,7 @@ class SendLogsPage extends ConsumerStatefulWidget {
 
 class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   final _emailController = TextEditingController();
+  final _routingCodeController = TextEditingController();
   final _commentController = TextEditingController();
   bool _isSending = false;
   bool _sent = false;
@@ -54,6 +55,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   @override
   void dispose() {
     _emailController.dispose();
+    _routingCodeController.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -94,6 +96,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
           // default; the Send screen shows "Data Transfer Type: Email").
           TransferMethod.email,
           email: widget.isEmailMode ? _emailController.text.trim() : null,
+          routingCode: _routingCodeController.text.trim().isEmpty
+              ? null
+              : _routingCodeController.text.trim(),
           comment: comment,
         );
     if (!mounted) return;
@@ -178,6 +183,14 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       controller: _emailController,
                       hint: 'some@email.com',
                       keyboardType: TextInputType.emailAddress,
+                      isUnderlined: true,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    // SRS 8.4: the inspector hands over a routing code.
+                    _FieldLabel(loc.routingCode),
+                    AppTextField(
+                      controller: _routingCodeController,
+                      hint: loc.routingCodeHint,
                       isUnderlined: true,
                     ),
                   ] else ...[

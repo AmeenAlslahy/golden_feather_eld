@@ -153,16 +153,17 @@ void main() {
       (tester) async {
     await pump(tester, email: true);
     expect(find.text('Send logs via email'), findsOneWidget);
-    // Reference layout (screenshot 3): only the recipient field + SEND.
+    // Reference layout (screenshot 3): recipient + SRS 8.4 routing code.
     expect(find.text('Recipient Email'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Routing Code'), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(2));
 
-    await tester.enterText(find.byType(TextField), 'nope');
+    await tester.enterText(find.byType(TextField).first, 'nope');
     await tapSend(tester);
     expect(find.text('Enter a valid email.'), findsOneWidget);
     expect(backend.calls, isEmpty);
 
-    await tester.enterText(find.byType(TextField), 'officer@dot.gov');
+    await tester.enterText(find.byType(TextField).first, 'officer@dot.gov');
     await tapSend(tester);
 
     expect(backend.calls, ['email:106:officer@dot.gov:Email logs transfer:']);

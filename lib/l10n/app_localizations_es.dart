@@ -2958,4 +2958,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dvirWindshield => 'Parabrisas';
+
+  @override
+  String get routingCode => 'Código de enrutamiento';
+
+  @override
+  String get routingCodeHint =>
+      'Ingrese el código de enrutamiento del inspector';
+
+  @override
+  String get tooManyPinAttempts =>
+      'Demasiados intentos incorrectos. Espere e intente de nuevo.';
 }

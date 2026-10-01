@@ -200,19 +200,14 @@ class _InspectionGraphPainter extends CustomPainter {
     }
     final raw = '${event.eventCode} ${event.eventType} ${event.description}'
         .toUpperCase();
-    if (raw.contains('PC') || raw.contains('PERSONAL')) return 'PC';
-    if (raw.contains('YM') || raw.contains('YARD')) return 'YM';
-    if (raw.contains('SB') || raw.contains('SLEEPER') || raw.contains(' 2')) {
-      return 'SB';
-    }
-    if (raw.contains('DRIV') ||
-        raw == 'D' ||
-        raw.startsWith('D ') ||
-        raw.contains(' 3') ||
-        event.eventCode == '3') {
-      return 'D';
-    }
-    if (raw.contains('ON') || event.eventCode == '4') return 'ON';
+    // Word boundaries: 'OFFICE' must not match OFF, 'Route 3' must not
+    // match the driving code.
+    if (RegExp(r'PC|PERSONAL').hasMatch(raw)) return 'PC';
+    if (RegExp(r'YM|YARD').hasMatch(raw)) return 'YM';
+    if (RegExp(r'SB|SLEEPER').hasMatch(raw)) return 'SB';
+    if (RegExp(r'DRIV').hasMatch(raw)) return 'D';
+    if (RegExp(r'ON').hasMatch(raw)) return 'ON';
+    if (RegExp(r'OFF').hasMatch(raw)) return 'OFF';
     if (raw.contains('OFF') || event.eventCode == '1') return 'OFF';
     return 'OFF';
   }

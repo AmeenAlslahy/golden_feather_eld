@@ -51,6 +51,7 @@ class InspectionState {
     bool clearLog = false,
     bool? isLoading,
     String? error,
+    bool clearError = false,
     String? transferMessage,
     bool clearTransferMessage = false,
   }) {
@@ -62,7 +63,7 @@ class InspectionState {
       cycle: cycle ?? this.cycle,
       log: clearLog ? log : (log ?? this.log),
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
       transferMessage:
           clearTransferMessage ? transferMessage : (transferMessage ?? this.transferMessage),
     );
@@ -109,7 +110,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
   Future<void> startInspection({required String pin}) async {
-    state = state.copyWith(isLoading: true, error: null, clearLog: true);
+    state = state.copyWith(isLoading: true, clearError: true, clearLog: true);
 
     if (_driverId <= 0) {
       state = state.copyWith(
@@ -167,7 +168,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   Future<void> loadLog(DateTime date) async {
     if (_driverId <= 0) return;
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     final result = await _backend.getLogs(
       driverId: DriverId(_driverId),
       date: date,
@@ -179,7 +180,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
         clearLog: true,
         error: _message(error),
       ),
-      (log) => state = state.copyWith(isLoading: false, log: log, error: null),
+      (log) => state = state.copyWith(isLoading: false, log: log, clearError: true),
     );
   }
 
@@ -209,7 +210,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       return false;
     }
 
-    state = state.copyWith(isLoading: true, error: null, clearTransferMessage: true);
+    state = state.copyWith(isLoading: true, clearError: true, clearTransferMessage: true);
     final driver = DriverId(_driverId);
     final note = comment.trim();
     final route = routingCode?.trim();
@@ -238,6 +239,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
         final outcome = readTransferOutcome(json);
         state = state.copyWith(
           isLoading: false,
+          clearError: outcome.accepted,
           error: outcome.accepted ? null : outcome.text,
           transferMessage: outcome.accepted ? outcome.text : null,
         );

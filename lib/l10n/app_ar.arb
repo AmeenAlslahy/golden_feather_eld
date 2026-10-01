@@ -1041,5 +1041,8 @@
   "dvirExhaustSystem": "نظام العادم",
   "dvirSuspension": "نظام التعليق",
   "dvirMirrors": "المرايا",
-  "dvirWindshield": "الزجاج الأمامي"
+  "dvirWindshield": "الزجاج الأمامي",
+  "routingCode": "رمز التوجيه",
+  "routingCodeHint": "أدخل رمز التوجيه من المفتش",
+  "tooManyPinAttempts": "محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً."
 }

@@ -1048,5 +1048,8 @@
   "dvirExhaustSystem": "Sistema de Escape",
   "dvirSuspension": "Suspensión",
   "dvirMirrors": "Espejos",
-  "dvirWindshield": "Parabrisas"
+  "dvirWindshield": "Parabrisas",
+  "routingCode": "Código de enrutamiento",
+  "routingCodeHint": "Ingrese el código de enrutamiento del inspector",
+  "tooManyPinAttempts": "Demasiados intentos incorrectos. Espere e intente de nuevo."
 }

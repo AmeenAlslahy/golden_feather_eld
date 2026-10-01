@@ -37,7 +37,11 @@ TransferOutcome readTransferOutcome(Map<String, dynamic> json) {
   final status = json['status'];
   final statusText = status is String ? status.trim() : '';
   final messageText = message is String ? message.trim() : '';
-  final failed = const {'failed', 'error', 'rejected'}.contains(statusText.toLowerCase());
+  // Live contract: the server answers 'PENDING' for an accepted transfer
+  // that is queued, so acceptance is deny-listed, not whitelisted. A
+  // missing status (HTTP 200 + message only) is also an acceptance.
+  final failed = const {'failed', 'error', 'rejected', 'denied'}
+      .contains(statusText.toLowerCase());
   final text = messageText.isNotEmpty
       ? messageText
       : statusText.isNotEmpty

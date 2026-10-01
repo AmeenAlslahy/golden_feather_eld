@@ -5535,6 +5535,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الزجاج الأمامي'**
   String get dvirWindshield;
+
+  /// No description provided for @routingCode.
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز التوجيه'**
+  String get routingCode;
+
+  /// No description provided for @routingCodeHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز التوجيه من المفتش'**
+  String get routingCodeHint;
+
+  /// No description provided for @tooManyPinAttempts.
+  ///
+  /// In ar, this message translates to:
+  /// **'محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.'**
+  String get tooManyPinAttempts;
 }
 
 class _AppLocalizationsDelegate

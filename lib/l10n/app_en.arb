@@ -1048,5 +1048,8 @@
   "dvirExhaustSystem": "Exhaust System",
   "dvirSuspension": "Suspension",
   "dvirMirrors": "Mirrors",
-  "dvirWindshield": "Windshield"
+  "dvirWindshield": "Windshield",
+  "routingCode": "Routing Code",
+  "routingCodeHint": "Enter the routing code from the inspector",
+  "tooManyPinAttempts": "Too many incorrect attempts. Please wait and try again."
 }

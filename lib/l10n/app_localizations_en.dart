@@ -2932,4 +2932,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dvirWindshield => 'Windshield';
+
+  @override
+  String get routingCode => 'Routing Code';
+
+  @override
+  String get routingCodeHint => 'Enter the routing code from the inspector';
+
+  @override
+  String get tooManyPinAttempts =>
+      'Too many incorrect attempts. Please wait and try again.';
 }

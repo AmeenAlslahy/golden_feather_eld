@@ -411,6 +411,8 @@ class _TransferAuditTile extends StatelessWidget {
       if (audit.channel.isNotEmpty) audit.channel,
       if (audit.recipient.isNotEmpty) audit.recipient,
       if (audit.transferredAt.isNotEmpty) audit.transferredAt,
+      if (audit.period.isNotEmpty) audit.period,
+      if (audit.recordCount.isNotEmpty) audit.recordCount,
       if (audit.message.isNotEmpty) audit.message,
     ];
     return Container(
