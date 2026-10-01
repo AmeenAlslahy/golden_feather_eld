@@ -20,11 +20,7 @@ abstract interface class DvirBackend {
   /// GET /eld/dvir/{id}
   Future<Result<RawJson>> getById(DvirId dvirId);
 
-  /// POST /eld/dvir/{id}/certify-repair
-  Future<Result<void>> certifyRepair({
-    required DvirId dvirId,
-    required RawJson repair,
-  });
+
 
   /// POST /eld/dvir/{id}/review
   Future<Result<void>> review({

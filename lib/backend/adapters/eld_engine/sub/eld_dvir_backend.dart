@@ -67,18 +67,7 @@ class EldDvirBackend implements DvirBackend {
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
 
-  @override
-  Future<Result<void>> certifyRepair({
-    required DvirId dvirId,
-    required RawJson repair,
-  }) async {
-    final res = await _apiClient.post<RawJson>(
-      EldEndpoints.certifyDvirRepair(dvirId.value),
-      data: repair,
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
-    );
-    return _accepted(res);
-  }
+
 
   @override
   Future<Result<void>> review({

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
@@ -64,7 +64,7 @@ void main() {
     test('paths match Swagger', () {
       expect(EldEndpoints.dvir, '/eld/dvir');
       expect(EldEndpoints.dvirDetails(7), '/eld/dvir/7');
-      expect(EldEndpoints.certifyDvirRepair(7), '/eld/dvir/7/certify-repair');
+
       expect(EldEndpoints.dvirNextDriverReview(7), '/eld/dvir/7/review');
       expect(EldEndpoints.dvirCatalog, '/eld/dvir/catalog');
       expect(EldEndpoints.dvirPrevious('ELD-PRO-1006'), '/eld/dvir/pre-trip/ELD-PRO-1006');

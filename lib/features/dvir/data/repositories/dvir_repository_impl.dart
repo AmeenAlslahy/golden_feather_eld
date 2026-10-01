@@ -147,35 +147,7 @@ class DvirRepositoryImpl implements DvirRepository {
     });
   }
 
-  @override
-  Future<Either<Failure, bool>> certifyRepair({
-    required String dvirId,
-    required String mechanicName,
-    required String action,
-    String? repairNotes,
-    required String mechanicSignature,
-  }) async {
-    return guardedNetwork(networkInfo, () async {
-      final parsedId = int.tryParse(dvirId);
-      if (parsedId == null) {
-        return const Left(ServerFailure(message: 'Invalid DVIR ID for certify'));
-      }
-      final dto = CertifyRepairRequestDto(
-        mechanicName: mechanicName,
-        action: action,
-        repairNotes: repairNotes,
-        mechanicSignature: mechanicSignature,
-      );
-      final result = await dvirBackend.certifyRepair(
-        dvirId: DvirId(parsedId),
-        repair: dto.toJson(),
-      );
-      return result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
-        (_) => const Right(true),
-      );
-    });
-  }
+
 
   @override
   Future<Either<Failure, bool>> reviewDvir({

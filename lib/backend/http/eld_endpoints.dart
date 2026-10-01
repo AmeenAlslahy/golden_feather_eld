@@ -91,8 +91,7 @@ class EldEndpoints {
   static const String dvir = '/eld/dvir';
   /// تفاصيل فحص المركبات 
   static String dvirDetails(int id) => '/eld/dvir/$id';
-  /// شهادة إصلاح المركبات 
-  static String certifyDvirRepair(int id) => '/eld/dvir/$id/certify-repair';
+
   /// مراجعة فحص المركبات 
   static String dvirNextDriverReview(int id) => '/eld/dvir/$id/review';
   /// كتالوج فحص المركبات 

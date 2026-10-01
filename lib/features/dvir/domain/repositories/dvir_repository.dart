@@ -15,13 +15,7 @@ abstract class DvirRepository {
     required int driverId,
     required String status,
   });
-  Future<Either<Failure, bool>> certifyRepair({
-    required String dvirId,
-    required String mechanicName,
-    required String action,
-    String? repairNotes,
-    required String mechanicSignature,
-  });
+
   Future<Either<Failure, bool>> reviewDvir({
     required String dvirId,
     required int reviewingDriverId,

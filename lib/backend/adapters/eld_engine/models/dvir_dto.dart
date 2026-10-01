@@ -325,37 +325,7 @@ class CreateDvirRequestDto {
   }
 }
 
-class CertifyRepairRequestDto {
-  final String mechanicName;
-  final String action;
-  final String? repairNotes;
-  final String mechanicSignature;
 
-  const CertifyRepairRequestDto({
-    required this.mechanicName,
-    required this.action,
-    this.repairNotes,
-    required this.mechanicSignature,
-  });
-
-  factory CertifyRepairRequestDto.fromJson(Map<String, dynamic> json) {
-    return CertifyRepairRequestDto(
-      mechanicName: json['mechanicName'].toString(),
-      action: json['action'].toString(),
-      repairNotes: json['repairNotes']?.toString(),
-      mechanicSignature: json['mechanicSignature'].toString(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'mechanicName': mechanicName,
-      'action': action,
-      'repairNotes': repairNotes,
-      'mechanicSignature': mechanicSignature,
-    };
-  }
-}
 
 class ReviewDvirRequestDto {
   final int reviewingDriverId;

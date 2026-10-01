@@ -29,12 +29,7 @@ class MockDvirBackend implements DvirBackend {
   Future<Result<RawJson>> getById(DvirId dvirId) =>
       throw UnimplementedError('MockDvirBackend.getById — Phase 2');
 
-  @override
-  Future<Result<void>> certifyRepair({
-    required DvirId dvirId,
-    required RawJson repair,
-  }) =>
-      throw UnimplementedError('MockDvirBackend.certifyRepair — Phase 2');
+
 
   @override
   Future<Result<void>> review({
