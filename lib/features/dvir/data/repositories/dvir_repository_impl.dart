@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/dvir_submission.dart';
 import '../../domain/dvir_catalog.dart';
@@ -23,11 +24,11 @@ class DvirRepositoryImpl implements DvirRepository {
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
       String vehicleId) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
+    return guardedNetwork(networkInfo, () async {
     final result = vehicleId.trim().isEmpty || vehicleId == 'unknown_vehicle'
         ? await dvirBackend.list()
         : await dvirBackend.list(uniqueId: vehicleId);
-    
+
     return result.fold(
       (error) => Left(ServerFailure(message: error.code)),
       (rawJson) {
@@ -39,11 +40,12 @@ class DvirRepositoryImpl implements DvirRepository {
         return Right(reports);
       }
     );
+    });
   }
 
   @override
   Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
+    return guardedNetwork(networkInfo, () async {
     final id = vehicleId.trim();
     if (id.isEmpty || id == 'unknown_vehicle' || id == 'No Vehicle') {
       return const Right(null);
@@ -73,6 +75,7 @@ class DvirRepositoryImpl implements DvirRepository {
         }
       },
     );
+    });
   }
 
   /// The record may be the body itself or nested under a documented-looking

@@ -41,40 +41,7 @@ class HosRulesEngine {
         _timeProvider = timeProvider;
 
   /// معالجة حدث جديد من جهاز ELD
-  HosEngineResult processEvent(EldEvent event) {
-    _checkAndApplyWeeklyRestart();
-    // 2. حساب الحدود الأربعة
-    final limitsResult = _calculator.calculateAllLimits(
-      drivingHours: _stateMachine.totalDrivingHours,
-      shiftStartTime: _stateMachine.shiftStartTime,
-      cycleHours: _stateMachine.cycleHours,
-    );
-
-    if (limitsResult is CalculationTimeUnavailable) {
-      return HosEngineTimeUnavailable(limitsResult.state);
-    }
-
-    final limits = (limitsResult as CalculationSuccess).limits;
-
-    // 3. التحقق من التنبيهات
-    final alerts = _generateAlerts(limits);
-
-    // 4. التحقق من الانتهاكات
-    final timeResult = _timeProvider.currentTime;
-    final violations = _checkViolations(limits, timeResult);
-
-    return HosEngineReady(HosStatusUpdate(
-      currentStatus: _stateMachine.currentStatus,
-      limits: limits,
-      alerts: alerts,
-      violations: violations,
-      remainingDriveMinutes: limits.remainingDriveMinutes,
-      remainingShiftMinutes: limits.remainingShiftMinutes,
-      remainingCycleHours: limits.remainingCycleHours,
-      breakRequired: limits.breakRequired,
-      breakRemainingMinutes: limits.breakRemainingMinutes,
-    ));
-  }
+  HosEngineResult processEvent(EldEvent event) => _buildStatusUpdate();
 
   void _checkAndApplyWeeklyRestart() {
     final timeResult = _timeProvider.currentTime;
@@ -229,7 +196,11 @@ class HosRulesEngine {
   }
 
   /// الحالة الحالية
-  HosEngineResult get currentStatus {
+  /// الحالة الحالية
+  HosEngineResult get currentStatus => _buildStatusUpdate();
+
+  /// مسار الحساب الوحيد — كان مكرراً حرفياً في processEvent وcurrentStatus.
+  HosEngineResult _buildStatusUpdate() {
     _checkAndApplyWeeklyRestart();
     final limitsResult = _calculator.calculateAllLimits(
       drivingHours: _stateMachine.totalDrivingHours,

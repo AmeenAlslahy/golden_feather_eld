@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
@@ -40,8 +41,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     final serverUrl = _getServerUrl();
     if (serverUrl == null) return const Left(MissingConfigurationFailure());
-    if (!_networkInfo.isConnected) return const Left(NetworkFailure());
-
+    return guardedNetwork(_networkInfo, () async {
     final backendType = _configProvider.backendType;
     final result = await _authBackend.login(
       identifier: identifier,
@@ -67,6 +67,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(sessionDto.userModel);
       }
     );
+    });
   }
 
   @override
@@ -85,11 +86,11 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(SessionMissingFailure());
     }
 
-    if (!_networkInfo.isConnected) {
-      return await _handleOfflineSession();
-    }
-
-    return await _validateRemoteSession(savedSession);
+    return guardedNetwork(
+      _networkInfo,
+      () => _validateRemoteSession(savedSession),
+      offline: _handleOfflineSession,
+    );
   }
 
   Future<void> _clearLocalData() async {
