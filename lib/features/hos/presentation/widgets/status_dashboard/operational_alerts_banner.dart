@@ -49,7 +49,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
           loc.noInternetConnection,
         ),
       ConnectionStatus.unknown => (
-          AppColors.textSecondaryFor(Theme.of(context).brightness),
+          context.styles.subtitle.color!,
           Icons.info_outline,
           loc.connectionStatusUnknown,
         ),

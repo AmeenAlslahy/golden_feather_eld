@@ -138,8 +138,11 @@ class AppColors {
   static Color surfaceFor(Brightness b) =>
       b == Brightness.light ? surface : surfaceDark;
 
+  /// حد الوضع الداكن — نفس قيمة [borderFor] في الداكن كرمز مسمى.
+  static const Color darkBorder = Color(0xFF3A3A3C);
+
   static Color borderFor(Brightness b) =>
-      b == Brightness.light ? border : const Color(0xFF3A3A3C);
+      b == Brightness.light ? border : darkBorder;
 
   /// النص الذهبي الآمن حسب الخلفية.
   static Color goldFor(Brightness b) =>

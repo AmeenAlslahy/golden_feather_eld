@@ -171,7 +171,7 @@ class HomePage extends ConsumerWidget {
                       child: Text(
                         context.loc.noInternetBanner,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(color: AppColors.white, fontSize: 14),
                       ),
                     ),
                   Expanded(child: pages[currentNavIndex]),

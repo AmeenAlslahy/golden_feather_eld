@@ -235,7 +235,7 @@ class _FieldLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+        color: context.styles.body.color!,
       ),
     );
   }

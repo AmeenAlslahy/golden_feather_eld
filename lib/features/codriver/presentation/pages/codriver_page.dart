@@ -35,10 +35,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
   Widget build(BuildContext context) {
     final codriverState = ref.watch(codriverProvider);
     final loc = context.loc;
-    final brightness = Theme.of(context).brightness;
-    final surfaceColor = AppColors.surfaceFor(brightness);
-    final textColor = AppColors.textPrimaryFor(brightness);
-    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
+    final surfaceColor = context.colorScheme.surface;
+    final textColor = context.styles.body.color!;
+    final textSecondaryColor = context.styles.subtitle.color!;
 
     final selfId = ref.watch(currentDriverIdProvider)?.toString();
     final drivers = [
@@ -120,7 +119,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                               decoration: BoxDecoration(
                                 border: Border(
                                   bottom: BorderSide(
-                                    color: AppColors.borderFor(brightness),
+                                    color: context.colorScheme.outline,
                                   ),
                                 ),
                               ),
@@ -510,7 +509,7 @@ class _LinkedCoDriver extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             color: state.currentError == null
-                ? AppColors.textSecondaryFor(Theme.of(context).brightness)
+                ? context.styles.subtitle.color
                 : AppColors.dangerRed,
           ),
         ),

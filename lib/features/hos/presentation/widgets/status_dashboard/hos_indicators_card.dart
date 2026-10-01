@@ -31,14 +31,14 @@ class HosIndicatorsCard extends StatelessWidget {
           width: double.infinity,
           // الشريط تحت دائرة الوقت: كان يستخدم رمز الخلفية الفاتحة فيظهر
           // أبيض في الوضع الداكن (بلاغ المالك).
-          color: AppColors.backgroundFor(Theme.of(context).brightness),
+          color: context.colorScheme.surface,
           padding: const EdgeInsets.symmetric(vertical: 18),
           child: Text(
             loc.hoursOfService,
             textAlign: TextAlign.center,
             style:  TextStyle(
               fontSize: 16,
-              color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+              color: context.styles.body.color!,
             ),
           ),
         ),
@@ -136,7 +136,7 @@ class _IndicatorRow extends StatelessWidget {
                   style:  TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                    color: context.styles.subtitle.color,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -144,7 +144,7 @@ class _IndicatorRow extends StatelessWidget {
                   detail,
                   style:  TextStyle(
                     fontSize: 15,
-                    color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                    color: context.styles.subtitle.color,
                   ),
                 ),
               ],
@@ -158,7 +158,7 @@ class _IndicatorRow extends StatelessWidget {
                 fontSize: 34,
                 color: isCritical
                     ? context.styles.error.color
-                    : AppColors.textPrimaryFor(Theme.of(context).brightness),
+                    : context.styles.body.color!,
               ),
             ),
           ),

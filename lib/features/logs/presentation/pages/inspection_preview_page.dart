@@ -133,7 +133,7 @@ class _DateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: context.isDark ? const Color(0xFF3A3A3C) : AppColors.surfaceDark,
+      color: context.isDark ? AppColors.darkBorder : AppColors.surfaceDark,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

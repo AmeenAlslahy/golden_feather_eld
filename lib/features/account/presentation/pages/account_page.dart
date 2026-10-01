@@ -337,10 +337,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                   color: context.styles.body.color,
                 ),
                 onChanged: onChanged,
-                style: TextStyle(
-                  fontSize: AppTypography.bodySize,
-                  color: context.styles.body.color,
-                ),
+                style: context.styles.body,
                 items: items.map((String item) {
                   return DropdownMenuItem<String>(
                     value: item,

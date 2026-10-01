@@ -477,9 +477,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         _report?.companyName ??
         account?.carrier ??
         context.loc.dvirCompanyUnavailable;
-    final brightness = Theme.of(context).brightness;
-    final textColor = AppColors.textPrimaryFor(brightness);
-    final borderColor = AppColors.borderFor(brightness);
+    final textColor = context.styles.body.color!;
+    final borderColor = context.colorScheme.outline;
 
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
@@ -581,7 +580,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   dashboard.trailerId ?? context.loc.trailers,
                   style: TextStyle(
                     color: dashboard.trailerId == null
-                        ? AppColors.textSecondaryFor(brightness)
+                        ? context.styles.subtitle.color
                         : textColor,
                     fontSize: 16,
                   ),
@@ -878,7 +877,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       style: TextStyle(color: textColor, fontSize: 16),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+        hintStyle: context.styles.subtitle,
         border: InputBorder.none,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -963,10 +962,8 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                           subtitle: item.critical
                               ? Text(
                                   loc.dvirSafetyAffecting,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.dangerRed,
-                                  ),
+                                  style: context.styles.error
+                                      .copyWith(fontSize: 11),
                                 )
                               : null,
                           onChanged: (v) => setState(() {

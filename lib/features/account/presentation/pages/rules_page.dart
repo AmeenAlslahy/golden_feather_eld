@@ -200,11 +200,8 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       });
                     }
                   },
-                  style: TextStyle(
+                  style: context.styles.body.copyWith(
                     fontSize: AppTypography.bodySize,
-                    color: AppColors.textPrimaryFor(
-                      Theme.of(context).brightness,
-                    ),
                   ),
                   items: options.map((String opt) {
                     return DropdownMenuItem<String>(
