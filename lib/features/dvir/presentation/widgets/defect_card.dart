@@ -1,4 +1,5 @@
-import '../../domain/dvir_catalog.dart';
+﻿import '../../domain/dvir_catalog.dart';
+import '../extensions/dvir_catalog_extensions.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -46,7 +47,7 @@ class DefectCard extends StatelessWidget {
           ),
           if (!readOnly)
             IconButton(
-              icon: Icon(Icons.remove_circle_outline, color: AppColors.dangerRed),
+              icon: const Icon(Icons.remove_circle_outline, color: AppColors.dangerRed),
               onPressed: onRemove,
             ),
         ],
@@ -54,3 +55,4 @@ class DefectCard extends StatelessWidget {
     );
   }
 }
+

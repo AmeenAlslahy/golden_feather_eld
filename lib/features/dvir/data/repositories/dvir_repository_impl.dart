@@ -93,16 +93,23 @@ class DvirRepositoryImpl implements DvirRepository {
 
   @override
   Future<Either<Failure, DvirReport>> getDvirDetails(String id) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    final result = await dvirBackend.getById(DvirId(int.parse(id)));
-    
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (rawJson) {
-        final dto = DvirDto.fromJson(rawJson);
-        return Right(_mapDtoToEntity(dto));
+    return guardedNetwork(networkInfo, () async {
+      final parsedId = int.tryParse(id);
+      if (parsedId == null) {
+        return const Left(ServerFailure(message: 'Invalid DVIR ID'));
       }
-    );
+      final result = await dvirBackend.getById(DvirId(parsedId));
+      return result.fold(
+        (error) => Left(ServerFailure(message: error.code)),
+        (rawJson) {
+          try {
+            return Right(_mapDtoToEntity(DvirDto.fromJson(rawJson)));
+          } catch (e) {
+            return const Left(ServerFailure(message: 'Failed to parse DVIR details'));
+          }
+        },
+      );
+    });
   }
 
   @override
@@ -111,33 +118,33 @@ class DvirRepositoryImpl implements DvirRepository {
     required int driverId,
     required String status,
   }) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
-    final body = buildDvirCreateBody(
-      driverId: driverId,
-      uniqueId: report.vehicleId,
-      status: status,
-      signatureData: report.signature,
-      inspectionTime: report.date.toUtc().toIso8601String(),
-      location: report.location,
-      odometer: report.odometer,
-      trailerNumber: report.trailerId,
-      companyName: report.companyName,
-      remarks: report.notes,
-      vehicleDefects: report.vehicleDefects,
-      trailerDefects: report.trailerDefects,
-      catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
-    );
-    if (body == null) {
-      return const Left(ServerFailure(
-        message: 'Driver, vehicle, or signature is missing.',
-      ));
-    }
-
-    final result = await dvirBackend.create(body);
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (_) => const Right(true),
-    );
+    return guardedNetwork(networkInfo, () async {
+      final body = buildDvirCreateBody(
+        driverId: driverId,
+        uniqueId: report.vehicleId,
+        status: status,
+        signatureData: report.signature,
+        inspectionTime: report.date.toUtc().toIso8601String(),
+        location: report.location,
+        odometer: report.odometer,
+        trailerNumber: report.trailerId,
+        companyName: report.companyName,
+        remarks: report.notes,
+        vehicleDefects: report.vehicleDefects,
+        trailerDefects: report.trailerDefects,
+        catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
+      );
+      if (body == null) {
+        return const Left(ServerFailure(
+          message: 'Driver, vehicle, or signature is missing.',
+        ));
+      }
+      final result = await dvirBackend.create(body);
+      return result.fold(
+        (error) => Left(ServerFailure(message: error.code)),
+        (_) => const Right(true),
+      );
+    });
   }
 
   @override
@@ -148,24 +155,26 @@ class DvirRepositoryImpl implements DvirRepository {
     String? repairNotes,
     required String mechanicSignature,
   }) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
-
-    final dto = CertifyRepairRequestDto(
-      mechanicName: mechanicName,
-      action: action,
-      repairNotes: repairNotes,
-      mechanicSignature: mechanicSignature,
-    );
-
-    final result = await dvirBackend.certifyRepair(
-      dvirId: DvirId(int.parse(dvirId)),
-      repair: dto.toJson(),
-    );
-
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (_) => const Right(true),
-    );
+    return guardedNetwork(networkInfo, () async {
+      final parsedId = int.tryParse(dvirId);
+      if (parsedId == null) {
+        return const Left(ServerFailure(message: 'Invalid DVIR ID for certify'));
+      }
+      final dto = CertifyRepairRequestDto(
+        mechanicName: mechanicName,
+        action: action,
+        repairNotes: repairNotes,
+        mechanicSignature: mechanicSignature,
+      );
+      final result = await dvirBackend.certifyRepair(
+        dvirId: DvirId(parsedId),
+        repair: dto.toJson(),
+      );
+      return result.fold(
+        (error) => Left(ServerFailure(message: error.code)),
+        (_) => const Right(true),
+      );
+    });
   }
 
   @override
@@ -177,25 +186,27 @@ class DvirRepositoryImpl implements DvirRepository {
     required bool driverAgreed,
     String? reviewNotes,
   }) async {
-    if (!networkInfo.isConnected) return const Left(NetworkFailure());
-
-    final dto = ReviewDvirRequestDto(
-      reviewingDriverId: reviewingDriverId,
-      reviewingDriverName: reviewingDriverName,
-      signatureData: signatureData,
-      driverAgreed: driverAgreed,
-      reviewNotes: reviewNotes,
-    );
-
-    final result = await dvirBackend.review(
-      dvirId: DvirId(int.parse(dvirId)),
-      review: dto.toJson(),
-    );
-
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (_) => const Right(true),
-    );
+    return guardedNetwork(networkInfo, () async {
+      final parsedId = int.tryParse(dvirId);
+      if (parsedId == null) {
+        return const Left(ServerFailure(message: 'Invalid DVIR ID for review'));
+      }
+      final dto = ReviewDvirRequestDto(
+        reviewingDriverId: reviewingDriverId,
+        reviewingDriverName: reviewingDriverName,
+        signatureData: signatureData,
+        driverAgreed: driverAgreed,
+        reviewNotes: reviewNotes,
+      );
+      final result = await dvirBackend.review(
+        dvirId: DvirId(parsedId),
+        review: dto.toJson(),
+      );
+      return result.fold(
+        (error) => Left(ServerFailure(message: error.code)),
+        (_) => const Right(true),
+      );
+    });
   }
 
   DvirReport _mapDtoToEntity(DvirDto dto) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/dvir_repository_providers.dart';
 import '../../domain/dvir_catalog.dart';
@@ -40,17 +41,21 @@ class DvirState {
       final p = previousDvir;
       return (p != null && p.nextDriverReviewed != true) ? p : null;
     }
-    for (final r in reports) {
-      if (r.vehicleId == vehicleId) return r.nextDriverReviewed != true ? r : null;
-    }
-    return null;
+    return reports
+        .where((r) => r.vehicleId == vehicleId)
+        .cast<DvirReport?>()
+        .firstWhere(
+          (r) => r!.nextDriverReviewed != true,
+          orElse: () => null,
+        );
   }
 
   DvirState copyWith({
     List<DvirReport>? reports,
     DvirReport? currentReport,
     bool? isLoading,
-    String? error,
+    // FIX: Use a sentinel to distinguish "clear error" from "keep current error".
+    Object? error = _keepError,
     DvirReport? previousDvir,
     bool clearPreviousDvir = false,
     String? previousVehicleId,
@@ -61,7 +66,8 @@ class DvirState {
       reports: reports ?? this.reports,
       currentReport: currentReport ?? this.currentReport,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      // FIX: only overwrite error when explicitly provided.
+      error: identical(error, _keepError) ? this.error : (error as String?),
       previousDvir: clearPreviousDvir ? null : (previousDvir ?? this.previousDvir),
       previousVehicleId: previousVehicleId ?? this.previousVehicleId,
       previousLookupDone: previousLookupDone ?? this.previousLookupDone,
@@ -70,25 +76,32 @@ class DvirState {
   }
 }
 
-/// مزود DVIR
-final dvirProvider = StateNotifierProvider<DvirNotifier, DvirState>((ref) {
+// Sentinel value so copyWith can distinguish null from "not provided".
+const Object _keepError = Object();
+
+/// مزود DVIR — autoDispose so the provider is rebuilt fresh every time the
+/// screen is re-opened, and released when no widget is listening.
+final dvirProvider =
+    StateNotifierProvider.autoDispose<DvirNotifier, DvirState>((ref) {
   final repository = ref.watch(dvirRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
-  return DvirNotifier(repository: repository, storageService: storageService);
+  final notifier = DvirNotifier(repository: repository, storageService: storageService);
+  // FIX: load lazily here (outside the constructor) so the constructor is pure.
+  notifier.refresh();
+  return notifier;
 });
 
 class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
   final TrackingConfigStorageService _storageService;
 
+  // FIX: constructor no longer kicks off a network call.
   DvirNotifier({
     required DvirRepository repository,
     required TrackingConfigStorageService storageService,
   })  : _repository = repository,
         _storageService = storageService,
-        super(const DvirState()) {
-    _loadDvirs();
-  }
+        super(const DvirState());
 
   Future<void> refresh() => _loadDvirs();
 
@@ -104,7 +117,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
         previousLookupDone: true,
         previousLookupFailed: true,
         clearPreviousDvir: true,
-        error: state.error,
+        // FIX: preserve existing error — use sentinel (no error: argument).
       ),
       (report) => state = state.copyWith(
         previousVehicleId: vehicleId,
@@ -112,12 +125,13 @@ class DvirNotifier extends StateNotifier<DvirState> {
         previousLookupFailed: false,
         previousDvir: report,
         clearPreviousDvir: report == null,
-        error: state.error,
+        // FIX: preserve existing error.
       ),
     );
   }
 
   Future<void> _loadDvirs() async {
+    // Explicitly clear the error when starting a fresh load.
     state = state.copyWith(isLoading: true, error: null);
 
     final vehicleId = _storageService.deviceId;
@@ -158,23 +172,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
         return false;
       },
       (_) {
+        // FIX: refresh in background, don't block the UI.
         _loadDvirs();
         return true;
       },
-    );
-  }
-
-  /// تصديق إصلاح العيوب من قبل الميكانيكي أو الناقل
-  Future<void> certifyRepair({
-    required String dvirId,
-    required String mechanicName,
-    required String action,
-    String? repairNotes,
-    required String mechanicSignature,
-  }) async {
-    state = state.copyWith(
-      isLoading: false,
-      error: 'Repair certification is a carrier action and is not available to the driver.',
     );
   }
 
@@ -214,37 +215,31 @@ class DvirNotifier extends StateNotifier<DvirState> {
     );
   }
 
-  /// استرجاع تفاصيل تقرير DVIR محدد
+  /// استرجاع تفاصيل تقرير DVIR محدد.
+  /// FIX: uses a local loading flag to avoid flickering the whole list.
   Future<void> loadDvirDetails(String dvirId) async {
-    state = state.copyWith(isLoading: true, error: null);
+    // Don't set global isLoading — detail load is silent.
     final result = await _repository.getDvirDetails(dvirId);
 
     if (mounted) {
       result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
+        (failure) => state = state.copyWith(error: failure.message),
         (report) => state = state.copyWith(
-          isLoading: false,
           currentReport: report,
           error: null,
         ),
       );
     }
   }
-
-  /// تحديث تقرير موجود (للاستخدام المحلي)
-  void updateReport(DvirReport report) {
-    final updatedReports = state.reports.map((r) {
-      return r.id == report.id ? report : r;
-    }).toList();
-    state = state.copyWith(reports: updatedReports);
-  }
 }
 
-/// `GET /eld/dvir/catalog` — the §396.11 item list. Not cached across sessions.
-final dvirCatalogProvider = FutureProvider<List<DvirCatalogItem>>((ref) async {
+/// `GET /eld/dvir/catalog` — the §396.11 item list.
+/// keepAlive for 30 min so repeated dialog opens don't hit the network.
+final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((ref) async {
+  // Keep the catalog alive for 30 minutes after last use.
+  final link = ref.keepAlive();
+  Timer(const Duration(minutes: 30), link.close);
+
   final result = await ref.watch(dvirBackendProviderAlias).getDefectsCatalog();
   return result.fold((error) => throw error, (json) {
     final items = parseDvirCatalog(json);

@@ -1,13 +1,14 @@
-import '../providers/dvir_provider.dart';
+﻿import '../providers/dvir_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/dvir_catalog.dart';
+import '../extensions/dvir_catalog_extensions.dart';
 
 /// Checkbox list of the live §396.11 catalog with an optional note per item.
 class DefectCatalogDialog extends ConsumerStatefulWidget {
-  const DefectCatalogDialog({required this.initial});
+  const DefectCatalogDialog({super.key, required this.initial});
 
   final List<DvirDefectSelection> initial;
 
@@ -132,3 +133,4 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
     );
   }
 }
+

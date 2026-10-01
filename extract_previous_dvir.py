@@ -1,14 +1,19 @@
-import 'package:flutter/material.dart';
+﻿import re
+
+source_file = 'lib/features/dvir/presentation/pages/dvir_form_page.dart'
+dest_file = 'lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart'
+
+with open(source_file, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+modal_code = '''import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+import '../../../../core/utils/theme_extension.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/dvir_report.dart';
 
-/// §396.13 review dialog: shows the previous inspection summary and asks the
-/// incoming driver to confirm they reviewed it before starting the trip.
 class PreviousDvirReviewModal extends StatelessWidget {
   final DvirReport latest;
-
-  /// Pre-built human-readable defect lines (localised by the caller).
   final List<String> previousDefects;
 
   const PreviousDvirReviewModal({
@@ -20,9 +25,6 @@ class PreviousDvirReviewModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final dateLabel = DateFormat('yyyy-MM-dd HH:mm').format(latest.date.toLocal());
-    final condition = context.translateVehicleCondition(latest.condition.name);
-
     return AlertDialog(
       title: Text(loc.dvirPreviousInspection),
       content: SingleChildScrollView(
@@ -32,7 +34,10 @@ class PreviousDvirReviewModal extends StatelessWidget {
           children: [
             Text(loc.dvirReviewBeforeDriving),
             const SizedBox(height: 8),
-            Text('$dateLabel \u2014 $condition'),
+            Text(
+              '\ — '
+              '\',
+            ),
             const SizedBox(height: 8),
             Text(
               loc.dvirRecordedDefects,
@@ -41,14 +46,14 @@ class PreviousDvirReviewModal extends StatelessWidget {
             if (previousDefects.isEmpty)
               Text(loc.dvirNone)
             else
-              for (final line in previousDefects) Text('\u2022 $line'),
+              for (final line in previousDefects) Text('• \'),
             if ((latest.repairStatus ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 loc.dvirRepairStatus +
                     latest.repairStatus!.trim() +
                     ((latest.mechanicName ?? '').trim().isNotEmpty
-                        ? ' (${latest.mechanicName!.trim()})'
+                        ? ' (\)'
                         : ''),
               ),
               if ((latest.repairNotes ?? '').trim().isNotEmpty)
@@ -70,3 +75,29 @@ class PreviousDvirReviewModal extends StatelessWidget {
     );
   }
 }
+'''
+
+with open(dest_file, 'w', encoding='utf-8') as f:
+    f.write(modal_code)
+
+old_dialog = r'            final reviewed = await showDialog<bool>\(\s*context: context,\s*builder: \(context\) => AlertDialog\(.*?actions: \[\s*TextButton\(.*?\),\s*FilledButton\(.*?\),\s*\],\s*\),\s*\);'
+
+def replacer(match):
+    return '''            final reviewed = await showDialog<bool>(
+              context: context,
+              builder: (context) => PreviousDvirReviewModal(
+                latest: latest,
+                previousDefects: previousDefects,
+              ),
+            );'''
+
+new_content = re.sub(old_dialog, replacer, content, flags=re.DOTALL)
+
+import_statement = "import '../widgets/previous_dvir_review_modal.dart';\n"
+if import_statement not in new_content:
+    new_content = new_content.replace("import '../widgets/status_modal.dart';", "import '../widgets/status_modal.dart';\n" + import_statement)
+
+with open(source_file, 'w', encoding='utf-8') as f:
+    f.write(new_content)
+
+print('Updated dvir_form_page.dart successfully')

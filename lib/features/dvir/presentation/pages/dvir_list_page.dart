@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -200,7 +201,7 @@ class _DvirCard extends StatelessWidget {
             const Divider(height: 24),
             // معلومات التقرير
             _infoRow(context, context.loc.dateLabel,
-                report.date.toString().substring(0, 10)),
+                DateFormat('yyyy-MM-dd').format(report.date.toLocal())),
             _infoRow(context, context.loc.vehicle, report.vehicleId),
             if (report.trailerId != null)
               _infoRow(context, context.loc.trailer, report.trailerId!),

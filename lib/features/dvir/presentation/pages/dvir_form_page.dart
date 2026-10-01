@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +13,7 @@ import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
+import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
 
@@ -27,6 +28,7 @@ import '../widgets/status_modal.dart';
 import '../widgets/defects_modal.dart';
 
 import '../providers/dvir_provider.dart';
+import '../widgets/previous_dvir_review_modal.dart';
 import '../../../../core/widgets/app_feedback.dart';
 
 class DvirFormPage extends ConsumerStatefulWidget {
@@ -129,7 +131,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         ? 'Vehicle Condition Satisfactory'
         : 'Has Defects';
     _signed = r.signature != null;
-    if (r.selectedDefects.isNotEmpty || _selectedDefects.isEmpty) {
+    // FIX: only overwrite local selection if the server report has defects.
+    if (r.selectedDefects.isNotEmpty) {
       _selectedDefects = r.selectedDefects;
     }
   }
@@ -192,6 +195,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     // SRS 7.6: choosing Has Defects with nothing recorded opens the defects list.
     if (selected == 'Has Defects' && !_hasAnyDefect) {
       await _openDefectCatalog();
+      // FIX: mounted check after the second awaited dialog.
+      if (!mounted) return;
     }
   }
 
@@ -286,55 +291,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       ];
       final reviewed = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(context.loc.dvirPreviousInspection),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.loc.dvirReviewBeforeDriving,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${DateFormat('yyyy-MM-dd HH:mm').format(latest.date.toLocal())} — '
-                  '${context.translateVehicleCondition(latest.condition.name)}',
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.loc.dvirRecordedDefects,
-                  style: context.styles.bodyBold,
-                ),
-                if (previousDefects.isEmpty)
-                  Text(context.loc.dvirNone)
-                else
-                  for (final line in previousDefects) Text('• $line'),
-                if ((latest.repairStatus ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    context.loc.dvirRepairStatus +
-                        latest.repairStatus!.trim() +
-                        ((latest.mechanicName ?? '').trim().isNotEmpty
-                            ? ' (${latest.mechanicName!.trim()})'
-                            : ''),
-                  ),
-                  if ((latest.repairNotes ?? '').trim().isNotEmpty)
-                    Text(latest.repairNotes!.trim()),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(context.loc.cancelAction),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(context.loc.dvirReviewed),
-            ),
-          ],
+        builder: (context) => PreviousDvirReviewModal(
+          latest: latest,
+          previousDefects: previousDefects,
         ),
       );
       if (reviewed != true || !mounted) return;
@@ -391,7 +350,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       );
       return;
     }
-    setState(() => _signed = true);
     AppFeedback.success(context, context.loc.reportSavedSuccess);
     Navigator.pop(context);
   }
@@ -481,28 +439,28 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               ),
             DvirFieldGroup(
               title: context.loc.dvirTimeET,
+              borderColor: borderColor,
+              textColor: textColor,
               child: Text(
                 currentTime,
                 style: context.styles.body,
               ),
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirFieldGroup(
               title: context.loc.location,
+              borderColor: borderColor,
+              textColor: textColor,
               child: Text(
                 automaticLocation,
                 style: context.styles.body,
               ),
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirFieldGroup(
               title: context.loc.dvirOdometerMi,
-              child: DvirFlatTextField(controller: _odometerController, hint: context.loc.dvirOdometerHint, readOnly: _readOnly, keyboardType: TextInputType.number,
-              ),
               borderColor: borderColor,
               textColor: textColor,
+              child: DvirFlatTextField(controller: _odometerController, hint: context.loc.dvirOdometerHint, readOnly: _readOnly, keyboardType: TextInputType.number,
+              ),
             ),
 
             // Reference layout (screenshots 15/19): Vehicle | Defects and
@@ -510,45 +468,45 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             DvirTwoColumn(
               left: DvirCell(
                 title: context.loc.vehicle,
+                borderColor: borderColor,
+                textColor: textColor,
                 child: Text(
                   dashboard.vehicleDisplayName,
                   style: context.styles.body,
                 ),
-                borderColor: borderColor,
-                textColor: textColor,
               ),
               right: DvirCell(
                 title: context.loc.defectsTitle,
+                borderColor: borderColor,
+                textColor: textColor,
                 child: DvirFlatTextField(
                   controller: _vehicleDefectsController,
                   hint: context.loc.defectsTitle,
                   readOnly: _readOnly,
                 ),
-                borderColor: borderColor,
-                textColor: textColor,
               ),
             ),
             DvirTwoColumn(
               left: DvirCell(
                 title: context.loc.trailers,
+                borderColor: borderColor,
+                textColor: textColor,
                 child: Text(
                   dashboard.trailerId ?? context.loc.trailers,
                   style: dashboard.trailerId == null
                         ? context.styles.subtitle
                         : context.styles.body,
                 ),
-                borderColor: borderColor,
-                textColor: textColor,
               ),
               right: DvirCell(
                 title: context.loc.defectsTitle,
+                borderColor: borderColor,
+                textColor: textColor,
                 child: DvirFlatTextField(
                   controller: _trailerDefectsController,
                   hint: context.loc.defectsTitle,
                   readOnly: _readOnly,
                 ),
-                borderColor: borderColor,
-                textColor: textColor,
               ),
             ),
             // §396.11 catalog picks stay functional; rendered as plain lines
@@ -560,25 +518,27 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
             DvirFieldGroup(
               title: context.loc.company,
+              borderColor: borderColor,
+              textColor: textColor,
               child: Text(
                 companyName,
                 style: context.styles.body,
               ),
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirFieldGroup(
               title: context.loc.remarks,
+              borderColor: borderColor,
+              textColor: textColor,
               child: DvirFlatTextField(
                 controller: _remarksController,
                 hint: context.loc.remarks,
                 readOnly: _readOnly,
               ),
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirFieldGroup(
               title: context.loc.status,
+              borderColor: borderColor,
+              textColor: textColor,
               child: InkWell(
                 onTap: _openStatusModal,
                 child: Row(
@@ -593,8 +553,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   ],
                 ),
               ),
-              borderColor: borderColor,
-              textColor: textColor,
             ),
 
             // Signature Section
@@ -638,7 +596,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             children: [
               for (final d in _selectedDefects)
                 DefectCard(
-                  key: Key('dvir_defect_card_'),
+                  key: const Key('dvir_defect_card_'),
                   defect: d,
                   textColor: textColor,
                   readOnly: _readOnly,
@@ -671,3 +629,5 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 }
+
+
