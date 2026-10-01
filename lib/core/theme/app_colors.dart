@@ -100,6 +100,11 @@ class AppColors {
   static const Color manualBand = Color(0xFFF7F7F7);
   static const Color manualBandDark = Color(0xFF1C1C1E);
 
+  // ========== جدول رأس السجل اليومي RODS (شكل الورقة الرسمية) ==========
+  static const Color rodsHeaderBg = Color(0xFFF2F2F2);
+  static const Color rodsHeaderText = Color(0xFF222222);
+  static const Color rodsHeaderSubtext = Color(0xFF333333);
+
   // ========== على الذهبي / على الأسود ==========
   static const Color onGold = secondary;      // نص على خلفية ذهبية
   static const Color onBlack = primaryGold;   // نص على خلفية سوداء

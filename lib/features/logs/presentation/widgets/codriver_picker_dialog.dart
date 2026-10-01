@@ -56,7 +56,7 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
                           return RadioListTile<String>(
                             title: Text(
                               driver.name,
-                              style: TextStyle(
+                              style: context.styles.body.copyWith(
                                 fontWeight: isSelected
                                     ? FontWeight.bold
                                     : FontWeight.normal,

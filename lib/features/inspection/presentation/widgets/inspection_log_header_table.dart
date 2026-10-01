@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 
 /// Dense striped header matching the Inspection Logs screenshot.
@@ -173,7 +174,7 @@ class InspectionLogHeaderTable extends StatelessWidget {
 
   Widget _headerRow(List<String> labels) {
     return Container(
-      color: const Color(0xFFF2F2F2),
+      color: AppColors.rodsHeaderBg,
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +189,7 @@ class InspectionLogHeaderTable extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     height: 1.15,
-                    color: Color(0xFF222222),
+                    color: AppColors.rodsHeaderText,
                   ),
                 ),
               ),
@@ -214,7 +215,7 @@ class InspectionLogHeaderTable extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     height: 1.25,
-                    color: Color(0xFF333333),
+                    color: AppColors.rodsHeaderSubtext,
                   ),
                 ),
               ),

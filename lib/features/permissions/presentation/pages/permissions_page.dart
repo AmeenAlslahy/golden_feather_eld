@@ -264,7 +264,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isGranted ? AppColors.successGreen : AppColors.textSecondaryFor(Theme.of(context).brightness),
+          color: isGranted ? AppColors.successGreen : context.styles.subtitle.color,
           size: 32,
         ),
         title: Row(

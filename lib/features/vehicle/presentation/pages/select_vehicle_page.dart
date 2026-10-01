@@ -67,7 +67,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               ),
               TextSpan(
                 text: context.loc.contactFleetManager,
-                style: const TextStyle(color: Color(0xFFE53935)),
+                style: context.styles.error.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -193,7 +193,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                         color: Theme.of(context).colorScheme.primary,
-                        backgroundColor: AppColors.surfaceFor(Theme.of(context).brightness),
+                        backgroundColor: context.colorScheme.surface,
                     onRefresh: () {
                       if (_browsingCompany) {
                         return ref

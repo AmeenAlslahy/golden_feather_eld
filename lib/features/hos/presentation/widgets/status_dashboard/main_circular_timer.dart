@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
 
@@ -65,10 +66,9 @@ class MainCircularTimer extends StatelessWidget {
                 Text(
                   statusLabel.toUpperCase(),
                   textAlign: TextAlign.center,
-                  style:  TextStyle(
+                  style: context.styles.body.copyWith(
                     fontSize: 22,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
                   ),
                 ),
                 const Icon(Icons.keyboard_arrow_down, size: 22),

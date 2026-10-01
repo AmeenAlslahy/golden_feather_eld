@@ -289,8 +289,7 @@ class EditLogPage extends ConsumerWidget {
                   decoration: InputDecoration(
                     hintText:
                         context.loc.enterReasonRequired,
-                    hintStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    hintStyle: context.styles.subtitle,
                     border: const UnderlineInputBorder(),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
@@ -359,13 +358,11 @@ AppFeedback.error(
 
                       final updatedEvent = existing?.copyWith(
                             status: status.code,
-                            statusArabic: status.arabic,
                             startTime: newStart,
                           ) ??
                           LogEvent(
                             id: DateTime.now().millisecondsSinceEpoch.toString(),
                             status: status.code,
-                            statusArabic: status.arabic,
                             startTime: newStart,
                             duration: Duration.zero,
                             location: formState.location,

@@ -258,8 +258,7 @@ final signatureBytes = await _signatureController.toPngBytes();
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 context.loc.clearSignature,
-                style: const TextStyle(
-                  fontSize: 14,
+                style: context.styles.subtitle.copyWith(
                   decoration: TextDecoration.underline,
                   decorationStyle: TextDecorationStyle.dotted,
                 ),

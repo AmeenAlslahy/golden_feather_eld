@@ -170,11 +170,8 @@ class _LogListItem extends StatelessWidget {
                                     : '${log.totalDrivingHours.toStringAsFixed(0)}h ${(log.totalDrivingHours % 1 * 60).toStringAsFixed(0)}m'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.successGreen,
-                          ),
+                          style: context.styles.success
+                              .copyWith(fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -230,10 +227,9 @@ class _StatusChip extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: AppTypography.subtitleSize,
+            style: context.styles.success.copyWith(
               fontWeight: AppTypography.semiBold,
-              color: isComplete ? AppColors.successGreen : AppColors.dangerRed,
+              color: isComplete ? null : AppColors.dangerText,
             ),
           ),
         ),

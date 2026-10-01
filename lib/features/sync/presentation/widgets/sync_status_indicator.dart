@@ -35,10 +35,8 @@ class SyncStatusIndicator extends ConsumerWidget {
           trailing: syncState.totalFailed > 0
               ? Text(
                   '(${context.loc.syncFailed(syncState.totalFailed.toString())})',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.dangerRed,
-                  ),
+                  style: context.styles.caption
+                      .copyWith(fontSize: 10, color: AppColors.dangerText),
                 )
               : null,
         ),
