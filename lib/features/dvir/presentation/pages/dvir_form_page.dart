@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
@@ -14,10 +14,8 @@ import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
 
-
 import '../widgets/dvir_form_sections.dart';
 import '../widgets/defect_card.dart';
-
 
 import '../widgets/status_modal.dart';
 
@@ -126,7 +124,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 
-
   /// Fills the read-only view from a report (list summary or full detail).
   void _applyReport(DvirReport r) {
     _report = r;
@@ -171,8 +168,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (_readOnly) return;
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
-      builder: (_) =>
-          DefectCatalogDialog(initial: _selectedDefects),
+      builder: (_) => DefectCatalogDialog(initial: _selectedDefects),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -239,7 +235,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       _snack(context.loc.dvirPrevNoServerId);
       return false;
     }
-    
+
     final loc = context.loc;
     final previousDefects = <String>[
       for (final d in latest.selectedDefects)
@@ -257,7 +253,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           (latest.defectsSummary ?? '').trim().isNotEmpty)
         latest.defectsSummary!.trim(),
     ];
-    
+
     final reviewed = await showDialog<bool>(
       context: context,
       builder: (context) => PreviousDvirReviewModal(
@@ -265,24 +261,26 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         previousDefects: previousDefects,
       ),
     );
-    
+
     if (reviewed != true || !mounted) return false;
-    
-    final reviewError = await ref.read(dvirProvider.notifier).reviewDvir(
+
+    final reviewError = await ref
+        .read(dvirProvider.notifier)
+        .reviewDvir(
           dvirId: '$previousId',
           reviewingDriverId: driverId,
           reviewingDriverName: dashboard.driverName,
           signatureData: signatureData,
           driverAgreed: true,
         );
-        
+
     if (!mounted) return false;
-    
+
     if (reviewError != null) {
       _snack(reviewError);
       return false;
     }
-    
+
     return true;
   }
 
@@ -290,10 +288,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (!_formKey.currentState!.validate()) return;
     final time = ref.read(trustedTimeProvider).currentTime;
     if (time is! TrustedTimeAvailable) {
-      AppFeedback.error(
-        context,
-        context.loc.dvirTimeUnavailable,
-      );
+      AppFeedback.error(context, context.loc.dvirTimeUnavailable);
       return;
     }
 
@@ -303,9 +298,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         .previousToReview(dashboard.vehicleId);
 
     if (widget.existingReport != null) {
-      _snack(
-        context.loc.dvirSavedCannotEdit,
-      );
+      _snack(context.loc.dvirSavedCannotEdit);
       return;
     }
 
@@ -316,9 +309,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (signatureData == null) return;
     final driverId = ref.read(currentDriverIdProvider);
     if (driverId == null || driverId <= 0) {
-      _snack(
-        context.loc.dvirDriverSessionMissing,
-      );
+      _snack(context.loc.dvirDriverSessionMissing);
       return;
     }
 
@@ -407,8 +398,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
           }),
         ) ??
-        (_report?.location ??
-            context.loc.dvirLocationUnavailable);
+        (_report?.location ?? context.loc.dvirLocationUnavailable);
     final companyName =
         _report?.companyName ??
         account?.carrier ??
@@ -444,11 +434,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         key: _formKey,
         child: ListView(
           padding: EdgeInsets.zero,
-                              children: [
+          children: [
             DvirNoticeSection(
               dashboard: dashboard,
               hasExistingReport: widget.existingReport != null,
-              hasPreviousToReview: ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) != null,
+              hasPreviousToReview:
+                  ref
+                      .watch(dvirProvider)
+                      .previousToReview(dashboard.vehicleId) !=
+                  null,
             ),
             DvirTimeLocationSection(
               currentTime: currentTime,
@@ -497,9 +491,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               borderColor: borderColor,
               textColor: textColor,
             ),
-            DvirSignatureSection(
-              controller: _signatureController,
-            ),
+            DvirSignatureSection(controller: _signatureController),
             DvirSubmitButtonSection(
               isSigned: _signed,
               isSubmitting: _isSubmitting,
@@ -512,9 +504,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       ),
     );
   }
-
-
-  
 
   Widget _buildCatalogDefects(Color textColor) {
     final loc = context.loc;
@@ -534,7 +523,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   readOnly: _readOnly,
                   onRemove: () {
                     setState(() {
-                      _selectedDefects = _selectedDefects.where((x) => x != d).toList();
+                      _selectedDefects = _selectedDefects
+                          .where((x) => x != d)
+                          .toList();
                       if (_selectedDefects.isEmpty) {
                         _selectedStatus = 'Vehicle Condition Satisfactory';
                       }
@@ -561,5 +552,3 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 }
-
-

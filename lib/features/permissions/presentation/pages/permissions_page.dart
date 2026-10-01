@@ -160,77 +160,88 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 48),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 48),
 
-              // شعار التطبيق
-              Icon(
-                Icons.local_shipping,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 24),
+                      // شعار التطبيق
+                      Icon(
+                        Icons.local_shipping,
+                        size: 80,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 24),
 
-              Text(
-                'صلاحيات التطبيق',
-                textAlign: TextAlign.center,
-                style: context.styles.pageTitle,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'يحتاج تطبيق ELD للصلاحيات التالية\nللعمل بشكل قانوني',
-                textAlign: TextAlign.center,
-                style: context.styles.body,
-              ),
-              const SizedBox(height: 48),
+                      Text(
+                        'صلاحيات التطبيق',
+                        textAlign: TextAlign.center,
+                        style: context.styles.pageTitle,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'يحتاج تطبيق ELD للصلاحيات التالية\nللعمل بشكل قانوني',
+                        textAlign: TextAlign.center,
+                        style: context.styles.body,
+                      ),
+                      const SizedBox(height: 48),
 
-              // الصلاحيات المطلوبة
-              _buildPermissionTile(
-                icon: Icons.location_on,
-                title: 'الموقع الجغرافي',
-                subtitle: 'لتسجيل مسار المركبة وساعات القيادة تلقائياً',
-                isRequired: true,
-                isGranted: _locationGranted,
-                onRequest: _requestLocation,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                      // الصلاحيات المطلوبة
+                      _buildPermissionTile(
+                        icon: Icons.location_on,
+                        title: 'الموقع الجغرافي',
+                        subtitle: 'لتسجيل مسار المركبة وساعات القيادة تلقائياً',
+                        isRequired: true,
+                        isGranted: _locationGranted,
+                        onRequest: _requestLocation,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-              _buildPermissionTile(
-                icon: Icons.bluetooth,
-                title: 'البلوتوث',
-                subtitle: 'للاتصال بجهاز ELD في المركبة',
-                isRequired: false,
-                isGranted: _bluetoothGranted,
-                onRequest: _requestBluetooth,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                      _buildPermissionTile(
+                        icon: Icons.bluetooth,
+                        title: 'البلوتوث',
+                        subtitle: 'للاتصال بجهاز ELD في المركبة',
+                        isRequired: false,
+                        isGranted: _bluetoothGranted,
+                        onRequest: _requestBluetooth,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-              _buildPermissionTile(
-                icon: Icons.notifications,
-                title: 'الإشعارات',
-                subtitle: 'للحصول على تنبيهات ساعات القيادة',
-                isRequired: false,
-                isGranted: _notificationGranted,
-                onRequest: _requestNotification,
-              ),
-              _buildPermissionTile(
-                icon: Icons.battery_alert,
-                title: 'توفير البطارية',
-                subtitle: 'يجب تعطيله لضمان عمل التتبع في الخلفية',
-                isRequired: true,
-                isGranted: _batteryGranted,
-                onRequest: _requestBattery,
-              ),
-              const SizedBox(height: AppSpacing.md),
+                      _buildPermissionTile(
+                        icon: Icons.notifications,
+                        title: 'الإشعارات',
+                        subtitle: 'للحصول على تنبيهات ساعات القيادة',
+                        isRequired: false,
+                        isGranted: _notificationGranted,
+                        onRequest: _requestNotification,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-              _buildPermissionTile(
-                icon: Icons.camera_alt,
-                title: 'الكاميرا',
-                subtitle: 'لالتقاط صور فحص المركبة (DVIR)',
-                isRequired: false,
-                isGranted: _cameraGranted,
-                onRequest: _requestCamera,
+                      _buildPermissionTile(
+                        icon: Icons.battery_alert,
+                        title: 'توفير البطارية',
+                        subtitle: 'يجب تعطيله لضمان عمل التتبع في الخلفية',
+                        isRequired: true,
+                        isGranted: _batteryGranted,
+                        onRequest: _requestBattery,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      _buildPermissionTile(
+                        icon: Icons.camera_alt,
+                        title: 'الكاميرا',
+                        subtitle: 'لالتقاط صور فحص المركبة (DVIR)',
+                        isRequired: false,
+                        isGranted: _cameraGranted,
+                        onRequest: _requestCamera,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
               ),
-              const Spacer(),
 
               // زر المتابعة
               AppButton(
