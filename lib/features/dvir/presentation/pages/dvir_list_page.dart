@@ -14,6 +14,7 @@ import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/dvir_list_summary.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
+import 'dvir_detail_page.dart';
 import 'dvir_form_page.dart';
 
 /// شاشة قائمة تقارير DVIR
@@ -96,12 +97,15 @@ class DvirListPage extends ConsumerWidget {
                         final report = dvirState.reports[index - 1];
                         return _DvirCard(
                           report: report,
+                          // SRS 7.12: النقر على أي تقرير في القائمة يفتح
+                          // شاشة التفاصيل (قراءة فقط)؛ التحرير من داخلها
+                          // للتقرير غير المُرسل.
                           onOpen: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    DvirFormPage(existingReport: report),
+                                    DvirDetailPage(dvirId: report.id),
                               ),
                             );
                           },

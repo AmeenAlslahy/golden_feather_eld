@@ -2925,4 +2925,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get tooManyPinAttempts =>
       'محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.';
+
+  @override
+  String get reviewedBy => 'باسم مُراجِع التقرير';
+
+  @override
+  String get companyName => 'الشركة';
+
+  @override
+  String get edit => 'تعديل';
 }

@@ -1044,5 +1044,8 @@
   "dvirWindshield": "الزجاج الأمامي",
   "routingCode": "رمز التوجيه",
   "routingCodeHint": "أدخل رمز التوجيه من المفتش",
-  "tooManyPinAttempts": "محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً."
+  "tooManyPinAttempts": "محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.",
+  "reviewedBy": "باسم مُراجِع التقرير",
+  "companyName": "الشركة",
+  "edit": "تعديل"
 }

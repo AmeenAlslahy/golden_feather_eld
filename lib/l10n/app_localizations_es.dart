@@ -2969,4 +2969,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tooManyPinAttempts =>
       'Demasiados intentos incorrectos. Espere e intente de nuevo.';
+
+  @override
+  String get reviewedBy => 'Revisado por';
+
+  @override
+  String get companyName => 'Compañía';
+
+  @override
+  String get edit => 'Editar';
 }

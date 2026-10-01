@@ -5553,6 +5553,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.'**
   String get tooManyPinAttempts;
+
+  /// No description provided for @reviewedBy.
+  ///
+  /// In ar, this message translates to:
+  /// **'باسم مُراجِع التقرير'**
+  String get reviewedBy;
+
+  /// No description provided for @companyName.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشركة'**
+  String get companyName;
+
+  /// No description provided for @edit.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل'**
+  String get edit;
 }
 
 class _AppLocalizationsDelegate

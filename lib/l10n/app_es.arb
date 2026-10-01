@@ -1051,5 +1051,8 @@
   "dvirWindshield": "Parabrisas",
   "routingCode": "Código de enrutamiento",
   "routingCodeHint": "Ingrese el código de enrutamiento del inspector",
-  "tooManyPinAttempts": "Demasiados intentos incorrectos. Espere e intente de nuevo."
+  "tooManyPinAttempts": "Demasiados intentos incorrectos. Espere e intente de nuevo.",
+  "reviewedBy": "Revisado por",
+  "companyName": "Compañía",
+  "edit": "Editar"
 }

@@ -1051,5 +1051,8 @@
   "dvirWindshield": "Windshield",
   "routingCode": "Routing Code",
   "routingCodeHint": "Enter the routing code from the inspector",
-  "tooManyPinAttempts": "Too many incorrect attempts. Please wait and try again."
+  "tooManyPinAttempts": "Too many incorrect attempts. Please wait and try again.",
+  "reviewedBy": "Reviewed By",
+  "companyName": "Company",
+  "edit": "Edit"
 }
