@@ -509,7 +509,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     _selectedMinute = now.minute;
     _selectedSecond = now.second;
     _selectedPeriod = now.hour < 12 ? 'AM' : 'PM';
-    _hourWheel = FixedExtentScrollController(initialItem: _selectedHour);
+    _hourWheel = FixedExtentScrollController(initialItem: _selectedHour - 1);
     _minuteWheel = FixedExtentScrollController(initialItem: _selectedMinute);
     _secondWheel = FixedExtentScrollController(initialItem: _selectedSecond);
   }
@@ -556,10 +556,11 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             child: Row(
               children: [
                 _buildWheel(
-                  24,
+                  12,
                   _hourWheel,
                   _selectedHour,
                   (v) => setState(() => _selectedHour = v),
+                  offset: 1,
                 ),
                 _buildWheel(
                   60,
@@ -586,29 +587,33 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     int max,
     FixedExtentScrollController controller,
     int selected,
-    Function(int) onChanged,
-  ) {
+    Function(int) onChanged, {
+    int offset = 0,
+  }) {
     return Expanded(
       child: ListWheelScrollView.useDelegate(
         itemExtent: 40,
         diameterRatio: 1.5,
-        onSelectedItemChanged: onChanged,
+        onSelectedItemChanged: (index) => onChanged(index + offset),
         controller: controller,
         childDelegate: ListWheelChildBuilderDelegate(
-          builder: (context, index) => Center(
-            child: Text(
-              index.toString().padLeft(2, '0'),
-              style: context.styles.body.copyWith(
-                fontSize: AppTypography.headerSize,
-                fontWeight: index == selected
-                    ? AppTypography.bold
-                    : AppTypography.regular,
-                color: index == selected
-                    ? context.styles.gold.color
-                    : context.styles.subtitle.color,
+          builder: (context, index) {
+            final val = index + offset;
+            return Center(
+              child: Text(
+                val.toString().padLeft(2, '0'),
+                style: context.styles.body.copyWith(
+                  fontSize: AppTypography.headerSize,
+                  fontWeight: val == selected
+                      ? AppTypography.bold
+                      : AppTypography.regular,
+                  color: val == selected
+                      ? context.styles.gold.color
+                      : context.styles.subtitle.color,
+                ),
               ),
-            ),
-          ),
+            );
+          },
           childCount: max,
         ),
       ),
