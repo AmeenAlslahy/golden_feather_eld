@@ -99,9 +99,27 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
 
     final isMoving = ref.watch(isVehicleMovingProvider);
     final rules = ref.watch(rulesScreenProvider).asData?.value;
+    // الخادم الحي يرسل مفاتيح نصية (personalConveyance: "Allowed")
+    // وقد تُرسل الواجهات الأخرى الصيغة المنطقية (*Enabled: true) —
+    // القارئ الموحد يقبل الصيغتين، وغياب الإعداد = غير مفعّل (SRS: لا PC/YM
+    // إلا بتهيئة مسبقة).
+    final fixed = rules?.fixedSettings ?? const <String, dynamic>{};
+    bool serverAllows(List<String> keys) {
+      for (final key in keys) {
+        final v = fixed[key];
+        if (v == null) continue;
+        if (v is bool) return v;
+        final t = v.toString().trim().toLowerCase();
+        if (t == 'allowed' || t == 'true') return true;
+        if (t == 'forbidden' || t == 'false' || t.isNotEmpty) return false;
+      }
+      return false;
+    }
+
     final personalConveyanceEnabled =
-        rules?.fixedSettings['personalConveyanceEnabled'] == true;
-    final yardMoveEnabled = rules?.fixedSettings['yardMoveEnabled'] == true;
+        serverAllows(const ['personalConveyance', 'personalConveyanceEnabled']);
+    final yardMoveEnabled =
+        serverAllows(const ['yardMoves', 'yardMoveEnabled']);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

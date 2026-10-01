@@ -126,9 +126,10 @@ void main() {
     expect(find.text('Comment'), findsOneWidget);
     expect(find.text('Data Transfer Type'), findsOneWidget);
     expect(find.text('Web Services'), findsOneWidget);
-    expect(find.byType(TextField), findsOneWidget);
+    // SRS 8.4: Comment + Routing Code on the telematics screen.
+    expect(find.byType(TextField), findsNWidgets(2));
 
-    await tester.enterText(find.byType(TextField), 'abc');
+    await tester.enterText(find.byType(TextField).first, 'abc');
     await tapSend(tester);
     expect(find.text('The comment must be 4 to 60 characters.'), findsOneWidget);
     expect(backend.calls, isEmpty);
@@ -141,7 +142,7 @@ void main() {
       (tester) async {
     await pump(tester);
 
-    await tester.enterText(find.byType(TextField), 'Roadside check I-80');
+    await tester.enterText(find.byType(TextField).first, 'Roadside check I-80');
     await tapSend(tester);
 
     expect(backend.calls, ['send:106:webServices:Roadside check I-80:']);
@@ -157,7 +158,7 @@ void main() {
     // Reference layout (screenshot 3): recipient + SRS 8.4 routing code.
     expect(find.text('Recipient Email'), findsOneWidget);
     expect(find.text('Routing Code'), findsOneWidget);
-    expect(find.byType(TextField), findsNWidgets(2));
+    expect(find.byType(TextField), findsNWidgets(3));
 
     await tester.enterText(find.byType(TextField).first, 'nope');
     await tapSend(tester);
@@ -179,7 +180,7 @@ void main() {
     backend.sendAnswer = const {'status': 'FAILED', 'message': 'Routing code unknown.'};
     await pump(tester);
 
-    await tester.enterText(find.byType(TextField), 'Roadside check');
+    await tester.enterText(find.byType(TextField).first, 'Roadside check');
     await tapSend(tester);
 
     expect(find.text('Routing code unknown.'), findsOneWidget);
@@ -197,7 +198,7 @@ void main() {
     );
     await pump(tester);
 
-    await tester.enterText(find.byType(TextField), 'Roadside check');
+    await tester.enterText(find.byType(TextField).first, 'Roadside check');
     await tapSend(tester);
 
     expect(find.textContaining('Dio'), findsNothing);

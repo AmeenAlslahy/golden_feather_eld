@@ -45,8 +45,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   void initState() {
     super.initState();
     if (widget.isEmailMode) {
-      // SRS 8.4: the output-file comment (4–60) is always sent; the
-      // reference layout shows only the recipient field on this screen.
+      // SRS 8.4: the prefilled FMCSA mailbox is shown for the inspector's
+      // PDF handover, and the output-file comment (4–60) is always sent.
+      _emailController.text = kFmcsaEldEmail;
       _commentController.text = kDefaultEmailComment;
     }
     _emailController.addListener(() => setState(() {}));
@@ -66,14 +67,18 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     return email.contains('@') && email.contains('.');
   }
 
+  /// القناة الفعالة: شاشة البريد بريد دائماً، وشاشة الإرسال حسب الاختيار.
+  bool get _usesEmail =>
+      widget.isEmailMode || _selectedMethod == TransferMethod.email;
+
   bool get _canSend {
     if (_isSending) return false;
-    if (widget.isEmailMode && !_emailValid) return false;
+    if (_usesEmail && !_emailValid) return false;
     return inspectionCommentError(_commentController.text, loc: context.loc) == null;
   }
 
   Future<void> _handleSend() async {
-    if (widget.isEmailMode && !_emailValid) {
+    if (_usesEmail && !_emailValid) {
       _snack(context.loc.enterValidEmail);
       return;
     }
@@ -94,7 +99,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
         .read(inspectionProvider.notifier)
         .sendLogs(
           widget.isEmailMode ? TransferMethod.email : _selectedMethod,
-          email: widget.isEmailMode ? _emailController.text.trim() : null,
+          email: _usesEmail ? _emailController.text.trim() : null,
           routingCode: _routingCodeController.text.trim().isEmpty
               ? null
               : _routingCodeController.text.trim(),
@@ -192,6 +197,13 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       hint: loc.routingCodeHint,
                       isUnderlined: true,
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _FieldLabel(loc.comment),
+                    AppTextField(
+                      controller: _commentController,
+                      hint: '',
+                      isUnderlined: true,
+                    ),
                   ] else ...[
                     _FieldLabel(loc.comment),
                     AppTextField(
@@ -223,7 +235,25 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         }
                       },
                     ),
+                    // SRS 8.4: عند اختيار Email يظهر حقل المرسل إليه؛
+                    // ورمز التوجيه يظهر على القناتين (خدمات الويب/البريد).
+                    if (_selectedMethod == TransferMethod.email) ...[
+                      const SizedBox(height: AppSpacing.lg),
+                      _FieldLabel(loc.recipientEmail),
+                      AppTextField(
+                        controller: _emailController,
+                        hint: 'some@email.com',
+                        keyboardType: TextInputType.emailAddress,
+                        isUnderlined: true,
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
+                    _FieldLabel(loc.routingCode),
+                    AppTextField(
+                      controller: _routingCodeController,
+                      hint: loc.routingCodeHint,
+                      isUnderlined: true,
+                    ),
                   ],
                   const SizedBox(height: 40),
                   AppButton(
