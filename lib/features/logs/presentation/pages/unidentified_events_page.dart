@@ -188,7 +188,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -227,7 +227,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            icon: const Icon(Icons.refresh),
             onPressed: _load,
           ),
         ],

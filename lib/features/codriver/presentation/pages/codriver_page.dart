@@ -59,11 +59,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
           builder: (context) => Navigator.of(context).canPop()
               ? IconButton(
                   key: const Key('codriver_back'),
-                  icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+                  icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.of(context).pop(),
                 )
               : IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.surface),
+                  icon: const Icon(Icons.menu),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
         ),
@@ -375,7 +375,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           _driverLabel(driver, context.loc).toUpperCase(),
                           style: TextStyle(
                             color: dialogSelectedId == driver.id
-                                ? AppColors.primaryGold
+                                ? context.styles.gold.color
                                 : textColor,
                             fontSize: 14,
                           ),
@@ -394,7 +394,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                   },
                   child: Text(
                     context.loc.cancelAction,
-                    style: const TextStyle(color: AppColors.primaryGold),
+                    style: context.styles.gold,
                   ),
                 ),
                 TextButton(
@@ -427,7 +427,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                   },
                   child: Text(
                     context.loc.okButton,
-                    style: const TextStyle(color: AppColors.primaryGold),
+                    style: context.styles.gold,
                   ),
                 ),
               ],

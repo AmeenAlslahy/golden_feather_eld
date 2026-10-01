@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -154,7 +153,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.surface),
+          icon: const Icon(Icons.close),
           onPressed: () {
             if (GoRouter.of(context).canPop()) {
               GoRouter.of(context).pop();
@@ -166,7 +165,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.surface),
+              icon: const Icon(Icons.menu),
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),

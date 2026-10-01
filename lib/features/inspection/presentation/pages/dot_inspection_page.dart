@@ -58,12 +58,12 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
           ),
           leading: locked
               ? IconButton(
-                  icon: const Icon(Icons.lock, color: AppColors.surface),
+                  icon: const Icon(Icons.lock),
                   onPressed: _promptDriverExit,
                 )
               : Builder(
                   builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu, color: AppColors.surface),
+                    icon: const Icon(Icons.menu),
                     onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
                 ),

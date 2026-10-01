@@ -67,7 +67,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryGold,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(context.loc.trailers, style: context.styles.appBarTitle),

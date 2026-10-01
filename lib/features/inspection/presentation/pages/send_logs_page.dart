@@ -145,7 +145,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(title, style: context.styles.appBarTitle),

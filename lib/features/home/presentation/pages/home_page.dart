@@ -70,7 +70,7 @@ class HomePage extends ConsumerWidget {
             centerTitle: currentNavIndex == 1, // توسيط العنوان في شاشة Recap
             leading: Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: AppColors.surface),
+                icon: const Icon(Icons.menu),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),

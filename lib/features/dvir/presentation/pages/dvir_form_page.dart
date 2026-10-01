@@ -488,7 +488,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.surface),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -500,7 +500,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           // SRS 7.2: إعادة جلب بيانات الخادم دون فقدان ما أدخله السائق.
           IconButton(
             key: const Key('dvir_form_refresh'),
-            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(dvirProvider.notifier).refresh(),
           ),
         ],

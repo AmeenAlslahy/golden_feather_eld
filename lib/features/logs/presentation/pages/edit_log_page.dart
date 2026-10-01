@@ -131,7 +131,7 @@ class EditLogPage extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.surface),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -206,7 +206,7 @@ class EditLogPage extends ConsumerWidget {
                             fontWeight: isSelected
                                 ? AppTypography.semiBold
                                 : AppTypography.regular,
-                            color: isSelected ? AppColors.primaryGold : null,
+                            color: isSelected ? context.styles.gold.color : null,
                           ),
                         ),
                         value: status['value']!,
@@ -604,7 +604,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: index == selected
-                    ? AppColors.primaryGold
+                    ? context.styles.gold.color
                     : context.styles.subtitle.color,
               ),
             ),
@@ -632,7 +632,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
-                    ? AppColors.primaryGold
+                    ? context.styles.gold.color
                     : context.styles.subtitle.color,
               ),
             ),

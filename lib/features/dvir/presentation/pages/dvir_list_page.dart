@@ -30,11 +30,11 @@ class DvirListPage extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.surface),
+            icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(dvirProvider.notifier).refresh(),
           ),
           IconButton(
-            icon: const Icon(Icons.add, color: AppColors.surface),
+            icon: const Icon(Icons.add),
             onPressed: () {
               Navigator.push(
                 context,
@@ -158,8 +158,6 @@ class _DvirCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = context.loc;
-
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(

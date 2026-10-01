@@ -39,7 +39,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
       error: (e, _) => Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -67,7 +67,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+              icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text('Inspection Logs', style: context.styles.appBarTitle),

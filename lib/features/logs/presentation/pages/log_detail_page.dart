@@ -32,7 +32,7 @@ class LogDetailPage extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             ref.read(logDetailTabProvider.notifier).state = 0; // Reset state
             Navigator.pop(context);
@@ -45,7 +45,7 @@ class LogDetailPage extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.visibility, color: AppColors.surface),
+            icon: const Icon(Icons.visibility),
             onPressed: () {
               Navigator.push(
                 context,
@@ -56,7 +56,7 @@ class LogDetailPage extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.add, color: AppColors.surface, size: 28),
+            icon:  const Icon(Icons.add, size: 28),
             onPressed: () async {
               final successMsg = context.loc.eventAddedSuccess;
               final newEvent = LogEvent(

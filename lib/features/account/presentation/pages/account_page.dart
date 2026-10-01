@@ -52,7 +52,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.surface),
+            icon: const Icon(Icons.menu),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -72,7 +72,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                   ),
                 )
               : IconButton(
-                  icon: const Icon(Icons.refresh, color: AppColors.surface),
+                  icon: const Icon(Icons.refresh),
                   onPressed: () {
                     ref.read(accountProvider.notifier).fetchMyAccount();
                   },

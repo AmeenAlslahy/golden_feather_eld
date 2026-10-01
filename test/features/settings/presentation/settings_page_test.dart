@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/contracts/config_backend.dart';
+import 'package:golden_feather_eld/backend/contracts/account_backend.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/localization/locale_provider.dart';
@@ -12,11 +13,14 @@ import 'package:golden_feather_eld/features/settings/presentation/pages/settings
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/core/error/app_error.dart';
 
 class _Storage extends Mock implements LocalStorageService {}
 
 class _Adapter extends Mock implements BackendAdapter {}
 
+class _Account extends Mock implements AccountBackend {}
 class _Config extends Mock implements ConfigBackend {}
 
 /// Settings — interface language, theme and server URL. The read-only
@@ -46,15 +50,20 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final adapter = _Adapter();
+    final account = _Account();
+    when(() => account.getMyAccount()).thenAnswer((_) async => const Left(UnknownError(code: 'test')));
+    when(() => adapter.account).thenReturn(account);
     when(() => adapter.config).thenReturn(config);
     when(() => adapter.isMock).thenReturn(true);
 
-    await tester.pumpWidget(
+
+
+      await tester.pumpWidget(
       ProviderScope(
         overrides: [
           localStorageProvider.overrideWithValue(storage),
           activeBackendProvider.overrideWithValue(adapter),
-        ],
+                  ],
         child: Consumer(
           builder: (context, ref, _) => MaterialApp(
             theme: AppTheme.light,
