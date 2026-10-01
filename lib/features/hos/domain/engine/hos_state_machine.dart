@@ -92,6 +92,12 @@ class HosStateMachine {
   List<StatusTransition> get transitions => List.unmodifiable(_transitions);
 
   /// إعادة تعيين
+  void applyWeeklyRestart() {
+    _cycleHours = 0.0;
+    _totalDrivingHours = 0.0;
+    _shiftStartTime = _trustedNow() ?? DateTime.utc(1970);
+  }
+
   void reset() {
     _stopDrivingTimer();
     _currentStatus = DutyStatus.offDuty;

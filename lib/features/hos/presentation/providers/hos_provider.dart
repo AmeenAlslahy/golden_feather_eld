@@ -1,3 +1,4 @@
+import "../../data/providers/hos_audit_providers.dart";
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,7 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       final result = _engine.processEvent(event);
       // لا تنشر state جديد إذا لم تتغير القيم فعلياً (كل نبضة GPS كانت
       // تُنشئ كائناً جديداً وتُعيد بناء المستمعين بلا فائدة).
+      _processAndLogViolations(result);
       if (mounted && result != state) state = result;
     });
   }
@@ -125,8 +127,19 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   }
 
   /// تحديث الحالة
+
+  void _processAndLogViolations(HosEngineResult result) {
+    if (result is HosEngineReady && result.update.violations.isNotEmpty) {
+      final auditRepo = _ref.read(hosAuditRepositoryProvider);
+      for (final v in result.update.violations) {
+        auditRepo.logViolation(v);
+      }
+    }
+  }
+
   void refresh() {
     final next = _engine.currentStatus;
+    _processAndLogViolations(next);
     if (mounted && next != state) state = next;
   }
 

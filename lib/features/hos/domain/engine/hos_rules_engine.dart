@@ -42,6 +42,7 @@ class HosRulesEngine {
 
   /// معالجة حدث جديد من جهاز ELD
   HosEngineResult processEvent(EldEvent event) {
+    _checkAndApplyWeeklyRestart();
     // 2. حساب الحدود الأربعة
     final limitsResult = _calculator.calculateAllLimits(
       drivingHours: _stateMachine.totalDrivingHours,
@@ -73,6 +74,35 @@ class HosRulesEngine {
       breakRequired: limits.breakRequired,
       breakRemainingMinutes: limits.breakRemainingMinutes,
     ));
+  }
+
+  void _checkAndApplyWeeklyRestart() {
+    final timeResult = _timeProvider.currentTime;
+    final periods = <({DateTime start, DateTime end})>[];
+    DateTime? offDutyStart;
+
+    if (_stateMachine.currentStatus == DutyStatus.offDuty || _stateMachine.currentStatus == DutyStatus.sleeperBerth) {
+        if (_stateMachine.transitions.isEmpty) {
+            offDutyStart = _stateMachine.shiftStartTime;
+        }
+    }
+
+    for (final t in _stateMachine.transitions) {
+      if ((t.to == DutyStatus.offDuty || t.to == DutyStatus.sleeperBerth) && offDutyStart == null) {
+        offDutyStart = t.timestamp;
+      } else if (t.to != DutyStatus.offDuty && t.to != DutyStatus.sleeperBerth && offDutyStart != null) {
+        periods.add((start: offDutyStart, end: t.timestamp));
+        offDutyStart = null;
+      }
+    }
+
+    if (offDutyStart != null && timeResult is TrustedTimeAvailable) {
+      periods.add((start: offDutyStart, end: timeResult.utc));
+    }
+
+    if (_calculator.hasWeeklyRestart(periods)) {
+      _stateMachine.applyWeeklyRestart();
+    }
   }
 
   /// يقيّم ما إذا كان الانتقال اليدوي مسموحاً بناءً على القواعد
@@ -200,6 +230,7 @@ class HosRulesEngine {
 
   /// الحالة الحالية
   HosEngineResult get currentStatus {
+    _checkAndApplyWeeklyRestart();
     final limitsResult = _calculator.calculateAllLimits(
       drivingHours: _stateMachine.totalDrivingHours,
       shiftStartTime: _stateMachine.shiftStartTime,
