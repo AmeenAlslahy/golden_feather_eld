@@ -18,6 +18,9 @@ import '../../domain/entities/dvir_report.dart';
 
 
 import '../widgets/signature_canvas.dart';
+import '../widgets/dvir_form_components.dart';
+import '../widgets/defect_card.dart';
+
 
 import '../widgets/status_modal.dart';
 
@@ -476,7 +479,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   context.loc.dvirPreviousReviewNotice,
                 ),
               ),
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.dvirTimeET,
               child: Text(
                 currentTime,
@@ -485,7 +488,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               borderColor: borderColor,
               textColor: textColor,
             ),
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.location,
               child: Text(
                 automaticLocation,
@@ -494,13 +497,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               borderColor: borderColor,
               textColor: textColor,
             ),
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.dvirOdometerMi,
-              child: _buildFlatTextField(
-                _odometerController,
-                context.loc.dvirOdometerHint,
-                textColor,
-                keyboardType: TextInputType.number,
+              child: DvirFlatTextField(controller: _odometerController, hint: context.loc.dvirOdometerHint, readOnly: _readOnly, keyboardType: TextInputType.number,
               ),
               borderColor: borderColor,
               textColor: textColor,
@@ -508,8 +507,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
             // Reference layout (screenshots 15/19): Vehicle | Defects and
             // Trailers | Defects as two side-by-side underlined cells each.
-            _buildTwoColumn(
-              left: _buildCell(
+            DvirTwoColumn(
+              left: DvirCell(
                 title: context.loc.vehicle,
                 child: Text(
                   dashboard.vehicleDisplayName,
@@ -518,19 +517,19 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 borderColor: borderColor,
                 textColor: textColor,
               ),
-              right: _buildCell(
+              right: DvirCell(
                 title: context.loc.defectsTitle,
-                child: _buildFlatTextField(
-                  _vehicleDefectsController,
-                  context.loc.defectsTitle,
-                  textColor,
+                child: DvirFlatTextField(
+                  controller: _vehicleDefectsController,
+                  hint: context.loc.defectsTitle,
+                  readOnly: _readOnly,
                 ),
                 borderColor: borderColor,
                 textColor: textColor,
               ),
             ),
-            _buildTwoColumn(
-              left: _buildCell(
+            DvirTwoColumn(
+              left: DvirCell(
                 title: context.loc.trailers,
                 child: Text(
                   dashboard.trailerId ?? context.loc.trailers,
@@ -541,12 +540,12 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 borderColor: borderColor,
                 textColor: textColor,
               ),
-              right: _buildCell(
+              right: DvirCell(
                 title: context.loc.defectsTitle,
-                child: _buildFlatTextField(
-                  _trailerDefectsController,
-                  context.loc.defectsTitle,
-                  textColor,
+                child: DvirFlatTextField(
+                  controller: _trailerDefectsController,
+                  hint: context.loc.defectsTitle,
+                  readOnly: _readOnly,
                 ),
                 borderColor: borderColor,
                 textColor: textColor,
@@ -559,7 +558,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               child: _buildCatalogDefects(textColor),
             ),
 
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.company,
               child: Text(
                 companyName,
@@ -568,17 +567,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               borderColor: borderColor,
               textColor: textColor,
             ),
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.remarks,
-              child: _buildFlatTextField(
-                _remarksController,
-                context.loc.remarks,
-                textColor,
+              child: DvirFlatTextField(
+                controller: _remarksController,
+                hint: context.loc.remarks,
+                readOnly: _readOnly,
               ),
               borderColor: borderColor,
               textColor: textColor,
             ),
-            _buildFieldGroup(
+            DvirFieldGroup(
               title: context.loc.status,
               child: InkWell(
                 onTap: _openStatusModal,
@@ -627,124 +626,30 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 
-  Widget _buildFieldGroup({
-    required String title,
-    required Widget child,
-    required Color borderColor,
-    required Color textColor,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: borderColor)),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cellTitle(title),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _cellTitle(String title) {
-    return Text(title, style: context.styles.sectionTitle);
-  }
-
-  Widget _buildCell({
-    required String title,
-    required Widget child,
-    required Color borderColor,
-    required Color textColor,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: borderColor)),
-      ),
-      padding: const EdgeInsets.only(top: 16, bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cellTitle(title),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTwoColumn({required Widget left, required Widget right}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: left),
-          const SizedBox(width: 32),
-          Expanded(child: right),
-        ],
-      ),
-    );
-  }
-
-  /// §396.11 catalog picks: defect cards plus "+ Add Defects". Free-text fields above stay as they were.
   Widget _buildCatalogDefects(Color textColor) {
     final loc = context.loc;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // SRS 7.6: one card per defect (name, note, remove). The wire item
-        // (`itemCode/itemName/category/note`) has no photo field, so no
-        // photo control is offered.
         if (_selectedDefects.isNotEmpty)
           Column(
             key: const Key('dvir_defect_cards'),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final d in _selectedDefects)
-                Padding(
-                  key: Key('dvir_defect_card_${d.item.code}'),
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        d.item.critical
-                            ? Icons.warning_amber_rounded
-                            : Icons.build_outlined,
-                        size: 16,
-                        color: d.item.critical
-                            ? AppColors.dangerRed
-                            : textColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          (d.description ?? '').trim().isEmpty
-                              ? d.item.label(loc)
-                              : '${d.item.label(loc)} — ${d.description!.trim()}',
-                          style: context.styles.subtitle,
-                        ),
-                      ),
-                      if (!_readOnly)
-                        IconButton(
-                          tooltip: loc.removeAction,
-                          icon: const Icon(Icons.close, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                          onPressed: () => setState(
-                            () => _selectedDefects = _selectedDefects
-                                .where((x) => x != d)
-                                .toList(),
-                          ),
-                        ),
-                    ],
-                  ),
+                DefectCard(
+                  key: Key('dvir_defect_card_'),
+                  defect: d,
+                  textColor: textColor,
+                  readOnly: _readOnly,
+                  onRemove: () {
+                    setState(() {
+                      _selectedDefects = _selectedDefects.where((x) => x != d).toList();
+                      if (_selectedDefects.isEmpty) {
+                        _selectedStatus = 'Vehicle Condition Satisfactory';
+                      }
+                    });
+                  },
                 ),
             ],
           ),
@@ -765,26 +670,4 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       ],
     );
   }
-
-  Widget _buildFlatTextField(
-    TextEditingController controller,
-    String hint,
-    Color textColor, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: context.styles.body,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: context.styles.subtitle,
-        border: InputBorder.none,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-      ),
-    );
-  }
 }
-
-
