@@ -19,83 +19,139 @@ import '../../../domain/saved_form_status.dart';
 import '../../../../../backend/providers/backend_providers.dart';
 import '../../../../../core/widgets/app_feedback.dart';
 
-class FormTab extends ConsumerWidget {
+class FormTab extends ConsumerStatefulWidget {
   const FormTab({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FormTab> createState() => _FormTabState();
+}
+
+class _FormTabState extends ConsumerState<FormTab> {
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
     final dashboard = ref.watch(dashboardDataProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildFormRow(context, context.loc.driver, dashboard.driverName),
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildFormRow(context, context.loc.driver, dashboard.driverName),
           Divider(color: Theme.of(context).dividerColor, height: 1),
-          _buildFormRow(
-            context,
-            context.loc.vehicles,
-            dashboard.vehicleDisplayName,
-            onEdit: () async {
-              final vehicle = await showDialog<Vehicle>(
-                context: context,
-                builder: (_) =>
-                    VehiclePickerDialog(currentVehicleId: dashboard.vehicleId),
-              );
-              if (vehicle != null && context.mounted) {
-                ref.read(dashboardDataProvider.notifier).updateVehicle(vehicle);
+          FormField<String>(
+            initialValue: dashboard.vehicleId,
+            validator: (_) {
+              final uniqueId = readOperableUniqueId(dashboard.vehicleId) ??
+                  readOperableUniqueId(ref.read(logsProvider).selectedLog?.uniqueId ?? '') ??
+                  '';
+              if (uniqueId.isEmpty) return context.loc.selectVehicleBeforeSavingForm;
+              return null;
+            },
+            builder: (field) => _buildFormRow(
+              context,
+              context.loc.vehicles,
+              dashboard.vehicleDisplayName,
+              errorText: field.errorText,
+              onEdit: () async {
+                final vehicle = await showDialog<Vehicle>(
+                  context: context,
+                  builder: (_) =>
+                      VehiclePickerDialog(currentVehicleId: dashboard.vehicleId),
+                );
+                if (vehicle != null && context.mounted) {
+                  ref.read(dashboardDataProvider.notifier).updateVehicle(vehicle);
+                }
+              },
+            ),
+          ),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
+          FormField<String>(
+            initialValue: dashboard.trailerId,
+            validator: (value) {
+              for (final trailer in splitFormList(value)) {
+                final error = trailerNumberError(trailer, context.loc);
+                if (error != null) return error;
               }
+              return null;
             },
+            builder: (field) => _buildFormRow(
+              context,
+              context.loc.trailers,
+              dashboard.trailerId ?? '-',
+              errorText: field.errorText,
+              onEdit: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TrailersPage()),
+                );
+              },
+            ),
           ),
           Divider(color: Theme.of(context).dividerColor, height: 1),
-          _buildFormRow(
-            context,
-            context.loc.trailers,
-            dashboard.trailerId ?? '-',
-            onEdit: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TrailersPage()),
-              );
-            },
-          ),
-          Divider(color: Theme.of(context).dividerColor, height: 1),
-          _buildFormRow(
-            context,
-            context.loc.shippingDocuments,
-            dashboard.shippingDocuments ?? '-',
-            onEdit: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const ShippingDocumentsPage()),
-              );
-            },
-          ),
-          Divider(color: Theme.of(context).dividerColor, height: 1),
-          _buildFormRow(
-            context,
-            context.loc.coDriver,
-            dashboard.coDriverName ?? '-',
-            onEdit: () async {
-              final coDriver = await showDialog<CoDriver>(
-                context: context,
-                builder: (_) => CoDriverPickerDialog(
-                    currentCoDriverId: dashboard.coDriverId ?? 'none'),
-              );
-              if (coDriver != null && context.mounted) {
-                ref
-                    .read(dashboardDataProvider.notifier)
-                    .updateCoDriver(coDriver);
+          FormField<String>(
+            initialValue: dashboard.shippingDocuments,
+            validator: (value) {
+              for (final doc in splitFormList(value)) {
+                final error = shippingDocumentError(doc, context.loc);
+                if (error != null) return error;
               }
+              return null;
             },
+            builder: (field) => _buildFormRow(
+              context,
+              context.loc.shippingDocuments,
+              dashboard.shippingDocuments ?? '-',
+              errorText: field.errorText,
+              onEdit: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ShippingDocumentsPage()),
+                );
+              },
+            ),
+          ),
+          Divider(color: Theme.of(context).dividerColor, height: 1),
+          FormField<String>(
+            initialValue: dashboard.coDriverId,
+            validator: (value) {
+              final rawCoDriver = value?.trim();
+              if (rawCoDriver != null && rawCoDriver.isNotEmpty && rawCoDriver != 'none') {
+                if (int.tryParse(rawCoDriver) == null) {
+                  return context.loc.coDriverMustBeServerId;
+                }
+              }
+              return null;
+            },
+            builder: (field) => _buildFormRow(
+              context,
+              context.loc.coDriver,
+              dashboard.coDriverName ?? '-',
+              errorText: field.errorText,
+              onEdit: () async {
+                final coDriver = await showDialog<CoDriver>(
+                  context: context,
+                  builder: (_) => CoDriverPickerDialog(
+                      currentCoDriverId: dashboard.coDriverId ?? 'none'),
+                );
+                if (coDriver != null && context.mounted) {
+                  ref
+                      .read(dashboardDataProvider.notifier)
+                      .updateCoDriver(coDriver);
+                }
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           AppButton(
             label: context.loc.saveButton.toUpperCase(),
             type: EldButtonType.agree,
             onPressed: () async {
+              if (!_formKey.currentState!.validate()) return;
               final selectedLog = ref.read(logsProvider).selectedLog;
               if (selectedLog == null) return;
 
@@ -105,6 +161,7 @@ class FormTab extends ConsumerWidget {
                 context.loc,
               );
               if (form.error != null) {
+                // Should be caught by form fields above, but fallback just in case
                 AppFeedback.error(context, form.error!);
                 return;
               }
@@ -143,11 +200,15 @@ class FormTab extends ConsumerWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
   Widget _buildFormRow(BuildContext context, String title, String value,
-      {VoidCallback? onEdit}) {
+      {String? errorText, VoidCallback? onEdit}) {
+    final hasError = errorText != null;
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Row(
@@ -159,13 +220,25 @@ class FormTab extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: context.styles.bodyBold,
+                  style: context.styles.bodyBold.copyWith(
+                    color: hasError ? errorColor : null,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: context.styles.body,
+                  style: context.styles.body.copyWith(
+                    color: hasError ? errorColor : null,
+                  ),
                 ),
+                if (hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      errorText,
+                      style: context.styles.error.copyWith(fontSize: 12),
+                    ),
+                  ),
               ],
             ),
           ),

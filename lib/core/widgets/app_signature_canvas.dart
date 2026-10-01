@@ -32,6 +32,9 @@ class AppSignatureCanvas extends StatelessWidget {
   /// Optional padding around the entire widget.
   final EdgeInsets padding;
 
+  /// Optional error text to display below the canvas.
+  final String? errorText;
+
   const AppSignatureCanvas({
     super.key,
     required this.controller,
@@ -39,6 +42,7 @@ class AppSignatureCanvas extends StatelessWidget {
     this.height = 200,
     this.showClear = true,
     this.padding = const EdgeInsets.all(AppSpacing.xl),
+    this.errorText,
   });
 
   @override
@@ -58,8 +62,10 @@ class AppSignatureCanvas extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(
-                color: colorScheme.outline.withValues(alpha: 0.5),
-                width: 1,
+                color: errorText != null 
+                    ? colorScheme.error 
+                    : colorScheme.outline.withValues(alpha: 0.5),
+                width: errorText != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -92,32 +98,88 @@ class AppSignatureCanvas extends StatelessWidget {
             ),
           ),
 
-          // ─── Clear button ────────────────────────────────────────────
-          if (showClear) ...[
+          // ─── Footer (Error Message & Clear Button) ────────────────
+          if (showClear || errorText != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: InkWell(
-                onTap: () => controller.clear(),
-                borderRadius: BorderRadius.circular(4),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 6,
-                  ),
-                  child: Text(
-                    loc.clearSignature,
-                    style: context.styles.subtitle.copyWith(
-                      decoration: TextDecoration.underline,
-                      decorationStyle: TextDecorationStyle.dotted,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: errorText != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 6.0, left: 8.0, right: 8.0),
+                          child: Text(
+                            errorText!,
+                            style: context.styles.error.copyWith(fontSize: 12),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                if (showClear)
+                  InkWell(
+                    onTap: () => controller.clear(),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        loc.clearSignature,
+                        style: context.styles.subtitle.copyWith(
+                          decoration: TextDecoration.underline,
+                          decorationStyle: TextDecorationStyle.dotted,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+              ],
             ),
           ],
         ],
       ),
     );
   }
+}
+
+/// A [FormField] wrapper for [AppSignatureCanvas] to integrate seamlessly with
+/// Flutter's [Form] validation.
+class AppSignatureFormField extends FormField<bool> {
+  AppSignatureFormField({
+    super.key,
+    required SignatureController controller,
+    String? placeholder,
+    double height = 200,
+    bool showClear = true,
+    EdgeInsets padding = const EdgeInsets.all(AppSpacing.xl),
+    super.onSaved,
+    super.validator,
+  }) : super(
+          initialValue: controller.isNotEmpty,
+          builder: (FormFieldState<bool> field) {
+            // Re-evaluate whenever the controller changes so validation clears instantly
+            return ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) {
+                // Update internal field state silently so validators run correctly
+                // Check if changed to avoid unnecessary cycles, though ListenableBuilder manages this well.
+                if (field.value != controller.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    field.didChange(controller.isNotEmpty);
+                  });
+                }
+                
+                return AppSignatureCanvas(
+                  controller: controller,
+                  placeholder: placeholder,
+                  height: height,
+                  showClear: showClear,
+                  padding: padding,
+                  errorText: field.errorText,
+                );
+              },
+            );
+          },
+        );
 }

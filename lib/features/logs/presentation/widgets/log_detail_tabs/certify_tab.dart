@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -25,6 +25,7 @@ class CertifyTab extends ConsumerStatefulWidget {
 }
 
 class _CertifyTabState extends ConsumerState<CertifyTab> {
+  final _formKey = GlobalKey<FormState>();
   late SignatureController _signatureController;
   bool _signatureReady = false;
 
@@ -223,14 +224,22 @@ final signatureBytes = await _signatureController.toPngBytes();
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        children: [
-          AppSignatureCanvas(
-            controller: _signatureController,
-            padding: EdgeInsets.zero,
-          ),
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            AppSignatureFormField(
+              controller: _signatureController,
+              padding: EdgeInsets.zero,
+              validator: (hasSignature) {
+                if (hasSignature != true) {
+                  return context.loc.pleaseDrawASignatureFirst;
+                }
+                return null;
+              },
+            ),
           const SizedBox(height: AppSpacing.xl),
           Text(
             readinessData.legalStatement.trim().isEmpty
@@ -279,8 +288,8 @@ final signatureBytes = await _signatureController.toPngBytes();
                 isLoading: state.isLoading,
                 onPressed: () {
                   if (state.isLoading) return;
-                  if (_signatureController.isEmpty ||
-                      !widget.selectedLog.isFormComplete) {
+                  if (!_formKey.currentState!.validate()) return;
+                  if (!widget.selectedLog.isFormComplete) {
                     _showError(context.loc.fillFormFirst);
                     return;
                   }
@@ -290,6 +299,7 @@ final signatureBytes = await _signatureController.toPngBytes();
             },
           ),
         ],
+      ),
       ),
     );
   }

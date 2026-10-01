@@ -260,21 +260,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       await _signatureController.toPngBytes(),
     );
     if (!mounted) return;
-    if (signatureData == null) {
-      _snack(context.loc.dvirSignatureRequired);
-      return;
-    }
+    if (signatureData == null) return;
     final driverId = ref.read(currentDriverIdProvider);
     if (driverId == null || driverId <= 0) {
       _snack(
         context.loc.dvirDriverSessionMissing,
-      );
-      return;
-    }
-    if (dashboard.vehicleId.trim().isEmpty ||
-        dashboard.vehicleId == 'No Vehicle') {
-      _snack(
-        context.loc.dvirVehicleIdMissing,
       );
       return;
     }
@@ -482,14 +472,42 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             // Reference layout (screenshots 15/19): Vehicle | Defects and
             // Trailers | Defects as two side-by-side underlined cells each.
             DvirTwoColumn(
-              left: DvirCell(
-                title: context.loc.vehicle,
-                borderColor: borderColor,
-                textColor: textColor,
-                child: Text(
-                  dashboard.vehicleDisplayName,
-                  style: context.styles.body,
-                ),
+              left: FormField<String>(
+                initialValue: dashboard.vehicleId,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty || value == 'No Vehicle') {
+                    return context.loc.dvirVehicleIdMissing;
+                  }
+                  return null;
+                },
+                builder: (field) {
+                  final hasError = field.hasError;
+                  final errorColor = Theme.of(context).colorScheme.error;
+                  return DvirCell(
+                    title: context.loc.vehicle,
+                    borderColor: hasError ? errorColor : borderColor,
+                    textColor: hasError ? errorColor : textColor,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dashboard.vehicleDisplayName,
+                          style: context.styles.body.copyWith(
+                            color: hasError ? errorColor : null,
+                          ),
+                        ),
+                        if (hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              field.errorText!,
+                              style: context.styles.error.copyWith(fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
               right: DvirCell(
                 title: context.loc.defectsTitle,
@@ -572,8 +590,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ),
 
             // Signature Section
-            AppSignatureCanvas(
+            AppSignatureFormField(
               controller: _signatureController,
+              validator: (hasSignature) {
+                if (hasSignature != true) {
+                  return context.loc.dvirSignatureRequired;
+                }
+                return null;
+              },
             ),
 
             Padding(
