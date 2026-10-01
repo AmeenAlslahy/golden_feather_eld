@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
 import '../features/tracking/data/services/tracking_service.dart';
-import '../core/di/auth_local_data_source_provider.dart';
 import '../core/services/local_database_service.dart';
 import '../core/services/local_storage_service.dart';
 import 'services/push_notification_service.dart';
@@ -104,19 +103,22 @@ class AppInitializer {
     // جلب إعدادات الخادم لم يعد يحجب الإقلاع: كان أول إطار ينتظر دورة
     // شبكة كاملة (حتى 30 ثانية على شبكة ضعيفة). يعمل الآن بالخلفية،
     // والواجهة تُفتح فوراً على القيم المخزنة محلياً.
-    unawaited(() async {
-      try {
-        await RemoteConfigService.fetchOnStartup(container);
-      } catch (e) {
-        AppLogger.error('Background remote-config fetch failed', e);
-      }
-    }());
+    Future.delayed(const Duration(seconds: 2), () {
+      unawaited(() async {
+        try {
+          await RemoteConfigService.fetchOnStartup(container);
+        } catch (e) {
+          AppLogger.error('Background remote-config fetch failed', e);
+        }
+      }());
+    });
 
-    // تدفئة كاش الجلسة: أول قراءة من Android Keystore مكلفة (ثوانٍ على
-    // بعض الأجهزة) — تُدفأ هنا بالتوازي بدل أن تحجب أول طلب HTTP.
-    unawaited(container.read(authLocalDataSourceProvider).getSession());
+    // تمت إزالة الاستدعاء المتوازي لـ getSession() لأنه كان يسبب Deadlock
+    // مع شاشة الإقلاع (SplashPage) في مكتبة flutter_secure_storage على أندرويد
+    // عند استدعائه مرتين في نفس الوقت.
 
-    Future.microtask(() {
+    // تأجيل مبدئي لتخفيف الضغط على الخيط الرئيسي (Main Thread) عند الإقلاع
+    Future.delayed(const Duration(milliseconds: 500), () {
       container.read(syncStateProvider.notifier);
       container.read(syncEngineProvider);
       container.read(trackingOrchestratorProvider);
