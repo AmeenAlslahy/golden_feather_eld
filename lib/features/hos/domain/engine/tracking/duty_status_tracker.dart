@@ -369,19 +369,11 @@ class DutyStatusTracker {
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
     );
     return result.fold((error) {
+      // رفض الخادم (أو فشل الوصول) يجب أن يظهر للسائق — لا يجوز تطبيق
+      // الحالة محلياً ثم إرسالها لاحقاً: الخادم رفض الانتقال صراحةً.
       AppLogger.warning(
-          'Duty status change rejected by server: ${error.code} (Falling back to local queue)');
-      
-      // Fallback: Apply locally and let SyncEngine handle the event delivery later
-      _applyManualLocal(
-        newStatus: newStatus,
-        timestamp: trusted,
-        lat: lat,
-        lon: lon,
-        annotation: annotation,
-        enqueue: true,
-      );
-      return null;
+          'Duty status change rejected by server: ${error.code}');
+      return DutyStampRefusal.serverRejected;
     }, (_) {
       _applyManualLocal(
         newStatus: newStatus,
