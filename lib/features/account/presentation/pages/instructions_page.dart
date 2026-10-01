@@ -30,7 +30,7 @@ class InstructionsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.eldAppBar,
+        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),

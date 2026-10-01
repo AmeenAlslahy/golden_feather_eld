@@ -19,7 +19,7 @@ class UserManualPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: brightness == Brightness.light ? const Color(0xFFF3F4F6) : AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.surface),
           onPressed: () => Navigator.pop(context),
@@ -314,7 +314,7 @@ class UserManualPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             width: 4,
             height: 24,
-            color: AppColors.primaryBlue.withValues(alpha: 0.8),
+            color: AppColors.primaryGold.withValues(alpha: 0.8),
           ),
           Expanded(
             flex: 7,
@@ -607,7 +607,7 @@ class UserManualPage extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 2, right: 8, left: 4),
                 width: 4,
                 height: 14,
-                color: AppColors.primaryBlue.withValues(alpha: 0.8),
+                color: AppColors.primaryGold.withValues(alpha: 0.8),
               ),
               Expanded(child: content),
             ],

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// القيم الخام للهوية الذهبية/السوداء.
+/// نظام الألوان الوحيد في التطبيق — الملف الوحيد الذي يحمل قيمة `Color(0x…)`.
+///
+/// **الهوية:** الذهبي (`primaryGold`) هو اللون الرئيسي، والأسود (`secondary`)
+/// هو الثانوي — قرار المالك 2026-09-24.
 ///
 /// **قاعدة الاستخدام:**
 /// - للنصوص: `context.styles.error/success/warning/muted` (لون + خط معًا).
-/// - لأزواج خلفية/نص متباينة: `context.eld.successFg/successBg` …
+/// - لأزواج خلفية/نص متباينة (شارات، تنبيهات): استخدم مجموعة الوضع الفاتح
+///   (`successText`+`successBg`) ومجموعة الداكن (`successOnDark`+`darkSuccessBg`).
 /// - `AppColors` مباشرة مقبول للأسطح والحدود والأيقونات (`surface`, `border`,
 ///   `primaryGold`, `dangerRed`) — لا تُنشئ `Color(0x…)` جديدًا في الواجهات؛
 ///   أضِف الرمز هنا أولاً.
@@ -13,19 +17,10 @@ class AppColors {
 
   // ========== الهوية الأساسية ==========
 
-  /// الذهبي — لون الهوية الأساسي.
+  /// الذهبي — لون الهوية الرئيسي.
   static const Color primaryGold = Color(0xFFD4AF37);
 
-  /// شريط التطبيق — الذهبي هو اللون الرئيسي في كل الشاشات (قرار المالك
-  /// 2026-09-24: ذهبي رئيسي / أسود ثانوي). يبقى الاسم لتوافق الشاشات القديمة.
-  static const Color eldAppBar = primaryGold;
-
-  /// Alias kept for the original driver screens; resolves to the gold primary.
-  static const Color primaryBlue = primaryGold;
-
-  /// SRS §25.1 — زر التوقيع.
-
-  /// أسود الهوية — الخلفية الفاخرة.
+  /// أسود الهوية — اللون الثانوي والخلفية الفاخرة.
   static const Color secondary = Color(0xFF0D0D0D);
 
   // ========== عائلة الذهبي ==========
@@ -100,21 +95,16 @@ class AppColors {
   static const Color darkGoldBg = Color(0xFF2A2410);
 
   // ========== على الذهبي / على الأسود ==========
-  static const Color onGold = Color(0xFF0D0D0D);
-  static const Color onBlack = Color(0xFFD4AF37);
+  static const Color onGold = secondary;      // نص على خلفية ذهبية
+  static const Color onBlack = primaryGold;   // نص على خلفية سوداء
 
   // ========== عناصر خاصة ==========
 
   /// لون خفيف مكمل.
 
   // ========== شريط التنقل السفلي ==========
-
-  static const Color navBarBackground = Color(0xFFFFFFFF);
-
-  /// أيقونة نشطة — ذهبي عميق (4.76:1 على الأبيض).
-  static const Color navBarActive = Color(0xFF6E5612);
-
-  /// أيقونة غير نشطة.
+  static const Color navBarBackground = surface;
+  static const Color navBarActive = goldDeep;
   static const Color navBarInactive = Color(0xFF8E8E93);
 
   // ========== مساعدات متكررة ==========

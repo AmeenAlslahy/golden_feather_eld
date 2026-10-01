@@ -11,6 +11,5 @@ export 'theme/app_spacing.dart';
 export 'theme/app_styles.dart';
 export 'theme/app_theme.dart';
 export 'theme/app_typography.dart';
-export 'theme/eld_colors.dart';
 export 'theme/press_feedback.dart';
 export 'extensions/context_extensions.dart';

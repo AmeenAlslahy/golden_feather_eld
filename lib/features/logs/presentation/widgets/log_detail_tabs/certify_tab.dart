@@ -240,7 +240,7 @@ final signatureBytes = await _signatureController.toPngBytes();
                   child: Text(
                     context.loc.drawYourSignatureHere,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
                       color: Color(0xFFB0B0B0),
@@ -262,7 +262,7 @@ final signatureBytes = await _signatureController.toPngBytes();
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 context.loc.clearSignature,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   decoration: TextDecoration.underline,
                   decorationStyle: TextDecorationStyle.dotted,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
-import '../theme/eld_colors.dart';
 import '../theme/app_typography.dart';
 
 enum AppStatusBadgeType {
@@ -13,6 +12,9 @@ enum AppStatusBadgeType {
 }
 
 /// شارة حالة موحدة للتطبيق
+///
+/// الألوان من `AppColors` حصرياً: مجموعة النص/الخلفية الفاتحة في الوضع
+/// الفاتح، ومجموعة `OnDark`/`dark*Bg` في الداكن — أزواج مضمونة التباين.
 class AppStatusBadge extends StatelessWidget {
   final String label;
   final AppStatusBadgeType type;
@@ -27,39 +29,38 @@ class AppStatusBadge extends StatelessWidget {
     this.trailing,
   });
 
-  Color _getBackgroundColor(ThemeData theme) {
-    final eld = theme.extension<EldColors>()!;
+  Color _getBackgroundColor(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
     switch (type) {
       case AppStatusBadgeType.success:
-        return eld.successBg;
+        return isDark ? AppColors.darkSuccessBg : AppColors.successBg;
       case AppStatusBadgeType.error:
-        return eld.dangerBg;
+        return isDark ? AppColors.darkDangerBg : AppColors.dangerBg;
       case AppStatusBadgeType.warning:
-        return eld.warningBg;
+        return isDark ? AppColors.darkWarningBg : AppColors.warningBg;
       case AppStatusBadgeType.info:
-        return eld.infoBg;
+        return isDark ? AppColors.darkInfoBg : AppColors.infoBg;
     }
   }
 
-  Color _getTextColor(ThemeData theme) {
-    final eld = theme.extension<EldColors>()!;
+  Color _getTextColor(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
     switch (type) {
       case AppStatusBadgeType.success:
-        return eld.successFg;
+        return isDark ? AppColors.successOnDark : AppColors.successText;
       case AppStatusBadgeType.error:
-        return eld.dangerFg;
+        return isDark ? AppColors.dangerOnDark : AppColors.dangerText;
       case AppStatusBadgeType.warning:
-        return AppColors.warningYellow;
+        return isDark ? AppColors.warningOnDark : AppColors.warningText;
       case AppStatusBadgeType.info:
-        // Gold on the pale info background is ~2.5:1; infoText is 8.6:1.
-        return AppColors.infoText;
+        return isDark ? AppColors.infoOnDark : AppColors.infoText;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textColor = _getTextColor(theme);
+    final brightness = Theme.of(context).brightness;
+    final textColor = _getTextColor(brightness);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -67,7 +68,7 @@ class AppStatusBadge extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: _getBackgroundColor(theme),
+        color: _getBackgroundColor(brightness),
         borderRadius: BorderRadius.circular(AppRadius.badge),
       ),
       child: Row(

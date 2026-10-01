@@ -4,7 +4,6 @@ import 'app_typography.dart';
 import 'app_radius.dart';
 import 'app_spacing.dart';
 import 'app_styles.dart';
-import 'eld_colors.dart';
 import 'press_feedback.dart';
 export 'app_styles.dart';
 
@@ -15,7 +14,7 @@ class AppTheme {
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    extensions: [EldColors.light(), AppStyles.fromBrightness(Brightness.light)],
+    extensions: [AppStyles.fromBrightness(Brightness.light)],
     colorScheme: const ColorScheme.light(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.surface,
@@ -171,7 +170,7 @@ class AppTheme {
 
   static final ThemeData dark = light.copyWith(
     brightness: Brightness.dark,
-    extensions: [EldColors.dark(), AppStyles.fromBrightness(Brightness.dark)],
+    extensions: [AppStyles.fromBrightness(Brightness.dark)],
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGold,
       onPrimary: AppColors.black,

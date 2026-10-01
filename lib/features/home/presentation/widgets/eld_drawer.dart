@@ -17,8 +17,7 @@ class EldDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final menuItems = ref.watch(menuProvider);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
+    final loc = context.loc;
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
       width: MediaQuery.of(context).size.width * 0.82,
@@ -27,13 +26,13 @@ class EldDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              color: AppColors.eldAppBar,
+              color: AppColors.primaryGold,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
                 vertical: AppSpacing.lg,
               ),
               child: Text(
-                isArabic ? 'القائمة' : 'Menu',
+                loc.menuTitle,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -51,7 +50,7 @@ class EldDrawer extends ConsumerWidget {
                 ),
                 itemBuilder: (context, index) {
                   final item = menuItems[index];
-                  final title = isArabic ? item.arabicTitle : item.title;
+                  final title = loc.localeName == 'ar' ? item.arabicTitle : item.title;
                   return ListTile(
                     splashColor: PressFeedback.ink,
                     leading: Icon(item.icon, size: 24),
@@ -79,7 +78,7 @@ class EldDrawer extends ConsumerWidget {
               splashColor: PressFeedback.ink,
               leading: const Icon(Icons.settings_outlined, size: 24),
               title: Text(
-                isArabic ? 'الإعدادات' : 'Settings',
+                loc.settingsTitle,
                 style: context.styles.body,
               ),
               onTap: () {

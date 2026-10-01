@@ -22,7 +22,7 @@ class InfoPacketPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.eldAppBar,
+        backgroundColor: AppColors.primaryGold,
         title: Text(
           loc.infoPacket,
           style: context.styles.appBarTitle,
