@@ -46,21 +46,22 @@ class InstructionsPage extends StatelessWidget {
         children: [
           // Section 1: Inspection Mode
           if (showAll || section == InstructionsSection.inspection)
-            _buildInspectionModeSection(context.loc, context),
+            _buildInspectionModeSection(context),
 
           // Section 2: Send Logs (Data Transfer Instruction Sheet)
           if (showAll || section == InstructionsSection.sendLogs)
-            _buildSendLogsSection(context.loc, context),
+            _buildSendLogsSection(context),
 
           // Section 3: Malfunction Manual
           if (showAll || section == InstructionsSection.malfunction)
-            _buildMalfunctionManualSection(context.loc, context),
+            _buildMalfunctionManualSection(context),
         ],
       ),
     );
   }
 
-  Widget _buildInspectionModeSection(AppLocalizations loc, BuildContext context) {
+  Widget _buildInspectionModeSection(BuildContext context) {
+    final loc = context.loc;
     // شريط داكن دائم حسب التصميم المرجعي — في الوضعين.
     final sectionColor =
         context.inspectionBand;
@@ -77,11 +78,11 @@ class InstructionsPage extends StatelessWidget {
             child: Container(
               height: 220,
               decoration: AppDecorations.solid(
-                Colors.white,
+                AppColors.white,
                 radius: AppRadius.sheet,
               ),
               child: const Center(
-                child: Icon(Icons.smartphone, size: 64, color: Colors.grey),
+                child: Icon(Icons.smartphone, size: 64, color: AppColors.placeholderGrey),
               ),
             ),
           ),
@@ -113,7 +114,8 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSendLogsSection(AppLocalizations loc, BuildContext context) {
+  Widget _buildSendLogsSection(BuildContext context) {
+    final loc = context.loc;
     return Container(
       decoration: AppDecorations.band(context.colorScheme.surface),
       padding: const EdgeInsets.symmetric(
@@ -146,15 +148,15 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(loc, context)),
+          Center(child: _buildContactInfo(context)),
         ],
       ),
     );
   }
 
-  Widget _buildMalfunctionManualSection(
-      AppLocalizations loc, BuildContext context) {
-    // خلفية رمادية فاتحة فاتحة / داكنة داكنة حسب الوضع.
+  Widget _buildMalfunctionManualSection(BuildContext context) {
+    final loc = context.loc;
+    // خلفية قسم دليل الأعطال — درجة لكل وضع.
     final sectionColor =
         context.manualBand;
 
@@ -174,11 +176,12 @@ class InstructionsPage extends StatelessWidget {
                     Container(
                       height: 120,
                       decoration: AppDecorations.solid(
-                        Colors.grey.shade800,
+                        AppColors.placeholderDark,
                         radius: AppRadius.imagePlaceholder,
                       ),
                       child: const Center(
-                          child: Icon(Icons.router, color: Colors.white, size: 48)),
+                          child: Icon(Icons.router,
+                              color: AppColors.white, size: 48)),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Row(
@@ -236,7 +239,7 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(loc, context)),
+          Center(child: _buildContactInfo(context)),
         ],
       ),
     );
@@ -250,7 +253,7 @@ class InstructionsPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle, size: 14, color: Colors.white),
+          const Icon(Icons.check_circle, size: 14, color: AppColors.white),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -282,11 +285,10 @@ class InstructionsPage extends StatelessWidget {
             width: 14,
             height: 14,
             decoration: BoxDecoration(
-              color: Colors
-                  .black54, // Matches the dark grey square checkmark in design
+              color: AppColors.checkSquare,
               borderRadius: BorderRadius.circular(2),
             ),
-            child: const Icon(Icons.check, size: 12, color: Colors.white),
+            child: const Icon(Icons.check, size: 12, color: AppColors.white),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -310,7 +312,8 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactInfo(AppLocalizations loc, BuildContext context) {
+  Widget _buildContactInfo(BuildContext context) {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -333,10 +336,10 @@ class InstructionsPage extends StatelessWidget {
       width: 24,
       height: 24,
       decoration: const BoxDecoration(
-        color: Colors.grey,
+        color: AppColors.placeholderGrey,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Icons.cable, size: 14, color: Colors.white),
+      child: const Icon(Icons.cable, size: 14, color: AppColors.white),
     );
   }
 }

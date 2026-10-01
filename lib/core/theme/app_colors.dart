@@ -100,6 +100,11 @@ class AppColors {
   static const Color manualBand = Color(0xFFF7F7F7);
   static const Color manualBandDark = Color(0xFF1C1C1E);
 
+  // ========== عناصر الصور البديلة (Placeholders) ==========
+  static const Color placeholderGrey = Color(0xFF808080);
+  static const Color placeholderDark = Color(0xFF424242);
+  static const Color checkSquare = Color(0x8A000000); // black54 — مربع الصح
+
   // ========== جدول رأس السجل اليومي RODS (شكل الورقة الرسمية) ==========
   static const Color rodsHeaderBg = Color(0xFFF2F2F2);
   static const Color rodsHeaderText = Color(0xFF222222);
