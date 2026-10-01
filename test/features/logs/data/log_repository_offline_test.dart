@@ -152,7 +152,6 @@ void main() {
             LogEvent(
               id: 'local-1',
               status: 'ON',
-              statusArabic: 'ON',
               startTime: DateTime(2026, 9, 24, 10),
               duration: const Duration(minutes: 30),
               location: 'Yard',
@@ -161,7 +160,6 @@ void main() {
             LogEvent(
               id: '9001',
               status: 'D',
-              statusArabic: 'D',
               startTime: DateTime(2026, 9, 24, 8),
               duration: const Duration(minutes: 60),
               location: '',

@@ -19,6 +19,7 @@ import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class CoDriverPage extends ConsumerStatefulWidget {
   const CoDriverPage({super.key});
@@ -34,7 +35,6 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
   Widget build(BuildContext context) {
     final codriverState = ref.watch(codriverProvider);
     final loc = context.loc;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final brightness = Theme.of(context).brightness;
     final surfaceColor = AppColors.surfaceFor(brightness);
     final textColor = AppColors.textPrimaryFor(brightness);
@@ -87,7 +87,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       child: Column(
                         children: [
                           Text(
-                            isArabic ? 'اختر مساعد السائق' : 'Select Co-driver',
+                            loc.coDriverSelectLabel,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -96,9 +96,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            isArabic
-                                ? 'الرجاء اختيار مساعد السائق الخاص بك'
-                                : 'Select your co-driver',
+                            loc.coDriverSelectHint,
                             style: TextStyle(
                               fontSize: 16,
                               color: textSecondaryColor,
@@ -112,7 +110,6 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                               context,
                               drivers,
                               currentSelectedId,
-                              isArabic,
                               textColor,
                               surfaceColor,
                             ),
@@ -138,7 +135,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                           (d) => d.id == currentSelectedId,
                                           orElse: () => CoDriver.none,
                                         ),
-                                        isArabic,
+                                        loc,
                                       ).toUpperCase(),
                                       style: TextStyle(
                                         fontSize: 18,
@@ -164,7 +161,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       child: Column(
                         children: [
                           Text(
-                            isArabic ? 'تبديل الأدوار' : 'Switch Drivers',
+                            loc.coDriverSwitchDrivers,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -173,9 +170,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            isArabic
-                                ? 'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.'
-                                : 'You will become co-driver. Your co-driver will stay driver.',
+                            loc.coDriverSwitchHint,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
@@ -197,13 +192,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 bottom: AppSpacing.md,
                               ),
                               child: Text(
-                                isArabic ? 'جاري التبديل...' : 'Switching...',
+                                loc.coDriverSwitching,
                               ),
                             ),
 
                           // Switch Button
                           AppButton(
-                            label: isArabic ? 'تبديل' : 'SWITCH',
+                            label: loc.coDriverSwitchAction,
                             type: EldButtonType.agree,
                             isLoading: codriverState.isSwitching,
                             onPressed:
@@ -233,7 +228,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                     if (refusal != null) {
                                       AppFeedback.error(
                                         context,
-                                        _refusalText(refusal, isArabic),
+                                        _refusalText(refusal, loc),
                                       );
                                       return;
                                     }
@@ -241,14 +236,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                       context: context,
                                       builder: (context) => AlertDialog(
                                         title: Text(
-                                          isArabic
-                                              ? 'تأكيد التبديل'
-                                              : 'Confirm Switch',
+                                          loc.coDriverConfirmSwitchTitle,
                                         ),
                                         content: Text(
-                                          isArabic
-                                              ? 'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.'
-                                              : 'This asks the server to switch roles. Hours are not copied and duty status is not changed.',
+                                          loc.coDriverConfirmSwitchBody,
                                         ),
                                         actions: [
                                           TextButton(
@@ -295,14 +286,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                             'switch_result_dialog',
                                           ),
                                           title: Text(
-                                            isArabic
-                                                ? 'تم تبديل الأدوار'
-                                                : 'Roles switched',
+                                            loc.coDriverRolesSwitchedTitle,
                                           ),
                                           content: Text(
-                                            isArabic
-                                                ? 'أنت الآن السائق المساعد.\n${newPrimary ?? 'السائق المساعد'} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'
-                                                : 'You are now the co-driver.\n${newPrimary ?? 'The co-driver'} is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.',
+                                            loc.coDriverRolesSwitchedBody(newPrimary ?? loc.coDriverDefaultNewPrimary),
                                             style: const TextStyle(
                                               color: AppColors.successGreen,
                                             ),
@@ -335,7 +322,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
                       child: _LinkedCoDriver(
                         state: codriverState,
-                        isArabic: isArabic,
+                        loc: loc,
                       ),
                     ),
                   ],
@@ -349,7 +336,6 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     BuildContext context,
     List<CoDriver> drivers,
     String currentId,
-    bool isArabic,
     Color textColor,
     Color surfaceColor,
   ) {
@@ -364,7 +350,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
             return AlertDialog(
               backgroundColor: surfaceColor,
               title: Text(
-                isArabic ? 'مساعد السائق' : 'Co-driver',
+                context.loc.coDriver,
                 style: TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.normal,
@@ -386,7 +372,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       final driver = drivers[index];
                       return RadioListTile<String>(
                         title: Text(
-                          _driverLabel(driver, isArabic).toUpperCase(),
+                          _driverLabel(driver, context.loc).toUpperCase(),
                           style: TextStyle(
                             color: dialogSelectedId == driver.id
                                 ? AppColors.primaryGold
@@ -407,7 +393,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    isArabic ? 'إلغاء' : 'CANCEL',
+                    context.loc.cancelAction,
                     style: const TextStyle(color: AppColors.primaryGold),
                   ),
                 ),
@@ -429,9 +415,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     if (!context.mounted) return;
                     if (error != null) {
                       final text = error == 'vehicle_identifier_missing'
-                          ? (isArabic
-                                ? 'اختر مركبة قبل ربط السائق المساعد.'
-                                : 'Select a vehicle before linking a co-driver.')
+                          ? context.loc.coDriverVehicleMissing
                           : error;
                       AppFeedback.error(context, text);
                       return;
@@ -442,7 +426,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     Navigator.of(context).pop();
                   },
                   child: Text(
-                    isArabic ? 'موافق' : 'OK',
+                    context.loc.okButton,
                     style: const TextStyle(color: AppColors.primaryGold),
                   ),
                 ),
@@ -455,51 +439,37 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
   }
 }
 
-String _driverLabel(CoDriver driver, bool isArabic) {
+String _driverLabel(CoDriver driver, AppLocalizations loc) {
   if (driver.id == CoDriver.none.id) {
-    return isArabic ? 'لا سائق مساعد' : 'No co-driver';
+    return loc.coDriverNone;
   }
   return driver.name;
 }
 
-String _refusalText(RoleSwitchRefusal refusal, bool isArabic) {
+String _refusalText(RoleSwitchRefusal refusal, AppLocalizations loc) {
   switch (refusal) {
     case RoleSwitchRefusal.sessionMissing:
-      return isArabic
-          ? 'جلسة السائق غير موجودة. سجّل الدخول قبل التبديل.'
-          : 'Driver session is missing. Sign in before switching.';
+      return loc.coDriverRefusalSessionMissing;
     case RoleSwitchRefusal.stillDriving:
-      return isArabic
-          ? 'غيّر حالة الواجب قبل التسليم. التبديل لا يغيّر الحالة.'
-          : 'Change duty status before handover. The switch does not change it.';
+      return loc.coDriverRefusalStillDriving;
     case RoleSwitchRefusal.motionUnknown:
-      return isArabic
-          ? 'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.'
-          : 'Vehicle motion is unknown. That is not treated as stopped.';
+      return loc.coDriverRefusalMotionUnknown;
     case RoleSwitchRefusal.thresholdMissing:
-      return isArabic
-          ? 'عتبة الحركة غير متوفرة من الإعداد.'
-          : 'The motion threshold is not available.';
+      return loc.coDriverRefusalThresholdMissing;
     case RoleSwitchRefusal.vehicleMoving:
-      return isArabic
-          ? 'لا يمكن تبديل الأدوار والمركبة تتحرك.'
-          : 'Roles can be switched only when the vehicle is stopped.';
+      return loc.coDriverRefusalVehicleMoving;
     case RoleSwitchRefusal.coDriverMissing:
-      return isArabic
-          ? 'اختر سائقاً مساعداً قبل التبديل.'
-          : 'Select a co-driver before switching.';
+      return loc.coDriverRefusalCoDriverMissing;
     case RoleSwitchRefusal.sameDriver:
-      return isArabic
-          ? 'لا يمكن اختيار الحساب الحالي سائقاً مساعداً.'
-          : 'The current account cannot be selected as the co-driver.';
+      return loc.coDriverRefusalSameDriver;
   }
 }
 
 class _LinkedCoDriver extends StatelessWidget {
   final CoDriverState state;
-  final bool isArabic;
+  final AppLocalizations loc;
 
-  const _LinkedCoDriver({required this.state, required this.isArabic});
+  const _LinkedCoDriver({required this.state, required this.loc});
 
   @override
   Widget build(BuildContext context) {
@@ -508,11 +478,9 @@ class _LinkedCoDriver extends StatelessWidget {
     if (state.currentError != null) {
       value = state.currentError!;
     } else if (linked == null) {
-      value = isArabic
-          ? 'لم يُقرأ الارتباط بعد.'
-          : 'The link has not been read.';
+      value = loc.coDriverLinkNotRead;
     } else if (!linked.isLinked) {
-      value = isArabic ? 'لا سائق مساعد مرتبط.' : 'No linked co-driver.';
+      value = loc.coDriverLinkNone;
     } else {
       value = linked.name ?? linked.coDriverId.toString();
     }
@@ -521,20 +489,18 @@ class _LinkedCoDriver extends StatelessWidget {
     final AppStatusBadge? teamBadge = (linked != null && linked.isLinked)
         ? (linked.teamDrivingActive
               ? AppStatusBadge(
-                  label: isArabic ? 'قيادة جماعية نشطة' : 'Team driving active',
+                  label: loc.coDriverTeamDrivingActive,
                   type: AppStatusBadgeType.success,
                 )
               : AppStatusBadge(
-                  label: isArabic
-                      ? 'قيادة جماعية غير نشطة'
-                      : 'Team driving inactive',
+                  label: loc.coDriverTeamDrivingInactive,
                   type: AppStatusBadgeType.warning,
                 ))
         : null;
     return Column(
       children: [
         Text(
-          isArabic ? 'المساعد المرتبط' : 'Linked co-driver',
+          loc.coDriverLinkedTitle,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -552,7 +518,7 @@ class _LinkedCoDriver extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           teamBadge,
         ],
-        _HosIsolationLine(isArabic: isArabic),
+        _HosIsolationLine(loc: loc),
       ],
     );
   }
@@ -562,9 +528,9 @@ class _LinkedCoDriver extends StatelessWidget {
 /// (`GET /eld/daily-logs/{id}/team`). Shown only when today's log exists;
 /// the note is the server's own text.
 class _HosIsolationLine extends ConsumerWidget {
-  const _HosIsolationLine({required this.isArabic});
+  const _HosIsolationLine({required this.loc});
 
-  final bool isArabic;
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -574,9 +540,7 @@ class _HosIsolationLine extends ConsumerWidget {
       error: (_, __) => Padding(
         padding: const EdgeInsets.only(top: AppSpacing.xs),
         child: Text(
-          isArabic
-              ? 'تعذر قراءة حالة عزل سجلات HOS.'
-              : 'HOS isolation status could not be read.',
+          loc.coDriverHosIsolationReadError,
           textAlign: TextAlign.center,
           style: context.styles.muted,
         ),
@@ -592,10 +556,8 @@ class _HosIsolationLine extends ConsumerWidget {
             children: [
               Text(
                 isolated
-                    ? (isArabic ? 'سجلات HOS معزولة' : 'HOS records isolated')
-                    : (isArabic
-                          ? 'سجلات HOS غير معزولة'
-                          : 'HOS records not isolated'),
+                    ? loc.coDriverHosIsolated
+                    : loc.coDriverHosNotIsolated,
                 textAlign: TextAlign.center,
                 style: isolated ? context.styles.success : context.styles.error,
               ),

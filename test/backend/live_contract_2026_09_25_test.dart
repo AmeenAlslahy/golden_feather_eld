@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/mappers/dot_inspection_mapper.dart';
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
@@ -97,8 +100,8 @@ void main() {
       ])!;
       expect(items, hasLength(2));
       expect(items.first.code, 'SERVICE_BRAKES');
-      expect(items.first.label(false), 'Service Brakes (including trailer connections)');
-      expect(items.first.label(true), 'فرامل الخدمة والتوصيلات');
+      expect(items.first.label(lookupAppLocalizations(const Locale('en'))), 'Service Brakes (including trailer connections)');
+      expect(items.first.label(lookupAppLocalizations(const Locale('ar'))), 'فرامل الخدمة والتوصيلات');
       expect(items.first.mandatory, isTrue);
       expect(items.first.critical, isTrue);
       expect(items.last.critical, isFalse);
@@ -131,9 +134,10 @@ void main() {
     });
 
     test('send-logs outputFileComment is validated to 4–60 chars client-side', () {
-      expect(inspectionCommentError('abc', isArabic: false), isNotNull);
-      expect(inspectionCommentError('roadside check', isArabic: false), isNull);
-      expect(inspectionCommentError('x' * 61, isArabic: false), isNotNull);
+      final loc = lookupAppLocalizations(const Locale('en'));
+      expect(inspectionCommentError('abc', loc: loc), isNotNull);
+      expect(inspectionCommentError('roadside check', loc: loc), isNull);
+      expect(inspectionCommentError('x' * 61, loc: loc), isNotNull);
     });
   });
 

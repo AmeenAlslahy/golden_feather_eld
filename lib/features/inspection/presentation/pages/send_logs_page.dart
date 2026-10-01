@@ -39,7 +39,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   bool _isSending = false;
   bool _sent = false;
 
-  bool get _arabic => Localizations.localeOf(context).languageCode == 'ar';
 
   @override
   void initState() {
@@ -68,19 +67,19 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   bool get _canSend {
     if (_isSending) return false;
     if (widget.isEmailMode && !_emailValid) return false;
-    return inspectionCommentError(_commentController.text) == null;
+    return inspectionCommentError(_commentController.text, loc: context.loc) == null;
   }
 
   Future<void> _handleSend() async {
     if (widget.isEmailMode && !_emailValid) {
-      _snack(_arabic ? 'أدخل بريداً صالحاً.' : 'Enter a valid email.');
+      _snack(context.loc.enterValidEmail);
       return;
     }
     // SRS 8.4: output-file comment 4–60 on both channels (the email screen
     // starts with a default the officer may replace).
     final commentError = inspectionCommentError(
       _commentController.text,
-      isArabic: _arabic,
+      loc: context.loc,
     );
     if (commentError != null) {
       _snack(commentError);
@@ -140,9 +139,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   @override
   Widget build(BuildContext context) {
     final message = ref.watch(inspectionProvider).transferMessage;
-    final title = widget.isEmailMode
-        ? (_arabic ? 'بريد السجلات' : 'Email Logs')
-        : (_arabic ? 'إرسال السجلات' : 'Send Logs');
+    final loc = context.loc;
+    final title = widget.isEmailMode ? loc.emailLogs : loc.sendLogs;
 
     return Scaffold(
       appBar: AppBar(
@@ -157,10 +155,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Text(
-                  message ??
-                      (_arabic
-                          ? 'قبل الخادم طلب النقل.'
-                          : 'The server accepted the transfer request.'),
+                  message ?? loc.transferAccepted,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
@@ -174,11 +169,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   // Reference layout (screenshots 3 / 9): one heading line,
                   // one or two labelled underline fields, one SEND button.
                   Text(
-                    widget.isEmailMode
-                        ? (_arabic
-                              ? 'إرسال السجلات عبر البريد'
-                              : 'Send logs via email')
-                        : (_arabic ? 'إرسال 8 سجلات' : 'Send 8 Logs'),
+                    widget.isEmailMode ? loc.sendLogsViaEmail : loc.send8Logs,
                     style: TextStyle(
                       fontSize: 18,
                       color: AppColors.textSecondaryFor(
@@ -188,7 +179,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   if (widget.isEmailMode) ...[
-                    _FieldLabel(_arabic ? 'بريد المستلم' : 'Recipient Email'),
+                    _FieldLabel(loc.recipientEmail),
                     AppTextField(
                       controller: _emailController,
                       hint: 'some@email.com',
@@ -196,20 +187,18 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       isUnderlined: true,
                     ),
                   ] else ...[
-                    _FieldLabel(_arabic ? 'تعليق' : 'Comment'),
+                    _FieldLabel(loc.comment),
                     AppTextField(
                       controller: _commentController,
                       hint: '',
                       isUnderlined: true,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    _FieldLabel(
-                      _arabic ? 'نوع نقل البيانات' : 'Data Transfer Type',
-                    ),
+                    _FieldLabel(loc.dataTransferType),
                     Padding(
                       padding: const EdgeInsets.only(top: 6, bottom: 10),
                       child: Text(
-                        _arabic ? 'بريد إلكتروني' : 'Email',
+                        loc.email,
                         style: TextStyle(
                           fontSize: 16,
                           color: AppColors.textPrimaryFor(
@@ -222,7 +211,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   ],
                   const SizedBox(height: 40),
                   AppButton(
-                    label: _arabic ? 'إرسال' : 'SEND',
+                    label: loc.sendAction,
                     type: _canSend ? EldButtonType.agree : EldButtonType.send,
                     isLoading: _isSending,
                     onPressed: _handleSend,

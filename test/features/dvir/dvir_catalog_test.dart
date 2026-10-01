@@ -1,3 +1,5 @@
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/dvir/domain/dvir_catalog.dart';
 import 'package:golden_feather_eld/features/dvir/domain/dvir_submission.dart';
@@ -22,10 +24,10 @@ void main() {
     expect(items, isNotNull);
     expect(items!.length, 2);
     expect(items.first.code, 'BRAKES_SERVICE');
-    expect(items.first.label(true), 'مكابح الخدمة');
+    expect(items.first.label(lookupAppLocalizations(const Locale('ar'))), 'مكابح الخدمة');
     expect(items.first.critical, isTrue);
     expect(items.last.code, 'HORN');
-    expect(items.last.label(true), 'Horn');
+    expect(items.last.label(lookupAppLocalizations(const Locale('ar'))), 'Horn');
   });
 
   test('an unreadable body is null, not an empty catalog', () {

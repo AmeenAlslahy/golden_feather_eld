@@ -116,9 +116,7 @@ class FormTab extends ConsumerWidget {
               if (!context.mounted) return;
               saved.fold(
                 (error) {
-                  final isArabic =
-                      Localizations.localeOf(context).languageCode == 'ar';
-                  AppFeedback.error(context, anyErrorUserMessage(error, isArabic: isArabic));
+                  AppFeedback.error(context, anyErrorUserMessage(error, loc: AppLocalizations.of(context)!));
                 },
                 (json) {
                   final read = readSavedForm(json);

@@ -9,6 +9,7 @@ import '../../../../../../routes.dart';
 import '../../../../../../core/error/user_facing_message.dart';
 import '../../../../../../core/extensions/context_extensions.dart';
 import '../../../../../../core/widgets/eld_retry_view.dart';
+import '../../../../../../l10n/app_localizations.dart';
 
 /// SRS 5.2 — Graph-Grid + the day's duty-status events.
 ///
@@ -32,7 +33,7 @@ class EventsTab extends ConsumerWidget {
         return EldRetryView(
           message: anyErrorUserMessage(
             logsState.eventsError!,
-            isArabic: Localizations.localeOf(context).languageCode == 'ar',
+                loc: AppLocalizations.of(context)!,
           ),
           onRetry: () =>
               ref.read(logsProvider.notifier).loadSelectedLogEvents(),

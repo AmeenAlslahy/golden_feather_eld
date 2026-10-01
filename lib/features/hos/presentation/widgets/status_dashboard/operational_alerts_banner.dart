@@ -36,28 +36,22 @@ class OperationalAlertsBanner extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final (color, icon, text) = switch (alerts.connectionStatus) {
       ConnectionStatus.warning => (
           AppColors.warningYellow,
           Icons.info_outline,
-          isArabic
-              ? 'الاتصال ضعيف. قد تتأخر بعض البيانات.'
-              : 'Weak connection. Some data may be delayed.',
+          loc.weakConnectionDelayedData,
         ),
       ConnectionStatus.disconnected => (
           AppColors.dangerRed,
           Icons.cloud_off,
-          isArabic
-              ? 'لا يوجد اتصال بالإنترنت.'
-              : 'No internet connection.',
+          loc.noInternetConnection,
         ),
       ConnectionStatus.unknown => (
           AppColors.textSecondaryFor(Theme.of(context).brightness),
           Icons.info_outline,
-          isArabic
-              ? 'حالة الاتصال غير معروفة.'
-              : 'Connection status is unknown.',
+          loc.connectionStatusUnknown,
         ),
       ConnectionStatus.ok => (
           AppColors.successGreen,

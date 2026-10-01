@@ -1,3 +1,5 @@
+import '../../../../l10n/app_localizations.dart';
+
 class ConnectivityStatus {
   final String? connectionStatus;
   final String? vehicleName;
@@ -116,9 +118,9 @@ bool isMacAddress(String value) =>
 /// Field error for the ELD MAC input, or null when acceptable.
 /// Only "required" is enforced: the identifier printed on real devices is not
 /// always colon-separated, so the format is not rejected client-side.
-String? macAddressError(String? value, {required bool isArabic}) {
+String? macAddressError(String? value, {required AppLocalizations loc}) {
   if ((value?.trim() ?? '').isEmpty) {
-    return isArabic ? 'عنوان MAC مطلوب.' : 'MAC address is required.';
+    return loc.macAddressRequired;
   }
   return null;
 }

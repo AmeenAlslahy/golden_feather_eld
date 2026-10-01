@@ -63,7 +63,6 @@ void main() {
       final original = LogEventModel(
         id: 'local-1',
         status: 'SB',
-        statusArabic: 'النوم',
         startTime: DateTime(2026, 9, 24, 22, 0),
         duration: const Duration(hours: 8),
         location: 'Truck stop',

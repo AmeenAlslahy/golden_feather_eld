@@ -21,7 +21,6 @@ class EldRetryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -35,7 +34,7 @@ class EldRetryView extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             IconButton(
-              tooltip: isArabic ? 'إعادة المحاولة' : 'Retry',
+              tooltip: context.loc.retryButton,
               iconSize: 40,
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),

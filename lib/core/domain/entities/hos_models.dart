@@ -6,15 +6,11 @@ import 'package:equatable/equatable.dart';
 
 /// حالات الخدمة المعتمدة من FMCSA
 enum DutyStatus {
-  offDuty('Off Duty', 'خارج الخدمة'),
-  sleeperBerth('Sleeper Berth', 'النوم'),
-  onDutyNotDriving('On Duty', 'على أهبة العمل'),
-  driving('Driving', 'قيادة'),
-  personalUse('Personal Use', 'استخدام شخصي');
-
-  final String englishName;
-  final String arabicName;
-  const DutyStatus(this.englishName, this.arabicName);
+  offDuty,
+  sleeperBerth,
+  onDutyNotDriving,
+  driving,
+  personalUse;
 
   String toShortCode() {
     switch (this) {
@@ -257,14 +253,10 @@ enum HosViolationType {
 
 /// مستوى الانتهاك
 enum ViolationLevel {
-  minor('بسيط', 'Minor'),
-  medium('متوسط', 'Medium'),
-  high('عالي', 'High'),
-  critical('حرج', 'Critical');
-
-  final String arabicName;
-  final String englishName;
-  const ViolationLevel(this.arabicName, this.englishName);
+  minor,
+  medium,
+  high,
+  critical;
 }
 
 /// نموذج انتهاك

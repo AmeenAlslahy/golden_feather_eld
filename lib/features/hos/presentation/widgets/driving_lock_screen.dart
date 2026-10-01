@@ -12,8 +12,8 @@ class DrivingLockScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    
+    final loc = context.loc;
+
     return Container(
       color: Colors.black.withValues(alpha: 0.9), // خلفية داكنة جداً
       width: double.infinity,
@@ -35,7 +35,7 @@ class DrivingLockScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
-              isArabic ? 'المركبة في حالة حركة' : 'Vehicle in Motion',
+              loc.vehicleInMotionTitle,
               style: context.styles.pageTitle.copyWith(color: AppColors.white),
               textAlign: TextAlign.center,
             ),
@@ -43,9 +43,7 @@ class DrivingLockScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Text(
-                isArabic 
-                    ? 'التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.'
-                    : 'To comply with FMCSA regulations and safety rules, the application is locked while driving. It will unlock when the vehicle stops.',
+                loc.vehicleInMotionDesc,
                 style: context.styles.body.copyWith(color: AppColors.white),
                 textAlign: TextAlign.center,
               ),

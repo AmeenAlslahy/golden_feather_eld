@@ -1,36 +1,27 @@
 // lib/core/error/user_facing_message.dart
 import 'app_error.dart';
 import 'failure.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Message shown to the driver. Never the exception, stack, or `toString()`.
-String anyErrorUserMessage(Object error, {required bool isArabic}) {
-  if (error is AppError) return appErrorUserMessage(error, isArabic: isArabic);
+String anyErrorUserMessage(Object error, {required AppLocalizations loc}) {
+  if (error is AppError) return appErrorUserMessage(error, loc: loc);
   if (error is Failure) {
     if (error is NetworkFailure || error.message == 'noInternet') {
-      return isArabic
-          ? 'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.'
-          : 'No internet connection. Check the network and try again.';
+      return loc.errNoInternet;
     }
-    return isArabic
-        ? 'تعذر إكمال الطلب. أعد المحاولة.'
-        : 'The request could not be completed. Try again.';
+    return loc.errRequestFailed;
   }
   if (error is String) {
     final text = error.trim();
-    if (text == 'noInternet') {
-      return isArabic
-          ? 'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.'
-          : 'No internet connection. Check the network and try again.';
-    }
+    if (text == 'noInternet') return loc.errNoInternet;
     // Only accept strings that look like safe, curated messages.
     if (_isSafeUserFacingText(text)) return text;
   }
-  return isArabic
-      ? 'تعذر إكمال الطلب. تحقق من الشبكة ثم أعد المحاولة.'
-      : 'The request could not be completed. Check the network and try again.';
+  return loc.errRequestFailedNetwork;
 }
 
-String appErrorUserMessage(AppError error, {required bool isArabic}) {
+String appErrorUserMessage(AppError error, {required AppLocalizations loc}) {
   // Server-provided messages are only surfaced when they pass a strict
   // allow-list check (no PII, no stack dumps, no framework names).
   final server = error.context?['serverMessage'];
@@ -43,27 +34,13 @@ String appErrorUserMessage(AppError error, {required bool isArabic}) {
   }
 
   return switch (error) {
-    NetworkError() => isArabic
-        ? 'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.'
-        : 'Could not reach the server. Check the network and try again.',
-    ValidationError() => isArabic
-        ? 'الخادم رفض الطلب.'
-        : 'The server rejected this request.',
-    SessionExpiredError() => isArabic
-        ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.'
-        : 'The session expired. Sign in again.',
-    PermissionError() => isArabic
-        ? 'ليست لديك صلاحية لهذا الإجراء.'
-        : 'You are not allowed to do this.',
-    NotFoundError() => isArabic
-        ? 'العنصر غير موجود على الخادم.'
-        : 'The server did not find this item.',
-    ServerError() => isArabic
-        ? 'حدث خطأ في الخادم. أعد المحاولة.'
-        : 'The server returned an error. Try again.',
-    _ => isArabic
-        ? 'تعذر إكمال الطلب.'
-        : 'The request could not be completed.',
+    NetworkError() => loc.errCannotReachServer,
+    ValidationError() => loc.errServerRejected,
+    SessionExpiredError() => loc.errSessionExpiredAction,
+    PermissionError() => loc.errPermissionDenied,
+    NotFoundError() => loc.errNotFound,
+    ServerError() => loc.errServerError,
+    _ => loc.errGeneric,
   };
 }
 

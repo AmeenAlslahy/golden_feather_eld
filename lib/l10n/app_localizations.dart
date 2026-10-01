@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_ar.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +97,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
     Locale('en'),
+    Locale('es'),
   ];
 
   /// No description provided for @auditTrail.
@@ -539,7 +541,7 @@ abstract class AppLocalizations {
   /// No description provided for @startAction.
   ///
   /// In ar, this message translates to:
-  /// **'بدء الخدمة'**
+  /// **'بدء'**
   String get startAction;
 
   /// No description provided for @stopAction.
@@ -1937,7 +1939,7 @@ abstract class AppLocalizations {
   /// No description provided for @email.
   ///
   /// In ar, this message translates to:
-  /// **'البريد الإلكتروني / اسم المستخدم'**
+  /// **'بريد إلكتروني'**
   String get email;
 
   /// No description provided for @emailRequired.
@@ -2303,7 +2305,7 @@ abstract class AppLocalizations {
   /// No description provided for @emailLogs.
   ///
   /// In ar, this message translates to:
-  /// **'إرسال عبر البريد'**
+  /// **'بريد السجلات'**
   String get emailLogs;
 
   /// No description provided for @endInspection.
@@ -4201,6 +4203,1338 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة.'**
   String get certifyLegalStatement;
+
+  /// No description provided for @errNoInternet.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.'**
+  String get errNoInternet;
+
+  /// No description provided for @errRequestFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر إكمال الطلب. أعد المحاولة.'**
+  String get errRequestFailed;
+
+  /// No description provided for @errRequestFailedNetwork.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر إكمال الطلب. تحقق من الشبكة ثم أعد المحاولة.'**
+  String get errRequestFailedNetwork;
+
+  /// No description provided for @errCannotReachServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.'**
+  String get errCannotReachServer;
+
+  /// No description provided for @errServerRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم رفض الطلب.'**
+  String get errServerRejected;
+
+  /// No description provided for @errSessionExpiredAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت الجلسة. سجّل الدخول مرة أخرى.'**
+  String get errSessionExpiredAction;
+
+  /// No description provided for @errPermissionDenied.
+  ///
+  /// In ar, this message translates to:
+  /// **'ليست لديك صلاحية لهذا الإجراء.'**
+  String get errPermissionDenied;
+
+  /// No description provided for @errNotFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'العنصر غير موجود على الخادم.'**
+  String get errNotFound;
+
+  /// No description provided for @errServerError.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدث خطأ في الخادم. أعد المحاولة.'**
+  String get errServerError;
+
+  /// No description provided for @errGeneric.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر إكمال الطلب.'**
+  String get errGeneric;
+
+  /// No description provided for @enterAReasonForManualRecording.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سبب التسجيل اليدوي.'**
+  String get enterAReasonForManualRecording;
+
+  /// No description provided for @couldNotUpdateManualRecordingM.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحديث وضع التسجيل اليدوي. أعد المحاولة.'**
+  String get couldNotUpdateManualRecordingM;
+
+  /// No description provided for @unableToConnectToEld.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر الاتصال بجهاز ELD.'**
+  String get unableToConnectToEld;
+
+  /// No description provided for @checkBluetoothAndRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من تشغيل الجهاز والبلوتوث ثم أعد المحاولة.'**
+  String get checkBluetoothAndRetry;
+
+  /// No description provided for @checkNetworkAndRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقق من الشبكة والجهاز ثم أعد المحاولة.'**
+  String get checkNetworkAndRetry;
+
+  /// No description provided for @driverSessionMissingSignIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة السائق غير موجودة. سجّل الدخول قبل التفتيش.'**
+  String get driverSessionMissingSignIn;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخطي'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'التالي'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingGetStarted.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ الآن'**
+  String get onboardingGetStarted;
+
+  /// No description provided for @onboardingTitle1.
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعاتك تُسجَّل تلقائياً'**
+  String get onboardingTitle1;
+
+  /// No description provided for @onboardingBody1.
+  ///
+  /// In ar, this message translates to:
+  /// **'يتتبع جهاز ELD حالة قيادتك مقابل حدود FMCSA لحظة تحرك المركبة — بلا أوراق وبلا تخمين.'**
+  String get onboardingBody1;
+
+  /// No description provided for @onboardingTitle2.
+  ///
+  /// In ar, this message translates to:
+  /// **'افحص مركبتك بثقة'**
+  String get onboardingTitle2;
+
+  /// No description provided for @onboardingBody2.
+  ///
+  /// In ar, this message translates to:
+  /// **'فحص يومي قبل وبعد الرحلة، تتبع العيوب مع شهادات الإصلاح، ومراجعة §396.13 — كل ذلك في مكان واحد.'**
+  String get onboardingBody2;
+
+  /// No description provided for @onboardingTitle3.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز للمفتش دائماً'**
+  String get onboardingTitle3;
+
+  /// No description provided for @onboardingBody3.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلاتك وحزمتك القانونية وخيارات النقل على متن الجهاز — حتى بلا إنترنت على الطريق.'**
+  String get onboardingBody3;
+
+  /// No description provided for @startedOnDate.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدأ: {date}'**
+  String startedOnDate(Object date);
+
+  /// No description provided for @tableTimeEt.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت ET'**
+  String get tableTimeEt;
+
+  /// No description provided for @certEventStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتماد · {status}'**
+  String certEventStatus(Object status);
+
+  /// No description provided for @eventCodeNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز: {code}'**
+  String eventCodeNote(Object code);
+
+  /// No description provided for @originNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'المصدر: {origin}'**
+  String originNote(Object origin);
+
+  /// No description provided for @notesNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظات: {notes}'**
+  String notesNote(Object notes);
+
+  /// No description provided for @inspectionCommentErrorLength.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب أن يكون التعليق بين 4 و60 حرفاً.'**
+  String get inspectionCommentErrorLength;
+
+  /// No description provided for @enterValidEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل بريداً صالحاً.'**
+  String get enterValidEmail;
+
+  /// No description provided for @transferAccepted.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل الخادم طلب النقل.'**
+  String get transferAccepted;
+
+  /// No description provided for @sendLogsViaEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال السجلات عبر البريد'**
+  String get sendLogsViaEmail;
+
+  /// No description provided for @send8Logs.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال 8 سجلات'**
+  String get send8Logs;
+
+  /// No description provided for @recipientEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'بريد المستلم'**
+  String get recipientEmail;
+
+  /// No description provided for @comment.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعليق'**
+  String get comment;
+
+  /// No description provided for @dataTransferType.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع نقل البيانات'**
+  String get dataTransferType;
+
+  /// No description provided for @sendAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get sendAction;
+
+  /// No description provided for @inspectLogs24.
+  ///
+  /// In ar, this message translates to:
+  /// **'افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة'**
+  String get inspectLogs24;
+
+  /// No description provided for @setPinGuidance.
+  ///
+  /// In ar, this message translates to:
+  /// **'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط'**
+  String get setPinGuidance;
+
+  /// No description provided for @eldCertifies.
+  ///
+  /// In ar, this message translates to:
+  /// **'يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.'**
+  String get eldCertifies;
+
+  /// No description provided for @notAllowedByServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متاح لهذا الحساب حسب الخادم.'**
+  String get notAllowedByServer;
+
+  /// No description provided for @startInspectionUpper.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدء التفتيش'**
+  String get startInspectionUpper;
+
+  /// No description provided for @serverDoesNotAllow.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم لا يسمح ببدء التفتيش الآن.'**
+  String get serverDoesNotAllow;
+
+  /// No description provided for @sendLogsFor24.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة'**
+  String get sendLogsFor24;
+
+  /// No description provided for @sendLogsToOfficer.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل سجلاتك للضابط إذا طلب ذلك'**
+  String get sendLogsToOfficer;
+
+  /// No description provided for @sendLogsUpper.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال السجلات'**
+  String get sendLogsUpper;
+
+  /// No description provided for @emailLogs24Pdf.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF'**
+  String get emailLogs24Pdf;
+
+  /// No description provided for @emailLogsPdf.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسل سجلاتك بصيغة PDF'**
+  String get emailLogsPdf;
+
+  /// No description provided for @emailLogsUpper.
+  ///
+  /// In ar, this message translates to:
+  /// **'بريد السجلات'**
+  String get emailLogsUpper;
+
+  /// No description provided for @infoPacketUpper.
+  ///
+  /// In ar, this message translates to:
+  /// **'حزمة المعلومات'**
+  String get infoPacketUpper;
+
+  /// No description provided for @inspectionPinTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رمز التفتيش'**
+  String get inspectionPinTitle;
+
+  /// No description provided for @enter4Digits.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز يجب أن يكون 4 أرقام.'**
+  String get enter4Digits;
+
+  /// No description provided for @pinsDoNotMatch.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمزان غير متطابقين.'**
+  String get pinsDoNotMatch;
+
+  /// No description provided for @pinLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز'**
+  String get pinLabel;
+
+  /// No description provided for @confirmPinLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الرمز'**
+  String get confirmPinLabel;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get cancelAction;
+
+  /// No description provided for @enterInspectionPin.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز التفتيش.'**
+  String get enterInspectionPin;
+
+  /// No description provided for @incorrectPin.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرمز غير صحيح.'**
+  String get incorrectPin;
+
+  /// No description provided for @driverExit.
+  ///
+  /// In ar, this message translates to:
+  /// **'خروج السائق'**
+  String get driverExit;
+
+  /// No description provided for @exitAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'خروج'**
+  String get exitAction;
+
+  /// No description provided for @enterNewPinOfficer.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز التفتيش الجديد الذي سيتم إعطاؤه للضابط'**
+  String get enterNewPinOfficer;
+
+  /// No description provided for @enterSamePinToExit.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل الرمز نفسه للخروج من وضع التفتيش'**
+  String get enterSamePinToExit;
+
+  /// No description provided for @setPinGuidanceDialog.
+  ///
+  /// In ar, this message translates to:
+  /// **'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.'**
+  String get setPinGuidanceDialog;
+
+  /// No description provided for @enterPinToExitGuidance.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل رمز التفتيش الذي عيّنته عند البدء. المفتش لا يخرج من هنا.'**
+  String get enterPinToExitGuidance;
+
+  /// No description provided for @menuTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'القائمة'**
+  String get menuTitle;
+
+  /// No description provided for @vehicleInMotionTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة في حالة حركة'**
+  String get vehicleInMotionTitle;
+
+  /// No description provided for @vehicleInMotionDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.'**
+  String get vehicleInMotionDesc;
+
+  /// No description provided for @weakConnectionDelayedData.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال ضعيف. قد تتأخر بعض البيانات.'**
+  String get weakConnectionDelayedData;
+
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالإنترنت.'**
+  String get noInternetConnection;
+
+  /// No description provided for @connectionStatusUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الاتصال غير معروفة.'**
+  String get connectionStatusUnknown;
+
+  /// No description provided for @driveLimitFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'حد القيادة {drive} ساعة'**
+  String driveLimitFormat(String drive);
+
+  /// No description provided for @shiftLimitFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'حد الخدمة {shift} ساعة'**
+  String shiftLimitFormat(String shift);
+
+  /// No description provided for @breakLimitFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'استراحة {rest} دقيقة'**
+  String breakLimitFormat(String rest);
+
+  /// No description provided for @usedFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'{description} · مستخدم'**
+  String usedFormat(String description);
+
+  /// No description provided for @noticeTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه'**
+  String get noticeTitle;
+
+  /// No description provided for @gpsTurnedOff.
+  ///
+  /// In ar, this message translates to:
+  /// **'نظام تحديد المواقع مغلق.'**
+  String get gpsTurnedOff;
+
+  /// No description provided for @serverReportsEldAlert.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.'**
+  String get serverReportsEldAlert;
+
+  /// No description provided for @operationalAlertTooltip.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيه تشغيلي'**
+  String get operationalAlertTooltip;
+
+  /// No description provided for @noInternetBanner.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.'**
+  String get noInternetBanner;
+
+  /// No description provided for @dvirSatisfactory.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة المركبة مرضية'**
+  String get dvirSatisfactory;
+
+  /// No description provided for @dvirHasDefects.
+  ///
+  /// In ar, this message translates to:
+  /// **'توجد عيوب'**
+  String get dvirHasDefects;
+
+  /// No description provided for @dvirDefectsCorrected.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إصلاح العيوب'**
+  String get dvirDefectsCorrected;
+
+  /// No description provided for @dvirDefectsNotCorrected.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيوب لا تستوجب الإصلاح'**
+  String get dvirDefectsNotCorrected;
+
+  /// No description provided for @dvirDefectRecorded.
+  ///
+  /// In ar, this message translates to:
+  /// **'— يوجد عيب مسجّل'**
+  String get dvirDefectRecorded;
+
+  /// No description provided for @dvirNoRepairCert.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد تصديق إصلاح بعد'**
+  String get dvirNoRepairCert;
+
+  /// No description provided for @dvirSetByCarrier.
+  ///
+  /// In ar, this message translates to:
+  /// **'يحدّدها الناقل لا السائق'**
+  String get dvirSetByCarrier;
+
+  /// No description provided for @dvirTimeUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الفحص غير متاح. اتصل ثم أعد المحاولة.'**
+  String get dvirTimeUnavailable;
+
+  /// No description provided for @dvirSavedCannotEdit.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.'**
+  String get dvirSavedCannotEdit;
+
+  /// No description provided for @dvirSignatureRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'التوقيع مطلوب.'**
+  String get dvirSignatureRequired;
+
+  /// No description provided for @dvirDriverSessionMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.'**
+  String get dvirDriverSessionMissing;
+
+  /// No description provided for @dvirVehicleIdMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'معرّف المركبة مفقود. اختر مركبة قبل التوقيع.'**
+  String get dvirVehicleIdMissing;
+
+  /// No description provided for @dvirPrevNoServerId.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.'**
+  String get dvirPrevNoServerId;
+
+  /// No description provided for @dvirPreviousInspection.
+  ///
+  /// In ar, this message translates to:
+  /// **'الفحص السابق'**
+  String get dvirPreviousInspection;
+
+  /// No description provided for @dvirReviewBeforeDriving.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع التقرير السابق ووقّع عليه قبل القيادة.'**
+  String get dvirReviewBeforeDriving;
+
+  /// No description provided for @dvirRecordedDefects.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيوب المسجّلة:'**
+  String get dvirRecordedDefects;
+
+  /// No description provided for @dvirNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد عيوب.'**
+  String get dvirNone;
+
+  /// No description provided for @dvirRepairStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الإصلاح: '**
+  String get dvirRepairStatus;
+
+  /// No description provided for @dvirReviewed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تمت المراجعة'**
+  String get dvirReviewed;
+
+  /// No description provided for @dvirLocationUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع غير متاح'**
+  String get dvirLocationUnavailable;
+
+  /// No description provided for @dvirCompanyUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشركة غير متاحة'**
+  String get dvirCompanyUnavailable;
+
+  /// No description provided for @dvirTimeUnavailableShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت غير متاح'**
+  String get dvirTimeUnavailableShort;
+
+  /// No description provided for @dvirInsertDvir.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدراج تقرير فحص (DVIR)'**
+  String get dvirInsertDvir;
+
+  /// No description provided for @dvirPreviousReviewNotice.
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة التقرير السابق — فتح التقرير لا يعد مراجعة له.'**
+  String get dvirPreviousReviewNotice;
+
+  /// No description provided for @dvirTimeET.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوقت'**
+  String get dvirTimeET;
+
+  /// No description provided for @dvirOdometerMi.
+  ///
+  /// In ar, this message translates to:
+  /// **'المسافة'**
+  String get dvirOdometerMi;
+
+  /// No description provided for @dvirOdometerHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'المسافة'**
+  String get dvirOdometerHint;
+
+  /// No description provided for @company.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشركة'**
+  String get company;
+
+  /// No description provided for @remarks.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظات'**
+  String get remarks;
+
+  /// No description provided for @dvirImageNotAvailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة غير متاحة.'**
+  String get dvirImageNotAvailable;
+
+  /// No description provided for @dvirClearSignature.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح التوقيع'**
+  String get dvirClearSignature;
+
+  /// No description provided for @dvirSigned.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التوقيع'**
+  String get dvirSigned;
+
+  /// No description provided for @dvirSign.
+  ///
+  /// In ar, this message translates to:
+  /// **'توقيع'**
+  String get dvirSign;
+
+  /// No description provided for @removeAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة'**
+  String get removeAction;
+
+  /// No description provided for @addDefects.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة عيوب'**
+  String get addDefects;
+
+  /// No description provided for @dvirDefects396_11.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيوب (§396.11)'**
+  String get dvirDefects396_11;
+
+  /// No description provided for @dvirLoadDefectsFail.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل قائمة العيوب من الخادم.'**
+  String get dvirLoadDefectsFail;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get retryAction;
+
+  /// No description provided for @dvirCatalogEmpty.
+  ///
+  /// In ar, this message translates to:
+  /// **'القائمة فارغة.'**
+  String get dvirCatalogEmpty;
+
+  /// No description provided for @dvirSafetyAffecting.
+  ///
+  /// In ar, this message translates to:
+  /// **'يؤثر على السلامة'**
+  String get dvirSafetyAffecting;
+
+  /// No description provided for @dvirDescriptionOptional.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصف (اختياري)'**
+  String get dvirDescriptionOptional;
+
+  /// No description provided for @eldDiagnosticReading.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ قراءة حالة الاتصال...'**
+  String get eldDiagnosticReading;
+
+  /// No description provided for @eldDiagnosticDiagnosticFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشخيص: {diagnostics}'**
+  String eldDiagnosticDiagnosticFormat(String diagnostics);
+
+  /// No description provided for @eldDiagnosticMalfunctionFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'عطل: {malfunctions}'**
+  String eldDiagnosticMalfunctionFormat(String malfunctions);
+
+  /// No description provided for @eldDiagnosticLastValidDataFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر بيانات صالحة: {lastHeartbeat}'**
+  String eldDiagnosticLastValidDataFormat(String lastHeartbeat);
+
+  /// No description provided for @eldDiagnosticDataAgeFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'عمر البيانات: {dataAgeSeconds} ثانية'**
+  String eldDiagnosticDataAgeFormat(String dataAgeSeconds);
+
+  /// No description provided for @eldDiagnosticNotReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير جاهز للتشغيل الطبيعي.'**
+  String get eldDiagnosticNotReady;
+
+  /// No description provided for @eldDiagnosticDataNotReliable.
+  ///
+  /// In ar, this message translates to:
+  /// **'البيانات غير موثوقة.'**
+  String get eldDiagnosticDataNotReliable;
+
+  /// No description provided for @eldDiagnosticConnected.
+  ///
+  /// In ar, this message translates to:
+  /// **'متصل'**
+  String get eldDiagnosticConnected;
+
+  /// No description provided for @eldDiagnosticDisconnected.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متصل'**
+  String get eldDiagnosticDisconnected;
+
+  /// No description provided for @eldDiagnosticUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير متاح'**
+  String get eldDiagnosticUnavailable;
+
+  /// No description provided for @eldDiagnosticMalfunction.
+  ///
+  /// In ar, this message translates to:
+  /// **'عطل'**
+  String get eldDiagnosticMalfunction;
+
+  /// No description provided for @eldDiagnosticNoConnectionStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم لم يُرجع حالة اتصال.'**
+  String get eldDiagnosticNoConnectionStatus;
+
+  /// No description provided for @eldReadinessTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهزية ما قبل التشغيل'**
+  String get eldReadinessTitle;
+
+  /// No description provided for @eldReadinessChecking.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ فحص الجاهزية...'**
+  String get eldReadinessChecking;
+
+  /// No description provided for @eldReadinessReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز للتشغيل'**
+  String get eldReadinessReady;
+
+  /// No description provided for @eldReadinessNotReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير جاهز للتشغيل'**
+  String get eldReadinessNotReady;
+
+  /// No description provided for @eldReadinessRecommendedActionFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإجراء المقترح: {action}'**
+  String eldReadinessRecommendedActionFormat(String action);
+
+  /// No description provided for @eldReadinessDevicePaired.
+  ///
+  /// In ar, this message translates to:
+  /// **'الجهاز مقترن'**
+  String get eldReadinessDevicePaired;
+
+  /// No description provided for @eldReadinessConnectionActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاتصال نشط'**
+  String get eldReadinessConnectionActive;
+
+  /// No description provided for @eldReadinessMotionData.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات الحركة'**
+  String get eldReadinessMotionData;
+
+  /// No description provided for @eldReadinessLocationData.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات الموقع'**
+  String get eldReadinessLocationData;
+
+  /// No description provided for @eldReadinessEngineTelemetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات المحرك (ECM)'**
+  String get eldReadinessEngineTelemetry;
+
+  /// No description provided for @eldMalfunctionTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'في حال العطل (§395.34)'**
+  String get eldMalfunctionTitle;
+
+  /// No description provided for @eldMalfunctionStep1.
+  ///
+  /// In ar, this message translates to:
+  /// **'دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.'**
+  String get eldMalfunctionStep1;
+
+  /// No description provided for @eldMalfunctionStep2.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.'**
+  String get eldMalfunctionStep2;
+
+  /// No description provided for @eldMalfunctionStep3.
+  ///
+  /// In ar, this message translates to:
+  /// **'استمر بالتسجيل الورقي حتى إصلاح الجهاز.'**
+  String get eldMalfunctionStep3;
+
+  /// No description provided for @eldMalfunctionManualActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'التسجيل اليدوي مفعّل حالياً.'**
+  String get eldMalfunctionManualActive;
+
+  /// No description provided for @eldMalfunctionManualActiveWithReason.
+  ///
+  /// In ar, this message translates to:
+  /// **'التسجيل اليدوي مفعّل حالياً — {reason}.'**
+  String eldMalfunctionManualActiveWithReason(String reason);
+
+  /// No description provided for @eldMalfunctionEndManual.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء التسجيل اليدوي'**
+  String get eldMalfunctionEndManual;
+
+  /// No description provided for @eldMalfunctionServerNotAllow.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم لا يسمح بالتحويل إلى التسجيل اليدوي لهذه المركبة.'**
+  String get eldMalfunctionServerNotAllow;
+
+  /// No description provided for @eldMalfunctionStartManual.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدء التسجيل اليدوي'**
+  String get eldMalfunctionStartManual;
+
+  /// No description provided for @eldMalfunctionStartSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل بداية فترة التسجيل اليدوي على الخادم.'**
+  String get eldMalfunctionStartSuccess;
+
+  /// No description provided for @eldMalfunctionEndSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إنهاء التسجيل اليدوي والعودة إلى التسجيل الإلكتروني.'**
+  String get eldMalfunctionEndSuccess;
+
+  /// No description provided for @eldMalfunctionReasonStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب التسجيل اليدوي'**
+  String get eldMalfunctionReasonStart;
+
+  /// No description provided for @eldMalfunctionReasonEnd.
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب إنهاء التسجيل اليدوي'**
+  String get eldMalfunctionReasonEnd;
+
+  /// No description provided for @eldMalfunctionHintStart.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: انقطاع الاتصال بالجهاز'**
+  String get eldMalfunctionHintStart;
+
+  /// No description provided for @eldMalfunctionHintEnd.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: عاد اتصال الجهاز'**
+  String get eldMalfunctionHintEnd;
+
+  /// No description provided for @dvirListNoRecords.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد سجلات'**
+  String get dvirListNoRecords;
+
+  /// No description provided for @dvirListTotal.
+  ///
+  /// In ar, this message translates to:
+  /// **'إجمالي'**
+  String get dvirListTotal;
+
+  /// No description provided for @dvirListOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'عيوب مفتوحة'**
+  String get dvirListOpen;
+
+  /// No description provided for @dvirListSigned.
+  ///
+  /// In ar, this message translates to:
+  /// **'موقّعة'**
+  String get dvirListSigned;
+
+  /// No description provided for @dvirListOos.
+  ///
+  /// In ar, this message translates to:
+  /// **'خارج الخدمة'**
+  String get dvirListOos;
+
+  /// No description provided for @serverAcceptedDisconnected.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.'**
+  String get serverAcceptedDisconnected;
+
+  /// No description provided for @macAddressRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان MAC مطلوب.'**
+  String get macAddressRequired;
+
+  /// No description provided for @coDriverSelectLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر مساعد السائق'**
+  String get coDriverSelectLabel;
+
+  /// No description provided for @coDriverSelectHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرجاء اختيار مساعد السائق الخاص بك'**
+  String get coDriverSelectHint;
+
+  /// No description provided for @coDriverSwitchDrivers.
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل الأدوار'**
+  String get coDriverSwitchDrivers;
+
+  /// No description provided for @coDriverSwitchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.'**
+  String get coDriverSwitchHint;
+
+  /// No description provided for @coDriverSwitching.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري التبديل...'**
+  String get coDriverSwitching;
+
+  /// No description provided for @coDriverSwitchAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل'**
+  String get coDriverSwitchAction;
+
+  /// No description provided for @coDriverConfirmSwitchTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد التبديل'**
+  String get coDriverConfirmSwitchTitle;
+
+  /// No description provided for @coDriverConfirmSwitchBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.'**
+  String get coDriverConfirmSwitchBody;
+
+  /// No description provided for @coDriverRolesSwitchedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تبديل الأدوار'**
+  String get coDriverRolesSwitchedTitle;
+
+  /// No description provided for @coDriverRolesSwitchedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنت الآن السائق المساعد.\n{newPrimary} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.'**
+  String coDriverRolesSwitchedBody(String newPrimary);
+
+  /// No description provided for @coDriverDefaultNewPrimary.
+  ///
+  /// In ar, this message translates to:
+  /// **'السائق المساعد'**
+  String get coDriverDefaultNewPrimary;
+
+  /// No description provided for @coDriverNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا سائق مساعد'**
+  String get coDriverNone;
+
+  /// No description provided for @coDriverRefusalSessionMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة السائق غير موجودة. سجّل الدخول قبل التبديل.'**
+  String get coDriverRefusalSessionMissing;
+
+  /// No description provided for @coDriverRefusalStillDriving.
+  ///
+  /// In ar, this message translates to:
+  /// **'غيّر حالة الواجب قبل التسليم. التبديل لا يغيّر الحالة.'**
+  String get coDriverRefusalStillDriving;
+
+  /// No description provided for @coDriverRefusalMotionUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.'**
+  String get coDriverRefusalMotionUnknown;
+
+  /// No description provided for @coDriverRefusalThresholdMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'عتبة الحركة غير متوفرة من الإعداد.'**
+  String get coDriverRefusalThresholdMissing;
+
+  /// No description provided for @coDriverRefusalVehicleMoving.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تبديل الأدوار والمركبة تتحرك.'**
+  String get coDriverRefusalVehicleMoving;
+
+  /// No description provided for @coDriverRefusalCoDriverMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر سائقاً مساعداً قبل التبديل.'**
+  String get coDriverRefusalCoDriverMissing;
+
+  /// No description provided for @coDriverRefusalSameDriver.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن اختيار الحساب الحالي سائقاً مساعداً.'**
+  String get coDriverRefusalSameDriver;
+
+  /// No description provided for @coDriverLinkedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المساعد المرتبط'**
+  String get coDriverLinkedTitle;
+
+  /// No description provided for @coDriverLinkNotRead.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُقرأ الارتباط بعد.'**
+  String get coDriverLinkNotRead;
+
+  /// No description provided for @coDriverLinkNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا سائق مساعد مرتبط.'**
+  String get coDriverLinkNone;
+
+  /// No description provided for @coDriverTeamDrivingActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيادة جماعية نشطة'**
+  String get coDriverTeamDrivingActive;
+
+  /// No description provided for @coDriverTeamDrivingInactive.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيادة جماعية غير نشطة'**
+  String get coDriverTeamDrivingInactive;
+
+  /// No description provided for @coDriverHosIsolationReadError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر قراءة حالة عزل سجلات HOS.'**
+  String get coDriverHosIsolationReadError;
+
+  /// No description provided for @coDriverHosIsolated.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلات HOS معزولة'**
+  String get coDriverHosIsolated;
+
+  /// No description provided for @coDriverHosNotIsolated.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلات HOS غير معزولة'**
+  String get coDriverHosNotIsolated;
+
+  /// No description provided for @coDriverVehicleMissing.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر مركبة قبل ربط السائق المساعد.'**
+  String get coDriverVehicleMissing;
+
+  /// No description provided for @dvirDefectsNone.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد عيوب للتقرير عنها.'**
+  String get dvirDefectsNone;
+
+  /// No description provided for @dvirDefectsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تحديد {defectCount} عيوب.'**
+  String dvirDefectsCount(int defectCount);
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإسبانية'**
+  String get languageSpanish;
+
+  /// No description provided for @reCertificationRequiredMsg.
+  ///
+  /// In ar, this message translates to:
+  /// **'يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.'**
+  String get reCertificationRequiredMsg;
+
+  /// No description provided for @statusOff.
+  ///
+  /// In ar, this message translates to:
+  /// **'خارج الخدمة'**
+  String get statusOff;
+
+  /// No description provided for @statusSb.
+  ///
+  /// In ar, this message translates to:
+  /// **'مقصورة النوم'**
+  String get statusSb;
+
+  /// No description provided for @statusD.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيادة'**
+  String get statusD;
+
+  /// No description provided for @statusOn.
+  ///
+  /// In ar, this message translates to:
+  /// **'في الخدمة'**
+  String get statusOn;
+
+  /// No description provided for @statusPc.
+  ///
+  /// In ar, this message translates to:
+  /// **'استخدام شخصي'**
+  String get statusPc;
+
+  /// No description provided for @statusYm.
+  ///
+  /// In ar, this message translates to:
+  /// **'حركة ساحة'**
+  String get statusYm;
+
+  /// No description provided for @dvirPreTrip.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل الرحلة'**
+  String get dvirPreTrip;
+
+  /// No description provided for @dvirPostTrip.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد الرحلة'**
+  String get dvirPostTrip;
+
+  /// No description provided for @dvirSafeToDrive.
+  ///
+  /// In ar, this message translates to:
+  /// **'آمنة للقيادة'**
+  String get dvirSafeToDrive;
+
+  /// No description provided for @dvirNeedsRepair.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتطلب صيانة'**
+  String get dvirNeedsRepair;
+
+  /// No description provided for @dvirUnsafe.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير آمنة'**
+  String get dvirUnsafe;
+
+  /// No description provided for @dvirBrakes.
+  ///
+  /// In ar, this message translates to:
+  /// **'المكابح'**
+  String get dvirBrakes;
+
+  /// No description provided for @dvirTires.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإطارات'**
+  String get dvirTires;
+
+  /// No description provided for @dvirLights.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإضاءة'**
+  String get dvirLights;
+
+  /// No description provided for @dvirSteering.
+  ///
+  /// In ar, this message translates to:
+  /// **'أجهزة التوجيه'**
+  String get dvirSteering;
+
+  /// No description provided for @dvirTrailerCoupling.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلات المقطورة'**
+  String get dvirTrailerCoupling;
+
+  /// No description provided for @dvirEmergencyEquipment.
+  ///
+  /// In ar, this message translates to:
+  /// **'معدات الطوارئ'**
+  String get dvirEmergencyEquipment;
+
+  /// No description provided for @dvirEngine.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحرك'**
+  String get dvirEngine;
+
+  /// No description provided for @dvirFuelSystem.
+  ///
+  /// In ar, this message translates to:
+  /// **'نظام الوقود'**
+  String get dvirFuelSystem;
+
+  /// No description provided for @dvirExhaustSystem.
+  ///
+  /// In ar, this message translates to:
+  /// **'نظام العادم'**
+  String get dvirExhaustSystem;
+
+  /// No description provided for @dvirSuspension.
+  ///
+  /// In ar, this message translates to:
+  /// **'نظام التعليق'**
+  String get dvirSuspension;
+
+  /// No description provided for @dvirMirrors.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرايا'**
+  String get dvirMirrors;
+
+  /// No description provided for @dvirWindshield.
+  ///
+  /// In ar, this message translates to:
+  /// **'الزجاج الأمامي'**
+  String get dvirWindshield;
 }
 
 class _AppLocalizationsDelegate
@@ -4214,7 +5548,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['ar', 'en'].contains(locale.languageCode);
+      <String>['ar', 'en', 'es'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -4227,6 +5561,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsAr();
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
   }
 
   throw FlutterError(

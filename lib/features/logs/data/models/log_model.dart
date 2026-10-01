@@ -1,12 +1,10 @@
 import '../../domain/entities/daily_log.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 
 class LogEventModel extends LogEvent {
   const LogEventModel({
     required super.id,
     required super.status,
-    required super.statusArabic,
     required super.startTime,
     required super.duration,
     required super.location,
@@ -65,7 +63,6 @@ class LogEventModel extends LogEvent {
       id: json['id']?.toString() ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       status: code.shortCode,
-      statusArabic: _arabicName(code),
       startTime: startTimeStr != null
           ? DateTime.parse(startTimeStr).toLocal()
           : DateTime.now(),
@@ -81,16 +78,6 @@ class LogEventModel extends LogEvent {
   }
 
   static const double _kmToMiles = 0.621371;
-
-  static String _arabicName(DutyStatusCode code) => switch (code) {
-        DutyStatusCode.offDuty => DutyStatus.offDuty.arabicName,
-        DutyStatusCode.sleeperBerth => DutyStatus.sleeperBerth.arabicName,
-        DutyStatusCode.driving => DutyStatus.driving.arabicName,
-        DutyStatusCode.onDutyNotDriving =>
-          DutyStatus.onDutyNotDriving.arabicName,
-        DutyStatusCode.personalConveyance => DutyStatus.personalUse.arabicName,
-        DutyStatusCode.yardMove => 'حركة داخل الساحة',
-      };
 
   Map<String, dynamic> toJson() {
     return {
@@ -108,7 +95,6 @@ class LogEventModel extends LogEvent {
     return LogEventModel(
       id: entity.id,
       status: entity.status,
-      statusArabic: entity.statusArabic,
       startTime: entity.startTime,
       duration: entity.duration,
       location: entity.location,

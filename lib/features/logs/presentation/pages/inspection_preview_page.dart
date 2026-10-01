@@ -256,7 +256,7 @@ class _EventRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              event.statusArabic ?? event.status ?? '',
+              context.translateStatus(event.status ?? ''),
               style: _valueStyle(context).copyWith(
                 color: _getStatusColor(context, event.status),
                 fontWeight: AppTypography.semiBold,

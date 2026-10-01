@@ -137,8 +137,6 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
               id: e['id'] as String? ??
                   DateTime.now().millisecondsSinceEpoch.toString(),
               status: e['status'] as String,
-              statusArabic:
-                  e['statusArabic'] as String? ?? e['status'] as String,
               startTime: DateTime.parse(e['startTime'] as String),
               duration: Duration(
                   seconds: _readDurationSeconds(e)),
@@ -159,7 +157,6 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     return {
       'id': event.id,
       'status': event.status,
-      'statusArabic': event.statusArabic,
       'startTime': event.startTime.toIso8601String(),
       'durationSeconds': event.duration.inSeconds,
       'location': event.location,

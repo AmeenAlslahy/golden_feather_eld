@@ -4,6 +4,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/daily_log.dart';
 import '../../../../../core/utils/status_color_helper.dart';
 import 'expanded_content.dart';
+import '../../../../../../l10n/app_localizations.dart';
 
 /// 'HH:mm' + اختصار منطقة توقيت الحدث (3 أحرف إن توفرت)،
 /// دون اعتماد على DateTime.now() ودون رمي استثناء لاسم توقيت فارغ.
@@ -48,7 +49,6 @@ class LogEventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = StatusColorHelper.getStatusColor(event.status);
     final isExpanded = event.isExpanded;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return InkWell(
       onTap: onTap,
@@ -123,9 +123,7 @@ class LogEventTile extends StatelessWidget {
                                 if (_startedOnAnotherDay)
                                   Flexible(
                                     child: Text(
-                                      isArabic
-                                          ? 'بدأ: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'
-                                          : 'Started: ${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
+                                        AppLocalizations.of(context)!.startedOnDate('${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'),
                                       style:  TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondaryFor(Theme.of(context).brightness),

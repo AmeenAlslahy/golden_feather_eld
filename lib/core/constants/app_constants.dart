@@ -45,12 +45,9 @@ enum SyncStatus {
 
 /// حالة التفتيش
 enum InspectionStatus {
-  pending('قيد الانتظار'),
-  inProgress('قيد التنفيذ'),
-  completed('مكتمل'),
-  failed('فشل'),
-  requiresReview('يحتاج مراجعة');
-
-  final String arabicName;
-  const InspectionStatus(this.arabicName);
+  pending,
+  inProgress,
+  completed,
+  failed,
+  requiresReview;
 }

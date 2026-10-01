@@ -73,7 +73,7 @@
   "passwordError": "كلمة المرور خاطئة",
   "disclosureMessage": "يقوم هذا التطبيق بجمع بيانات الموقع والنشاط في الخلفية وإرسالها إلى الخادم المحدد.",
   "configurationMessage": "هل تريد تطبيق الإعدادات الجديدة؟",
-  "startAction": "بدء الخدمة",
+  "startAction": "بدء",
   "stopAction": "إيقاف الخدمة",
   "sosAction": "ارسال استغاثة",
   "home": "الرئيسية",
@@ -320,7 +320,7 @@
   "haveAccount": "لديك حساب بالفعل؟",
   "loginHere": "سجل دخولك هنا",
   "resetPassword": "استعادة كلمة المرور",
-  "email": "البريد الإلكتروني / اسم المستخدم",
+  "email": "بريد إلكتروني",
   "emailRequired": "البريد الإلكتروني مطلوب",
   "invalidEmailFormat": "صيغة البريد الإلكتروني غير صحيحة",
   "sendResetLink": "إرسال رابط الاستعادة",
@@ -381,7 +381,7 @@
   "screenLockedForOfficer": "الشاشة مقفلة لمراجعة الضابط",
   "unlockDriverOnly": "فك القفل (للسائق فقط)",
   "sendLogs": "إرسال السجلات",
-  "emailLogs": "إرسال عبر البريد",
+  "emailLogs": "بريد السجلات",
   "endInspection": "إنهاء التفتيش",
   "certified": "معتمد",
   "eldReport": "تقرير ELD",
@@ -735,5 +735,311 @@
   "responseInterrupted": "انقطعت العملية. أعد المحاولة.",
   "drawSignatureFirst": "ارسم التوقيع أولاً.",
   "drawYourSignatureHere": "ارسم توقيعك هنا",
-  "certifyLegalStatement": "أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة."
+  "certifyLegalStatement": "أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة.",
+  "errNoInternet": "لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.",
+  "errRequestFailed": "تعذر إكمال الطلب. أعد المحاولة.",
+  "errRequestFailedNetwork": "تعذر إكمال الطلب. تحقق من الشبكة ثم أعد المحاولة.",
+  "errCannotReachServer": "تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.",
+  "errServerRejected": "الخادم رفض الطلب.",
+  "errSessionExpiredAction": "انتهت الجلسة. سجّل الدخول مرة أخرى.",
+  "errPermissionDenied": "ليست لديك صلاحية لهذا الإجراء.",
+  "errNotFound": "العنصر غير موجود على الخادم.",
+  "errServerError": "حدث خطأ في الخادم. أعد المحاولة.",
+  "errGeneric": "تعذر إكمال الطلب.",
+  "enterAReasonForManualRecording": "اكتب سبب التسجيل اليدوي.",
+  "couldNotUpdateManualRecordingM": "تعذر تحديث وضع التسجيل اليدوي. أعد المحاولة.",
+  "unableToConnectToEld": "تعذر الاتصال بجهاز ELD.",
+  "checkBluetoothAndRetry": "تحقق من تشغيل الجهاز والبلوتوث ثم أعد المحاولة.",
+  "checkNetworkAndRetry": "تحقق من الشبكة والجهاز ثم أعد المحاولة.",
+  "driverSessionMissingSignIn": "جلسة السائق غير موجودة. سجّل الدخول قبل التفتيش.",
+  "onboardingSkip": "تخطي",
+  "onboardingNext": "التالي",
+  "onboardingGetStarted": "ابدأ الآن",
+  "onboardingTitle1": "ساعاتك تُسجَّل تلقائياً",
+  "onboardingBody1": "يتتبع جهاز ELD حالة قيادتك مقابل حدود FMCSA لحظة تحرك المركبة — بلا أوراق وبلا تخمين.",
+  "onboardingTitle2": "افحص مركبتك بثقة",
+  "onboardingBody2": "فحص يومي قبل وبعد الرحلة، تتبع العيوب مع شهادات الإصلاح، ومراجعة §396.13 — كل ذلك في مكان واحد.",
+  "onboardingTitle3": "جاهز للمفتش دائماً",
+  "onboardingBody3": "سجلاتك وحزمتك القانونية وخيارات النقل على متن الجهاز — حتى بلا إنترنت على الطريق.",
+  "startedOnDate": "بدأ: {date}",
+  "tableTimeEt": "الوقت ET",
+  "certEventStatus": "اعتماد · {status}",
+  "eventCodeNote": "الرمز: {code}",
+  "originNote": "المصدر: {origin}",
+  "notesNote": "ملاحظات: {notes}",
+  "inspectionCommentErrorLength": "يجب أن يكون التعليق بين 4 و60 حرفاً.",
+  "enterValidEmail": "أدخل بريداً صالحاً.",
+  "transferAccepted": "قبل الخادم طلب النقل.",
+  "sendLogsViaEmail": "إرسال السجلات عبر البريد",
+  "send8Logs": "إرسال 8 سجلات",
+  "recipientEmail": "بريد المستلم",
+  "comment": "تعليق",
+  "dataTransferType": "نوع نقل البيانات",
+  "sendAction": "إرسال",
+  "inspectLogs24": "افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة",
+  "setPinGuidance": "عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط",
+  "eldCertifies": "يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.",
+  "notAllowedByServer": "غير متاح لهذا الحساب حسب الخادم.",
+  "startInspectionUpper": "بدء التفتيش",
+  "serverDoesNotAllow": "الخادم لا يسمح ببدء التفتيش الآن.",
+  "sendLogsFor24": "أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة",
+  "sendLogsToOfficer": "أرسل سجلاتك للضابط إذا طلب ذلك",
+  "sendLogsUpper": "إرسال السجلات",
+  "emailLogs24Pdf": "أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF",
+  "emailLogsPdf": "أرسل سجلاتك بصيغة PDF",
+  "emailLogsUpper": "بريد السجلات",
+  "infoPacketUpper": "حزمة المعلومات",
+  "inspectionPinTitle": "رمز التفتيش",
+  "enter4Digits": "الرمز يجب أن يكون 4 أرقام.",
+  "pinsDoNotMatch": "الرمزان غير متطابقين.",
+  "pinLabel": "الرمز",
+  "confirmPinLabel": "تأكيد الرمز",
+  "cancelAction": "إلغاء",
+  "enterInspectionPin": "أدخل رمز التفتيش.",
+  "incorrectPin": "الرمز غير صحيح.",
+  "driverExit": "خروج السائق",
+  "exitAction": "خروج",
+  "enterNewPinOfficer": "أدخل رمز التفتيش الجديد الذي سيتم إعطاؤه للضابط",
+  "enterSamePinToExit": "أدخل الرمز نفسه للخروج من وضع التفتيش",
+  "setPinGuidanceDialog": "عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.",
+  "enterPinToExitGuidance": "أدخل رمز التفتيش الذي عيّنته عند البدء. المفتش لا يخرج من هنا.",
+  "menuTitle": "القائمة",
+  "vehicleInMotionTitle": "المركبة في حالة حركة",
+  "vehicleInMotionDesc": "التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.",
+  "weakConnectionDelayedData": "الاتصال ضعيف. قد تتأخر بعض البيانات.",
+  "noInternetConnection": "لا يوجد اتصال بالإنترنت.",
+  "connectionStatusUnknown": "حالة الاتصال غير معروفة.",
+  "driveLimitFormat": "حد القيادة {drive} ساعة",
+  "@driveLimitFormat": {
+    "placeholders": {
+      "drive": {
+        "type": "String"
+      }
+    }
+  },
+  "shiftLimitFormat": "حد الخدمة {shift} ساعة",
+  "@shiftLimitFormat": {
+    "placeholders": {
+      "shift": {
+        "type": "String"
+      }
+    }
+  },
+  "breakLimitFormat": "استراحة {rest} دقيقة",
+  "@breakLimitFormat": {
+    "placeholders": {
+      "rest": {
+        "type": "String"
+      }
+    }
+  },
+  "usedFormat": "{description} · مستخدم",
+  "@usedFormat": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeTitle": "تنبيه",
+  "gpsTurnedOff": "نظام تحديد المواقع مغلق.",
+  "serverReportsEldAlert": "الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.",
+  "operationalAlertTooltip": "تنبيه تشغيلي",
+  "noInternetBanner": "لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.",
+  "dvirSatisfactory": "حالة المركبة مرضية",
+  "dvirHasDefects": "توجد عيوب",
+  "dvirDefectsCorrected": "تم إصلاح العيوب",
+  "dvirDefectsNotCorrected": "العيوب لا تستوجب الإصلاح",
+  "dvirDefectRecorded": "— يوجد عيب مسجّل",
+  "dvirNoRepairCert": "لا يوجد تصديق إصلاح بعد",
+  "dvirSetByCarrier": "يحدّدها الناقل لا السائق",
+  "dvirTimeUnavailable": "وقت الفحص غير متاح. اتصل ثم أعد المحاولة.",
+  "dvirSavedCannotEdit": "لا يمكن تعديل تقرير محفوظ من هذا الجهاز.",
+  "dvirSignatureRequired": "التوقيع مطلوب.",
+  "dvirDriverSessionMissing": "جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.",
+  "dvirVehicleIdMissing": "معرّف المركبة مفقود. اختر مركبة قبل التوقيع.",
+  "dvirPrevNoServerId": "التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.",
+  "dvirPreviousInspection": "الفحص السابق",
+  "dvirReviewBeforeDriving": "راجع التقرير السابق ووقّع عليه قبل القيادة.",
+  "dvirRecordedDefects": "العيوب المسجّلة:",
+  "dvirNone": "لا توجد عيوب.",
+  "dvirRepairStatus": "حالة الإصلاح: ",
+  "dvirReviewed": "تمت المراجعة",
+  "dvirLocationUnavailable": "الموقع غير متاح",
+  "dvirCompanyUnavailable": "الشركة غير متاحة",
+  "dvirTimeUnavailableShort": "الوقت غير متاح",
+  "dvirInsertDvir": "إدراج تقرير فحص (DVIR)",
+  "dvirPreviousReviewNotice": "مراجعة التقرير السابق — فتح التقرير لا يعد مراجعة له.",
+  "dvirTimeET": "الوقت",
+  "dvirOdometerMi": "المسافة",
+  "dvirOdometerHint": "المسافة",
+  "company": "الشركة",
+  "remarks": "ملاحظات",
+  "dvirImageNotAvailable": "الصورة غير متاحة.",
+  "dvirClearSignature": "مسح التوقيع",
+  "dvirSigned": "تم التوقيع",
+  "dvirSign": "توقيع",
+  "removeAction": "إزالة",
+  "addDefects": "إضافة عيوب",
+  "dvirDefects396_11": "العيوب (§396.11)",
+  "dvirLoadDefectsFail": "تعذر تحميل قائمة العيوب من الخادم.",
+  "retryAction": "إعادة المحاولة",
+  "dvirCatalogEmpty": "القائمة فارغة.",
+  "dvirSafetyAffecting": "يؤثر على السلامة",
+  "dvirDescriptionOptional": "وصف (اختياري)",
+  "eldDiagnosticReading": "جارٍ قراءة حالة الاتصال...",
+  "eldDiagnosticDiagnosticFormat": "تشخيص: {diagnostics}",
+  "@eldDiagnosticDiagnosticFormat": {
+    "placeholders": {
+      "diagnostics": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticMalfunctionFormat": "عطل: {malfunctions}",
+  "@eldDiagnosticMalfunctionFormat": {
+    "placeholders": {
+      "malfunctions": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticLastValidDataFormat": "آخر بيانات صالحة: {lastHeartbeat}",
+  "@eldDiagnosticLastValidDataFormat": {
+    "placeholders": {
+      "lastHeartbeat": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticDataAgeFormat": "عمر البيانات: {dataAgeSeconds} ثانية",
+  "@eldDiagnosticDataAgeFormat": {
+    "placeholders": {
+      "dataAgeSeconds": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticNotReady": "غير جاهز للتشغيل الطبيعي.",
+  "eldDiagnosticDataNotReliable": "البيانات غير موثوقة.",
+  "eldDiagnosticConnected": "متصل",
+  "eldDiagnosticDisconnected": "غير متصل",
+  "eldDiagnosticUnavailable": "غير متاح",
+  "eldDiagnosticMalfunction": "عطل",
+  "eldDiagnosticNoConnectionStatus": "الخادم لم يُرجع حالة اتصال.",
+  "eldReadinessTitle": "جاهزية ما قبل التشغيل",
+  "eldReadinessChecking": "جارٍ فحص الجاهزية...",
+  "eldReadinessReady": "جاهز للتشغيل",
+  "eldReadinessNotReady": "غير جاهز للتشغيل",
+  "eldReadinessRecommendedActionFormat": "الإجراء المقترح: {action}",
+  "@eldReadinessRecommendedActionFormat": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "eldReadinessDevicePaired": "الجهاز مقترن",
+  "eldReadinessConnectionActive": "الاتصال نشط",
+  "eldReadinessMotionData": "بيانات الحركة",
+  "eldReadinessLocationData": "بيانات الموقع",
+  "eldReadinessEngineTelemetry": "بيانات المحرك (ECM)",
+  "eldMalfunctionTitle": "في حال العطل (§395.34)",
+  "eldMalfunctionStep1": "دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.",
+  "eldMalfunctionStep2": "أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.",
+  "eldMalfunctionStep3": "استمر بالتسجيل الورقي حتى إصلاح الجهاز.",
+  "eldMalfunctionManualActive": "التسجيل اليدوي مفعّل حالياً.",
+  "eldMalfunctionManualActiveWithReason": "التسجيل اليدوي مفعّل حالياً — {reason}.",
+  "@eldMalfunctionManualActiveWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "eldMalfunctionEndManual": "إنهاء التسجيل اليدوي",
+  "eldMalfunctionServerNotAllow": "الخادم لا يسمح بالتحويل إلى التسجيل اليدوي لهذه المركبة.",
+  "eldMalfunctionStartManual": "بدء التسجيل اليدوي",
+  "eldMalfunctionStartSuccess": "تم تسجيل بداية فترة التسجيل اليدوي على الخادم.",
+  "eldMalfunctionEndSuccess": "تم إنهاء التسجيل اليدوي والعودة إلى التسجيل الإلكتروني.",
+  "eldMalfunctionReasonStart": "سبب التسجيل اليدوي",
+  "eldMalfunctionReasonEnd": "سبب إنهاء التسجيل اليدوي",
+  "eldMalfunctionHintStart": "مثال: انقطاع الاتصال بالجهاز",
+  "eldMalfunctionHintEnd": "مثال: عاد اتصال الجهاز",
+  "dvirListNoRecords": "لا توجد سجلات",
+  "dvirListTotal": "إجمالي",
+  "dvirListOpen": "عيوب مفتوحة",
+  "dvirListSigned": "موقّعة",
+  "dvirListOos": "خارج الخدمة",
+  "serverAcceptedDisconnected": "قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.",
+  "macAddressRequired": "عنوان MAC مطلوب.",
+  "coDriverSelectLabel": "اختر مساعد السائق",
+  "coDriverSelectHint": "الرجاء اختيار مساعد السائق الخاص بك",
+  "coDriverSwitchDrivers": "تبديل الأدوار",
+  "coDriverSwitchHint": "ستصبح السائق المساعد. سيبقى مساعدك سائقاً.",
+  "coDriverSwitching": "جاري التبديل...",
+  "coDriverSwitchAction": "تبديل",
+  "coDriverConfirmSwitchTitle": "تأكيد التبديل",
+  "coDriverConfirmSwitchBody": "يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.",
+  "coDriverRolesSwitchedTitle": "تم تبديل الأدوار",
+  "coDriverRolesSwitchedBody": "أنت الآن السائق المساعد.\n{newPrimary} هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.",
+  "@coDriverRolesSwitchedBody": {
+    "placeholders": {
+      "newPrimary": {
+        "type": "String"
+      }
+    }
+  },
+  "coDriverDefaultNewPrimary": "السائق المساعد",
+  "coDriverNone": "لا سائق مساعد",
+  "coDriverRefusalSessionMissing": "جلسة السائق غير موجودة. سجّل الدخول قبل التبديل.",
+  "coDriverRefusalStillDriving": "غيّر حالة الواجب قبل التسليم. التبديل لا يغيّر الحالة.",
+  "coDriverRefusalMotionUnknown": "حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.",
+  "coDriverRefusalThresholdMissing": "عتبة الحركة غير متوفرة من الإعداد.",
+  "coDriverRefusalVehicleMoving": "لا يمكن تبديل الأدوار والمركبة تتحرك.",
+  "coDriverRefusalCoDriverMissing": "اختر سائقاً مساعداً قبل التبديل.",
+  "coDriverRefusalSameDriver": "لا يمكن اختيار الحساب الحالي سائقاً مساعداً.",
+  "coDriverLinkedTitle": "المساعد المرتبط",
+  "coDriverLinkNotRead": "لم يُقرأ الارتباط بعد.",
+  "coDriverLinkNone": "لا سائق مساعد مرتبط.",
+  "coDriverTeamDrivingActive": "قيادة جماعية نشطة",
+  "coDriverTeamDrivingInactive": "قيادة جماعية غير نشطة",
+  "coDriverHosIsolationReadError": "تعذر قراءة حالة عزل سجلات HOS.",
+  "coDriverHosIsolated": "سجلات HOS معزولة",
+  "coDriverHosNotIsolated": "سجلات HOS غير معزولة",
+  "coDriverVehicleMissing": "اختر مركبة قبل ربط السائق المساعد.",
+  "dvirDefectsNone": "لا توجد عيوب للتقرير عنها.",
+  "dvirDefectsCount": "تم تحديد {defectCount} عيوب.",
+  "@dvirDefectsCount": {
+    "placeholders": {
+      "defectCount": {
+        "type": "int"
+      }
+    }
+  },
+  "languageSpanish": "الإسبانية",
+  "reCertificationRequiredMsg": "يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.",
+  "statusOff": "خارج الخدمة",
+  "statusSb": "مقصورة النوم",
+  "statusD": "قيادة",
+  "statusOn": "في الخدمة",
+  "statusPc": "استخدام شخصي",
+  "statusYm": "حركة ساحة",
+  "dvirPreTrip": "قبل الرحلة",
+  "dvirPostTrip": "بعد الرحلة",
+  "dvirSafeToDrive": "آمنة للقيادة",
+  "dvirNeedsRepair": "تتطلب صيانة",
+  "dvirUnsafe": "غير آمنة",
+  "dvirBrakes": "المكابح",
+  "dvirTires": "الإطارات",
+  "dvirLights": "الإضاءة",
+  "dvirSteering": "أجهزة التوجيه",
+  "dvirTrailerCoupling": "وصلات المقطورة",
+  "dvirEmergencyEquipment": "معدات الطوارئ",
+  "dvirEngine": "المحرك",
+  "dvirFuelSystem": "نظام الوقود",
+  "dvirExhaustSystem": "نظام العادم",
+  "dvirSuspension": "نظام التعليق",
+  "dvirMirrors": "المرايا",
+  "dvirWindshield": "الزجاج الأمامي"
 }

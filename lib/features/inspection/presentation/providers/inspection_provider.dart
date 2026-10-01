@@ -10,6 +10,7 @@ import '../../../../core/localization/locale_provider.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/utils/provider_cache.dart';
 
 // --- Dependency Injection Providers ---
@@ -74,7 +75,7 @@ final inspectionProvider =
   return InspectionNotifier(
     backend: ref.watch(inspectionBackendProvider),
     driverId: ref.watch(currentDriverIdProvider) ?? 0,
-    isArabic: ref.watch(localeProvider).languageCode == 'ar',
+    loc: lookupAppLocalizations(ref.watch(localeProvider)),
   );
 });
 
@@ -91,19 +92,19 @@ final informationPacketProvider =
 class InspectionNotifier extends StateNotifier<InspectionState> {
   final InspectionBackend _backend;
   final int _driverId;
-  final bool _isArabic;
+  final AppLocalizations _loc;
 
   InspectionNotifier({
     required InspectionBackend backend,
     required int driverId,
-    required bool isArabic,
+    required AppLocalizations loc,
   })  : _backend = backend,
         _driverId = driverId,
-        _isArabic = isArabic,
+        _loc = loc,
         super(const InspectionState());
 
   String _message(AppError error) {
-    return appErrorUserMessage(error, isArabic: _isArabic);
+    return appErrorUserMessage(error, loc: _loc);
   }
 
   /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
@@ -113,9 +114,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (_driverId <= 0) {
       state = state.copyWith(
         isLoading: false,
-        error: _isArabic
-            ? 'جلسة السائق غير موجودة. سجّل الدخول قبل التفتيش.'
-            : 'Driver session is missing. Sign in again before inspection.',
+        error: _loc.driverSessionMissingSignIn,
       );
       return;
     }
@@ -196,7 +195,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     String? routingCode,
     required String comment,
   }) async {
-    final commentError = inspectionCommentError(comment);
+    final commentError = inspectionCommentError(comment, loc: _loc);
     if (commentError != null) {
       state = state.copyWith(isLoading: false, error: commentError, clearTransferMessage: true);
       return false;

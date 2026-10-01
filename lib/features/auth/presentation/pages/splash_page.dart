@@ -44,8 +44,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     AppLogger.info('SplashPage: Checking permissions...');
     try {
-      final locationGranted = await Permission.location.isGranted.timeout(const Duration(seconds: 2));
-      final bluetoothGranted = await Permission.bluetooth.isGranted.timeout(const Duration(seconds: 2));
+      final locationGranted = await Permission.location.isGranted;
+      final bluetoothGranted = await Permission.bluetooth.isGranted;
       if (!mounted) return;
 
       if (!locationGranted || !bluetoothGranted) {
@@ -54,10 +54,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         return;
       }
     } catch (e) {
-      AppLogger.error('SplashPage: Permission check timed out or failed', e);
-      // Proceed to login as fallback
-      context.goNamed('login');
-      return;
+      AppLogger.error('SplashPage: Permission check failed', e);
+      // We don't return here. We just proceed to check auth status.
     }
 
     AppLogger.info('SplashPage: Checking auth status...');

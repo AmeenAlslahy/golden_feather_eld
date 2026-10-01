@@ -6,6 +6,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../providers/recap_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RecapPage extends ConsumerWidget {
   const RecapPage({super.key});
@@ -70,9 +71,8 @@ class RecapPage extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           return EldRetryView(
-            message: anyErrorUserMessage(err, isArabic: isArabic),
+            message: anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
             onRetry: () => ref.invalidate(recapProvider),
           );
         },

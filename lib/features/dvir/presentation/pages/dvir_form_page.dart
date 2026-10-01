@@ -126,16 +126,16 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
 
   String _statusLabel(String wire) {
-    if (!_isAr) return wire;
+    final loc = context.loc;
     switch (wire) {
       case 'Vehicle Condition Satisfactory':
-        return 'حالة المركبة مرضية';
+        return loc.dvirSatisfactory;
       case 'Has Defects':
-        return 'توجد عيوب';
+        return loc.dvirHasDefects;
       case 'Defects Corrected':
-        return 'تم إصلاح العيوب';
+        return loc.dvirDefectsCorrected;
       case 'Defects Need Not Be Corrected':
-        return 'العيوب لا تستوجب الإصلاح';
+        return loc.dvirDefectsNotCorrected;
       default:
         return wire;
     }
@@ -143,11 +143,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   Future<void> _openDefectCatalog() async {
     if (_readOnly) return;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) =>
-          _DefectCatalogDialog(initial: _selectedDefects, isArabic: isArabic),
+          _DefectCatalogDialog(initial: _selectedDefects),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -170,23 +169,23 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   Future<void> _openStatusModal() async {
     final hasDefect = _hasAnyDefect;
-    final ar = _isAr;
+    final loc = context.loc;
     // Wire values stay English (server contract); only the labels follow the locale.
     final selected = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(ar ? 'الحالة' : 'Status'),
+        title: Text(loc.status),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
               title: Text(
-                ar ? 'حالة المركبة مرضية' : 'Vehicle Condition Satisfactory',
+                loc.dvirSatisfactory,
               ),
               enabled: !hasDefect,
               subtitle: hasDefect
-                  ? Text(ar ? '— يوجد عيب مسجّل' : '— a defect is recorded')
+                  ? Text(loc.dvirDefectRecorded)
                   : null,
               onTap: hasDefect
                   ? null
@@ -196,27 +195,23 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     ),
             ),
             ListTile(
-              title: Text(ar ? 'توجد عيوب' : 'Has Defects'),
+              title: Text(loc.dvirHasDefects),
               onTap: () => Navigator.pop(context, 'Has Defects'),
             ),
             ListTile(
               enabled: false,
-              title: Text(ar ? 'تم إصلاح العيوب' : 'Defects Corrected'),
+              title: Text(loc.dvirDefectsCorrected),
               subtitle: Text(
-                ar ? 'لا يوجد تصديق إصلاح بعد' : 'No repair certification yet',
+                loc.dvirNoRepairCert,
               ),
             ),
             ListTile(
               enabled: false,
               title: Text(
-                ar
-                    ? 'العيوب لا تستوجب الإصلاح'
-                    : 'Defects Need Not Be Corrected',
+                loc.dvirDefectsNotCorrected,
               ),
               subtitle: Text(
-                ar
-                    ? 'يحدّدها الناقل لا السائق'
-                    : 'Set by the carrier, not the driver',
+                loc.dvirSetByCarrier,
               ),
             ),
           ],
@@ -224,11 +219,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(ar ? 'إلغاء' : 'CANCEL'),
+            child: Text(loc.cancelAction),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, _selectedStatus),
-            child: Text(ar ? 'موافق' : 'OK'),
+            child: Text(loc.okButton),
           ),
         ],
       ),
@@ -264,9 +259,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (time is! TrustedTimeAvailable) {
       AppFeedback.error(
         context,
-        _isAr
-            ? 'وقت الفحص غير متاح. اتصل ثم أعد المحاولة.'
-            : 'Inspection time is unavailable. Connect and try again.',
+        context.loc.dvirTimeUnavailable,
       );
       return;
     }
@@ -278,9 +271,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
     if (widget.existingReport != null) {
       _snack(
-        _isAr
-            ? 'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.'
-            : 'A saved report cannot be edited on this device.',
+        context.loc.dvirSavedCannotEdit,
       );
       return;
     }
@@ -290,24 +281,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
     if (!mounted) return;
     if (signatureData == null) {
-      _snack(_isAr ? 'التوقيع مطلوب.' : 'A signature is required.');
+      _snack(context.loc.dvirSignatureRequired);
       return;
     }
     final driverId = ref.read(currentDriverIdProvider);
     if (driverId == null || driverId <= 0) {
       _snack(
-        _isAr
-            ? 'جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.'
-            : 'Driver session is missing. Sign in again before signing the report.',
+        context.loc.dvirDriverSessionMissing,
       );
       return;
     }
     if (dashboard.vehicleId.trim().isEmpty ||
         dashboard.vehicleId == 'No Vehicle') {
       _snack(
-        _isAr
-            ? 'معرّف المركبة مفقود. اختر مركبة قبل التوقيع.'
-            : 'Vehicle id is missing. Select a vehicle before signing.',
+        context.loc.dvirVehicleIdMissing,
       );
       return;
     }
@@ -317,16 +304,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       final previousId = int.tryParse(latest.id);
       if (previousId == null) {
         _snack(
-          _isAr
-              ? 'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.'
-              : 'The previous report has no server id and cannot be reviewed.',
+          context.loc.dvirPrevNoServerId,
         );
         return;
       }
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final loc = context.loc;
       final previousDefects = <String>[
         for (final d in latest.selectedDefects)
-          d.item.label(isArabic) +
+          d.item.label(loc) +
               ((d.description?.trim().isNotEmpty ?? false)
                   ? ' — ${d.description!.trim()}'
                   : ''),
@@ -343,35 +328,33 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       final reviewed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(isArabic ? 'الفحص السابق' : 'Previous inspection'),
+          title: Text(context.loc.dvirPreviousInspection),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic
-                      ? 'راجع التقرير السابق ووقّع عليه قبل القيادة.'
-                      : 'Review and sign the previous report before driving.',
+                  context.loc.dvirReviewBeforeDriving,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   '${DateFormat('yyyy-MM-dd HH:mm').format(latest.date.toLocal())} — '
-                  '${isArabic ? latest.condition.arabicName : latest.condition.englishName}',
+                  '${context.translateVehicleCondition(latest.condition.name)}',
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  isArabic ? 'العيوب المسجّلة:' : 'Recorded defects:',
+                  context.loc.dvirRecordedDefects,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 if (previousDefects.isEmpty)
-                  Text(isArabic ? 'لا توجد عيوب.' : 'None.')
+                  Text(context.loc.dvirNone)
                 else
                   for (final line in previousDefects) Text('• $line'),
                 if ((latest.repairStatus ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    (isArabic ? 'حالة الإصلاح: ' : 'Repair status: ') +
+                    context.loc.dvirRepairStatus +
                         latest.repairStatus!.trim() +
                         ((latest.mechanicName ?? '').trim().isNotEmpty
                             ? ' (${latest.mechanicName!.trim()})'
@@ -386,11 +369,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text(isArabic ? 'إلغاء' : 'CANCEL'),
+              child: Text(context.loc.cancelAction),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(isArabic ? 'تمت المراجعة' : 'Reviewed'),
+              child: Text(context.loc.dvirReviewed),
             ),
           ],
         ),
@@ -489,18 +472,18 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           }),
         ) ??
         (_report?.location ??
-            (_isAr ? 'الموقع غير متاح' : 'Location unavailable'));
+            context.loc.dvirLocationUnavailable);
     final companyName =
         _report?.companyName ??
         account?.carrier ??
-        (_isAr ? 'الشركة غير متاحة' : 'Company unavailable');
+        context.loc.dvirCompanyUnavailable;
     final brightness = Theme.of(context).brightness;
     final textColor = AppColors.textPrimaryFor(brightness);
     final borderColor = AppColors.borderFor(brightness);
 
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
-        : (_isAr ? 'الوقت غير متاح' : 'Time unavailable');
+        : context.loc.dvirTimeUnavailableShort;
 
     return Scaffold(
       appBar: AppBar(
@@ -509,7 +492,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _isAr ? 'إدراج تقرير فحص (DVIR)' : 'Insert DVIR',
+          context.loc.dvirInsertDvir,
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
@@ -535,13 +518,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 color: AppColors.warningYellow.withValues(alpha: 0.2),
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Text(
-                  _isAr
-                      ? 'مراجعة التقرير السابق — فتح التقرير لا يعد مراجعة له.'
-                      : 'Previous DVIR Review — §396.13. Opening the report is not a review.',
+                  context.loc.dvirPreviousReviewNotice,
                 ),
               ),
             _buildFieldGroup(
-              title: _isAr ? 'الوقت' : 'Time (ET)',
+              title: context.loc.dvirTimeET,
               child: Text(
                 currentTime,
                 style: TextStyle(color: textColor, fontSize: 16),
@@ -550,7 +531,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: _isAr ? 'الموقع' : 'Location',
+              title: context.loc.location,
               child: Text(
                 automaticLocation,
                 style: TextStyle(color: textColor, fontSize: 16),
@@ -559,10 +540,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: _isAr ? 'المسافة' : 'Odometer (mi)',
+              title: context.loc.dvirOdometerMi,
               child: _buildFlatTextField(
                 _odometerController,
-                _isAr ? 'المسافة' : 'Odometer',
+                context.loc.dvirOdometerHint,
                 textColor,
                 keyboardType: TextInputType.number,
               ),
@@ -627,7 +608,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ),
 
             _buildFieldGroup(
-              title: _isAr ? 'الشركة' : 'Company',
+              title: context.loc.company,
               child: Text(
                 companyName,
                 style: TextStyle(color: textColor, fontSize: 16),
@@ -636,17 +617,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: _isAr ? 'ملاحظات' : 'Remarks',
+              title: context.loc.remarks,
               child: _buildFlatTextField(
                 _remarksController,
-                _isAr ? 'ملاحظات' : 'Remarks',
+                context.loc.remarks,
                 textColor,
               ),
               borderColor: borderColor,
               textColor: textColor,
             ),
             _buildFieldGroup(
-              title: _isAr ? 'الحالة' : 'Status',
+              title: context.loc.status,
               child: InkWell(
                 onTap: _openStatusModal,
                 child: Row(
@@ -684,9 +665,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       children: [
                         Center(
                           child: Text(
-                            _isAr
-                                ? 'الصورة غير متاحة.'
-                                : 'Image not available.',
+                            context.loc.dvirImageNotAvailable,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 32,
@@ -706,7 +685,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   InkWell(
                     onTap: () => _signatureController.clear(),
                     child: Text(
-                      _isAr ? 'مسح التوقيع' : 'Clear signature',
+                      context.loc.dvirClearSignature,
                       style: const TextStyle(
                         fontSize: 14,
                         decoration: TextDecoration.underline,
@@ -812,7 +791,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   /// §396.11 catalog picks: defect cards plus "+ Add Defects". Free-text fields above stay as they were.
   Widget _buildCatalogDefects(Color textColor) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -843,14 +823,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                       Expanded(
                         child: Text(
                           (d.description ?? '').trim().isEmpty
-                              ? d.item.label(isArabic)
-                              : '${d.item.label(isArabic)} — ${d.description!.trim()}',
+                              ? d.item.label(loc)
+                              : '${d.item.label(loc)} — ${d.description!.trim()}',
                           style: TextStyle(fontSize: 14, color: textColor),
                         ),
                       ),
                       if (!_readOnly)
                         IconButton(
-                          tooltip: isArabic ? 'إزالة' : 'Remove',
+                          tooltip: loc.removeAction,
                           icon: const Icon(Icons.close, size: 18),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
@@ -873,7 +853,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             onPressed: _openDefectCatalog,
             icon: const Icon(Icons.add, size: 16),
             label: Text(
-              isArabic ? 'إضافة عيوب' : 'Add Defects',
+              loc.addDefects,
               style: TextStyle(fontSize: 12, color: textColor),
             ),
             style: TextButton.styleFrom(
@@ -909,10 +889,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
 /// Checkbox list of the live §396.11 catalog with an optional note per item.
 class _DefectCatalogDialog extends ConsumerStatefulWidget {
-  const _DefectCatalogDialog({required this.initial, required this.isArabic});
+  const _DefectCatalogDialog({required this.initial});
 
   final List<DvirDefectSelection> initial;
-  final bool isArabic;
 
   @override
   ConsumerState<_DefectCatalogDialog> createState() =>
@@ -940,10 +919,11 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = widget.isArabic;
+    final loc = context.loc;
+
     final catalog = ref.watch(dvirCatalogProvider);
     return AlertDialog(
-      title: Text(isArabic ? 'العيوب (§396.11)' : 'Defects (§396.11)'),
+      title: Text(loc.dvirDefects396_11),
       content: SizedBox(
         width: double.maxFinite,
         child: catalog.when(
@@ -955,18 +935,16 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                isArabic
-                    ? 'تعذر تحميل قائمة العيوب من الخادم.'
-                    : 'Could not load the defects list from the server.',
+                loc.dvirLoadDefectsFail,
               ),
               TextButton(
                 onPressed: () => ref.invalidate(dvirCatalogProvider),
-                child: Text(isArabic ? 'إعادة المحاولة' : 'RETRY'),
+                child: Text(loc.retryAction),
               ),
             ],
           ),
           data: (items) => items.isEmpty
-              ? Text(isArabic ? 'القائمة فارغة.' : 'The catalog is empty.')
+              ? Text(loc.dvirCatalogEmpty)
               : ListView.builder(
                   shrinkWrap: true,
                   itemCount: items.length,
@@ -981,12 +959,10 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                           contentPadding: EdgeInsets.zero,
                           controlAffinity: ListTileControlAffinity.leading,
                           value: checked,
-                          title: Text(item.label(isArabic)),
+                          title: Text(item.label(loc)),
                           subtitle: item.critical
                               ? Text(
-                                  isArabic
-                                      ? 'يؤثر على السلامة'
-                                      : 'Safety affecting',
+                                  loc.dvirSafetyAffecting,
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.dangerRed,
@@ -1012,9 +988,7 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                               style: const TextStyle(fontSize: 12),
                               decoration: InputDecoration(
                                 isDense: true,
-                                hintText: isArabic
-                                    ? 'وصف (اختياري)'
-                                    : 'Description (optional)',
+                                hintText: loc.dvirDescriptionOptional,
                               ),
                               onChanged: (text) =>
                                   _picked[item.code] = DvirDefectSelection(
@@ -1032,11 +1006,11 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(isArabic ? 'إلغاء' : 'CANCEL'),
+          child: Text(loc.cancelAction),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _picked.values.toList()),
-          child: Text(isArabic ? 'موافق' : 'OK'),
+          child: Text(loc.okButton),
         ),
       ],
     );

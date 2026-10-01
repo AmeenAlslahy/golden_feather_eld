@@ -21,7 +21,6 @@ void main() {
       LogEvent(
         id: id,
         status: status,
-        statusArabic: status,
         startTime: DateTime(2026, 9, 24, 8),
         duration: const Duration(minutes: 30),
         location: 'Reno, NV',
@@ -82,7 +81,6 @@ void main() {
         LogEvent(
           id: '1',
           status: 'OFF',
-          statusArabic: 'OFF',
           // Started the evening before → the start date is shown.
           startTime: DateTime(2026, 9, 23, 22),
           duration: const Duration(hours: 8),
@@ -92,7 +90,6 @@ void main() {
         LogEvent(
           id: '3',
           status: 'PC',
-          statusArabic: 'PC',
           startTime: DateTime(2026, 9, 24, 12),
           duration: const Duration(minutes: 45),
           location: '',

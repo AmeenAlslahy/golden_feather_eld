@@ -54,11 +54,9 @@ final certifyLogProvider = StateNotifierProvider<CertifyLogNotifier, CertifyLogS
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
   final AppLocalizations _loc;
-  bool get _isArabic => _loc.localeName == 'ar';
-
   /// Driver-facing text only — never the failure code or exception text.
   String _message(Failure failure) =>
-      anyErrorUserMessage(failure, isArabic: _isArabic);
+      anyErrorUserMessage(failure, loc: _loc);
 
   CertifyLogNotifier(this._repository, this._loc)
       : super(const CertifyLogState());

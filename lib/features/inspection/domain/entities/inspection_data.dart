@@ -50,12 +50,8 @@ class InspectionDayData extends Equatable {
 
 /// طريقة نقل البيانات
 enum TransferMethod {
-  webService('Web Service', 'خدمة الويب'),
-  email('Email', 'بريد إلكتروني'),
-  bluetooth('Bluetooth', 'بلوتوث'),
-  usb('USB', 'USB');
-
-  final String englishName;
-  final String arabicName;
-  const TransferMethod(this.englishName, this.arabicName);
+  webService,
+  email,
+  bluetooth,
+  usb;
 }

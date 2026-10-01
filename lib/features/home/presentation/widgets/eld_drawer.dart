@@ -50,7 +50,7 @@ class EldDrawer extends ConsumerWidget {
                 ),
                 itemBuilder: (context, index) {
                   final item = menuItems[index];
-                  final title = loc.localeName == 'ar' ? item.arabicTitle : item.title;
+                  final title = item.titleBuilder(loc);
                   return ListTile(
                     splashColor: PressFeedback.ink,
                     leading: Icon(item.icon, size: 24),

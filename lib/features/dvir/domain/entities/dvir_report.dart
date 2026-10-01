@@ -4,43 +4,31 @@ import '../dvir_catalog.dart';
 
 /// نوع الفحص
 enum InspectionType {
-  preTrip('قبل الرحلة', 'Pre-Trip'),
-  postTrip('بعد الرحلة', 'Post-Trip');
-
-  final String arabicName;
-  final String englishName;
-  const InspectionType(this.arabicName, this.englishName);
+  preTrip,
+  postTrip;
 }
 
 /// حالة المركبة
 enum VehicleCondition {
-  safe('آمنة للقيادة', 'Safe to Drive'),
-  needsRepair('تتطلب صيانة', 'Needs Repair'),
-  unsafe('غير آمنة', 'Unsafe');
-
-  final String arabicName;
-  final String englishName;
-  const VehicleCondition(this.arabicName, this.englishName);
+  safe,
+  needsRepair,
+  unsafe;
 }
 
 /// أجزاء المركبة للفحص
 enum InspectionItem {
-  brakes('المكابح', 'Brakes'),
-  tires('الإطارات', 'Tires'),
-  lights('الإضاءة', 'Lights'),
-  steering('أجهزة التوجيه', 'Steering'),
-  trailerCoupling('وصلات المقطورة', 'Trailer Coupling'),
-  emergencyEquipment('معدات الطوارئ', 'Emergency Equipment'),
-  engine('المحرك', 'Engine'),
-  fuelSystem('نظام الوقود', 'Fuel System'),
-  exhaustSystem('نظام العادم', 'Exhaust System'),
-  suspension('نظام التعليق', 'Suspension'),
-  mirrors('المرايا', 'Mirrors'),
-  windshield('الزجاج الأمامي', 'Windshield');
-
-  final String arabicName;
-  final String englishName;
-  const InspectionItem(this.arabicName, this.englishName);
+  brakes,
+  tires,
+  lights,
+  steering,
+  trailerCoupling,
+  emergencyEquipment,
+  engine,
+  fuelSystem,
+  exhaustSystem,
+  suspension,
+  mirrors,
+  windshield;
 }
 
 /// نتيجة فحص عنصر

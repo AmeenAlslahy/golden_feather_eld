@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/user_facing_message.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 void main() {
   test('prefers serverMessage and never dumps the exception', () {
@@ -14,7 +16,7 @@ void main() {
       },
     );
 
-    final text = appErrorUserMessage(error, isArabic: true);
+    final text = appErrorUserMessage(error, loc: lookupAppLocalizations(const Locale('ar')));
     expect(text, contains('16'));
     expect(text, isNot(contains('FormatException')));
     expect(text, isNot(contains('ValidationError')));
@@ -25,7 +27,9 @@ void main() {
       code: 'network.connectionFailed',
       l10nKey: 'networkConnectionFailed',
     );
-    expect(appErrorUserMessage(error, isArabic: false), contains('server'));
-    expect(appErrorUserMessage(error, isArabic: true), contains('الخادم'));
+    final locEn = lookupAppLocalizations(const Locale('en'));
+    final locAr = lookupAppLocalizations(const Locale('ar'));
+    expect(appErrorUserMessage(error, loc: locEn), contains('server'));
+    expect(appErrorUserMessage(error, loc: locAr), contains('الخادم'));
   });
 }

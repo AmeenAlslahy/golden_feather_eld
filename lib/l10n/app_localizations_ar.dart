@@ -231,7 +231,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get configurationMessage => 'هل تريد تطبيق الإعدادات الجديدة؟';
 
   @override
-  String get startAction => 'بدء الخدمة';
+  String get startAction => 'بدء';
 
   @override
   String get stopAction => 'إيقاف الخدمة';
@@ -937,7 +937,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get resetPassword => 'استعادة كلمة المرور';
 
   @override
-  String get email => 'البريد الإلكتروني / اسم المستخدم';
+  String get email => 'بريد إلكتروني';
 
   @override
   String get emailRequired => 'البريد الإلكتروني مطلوب';
@@ -1120,7 +1120,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendLogs => 'إرسال السجلات';
 
   @override
-  String get emailLogs => 'إرسال عبر البريد';
+  String get emailLogs => 'بريد السجلات';
 
   @override
   String get endInspection => 'إنهاء التفتيش';
@@ -2173,4 +2173,746 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get certifyLegalStatement =>
       'أشهد بموجب هذا أن إدخالات بياناتي وسجل حالة الواجب الخاص بي لمدة 24 ساعة صحيحة ودقيقة.';
+
+  @override
+  String get errNoInternet =>
+      'لا يوجد اتصال بالإنترنت. تحقق من الشبكة ثم أعد المحاولة.';
+
+  @override
+  String get errRequestFailed => 'تعذر إكمال الطلب. أعد المحاولة.';
+
+  @override
+  String get errRequestFailedNetwork =>
+      'تعذر إكمال الطلب. تحقق من الشبكة ثم أعد المحاولة.';
+
+  @override
+  String get errCannotReachServer =>
+      'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.';
+
+  @override
+  String get errServerRejected => 'الخادم رفض الطلب.';
+
+  @override
+  String get errSessionExpiredAction => 'انتهت الجلسة. سجّل الدخول مرة أخرى.';
+
+  @override
+  String get errPermissionDenied => 'ليست لديك صلاحية لهذا الإجراء.';
+
+  @override
+  String get errNotFound => 'العنصر غير موجود على الخادم.';
+
+  @override
+  String get errServerError => 'حدث خطأ في الخادم. أعد المحاولة.';
+
+  @override
+  String get errGeneric => 'تعذر إكمال الطلب.';
+
+  @override
+  String get enterAReasonForManualRecording => 'اكتب سبب التسجيل اليدوي.';
+
+  @override
+  String get couldNotUpdateManualRecordingM =>
+      'تعذر تحديث وضع التسجيل اليدوي. أعد المحاولة.';
+
+  @override
+  String get unableToConnectToEld => 'تعذر الاتصال بجهاز ELD.';
+
+  @override
+  String get checkBluetoothAndRetry =>
+      'تحقق من تشغيل الجهاز والبلوتوث ثم أعد المحاولة.';
+
+  @override
+  String get checkNetworkAndRetry => 'تحقق من الشبكة والجهاز ثم أعد المحاولة.';
+
+  @override
+  String get driverSessionMissingSignIn =>
+      'جلسة السائق غير موجودة. سجّل الدخول قبل التفتيش.';
+
+  @override
+  String get onboardingSkip => 'تخطي';
+
+  @override
+  String get onboardingNext => 'التالي';
+
+  @override
+  String get onboardingGetStarted => 'ابدأ الآن';
+
+  @override
+  String get onboardingTitle1 => 'ساعاتك تُسجَّل تلقائياً';
+
+  @override
+  String get onboardingBody1 =>
+      'يتتبع جهاز ELD حالة قيادتك مقابل حدود FMCSA لحظة تحرك المركبة — بلا أوراق وبلا تخمين.';
+
+  @override
+  String get onboardingTitle2 => 'افحص مركبتك بثقة';
+
+  @override
+  String get onboardingBody2 =>
+      'فحص يومي قبل وبعد الرحلة، تتبع العيوب مع شهادات الإصلاح، ومراجعة §396.13 — كل ذلك في مكان واحد.';
+
+  @override
+  String get onboardingTitle3 => 'جاهز للمفتش دائماً';
+
+  @override
+  String get onboardingBody3 =>
+      'سجلاتك وحزمتك القانونية وخيارات النقل على متن الجهاز — حتى بلا إنترنت على الطريق.';
+
+  @override
+  String startedOnDate(Object date) {
+    return 'بدأ: $date';
+  }
+
+  @override
+  String get tableTimeEt => 'الوقت ET';
+
+  @override
+  String certEventStatus(Object status) {
+    return 'اعتماد · $status';
+  }
+
+  @override
+  String eventCodeNote(Object code) {
+    return 'الرمز: $code';
+  }
+
+  @override
+  String originNote(Object origin) {
+    return 'المصدر: $origin';
+  }
+
+  @override
+  String notesNote(Object notes) {
+    return 'ملاحظات: $notes';
+  }
+
+  @override
+  String get inspectionCommentErrorLength =>
+      'يجب أن يكون التعليق بين 4 و60 حرفاً.';
+
+  @override
+  String get enterValidEmail => 'أدخل بريداً صالحاً.';
+
+  @override
+  String get transferAccepted => 'قبل الخادم طلب النقل.';
+
+  @override
+  String get sendLogsViaEmail => 'إرسال السجلات عبر البريد';
+
+  @override
+  String get send8Logs => 'إرسال 8 سجلات';
+
+  @override
+  String get recipientEmail => 'بريد المستلم';
+
+  @override
+  String get comment => 'تعليق';
+
+  @override
+  String get dataTransferType => 'نوع نقل البيانات';
+
+  @override
+  String get sendAction => 'إرسال';
+
+  @override
+  String get inspectLogs24 =>
+      'افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة';
+
+  @override
+  String get setPinGuidance =>
+      'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط';
+
+  @override
+  String get eldCertifies =>
+      'يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.';
+
+  @override
+  String get notAllowedByServer => 'غير متاح لهذا الحساب حسب الخادم.';
+
+  @override
+  String get startInspectionUpper => 'بدء التفتيش';
+
+  @override
+  String get serverDoesNotAllow => 'الخادم لا يسمح ببدء التفتيش الآن.';
+
+  @override
+  String get sendLogsFor24 =>
+      'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة';
+
+  @override
+  String get sendLogsToOfficer => 'أرسل سجلاتك للضابط إذا طلب ذلك';
+
+  @override
+  String get sendLogsUpper => 'إرسال السجلات';
+
+  @override
+  String get emailLogs24Pdf =>
+      'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF';
+
+  @override
+  String get emailLogsPdf => 'أرسل سجلاتك بصيغة PDF';
+
+  @override
+  String get emailLogsUpper => 'بريد السجلات';
+
+  @override
+  String get infoPacketUpper => 'حزمة المعلومات';
+
+  @override
+  String get inspectionPinTitle => 'رمز التفتيش';
+
+  @override
+  String get enter4Digits => 'الرمز يجب أن يكون 4 أرقام.';
+
+  @override
+  String get pinsDoNotMatch => 'الرمزان غير متطابقين.';
+
+  @override
+  String get pinLabel => 'الرمز';
+
+  @override
+  String get confirmPinLabel => 'تأكيد الرمز';
+
+  @override
+  String get cancelAction => 'إلغاء';
+
+  @override
+  String get enterInspectionPin => 'أدخل رمز التفتيش.';
+
+  @override
+  String get incorrectPin => 'الرمز غير صحيح.';
+
+  @override
+  String get driverExit => 'خروج السائق';
+
+  @override
+  String get exitAction => 'خروج';
+
+  @override
+  String get enterNewPinOfficer =>
+      'أدخل رمز التفتيش الجديد الذي سيتم إعطاؤه للضابط';
+
+  @override
+  String get enterSamePinToExit => 'أدخل الرمز نفسه للخروج من وضع التفتيش';
+
+  @override
+  String get setPinGuidanceDialog =>
+      'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.';
+
+  @override
+  String get enterPinToExitGuidance =>
+      'أدخل رمز التفتيش الذي عيّنته عند البدء. المفتش لا يخرج من هنا.';
+
+  @override
+  String get menuTitle => 'القائمة';
+
+  @override
+  String get vehicleInMotionTitle => 'المركبة في حالة حركة';
+
+  @override
+  String get vehicleInMotionDesc =>
+      'التزاماً بقواعد السلامة المرورية ولوائح FMCSA، يتم حظر استخدام التطبيق أثناء القيادة. ستتم استعادة الواجهة فور توقف المركبة.';
+
+  @override
+  String get weakConnectionDelayedData =>
+      'الاتصال ضعيف. قد تتأخر بعض البيانات.';
+
+  @override
+  String get noInternetConnection => 'لا يوجد اتصال بالإنترنت.';
+
+  @override
+  String get connectionStatusUnknown => 'حالة الاتصال غير معروفة.';
+
+  @override
+  String driveLimitFormat(String drive) {
+    return 'حد القيادة $drive ساعة';
+  }
+
+  @override
+  String shiftLimitFormat(String shift) {
+    return 'حد الخدمة $shift ساعة';
+  }
+
+  @override
+  String breakLimitFormat(String rest) {
+    return 'استراحة $rest دقيقة';
+  }
+
+  @override
+  String usedFormat(String description) {
+    return '$description · مستخدم';
+  }
+
+  @override
+  String get noticeTitle => 'تنبيه';
+
+  @override
+  String get gpsTurnedOff => 'نظام تحديد المواقع مغلق.';
+
+  @override
+  String get serverReportsEldAlert =>
+      'الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.';
+
+  @override
+  String get operationalAlertTooltip => 'تنبيه تشغيلي';
+
+  @override
+  String get noInternetBanner =>
+      'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.';
+
+  @override
+  String get dvirSatisfactory => 'حالة المركبة مرضية';
+
+  @override
+  String get dvirHasDefects => 'توجد عيوب';
+
+  @override
+  String get dvirDefectsCorrected => 'تم إصلاح العيوب';
+
+  @override
+  String get dvirDefectsNotCorrected => 'العيوب لا تستوجب الإصلاح';
+
+  @override
+  String get dvirDefectRecorded => '— يوجد عيب مسجّل';
+
+  @override
+  String get dvirNoRepairCert => 'لا يوجد تصديق إصلاح بعد';
+
+  @override
+  String get dvirSetByCarrier => 'يحدّدها الناقل لا السائق';
+
+  @override
+  String get dvirTimeUnavailable => 'وقت الفحص غير متاح. اتصل ثم أعد المحاولة.';
+
+  @override
+  String get dvirSavedCannotEdit => 'لا يمكن تعديل تقرير محفوظ من هذا الجهاز.';
+
+  @override
+  String get dvirSignatureRequired => 'التوقيع مطلوب.';
+
+  @override
+  String get dvirDriverSessionMissing =>
+      'جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.';
+
+  @override
+  String get dvirVehicleIdMissing =>
+      'معرّف المركبة مفقود. اختر مركبة قبل التوقيع.';
+
+  @override
+  String get dvirPrevNoServerId =>
+      'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.';
+
+  @override
+  String get dvirPreviousInspection => 'الفحص السابق';
+
+  @override
+  String get dvirReviewBeforeDriving =>
+      'راجع التقرير السابق ووقّع عليه قبل القيادة.';
+
+  @override
+  String get dvirRecordedDefects => 'العيوب المسجّلة:';
+
+  @override
+  String get dvirNone => 'لا توجد عيوب.';
+
+  @override
+  String get dvirRepairStatus => 'حالة الإصلاح: ';
+
+  @override
+  String get dvirReviewed => 'تمت المراجعة';
+
+  @override
+  String get dvirLocationUnavailable => 'الموقع غير متاح';
+
+  @override
+  String get dvirCompanyUnavailable => 'الشركة غير متاحة';
+
+  @override
+  String get dvirTimeUnavailableShort => 'الوقت غير متاح';
+
+  @override
+  String get dvirInsertDvir => 'إدراج تقرير فحص (DVIR)';
+
+  @override
+  String get dvirPreviousReviewNotice =>
+      'مراجعة التقرير السابق — فتح التقرير لا يعد مراجعة له.';
+
+  @override
+  String get dvirTimeET => 'الوقت';
+
+  @override
+  String get dvirOdometerMi => 'المسافة';
+
+  @override
+  String get dvirOdometerHint => 'المسافة';
+
+  @override
+  String get company => 'الشركة';
+
+  @override
+  String get remarks => 'ملاحظات';
+
+  @override
+  String get dvirImageNotAvailable => 'الصورة غير متاحة.';
+
+  @override
+  String get dvirClearSignature => 'مسح التوقيع';
+
+  @override
+  String get dvirSigned => 'تم التوقيع';
+
+  @override
+  String get dvirSign => 'توقيع';
+
+  @override
+  String get removeAction => 'إزالة';
+
+  @override
+  String get addDefects => 'إضافة عيوب';
+
+  @override
+  String get dvirDefects396_11 => 'العيوب (§396.11)';
+
+  @override
+  String get dvirLoadDefectsFail => 'تعذر تحميل قائمة العيوب من الخادم.';
+
+  @override
+  String get retryAction => 'إعادة المحاولة';
+
+  @override
+  String get dvirCatalogEmpty => 'القائمة فارغة.';
+
+  @override
+  String get dvirSafetyAffecting => 'يؤثر على السلامة';
+
+  @override
+  String get dvirDescriptionOptional => 'وصف (اختياري)';
+
+  @override
+  String get eldDiagnosticReading => 'جارٍ قراءة حالة الاتصال...';
+
+  @override
+  String eldDiagnosticDiagnosticFormat(String diagnostics) {
+    return 'تشخيص: $diagnostics';
+  }
+
+  @override
+  String eldDiagnosticMalfunctionFormat(String malfunctions) {
+    return 'عطل: $malfunctions';
+  }
+
+  @override
+  String eldDiagnosticLastValidDataFormat(String lastHeartbeat) {
+    return 'آخر بيانات صالحة: $lastHeartbeat';
+  }
+
+  @override
+  String eldDiagnosticDataAgeFormat(String dataAgeSeconds) {
+    return 'عمر البيانات: $dataAgeSeconds ثانية';
+  }
+
+  @override
+  String get eldDiagnosticNotReady => 'غير جاهز للتشغيل الطبيعي.';
+
+  @override
+  String get eldDiagnosticDataNotReliable => 'البيانات غير موثوقة.';
+
+  @override
+  String get eldDiagnosticConnected => 'متصل';
+
+  @override
+  String get eldDiagnosticDisconnected => 'غير متصل';
+
+  @override
+  String get eldDiagnosticUnavailable => 'غير متاح';
+
+  @override
+  String get eldDiagnosticMalfunction => 'عطل';
+
+  @override
+  String get eldDiagnosticNoConnectionStatus => 'الخادم لم يُرجع حالة اتصال.';
+
+  @override
+  String get eldReadinessTitle => 'جاهزية ما قبل التشغيل';
+
+  @override
+  String get eldReadinessChecking => 'جارٍ فحص الجاهزية...';
+
+  @override
+  String get eldReadinessReady => 'جاهز للتشغيل';
+
+  @override
+  String get eldReadinessNotReady => 'غير جاهز للتشغيل';
+
+  @override
+  String eldReadinessRecommendedActionFormat(String action) {
+    return 'الإجراء المقترح: $action';
+  }
+
+  @override
+  String get eldReadinessDevicePaired => 'الجهاز مقترن';
+
+  @override
+  String get eldReadinessConnectionActive => 'الاتصال نشط';
+
+  @override
+  String get eldReadinessMotionData => 'بيانات الحركة';
+
+  @override
+  String get eldReadinessLocationData => 'بيانات الموقع';
+
+  @override
+  String get eldReadinessEngineTelemetry => 'بيانات المحرك (ECM)';
+
+  @override
+  String get eldMalfunctionTitle => 'في حال العطل (§395.34)';
+
+  @override
+  String get eldMalfunctionStep1 =>
+      'دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.';
+
+  @override
+  String get eldMalfunctionStep2 =>
+      'أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.';
+
+  @override
+  String get eldMalfunctionStep3 => 'استمر بالتسجيل الورقي حتى إصلاح الجهاز.';
+
+  @override
+  String get eldMalfunctionManualActive => 'التسجيل اليدوي مفعّل حالياً.';
+
+  @override
+  String eldMalfunctionManualActiveWithReason(String reason) {
+    return 'التسجيل اليدوي مفعّل حالياً — $reason.';
+  }
+
+  @override
+  String get eldMalfunctionEndManual => 'إنهاء التسجيل اليدوي';
+
+  @override
+  String get eldMalfunctionServerNotAllow =>
+      'الخادم لا يسمح بالتحويل إلى التسجيل اليدوي لهذه المركبة.';
+
+  @override
+  String get eldMalfunctionStartManual => 'بدء التسجيل اليدوي';
+
+  @override
+  String get eldMalfunctionStartSuccess =>
+      'تم تسجيل بداية فترة التسجيل اليدوي على الخادم.';
+
+  @override
+  String get eldMalfunctionEndSuccess =>
+      'تم إنهاء التسجيل اليدوي والعودة إلى التسجيل الإلكتروني.';
+
+  @override
+  String get eldMalfunctionReasonStart => 'سبب التسجيل اليدوي';
+
+  @override
+  String get eldMalfunctionReasonEnd => 'سبب إنهاء التسجيل اليدوي';
+
+  @override
+  String get eldMalfunctionHintStart => 'مثال: انقطاع الاتصال بالجهاز';
+
+  @override
+  String get eldMalfunctionHintEnd => 'مثال: عاد اتصال الجهاز';
+
+  @override
+  String get dvirListNoRecords => 'لا توجد سجلات';
+
+  @override
+  String get dvirListTotal => 'إجمالي';
+
+  @override
+  String get dvirListOpen => 'عيوب مفتوحة';
+
+  @override
+  String get dvirListSigned => 'موقّعة';
+
+  @override
+  String get dvirListOos => 'خارج الخدمة';
+
+  @override
+  String get serverAcceptedDisconnected =>
+      'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.';
+
+  @override
+  String get macAddressRequired => 'عنوان MAC مطلوب.';
+
+  @override
+  String get coDriverSelectLabel => 'اختر مساعد السائق';
+
+  @override
+  String get coDriverSelectHint => 'الرجاء اختيار مساعد السائق الخاص بك';
+
+  @override
+  String get coDriverSwitchDrivers => 'تبديل الأدوار';
+
+  @override
+  String get coDriverSwitchHint => 'ستصبح السائق المساعد. سيبقى مساعدك سائقاً.';
+
+  @override
+  String get coDriverSwitching => 'جاري التبديل...';
+
+  @override
+  String get coDriverSwitchAction => 'تبديل';
+
+  @override
+  String get coDriverConfirmSwitchTitle => 'تأكيد التبديل';
+
+  @override
+  String get coDriverConfirmSwitchBody =>
+      'يطلب التبديل من الخادم فقط. لن تُنقل ساعات الخدمة ولن تتغير حالة الواجب.';
+
+  @override
+  String get coDriverRolesSwitchedTitle => 'تم تبديل الأدوار';
+
+  @override
+  String coDriverRolesSwitchedBody(String newPrimary) {
+    return 'أنت الآن السائق المساعد.\n$newPrimary هو الآن السائق الأساسي.\n\nلم تُنقل الساعات ولم تتغير حالة الواجب. يضبط السائق الجديد حالته قبل الحركة.';
+  }
+
+  @override
+  String get coDriverDefaultNewPrimary => 'السائق المساعد';
+
+  @override
+  String get coDriverNone => 'لا سائق مساعد';
+
+  @override
+  String get coDriverRefusalSessionMissing =>
+      'جلسة السائق غير موجودة. سجّل الدخول قبل التبديل.';
+
+  @override
+  String get coDriverRefusalStillDriving =>
+      'غيّر حالة الواجب قبل التسليم. التبديل لا يغيّر الحالة.';
+
+  @override
+  String get coDriverRefusalMotionUnknown =>
+      'حركة المركبة غير معروفة. لا يُعدّ ذلك توقفاً.';
+
+  @override
+  String get coDriverRefusalThresholdMissing =>
+      'عتبة الحركة غير متوفرة من الإعداد.';
+
+  @override
+  String get coDriverRefusalVehicleMoving =>
+      'لا يمكن تبديل الأدوار والمركبة تتحرك.';
+
+  @override
+  String get coDriverRefusalCoDriverMissing =>
+      'اختر سائقاً مساعداً قبل التبديل.';
+
+  @override
+  String get coDriverRefusalSameDriver =>
+      'لا يمكن اختيار الحساب الحالي سائقاً مساعداً.';
+
+  @override
+  String get coDriverLinkedTitle => 'المساعد المرتبط';
+
+  @override
+  String get coDriverLinkNotRead => 'لم يُقرأ الارتباط بعد.';
+
+  @override
+  String get coDriverLinkNone => 'لا سائق مساعد مرتبط.';
+
+  @override
+  String get coDriverTeamDrivingActive => 'قيادة جماعية نشطة';
+
+  @override
+  String get coDriverTeamDrivingInactive => 'قيادة جماعية غير نشطة';
+
+  @override
+  String get coDriverHosIsolationReadError => 'تعذر قراءة حالة عزل سجلات HOS.';
+
+  @override
+  String get coDriverHosIsolated => 'سجلات HOS معزولة';
+
+  @override
+  String get coDriverHosNotIsolated => 'سجلات HOS غير معزولة';
+
+  @override
+  String get coDriverVehicleMissing => 'اختر مركبة قبل ربط السائق المساعد.';
+
+  @override
+  String get dvirDefectsNone => 'لا توجد عيوب للتقرير عنها.';
+
+  @override
+  String dvirDefectsCount(int defectCount) {
+    return 'تم تحديد $defectCount عيوب.';
+  }
+
+  @override
+  String get languageSpanish => 'الإسبانية';
+
+  @override
+  String get reCertificationRequiredMsg =>
+      'يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.';
+
+  @override
+  String get statusOff => 'خارج الخدمة';
+
+  @override
+  String get statusSb => 'مقصورة النوم';
+
+  @override
+  String get statusD => 'قيادة';
+
+  @override
+  String get statusOn => 'في الخدمة';
+
+  @override
+  String get statusPc => 'استخدام شخصي';
+
+  @override
+  String get statusYm => 'حركة ساحة';
+
+  @override
+  String get dvirPreTrip => 'قبل الرحلة';
+
+  @override
+  String get dvirPostTrip => 'بعد الرحلة';
+
+  @override
+  String get dvirSafeToDrive => 'آمنة للقيادة';
+
+  @override
+  String get dvirNeedsRepair => 'تتطلب صيانة';
+
+  @override
+  String get dvirUnsafe => 'غير آمنة';
+
+  @override
+  String get dvirBrakes => 'المكابح';
+
+  @override
+  String get dvirTires => 'الإطارات';
+
+  @override
+  String get dvirLights => 'الإضاءة';
+
+  @override
+  String get dvirSteering => 'أجهزة التوجيه';
+
+  @override
+  String get dvirTrailerCoupling => 'وصلات المقطورة';
+
+  @override
+  String get dvirEmergencyEquipment => 'معدات الطوارئ';
+
+  @override
+  String get dvirEngine => 'المحرك';
+
+  @override
+  String get dvirFuelSystem => 'نظام الوقود';
+
+  @override
+  String get dvirExhaustSystem => 'نظام العادم';
+
+  @override
+  String get dvirSuspension => 'نظام التعليق';
+
+  @override
+  String get dvirMirrors => 'المرايا';
+
+  @override
+  String get dvirWindshield => 'الزجاج الأمامي';
 }

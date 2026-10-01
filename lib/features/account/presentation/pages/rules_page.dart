@@ -14,6 +14,7 @@ import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import '../../application/models/rules_screen_model.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key});
@@ -58,7 +59,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   }
 
   Future<void> _saveRules(RulesScreenModel model) async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!_isFormValid) {
       AppFeedback.error(context, context.loc.formIncomplete);
       return;
@@ -89,7 +89,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           (failure) {
             AppFeedback.error(
               context,
-              appErrorUserMessage(failure, isArabic: isArabic),
+              appErrorUserMessage(failure, loc: AppLocalizations.of(context)!),
             );
           },
           (_) {
@@ -226,7 +226,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   @override
   Widget build(BuildContext context) {
     final rulesScreenAsync = ref.watch(rulesScreenProvider);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final loc = context.loc;
 
     return Scaffold(
@@ -245,7 +244,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       body: rulesScreenAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => EldRetryView(
-          message: anyErrorUserMessage(err, isArabic: isArabic),
+          message: anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
           onRetry: () => ref.invalidate(rulesScreenProvider),
         ),
         data: (model) {
@@ -369,7 +368,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                               Expanded(
                                 flex: 3,
                                 child: Align(
-                                  alignment: isArabic
+                                  alignment: Localizations.localeOf(context).languageCode == 'ar'
                                       ? Alignment.centerRight
                                       : Alignment.centerLeft,
                                   child: Switch(

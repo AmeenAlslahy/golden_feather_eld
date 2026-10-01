@@ -16,6 +16,7 @@ import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class EldConnectionState {
   final bool isConnecting;
@@ -118,11 +119,11 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   Future<String?> setManualMode({
     required bool enable,
     required String reason,
-    required bool isArabic,
+    required AppLocalizations loc,
   }) async {
     final trimmed = reason.trim();
     if (trimmed.isEmpty) {
-      return isArabic ? 'اكتب سبب التسجيل اليدوي.' : 'Enter a reason for manual recording.';
+      return loc.enterAReasonForManualRecording;
     }
     try {
       final result = await _ref.read(hardwareBackendProvider).setManualMode(
@@ -130,13 +131,11 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
             reason: trimmed,
           );
       return await result.fold(
-        (error) => anyErrorUserMessage(error, isArabic: isArabic),
+        (error) => anyErrorUserMessage(error, loc: loc),
         (_) => null,
       );
     } catch (_) {
-      return isArabic
-          ? 'تعذر تحديث وضع التسجيل اليدوي. أعد المحاولة.'
-          : 'Could not update manual recording mode. Try again.';
+      return loc.couldNotUpdateManualRecordingM;
     }
   }
 
@@ -249,12 +248,9 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           !current.isConnecting &&
           !current.hasFailed) {
         if (current.infoMessage == 'disconnected_accepted') {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           AppFeedback.info(
             context,
-            isArabic
-                ? 'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.'
-                : 'The server accepted disconnected mode. No local duty event was created.',
+            context.loc.serverAcceptedDisconnected,
           );
         }
         context.go(AppRoutes.home);
@@ -355,8 +351,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       onSubmitted: (_) => _attemptConnection(),
                       validator: (v) => macAddressError(
                         v,
-                        isArabic:
-                            Localizations.localeOf(context).languageCode == 'ar',
+                        loc: context.loc,
                       ),
                     ),
                   ),
@@ -401,22 +396,18 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
     AppError? error,
     String mac,
   ) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = AppLocalizations.of(context)!;
     final target = mac.trim();
     final head = target.isEmpty
-        ? (isArabic ? 'تعذر الاتصال بجهاز ELD.' : 'Unable to connect to the ELD.')
+        ? loc.unableToConnectToEld
         : '${context.loc.unableToConnect} $target.';
     if (error != null) {
-      return '$head ${anyErrorUserMessage(error, isArabic: isArabic)}';
+      return '$head ${anyErrorUserMessage(error, loc: loc)}';
     }
     if (raw == 'bluetooth_failed') {
-      return isArabic
-          ? '$head تحقق من تشغيل الجهاز والبلوتوث ثم أعد المحاولة.'
-          : '$head Check that the device and Bluetooth are on, then try again.';
+      return '$head ${loc.checkBluetoothAndRetry}';
     }
-    return isArabic
-        ? '$head تحقق من الشبكة والجهاز ثم أعد المحاولة.'
-        : '$head Check the network and device, then try again.';
+    return '$head ${loc.checkNetworkAndRetry}';
   }
 
   Widget _buildChecklistItem(String text) {

@@ -62,7 +62,6 @@ class LogDetailPage extends ConsumerWidget {
               final newEvent = LogEvent(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 status: 'OFF',
-                statusArabic: 'خارج الخدمة',
                 startTime: DateTime.now(),
                 duration: Duration.zero,
                 location: '',
@@ -101,9 +100,7 @@ class LogDetailPage extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      Localizations.localeOf(context).languageCode == 'ar'
-                          ? 'يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.'
-                          : 'Re-certification Required: Edits were made after your last signature.',
+                      context.loc.reCertificationRequiredMsg,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.warningYellow,
                             fontWeight: FontWeight.bold,

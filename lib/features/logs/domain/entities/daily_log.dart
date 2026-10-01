@@ -132,7 +132,6 @@ class DailyLog extends Equatable {
 class LogEvent extends Equatable {
   final String id;
   final String status; // OFF, SB, D, ON
-  final String statusArabic;
   final DateTime startTime;
   final Duration duration;
   final String location;
@@ -145,7 +144,6 @@ class LogEvent extends Equatable {
   const LogEvent({
     required this.id,
     required this.status,
-    required this.statusArabic,
     required this.startTime,
     required this.duration,
     required this.location,
@@ -171,7 +169,6 @@ class LogEvent extends Equatable {
   LogEvent copyWith({
     String? id,
     String? status,
-    String? statusArabic,
     DateTime? startTime,
     Duration? duration,
     String? location,
@@ -184,7 +181,6 @@ class LogEvent extends Equatable {
     return LogEvent(
       id: id ?? this.id,
       status: status ?? this.status,
-      statusArabic: statusArabic ?? this.statusArabic,
       startTime: startTime ?? this.startTime,
       duration: duration ?? this.duration,
       location: location ?? this.location,

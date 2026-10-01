@@ -73,7 +73,7 @@ class HosIndicatorsCard extends StatelessWidget {
   List<String> _descriptions(BuildContext context) {
     final loc = context.loc;
     final limits = constraints?.limits ?? const <String>[];
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
 
     String? hoursFor(List<String> keys) {
       for (final limit in limits) {
@@ -94,15 +94,13 @@ class HosIndicatorsCard extends StatelessWidget {
     return [
       drive == null
           ? loc.driveLimitDesc
-          : (isArabic ? 'حد القيادة $drive ساعة' : '$drive-Hour Driving Limit'),
+          : loc.driveLimitFormat(drive),
       shift == null
           ? loc.shiftLimitDesc
-          : (isArabic ? 'حد الخدمة $shift ساعة' : '$shift-Hour On Duty Limit'),
+          : loc.shiftLimitFormat(shift),
       rest == null
           ? loc.breakLimitDesc
-          : (isArabic
-              ? 'استراحة $rest دقيقة'
-              : '$rest Minute Rest Break'),
+          : loc.breakLimitFormat(rest),
       ruleSet == CycleRule.unknown ? loc.cycleLimitDesc : ruleSet.wire,
     ];
   }
@@ -116,13 +114,13 @@ class _IndicatorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final isCritical = indicator.type == IndicatorType.remaining &&
         indicator.value <= const Duration(hours: 1);
     // The reference shows remaining time; a "used" value is marked so the
     // driver never reads a consumed figure as time left.
     final detail = indicator.type == IndicatorType.used
-        ? '$description · ${isArabic ? 'مستخدم' : 'Used'}'
+        ? loc.usedFormat(description)
         : description;
 
     return Padding(

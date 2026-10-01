@@ -27,28 +27,22 @@ String? refuseAutomaticDrivingEdit({
 /// الرموز هي معجم التطبيق نفسه ([DutyStatus]). 'Yard Moves' يُطابق
 /// الرمز السلكي YM عبر [DutyStatusCode.yardMove] — كان سابقاً يُمرر
 /// نصياً فيتعذر على fromShortCode التعرف عليه فأُرسل OFF_DUTY!
-({String code, String arabic}) statusFromEditValue(String value) {
+String statusFromEditValue(String value) {
   switch (value) {
     case 'Off Duty':
-      return (code: DutyStatus.offDuty.toShortCode(), arabic: DutyStatus.offDuty.arabicName);
+      return DutyStatus.offDuty.toShortCode();
     case 'Sleeper':
-      return (
-        code: DutyStatus.sleeperBerth.toShortCode(),
-        arabic: DutyStatus.sleeperBerth.arabicName
-      );
+      return DutyStatus.sleeperBerth.toShortCode();
     case 'Driving':
-      return (code: DutyStatus.driving.toShortCode(), arabic: DutyStatus.driving.arabicName);
+      return DutyStatus.driving.toShortCode();
     case 'On Duty':
-      return (
-        code: DutyStatus.onDutyNotDriving.toShortCode(),
-        arabic: DutyStatus.onDutyNotDriving.arabicName
-      );
+      return DutyStatus.onDutyNotDriving.toShortCode();
     case 'Personal Use':
-      return (code: DutyStatus.personalUse.toShortCode(), arabic: DutyStatus.personalUse.arabicName);
+      return DutyStatus.personalUse.toShortCode();
     case 'Yard Moves':
-      return (code: DutyStatusCode.yardMove.shortCode, arabic: 'حركة الساحة');
+      return DutyStatusCode.yardMove.shortCode;
     default:
-      return (code: value, arabic: value);
+      return value;
   }
 }
 

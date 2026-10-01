@@ -8,6 +8,7 @@ import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/account_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/localization/locale_provider.dart';
 
 /// شاشة معلومات الحساب
 class AccountPage extends ConsumerStatefulWidget {
@@ -174,6 +175,11 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                       );
                                   if (context.mounted) {
                                     if (success) {
+                                      String code = 'en';
+                                      if (newValue.toLowerCase() == 'arabic' || newValue == 'العربية') code = 'ar';
+                                      if (newValue.toLowerCase() == 'spanish' || newValue == 'español') code = 'es';
+                                      ref.read(localeProvider.notifier).setLocale(code);
+                                      
                                       AppFeedback.success(
                                         context,
                                         loc.languageUpdatedSuccessfully,

@@ -10,6 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../providers/auth_mode_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class ForgotPasswordForm extends ConsumerStatefulWidget {
   const ForgotPasswordForm({super.key});
@@ -61,7 +62,7 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
               ? (_arabic
                   ? 'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.'
                   : 'Reset is not available on this server. Contact your fleet manager.')
-              : anyErrorUserMessage(error, isArabic: _arabic);
+              : anyErrorUserMessage(error, loc: AppLocalizations.of(context)!);
         });
       },
       (_) {

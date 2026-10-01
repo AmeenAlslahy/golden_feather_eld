@@ -187,6 +187,7 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.ensureVisible(find.text('Back to Login'));
     await tester.tap(find.text('Back to Login'));
     await tester.pumpAndSettle();
     expect(loginButton(), findsOneWidget);

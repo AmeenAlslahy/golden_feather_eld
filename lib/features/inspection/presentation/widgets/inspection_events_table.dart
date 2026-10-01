@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
-
 /// Read-only event list for roadside inspection (typed DOT events).
 class InspectionEventsTable extends StatelessWidget {
   const InspectionEventsTable({super.key, required this.events});
@@ -12,7 +11,7 @@ class InspectionEventsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     if (events.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -39,21 +38,21 @@ class InspectionEventsTable extends StatelessWidget {
                 width: 56,
                 child: Text(
                   // SRS 8.3 column label; the server field is `timeEt`.
-                  isArabic ? 'الوقت ET' : 'Time ET',
+                  loc.tableTimeEt,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               Expanded(
                 flex: 2,
                 child: Text(
-                  isArabic ? 'الحالة' : 'Status',
+                  loc.status,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               Expanded(
                 flex: 3,
                 child: Text(
-                  isArabic ? 'الموقع' : 'Location',
+                  loc.location,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
@@ -61,7 +60,7 @@ class InspectionEventsTable extends StatelessWidget {
               SizedBox(
                 width: 52,
                 child: Text(
-                  isArabic ? 'العداد' : 'Odometer',
+                  loc.odometer,
                   maxLines: 2,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -69,7 +68,7 @@ class InspectionEventsTable extends StatelessWidget {
               SizedBox(
                 width: 44,
                 child: Text(
-                  isArabic ? 'ساعات\nالمحرك' : 'Engine\nHours',
+                  loc.engineHours,
                   maxLines: 2,
                   style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -90,20 +89,20 @@ class _EventRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final status = event.description.isNotEmpty
         ? event.description
         : (event.eventCode.isNotEmpty ? event.eventCode : event.eventType);
     final statusLabel = event.certificationEvent
-        ? (isArabic ? 'اعتماد · $status' : 'Cert · $status')
+        ? loc.certEventStatus(status)
         : status;
     final extras = <String>[
       if (event.eventCode.trim().isNotEmpty && event.eventCode != status)
-        isArabic ? 'الرمز: ${event.eventCode}' : 'Code: ${event.eventCode}',
+        loc.eventCodeNote(event.eventCode),
       if (event.origin.trim().isNotEmpty)
-        isArabic ? 'المصدر: ${event.origin}' : 'Origin: ${event.origin}',
+        loc.originNote(event.origin),
       if (event.notes.trim().isNotEmpty)
-        isArabic ? 'ملاحظات: ${event.notes}' : 'Notes: ${event.notes}',
+        loc.notesNote(event.notes),
     ];
     return Container(
       padding: const EdgeInsets.symmetric(

@@ -100,8 +100,7 @@ class HomePage extends ConsumerWidget {
                         if (!showTool && !showTriangle) {
                           return const SizedBox.shrink();
                         }
-                        final isArabic =
-                            Localizations.localeOf(context).languageCode == 'ar';
+                        final loc = context.loc;
                         return Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -118,21 +117,17 @@ class HomePage extends ConsumerWidget {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: Text(
-                                        isArabic ? 'تنبيه' : 'Notice',
+                                        loc.noticeTitle,
                                       ),
                                       content: Text(
                                         isGpsOff
-                                            ? (isArabic
-                                                ? 'نظام تحديد المواقع مغلق.'
-                                                : 'GPS is turned off.')
-                                            : (isArabic
-                                                ? 'الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.'
-                                                : 'The server reports an ELD operational alert. Open the Connection screen for details.'),
+                                            ? loc.gpsTurnedOff
+                                            : loc.serverReportsEldAlert,
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () => Navigator.pop(context),
-                                          child: Text(isArabic ? 'حسناً' : 'OK'),
+                                          child: Text(loc.okButton),
                                         ),
                                       ],
                                     ),
@@ -142,7 +137,7 @@ class HomePage extends ConsumerWidget {
                             if (showTriangle)
                               IconButton(
                                 key: const Key('home_warning_triangle'),
-                                tooltip: isArabic ? 'تنبيه تشغيلي' : 'Operational alert',
+                                tooltip: loc.operationalAlertTooltip,
                                 icon: const Icon(
                                   Icons.warning_amber,
                                   color: AppColors.warningYellow,
@@ -174,9 +169,7 @@ class HomePage extends ConsumerWidget {
                       color: Colors.black87,
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
-                        Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.'
-                            : 'No internet. You can continue with saved data.',
+                        context.loc.noInternetBanner,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),

@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../account/presentation/providers/account_provider.dart';
 
 // final fleetSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 //   final result = await ref.watch(configBackendProvider).getSettings();
@@ -120,10 +121,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: 'en',
                         label: Text(context.loc.languageEnglish),
                       ),
+                      ButtonSegment(
+                        value: 'es',
+                        label: Text(context.loc.languageSpanish),
+                      ),
                     ],
-                    selected: {locale.languageCode == 'ar' ? 'ar' : 'en'},
-                    onSelectionChanged: (value) {
-                      ref.read(localeProvider.notifier).setLocale(value.first);
+                    selected: {locale.languageCode},
+                    onSelectionChanged: (value) async {
+                      final code = value.first;
+                      ref.read(localeProvider.notifier).setLocale(code);
+                      
+                      final accountState = ref.read(accountProvider);
+                      // If user is logged in, sync to server
+                      if (accountState.accountData != null) {
+                        final langName = code == 'ar' ? 'Arabic' : (code == 'es' ? 'Spanish' : 'English');
+                        final currentOdo = accountState.accountData?.odometer ?? 'mi';
+                        await ref.read(accountProvider.notifier).updatePreferences(
+                          language: langName,
+                          odometerUnit: currentOdo,
+                        );
+                      }
                     },
                   ),
                 ],

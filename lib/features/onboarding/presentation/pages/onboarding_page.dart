@@ -7,6 +7,7 @@ import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Onboarding لأول تشغيل (3 شرائح): تتبع تلقائي، فحص المركبة، جاهزية
 /// التفتيش. يُعرض مرة واحدة بعلم [LocalStorageService.onboardingSeen]
@@ -22,39 +23,21 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _slides = <_Slide>[
+  static final _slides = <_Slide>[
     _Slide(
       icon: Icons.route,
-      titleEn: 'Your hours, recorded automatically',
-      titleAr: 'ساعاتك تُسجَّل تلقائياً',
-      bodyEn:
-          'The ELD tracks your driving status against FMCSA limits the moment '
-          'the vehicle moves — no paperwork, no guessing.',
-      bodyAr:
-          'يتتبع جهاز ELD حالة قيادتك مقابل حدود FMCSA لحظة تحرك المركبة — '
-          'بلا أوراق وبلا تخمين.',
+      title: (loc) => loc.onboardingTitle1,
+      body: (loc) => loc.onboardingBody1,
     ),
     _Slide(
       icon: Icons.fact_check_outlined,
-      titleEn: 'Inspect your vehicle with confidence',
-      titleAr: 'افحص مركبتك بثقة',
-      bodyEn:
-          'Daily DVIR before and after the trip, defect tracking with repair '
-          'certifications, and §396.13 review — all in one place.',
-      bodyAr:
-          'فحص يومي قبل وبعد الرحلة، تتبع العيوب مع شهادات الإصلاح، ومراجعة '
-          '§396.13 — كل ذلك في مكان واحد.',
+      title: (loc) => loc.onboardingTitle2,
+      body: (loc) => loc.onboardingBody2,
     ),
     _Slide(
       icon: Icons.verified_user_outlined,
-      titleEn: 'Always ready for the inspector',
-      titleAr: 'جاهز للمفتش دائماً',
-      bodyEn:
-          'Your records, information packet, and transfer options live on the '
-          'device — even when there is no internet on the road.',
-      bodyAr:
-          'سجلاتك وحزمتك القانونية وخيارات النقل على متن الجهاز — حتى بلا '
-          'إنترنت على الطريق.',
+      title: (loc) => loc.onboardingTitle3,
+      body: (loc) => loc.onboardingBody3,
     ),
   ];
 
@@ -85,7 +68,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -97,7 +80,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               child: TextButton(
                 onPressed: _finish,
                 child: Text(
-                  isArabic ? 'تخطي' : 'Skip',
+                  loc.onboardingSkip,
                   style: context.styles.body.copyWith(
                     color: AppColors.textSecondaryFor(
                         Theme.of(context).brightness),
@@ -130,7 +113,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(
-                          isArabic ? slide.titleAr : slide.titleEn,
+                          slide.title(loc),
                           textAlign: TextAlign.center,
                           style: context.styles.pageTitle.copyWith(
                             fontWeight: FontWeight.bold,
@@ -138,7 +121,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          isArabic ? slide.bodyAr : slide.bodyEn,
+                          slide.body(loc),
                           textAlign: TextAlign.center,
                           style: context.styles.body,
                         ),
@@ -173,8 +156,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 width: double.infinity,
                 child: AppButton(
                   label: _isLast
-                      ? (isArabic ? 'ابدأ الآن' : 'GET STARTED')
-                      : (isArabic ? 'التالي' : 'NEXT'),
+                      ? loc.onboardingGetStarted
+                      : loc.onboardingNext,
                   onPressed: _next,
                   type: EldButtonType.send,
                 ),
@@ -189,16 +172,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
 class _Slide {
   final IconData icon;
-  final String titleEn;
-  final String titleAr;
-  final String bodyEn;
-  final String bodyAr;
+  final String Function(AppLocalizations) title;
+  final String Function(AppLocalizations) body;
 
   const _Slide({
     required this.icon,
-    required this.titleEn,
-    required this.titleAr,
-    required this.bodyEn,
-    required this.bodyAr,
+    required this.title,
+    required this.body,
   });
 }

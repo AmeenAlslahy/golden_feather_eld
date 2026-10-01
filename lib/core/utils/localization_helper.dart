@@ -35,18 +35,18 @@ extension LocalizationHelper on BuildContext {
         // Not an l10n key: a backend error code such as
         // `network.connectionFailed`, `server.unavailable`, `server_error`.
         // The driver never sees the code itself.
-        final isArabic = Localizations.localeOf(this).languageCode == 'ar';
+        final loc = AppLocalizations.of(this)!;
         final lower = key.toLowerCase();
         if (lower.startsWith('network.') || lower.contains('connection')) {
-          return anyErrorUserMessage('noInternet', isArabic: isArabic);
+          return anyErrorUserMessage('noInternet', loc: loc);
         }
         if (lower.startsWith('server') ||
             lower.endsWith('_error') ||
             lower.contains('.') ||
             lower.contains('_')) {
-          return anyErrorUserMessage(Object(), isArabic: isArabic);
+          return anyErrorUserMessage(Object(), loc: loc);
         }
-        return anyErrorUserMessage(key, isArabic: isArabic);
+        return anyErrorUserMessage(key, loc: loc);
     }
   }
 }

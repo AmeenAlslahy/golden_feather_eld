@@ -32,7 +32,6 @@ void main() {
   LogEvent ev(String id, String status, int minutes) => LogEvent(
         id: id,
         status: status,
-        statusArabic: status,
         startTime: DateTime(2026, 9, 24, 8),
         duration: Duration(minutes: minutes),
         location: 'x',

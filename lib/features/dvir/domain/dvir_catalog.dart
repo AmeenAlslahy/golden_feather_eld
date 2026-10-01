@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// One §396.11 catalog item from `GET /eld/dvir/catalog`.
 class DvirCatalogItem extends Equatable {
@@ -18,8 +19,8 @@ class DvirCatalogItem extends Equatable {
     this.critical = false,
   });
 
-  String label(bool isArabic) =>
-      isArabic && (nameAr?.trim().isNotEmpty ?? false) ? nameAr! : name;
+  String label(AppLocalizations loc) =>
+      loc.localeName == 'ar' && (nameAr?.trim().isNotEmpty ?? false) ? nameAr! : name;
 
   @override
   List<Object?> get props => [code, name, nameAr, category, mandatory, critical];

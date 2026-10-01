@@ -58,7 +58,7 @@ class _InspectionBackend extends Mock implements InspectionBackend {}
 /// the page shows the empty body plus the lock icon in the app bar).
 class _LockedInspection extends InspectionNotifier {
   _LockedInspection(InspectionBackend backend)
-      : super(backend: backend, driverId: 101, isArabic: false) {
+      : super(backend: backend, driverId: 101, loc: lookupAppLocalizations(const Locale('en'))) {
     state = const InspectionState(
       isInspectionMode: true,
       isPinLocked: true,

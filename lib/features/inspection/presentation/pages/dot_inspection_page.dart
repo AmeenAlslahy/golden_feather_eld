@@ -79,29 +79,17 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
   }
 
   Widget _buildStartInspection() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final error = ref.watch(inspectionProvider).error;
     // Live GET /eld/dot-inspection. Server text wins when present; local copy is the fallback.
     final screen = ref.watch(dotInspectionScreenProvider).asData?.value;
-    final guidance = _nonEmpty(screen?.guidanceText) ??
-        (isArabic
-            ? 'افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة'
-            : 'Inspect logs for the 24-hour period and the previous days for one HOS cycle');
-    final handOver = _nonEmpty(screen?.handOverDeviceNotice) ??
-        (isArabic
-            ? 'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط'
-            : 'Set a PIN, select "Start Inspection", and give your device to the officer');
-    final compliance = _nonEmpty(screen?.carrierComplianceStatement) ??
-        (isArabic
-            ? 'يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.'
-            : 'This ELD certifies that use of the app with the ELD device complies with all requirements for ELD as defined in Federal Motor Carrier Safety regulation 49 CFR part 395 Subpart B.');
+    final guidance = _nonEmpty(screen?.guidanceText) ?? context.loc.inspectLogs24;
+    final handOver = _nonEmpty(screen?.handOverDeviceNotice) ?? context.loc.setPinGuidance;
+    final compliance = _nonEmpty(screen?.carrierComplianceStatement) ?? context.loc.eldCertifies;
     final canStart = screen?.canStartInspection ?? true;
     final canSend = screen?.canSendLogs ?? true;
     final canEmail = screen?.canEmailLogs ?? true;
     final canPacket = screen?.canViewInformationPacket ?? true;
-    final notAllowed = isArabic
-        ? 'غير متاح لهذا الحساب حسب الخادم.'
-        : 'Not available for this account per the server.';
+    final notAllowed = context.loc.notAllowedByServer;
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -128,16 +116,14 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               ),
               const SizedBox(height: 16),
               AppButton(
-                label: isArabic ? 'بدء التفتيش' : 'START INSPECTION',
+                label: context.loc.startInspectionUpper,
                 type: EldButtonType.dark,
                 onPressed: canStart ? _startWithPin : null,
               ),
               if (!canStart) ...[
                 const SizedBox(height: 8),
                 Text(
-                  isArabic
-                      ? 'الخادم لا يسمح ببدء التفتيش الآن.'
-                      : 'The server does not allow starting an inspection right now.',
+                  context.loc.serverDoesNotAllow,
                   textAlign: TextAlign.center,
                   style: context.styles.muted,
                 ),
@@ -153,23 +139,19 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
           child: Column(
             children: [
               Text(
-                isArabic
-                    ? 'أرسل السجلات لفترة 24 ساعة والأيام السابقة لدورة واحدة'
-                    : 'Send logs for the 24-hour period and the previous days for one HOS cycle',
+                context.loc.sendLogsFor24,
                 textAlign: TextAlign.center,
                 style: context.styles.body,
               ),
               const SizedBox(height: 8),
               Text(
-                isArabic
-                    ? 'أرسل سجلاتك للضابط إذا طلب ذلك'
-                    : 'Send your logs to the officer if they request',
+                context.loc.sendLogsToOfficer,
                 textAlign: TextAlign.center,
                 style: context.styles.muted,
               ),
               const SizedBox(height: 16),
               AppButton(
-                label: isArabic ? 'إرسال السجلات' : 'SEND LOGS',
+                label: context.loc.sendLogsUpper,
                 type: EldButtonType.dark,
                 onPressed: canSend
                     ? () {
@@ -197,23 +179,19 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
           child: Column(
             children: [
               Text(
-                isArabic
-                    ? 'أرسل السجلات بالبريد لفترة 24 ساعة والأيام السابقة كملف PDF'
-                    : 'Email logs for the 24-hour period and the previous days for one HOS cycle as PDF',
+                context.loc.emailLogs24Pdf,
                 textAlign: TextAlign.center,
                 style: context.styles.body,
               ),
               const SizedBox(height: 8),
               Text(
-                isArabic
-                    ? 'أرسل سجلاتك بصيغة PDF'
-                    : 'Email your logs in the PDF format',
+                context.loc.emailLogsPdf,
                 textAlign: TextAlign.center,
                 style: context.styles.muted,
               ),
               const SizedBox(height: 16),
               AppButton(
-                label: isArabic ? 'بريد السجلات' : 'EMAIL LOGS',
+                label: context.loc.emailLogsUpper,
                 type: EldButtonType.dark,
                 onPressed: canEmail
                     ? () {
@@ -249,7 +227,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               ),
               const SizedBox(height: 16),
               AppButton(
-                label: isArabic ? 'حزمة المعلومات' : 'INFORMATION PACKET',
+                label: context.loc.infoPacketUpper,
                 type: EldButtonType.dark,
                 onPressed: canPacket
                     ? () => context.push(AppRoutes.infoPacket)
@@ -273,7 +251,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     final day = _currentDayIndex >= 0 && _currentDayIndex < state.cycle.length
         ? state.cycle[_currentDayIndex]
         : null;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final account = ref.watch(accountProvider).accountData;
     final co = ref.watch(codriverProvider).currentCoDriver;
     return Column(
@@ -358,9 +336,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: AppButton(
-                          label: isArabic
-                              ? 'خروج السائق'
-                              : 'DRIVER EXIT',
+                          label: loc.driverExit,
                           type: EldButtonType.danger,
                           onPressed: _promptDriverExit,
                         ),
@@ -424,16 +400,16 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
     super.dispose();
   }
 
-  void _submit(bool isArabic) {
+  void _submit(BuildContext context) {
     if (_pin.text.length != 4) {
       setState(() {
-        _error = isArabic ? 'الرمز يجب أن يكون 4 أرقام.' : 'PIN must be 4 digits.';
+        _error = context.loc.enter4Digits;
       });
       return;
     }
     if (_pin.text != _confirm.text) {
       setState(() {
-        _error = isArabic ? 'الرمزان غير متطابقين.' : 'The PINs do not match.';
+        _error = context.loc.pinsDoNotMatch;
       });
       return;
     }
@@ -442,17 +418,15 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     return AlertDialog(
-      title: Text(isArabic ? 'رمز التفتيش' : 'Inspection PIN'),
+      title: Text(loc.inspectionPinTitle),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isArabic
-                  ? 'عيّن رمزاً من 4 أرقام لقفل الشاشة. المفتش يرى السجلات فقط ولا يخرج إلا بكلمة مرور السائق.'
-                  : 'Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.',
+              loc.setPinGuidanceDialog,
               style: context.styles.muted,
             ),
             const SizedBox(height: 12),
@@ -463,7 +437,7 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
               maxLength: 4,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
-                labelText: isArabic ? 'الرمز' : 'PIN',
+                labelText: context.loc.pinLabel,
                 counterText: '',
               ),
             ),
@@ -473,9 +447,9 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
               keyboardType: TextInputType.number,
               maxLength: 4,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onSubmitted: (_) => _submit(isArabic),
+              onSubmitted: (_) => _submit(context),
               decoration: InputDecoration(
-                labelText: isArabic ? 'تأكيد الرمز' : 'Confirm PIN',
+                labelText: context.loc.confirmPinLabel,
                 counterText: '',
               ),
             ),
@@ -490,11 +464,11 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          child: Text(context.loc.cancelAction),
         ),
         TextButton(
-          onPressed: () => _submit(isArabic),
-          child: Text(isArabic ? 'بدء' : 'Start'),
+          onPressed: () => _submit(context),
+          child: Text(context.loc.startAction),
         ),
       ],
     );
@@ -522,18 +496,18 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
     super.dispose();
   }
 
-  void _submit(bool isArabic) {
+  void _submit(BuildContext context) {
     final pin = _pin.text.trim();
     if (pin.isEmpty) {
       setState(() {
-        _error = isArabic ? 'أدخل رمز التفتيش.' : 'Enter the inspection PIN.';
+        _error = context.loc.enterInspectionPin;
       });
       return;
     }
     final accepted = ref.read(inspectionProvider.notifier).exitWithPin(pin);
     if (!accepted) {
       setState(() {
-        _error = isArabic ? 'الرمز غير صحيح.' : 'Incorrect PIN.';
+        _error = context.loc.incorrectPin;
       });
       return;
     }
@@ -542,17 +516,14 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return AlertDialog(
-      title: Text(isArabic ? 'خروج السائق' : 'Driver exit'),
+      title: Text(context.loc.driverExit),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isArabic
-                  ? 'أدخل رمز التفتيش الذي عيّنته عند البدء. المفتش لا يخرج من هنا.'
-                  : 'Enter the inspection PIN you set when starting. The officer cannot leave here.',
+              context.loc.enterPinToExitGuidance,
               style: context.styles.muted,
             ),
             const SizedBox(height: 12),
@@ -563,9 +534,9 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
               keyboardType: TextInputType.number,
               maxLength: 4,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onSubmitted: (_) => _submit(isArabic),
+              onSubmitted: (_) => _submit(context),
               decoration: InputDecoration(
-                labelText: isArabic ? 'الرمز' : 'PIN',
+                labelText: context.loc.pinLabel,
                 counterText: '',
               ),
             ),
@@ -580,11 +551,11 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          child: Text(context.loc.cancelAction),
         ),
         TextButton(
-          onPressed: () => _submit(isArabic),
-          child: Text(isArabic ? 'خروج' : 'Exit'),
+          onPressed: () => _submit(context),
+          child: Text(context.loc.exitAction),
         ),
       ],
     );

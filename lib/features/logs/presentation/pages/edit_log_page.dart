@@ -75,26 +75,24 @@ String _formatCurrentTime() {
 
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, dynamic>((ref, event) {
-  return EditLogFormNotifier(EditLogFormState(
-    // الرمز المخزن (D/ON/...) يُعاد إلى قيمة القائمة (Driving/On Duty/...)
-    // حتى تُحدد الحالة الحالية في الواجهة.
-    selectedStatus: editValueForStatus(event.status),
-    startTime: event.formattedStartTime ?? _formatCurrentTime(),
-    duration: event.formattedDuration ?? '00:00',
-    location: event.location ?? '',
-  ));
-});
+      return EditLogFormNotifier(
+        EditLogFormState(
+          // الرمز المخزن (D/ON/...) يُعاد إلى قيمة القائمة (Driving/On Duty/...)
+          // حتى تُحدد الحالة الحالية في الواجهة.
+          selectedStatus: editValueForStatus(event.status),
+          startTime: event.formattedStartTime ?? _formatCurrentTime(),
+          duration: event.formattedDuration ?? '00:00',
+          location: event.location ?? '',
+        ),
+      );
+    });
 
 /// شاشة تعديل الحدث
 class EditLogPage extends ConsumerWidget {
   final dynamic event;
   final bool isNewEvent;
 
-  const EditLogPage({
-    super.key,
-    required this.event,
-    this.isNewEvent = false,
-  });
+  const EditLogPage({super.key, required this.event, this.isNewEvent = false});
 
   void _showTimePicker(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
@@ -116,8 +114,9 @@ class EditLogPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardDataProvider);
     final formState = ref.watch(editLogFormProvider(event));
-    final selectedLog =
-        ref.watch(logsProvider).selectedLog; // جلب اليوم المختار
+    final selectedLog = ref
+        .watch(logsProvider)
+        .selectedLog; // جلب اليوم المختار
 
     final List<Map<String, String>> statuses = [
       {'value': 'Off Duty', 'label': context.loc.offDuty},
@@ -144,37 +143,46 @@ class EditLogPage extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md), // تم تصغير الـ padding الجانبي
+          horizontal: AppSpacing.md,
+        ), // تم تصغير الـ padding الجانبي
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
             const SizedBox(height: AppSpacing.md),
             LogGraph(
-                events:
-                    selectedLog?.events ?? []), // تمرير الأحداث الحقيقية لليوم
-
+              events: selectedLog?.events ?? [],
+            ), // تمرير الأحداث الحقيقية لليوم
             // 2. حقل الوقت والمدة
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
-                    child: _buildTimeField(
-                        context,
-                        context.loc.startTime,
-                        formState.startTime,
-                        () => _showTimePicker(context, ref))),
+                  child: _buildTimeField(
+                    context,
+                    context.loc.startTime,
+                    formState.startTime,
+                    () => _showTimePicker(context, ref),
+                  ),
+                ),
                 Expanded(
-                    child: _buildTimeField(context, context.loc.duration,
-                        formState.duration, () {})),
+                  child: _buildTimeField(
+                    context,
+                    context.loc.duration,
+                    formState.duration,
+                    () {},
+                  ),
+                ),
               ],
             ),
             // خط متقطع أسفل الوقت (للمطابقة)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               child: CustomPaint(
-                  painter:
-                      DashedLinePainter(color: Theme.of(context).dividerColor)),
+                painter: DashedLinePainter(
+                  color: Theme.of(context).dividerColor,
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -187,32 +195,33 @@ class EditLogPage extends ConsumerWidget {
               },
               child: Column(
                 children: statuses.map((status) {
-              final isSelected = formState.selectedStatus == status['value'];
-              return Column(
-                children: [
-                  RadioListTile<String>(
-                    title: Text(
-                      status['label']!,
-                      style: context.styles.body.copyWith(
-                        fontWeight: isSelected
-                            ? AppTypography.semiBold
-                            : AppTypography.regular,
-                        color: isSelected
-                            ? AppColors.primaryGold
-                            : null,
+                  final isSelected =
+                      formState.selectedStatus == status['value'];
+                  return Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: Text(
+                          status['label']!,
+                          style: context.styles.body.copyWith(
+                            fontWeight: isSelected
+                                ? AppTypography.semiBold
+                                : AppTypography.regular,
+                            color: isSelected ? AppColors.primaryGold : null,
+                          ),
+                        ),
+                        value: status['value']!,
+                        activeColor: AppColors.primaryGold,
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                    ),
-                    value: status['value']!,
-                    activeColor: AppColors.primaryGold,
-                    controlAffinity: ListTileControlAffinity.trailing,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  Divider(
-                      color:
-                          Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                      height: 1),
-                ],
-              );
+                      Divider(
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.5),
+                        height: 1,
+                      ),
+                    ],
+                  );
                 }).toList(),
               ),
             ),
@@ -227,15 +236,12 @@ class EditLogPage extends ConsumerWidget {
                   style: context.styles.bodyBold.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  dashboard.vehicleId,
-                  style: context.styles.body,
-                ),
+                Text(dashboard.vehicleId, style: context.styles.body),
                 const SizedBox(height: 8),
                 Divider(
-                    color:
-                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                    height: 1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                  height: 1,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -250,14 +256,17 @@ class EditLogPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formState.location.isEmpty ? ' ' : formState.location, // empty space to keep height if empty
+                  formState.location.isEmpty
+                      ? ' '
+                      : formState
+                            .location, // empty space to keep height if empty
                   style: context.styles.subtitle,
                 ),
                 const SizedBox(height: 8),
                 Divider(
-                    color:
-                        Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                    height: 1),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                  height: 1,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -268,7 +277,10 @@ class EditLogPage extends ConsumerWidget {
                 hintText: context.loc.manualLocation,
                 hintStyle: context.styles.subtitle,
                 border: const UnderlineInputBorder(),
-                suffixIcon:  Icon(Icons.my_location, color: context.styles.body.color),
+                suffixIcon: Icon(
+                  Icons.my_location,
+                  color: context.styles.body.color,
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
               style: context.styles.body,
@@ -287,8 +299,7 @@ class EditLogPage extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
                   decoration: InputDecoration(
-                    hintText:
-                        context.loc.enterReasonRequired,
+                    hintText: context.loc.enterReasonRequired,
                     hintStyle: context.styles.subtitle,
                     border: const UnderlineInputBorder(),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -306,112 +317,117 @@ class EditLogPage extends ConsumerWidget {
 
             // 7. زر الحفظ
             AppButton(
-              label:
-                  isNewEvent ? context.loc.addButton : context.loc.saveButton,
+              label: isNewEvent
+                  ? context.loc.addButton
+                  : context.loc.saveButton,
               type: EldButtonType.agree,
               onPressed: () async {
-                      if (formState.reason.trim().isEmpty) {
-                        AppFeedback.error(
-                          context,
-                          context.loc.aReasonForTheChangeIs,
-                        );
-                        return;
-                      }
-                      // حفظ التعديلات وسجل التدقيق
-                      final notifier = ref.read(logsProvider.notifier);
-                      
-                      final driverId = resolveDriverIdForAudit(ref);
+                if (formState.reason.trim().isEmpty) {
+                  AppFeedback.error(context, context.loc.aReasonForTheChangeIs);
+                  return;
+                }
+                // حفظ التعديلات وسجل التدقيق
+                final notifier = ref.read(logsProvider.notifier);
 
-                      if (driverId == null || driverId.isEmpty) {
-                        if (context.mounted) {
-                          AppFeedback.error(context, 
-                                context.loc.cannotSaveDriverSessionNotFound);
-                        }
-                        return;
-                      }
+                final driverId = resolveDriverIdForAudit(ref);
 
-                      // بناء الحدث كما عدّله المستخدم (القيمة الحالية للنموذج)
-                      final selectedLog = ref.read(logsProvider).selectedLog;
-                      final status =
-                          statusFromEditValue(formState.selectedStatus);
-                      final existing = event is LogEvent ? event : null;
-                      final newStart = parseEditFormTime(
-                              formState.startTime, selectedLog?.date) ??
-                          existing?.startTime ??
-                          DateTime.now();
-                      if (existing != null) {
-                        final refusal = refuseAutomaticDrivingEdit(
-                          original: existing,
-                          newStatusCode: status.code,
-                          newStart: newStart,
-                        );
-                        if (refusal != null) {
-                          if (context.mounted) {
-AppFeedback.error(
-                              context,
-                              context.loc.automaticDrivingTimeCannotBeShortened,
-                            );
-                          }
-                          return;
-                        }
-                      }
+                if (driverId == null || driverId.isEmpty) {
+                  if (context.mounted) {
+                    AppFeedback.error(
+                      context,
+                      context.loc.cannotSaveDriverSessionNotFound,
+                    );
+                  }
+                  return;
+                }
 
-                      final updatedEvent = existing?.copyWith(
-                            status: status.code,
-                            startTime: newStart,
-                          ) ??
-                          LogEvent(
-                            id: DateTime.now().millisecondsSinceEpoch.toString(),
-                            status: status.code,
-                            startTime: newStart,
-                            duration: Duration.zero,
-                            location: formState.location,
-                          );
+                // بناء الحدث كما عدّله المستخدم (القيمة الحالية للنموذج)
+                final selectedLog = ref.read(logsProvider).selectedLog;
+                final status = statusFromEditValue(formState.selectedStatus);
+                final existing = event is LogEvent ? event : null;
+                final newStart =
+                    parseEditFormTime(formState.startTime, selectedLog?.date) ??
+                    existing?.startTime ??
+                    DateTime.now();
+                if (existing != null) {
+                  final refusal = refuseAutomaticDrivingEdit(
+                    original: existing,
+                    newStatusCode: status,
+                    newStart: newStart,
+                  );
+                  if (refusal != null) {
+                    if (context.mounted) {
+                      AppFeedback.error(
+                        context,
+                        context.loc.automaticDrivingTimeCannotBeShortened,
+                      );
+                    }
+                    return;
+                  }
+                }
 
-                      // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
-                      final saved = isNewEvent
-                          ? await notifier.addEvent(updatedEvent,
-                              reason: formState.reason)
-                          : await notifier.updateEvent(updatedEvent,
-                              reason: formState.reason);
-                      if (!saved) {
-                        if (context.mounted) {
-AppFeedback.error(context, 
-                                context.loc.theEventCouldNotBeSaved);
-                        }
-                        return;
-                      }
+                final updatedEvent =
+                    existing?.copyWith(status: status, startTime: newStart) ??
+                    LogEvent(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      status: status,
+                      startTime: newStart,
+                      duration: Duration.zero,
+                      location: formState.location,
+                    );
 
-                      final timeAuthority = ref.read(timeAuthorityProvider);
-
-                      final entry = AuditEntry(
-                        id: const Uuid().v4(),
-                        timestamp: timeAuthority.nowUtc(),
-                        driverId: driverId,
-                        oldStatus:
-                            isNewEvent ? null : (existing?.status),
-                        newStatus: status.code,
+                // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
+                final saved = isNewEvent
+                    ? await notifier.addEvent(
+                        updatedEvent,
+                        reason: formState.reason,
+                      )
+                    : await notifier.updateEvent(
+                        updatedEvent,
                         reason: formState.reason,
                       );
+                if (!saved) {
+                  if (context.mounted) {
+                    AppFeedback.error(
+                      context,
+                      context.loc.theEventCouldNotBeSaved,
+                    );
+                  }
+                  return;
+                }
 
-                      final auditSaved = (await notifier.saveAuditEntry(entry))
-                          .fold((_) => false, (ok) => ok);
-                      if (!auditSaved) {
-                        if (context.mounted) {
-AppFeedback.error(context, 
-                                context.loc.theEventWasSavedButThe);
-                        }
-                        return;
-                      }
+                final timeAuthority = ref.read(timeAuthorityProvider);
 
-                      if (context.mounted) {
-AppFeedback.success(
-                          context,
-                          context.loc.eventSavedSuccessfully,
-                        );
-                        Navigator.pop(context, true);
-                      }
-                    },
+                final entry = AuditEntry(
+                  id: const Uuid().v4(),
+                  timestamp: timeAuthority.nowUtc(),
+                  driverId: driverId,
+                  oldStatus: isNewEvent ? null : (existing?.status),
+                  newStatus: status,
+                  reason: formState.reason,
+                );
+
+                final auditSaved = (await notifier.saveAuditEntry(
+                  entry,
+                )).fold((_) => false, (ok) => ok);
+                if (!auditSaved) {
+                  if (context.mounted) {
+                    AppFeedback.error(
+                      context,
+                      context.loc.theEventWasSavedButThe,
+                    );
+                  }
+                  return;
+                }
+
+                if (context.mounted) {
+                  AppFeedback.success(
+                    context,
+                    context.loc.eventSavedSuccessfully,
+                  );
+                  Navigator.pop(context, true);
+                }
+              },
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -421,31 +437,37 @@ AppFeedback.success(
   }
 
   Widget _buildTimeField(
-      BuildContext context, String label, String value, VoidCallback onTap) {
+    BuildContext context,
+    String label,
+    String value,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: context.styles.sectionTitle
-                  .copyWith(fontSize: AppTypography.subtitleSize),
+              style: context.styles.sectionTitle.copyWith(
+                fontSize: AppTypography.subtitleSize,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  value,
-                  style: context.styles.body,
+                Text(value, style: context.styles.body),
+                Icon(
+                  Icons.access_time,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  size: 20,
                 ),
-                Icon(Icons.access_time,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    size: 20),
               ],
             ),
           ],
@@ -481,8 +503,9 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _selectedHour =
-        now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+    _selectedHour = now.hour > 12
+        ? now.hour - 12
+        : (now.hour == 0 ? 12 : now.hour);
     _selectedMinute = now.minute;
     _selectedSecond = now.second;
     _selectedPeriod = now.hour < 12 ? 'AM' : 'PM';
@@ -512,8 +535,10 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
             children: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text(context.loc.cancelButton,
-                    style: context.styles.error),
+                child: Text(
+                  context.loc.cancelButton,
+                  style: context.styles.error,
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -521,8 +546,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                       '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} ${_selectedPeriod == 'AM' ? context.loc.am : context.loc.pm}';
                   widget.onDone(time);
                 },
-                child: Text(context.loc.saveButton,
-                    style: context.styles.gold),
+                child: Text(context.loc.saveButton, style: context.styles.gold),
               ),
             ],
           ),
@@ -531,12 +555,24 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           Expanded(
             child: Row(
               children: [
-                _buildWheel(24, _hourWheel, _selectedHour,
-                    (v) => setState(() => _selectedHour = v)),
-                _buildWheel(60, _minuteWheel, _selectedMinute,
-                    (v) => setState(() => _selectedMinute = v)),
-                _buildWheel(60, _secondWheel, _selectedSecond,
-                    (v) => setState(() => _selectedSecond = v)),
+                _buildWheel(
+                  24,
+                  _hourWheel,
+                  _selectedHour,
+                  (v) => setState(() => _selectedHour = v),
+                ),
+                _buildWheel(
+                  60,
+                  _minuteWheel,
+                  _selectedMinute,
+                  (v) => setState(() => _selectedMinute = v),
+                ),
+                _buildWheel(
+                  60,
+                  _secondWheel,
+                  _selectedSecond,
+                  (v) => setState(() => _selectedSecond = v),
+                ),
                 _buildPeriodWheel(),
               ],
             ),
@@ -546,8 +582,12 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     );
   }
 
-  Widget _buildWheel(int max, FixedExtentScrollController controller,
-      int selected, Function(int) onChanged) {
+  Widget _buildWheel(
+    int max,
+    FixedExtentScrollController controller,
+    int selected,
+    Function(int) onChanged,
+  ) {
     return Expanded(
       child: ListWheelScrollView.useDelegate(
         itemExtent: 40,

@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../pages/eld_connection_page.dart';
 import '../providers/hardware_status_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Server-side ELD connectivity status lines (SRS 3.8 diagnostics).
 class EldConnectivityPanel extends ConsumerWidget {
@@ -15,47 +16,40 @@ class EldConnectivityPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final status = ref.watch(hardwareStatusProvider);
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: status.when(
         loading: () => Text(
-          isArabic ? 'جارٍ قراءة حالة الاتصال...' : 'Reading connection status...',
+          loc.eldDiagnosticReading,
           style: context.styles.body,
         ),
         error: (error, _) => Text(
-          anyErrorUserMessage(error, isArabic: isArabic),
+          anyErrorUserMessage(error, loc: AppLocalizations.of(context)!),
           style: context.styles.error,
         ),
-        data: (data) => _statusBody(context, data, isArabic),
+        data: (data) => _statusBody(context, data),
       ),
     );
   }
 
-  Widget _statusBody(BuildContext context, ConnectivityStatus data, bool isArabic) {
+  Widget _statusBody(BuildContext context, ConnectivityStatus data) {
+    final loc = context.loc;
     final lines = <String>[
-      _statusLine(data, isArabic),
+      _statusLine(data, loc),
       if (data.hasDiagnostic)
-        isArabic
-            ? 'تشخيص: ${data.diagnostics.join(', ')}'
-            : 'Diagnostic: ${data.diagnostics.join(', ')}',
+        loc.eldDiagnosticDiagnosticFormat(data.diagnostics.join(', ')),
       if (data.malfunctions.isNotEmpty)
-        isArabic
-            ? 'عطل: ${data.malfunctions.join(', ')}'
-            : 'Malfunction: ${data.malfunctions.join(', ')}',
+        loc.eldDiagnosticMalfunctionFormat(data.malfunctions.join(', ')),
       if (data.lastHeartbeat != null && data.lastHeartbeat!.isNotEmpty)
-        isArabic
-            ? 'آخر بيانات صالحة: ${data.lastHeartbeat}'
-            : 'Last valid data: ${data.lastHeartbeat}',
+        loc.eldDiagnosticLastValidDataFormat(data.lastHeartbeat!),
       if (data.dataAgeSeconds != null)
-        isArabic
-            ? 'عمر البيانات: ${data.dataAgeSeconds} ثانية'
-            : 'Data age: ${data.dataAgeSeconds} seconds',
+        loc.eldDiagnosticDataAgeFormat(data.dataAgeSeconds!.toString()),
       if (data.normalOperationAllowed == false)
-        isArabic ? 'غير جاهز للتشغيل الطبيعي.' : 'Not ready for normal operation.',
+        loc.eldDiagnosticNotReady,
       if (data.isReliable == false)
-        isArabic ? 'البيانات غير موثوقة.' : 'Data is not reliable.',
+        loc.eldDiagnosticDataNotReliable,
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,20 +63,18 @@ class EldConnectivityPanel extends ConsumerWidget {
     );
   }
 
-  String _statusLine(ConnectivityStatus data, bool isArabic) {
+  String _statusLine(ConnectivityStatus data, AppLocalizations loc) {
     switch (data.connectionStatus?.toUpperCase()) {
       case 'CONNECTED':
-        return isArabic ? 'متصل' : 'Connected';
+        return loc.eldDiagnosticConnected;
       case 'DISCONNECTED':
-        return isArabic ? 'غير متصل' : 'Disconnected';
+        return loc.eldDiagnosticDisconnected;
       case 'UNAVAILABLE':
-        return isArabic ? 'غير متاح' : 'Unavailable';
+        return loc.eldDiagnosticUnavailable;
       case 'MALFUNCTION':
-        return isArabic ? 'عطل' : 'Malfunction';
+        return loc.eldDiagnosticMalfunction;
       case null:
-        return isArabic
-            ? 'الخادم لم يُرجع حالة اتصال.'
-            : 'The server did not return a connection status.';
+        return loc.eldDiagnosticNoConnectionStatus;
       default:
         return data.connectionStatus!;
     }
@@ -99,7 +91,7 @@ class EldReadinessPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     final readiness = ref.watch(hardwareReadinessProvider);
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
@@ -107,35 +99,35 @@ class EldReadinessPanel extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isArabic ? 'جاهزية ما قبل التشغيل' : 'Pre-operation readiness',
+            loc.eldReadinessTitle,
             style: context.styles.bodyBold,
           ),
           const SizedBox(height: AppSpacing.xs),
           readiness.when(
             loading: () => Text(
-              isArabic ? 'جارٍ فحص الجاهزية...' : 'Checking readiness...',
+              loc.eldReadinessChecking,
               style: context.styles.body,
             ),
             error: (error, _) => Text(
-              anyErrorUserMessage(error, isArabic: isArabic),
+              anyErrorUserMessage(error, loc: AppLocalizations.of(context)!),
               style: context.styles.error,
             ),
-            data: (data) => _body(context, data, isArabic),
+            data: (data) => _body(context, data, loc),
           ),
         ],
       ),
     );
   }
 
-  Widget _body(BuildContext context, HardwareReadiness data, bool isArabic) {
+  Widget _body(BuildContext context, HardwareReadiness data, AppLocalizations loc) {
     final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           data.ready
-              ? (isArabic ? 'جاهز للتشغيل' : 'Ready for operation')
-              : (isArabic ? 'غير جاهز للتشغيل' : 'Not ready for operation'),
+              ? loc.eldReadinessReady
+              : loc.eldReadinessNotReady,
           style: data.ready ? context.styles.success : context.styles.error,
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -152,7 +144,7 @@ class EldReadinessPanel extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    readinessCheckLabel(entry.key, isArabic: isArabic),
+                    readinessCheckLabel(entry.key, loc: loc),
                     style: context.styles.body,
                   ),
                 ),
@@ -170,9 +162,7 @@ class EldReadinessPanel extends ConsumerWidget {
         if (data.recommendedAction != null) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
-            isArabic
-                ? 'الإجراء المقترح: ${data.recommendedAction}'
-                : 'Recommended action: ${data.recommendedAction}',
+            loc.eldReadinessRecommendedActionFormat(data.recommendedAction!),
             style: context.styles.body,
           ),
         ],
@@ -183,18 +173,18 @@ class EldReadinessPanel extends ConsumerWidget {
 
 /// Human label for a server checklist key; unknown keys are shown as-is
 /// (underscores → spaces) rather than dropped.
-String readinessCheckLabel(String key, {required bool isArabic}) {
+String readinessCheckLabel(String key, {required AppLocalizations loc}) {
   switch (key) {
     case 'device_paired':
-      return isArabic ? 'الجهاز مقترن' : 'Device paired';
+      return loc.eldReadinessDevicePaired;
     case 'connection_active':
-      return isArabic ? 'الاتصال نشط' : 'Connection active';
+      return loc.eldReadinessConnectionActive;
     case 'motion_data':
-      return isArabic ? 'بيانات الحركة' : 'Motion data';
+      return loc.eldReadinessMotionData;
     case 'location_data':
-      return isArabic ? 'بيانات الموقع' : 'Location data';
+      return loc.eldReadinessLocationData;
     case 'engine_telemetry':
-      return isArabic ? 'بيانات المحرك (ECM)' : 'Engine telemetry (ECM)';
+      return loc.eldReadinessEngineTelemetry;
     default:
       return key.replaceAll('_', ' ');
   }
@@ -217,7 +207,8 @@ class ManualRecordingSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
+
     final status = ref.watch(hardwareStatusProvider).asData?.value;
     final failed = ref.watch(eldConnectionProvider).hasFailed;
     final serverState = status?.connectionStatus?.toUpperCase();
@@ -229,17 +220,11 @@ class ManualRecordingSection extends ConsumerWidget {
         serverState == 'UNAVAILABLE';
     if (!degraded && !manualActive) return const SizedBox.shrink();
 
-    final steps = isArabic
-        ? const [
-            'دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.',
-            'أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.',
-            'استمر بالتسجيل الورقي حتى إصلاح الجهاز.',
-          ]
-        : const [
-            'Note the malfunction and notify the carrier in writing within 24 hours.',
-            'Reconstruct the current 24 hours and the previous 7 days on paper if the ELD cannot provide them.',
-            'Continue paper logs until the device is repaired.',
-          ];
+    final steps = [
+      loc.eldMalfunctionStep1,
+      loc.eldMalfunctionStep2,
+      loc.eldMalfunctionStep3,
+    ];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
@@ -247,7 +232,7 @@ class ManualRecordingSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isArabic ? 'في حال العطل (§395.34)' : 'If the ELD malfunctions (§395.34)',
+            loc.eldMalfunctionTitle,
             style: context.styles.body,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -259,29 +244,27 @@ class ManualRecordingSection extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
           if (manualActive) ...[
             Text(
-              isArabic
-                  ? 'التسجيل اليدوي مفعّل حالياً${status?.manualModeReason != null ? ' — ${status!.manualModeReason}' : ''}.'
-                  : 'Manual recording is active${status?.manualModeReason != null ? ' — ${status!.manualModeReason}' : ''}.',
+              status?.manualModeReason != null
+                  ? loc.eldMalfunctionManualActiveWithReason(status!.manualModeReason!)
+                  : loc.eldMalfunctionManualActive,
               style: context.styles.warning,
             ),
             const SizedBox(height: AppSpacing.sm),
             AppButton(
-              label: isArabic ? 'إنهاء التسجيل اليدوي' : 'END MANUAL RECORDING',
+              label: loc.eldMalfunctionEndManual,
               type: EldButtonType.dark,
-              onPressed: () => _promptManualMode(context, ref, isArabic, enable: false),
+              onPressed: () => _promptManualMode(context, ref, enable: false),
             ),
           ] else if (status?.manualRecordingAllowed == false)
             Text(
-              isArabic
-                  ? 'الخادم لا يسمح بالتحويل إلى التسجيل اليدوي لهذه المركبة.'
-                  : 'The server does not allow manual recording for this vehicle.',
+              loc.eldMalfunctionServerNotAllow,
               style: context.styles.error,
             )
           else
             AppButton(
-              label: isArabic ? 'بدء التسجيل اليدوي' : 'START MANUAL RECORDING',
+              label: loc.eldMalfunctionStartManual,
               type: EldButtonType.dark,
-              onPressed: () => _promptManualMode(context, ref, isArabic, enable: true),
+              onPressed: () => _promptManualMode(context, ref, enable: true),
             ),
         ],
       ),
@@ -292,20 +275,19 @@ class ManualRecordingSection extends ConsumerWidget {
   /// requires a reason for enable **and** disable (400 otherwise).
   Future<void> _promptManualMode(
     BuildContext context,
-    WidgetRef ref,
-    bool isArabic, {
+    WidgetRef ref, {
     required bool enable,
   }) async {
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => _ManualModeReasonDialog(isArabic: isArabic, enable: enable),
+      builder: (_) => _ManualModeReasonDialog(enable: enable),
     );
     if (reason == null || !context.mounted) return;
 
     final error = await ref.read(eldConnectionProvider.notifier).setManualMode(
           enable: enable,
           reason: reason,
-          isArabic: isArabic,
+          loc: AppLocalizations.of(context)!,
         );
     if (!context.mounted) return;
     if (error == null) {
@@ -317,16 +299,12 @@ class ManualRecordingSection extends ConsumerWidget {
     } else if (enable) {
       AppFeedback.success(
         context,
-        isArabic
-            ? 'تم تسجيل بداية فترة التسجيل اليدوي على الخادم.'
-            : 'Manual recording start was recorded on the server.',
+        context.loc.eldMalfunctionStartSuccess,
       );
     } else {
       AppFeedback.success(
         context,
-        isArabic
-            ? 'تم إنهاء التسجيل اليدوي والعودة إلى التسجيل الإلكتروني.'
-            : 'Manual recording ended; electronic recording resumed.',
+        context.loc.eldMalfunctionEndSuccess,
       );
     }
   }
@@ -335,9 +313,8 @@ class ManualRecordingSection extends ConsumerWidget {
 /// Owns its text controller so it is disposed with the route, after the
 /// dialog's exit animation — not while the TextField is still attached.
 class _ManualModeReasonDialog extends StatefulWidget {
-  const _ManualModeReasonDialog({required this.isArabic, required this.enable});
+  const _ManualModeReasonDialog({required this.enable});
 
-  final bool isArabic;
   final bool enable;
 
   @override
@@ -355,35 +332,31 @@ class _ManualModeReasonDialogState extends State<_ManualModeReasonDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = widget.isArabic;
+    final loc = context.loc;
     final enable = widget.enable;
     return AlertDialog(
       title: Text(
         enable
-            ? (isArabic ? 'سبب التسجيل اليدوي' : 'Manual recording reason')
-            : (isArabic ? 'سبب إنهاء التسجيل اليدوي' : 'Reason for ending manual recording'),
+            ? loc.eldMalfunctionReasonStart
+            : loc.eldMalfunctionReasonEnd,
       ),
       content: TextField(
         controller: _controller,
         maxLines: 2,
         decoration: InputDecoration(
           hintText: enable
-              ? (isArabic
-                  ? 'مثال: انقطاع الاتصال بالجهاز'
-                  : 'e.g. lost connection to the ELD')
-              : (isArabic
-                  ? 'مثال: عاد اتصال الجهاز'
-                  : 'e.g. ELD connection restored'),
+              ? loc.eldMalfunctionHintStart
+              : loc.eldMalfunctionHintEnd,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(isArabic ? 'إلغاء' : 'CANCEL'),
+          child: Text(loc.cancelAction),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: Text(isArabic ? 'موافق' : 'OK'),
+          child: Text(loc.okButton),
         ),
       ],
     );

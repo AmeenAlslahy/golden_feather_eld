@@ -1,13 +1,12 @@
 import '../../../../backend/contracts/contract_enums.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'entities/inspection_data.dart';
 
 /// The live send path rejects a comment outside 4–60 characters.
-String? inspectionCommentError(String comment, {bool isArabic = false}) {
+String? inspectionCommentError(String comment, {required AppLocalizations loc}) {
   final length = comment.trim().length;
   if (length < 4 || length > 60) {
-    return isArabic
-        ? 'يجب أن يكون التعليق بين 4 و60 حرفاً.'
-        : 'The comment must be 4 to 60 characters.';
+    return loc.inspectionCommentErrorLength;
   }
   return null;
 }

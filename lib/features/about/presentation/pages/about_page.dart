@@ -16,6 +16,7 @@ import '../../../tracking/presentation/providers/tracking_providers.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
 import '../../../connection/presentation/widgets/eld_diagnostics_section.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// مزود معلومات حزمة التطبيق
 final packageInfoProvider = FutureProvider<PackageInfo>((ref) {
@@ -39,7 +40,6 @@ class AboutPage extends ConsumerWidget {
     final storage = ref.watch(localStorageProvider);
 
     final loc = context.loc;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final notAvailable = loc.notAvailable;
 
     return Scaffold(
@@ -167,7 +167,7 @@ class AboutPage extends ConsumerWidget {
                       error: (err, _) => Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         child: Text(
-                          anyErrorUserMessage(err, isArabic: isArabic),
+                          anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
                           style: context.styles.error,
                         ),
                       ),
@@ -183,7 +183,6 @@ class AboutPage extends ConsumerWidget {
           EldCard(
             child: Consumer(
               builder: (context, ref, _) {
-                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                 final hwStatusAsync = ref.watch(hardwareStatusProvider);
 
                 return Column(
@@ -214,7 +213,7 @@ class AboutPage extends ConsumerWidget {
                       loading: () => const Center(child: CircularProgressIndicator()),
                       // Never a raw exception string for the driver.
                       error: (err, _) => Text(
-                        anyErrorUserMessage(err, isArabic: isArabic),
+                        anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
                         style: context.styles.error,
                       ),
                     ),

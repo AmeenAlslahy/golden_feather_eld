@@ -61,13 +61,12 @@ class User extends Equatable {
 
 /// أدوار المستخدمين
 enum UserRole {
-  admin('admin', 'مدير النظام'),
-  supervisor('supervisor', 'مشرف'),
-  fieldWorker('field_worker', 'موظف ميداني');
+  admin('admin'),
+  supervisor('supervisor'),
+  fieldWorker('field_worker');
 
   final String code;
-  final String arabicName;
-  const UserRole(this.code, this.arabicName);
+  const UserRole(this.code);
 
   static UserRole fromCode(String code) {
     return UserRole.values.firstWhere(

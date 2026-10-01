@@ -1,14 +1,17 @@
+import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/features/inspection/domain/entities/inspection_data.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
 
 void main() {
   test('comment is refused outside 4 to 60 characters', () {
-    expect(inspectionCommentError('abc'), isNotNull);
-    expect(inspectionCommentError('a' * 61), isNotNull);
-    expect(inspectionCommentError('road'), isNull);
-    expect(inspectionCommentError('  road  '), isNull);
+    final loc = lookupAppLocalizations(const Locale('en'));
+    expect(inspectionCommentError('abc', loc: loc), isNotNull);
+    expect(inspectionCommentError('a' * 61, loc: loc), isNotNull);
+    expect(inspectionCommentError('road', loc: loc), isNull);
+    expect(inspectionCommentError('  road  ', loc: loc), isNull);
   });
 
   test('every roadside method uses the live transfer type', () {

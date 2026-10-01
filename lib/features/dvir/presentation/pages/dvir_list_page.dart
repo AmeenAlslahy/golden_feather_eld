@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-// import '../../../../l10n/app_localizations.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
@@ -60,9 +60,7 @@ class DvirListPage extends ConsumerWidget {
                             child: EldRetryView(
                               message: anyErrorUserMessage(
                                 dvirState.error!,
-                                isArabic:
-                                    Localizations.localeOf(context).languageCode ==
-                                        'ar',
+                                loc: AppLocalizations.of(context)!,
                               ),
                               onRetry: () =>
                                   ref.read(dvirProvider.notifier).refresh(),
@@ -74,10 +72,7 @@ class DvirListPage extends ConsumerWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 40),
                             child: Text(
-                              Localizations.localeOf(context).languageCode ==
-                                      'ar'
-                                  ? 'لا توجد سجلات'
-                                  : 'No Records',
+                              context.loc.dvirListNoRecords,
                               textAlign: TextAlign.center,
                               style:  TextStyle(
                                 fontSize: 18,
@@ -124,15 +119,15 @@ class _DvirSummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          _cell(isArabic ? 'إجمالي' : 'Total', summary.total),
-          _cell(isArabic ? 'عيوب مفتوحة' : 'Open', summary.openDefects),
-          _cell(isArabic ? 'موقّعة' : 'Signed', summary.signed),
-          _cell(isArabic ? 'خارج الخدمة' : 'OOS', summary.outOfService),
+          _cell(loc.dvirListTotal, summary.total),
+          _cell(loc.dvirListOpen, summary.openDefects),
+          _cell(loc.dvirListSigned, summary.signed),
+          _cell(loc.dvirListOos, summary.outOfService),
         ],
       ),
     );
@@ -163,7 +158,7 @@ class _DvirCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = context.loc;
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -188,7 +183,7 @@ class _DvirCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    isArabic ? report.type.arabicName : report.type.englishName,
+                    context.translateInspectionType(report.type.name),
                     style: context.styles.bodyBold,
                   ),
                 ),

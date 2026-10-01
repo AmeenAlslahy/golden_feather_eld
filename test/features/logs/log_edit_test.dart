@@ -5,26 +5,25 @@ import 'package:golden_feather_eld/features/logs/domain/log_edit.dart';
 void main() {
   group('statusFromEditValue', () {
     test('maps the five known statuses to app codes', () {
-      expect(statusFromEditValue('Off Duty').code, 'OFF');
-      expect(statusFromEditValue('Sleeper').code, 'SB');
-      expect(statusFromEditValue('Driving').code, 'D');
-      expect(statusFromEditValue('On Duty').code, 'ON');
-      expect(statusFromEditValue('Personal Use').code, 'PC');
+      expect(statusFromEditValue('Off Duty'), 'OFF');
+      expect(statusFromEditValue('Sleeper'), 'SB');
+      expect(statusFromEditValue('Driving'), 'D');
+      expect(statusFromEditValue('On Duty'), 'ON');
+      expect(statusFromEditValue('Personal Use'), 'PC');
     });
 
     test('Yard Moves maps to its real short code (SRS wire YARD_MOVE)', () {
       // كان سابقاً يُعاد النص كما هو — فيتعذر على fromShortCode
       // التعرف عليه وكان الـ PUT يرسل OFF_DUTY بدل YARD_MOVE.
       final v = statusFromEditValue('Yard Moves');
-      expect(v.code, 'YM');
+      expect(v, 'YM');
       expect(editValueForStatus('YM'), 'Yard Moves');
     });
 
     test('does not invent a code for a genuinely unmapped status', () {
       final v = statusFromEditValue('Some New Status');
-      expect(v.code, 'Some New Status');
-      expect(v.arabic, 'Some New Status');
-    });
+      expect(v, 'Some New Status');
+          });
   });
 
   group('editValueForStatus', () {
@@ -44,7 +43,7 @@ void main() {
         'On Duty',
         'Personal Use'
       ]) {
-        expect(editValueForStatus(statusFromEditValue(form).code), form);
+        expect(editValueForStatus(statusFromEditValue(form)), form);
       }
     });
 
@@ -79,7 +78,6 @@ void main() {
     final event = LogEvent(
       id: '1',
       status: 'D',
-      statusArabic: 'قيادة',
       startTime: DateTime(2026, 9, 24, 8),
       duration: const Duration(hours: 1),
       location: '',

@@ -10,6 +10,7 @@ import '../providers/status_dashboard_providers.dart';
 import '../widgets/status_dashboard/hos_indicators_card.dart';
 import '../widgets/status_dashboard/main_circular_timer.dart';
 import 'change_status_page.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Main driver dashboard — status, remaining time, HOS indicators.
 ///
@@ -116,9 +117,8 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return EldRetryView(
-      message: anyErrorUserMessage(error, isArabic: isArabic),
+      message: anyErrorUserMessage(error, loc: AppLocalizations.of(context)!),
       onRetry: onRetry,
     );
   }

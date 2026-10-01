@@ -73,7 +73,7 @@
   "passwordError": "Wrong password",
   "disclosureMessage": "This app collects location and activity data in the background and sends it to the configured server.",
   "configurationMessage": "Apply new configuration?",
-  "startAction": "Start service",
+  "startAction": "Start",
   "stopAction": "Stop service",
   "sosAction": "Send SOS",
   "home": "Home",
@@ -320,7 +320,7 @@
   "haveAccount": "Already have an account?",
   "loginHere": "Login here",
   "resetPassword": "Reset Password",
-  "email": "Email / Username",
+  "email": "Email",
   "emailRequired": "Email is required",
   "invalidEmailFormat": "Invalid email format",
   "sendResetLink": "Send Reset Link",
@@ -742,5 +742,311 @@
   "responseInterrupted": "Response was interrupted.",
   "drawSignatureFirst": "Please draw a signature first.",
   "drawYourSignatureHere": "Draw your signature here",
-  "certifyLegalStatement": "I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct."
+  "certifyLegalStatement": "I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.",
+  "errNoInternet": "No internet connection. Check the network and try again.",
+  "errRequestFailed": "The request could not be completed. Try again.",
+  "errRequestFailedNetwork": "The request could not be completed. Check the network and try again.",
+  "errCannotReachServer": "Could not reach the server. Check the network and try again.",
+  "errServerRejected": "The server rejected this request.",
+  "errSessionExpiredAction": "The session expired. Sign in again.",
+  "errPermissionDenied": "You are not allowed to do this.",
+  "errNotFound": "The server did not find this item.",
+  "errServerError": "The server returned an error. Try again.",
+  "errGeneric": "The request could not be completed.",
+  "enterAReasonForManualRecording": "Enter a reason for manual recording.",
+  "couldNotUpdateManualRecordingM": "Could not update manual recording mode. Try again.",
+  "unableToConnectToEld": "Unable to connect to the ELD.",
+  "checkBluetoothAndRetry": "Check that the device and Bluetooth are on, then try again.",
+  "checkNetworkAndRetry": "Check the network and device, then try again.",
+  "driverSessionMissingSignIn": "Driver session is missing. Sign in again before inspection.",
+  "onboardingSkip": "Skip",
+  "onboardingNext": "NEXT",
+  "onboardingGetStarted": "GET STARTED",
+  "onboardingTitle1": "Your hours, recorded automatically",
+  "onboardingBody1": "The ELD tracks your driving status against FMCSA limits the moment the vehicle moves — no paperwork, no guessing.",
+  "onboardingTitle2": "Inspect your vehicle with confidence",
+  "onboardingBody2": "Daily DVIR before and after the trip, defect tracking with repair certifications, and §396.13 review — all in one place.",
+  "onboardingTitle3": "Always ready for the inspector",
+  "onboardingBody3": "Your records, information packet, and transfer options live on the device — even when there is no internet on the road.",
+  "startedOnDate": "Started: {date}",
+  "tableTimeEt": "Time ET",
+  "certEventStatus": "Cert · {status}",
+  "eventCodeNote": "Code: {code}",
+  "originNote": "Origin: {origin}",
+  "notesNote": "Notes: {notes}",
+  "inspectionCommentErrorLength": "The comment must be 4 to 60 characters.",
+  "enterValidEmail": "Enter a valid email.",
+  "transferAccepted": "The server accepted the transfer request.",
+  "sendLogsViaEmail": "Send logs via email",
+  "send8Logs": "Send 8 Logs",
+  "recipientEmail": "Recipient Email",
+  "comment": "Comment",
+  "dataTransferType": "Data Transfer Type",
+  "sendAction": "SEND",
+  "inspectLogs24": "Inspect logs for the 24-hour period and the previous days for one HOS cycle",
+  "setPinGuidance": "Set a PIN, select \"Start Inspection\", and give your device to the officer",
+  "eldCertifies": "This ELD certifies that use of the app with the ELD device complies with all requirements for ELD as defined in Federal Motor Carrier Safety regulation 49 CFR part 395 Subpart B.",
+  "notAllowedByServer": "Not available for this account per the server.",
+  "startInspectionUpper": "START INSPECTION",
+  "serverDoesNotAllow": "The server does not allow starting an inspection right now.",
+  "sendLogsFor24": "Send logs for the 24-hour period and the previous days for one HOS cycle",
+  "sendLogsToOfficer": "Send your logs to the officer if they request",
+  "sendLogsUpper": "SEND LOGS",
+  "emailLogs24Pdf": "Email logs for the 24-hour period and the previous days for one HOS cycle as PDF",
+  "emailLogsPdf": "Email your logs in the PDF format",
+  "emailLogsUpper": "EMAIL LOGS",
+  "infoPacketUpper": "INFORMATION PACKET",
+  "inspectionPinTitle": "Inspection PIN",
+  "enter4Digits": "PIN must be 4 digits.",
+  "pinsDoNotMatch": "The PINs do not match.",
+  "pinLabel": "PIN",
+  "confirmPinLabel": "Confirm PIN",
+  "cancelAction": "Cancel",
+  "enterInspectionPin": "Enter the inspection PIN.",
+  "incorrectPin": "Incorrect PIN.",
+  "driverExit": "Driver exit",
+  "exitAction": "Exit",
+  "enterNewPinOfficer": "Enter a new inspection PIN to be given to the officer",
+  "enterSamePinToExit": "Enter the same PIN to exit the inspection mode",
+  "setPinGuidanceDialog": "Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.",
+  "enterPinToExitGuidance": "Enter the inspection PIN you set when starting. The officer cannot leave here.",
+  "menuTitle": "Menu",
+  "vehicleInMotionTitle": "Vehicle in Motion",
+  "vehicleInMotionDesc": "To comply with FMCSA regulations and safety rules, the application is locked while driving. It will unlock when the vehicle stops.",
+  "weakConnectionDelayedData": "Weak connection. Some data may be delayed.",
+  "noInternetConnection": "No internet connection.",
+  "connectionStatusUnknown": "Connection status is unknown.",
+  "driveLimitFormat": "{drive}-Hour Driving Limit",
+  "@driveLimitFormat": {
+    "placeholders": {
+      "drive": {
+        "type": "String"
+      }
+    }
+  },
+  "shiftLimitFormat": "{shift}-Hour On Duty Limit",
+  "@shiftLimitFormat": {
+    "placeholders": {
+      "shift": {
+        "type": "String"
+      }
+    }
+  },
+  "breakLimitFormat": "{rest} Minute Rest Break",
+  "@breakLimitFormat": {
+    "placeholders": {
+      "rest": {
+        "type": "String"
+      }
+    }
+  },
+  "usedFormat": "{description} · Used",
+  "@usedFormat": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeTitle": "Notice",
+  "gpsTurnedOff": "GPS is turned off.",
+  "serverReportsEldAlert": "The server reports an ELD operational alert. Open the Connection screen for details.",
+  "operationalAlertTooltip": "Operational alert",
+  "noInternetBanner": "No internet. You can continue with saved data.",
+  "dvirSatisfactory": "Vehicle Condition Satisfactory",
+  "dvirHasDefects": "Has Defects",
+  "dvirDefectsCorrected": "Defects Corrected",
+  "dvirDefectsNotCorrected": "Defects Need Not Be Corrected",
+  "dvirDefectRecorded": "— a defect is recorded",
+  "dvirNoRepairCert": "No repair certification yet",
+  "dvirSetByCarrier": "Set by the carrier, not the driver",
+  "dvirTimeUnavailable": "Inspection time is unavailable. Connect and try again.",
+  "dvirSavedCannotEdit": "A saved report cannot be edited on this device.",
+  "dvirSignatureRequired": "A signature is required.",
+  "dvirDriverSessionMissing": "Driver session is missing. Sign in again before signing the report.",
+  "dvirVehicleIdMissing": "Vehicle id is missing. Select a vehicle before signing.",
+  "dvirPrevNoServerId": "The previous report has no server id and cannot be reviewed.",
+  "dvirPreviousInspection": "Previous inspection",
+  "dvirReviewBeforeDriving": "Review and sign the previous report before driving.",
+  "dvirRecordedDefects": "Recorded defects:",
+  "dvirNone": "None.",
+  "dvirRepairStatus": "Repair status: ",
+  "dvirReviewed": "Reviewed",
+  "dvirLocationUnavailable": "Location unavailable",
+  "dvirCompanyUnavailable": "Company unavailable",
+  "dvirTimeUnavailableShort": "Time unavailable",
+  "dvirInsertDvir": "Insert DVIR",
+  "dvirPreviousReviewNotice": "Previous DVIR Review — §396.13. Opening the report is not a review.",
+  "dvirTimeET": "Time (ET)",
+  "dvirOdometerMi": "Odometer (mi)",
+  "dvirOdometerHint": "Odometer",
+  "company": "Company",
+  "remarks": "Remarks",
+  "dvirImageNotAvailable": "Image not available.",
+  "dvirClearSignature": "Clear signature",
+  "dvirSigned": "SIGNED",
+  "dvirSign": "SIGN",
+  "removeAction": "Remove",
+  "addDefects": "Add Defects",
+  "dvirDefects396_11": "Defects (§396.11)",
+  "dvirLoadDefectsFail": "Could not load the defects list from the server.",
+  "retryAction": "RETRY",
+  "dvirCatalogEmpty": "The catalog is empty.",
+  "dvirSafetyAffecting": "Safety affecting",
+  "dvirDescriptionOptional": "Description (optional)",
+  "eldDiagnosticReading": "Reading connection status...",
+  "eldDiagnosticDiagnosticFormat": "Diagnostic: {diagnostics}",
+  "@eldDiagnosticDiagnosticFormat": {
+    "placeholders": {
+      "diagnostics": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticMalfunctionFormat": "Malfunction: {malfunctions}",
+  "@eldDiagnosticMalfunctionFormat": {
+    "placeholders": {
+      "malfunctions": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticLastValidDataFormat": "Last valid data: {lastHeartbeat}",
+  "@eldDiagnosticLastValidDataFormat": {
+    "placeholders": {
+      "lastHeartbeat": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticDataAgeFormat": "Data age: {dataAgeSeconds} seconds",
+  "@eldDiagnosticDataAgeFormat": {
+    "placeholders": {
+      "dataAgeSeconds": {
+        "type": "String"
+      }
+    }
+  },
+  "eldDiagnosticNotReady": "Not ready for normal operation.",
+  "eldDiagnosticDataNotReliable": "Data is not reliable.",
+  "eldDiagnosticConnected": "Connected",
+  "eldDiagnosticDisconnected": "Disconnected",
+  "eldDiagnosticUnavailable": "Unavailable",
+  "eldDiagnosticMalfunction": "Malfunction",
+  "eldDiagnosticNoConnectionStatus": "The server did not return a connection status.",
+  "eldReadinessTitle": "Pre-operation readiness",
+  "eldReadinessChecking": "Checking readiness...",
+  "eldReadinessReady": "Ready for operation",
+  "eldReadinessNotReady": "Not ready for operation",
+  "eldReadinessRecommendedActionFormat": "Recommended action: {action}",
+  "@eldReadinessRecommendedActionFormat": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "eldReadinessDevicePaired": "Device paired",
+  "eldReadinessConnectionActive": "Connection active",
+  "eldReadinessMotionData": "Motion data",
+  "eldReadinessLocationData": "Location data",
+  "eldReadinessEngineTelemetry": "Engine telemetry (ECM)",
+  "eldMalfunctionTitle": "If the ELD malfunctions (§395.34)",
+  "eldMalfunctionStep1": "Note the malfunction and notify the carrier in writing within 24 hours.",
+  "eldMalfunctionStep2": "Reconstruct the current 24 hours and the previous 7 days on paper if the ELD cannot provide them.",
+  "eldMalfunctionStep3": "Continue paper logs until the device is repaired.",
+  "eldMalfunctionManualActive": "Manual recording is active.",
+  "eldMalfunctionManualActiveWithReason": "Manual recording is active — {reason}.",
+  "@eldMalfunctionManualActiveWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "eldMalfunctionEndManual": "END MANUAL RECORDING",
+  "eldMalfunctionServerNotAllow": "The server does not allow manual recording for this vehicle.",
+  "eldMalfunctionStartManual": "START MANUAL RECORDING",
+  "eldMalfunctionStartSuccess": "Manual recording start was recorded on the server.",
+  "eldMalfunctionEndSuccess": "Manual recording ended; electronic recording resumed.",
+  "eldMalfunctionReasonStart": "Manual recording reason",
+  "eldMalfunctionReasonEnd": "Reason for ending manual recording",
+  "eldMalfunctionHintStart": "e.g. lost connection to the ELD",
+  "eldMalfunctionHintEnd": "e.g. ELD connection restored",
+  "dvirListNoRecords": "No Records",
+  "dvirListTotal": "Total",
+  "dvirListOpen": "Open",
+  "dvirListSigned": "Signed",
+  "dvirListOos": "OOS",
+  "serverAcceptedDisconnected": "The server accepted disconnected mode. No local duty event was created.",
+  "macAddressRequired": "MAC address is required.",
+  "coDriverSelectLabel": "Select Co-driver",
+  "coDriverSelectHint": "Select your co-driver",
+  "coDriverSwitchDrivers": "Switch Drivers",
+  "coDriverSwitchHint": "You will become co-driver. Your co-driver will stay driver.",
+  "coDriverSwitching": "Switching...",
+  "coDriverSwitchAction": "SWITCH",
+  "coDriverConfirmSwitchTitle": "Confirm Switch",
+  "coDriverConfirmSwitchBody": "This asks the server to switch roles. Hours are not copied and duty status is not changed.",
+  "coDriverRolesSwitchedTitle": "Roles switched",
+  "coDriverRolesSwitchedBody": "You are now the co-driver.\n{newPrimary} is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.",
+  "@coDriverRolesSwitchedBody": {
+    "placeholders": {
+      "newPrimary": {
+        "type": "String"
+      }
+    }
+  },
+  "coDriverDefaultNewPrimary": "The co-driver",
+  "coDriverNone": "No co-driver",
+  "coDriverRefusalSessionMissing": "Driver session is missing. Sign in before switching.",
+  "coDriverRefusalStillDriving": "Change duty status before handover. The switch does not change it.",
+  "coDriverRefusalMotionUnknown": "Vehicle motion is unknown. That is not treated as stopped.",
+  "coDriverRefusalThresholdMissing": "The motion threshold is not available.",
+  "coDriverRefusalVehicleMoving": "Roles can be switched only when the vehicle is stopped.",
+  "coDriverRefusalCoDriverMissing": "Select a co-driver before switching.",
+  "coDriverRefusalSameDriver": "The current account cannot be selected as the co-driver.",
+  "coDriverLinkedTitle": "Linked co-driver",
+  "coDriverLinkNotRead": "The link has not been read.",
+  "coDriverLinkNone": "No linked co-driver.",
+  "coDriverTeamDrivingActive": "Team driving active",
+  "coDriverTeamDrivingInactive": "Team driving inactive",
+  "coDriverHosIsolationReadError": "HOS isolation status could not be read.",
+  "coDriverHosIsolated": "HOS records isolated",
+  "coDriverHosNotIsolated": "HOS records not isolated",
+  "coDriverVehicleMissing": "Select a vehicle before linking a co-driver.",
+  "dvirDefectsNone": "No defects to report.",
+  "dvirDefectsCount": "{defectCount} defects selected.",
+  "@dvirDefectsCount": {
+    "placeholders": {
+      "defectCount": {
+        "type": "int"
+      }
+    }
+  },
+  "languageSpanish": "Spanish",
+  "reCertificationRequiredMsg": "Re-certification Required: Edits were made after your last signature.",
+  "statusOff": "Off Duty",
+  "statusSb": "Sleeper Berth",
+  "statusD": "Driving",
+  "statusOn": "On Duty",
+  "statusPc": "Personal Conveyance",
+  "statusYm": "Yard Move",
+  "dvirPreTrip": "Pre-Trip",
+  "dvirPostTrip": "Post-Trip",
+  "dvirSafeToDrive": "Safe to Drive",
+  "dvirNeedsRepair": "Needs Repair",
+  "dvirUnsafe": "Unsafe",
+  "dvirBrakes": "Brakes",
+  "dvirTires": "Tires",
+  "dvirLights": "Lights",
+  "dvirSteering": "Steering",
+  "dvirTrailerCoupling": "Trailer Coupling",
+  "dvirEmergencyEquipment": "Emergency Equipment",
+  "dvirEngine": "Engine",
+  "dvirFuelSystem": "Fuel System",
+  "dvirExhaustSystem": "Exhaust System",
+  "dvirSuspension": "Suspension",
+  "dvirMirrors": "Mirrors",
+  "dvirWindshield": "Windshield"
 }

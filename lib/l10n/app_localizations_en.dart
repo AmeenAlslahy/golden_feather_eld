@@ -231,7 +231,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get configurationMessage => 'Apply new configuration?';
 
   @override
-  String get startAction => 'Start service';
+  String get startAction => 'Start';
 
   @override
   String get stopAction => 'Stop service';
@@ -936,7 +936,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetPassword => 'Reset Password';
 
   @override
-  String get email => 'Email / Username';
+  String get email => 'Email';
 
   @override
   String get emailRequired => 'Email is required';
@@ -2175,4 +2175,761 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get certifyLegalStatement =>
       'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.';
+
+  @override
+  String get errNoInternet =>
+      'No internet connection. Check the network and try again.';
+
+  @override
+  String get errRequestFailed =>
+      'The request could not be completed. Try again.';
+
+  @override
+  String get errRequestFailedNetwork =>
+      'The request could not be completed. Check the network and try again.';
+
+  @override
+  String get errCannotReachServer =>
+      'Could not reach the server. Check the network and try again.';
+
+  @override
+  String get errServerRejected => 'The server rejected this request.';
+
+  @override
+  String get errSessionExpiredAction => 'The session expired. Sign in again.';
+
+  @override
+  String get errPermissionDenied => 'You are not allowed to do this.';
+
+  @override
+  String get errNotFound => 'The server did not find this item.';
+
+  @override
+  String get errServerError => 'The server returned an error. Try again.';
+
+  @override
+  String get errGeneric => 'The request could not be completed.';
+
+  @override
+  String get enterAReasonForManualRecording =>
+      'Enter a reason for manual recording.';
+
+  @override
+  String get couldNotUpdateManualRecordingM =>
+      'Could not update manual recording mode. Try again.';
+
+  @override
+  String get unableToConnectToEld => 'Unable to connect to the ELD.';
+
+  @override
+  String get checkBluetoothAndRetry =>
+      'Check that the device and Bluetooth are on, then try again.';
+
+  @override
+  String get checkNetworkAndRetry =>
+      'Check the network and device, then try again.';
+
+  @override
+  String get driverSessionMissingSignIn =>
+      'Driver session is missing. Sign in again before inspection.';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'NEXT';
+
+  @override
+  String get onboardingGetStarted => 'GET STARTED';
+
+  @override
+  String get onboardingTitle1 => 'Your hours, recorded automatically';
+
+  @override
+  String get onboardingBody1 =>
+      'The ELD tracks your driving status against FMCSA limits the moment the vehicle moves — no paperwork, no guessing.';
+
+  @override
+  String get onboardingTitle2 => 'Inspect your vehicle with confidence';
+
+  @override
+  String get onboardingBody2 =>
+      'Daily DVIR before and after the trip, defect tracking with repair certifications, and §396.13 review — all in one place.';
+
+  @override
+  String get onboardingTitle3 => 'Always ready for the inspector';
+
+  @override
+  String get onboardingBody3 =>
+      'Your records, information packet, and transfer options live on the device — even when there is no internet on the road.';
+
+  @override
+  String startedOnDate(Object date) {
+    return 'Started: $date';
+  }
+
+  @override
+  String get tableTimeEt => 'Time ET';
+
+  @override
+  String certEventStatus(Object status) {
+    return 'Cert · $status';
+  }
+
+  @override
+  String eventCodeNote(Object code) {
+    return 'Code: $code';
+  }
+
+  @override
+  String originNote(Object origin) {
+    return 'Origin: $origin';
+  }
+
+  @override
+  String notesNote(Object notes) {
+    return 'Notes: $notes';
+  }
+
+  @override
+  String get inspectionCommentErrorLength =>
+      'The comment must be 4 to 60 characters.';
+
+  @override
+  String get enterValidEmail => 'Enter a valid email.';
+
+  @override
+  String get transferAccepted => 'The server accepted the transfer request.';
+
+  @override
+  String get sendLogsViaEmail => 'Send logs via email';
+
+  @override
+  String get send8Logs => 'Send 8 Logs';
+
+  @override
+  String get recipientEmail => 'Recipient Email';
+
+  @override
+  String get comment => 'Comment';
+
+  @override
+  String get dataTransferType => 'Data Transfer Type';
+
+  @override
+  String get sendAction => 'SEND';
+
+  @override
+  String get inspectLogs24 =>
+      'Inspect logs for the 24-hour period and the previous days for one HOS cycle';
+
+  @override
+  String get setPinGuidance =>
+      'Set a PIN, select \"Start Inspection\", and give your device to the officer';
+
+  @override
+  String get eldCertifies =>
+      'This ELD certifies that use of the app with the ELD device complies with all requirements for ELD as defined in Federal Motor Carrier Safety regulation 49 CFR part 395 Subpart B.';
+
+  @override
+  String get notAllowedByServer =>
+      'Not available for this account per the server.';
+
+  @override
+  String get startInspectionUpper => 'START INSPECTION';
+
+  @override
+  String get serverDoesNotAllow =>
+      'The server does not allow starting an inspection right now.';
+
+  @override
+  String get sendLogsFor24 =>
+      'Send logs for the 24-hour period and the previous days for one HOS cycle';
+
+  @override
+  String get sendLogsToOfficer =>
+      'Send your logs to the officer if they request';
+
+  @override
+  String get sendLogsUpper => 'SEND LOGS';
+
+  @override
+  String get emailLogs24Pdf =>
+      'Email logs for the 24-hour period and the previous days for one HOS cycle as PDF';
+
+  @override
+  String get emailLogsPdf => 'Email your logs in the PDF format';
+
+  @override
+  String get emailLogsUpper => 'EMAIL LOGS';
+
+  @override
+  String get infoPacketUpper => 'INFORMATION PACKET';
+
+  @override
+  String get inspectionPinTitle => 'Inspection PIN';
+
+  @override
+  String get enter4Digits => 'PIN must be 4 digits.';
+
+  @override
+  String get pinsDoNotMatch => 'The PINs do not match.';
+
+  @override
+  String get pinLabel => 'PIN';
+
+  @override
+  String get confirmPinLabel => 'Confirm PIN';
+
+  @override
+  String get cancelAction => 'Cancel';
+
+  @override
+  String get enterInspectionPin => 'Enter the inspection PIN.';
+
+  @override
+  String get incorrectPin => 'Incorrect PIN.';
+
+  @override
+  String get driverExit => 'Driver exit';
+
+  @override
+  String get exitAction => 'Exit';
+
+  @override
+  String get enterNewPinOfficer =>
+      'Enter a new inspection PIN to be given to the officer';
+
+  @override
+  String get enterSamePinToExit =>
+      'Enter the same PIN to exit the inspection mode';
+
+  @override
+  String get setPinGuidanceDialog =>
+      'Set a 4-digit PIN to lock the screen. The officer can only view logs and cannot leave without the driver password.';
+
+  @override
+  String get enterPinToExitGuidance =>
+      'Enter the inspection PIN you set when starting. The officer cannot leave here.';
+
+  @override
+  String get menuTitle => 'Menu';
+
+  @override
+  String get vehicleInMotionTitle => 'Vehicle in Motion';
+
+  @override
+  String get vehicleInMotionDesc =>
+      'To comply with FMCSA regulations and safety rules, the application is locked while driving. It will unlock when the vehicle stops.';
+
+  @override
+  String get weakConnectionDelayedData =>
+      'Weak connection. Some data may be delayed.';
+
+  @override
+  String get noInternetConnection => 'No internet connection.';
+
+  @override
+  String get connectionStatusUnknown => 'Connection status is unknown.';
+
+  @override
+  String driveLimitFormat(String drive) {
+    return '$drive-Hour Driving Limit';
+  }
+
+  @override
+  String shiftLimitFormat(String shift) {
+    return '$shift-Hour On Duty Limit';
+  }
+
+  @override
+  String breakLimitFormat(String rest) {
+    return '$rest Minute Rest Break';
+  }
+
+  @override
+  String usedFormat(String description) {
+    return '$description · Used';
+  }
+
+  @override
+  String get noticeTitle => 'Notice';
+
+  @override
+  String get gpsTurnedOff => 'GPS is turned off.';
+
+  @override
+  String get serverReportsEldAlert =>
+      'The server reports an ELD operational alert. Open the Connection screen for details.';
+
+  @override
+  String get operationalAlertTooltip => 'Operational alert';
+
+  @override
+  String get noInternetBanner =>
+      'No internet. You can continue with saved data.';
+
+  @override
+  String get dvirSatisfactory => 'Vehicle Condition Satisfactory';
+
+  @override
+  String get dvirHasDefects => 'Has Defects';
+
+  @override
+  String get dvirDefectsCorrected => 'Defects Corrected';
+
+  @override
+  String get dvirDefectsNotCorrected => 'Defects Need Not Be Corrected';
+
+  @override
+  String get dvirDefectRecorded => '— a defect is recorded';
+
+  @override
+  String get dvirNoRepairCert => 'No repair certification yet';
+
+  @override
+  String get dvirSetByCarrier => 'Set by the carrier, not the driver';
+
+  @override
+  String get dvirTimeUnavailable =>
+      'Inspection time is unavailable. Connect and try again.';
+
+  @override
+  String get dvirSavedCannotEdit =>
+      'A saved report cannot be edited on this device.';
+
+  @override
+  String get dvirSignatureRequired => 'A signature is required.';
+
+  @override
+  String get dvirDriverSessionMissing =>
+      'Driver session is missing. Sign in again before signing the report.';
+
+  @override
+  String get dvirVehicleIdMissing =>
+      'Vehicle id is missing. Select a vehicle before signing.';
+
+  @override
+  String get dvirPrevNoServerId =>
+      'The previous report has no server id and cannot be reviewed.';
+
+  @override
+  String get dvirPreviousInspection => 'Previous inspection';
+
+  @override
+  String get dvirReviewBeforeDriving =>
+      'Review and sign the previous report before driving.';
+
+  @override
+  String get dvirRecordedDefects => 'Recorded defects:';
+
+  @override
+  String get dvirNone => 'None.';
+
+  @override
+  String get dvirRepairStatus => 'Repair status: ';
+
+  @override
+  String get dvirReviewed => 'Reviewed';
+
+  @override
+  String get dvirLocationUnavailable => 'Location unavailable';
+
+  @override
+  String get dvirCompanyUnavailable => 'Company unavailable';
+
+  @override
+  String get dvirTimeUnavailableShort => 'Time unavailable';
+
+  @override
+  String get dvirInsertDvir => 'Insert DVIR';
+
+  @override
+  String get dvirPreviousReviewNotice =>
+      'Previous DVIR Review — §396.13. Opening the report is not a review.';
+
+  @override
+  String get dvirTimeET => 'Time (ET)';
+
+  @override
+  String get dvirOdometerMi => 'Odometer (mi)';
+
+  @override
+  String get dvirOdometerHint => 'Odometer';
+
+  @override
+  String get company => 'Company';
+
+  @override
+  String get remarks => 'Remarks';
+
+  @override
+  String get dvirImageNotAvailable => 'Image not available.';
+
+  @override
+  String get dvirClearSignature => 'Clear signature';
+
+  @override
+  String get dvirSigned => 'SIGNED';
+
+  @override
+  String get dvirSign => 'SIGN';
+
+  @override
+  String get removeAction => 'Remove';
+
+  @override
+  String get addDefects => 'Add Defects';
+
+  @override
+  String get dvirDefects396_11 => 'Defects (§396.11)';
+
+  @override
+  String get dvirLoadDefectsFail =>
+      'Could not load the defects list from the server.';
+
+  @override
+  String get retryAction => 'RETRY';
+
+  @override
+  String get dvirCatalogEmpty => 'The catalog is empty.';
+
+  @override
+  String get dvirSafetyAffecting => 'Safety affecting';
+
+  @override
+  String get dvirDescriptionOptional => 'Description (optional)';
+
+  @override
+  String get eldDiagnosticReading => 'Reading connection status...';
+
+  @override
+  String eldDiagnosticDiagnosticFormat(String diagnostics) {
+    return 'Diagnostic: $diagnostics';
+  }
+
+  @override
+  String eldDiagnosticMalfunctionFormat(String malfunctions) {
+    return 'Malfunction: $malfunctions';
+  }
+
+  @override
+  String eldDiagnosticLastValidDataFormat(String lastHeartbeat) {
+    return 'Last valid data: $lastHeartbeat';
+  }
+
+  @override
+  String eldDiagnosticDataAgeFormat(String dataAgeSeconds) {
+    return 'Data age: $dataAgeSeconds seconds';
+  }
+
+  @override
+  String get eldDiagnosticNotReady => 'Not ready for normal operation.';
+
+  @override
+  String get eldDiagnosticDataNotReliable => 'Data is not reliable.';
+
+  @override
+  String get eldDiagnosticConnected => 'Connected';
+
+  @override
+  String get eldDiagnosticDisconnected => 'Disconnected';
+
+  @override
+  String get eldDiagnosticUnavailable => 'Unavailable';
+
+  @override
+  String get eldDiagnosticMalfunction => 'Malfunction';
+
+  @override
+  String get eldDiagnosticNoConnectionStatus =>
+      'The server did not return a connection status.';
+
+  @override
+  String get eldReadinessTitle => 'Pre-operation readiness';
+
+  @override
+  String get eldReadinessChecking => 'Checking readiness...';
+
+  @override
+  String get eldReadinessReady => 'Ready for operation';
+
+  @override
+  String get eldReadinessNotReady => 'Not ready for operation';
+
+  @override
+  String eldReadinessRecommendedActionFormat(String action) {
+    return 'Recommended action: $action';
+  }
+
+  @override
+  String get eldReadinessDevicePaired => 'Device paired';
+
+  @override
+  String get eldReadinessConnectionActive => 'Connection active';
+
+  @override
+  String get eldReadinessMotionData => 'Motion data';
+
+  @override
+  String get eldReadinessLocationData => 'Location data';
+
+  @override
+  String get eldReadinessEngineTelemetry => 'Engine telemetry (ECM)';
+
+  @override
+  String get eldMalfunctionTitle => 'If the ELD malfunctions (§395.34)';
+
+  @override
+  String get eldMalfunctionStep1 =>
+      'Note the malfunction and notify the carrier in writing within 24 hours.';
+
+  @override
+  String get eldMalfunctionStep2 =>
+      'Reconstruct the current 24 hours and the previous 7 days on paper if the ELD cannot provide them.';
+
+  @override
+  String get eldMalfunctionStep3 =>
+      'Continue paper logs until the device is repaired.';
+
+  @override
+  String get eldMalfunctionManualActive => 'Manual recording is active.';
+
+  @override
+  String eldMalfunctionManualActiveWithReason(String reason) {
+    return 'Manual recording is active — $reason.';
+  }
+
+  @override
+  String get eldMalfunctionEndManual => 'END MANUAL RECORDING';
+
+  @override
+  String get eldMalfunctionServerNotAllow =>
+      'The server does not allow manual recording for this vehicle.';
+
+  @override
+  String get eldMalfunctionStartManual => 'START MANUAL RECORDING';
+
+  @override
+  String get eldMalfunctionStartSuccess =>
+      'Manual recording start was recorded on the server.';
+
+  @override
+  String get eldMalfunctionEndSuccess =>
+      'Manual recording ended; electronic recording resumed.';
+
+  @override
+  String get eldMalfunctionReasonStart => 'Manual recording reason';
+
+  @override
+  String get eldMalfunctionReasonEnd => 'Reason for ending manual recording';
+
+  @override
+  String get eldMalfunctionHintStart => 'e.g. lost connection to the ELD';
+
+  @override
+  String get eldMalfunctionHintEnd => 'e.g. ELD connection restored';
+
+  @override
+  String get dvirListNoRecords => 'No Records';
+
+  @override
+  String get dvirListTotal => 'Total';
+
+  @override
+  String get dvirListOpen => 'Open';
+
+  @override
+  String get dvirListSigned => 'Signed';
+
+  @override
+  String get dvirListOos => 'OOS';
+
+  @override
+  String get serverAcceptedDisconnected =>
+      'The server accepted disconnected mode. No local duty event was created.';
+
+  @override
+  String get macAddressRequired => 'MAC address is required.';
+
+  @override
+  String get coDriverSelectLabel => 'Select Co-driver';
+
+  @override
+  String get coDriverSelectHint => 'Select your co-driver';
+
+  @override
+  String get coDriverSwitchDrivers => 'Switch Drivers';
+
+  @override
+  String get coDriverSwitchHint =>
+      'You will become co-driver. Your co-driver will stay driver.';
+
+  @override
+  String get coDriverSwitching => 'Switching...';
+
+  @override
+  String get coDriverSwitchAction => 'SWITCH';
+
+  @override
+  String get coDriverConfirmSwitchTitle => 'Confirm Switch';
+
+  @override
+  String get coDriverConfirmSwitchBody =>
+      'This asks the server to switch roles. Hours are not copied and duty status is not changed.';
+
+  @override
+  String get coDriverRolesSwitchedTitle => 'Roles switched';
+
+  @override
+  String coDriverRolesSwitchedBody(String newPrimary) {
+    return 'You are now the co-driver.\n$newPrimary is now the primary driver.\n\nHours were not copied and duty status was not changed. The new driver sets duty before moving.';
+  }
+
+  @override
+  String get coDriverDefaultNewPrimary => 'The co-driver';
+
+  @override
+  String get coDriverNone => 'No co-driver';
+
+  @override
+  String get coDriverRefusalSessionMissing =>
+      'Driver session is missing. Sign in before switching.';
+
+  @override
+  String get coDriverRefusalStillDriving =>
+      'Change duty status before handover. The switch does not change it.';
+
+  @override
+  String get coDriverRefusalMotionUnknown =>
+      'Vehicle motion is unknown. That is not treated as stopped.';
+
+  @override
+  String get coDriverRefusalThresholdMissing =>
+      'The motion threshold is not available.';
+
+  @override
+  String get coDriverRefusalVehicleMoving =>
+      'Roles can be switched only when the vehicle is stopped.';
+
+  @override
+  String get coDriverRefusalCoDriverMissing =>
+      'Select a co-driver before switching.';
+
+  @override
+  String get coDriverRefusalSameDriver =>
+      'The current account cannot be selected as the co-driver.';
+
+  @override
+  String get coDriverLinkedTitle => 'Linked co-driver';
+
+  @override
+  String get coDriverLinkNotRead => 'The link has not been read.';
+
+  @override
+  String get coDriverLinkNone => 'No linked co-driver.';
+
+  @override
+  String get coDriverTeamDrivingActive => 'Team driving active';
+
+  @override
+  String get coDriverTeamDrivingInactive => 'Team driving inactive';
+
+  @override
+  String get coDriverHosIsolationReadError =>
+      'HOS isolation status could not be read.';
+
+  @override
+  String get coDriverHosIsolated => 'HOS records isolated';
+
+  @override
+  String get coDriverHosNotIsolated => 'HOS records not isolated';
+
+  @override
+  String get coDriverVehicleMissing =>
+      'Select a vehicle before linking a co-driver.';
+
+  @override
+  String get dvirDefectsNone => 'No defects to report.';
+
+  @override
+  String dvirDefectsCount(int defectCount) {
+    return '$defectCount defects selected.';
+  }
+
+  @override
+  String get languageSpanish => 'Spanish';
+
+  @override
+  String get reCertificationRequiredMsg =>
+      'Re-certification Required: Edits were made after your last signature.';
+
+  @override
+  String get statusOff => 'Off Duty';
+
+  @override
+  String get statusSb => 'Sleeper Berth';
+
+  @override
+  String get statusD => 'Driving';
+
+  @override
+  String get statusOn => 'On Duty';
+
+  @override
+  String get statusPc => 'Personal Conveyance';
+
+  @override
+  String get statusYm => 'Yard Move';
+
+  @override
+  String get dvirPreTrip => 'Pre-Trip';
+
+  @override
+  String get dvirPostTrip => 'Post-Trip';
+
+  @override
+  String get dvirSafeToDrive => 'Safe to Drive';
+
+  @override
+  String get dvirNeedsRepair => 'Needs Repair';
+
+  @override
+  String get dvirUnsafe => 'Unsafe';
+
+  @override
+  String get dvirBrakes => 'Brakes';
+
+  @override
+  String get dvirTires => 'Tires';
+
+  @override
+  String get dvirLights => 'Lights';
+
+  @override
+  String get dvirSteering => 'Steering';
+
+  @override
+  String get dvirTrailerCoupling => 'Trailer Coupling';
+
+  @override
+  String get dvirEmergencyEquipment => 'Emergency Equipment';
+
+  @override
+  String get dvirEngine => 'Engine';
+
+  @override
+  String get dvirFuelSystem => 'Fuel System';
+
+  @override
+  String get dvirExhaustSystem => 'Exhaust System';
+
+  @override
+  String get dvirSuspension => 'Suspension';
+
+  @override
+  String get dvirMirrors => 'Mirrors';
+
+  @override
+  String get dvirWindshield => 'Windshield';
 }
