@@ -86,6 +86,7 @@ dev_dependencies:
   freezed: ^3.0.6
   analyzer: ^7.6.0
   json_serializable: ^6.9.5
+  shared_preferences_platform_interface: ^2.4.1
 
 flutter:
   uses-material-design: true

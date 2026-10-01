@@ -25,14 +25,21 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   Future<void> _checkFirstLaunch() async {
     if (!mounted) return;
 
-    AppLogger.info('SplashPage: Checking onboarding status...');
-    if (!ref.read(localStorageProvider).onboardingSeen) {
-      if (!mounted) return;
-      AppLogger.info('SplashPage: Redirecting to onboarding');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.goNamed('onboarding');
-      });
-      return;
+    // شبكة أمان: أي فشل في فحص الإقلاع الأول لا يحق تعليق السبلاش للأبد —
+    // نكمل المسار الطبيعي (صلاحيات/مصادقة) كسلوك بديل آمن.
+    try {
+      AppLogger.info('SplashPage: Checking onboarding status...');
+      if (!ref.read(localStorageProvider).onboardingSeen) {
+        if (!mounted) return;
+        AppLogger.info('SplashPage: Redirecting to onboarding');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.goNamed('onboarding');
+        });
+        return;
+      }
+    } catch (e) {
+      AppLogger.error(
+          'SplashPage: onboarding check failed — continuing to normal flow', e);
     }
 
     AppLogger.info('SplashPage: Checking permissions...');
