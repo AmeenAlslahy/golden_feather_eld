@@ -46,7 +46,7 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
                 ? Center(
                     child: Text(
                       vehicleState.error!,
-                      style: const TextStyle(color: AppColors.dangerRed),
+                      style: context.styles.error,
                     ),
                   )
                 : vehicles.isEmpty
@@ -74,7 +74,7 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
                               subtitle: vehicle.vin != null
                                   ? Text(
                                       '${context.loc.vin}: ${_vinTail(vehicle.vin!)}',
-                                      style: const TextStyle(fontSize: 12))
+                                      style: context.styles.caption)
                                   : null,
                               value: vehicle.id,
                               activeColor: AppColors.primaryGold,

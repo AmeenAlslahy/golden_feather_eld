@@ -193,14 +193,13 @@ class EditLogPage extends ConsumerWidget {
                   RadioListTile<String>(
                     title: Text(
                       status['label']!,
-                      style: TextStyle(
-                        fontSize: AppTypography.bodySize,
+                      style: context.styles.body.copyWith(
                         fontWeight: isSelected
                             ? AppTypography.semiBold
                             : AppTypography.regular,
                         color: isSelected
                             ? AppColors.primaryGold
-                            : Theme.of(context).colorScheme.onSurface,
+                            : null,
                       ),
                     ),
                     value: status['value']!,
@@ -225,19 +224,12 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.vehicle,
-                  style:  TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                  ),
+                  style: context.styles.bodyBold.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   dashboard.vehicleId,
-                  style:  TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                  ),
+                  style: context.styles.body,
                 ),
                 const SizedBox(height: 8),
                 Divider(
@@ -254,19 +246,12 @@ class EditLogPage extends ConsumerWidget {
               children: [
                 Text(
                   context.loc.location,
-                  style:  TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                  ),
+                  style: context.styles.bodyBold.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   formState.location.isEmpty ? ' ' : formState.location, // empty space to keep height if empty
-                  style:  TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondaryFor(Theme.of(context).brightness),
-                  ),
+                  style: context.styles.subtitle,
                 ),
                 const SizedBox(height: 8),
                 Divider(
@@ -281,10 +266,9 @@ class EditLogPage extends ConsumerWidget {
             TextField(
               decoration: InputDecoration(
                 hintText: context.loc.manualLocation,
-                hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                hintStyle: context.styles.subtitle,
                 border: const UnderlineInputBorder(),
-                suffixIcon:  Icon(Icons.my_location, color: AppColors.textPrimaryFor(Theme.of(context).brightness)),
+                suffixIcon:  Icon(Icons.my_location, color: context.styles.body.color),
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
               style: context.styles.body,
@@ -451,10 +435,8 @@ AppFeedback.success(
           children: [
             Text(
               label,
-              style: const TextStyle(
-                fontSize: AppTypography.subtitleSize,
-                fontWeight: AppTypography.semiBold,
-              ),
+              style: context.styles.sectionTitle
+                  .copyWith(fontSize: AppTypography.subtitleSize),
             ),
             const SizedBox(height: AppSpacing.sm),
             Row(
@@ -543,7 +525,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   widget.onDone(time);
                 },
                 child: Text(context.loc.saveButton,
-                    style: const TextStyle(color: AppColors.primaryGold)),
+                    style: context.styles.gold),
               ),
             ],
           ),
@@ -579,15 +561,14 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           builder: (context, index) => Center(
             child: Text(
               index.toString().padLeft(2, '0'),
-              style: TextStyle(
-                fontSize: AppTypography
-                    .headerSize, // replaced AppTypography.headerSize directly? Wait, AppTypography.headerSize is 28.0, so this is fine.
+              style: context.styles.body.copyWith(
+                fontSize: AppTypography.headerSize,
                 fontWeight: index == selected
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: index == selected
                     ? AppColors.primaryGold
-                    : AppColors.textSecondaryFor(Theme.of(context).brightness),
+                    : context.styles.subtitle.color,
               ),
             ),
           ),
@@ -609,14 +590,13 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           builder: (context, index) => Center(
             child: Text(
               index == 0 ? context.loc.am : context.loc.pm,
-              style: TextStyle(
-                fontSize: AppTypography.bodySize,
+              style: context.styles.body.copyWith(
                 fontWeight: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
                     ? AppTypography.bold
                     : AppTypography.regular,
                 color: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
                     ? AppColors.primaryGold
-                    : AppColors.textSecondaryFor(Theme.of(context).brightness),
+                    : context.styles.subtitle.color,
               ),
             ),
           ),

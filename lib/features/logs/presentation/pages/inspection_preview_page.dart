@@ -46,7 +46,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
         body: EldRetryView(
           message: anyErrorUserMessage(
             e,
-            isArabic: Localizations.localeOf(context).languageCode == 'ar',
+            loc: AppLocalizations.of(context)!,
           ),
           onRetry: () => ref.invalidate(dotInspectionScreenProvider),
         ),
@@ -133,7 +133,7 @@ class _DateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF3A3A3C),
+      color: context.isDark ? const Color(0xFF3A3A3C) : AppColors.surfaceDark,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -171,8 +171,7 @@ class _EventsTable extends StatelessWidget {
         child: Center(
           child: Text(
             AppLocalizations.of(context)!.noData,
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: context.styles.subtitle,
           ),
         ),
       );
@@ -319,9 +318,9 @@ class _EventRow extends StatelessWidget {
       case 'SB':
         return AppColors.primaryGold;
       case 'OFF':
-        return AppColors.textSecondaryFor(Theme.of(context).brightness);
+        return context.styles.subtitle.color!;
       default:
-        return AppColors.textSecondaryFor(Theme.of(context).brightness);
+        return context.styles.subtitle.color!;
     }
   }
 }
@@ -372,10 +371,8 @@ class _AuditTrail extends ConsumerWidget {
         children: [
           Text(
             context.loc.transferAuditTitle,
-            style: const TextStyle(
-              fontSize: AppTypography.subtitleSize,
-              fontWeight: AppTypography.bold,
-            ),
+            style: context.styles.bodyBold
+                .copyWith(fontSize: AppTypography.subtitleSize),
           ),
           const SizedBox(height: AppSpacing.md),
           auditsAsync.when(
@@ -383,9 +380,7 @@ class _AuditTrail extends ConsumerWidget {
               if (audits.isEmpty) {
                 return Text(
                   context.loc.noTransfersFromServer,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: context.styles.subtitle,
                 );
               }
               return Column(
@@ -430,7 +425,7 @@ class _TransferAuditTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
-      child: Text(lines.join(' · '), style: const TextStyle(fontSize: 12)),
+      child: Text(lines.join(' · '), style: context.styles.caption),
     );
   }
 }

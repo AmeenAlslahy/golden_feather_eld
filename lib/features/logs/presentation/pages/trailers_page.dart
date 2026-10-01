@@ -111,7 +111,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                             size: 18, color: AppColors.surface),
                         const SizedBox(width: 4),
                         Text(context.loc.addButton,
-                            style: const TextStyle(color: AppColors.surface)),
+                            style: context.styles.button),
                       ],
                     ),
                   ),
@@ -126,8 +126,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                 ? Center(
                     child: Text(
                       context.loc.noTrailersAdded,
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.outline),
+                      style: context.styles.subtitle,
                     ),
                   )
                 : ListView.separated(
@@ -143,7 +142,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                         ),
                         leading:  Icon(
                           Icons.local_shipping,
-                          color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                          color: context.styles.subtitle.color,
                           size: 28,
                         ),
                         title: Text(
@@ -161,10 +160,8 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                           ),
                           child: Text(
                             context.loc.deleteButton,
-                            style: const TextStyle(
-                              fontSize: AppTypography.smallSize,
-                              fontWeight: AppTypography.bold,
-                            ),
+                            style: context.styles.button
+                                .copyWith(fontSize: AppTypography.smallSize),
                           ),
                         ),
                       );

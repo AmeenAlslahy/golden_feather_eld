@@ -43,7 +43,7 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
             : codriverState.error != null
                 ? Text(
                     'Error: ${codriverState.error}',
-                    style: const TextStyle(color: AppColors.dangerText),
+                    style: context.styles.error,
                   )
                 : SingleChildScrollView(
                     child: RadioGroup<String>(

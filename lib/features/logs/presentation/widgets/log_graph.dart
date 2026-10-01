@@ -1,5 +1,6 @@
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
@@ -20,11 +21,9 @@ class LogGraph extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final latestEldEvent = ref.watch(logGraphEventsProvider).valueOrNull;
 
-    final brightness = Theme.of(context).brightness;
-
     return Container(
       height: 190,
-      color: AppColors.surfaceFor(brightness),
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.only(
         top: AppSpacing.md,
         bottom: AppSpacing.md,
@@ -37,8 +36,8 @@ class LogGraph extends ConsumerWidget {
               events: events,
               logDate: logDate,
               latestEldEvent: latestEldEvent,
-              textColor: AppColors.textPrimaryFor(brightness),
-              gridColor: AppColors.borderFor(brightness),
+              textColor: context.styles.body.color!,
+              gridColor: Theme.of(context).colorScheme.outline,
             ),
           );
         },
@@ -209,7 +208,7 @@ class _LogGraphPainter extends CustomPainter {
     if (events.isEmpty) return;
 
     final linePaint = Paint()
-      ..color = const Color(0xFF1B5B8A) // Match blue color from screenshot
+      ..color = AppColors.infoBlue // لون خط المخطط — رمز من AppColors
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.miter; // Miter makes sharp right angles

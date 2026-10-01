@@ -375,8 +375,8 @@ class _Stat extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             children: [
-              Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(label, style: const TextStyle(fontSize: 10)),
+              Text(value, style: context.styles.bodyBold),
+              Text(label, style: context.styles.caption.copyWith(fontSize: 10)),
             ],
           ),
         ),
@@ -441,7 +441,7 @@ class _EventList extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(status,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                          style: context.styles.bodyBold),
                     ),
                     // SRS 11.2 — allocation state chip from the server.
                     if (allocation.isNotEmpty)
@@ -467,8 +467,8 @@ class _EventList extends StatelessWidget {
                 if (overdue)
                   Text(
                     context.loc.overdue,
-                    style: const TextStyle(
-                        color: AppColors.dangerRed, fontWeight: FontWeight.bold),
+                    style: context.styles.error
+                        .copyWith(fontWeight: FontWeight.bold),
                   ),
                 if (reason.isNotEmpty) Text(reason),
                 Padding(

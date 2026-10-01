@@ -10,6 +10,7 @@ import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../providers/logs_provider.dart';
 
 /// شاشة قائمة السجلات
@@ -65,7 +66,7 @@ class LogsListPage extends ConsumerWidget {
           ? EldRetryView(
               message: anyErrorUserMessage(
                 logsState.error!,
-                isArabic: Localizations.localeOf(context).languageCode == 'ar',
+                loc: AppLocalizations.of(context)!,
               ),
               onRetry: () =>
                   ref.read(logsProvider.notifier).loadLogs(refresh: true),
@@ -138,14 +139,10 @@ class _LogListItem extends StatelessWidget {
                         : log.formattedDate,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style:  TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                    ),
+                    style: context.styles.body,
                   ),
                 ),
-                 Icon(Icons.chevron_right, size: 24, color: AppColors.textSecondaryFor(Theme.of(context).brightness)),
+                 Icon(Icons.chevron_right, size: 24, color: context.styles.subtitle.color),
               ],
             ),
 

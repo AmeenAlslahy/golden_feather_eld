@@ -74,7 +74,7 @@ final trail = ref.watch(auditTrailProvider);
                     return ListTile(
                       dense: true,
                       leading:  Icon(Icons.history,
-                          color: AppColors.textSecondaryFor(Theme.of(context).brightness), size: 20),
+                          color: context.styles.subtitle.color, size: 20),
                       title: Text(
                         e.action.isNotEmpty ? e.action : e.newStatus,
                         style: context.styles.body,

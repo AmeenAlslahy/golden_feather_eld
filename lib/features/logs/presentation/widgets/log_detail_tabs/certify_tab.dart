@@ -240,11 +240,7 @@ final signatureBytes = await _signatureController.toPngBytes();
                   child: Text(
                     context.loc.drawYourSignatureHere,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFB0B0B0),
-                    ),
+                    style: context.styles.subtitle.copyWith(fontSize: 16),
                   ),
                 ),
                 Signature(

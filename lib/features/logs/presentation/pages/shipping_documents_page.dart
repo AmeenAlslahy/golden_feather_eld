@@ -112,7 +112,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                             size: 18, color: AppColors.surface),
                         const SizedBox(width: 4),
                         Text(context.loc.addButton,
-                            style: const TextStyle(color: AppColors.surface)),
+                            style: context.styles.button),
                       ],
                     ),
                   ),
@@ -127,8 +127,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                 ? Center(
                     child: Text(
                       context.loc.noDocumentsAdded,
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.outline),
+                      style: context.styles.subtitle,
                     ),
                   )
                 : ListView.separated(
@@ -144,7 +143,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                         ),
                         leading:  Icon(
                           Icons.description,
-                          color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                          color: context.styles.subtitle.color,
                           size: 28,
                         ),
                         title: Text(
@@ -162,10 +161,8 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                           ),
                           child: Text(
                             context.loc.deleteButton,
-                            style: const TextStyle(
-                              fontSize: AppTypography.smallSize,
-                              fontWeight: AppTypography.bold,
-                            ),
+                            style: context.styles.button
+                                .copyWith(fontSize: AppTypography.smallSize),
                           ),
                         ),
                       );
