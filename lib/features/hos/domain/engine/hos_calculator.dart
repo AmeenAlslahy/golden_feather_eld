@@ -98,10 +98,12 @@ class HosCalculator {
 
   /// فحص الراحة الأسبوعية (34 ساعة)
   /// Needs: Regulatory Timezone (Currently assumes inputs are already formatted)
-  bool hasWeeklyRestart(List<DateTime> offDutyPeriods) {
+  bool hasWeeklyRestart(List<({DateTime start, DateTime end})> offDutyPeriods) {
+    // 34 consecutive hours of off-duty/sleeper berth
+    const requiredHours = 34;
     for (final period in offDutyPeriods) {
-      // يجب أن تتضمن فترتين من 1-5 صباحاً
-      if (period.hour >= 1 && period.hour <= 5) {
+      final duration = period.end.difference(period.start);
+      if (duration.inMinutes >= requiredHours * 60) {
         return true;
       }
     }

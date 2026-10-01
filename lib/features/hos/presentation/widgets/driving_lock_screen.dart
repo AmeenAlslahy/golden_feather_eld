@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -25,7 +26,7 @@ class DrivingLockScreen extends ConsumerWidget {
             GestureDetector(
               onDoubleTap: () {
                 // UI Bypass: Just hide the screen locally so we can test other pages
-                ref.read(developerBypassDrivingScreenProvider.notifier).state = true;
+                if (kDebugMode) ref.read(developerBypassDrivingScreenProvider.notifier).state = true;
               },
               child: const Icon(
                 Icons.directions_car,
