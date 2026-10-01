@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
 import '../../domain/entities/audit_entry.dart';
@@ -88,11 +89,18 @@ final editLogFormProvider = StateNotifierProvider.autoDispose
     });
 
 /// شاشة تعديل الحدث
-class EditLogPage extends ConsumerWidget {
+class EditLogPage extends ConsumerStatefulWidget {
   final dynamic event;
   final bool isNewEvent;
 
   const EditLogPage({super.key, required this.event, this.isNewEvent = false});
+
+  @override
+  ConsumerState<EditLogPage> createState() => _EditLogPageState();
+}
+
+class _EditLogPageState extends ConsumerState<EditLogPage> {
+  final _formKey = GlobalKey<FormState>();
 
   void _showTimePicker(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
@@ -103,7 +111,7 @@ class EditLogPage extends ConsumerWidget {
       ),
       builder: (context) => _TimePickerSheet(
         onDone: (time) {
-          ref.read(editLogFormProvider(event).notifier).setStartTime(time);
+          ref.read(editLogFormProvider(widget.event).notifier).setStartTime(time);
           Navigator.pop(context);
         },
       ),
@@ -111,12 +119,13 @@ class EditLogPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final dashboard = ref.watch(dashboardDataProvider);
-    final formState = ref.watch(editLogFormProvider(event));
+    final formState = ref.watch(editLogFormProvider(widget.event));
     final selectedLog = ref
         .watch(logsProvider)
         .selectedLog; // جلب اليوم المختار
+
 
     final List<Map<String, String>> statuses = [
       {'value': 'Off Duty', 'label': context.loc.offDuty},
@@ -135,7 +144,7 @@ class EditLogPage extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isNewEvent
+          widget.isNewEvent
               ? context.loc.insertDutyStatus
               : context.loc.editDutyStatus,
           style: context.styles.appBarTitle,
@@ -145,10 +154,12 @@ class EditLogPage extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
         ), // تم تصغير الـ padding الجانبي
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
             const SizedBox(height: AppSpacing.md),
             LogGraph(
               events: selectedLog?.events ?? [],
@@ -191,7 +202,7 @@ class EditLogPage extends ConsumerWidget {
               groupValue: formState.selectedStatus,
               onChanged: (value) {
                 if (value == null) return;
-                ref.read(editLogFormProvider(event).notifier).setStatus(value);
+                ref.read(editLogFormProvider(widget.event).notifier).setStatus(value);
               },
               child: Column(
                 children: statuses.map((status) {
@@ -297,17 +308,12 @@ class EditLogPage extends ConsumerWidget {
                   style: context.styles.sectionTitle,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: context.loc.enterReasonRequired,
-                    hintStyle: context.styles.subtitle,
-                    border: const UnderlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  style: context.styles.body,
+                AppTextField(
+                  hint: context.loc.enterReasonRequired,
+                  validator: (value) => value == null || value.trim().isEmpty ? context.loc.aReasonForTheChangeIs : null,
                   onChanged: (value) {
                     ref
-                        .read(editLogFormProvider(event).notifier)
+                        .read(editLogFormProvider(widget.event).notifier)
                         .setReason(value);
                   },
                 ),
@@ -317,13 +323,12 @@ class EditLogPage extends ConsumerWidget {
 
             // 7. زر الحفظ
             AppButton(
-              label: isNewEvent
+              label: widget.isNewEvent
                   ? context.loc.addButton
                   : context.loc.saveButton,
               type: EldButtonType.agree,
               onPressed: () async {
-                if (formState.reason.trim().isEmpty) {
-                  AppFeedback.error(context, context.loc.aReasonForTheChangeIs);
+                if (!_formKey.currentState!.validate()) {
                   return;
                 }
                 // حفظ التعديلات وسجل التدقيق
@@ -344,7 +349,7 @@ class EditLogPage extends ConsumerWidget {
                 // بناء الحدث كما عدّله المستخدم (القيمة الحالية للنموذج)
                 final selectedLog = ref.read(logsProvider).selectedLog;
                 final status = statusFromEditValue(formState.selectedStatus);
-                final existing = event is LogEvent ? event : null;
+                final existing = widget.event is LogEvent ? widget.event : null;
                 final newStart =
                     parseEditFormTime(formState.startTime, selectedLog?.date) ??
                     existing?.startTime ??
@@ -377,7 +382,7 @@ class EditLogPage extends ConsumerWidget {
                     );
 
                 // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
-                final saved = isNewEvent
+                final saved = widget.isNewEvent
                     ? await notifier.addEvent(
                         updatedEvent,
                         reason: formState.reason,
@@ -402,7 +407,7 @@ class EditLogPage extends ConsumerWidget {
                   id: const Uuid().v4(),
                   timestamp: timeAuthority.nowUtc(),
                   driverId: driverId,
-                  oldStatus: isNewEvent ? null : (existing?.status),
+                  oldStatus: widget.isNewEvent ? null : (existing?.status),
                   newStatus: status,
                   reason: formState.reason,
                 );
@@ -432,6 +437,7 @@ class EditLogPage extends ConsumerWidget {
             const SizedBox(height: AppSpacing.md),
           ],
         ),
+      ),
       ),
     );
   }

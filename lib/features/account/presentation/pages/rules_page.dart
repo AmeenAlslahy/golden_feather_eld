@@ -24,6 +24,7 @@ class RulesPage extends ConsumerStatefulWidget {
 }
 
 class _RulesPageState extends ConsumerState<RulesPage> {
+  final _formKey = GlobalKey<FormState>();
   // Form State
   String? _cycleRule;
   String? _cargoType;
@@ -37,16 +38,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   /// القيم القديمة ظاهرة رغم تحديث الخادم.
   RulesScreenModel? _initializedModel;
 
-  bool get _isFormValid {
-    return _cycleRule != null &&
-        _cycleRule!.isNotEmpty &&
-        _cargoType != null &&
-        _cargoType!.isNotEmpty &&
-        _restart != null &&
-        _restart!.isNotEmpty &&
-        _restBreak != null &&
-        _restBreak!.isNotEmpty;
-  }
 
   void _initForm(RulesScreenModel model) {
     if (identical(_initializedModel, model)) return;
@@ -59,8 +50,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   }
 
   Future<void> _saveRules(RulesScreenModel model) async {
-    if (!_isFormValid) {
-      AppFeedback.error(context, context.loc.formIncomplete);
+    if (!_formKey.currentState!.validate()) {
       return;
     }
     setState(() => _isSaving = true);
@@ -161,9 +151,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
               child: Text(
                 label,
                 style: context.styles.body.copyWith(
-                  color: AppColors.textSecondaryFor(
-                    Theme.of(context).brightness,
-                  ),
+                  color: context.textSecondary,
                   fontWeight: AppTypography.semiBold,
                 ),
               ),
@@ -176,9 +164,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                   value: currentValue,
                   icon: Icon(
                     Icons.keyboard_arrow_down,
-                    color: AppColors.textPrimaryFor(
-                      Theme.of(context).brightness,
-                    ),
+                    color: context.textPrimary,
                   ),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
@@ -281,9 +267,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                         children: [
                           Icon(
                             Icons.info_outline,
-                            color: AppColors.textPrimaryFor(
-                              Theme.of(context).brightness,
-                            ),
+                            color: context.textPrimary,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
@@ -355,9 +339,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                                 child: Text(
                                   loc.sixteenHourException,
                                   style: context.styles.body.copyWith(
-                                    color: AppColors.textSecondaryFor(
-                                      Theme.of(context).brightness,
-                                    ),
+                                    color: context.textSecondary,
                                     fontWeight: AppTypography.semiBold,
                                   ),
                                 ),
@@ -460,9 +442,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       children: [
                         Icon(
                           Icons.info,
-                          color: AppColors.textSecondaryFor(
-                            Theme.of(context).brightness,
-                          ),
+                          color: context.textSecondary,
                           size: 18,
                         ),
                         const SizedBox(width: AppSpacing.sm),
@@ -471,9 +451,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                             loc.contactFleetManager,
                             textAlign: TextAlign.center,
                             style: context.styles.body.copyWith(
-                              color: AppColors.textSecondaryFor(
-                                Theme.of(context).brightness,
-                              ),
+                              color: context.textSecondary,
                             ),
                           ),
                         ),
