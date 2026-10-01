@@ -1,0 +1,56 @@
+import '../../domain/dvir_catalog.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
+
+
+
+class DefectCard extends StatelessWidget {
+  final DvirDefectSelection defect;
+  final Color textColor;
+  final bool readOnly;
+  final VoidCallback onRemove;
+
+  const DefectCard({
+    super.key,
+    required this.defect,
+    required this.textColor,
+    required this.readOnly,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = context.loc;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Icon(
+            defect.item.critical
+                ? Icons.warning_amber_rounded
+                : Icons.build_outlined,
+            size: 16,
+            color: defect.item.critical
+                ? AppColors.dangerRed
+                : textColor,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              (defect.description ?? '').trim().isEmpty
+                  ? defect.item.label(loc)
+                  : ' — ',
+              style: context.styles.subtitle,
+            ),
+          ),
+          if (!readOnly)
+            IconButton(
+              icon: Icon(Icons.remove_circle_outline, color: AppColors.dangerRed),
+              onPressed: onRemove,
+            ),
+        ],
+      ),
+    );
+  }
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_decorations.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -15,6 +15,14 @@ import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
+
+
+import '../widgets/signature_canvas.dart';
+
+import '../widgets/status_modal.dart';
+
+import '../widgets/defects_modal.dart';
+
 import '../providers/dvir_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 
@@ -147,7 +155,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) =>
-          _DefectCatalogDialog(initial: _selectedDefects),
+          DefectCatalogDialog(initial: _selectedDefects),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -169,64 +177,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   Future<void> _openStatusModal() async {
-    final hasDefect = _hasAnyDefect;
-    final loc = context.loc;
-    // Wire values stay English (server contract); only the labels follow the locale.
     final selected = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(loc.status),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              title: Text(
-                loc.dvirSatisfactory,
-              ),
-              enabled: !hasDefect,
-              subtitle: hasDefect
-                  ? Text(loc.dvirDefectRecorded)
-                  : null,
-              onTap: hasDefect
-                  ? null
-                  : () => Navigator.pop(
-                      context,
-                      'Vehicle Condition Satisfactory',
-                    ),
-            ),
-            ListTile(
-              title: Text(loc.dvirHasDefects),
-              onTap: () => Navigator.pop(context, 'Has Defects'),
-            ),
-            ListTile(
-              enabled: false,
-              title: Text(loc.dvirDefectsCorrected),
-              subtitle: Text(
-                loc.dvirNoRepairCert,
-              ),
-            ),
-            ListTile(
-              enabled: false,
-              title: Text(
-                loc.dvirDefectsNotCorrected,
-              ),
-              subtitle: Text(
-                loc.dvirSetByCarrier,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(loc.cancelAction),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, _selectedStatus),
-            child: Text(loc.okButton),
-          ),
-        ],
+      builder: (context) => DvirStatusModal(
+        hasDefect: _hasAnyDefect,
+        selectedStatus: _selectedStatus,
       ),
     );
     if (selected == null || !mounted) return;
@@ -644,51 +599,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ),
 
             // Signature Section
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                children: [
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: AppDecorations.outlined(
-                      borderColor: borderColor,
-                      alpha: 0.5,
-                      color: Colors.white,
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Text(
-                            context.loc.dvirImageNotAvailable,
-                            textAlign: TextAlign.center,
-                            style: context.styles.muted.copyWith(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                          ),
-                        ),
-                        Signature(
-                          controller: _signatureController,
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  InkWell(
-                    onTap: () => _signatureController.clear(),
-                    child: Text(
-                      context.loc.dvirClearSignature,
-                      style: context.styles.subtitle.copyWith(
-                        decoration: TextDecoration.underline,
-                        decorationStyle: TextDecorationStyle.dotted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            DvirSignatureCanvas(
+              controller: _signatureController,
+              borderColor: borderColor,
             ),
 
             Padding(
@@ -874,130 +787,4 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 }
 
-/// Checkbox list of the live §396.11 catalog with an optional note per item.
-class _DefectCatalogDialog extends ConsumerStatefulWidget {
-  const _DefectCatalogDialog({required this.initial});
 
-  final List<DvirDefectSelection> initial;
-
-  @override
-  ConsumerState<_DefectCatalogDialog> createState() =>
-      _DefectCatalogDialogState();
-}
-
-class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
-  late final Map<String, DvirDefectSelection> _picked = {
-    for (final d in widget.initial) d.item.code: d,
-  };
-  final Map<String, TextEditingController> _notes = {};
-
-  @override
-  void dispose() {
-    for (final c in _notes.values) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  TextEditingController _noteFor(DvirCatalogItem item) => _notes.putIfAbsent(
-    item.code,
-    () => TextEditingController(text: _picked[item.code]?.description ?? ''),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final loc = context.loc;
-
-    final catalog = ref.watch(dvirCatalogProvider);
-    return AlertDialog(
-      title: Text(loc.dvirDefects396_11),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: catalog.when(
-          loading: () => const SizedBox(
-            height: 80,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                loc.dvirLoadDefectsFail,
-              ),
-              TextButton(
-                onPressed: () => ref.invalidate(dvirCatalogProvider),
-                child: Text(loc.retryAction),
-              ),
-            ],
-          ),
-          data: (items) => items.isEmpty
-              ? Text(loc.dvirCatalogEmpty)
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  itemBuilder: (context, i) {
-                    final item = items[i];
-                    final checked = _picked.containsKey(item.code);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CheckboxListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          value: checked,
-                          title: Text(item.label(loc)),
-                          subtitle: item.critical
-                              ? Text(
-                                  loc.dvirSafetyAffecting,
-                                  style: context.styles.error
-                                      .copyWith(fontSize: 11),
-                                )
-                              : null,
-                          onChanged: (v) => setState(() {
-                            if (v == true) {
-                              _picked[item.code] = DvirDefectSelection(
-                                item: item,
-                                description: _noteFor(item).text,
-                              );
-                            } else {
-                              _picked.remove(item.code);
-                            }
-                          }),
-                        ),
-                        if (checked)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 40, bottom: 8),
-                            child: TextField(
-                              controller: _noteFor(item),
-                              style: context.styles.caption,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                hintText: loc.dvirDescriptionOptional,
-                              ),
-                              onChanged: (text) =>
-                                  _picked[item.code] = DvirDefectSelection(
-                                    item: item,
-                                    description: text,
-                                  ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(loc.cancelAction),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _picked.values.toList()),
-          child: Text(loc.okButton),
-        ),
-      ],
-    );
-  }
-}
