@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -22,15 +21,13 @@ class InfoPacketPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primaryGold,
         title: Text(
           loc.infoPacket,
           style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.surface),
+            icon: const Icon(Icons.menu),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -97,7 +94,7 @@ class _PacketStatus extends StatelessWidget {
                 ? context.loc.thePacketIsIncomplete
                 : context.loc.packetIncompleteMissing(missing),
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: AppColors.dangerRed),
+            style: context.styles.error,
           ),
         );
       },
@@ -132,21 +129,13 @@ class _PacketBlock extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style:  TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-            ),
+            style: context.styles.sectionTitle,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             body,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.45,
-              color: Color(0xFF9E9E9E),
-            ),
+            style: context.styles.subtitle,
           ),
           const SizedBox(height: AppSpacing.xl),
           AppButton(

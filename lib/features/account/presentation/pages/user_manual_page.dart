@@ -1,83 +1,60 @@
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../../../../l10n/app_localizations.dart';
 
+/// دليل المستخدم — صفحة مرجعية كثيفة النصوص (9-11px مقصودة)،
+/// لكن الألوان والأوزان كلها من `context.styles` عبر copyWith.
 class UserManualPage extends StatelessWidget {
   const UserManualPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final brightness = Theme.of(context).brightness;
-    final surfaceColor = AppColors.surfaceFor(brightness);
-    final textColor = AppColors.textPrimaryFor(brightness);
-    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
 
     return Scaffold(
-      backgroundColor: brightness == Brightness.light ? const Color(0xFFF3F4F6) : AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           loc.eldUserManual,
-          style: const TextStyle(
-            fontSize: AppTypography.headerSize,
-            fontWeight: AppTypography.bold,
-            color: AppColors.surface,
-          ),
+          style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
       ),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildHeader(loc, surfaceColor, textColor, textSecondaryColor, brightness),
+          _buildHeader(loc, context),
           const SizedBox(height: AppSpacing.sm),
-          _buildSectionTitle(
-              loc.features, textColor),
-          _buildFeaturesSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
-          
-          _buildSectionTitle(
-              loc.installationAndSetup,
-              textColor),
-          _buildInstallationSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
-          
-          _buildSectionTitle(loc.logManagement,
-              textColor),
-          _buildLogManagementSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
-          
-          _buildSectionTitle(loc.roadsideInspections,
-              textColor),
-          _buildRoadsideSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
-          
-          _buildSectionTitle(
-              loc.electronicDriverVehicleInspect,
-              textColor),
-          _buildDvirSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
-          
-          _buildSectionTitle(
-              loc.fleetManagerPortal,
-              textColor),
-          _buildFleetManagerSection(
-              loc, surfaceColor, textColor, textSecondaryColor, brightness),
+          _buildSectionTitle(loc.features, context),
+          _buildFeaturesSection(loc, context),
+
+          _buildSectionTitle(loc.installationAndSetup, context),
+          _buildInstallationSection(loc, context),
+
+          _buildSectionTitle(loc.logManagement, context),
+          _buildLogManagementSection(loc, context),
+
+          _buildSectionTitle(loc.roadsideInspections, context),
+          _buildRoadsideSection(loc, context),
+
+          _buildSectionTitle(loc.electronicDriverVehicleInspect, context),
+          _buildDvirSection(loc, context),
+
+          _buildSectionTitle(loc.fleetManagerPortal, context),
+          _buildFleetManagerSection(loc, context),
           const SizedBox(height: 32.0),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, Color textColor) {
+  Widget _buildSectionTitle(String title, BuildContext context) {
+    final lineColor = context.styles.body.color!.withValues(alpha: 0.3);
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.md),
@@ -86,23 +63,19 @@ class UserManualPage extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+            style: context.styles.bodyBold.copyWith(fontSize: 14),
           ),
           const SizedBox(height: 8),
-          Divider(color: textColor.withValues(alpha: 0.3), thickness: 1, height: 1),
+          Divider(color: lineColor, thickness: 1, height: 1),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(AppLocalizations loc, Color surfaceColor, Color textColor,
-      Color secondaryColor, Brightness brightness) {
+  Widget _buildHeader(AppLocalizations loc, BuildContext context) {
+    final iconColor = context.styles.subtitle.color!;
     return Container(
-      color: surfaceColor,
+      color: Theme.of(context).colorScheme.surface,
       constraints: const BoxConstraints(minHeight: 250),
       child: IntrinsicHeight(
         child: Row(
@@ -113,11 +86,11 @@ class UserManualPage extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: textColor.withValues(alpha: 0.06),
+                  color: context.styles.body.color!.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Icon(Icons.local_shipping, size: 64, color: secondaryColor),
+                  child: Icon(Icons.local_shipping, size: 64, color: iconColor),
                 ),
               ),
             ),
@@ -137,22 +110,22 @@ class UserManualPage extends StatelessWidget {
                       children: [
                         Text(
                           loc.userManual,
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: textColor,
-                              fontWeight: FontWeight.bold),
+                          style: context.styles.bodyBold.copyWith(fontSize: 11),
                         ),
                         const SizedBox(width: 8),
-                        Expanded(child: Divider(color: textColor.withValues(alpha: 0.3))),
+                        Expanded(
+                          child: Divider(
+                            color: context.styles.body.color!
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
                       ],
                     ),
                     const Spacer(),
                     Text(
                       'Golden Feather ELD',
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                          color: textColor),
+                      style: context.styles.body
+                          .copyWith(fontSize: 24, fontWeight: FontWeight.w400),
                     ),
                     const Spacer(),
                     Container(
@@ -160,10 +133,10 @@ class UserManualPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md, vertical: AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: brightness == Brightness.light ? AppColors.white : AppColors.surface,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          if (brightness == Brightness.light)
+                          if (!context.isDark)
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 8,
@@ -174,8 +147,7 @@ class UserManualPage extends StatelessWidget {
                       child: Text(
                         loc.electronicLoggingDeviceEld,
                         textAlign: TextAlign.center,
-                        style:  TextStyle(
-                            fontSize: 11, color: AppColors.textPrimaryFor(brightness)),
+                        style: context.styles.body.copyWith(fontSize: 11),
                       ),
                     ),
                   ],
@@ -188,8 +160,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturesSection(AppLocalizations loc, Color surfaceColor,
-      Color textColor, Color secondaryColor, Brightness brightness) {
+  Widget _buildFeaturesSection(AppLocalizations loc, BuildContext context) {
     final features = [
       {
         'title': loc.recordsOfDutyStatus,
@@ -231,15 +202,13 @@ class UserManualPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: features
-            .map((f) => _buildFeatureCard(
-                f['title']!, f['desc']!, textColor, secondaryColor, brightness))
+            .map((f) => _buildFeatureCard(f['title']!, f['desc']!, context))
             .toList(),
       ),
     );
   }
 
-  Widget _buildFleetManagerSection(AppLocalizations loc, Color surfaceColor,
-      Color textColor, Color secondaryColor, Brightness brightness) {
+  Widget _buildFleetManagerSection(AppLocalizations loc, BuildContext context) {
     final features = [
       {
         'title': loc.setUpFleetManagerPortal,
@@ -272,23 +241,22 @@ class UserManualPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: features
-            .map((f) => _buildFeatureCard(
-                f['title']!, f['desc']!, textColor, secondaryColor, brightness))
+            .map((f) => _buildFeatureCard(f['title']!, f['desc']!, context))
             .toList(),
       ),
     );
   }
 
-  Widget _buildFeatureCard(String title, String description, Color textColor,
-      Color secondaryColor, Brightness brightness) {
+  Widget _buildFeatureCard(
+      String title, String description, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: brightness == Brightness.light ? Colors.white : AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          if (brightness == Brightness.light)
+          if (!context.isDark)
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
@@ -304,10 +272,7 @@ class UserManualPage extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: textColor),
+              style: context.styles.bodyBold.copyWith(fontSize: 10),
             ),
           ),
           Container(
@@ -320,8 +285,7 @@ class UserManualPage extends StatelessWidget {
             flex: 7,
             child: Text(
               description,
-              style: TextStyle(
-                  fontSize: 9, color: secondaryColor, height: 1.5),
+              style: context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
             ),
           ),
         ],
@@ -329,8 +293,8 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInstallationSection(AppLocalizations loc, Color surfaceColor,
-      Color textColor, Color secondaryColor, Brightness brightness) {
+  Widget _buildInstallationSection(
+      AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
@@ -342,7 +306,7 @@ class UserManualPage extends StatelessWidget {
             child: Container(
               height: 120,
               decoration: BoxDecoration(
-                color: textColor,
+                color: context.styles.body.color!,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
@@ -356,35 +320,32 @@ class UserManualPage extends StatelessWidget {
             child: Column(
               children: [
                 _buildTabbedCard(
+                  context: context,
                   title: loc.installEldHardware,
-                  textColor: textColor,
-                  brightness: brightness,
                   content: Text(
                     loc.beginByLocatingTheEcmDiagnostic,
-                    style: TextStyle(
-                        fontSize: 9, color: secondaryColor, height: 1.5),
+                    style: context.styles.subtitle
+                        .copyWith(fontSize: 9, height: 1.5),
                   ),
                 ),
                 const SizedBox(height: 12),
                 _buildTabbedCard(
+                  context: context,
                   title: loc.installEldSoftware,
-                  textColor: textColor,
-                  brightness: brightness,
                   content: Text(
                     loc.beforeYouStartUsingTheEld,
-                    style: TextStyle(
-                        fontSize: 9, color: secondaryColor, height: 1.5),
+                    style: context.styles.subtitle
+                        .copyWith(fontSize: 9, height: 1.5),
                   ),
                 ),
                 const SizedBox(height: 12),
                 _buildTabbedCard(
+                  context: context,
                   title: loc.hoursOfService1,
-                  textColor: textColor,
-                  brightness: brightness,
                   content: Text(
                     loc.onceTheEldIsSetUp,
-                    style: TextStyle(
-                        fontSize: 9, color: secondaryColor, height: 1.5),
+                    style: context.styles.subtitle
+                        .copyWith(fontSize: 9, height: 1.5),
                   ),
                 ),
               ],
@@ -395,8 +356,8 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLogManagementSection(AppLocalizations loc, Color surfaceColor,
-      Color textColor, Color secondaryColor, Brightness brightness) {
+  Widget _buildLogManagementSection(
+      AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
@@ -410,12 +371,17 @@ class UserManualPage extends StatelessWidget {
                 child: Container(
                   height: 160,
                   decoration: BoxDecoration(
-                    color: textColor.withValues(alpha: 0.06),
+                    color:
+                        context.styles.body.color!.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: textColor.withValues(alpha: 0.3), width: 2),
+                    border: Border.all(
+                        color:
+                            context.styles.body.color!.withValues(alpha: 0.3),
+                        width: 2),
                   ),
                   child: Center(
-                      child: Icon(Icons.smartphone, color: secondaryColor, size: 48)),
+                      child: Icon(Icons.smartphone,
+                          color: context.styles.subtitle.color!, size: 48)),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -424,21 +390,21 @@ class UserManualPage extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildTabbedCard(
+                      context: context,
                       title: loc.accessingLogs,
-                      textColor: textColor,
-                      brightness: brightness,
                       content: Text(
                           loc.logInToTheEldAppWithYourUnique,
-                          style: TextStyle(fontSize: 9, color: secondaryColor)),
+                          style:
+                              context.styles.subtitle.copyWith(fontSize: 9)),
                     ),
                     const SizedBox(height: 12),
                     _buildTabbedCard(
+                      context: context,
                       title: loc.viewingLogs1,
-                      textColor: textColor,
-                      brightness: brightness,
                       content: Text(
                           loc.viewDetailedRodsForDifferentDa,
-                          style: TextStyle(fontSize: 9, color: secondaryColor)),
+                          style:
+                              context.styles.subtitle.copyWith(fontSize: 9)),
                     ),
                   ],
                 ),
@@ -447,29 +413,27 @@ class UserManualPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildTabbedCard(
+            context: context,
             title: loc.editingLogs,
-            textColor: textColor,
-            brightness: brightness,
             content: Text(
                 loc.editDutyStatusEntriesExceptFor,
-                style: TextStyle(fontSize: 9, color: secondaryColor)),
+                style: context.styles.subtitle.copyWith(fontSize: 9)),
           ),
           const SizedBox(height: 12),
           _buildTabbedCard(
+            context: context,
             title: loc.certifyingLogs,
-            textColor: textColor,
-            brightness: brightness,
             content: Text(
                 loc.certifyingLogsEndYourShiftByDi,
-                style: TextStyle(fontSize: 9, color: secondaryColor)),
+                style: context.styles.subtitle.copyWith(fontSize: 9)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRoadsideSection(AppLocalizations loc, Color surfaceColor,
-      Color textColor, Color secondaryColor, Brightness brightness) {
+  Widget _buildRoadsideSection(
+      AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
@@ -477,13 +441,12 @@ class UserManualPage extends StatelessWidget {
         children: [
           Expanded(
             child: _buildTabbedCard(
+              context: context,
               title: loc.dotInspection,
-              textColor: textColor,
-              brightness: brightness,
               content: Text(
                 loc.duringARoadsideInspectionFollowThese,
                 style:
-                    TextStyle(fontSize: 9, color: secondaryColor, height: 1.5),
+                    context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
               ),
             ),
           ),
@@ -492,13 +455,12 @@ class UserManualPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 40),
               child: _buildTabbedCard(
+                context: context,
                 title: loc.hosComplianceAlerts,
-                textColor: textColor,
-                brightness: brightness,
                 content: Text(
                   loc.stayCompliantWithHosRegulationsBy,
                   style:
-                      TextStyle(fontSize: 9, color: secondaryColor, height: 1.5),
+                      context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
                 ),
               ),
             ),
@@ -508,19 +470,18 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDvirSection(AppLocalizations loc, Color surfaceColor, Color textColor,
-      Color secondaryColor, Brightness brightness) {
+  Widget _buildDvirSection(AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: [
           _buildTabbedCard(
+            context: context,
             title: loc.createDvir,
-            textColor: textColor,
-            brightness: brightness,
             content: Text(
                 loc.createANewInspectionReportAccess,
-                style: TextStyle(fontSize: 9, color: secondaryColor, height: 1.5)),
+                style:
+                    context.styles.subtitle.copyWith(fontSize: 9, height: 1.5)),
           ),
           const SizedBox(height: 12),
           Row(
@@ -528,23 +489,23 @@ class UserManualPage extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildTabbedCard(
+                  context: context,
                   title: loc.editDvir,
-                  textColor: textColor,
-                  brightness: brightness,
                   content: Text(
                       loc.editAnExistingReportGoTo,
-                      style: TextStyle(fontSize: 9, color: secondaryColor, height: 1.5)),
+                      style: context.styles.subtitle
+                          .copyWith(fontSize: 9, height: 1.5)),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _buildTabbedCard(
+                  context: context,
                   title: loc.deleteDvir,
-                  textColor: textColor,
-                  brightness: brightness,
                   content: Text(
                       loc.deleteAnExistingReportInDvir,
-                      style: TextStyle(fontSize: 9, color: secondaryColor, height: 1.5)),
+                      style: context.styles.subtitle
+                          .copyWith(fontSize: 9, height: 1.5)),
                 ),
               ),
             ],
@@ -554,12 +515,12 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTabbedCard(
-      {required String title,
-      required Widget content,
-      required Color textColor,
-      required Brightness brightness,
-      bool fullWidth = true}) {
+  Widget _buildTabbedCard({
+    required BuildContext context,
+    required String title,
+    required Widget content,
+    bool fullWidth = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -569,17 +530,16 @@ class UserManualPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Text(
                 title,
-                style: TextStyle(
+                style: context.styles.muted.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: textColor.withValues(alpha: 0.6),
                 ),
               ),
             ),
             Expanded(
               child: Container(
                 height: 1,
-                color: textColor.withValues(alpha: 0.06),
+                color: context.styles.body.color!.withValues(alpha: 0.06),
               ),
             ),
           ],
@@ -588,10 +548,10 @@ class UserManualPage extends StatelessWidget {
         Container(
           width: fullWidth ? double.infinity : null,
           decoration: BoxDecoration(
-            color: brightness == Brightness.light ? Colors.white : AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
-              if (brightness == Brightness.light)
+              if (!context.isDark)
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 6,

@@ -94,6 +94,12 @@ class AppColors {
   static const Color goldBg = Color(0xFFFDF8E7);
   static const Color darkGoldBg = Color(0xFF2A2410);
 
+  // ========== أقسام صفحة التعليمات (دلالة تصميمية: شريط داكن دائم) ==========
+  static const Color inspectionBand = Color(0xFF333A45);
+  static const Color inspectionBandDark = Color(0xFF1E242C);
+  static const Color manualBand = Color(0xFFF7F7F7);
+  static const Color manualBandDark = Color(0xFF1C1C1E);
+
   // ========== على الذهبي / على الأسود ==========
   static const Color onGold = secondary;      // نص على خلفية ذهبية
   static const Color onBlack = primaryGold;   // نص على خلفية سوداء

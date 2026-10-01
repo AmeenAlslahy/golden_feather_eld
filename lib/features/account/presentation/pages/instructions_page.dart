@@ -1,8 +1,9 @@
-import '../../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Which packet item this screen shows (SRS 8.2: the Information Packet has
 /// three separate items). `all` keeps the combined Instructions view.
@@ -24,22 +25,18 @@ class InstructionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    final brightness = Theme.of(context).brightness;
     final showAll = section == InstructionsSection.all;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primaryGold,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.surface),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           _title(context.loc),
           style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
       ),
       body: ListView(
         key: Key('instructions_${section.name}'),
@@ -47,26 +44,24 @@ class InstructionsPage extends StatelessWidget {
         children: [
           // Section 1: Inspection Mode
           if (showAll || section == InstructionsSection.inspection)
-            _buildInspectionModeSection(context.loc, brightness),
+            _buildInspectionModeSection(context.loc, context),
 
           // Section 2: Send Logs (Data Transfer Instruction Sheet)
           if (showAll || section == InstructionsSection.sendLogs)
-            _buildSendLogsSection(context.loc, brightness),
+            _buildSendLogsSection(context.loc, context),
 
           // Section 3: Malfunction Manual
           if (showAll || section == InstructionsSection.malfunction)
-            _buildMalfunctionManualSection(context.loc, brightness),
+            _buildMalfunctionManualSection(context.loc, context),
         ],
       ),
     );
   }
 
-  Widget _buildInspectionModeSection(AppLocalizations loc, Brightness brightness) {
-    // Dark background for this section as per design
-    final sectionColor = brightness == Brightness.light
-        ? const Color(0xFF333A45)
-        : const Color(0xFF1E242C);
-    const textColor = Colors.white;
+  Widget _buildInspectionModeSection(AppLocalizations loc, BuildContext context) {
+    // شريط داكن دائم حسب التصميم المرجعي — في الوضعين.
+    final sectionColor =
+        context.isDark ? AppColors.inspectionBandDark : AppColors.inspectionBand;
 
     return Container(
       color: sectionColor,
@@ -97,34 +92,17 @@ class InstructionsPage extends StatelessWidget {
               children: [
                 Text(
                   loc.goldenFeatherEldInspectionMode,
-                  style: const TextStyle(
+                  style: context.styles.bodyBold.copyWith(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
                     height: 1.2,
+                    color: AppColors.white, // نص على شريط داكن دائم
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                _buildChecklistItem(
-                  text: loc.tapDotInspectionInTheMenuPress,
-                  textColor: textColor,
-                  iconColor: Colors.white,
-                ),
-                _buildChecklistItem(
-                  text: loc.anInspectorMayPressArrowsToVie,
-                  textColor: textColor,
-                  iconColor: Colors.white,
-                ),
-                _buildChecklistItem(
-                  text: loc.anInspectorMayViewTheLogFormTh,
-                  textColor: textColor,
-                  iconColor: Colors.white,
-                ),
-                _buildChecklistItem(
-                  text: loc.theOfficerCannotLeaveInspectio,
-                  textColor: textColor,
-                  iconColor: Colors.white,
-                ),
+                _buildChecklistItem(context: context, text: loc.tapDotInspectionInTheMenuPress),
+                _buildChecklistItem(context: context, text: loc.anInspectorMayPressArrowsToVie),
+                _buildChecklistItem(context: context, text: loc.anInspectorMayViewTheLogFormTh),
+                _buildChecklistItem(context: context, text: loc.theOfficerCannotLeaveInspectio),
               ],
             ),
           ),
@@ -133,13 +111,9 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSendLogsSection(AppLocalizations loc, Brightness brightness) {
-    final sectionColor = AppColors.surfaceFor(brightness);
-    final textColor = AppColors.textPrimaryFor(brightness);
-    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
-
+  Widget _buildSendLogsSection(AppLocalizations loc, BuildContext context) {
     return Container(
-      color: sectionColor,
+      color: context.colorScheme.surface,
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
       child: Column(
@@ -156,16 +130,13 @@ class InstructionsPage extends StatelessWidget {
                   children: [
                     Text(
                       loc.sendLogs,
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor),
+                      style: context.styles.bodyBold.copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       loc.goldenFeatherEldIsCapableOfPro,
-                      style: TextStyle(
-                          fontSize: 10, color: textSecondaryColor, height: 1.5),
+                      style:
+                          context.styles.subtitle.copyWith(fontSize: 10, height: 1.5),
                     ),
                   ],
                 ),
@@ -173,19 +144,17 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(loc, textSecondaryColor)),
+          Center(child: _buildContactInfo(loc, context)),
         ],
       ),
     );
   }
 
-  Widget _buildMalfunctionManualSection(AppLocalizations loc, Brightness brightness) {
-    // Light gray background
-    final sectionColor = brightness == Brightness.light
-        ? const Color(0xFFF7F7F7)
-        : const Color(0xFF1C1C1E);
-    final textColor = AppColors.textPrimaryFor(brightness);
-    final textSecondaryColor = AppColors.textSecondaryFor(brightness);
+  Widget _buildMalfunctionManualSection(
+      AppLocalizations loc, BuildContext context) {
+    // خلفية رمادية فاتحة فاتحة / داكنة داكنة حسب الوضع.
+    final sectionColor =
+        context.isDark ? AppColors.manualBandDark : AppColors.manualBand;
 
     return Container(
       color: sectionColor,
@@ -230,41 +199,34 @@ class InstructionsPage extends StatelessWidget {
                   children: [
                     Text(
                       loc.goldenFeatherEldMalfunctionMan,
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                          height: 1.2),
+                      style: context.styles.bodyBold
+                          .copyWith(fontSize: 18, height: 1.2),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       loc.inAccordanceWithTheGuidelinesS,
-                      style: TextStyle(fontSize: 11, color: textSecondaryColor),
+                      style: context.styles.caption.copyWith(fontSize: 11),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     _buildSquareChecklistItem(
+                      context: context,
                       title: loc.malfunctionIndication,
                       desc: loc.immediatelyContactTheSupportIf,
-                      textColor: textColor,
-                      secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
+                      context: context,
                       title: loc.noteTheMalfunction,
                       desc: loc.noteTheMalfunctionAndProvideAW,
-                      textColor: textColor,
-                      secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
+                      context: context,
                       title: loc.switchToPaperLogs,
                       desc: loc.keepAPaperLogForThatDayAndUnti,
-                      textColor: textColor,
-                      secondaryColor: textSecondaryColor,
                     ),
                     _buildSquareChecklistItem(
+                      context: context,
                       title: loc.k8DaysRule,
                       desc: loc.inTheEventOfAnEldMalfunctionTh,
-                      textColor: textColor,
-                      secondaryColor: textSecondaryColor,
                     ),
                   ],
                 ),
@@ -272,27 +234,30 @@ class InstructionsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(loc, textSecondaryColor)),
+          Center(child: _buildContactInfo(loc, context)),
         ],
       ),
     );
   }
 
   Widget _buildChecklistItem(
-      {required String text,
-      required Color textColor,
-      required Color iconColor}) {
+      {required BuildContext context, required String text}) {
+    // عناصر الشريط الداكن دائماً — نص أبيض على الخلفية الداكنة.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle, size: 14, color: iconColor),
+          const Icon(Icons.check_circle, size: 14, color: Colors.white),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 10, color: textColor, height: 1.4),
+              style: context.styles.subtitle.copyWith(
+                fontSize: 10,
+                height: 1.4,
+                color: AppColors.white, // نص على شريط داكن دائم
+              ),
             ),
           ),
         ],
@@ -300,11 +265,11 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSquareChecklistItem(
-      {required String title,
-      required String desc,
-      required Color textColor,
-      required Color secondaryColor}) {
+  Widget _buildSquareChecklistItem({
+    required BuildContext context,
+    required String title,
+    required String desc,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -326,14 +291,15 @@ class InstructionsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: textColor)),
-                Text(desc,
-                    style: TextStyle(
-                        fontSize: 10, color: secondaryColor, height: 1.3)),
+                Text(
+                  title,
+                  style: context.styles.bodyBold.copyWith(fontSize: 12),
+                ),
+                Text(
+                  desc,
+                  style:
+                      context.styles.subtitle.copyWith(fontSize: 10, height: 1.3),
+                ),
               ],
             ),
           ),
@@ -342,18 +308,18 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactInfo(AppLocalizations loc, Color secondaryColor) {
+  Widget _buildContactInfo(AppLocalizations loc, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           'www.topceld.com',
-          style: TextStyle(
-              fontSize: 10, color: secondaryColor, fontWeight: FontWeight.bold),
+          style:
+              context.styles.subtitle.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
         ),
         Text(
           loc.contactTheSupportTeamAtTopceld,
-          style: TextStyle(fontSize: 9, color: secondaryColor),
+          style: context.styles.subtitle.copyWith(fontSize: 9),
           textAlign: TextAlign.center,
         ),
       ],

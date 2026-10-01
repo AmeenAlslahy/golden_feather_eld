@@ -270,7 +270,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             child: Text(
               label,
               style: context.styles.body.copyWith(
-                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                color: context.styles.subtitle.color,
                 fontWeight: AppTypography.semiBold,
               ),
             ),
@@ -281,7 +281,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               value,
               textAlign: TextAlign.start,
               style: context.styles.body.copyWith(
-                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                color: context.styles.body.color,
               ),
             ),
           ),
@@ -315,7 +315,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
             child: Text(
               title,
               style: context.styles.body.copyWith(
-                color: AppColors.textSecondaryFor(Theme.of(context).brightness),
+                color: context.styles.subtitle.color,
                 fontWeight: AppTypography.semiBold,
               ),
             ),
@@ -328,12 +328,12 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 value: safeValue.isEmpty ? null : safeValue,
                 icon: Icon(
                   Icons.keyboard_arrow_down,
-                  color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                  color: context.styles.body.color,
                 ),
                 onChanged: onChanged,
                 style: TextStyle(
                   fontSize: AppTypography.bodySize,
-                  color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                  color: context.styles.body.color,
                 ),
                 items: items.map((String item) {
                   return DropdownMenuItem<String>(

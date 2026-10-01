@@ -16,10 +16,12 @@ extension ContextExtensions on BuildContext {
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;
   double get screenHeight => screenSize.height;
+
+  // ========== الوضع واللغة ==========
+  bool get isDark => theme.brightness == Brightness.dark;
+  bool get isArabic =>
+      Localizations.localeOf(this).languageCode == 'ar';
 }
 
 
-/// لغة الواجهة الحالية — بدل تكرار Localizations.localeOf في كل widget.
-extension LocaleContextX on BuildContext {
-  bool get isArabic => Localizations.localeOf(this).languageCode == 'ar';
-}
+
