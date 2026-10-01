@@ -140,11 +140,9 @@ void main() {
       await tester.tap(buttonFinder);
       await tester.pump();
 
-      // The log is not certified without a signature; the driver is told why.
-      expect(find.text('You need to fill and save form first.'), findsOneWidget);
-      // Pump past the AppFeedback auto-dismiss timer (3s).
-      await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      // The log is not certified without a signature; the driver is told
+      // why INLINE (FormField validator, SRS 8.1 dialog copy).
+      expect(find.text('Please draw a signature first.'), findsOneWidget);
     });
 
     testWidgets('carrier-proposed edits are shown and ACCEPT hits the respond API',

@@ -238,7 +238,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
 final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((ref) async {
   // Keep the catalog alive for 30 minutes after last use.
   final link = ref.keepAlive();
-  Timer(const Duration(minutes: 30), link.close);
+  final timer = Timer(const Duration(minutes: 30), link.close);
+  // بلا إلغاء كان المؤقت يبقى معلقاً حتى بعد تخلص المزود —
+  // ويفجّر فحص timersPending في الاختبارات.
+  ref.onDispose(timer.cancel);
 
   final result = await ref.watch(dvirBackendProviderAlias).getDefectsCatalog();
   return result.fold((error) => throw error, (json) {
