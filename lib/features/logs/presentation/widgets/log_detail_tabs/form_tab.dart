@@ -301,9 +301,11 @@ _DailyFormPayload _dailyFormPayload(DashboardData dashboard, String logUniqueId,
     }
   }
 
+  // SRS 5.13: عند غياب المساعد يُرسل coDriverId: null صراحةً — لا يُحذف
+  // الحقل — والقوائم تُرسل [] حتى عند الفراغ.
   return _DailyFormPayload({
     'uniqueId': uniqueId,
-    if (coDriverId != null) 'coDriverId': coDriverId,
+    'coDriverId': coDriverId,
     'trailers': trailers,
     'shippingDocuments': documents,
   }, null);
