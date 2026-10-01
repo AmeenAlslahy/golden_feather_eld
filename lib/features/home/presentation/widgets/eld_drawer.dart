@@ -33,10 +33,9 @@ class EldDrawer extends ConsumerWidget {
               ),
               child: Text(
                 loc.menuTitle,
-                style: const TextStyle(
+                style: context.styles.appBarTitle.copyWith(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.surface,
                 ),
               ),
             ),
@@ -106,9 +105,8 @@ class EldDrawer extends ConsumerWidget {
                   return Text(
                     'v$version',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.outline,
+                    style: context.styles.caption.copyWith(
+                      color: context.colorScheme.outline,
                     ),
                   );
                 },

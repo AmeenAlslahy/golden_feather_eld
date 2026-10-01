@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/daily_log.dart';
@@ -92,21 +93,14 @@ class LogEventTile extends StatelessWidget {
                             width: 36,
                             child: Text(
                               event.status,
-                              style:  TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                              ),
+                              style: context.styles.sectionTitle.copyWith(fontSize: 15),
                             ),
                           ),
                           SizedBox(
                             width: 110,
                             child: Text(
                               _formatTimeWithZone(event.startTime),
-                              style:  TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                              ),
+                              style: context.styles.body.copyWith(fontSize: 14),
                             ),
                           ),
                           Expanded(
@@ -114,20 +108,14 @@ class LogEventTile extends StatelessWidget {
                               children: [
                                 Text(
                                   event.formattedDuration,
-                                  style:  TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textPrimaryFor(Theme.of(context).brightness),
-                                  ),
+                                  style: context.styles.body.copyWith(fontSize: 14),
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
                                 if (_startedOnAnotherDay)
                                   Flexible(
                                     child: Text(
                                         AppLocalizations.of(context)!.startedOnDate('${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'),
-                                      style:  TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondaryFor(Theme.of(context).brightness),
-                                      ),
+                                      style: context.styles.caption,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),

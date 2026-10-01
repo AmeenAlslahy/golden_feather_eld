@@ -345,7 +345,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 const SizedBox(height: 8),
                 Text(
                   context.loc.dvirRecordedDefects,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: context.styles.bodyBold,
                 ),
                 if (previousDefects.isEmpty)
                   Text(context.loc.dvirNone)
@@ -524,7 +524,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               title: context.loc.dvirTimeET,
               child: Text(
                 currentTime,
-                style: TextStyle(color: textColor, fontSize: 16),
+                style: context.styles.body,
               ),
               borderColor: borderColor,
               textColor: textColor,
@@ -533,7 +533,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               title: context.loc.location,
               child: Text(
                 automaticLocation,
-                style: TextStyle(color: textColor, fontSize: 16),
+                style: context.styles.body,
               ),
               borderColor: borderColor,
               textColor: textColor,
@@ -557,7 +557,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 title: context.loc.vehicle,
                 child: Text(
                   dashboard.vehicleDisplayName,
-                  style: TextStyle(color: textColor, fontSize: 16),
+                  style: context.styles.body,
                 ),
                 borderColor: borderColor,
                 textColor: textColor,
@@ -578,12 +578,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 title: context.loc.trailers,
                 child: Text(
                   dashboard.trailerId ?? context.loc.trailers,
-                  style: TextStyle(
-                    color: dashboard.trailerId == null
-                        ? context.styles.subtitle.color
-                        : textColor,
-                    fontSize: 16,
-                  ),
+                  style: dashboard.trailerId == null
+                        ? context.styles.subtitle
+                        : context.styles.body,
                 ),
                 borderColor: borderColor,
                 textColor: textColor,
@@ -610,7 +607,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               title: context.loc.company,
               child: Text(
                 companyName,
-                style: TextStyle(color: textColor, fontSize: 16),
+                style: context.styles.body,
               ),
               borderColor: borderColor,
               textColor: textColor,
@@ -634,7 +631,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     Expanded(
                       child: Text(
                         _statusLabel(_selectedStatus),
-                        style: TextStyle(color: textColor, fontSize: 16),
+                        style: context.styles.body,
                       ),
                     ),
                     Icon(Icons.arrow_drop_down, color: textColor),
@@ -666,10 +663,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                           child: Text(
                             context.loc.dvirImageNotAvailable,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: context.styles.muted.copyWith(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade300,
+                              color: Theme.of(context).colorScheme.outline,
                             ),
                           ),
                         ),
@@ -685,8 +682,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                     onTap: () => _signatureController.clear(),
                     child: Text(
                       context.loc.dvirClearSignature,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: context.styles.subtitle.copyWith(
                         decoration: TextDecoration.underline,
                         decorationStyle: TextDecorationStyle.dotted,
                       ),
@@ -733,7 +729,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cellTitle(title, textColor),
+          _cellTitle(title),
           const SizedBox(height: 12),
           child,
         ],
@@ -741,15 +737,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 
-  Widget _cellTitle(String title, Color textColor) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-    );
+  Widget _cellTitle(String title) {
+    return Text(title, style: context.styles.sectionTitle);
   }
 
   Widget _buildCell({
@@ -766,7 +755,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _cellTitle(title, textColor),
+          _cellTitle(title),
           const SizedBox(height: 12),
           child,
         ],
@@ -824,7 +813,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                           (d.description ?? '').trim().isEmpty
                               ? d.item.label(loc)
                               : '${d.item.label(loc)} — ${d.description!.trim()}',
-                          style: TextStyle(fontSize: 14, color: textColor),
+                          style: context.styles.subtitle,
                         ),
                       ),
                       if (!_readOnly)
@@ -853,7 +842,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             icon: const Icon(Icons.add, size: 16),
             label: Text(
               loc.addDefects,
-              style: TextStyle(fontSize: 12, color: textColor),
+              style: context.styles.body.copyWith(fontSize: 12),
             ),
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
@@ -874,7 +863,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor, fontSize: 16),
+      style: context.styles.body,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: context.styles.subtitle,
@@ -982,7 +971,7 @@ class _DefectCatalogDialogState extends ConsumerState<_DefectCatalogDialog> {
                             padding: const EdgeInsets.only(left: 40, bottom: 8),
                             child: TextField(
                               controller: _noteFor(item),
-                              style: const TextStyle(fontSize: 12),
+                              style: context.styles.caption,
                               decoration: InputDecoration(
                                 isDense: true,
                                 hintText: loc.dvirDescriptionOptional,

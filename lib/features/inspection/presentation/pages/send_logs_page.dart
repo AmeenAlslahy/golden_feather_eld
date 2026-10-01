@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -170,12 +169,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   // one or two labelled underline fields, one SEND button.
                   Text(
                     widget.isEmailMode ? loc.sendLogsViaEmail : loc.send8Logs,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.textSecondaryFor(
-                        Theme.of(context).brightness,
-                      ),
-                    ),
+                    style: context.styles.subtitle.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   if (widget.isEmailMode) ...[
@@ -199,12 +193,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       padding: const EdgeInsets.only(top: 6, bottom: 10),
                       child: Text(
                         loc.email,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textPrimaryFor(
-                            Theme.of(context).brightness,
-                          ),
-                        ),
+                        style: context.styles.body,
                       ),
                     ),
                     const Divider(height: 1),
@@ -232,11 +221,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: context.styles.body.color!,
-      ),
+      style: context.styles.sectionTitle,
     );
   }
 }

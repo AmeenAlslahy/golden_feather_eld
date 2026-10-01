@@ -36,10 +36,7 @@ class HosIndicatorsCard extends StatelessWidget {
           child: Text(
             loc.hoursOfService,
             textAlign: TextAlign.center,
-            style:  TextStyle(
-              fontSize: 16,
-              color: context.styles.body.color!,
-            ),
+            style: context.styles.body,
           ),
         ),
         const Divider(height: 1, color: AppColors.border),
@@ -133,19 +130,15 @@ class _IndicatorRow extends StatelessWidget {
               children: [
                 Text(
                   indicator.label,
-                  style:  TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.styles.subtitle.color,
-                  ),
+                  style: context.styles.sectionTitle.copyWith(
+                      fontSize: 18,
+                      color: context.styles.subtitle.color,
+                    ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   detail,
-                  style:  TextStyle(
-                    fontSize: 15,
-                    color: context.styles.subtitle.color,
-                  ),
+                  style: context.styles.subtitle.copyWith(fontSize: 15),
                 ),
               ],
             ),
@@ -154,11 +147,11 @@ class _IndicatorRow extends StatelessWidget {
             child: Text(
               _formatDuration(indicator.value),
               textAlign: TextAlign.end,
-              style: TextStyle(
+              style: context.styles.body.copyWith(
                 fontSize: 34,
                 color: isCritical
                     ? context.styles.error.color
-                    : context.styles.body.color!,
+                    : null,
               ),
             ),
           ),

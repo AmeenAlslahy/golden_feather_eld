@@ -74,10 +74,7 @@ class DvirListPage extends ConsumerWidget {
                             child: Text(
                               context.loc.dvirListNoRecords,
                               textAlign: TextAlign.center,
-                              style:  TextStyle(
-                                fontSize: 18,
-                                color: context.styles.subtitle.color,
-                              ),
+                              style: context.styles.subtitle.copyWith(fontSize: 18),
                             ),
                           ),
                       ],
@@ -124,25 +121,25 @@ class _DvirSummaryRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          _cell(loc.dvirListTotal, summary.total),
-          _cell(loc.dvirListOpen, summary.openDefects),
-          _cell(loc.dvirListSigned, summary.signed),
-          _cell(loc.dvirListOos, summary.outOfService),
+          _cell(context, loc.dvirListTotal, summary.total),
+          _cell(context, loc.dvirListOpen, summary.openDefects),
+          _cell(context, loc.dvirListSigned, summary.signed),
+          _cell(context, loc.dvirListOos, summary.outOfService),
         ],
       ),
     );
   }
 
-  Widget _cell(String label, int value) {
+  Widget _cell(BuildContext context, String label, int value) {
     return Expanded(
       child: Column(
         children: [
           Text(
             '$value',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            style: context.styles.bodyBold,
           ),
           const SizedBox(height: 4),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
+          Text(label, textAlign: TextAlign.center, style: context.styles.caption.copyWith(fontSize: 11)),
         ],
       ),
     );
@@ -201,12 +198,13 @@ class _DvirCard extends StatelessWidget {
                     report.isSubmitted
                         ? context.loc.submitted
                         : context.loc.draft,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: report.isSubmitted
-                          ? AppColors.successGreen
-                          : AppColors.warningYellow,
-                    ),
+                    style: context.isDark
+                          ? (report.isSubmitted
+                              ? context.styles.success
+                              : context.styles.warning)
+                          : (report.isSubmitted
+                              ? context.styles.success
+                              : context.styles.warning),
                   ),
                 ),
               ],
@@ -227,15 +225,15 @@ class _DvirCard extends StatelessWidget {
                 final (label, color) = switch (status) {
                   VehicleOperationalStatus.outOfService => (
                       context.loc.vehicleStatusOutOfService,
-                      AppColors.dangerRed,
+                      context.styles.error.color!,
                     ),
                   VehicleOperationalStatus.restricted => (
                       context.loc.vehicleStatusRestricted,
-                      AppColors.warningYellow,
+                      context.styles.warning.color!,
                     ),
                   VehicleOperationalStatus.available => (
                       context.loc.vehicleStatusAvailable,
-                      AppColors.successGreen,
+                      context.styles.success.color!,
                     ),
                 };
                 return Container(
@@ -253,9 +251,8 @@ class _DvirCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         label,
-                        style: TextStyle(
+                        style: context.styles.caption.copyWith(
                           color: color,
-                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -295,10 +292,7 @@ class _DvirCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             'Repair Cert · ${report.repairStatus}',
-                            style:  TextStyle(
-                              color: context.styles.subtitle.color,
-                              fontSize: 12,
-                            ),
+                            style: context.styles.caption,
                           ),
                         ],
                       ),
@@ -322,8 +316,7 @@ class _DvirCard extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       'Reviewed §396.13',
-                      style: TextStyle(
-                          color: AppColors.successGreen, fontSize: 13),
+                      style: context.styles.success.copyWith(fontSize: 13),
                     ),
                   ],
                 ),

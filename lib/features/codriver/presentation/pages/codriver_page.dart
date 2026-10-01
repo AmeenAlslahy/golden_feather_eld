@@ -37,7 +37,6 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final loc = context.loc;
     final surfaceColor = context.colorScheme.surface;
     final textColor = context.styles.body.color!;
-    final textSecondaryColor = context.styles.subtitle.color!;
 
     final selfId = ref.watch(currentDriverIdProvider)?.toString();
     final drivers = [
@@ -87,19 +86,12 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         children: [
                           Text(
                             loc.coDriverSelectLabel,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
+                            style: context.styles.bodyBold,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
                             loc.coDriverSelectHint,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: textSecondaryColor,
-                            ),
+                            style: context.styles.subtitle,
                           ),
                           const SizedBox(height: 32.0),
 
@@ -136,10 +128,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                         ),
                                         loc,
                                       ).toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: textColor,
-                                      ),
+                                      style: context.styles.bodyBold.copyWith(fontSize: 18),
                                     ),
                                   ),
                                   Icon(
@@ -161,20 +150,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         children: [
                           Text(
                             loc.coDriverSwitchDrivers,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
+                            style: context.styles.bodyBold,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
                             loc.coDriverSwitchHint,
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: textSecondaryColor,
-                            ),
+                            style: context.styles.subtitle,
                           ),
                           if (codriverState.error != null) ...[
                             const SizedBox(height: AppSpacing.sm),
@@ -289,9 +271,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                           ),
                                           content: Text(
                                             loc.coDriverRolesSwitchedBody(newPrimary ?? loc.coDriverDefaultNewPrimary),
-                                            style: const TextStyle(
-                                              color: AppColors.successGreen,
-                                            ),
+                                            style: context.styles.success,
                                           ),
                                           actions: [
                                             FilledButton(
@@ -350,10 +330,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               backgroundColor: surfaceColor,
               title: Text(
                 context.loc.coDriver,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.normal,
-                ),
+                style: context.styles.body.copyWith(fontWeight: FontWeight.normal),
               ),
               contentPadding: const EdgeInsets.only(top: 16),
               content: SizedBox(
@@ -372,11 +349,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       return RadioListTile<String>(
                         title: Text(
                           _driverLabel(driver, context.loc).toUpperCase(),
-                          style: TextStyle(
+                          style: context.styles.body.copyWith(
+                            fontSize: 14,
                             color: dialogSelectedId == driver.id
                                 ? context.styles.gold.color
-                                : textColor,
-                            fontSize: 14,
+                                : null,
                           ),
                         ),
                         value: driver.id,
@@ -500,18 +477,15 @@ class _LinkedCoDriver extends StatelessWidget {
       children: [
         Text(
           loc.coDriverLinkedTitle,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: context.styles.bodyBold,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: state.currentError == null
-                ? context.styles.subtitle.color
-                : AppColors.dangerRed,
-          ),
+          style: state.currentError == null
+              ? context.styles.subtitle
+              : context.styles.error,
         ),
         if (teamBadge != null) ...[
           const SizedBox(height: AppSpacing.xs),
