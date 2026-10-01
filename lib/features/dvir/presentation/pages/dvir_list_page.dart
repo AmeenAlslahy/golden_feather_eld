@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_status_pill.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/dvir_list_summary.dart';
@@ -183,29 +186,14 @@ class _DvirCard extends StatelessWidget {
                   ),
                 ),
                 // حالة التقرير
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: report.isSubmitted
-                        ? AppColors.successGreen.withValues(alpha: 0.1)
-                        : AppColors.warningYellow.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    report.isSubmitted
-                        ? context.loc.submitted
-                        : context.loc.draft,
-                    style: context.isDark
-                          ? (report.isSubmitted
-                              ? context.styles.success
-                              : context.styles.warning)
-                          : (report.isSubmitted
-                              ? context.styles.success
-                              : context.styles.warning),
-                  ),
+                AppStatusPill(
+                  label: report.isSubmitted
+                      ? context.loc.submitted
+                      : context.loc.draft,
+                  color: (report.isSubmitted
+                          ? context.styles.success
+                          : context.styles.warning)
+                      .color!,
                 ),
               ],
             ),
@@ -236,27 +224,16 @@ class _DvirCard extends StatelessWidget {
                       context.styles.success.color!,
                     ),
                 };
-                return Container(
-                  margin: const EdgeInsets.only(top: AppSpacing.sm),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.circle, size: 8, color: color),
-                      const SizedBox(width: 6),
-                      Text(
-                        label,
-                        style: context.styles.caption.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                return Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AppStatusPill(
+                      icon: Icons.circle,
+                      iconSize: 8,
+                      label: label,
+                      color: color,
+                    ),
                   ),
                 );
               },
@@ -266,9 +243,10 @@ class _DvirCard extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(top: AppSpacing.sm),
                 padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.dangerRed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                decoration: AppDecorations.tinted(
+                  context.styles.error.color!,
+                  alpha: 0.1,
+                  radius: AppRadius.input,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,9 +283,10 @@ class _DvirCard extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(top: AppSpacing.sm),
                 padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.successGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                decoration: AppDecorations.tinted(
+                  context.styles.success.color!,
+                  alpha: 0.1,
+                  radius: AppRadius.input,
                 ),
                 child: Row(
                   children: [

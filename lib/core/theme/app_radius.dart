@@ -22,4 +22,10 @@ class AppRadius {
 
   /// البطاقات الكبيرة
   static const double largeCard = 12.0;
+
+  /// الأوراق والبطاقات العريضة (رأس الدليل، صور الحوارات)
+  static const double sheet = 16.0;
+
+  /// الشارة الدائرية الكاملة (Pill) — شارات الحالة
+  static const double pill = 999.0;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -650,12 +651,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                   Container(
                     height: 200,
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: borderColor.withValues(alpha: 0.5),
-                      ),
-                      color: Colors
-                          .white, // Ensure signature pad is visible against white
+                    decoration: AppDecorations.outlined(
+                      borderColor: borderColor,
+                      alpha: 0.5,
+                      color: Colors.white,
                     ),
                     child: Stack(
                       children: [

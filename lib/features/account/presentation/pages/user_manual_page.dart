@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -85,9 +87,10 @@ class UserManualPage extends StatelessWidget {
               flex: 4,
               child: Container(
                 margin: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: context.styles.body.color!.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
+                decoration: AppDecorations.tinted(
+                  context.styles.body.color!,
+                  alpha: 0.06,
+                  radius: AppRadius.largeCard,
                 ),
                 child: Center(
                   child: Icon(Icons.local_shipping, size: 64, color: iconColor),
@@ -252,18 +255,7 @@ class UserManualPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          if (!context.isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-        ],
-      ),
+      decoration: AppDecorations.card(context),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -371,9 +363,8 @@ class UserManualPage extends StatelessWidget {
                 child: Container(
                   height: 160,
                   decoration: BoxDecoration(
-                    color:
-                        context.styles.body.color!.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
+                    color: context.styles.body.color!.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(AppRadius.largeCard),
                     border: Border.all(
                         color:
                             context.styles.body.color!.withValues(alpha: 0.3),
@@ -547,18 +538,7 @@ class UserManualPage extends StatelessWidget {
         const SizedBox(height: 4),
         Container(
           width: fullWidth ? double.infinity : null,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              if (!context.isDark)
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
+          decoration: AppDecorations.card(context, radius: AppRadius.input),
           padding: const EdgeInsets.all(12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

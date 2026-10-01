@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_decorations.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -64,7 +66,7 @@ class InstructionsPage extends StatelessWidget {
         context.isDark ? AppColors.inspectionBandDark : AppColors.inspectionBand;
 
     return Container(
-      color: sectionColor,
+      decoration: AppDecorations.band(sectionColor),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,9 +76,9 @@ class InstructionsPage extends StatelessWidget {
             flex: 4,
             child: Container(
               height: 220,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+              decoration: AppDecorations.solid(
+                Colors.white,
+                radius: AppRadius.sheet,
               ),
               child: const Center(
                 child: Icon(Icons.smartphone, size: 64, color: Colors.grey),
@@ -113,7 +115,7 @@ class InstructionsPage extends StatelessWidget {
 
   Widget _buildSendLogsSection(AppLocalizations loc, BuildContext context) {
     return Container(
-      color: context.colorScheme.surface,
+      decoration: AppDecorations.band(context.colorScheme.surface),
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
       child: Column(
@@ -157,7 +159,7 @@ class InstructionsPage extends StatelessWidget {
         context.isDark ? AppColors.manualBandDark : AppColors.manualBand;
 
     return Container(
-      color: sectionColor,
+      decoration: AppDecorations.band(sectionColor),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
@@ -171,9 +173,9 @@ class InstructionsPage extends StatelessWidget {
                   children: [
                     Container(
                       height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
-                        borderRadius: BorderRadius.circular(8),
+                      decoration: AppDecorations.solid(
+                        Colors.grey.shade800,
+                        radius: AppRadius.imagePlaceholder,
                       ),
                       child: const Center(
                           child: Icon(Icons.router, color: Colors.white, size: 48)),
