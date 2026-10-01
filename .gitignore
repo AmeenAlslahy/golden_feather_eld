@@ -60,3 +60,4 @@ lib_v2.zip
 *.zip
 analyze_output*.txt
 coverage/
+test_hive_dir
