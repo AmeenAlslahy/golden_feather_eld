@@ -233,6 +233,64 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         'Company unavailable';
   }
 
+  Future<bool> _reviewPreviousDvirIfNeeded({
+    required DvirReport latest,
+    required int driverId,
+    required DashboardData dashboard,
+    required String signatureData,
+  }) async {
+    final previousId = int.tryParse(latest.id);
+    if (previousId == null) {
+      _snack(context.loc.dvirPrevNoServerId);
+      return false;
+    }
+    
+    final loc = context.loc;
+    final previousDefects = <String>[
+      for (final d in latest.selectedDefects)
+        d.item.label(loc) +
+            ((d.description?.trim().isNotEmpty ?? false)
+                ? ' — ${d.description!.trim()}'
+                : ''),
+      if ((latest.vehicleDefects ?? '').trim().isNotEmpty)
+        latest.vehicleDefects!.trim(),
+      if ((latest.trailerDefects ?? '').trim().isNotEmpty)
+        latest.trailerDefects!.trim(),
+      if (latest.selectedDefects.isEmpty &&
+          (latest.vehicleDefects ?? '').trim().isEmpty &&
+          (latest.trailerDefects ?? '').trim().isEmpty &&
+          (latest.defectsSummary ?? '').trim().isNotEmpty)
+        latest.defectsSummary!.trim(),
+    ];
+    
+    final reviewed = await showDialog<bool>(
+      context: context,
+      builder: (context) => PreviousDvirReviewModal(
+        latest: latest,
+        previousDefects: previousDefects,
+      ),
+    );
+    
+    if (reviewed != true || !mounted) return false;
+    
+    final reviewError = await ref.read(dvirProvider.notifier).reviewDvir(
+          dvirId: '$previousId',
+          reviewingDriverId: driverId,
+          reviewingDriverName: dashboard.driverName,
+          signatureData: signatureData,
+          driverAgreed: true,
+        );
+        
+    if (!mounted) return false;
+    
+    if (reviewError != null) {
+      _snack(reviewError);
+      return false;
+    }
+    
+    return true;
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     final time = ref.read(trustedTimeProvider).currentTime;
@@ -270,53 +328,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
 
     if (previousToReview != null) {
-      final latest = previousToReview;
-      final previousId = int.tryParse(latest.id);
-      if (previousId == null) {
-        _snack(
-          context.loc.dvirPrevNoServerId,
-        );
-        return;
-      }
-      final loc = context.loc;
-      final previousDefects = <String>[
-        for (final d in latest.selectedDefects)
-          d.item.label(loc) +
-              ((d.description?.trim().isNotEmpty ?? false)
-                  ? ' — ${d.description!.trim()}'
-                  : ''),
-        if ((latest.vehicleDefects ?? '').trim().isNotEmpty)
-          latest.vehicleDefects!.trim(),
-        if ((latest.trailerDefects ?? '').trim().isNotEmpty)
-          latest.trailerDefects!.trim(),
-        if (latest.selectedDefects.isEmpty &&
-            (latest.vehicleDefects ?? '').trim().isEmpty &&
-            (latest.trailerDefects ?? '').trim().isEmpty &&
-            (latest.defectsSummary ?? '').trim().isNotEmpty)
-          latest.defectsSummary!.trim(),
-      ];
-      final reviewed = await showDialog<bool>(
-        context: context,
-        builder: (context) => PreviousDvirReviewModal(
-          latest: latest,
-          previousDefects: previousDefects,
-        ),
+      final success = await _reviewPreviousDvirIfNeeded(
+        latest: previousToReview,
+        driverId: driverId,
+        dashboard: dashboard,
+        signatureData: signatureData,
       );
-      if (reviewed != true || !mounted) return;
-      final reviewError = await ref
-          .read(dvirProvider.notifier)
-          .reviewDvir(
-            dvirId: '$previousId',
-            reviewingDriverId: driverId,
-            reviewingDriverName: dashboard.driverName,
-            signatureData: signatureData,
-            driverAgreed: true,
-          );
-      if (!mounted) return;
-      if (reviewError != null) {
-        _snack(reviewError);
-        return;
-      }
+      if (!success) return; // Review was aborted or failed
     }
 
     setState(() => _isSubmitting = true);
@@ -431,194 +449,235 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         key: _formKey,
         child: ListView(
           padding: EdgeInsets.zero,
-          children: [
-            if (widget.existingReport == null &&
-                ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) !=
-                    null)
-              Container(
-                width: double.infinity,
-                color: AppColors.warningYellow.withValues(alpha: 0.2),
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Text(
-                  context.loc.dvirPreviousReviewNotice,
-                ),
-              ),
-            DvirFieldGroup(
-              title: context.loc.dvirTimeET,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: Text(
-                currentTime,
-                style: context.styles.body,
-              ),
-            ),
-            DvirFieldGroup(
-              title: context.loc.location,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: Text(
-                automaticLocation,
-                style: context.styles.body,
-              ),
-            ),
-            DvirFieldGroup(
-              title: context.loc.dvirOdometerMi,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: DvirFlatTextField(controller: _odometerController, hint: context.loc.dvirOdometerHint, readOnly: _readOnly, keyboardType: TextInputType.number,
-              ),
-            ),
-
-            // Reference layout (screenshots 15/19): Vehicle | Defects and
-            // Trailers | Defects as two side-by-side underlined cells each.
-            DvirTwoColumn(
-              left: FormField<String>(
-                initialValue: dashboard.vehicleId,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty || value == 'No Vehicle') {
-                    return context.loc.dvirVehicleIdMissing;
-                  }
-                  return null;
-                },
-                builder: (field) {
-                  final hasError = field.hasError;
-                  final errorColor = Theme.of(context).colorScheme.error;
-                  return DvirCell(
-                    title: context.loc.vehicle,
-                    borderColor: hasError ? errorColor : borderColor,
-                    textColor: hasError ? errorColor : textColor,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dashboard.vehicleDisplayName,
-                          style: context.styles.body.copyWith(
-                            color: hasError ? errorColor : null,
-                          ),
-                        ),
-                        if (hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              field.errorText!,
-                              style: context.styles.error.copyWith(fontSize: 12),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              right: DvirCell(
-                title: context.loc.defectsTitle,
-                borderColor: borderColor,
-                textColor: textColor,
-                child: DvirFlatTextField(
-                  controller: _vehicleDefectsController,
-                  hint: context.loc.defectsTitle,
-                  readOnly: _readOnly,
-                ),
-              ),
-            ),
-            DvirTwoColumn(
-              left: DvirCell(
-                title: context.loc.trailers,
-                borderColor: borderColor,
-                textColor: textColor,
-                child: Text(
-                  dashboard.trailerId ?? context.loc.trailers,
-                  style: dashboard.trailerId == null
-                        ? context.styles.subtitle
-                        : context.styles.body,
-                ),
-              ),
-              right: DvirCell(
-                title: context.loc.defectsTitle,
-                borderColor: borderColor,
-                textColor: textColor,
-                child: DvirFlatTextField(
-                  controller: _trailerDefectsController,
-                  hint: context.loc.defectsTitle,
-                  readOnly: _readOnly,
-                ),
-              ),
-            ),
-            // §396.11 catalog picks stay functional; rendered as plain lines
-            // under the grid so the reference layout is unchanged.
+                    children: [
+            _buildNoticeSection(dashboard),
+            _buildTimeAndLocation(currentTime, automaticLocation, borderColor, textColor),
+            _buildOdometer(borderColor, textColor),
+            _buildVehicleSection(dashboard, borderColor, textColor),
+            _buildTrailerSection(dashboard, borderColor, textColor),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _buildCatalogDefects(textColor),
             ),
-
-            DvirFieldGroup(
-              title: context.loc.company,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: Text(
-                companyName,
-                style: context.styles.body,
-              ),
-            ),
-            DvirFieldGroup(
-              title: context.loc.remarks,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: DvirFlatTextField(
-                controller: _remarksController,
-                hint: context.loc.remarks,
-                readOnly: _readOnly,
-              ),
-            ),
-            DvirFieldGroup(
-              title: context.loc.status,
-              borderColor: borderColor,
-              textColor: textColor,
-              child: InkWell(
-                onTap: _openStatusModal,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _statusLabel(_selectedStatus),
-                        style: context.styles.body,
-                      ),
-                    ),
-                    Icon(Icons.arrow_drop_down, color: textColor),
-                  ],
-                ),
-              ),
-            ),
-
-            // Signature Section
-            AppSignatureFormField(
-              controller: _signatureController,
-              validator: (hasSignature) {
-                if (hasSignature != true) {
-                  return context.loc.dvirSignatureRequired;
-                }
-                return null;
-              },
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 28,
-                vertical: AppSpacing.sm,
-              ),
-              child: AppButton(
-                label: _signed
-                    ? (_isAr ? 'تم التوقيع' : 'SIGNED')
-                    : (_isAr ? 'توقيع' : 'SIGN'),
-                type: EldButtonType.agree,
-                isLoading: _isSubmitting,
-                onPressed: _isSubmitting || !timeAvailable || _signed
-                    ? null
-                    : _handleSubmit,
-              ),
-            ),
+            _buildCompany(companyName, borderColor, textColor),
+            _buildRemarks(borderColor, textColor),
+            _buildStatus(borderColor, textColor),
+            _buildSignatureSection(),
+            _buildSubmitButton(timeAvailable),
             const SizedBox(height: 32.0),
           ],
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildNoticeSection(DashboardData dashboard) {
+    if (widget.existingReport == null &&
+        ref.watch(dvirProvider).previousToReview(dashboard.vehicleId) != null) {
+      return Container(
+        width: double.infinity,
+        color: AppColors.warningYellow.withValues(alpha: 0.2),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Text(
+          context.loc.dvirPreviousReviewNotice,
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTimeAndLocation(String currentTime, String automaticLocation, Color borderColor, Color textColor) {
+    return Column(
+      children: [
+        DvirFieldGroup(
+          title: context.loc.dvirTimeET,
+          borderColor: borderColor,
+          textColor: textColor,
+          child: Text(
+            currentTime,
+            style: context.styles.body,
+          ),
+        ),
+        DvirFieldGroup(
+          title: context.loc.location,
+          borderColor: borderColor,
+          textColor: textColor,
+          child: Text(
+            automaticLocation,
+            style: context.styles.body,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOdometer(Color borderColor, Color textColor) {
+    return DvirFieldGroup(
+      title: context.loc.dvirOdometerMi,
+      borderColor: borderColor,
+      textColor: textColor,
+      child: DvirFlatTextField(
+        controller: _odometerController,
+        hint: context.loc.dvirOdometerHint,
+        readOnly: _readOnly,
+        keyboardType: TextInputType.number,
+      ),
+    );
+  }
+
+  Widget _buildVehicleSection(DashboardData dashboard, Color borderColor, Color textColor) {
+    return DvirTwoColumn(
+      left: FormField<String>(
+        initialValue: dashboard.vehicleId,
+        validator: (value) {
+          if (value == null || value.trim().isEmpty || value == 'No Vehicle') {
+            return context.loc.dvirVehicleIdMissing;
+          }
+          return null;
+        },
+        builder: (field) {
+          final hasError = field.hasError;
+          final errorColor = Theme.of(context).colorScheme.error;
+          return DvirCell(
+            title: context.loc.vehicle,
+            borderColor: hasError ? errorColor : borderColor,
+            textColor: hasError ? errorColor : textColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dashboard.vehicleDisplayName,
+                  style: context.styles.body.copyWith(
+                    color: hasError ? errorColor : null,
+                  ),
+                ),
+                if (hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      field.errorText!,
+                      style: context.styles.error.copyWith(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+      right: DvirCell(
+        title: context.loc.defectsTitle,
+        borderColor: borderColor,
+        textColor: textColor,
+        child: DvirFlatTextField(
+          controller: _vehicleDefectsController,
+          hint: context.loc.defectsTitle,
+          readOnly: _readOnly,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrailerSection(DashboardData dashboard, Color borderColor, Color textColor) {
+    return DvirTwoColumn(
+      left: DvirCell(
+        title: context.loc.trailers,
+        borderColor: borderColor,
+        textColor: textColor,
+        child: Text(
+          dashboard.trailerId ?? context.loc.trailers,
+          style: dashboard.trailerId == null
+              ? context.styles.subtitle
+              : context.styles.body,
+        ),
+      ),
+      right: DvirCell(
+        title: context.loc.defectsTitle,
+        borderColor: borderColor,
+        textColor: textColor,
+        child: DvirFlatTextField(
+          controller: _trailerDefectsController,
+          hint: context.loc.defectsTitle,
+          readOnly: _readOnly,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompany(String companyName, Color borderColor, Color textColor) {
+    return DvirFieldGroup(
+      title: context.loc.company,
+      borderColor: borderColor,
+      textColor: textColor,
+      child: Text(
+        companyName,
+        style: context.styles.body,
+      ),
+    );
+  }
+
+  Widget _buildRemarks(Color borderColor, Color textColor) {
+    return DvirFieldGroup(
+      title: context.loc.remarks,
+      borderColor: borderColor,
+      textColor: textColor,
+      child: DvirFlatTextField(
+        controller: _remarksController,
+        hint: context.loc.remarks,
+        readOnly: _readOnly,
+      ),
+    );
+  }
+
+  Widget _buildStatus(Color borderColor, Color textColor) {
+    return DvirFieldGroup(
+      title: context.loc.status,
+      borderColor: borderColor,
+      textColor: textColor,
+      child: InkWell(
+        onTap: _openStatusModal,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _statusLabel(_selectedStatus),
+                style: context.styles.body,
+              ),
+            ),
+            Icon(Icons.arrow_drop_down, color: textColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignatureSection() {
+    return AppSignatureFormField(
+      controller: _signatureController,
+      validator: (hasSignature) {
+        if (hasSignature != true) {
+          return context.loc.dvirSignatureRequired;
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildSubmitButton(bool timeAvailable) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 28,
+        vertical: AppSpacing.sm,
+      ),
+      child: AppButton(
+        label: _signed
+            ? (_isAr ? 'تم التوقيع' : 'SIGNED')
+            : (_isAr ? 'توقيع' : 'SIGN'),
+        type: EldButtonType.agree,
+        isLoading: _isSubmitting,
+        onPressed: _isSubmitting || !timeAvailable || _signed
+            ? null
+            : _handleSubmit,
       ),
     );
   }
