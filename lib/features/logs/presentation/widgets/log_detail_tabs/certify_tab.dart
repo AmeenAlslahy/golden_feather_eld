@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/widgets/app_signature_canvas.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../domain/entities/daily_log.dart';
@@ -226,44 +227,9 @@ final signatureBytes = await _signatureController.toPngBytes();
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border, width: 1),
-              color: Colors.white,
-            ),
-            child: Stack(
-              children: [
-                if (_signatureController.isEmpty)
-                Center(
-                  child: Text(
-                    context.loc.drawYourSignatureHere,
-                    textAlign: TextAlign.center,
-                    style: context.styles.subtitle.copyWith(fontSize: 16),
-                  ),
-                ),
-                Signature(
-                  controller: _signatureController,
-                  height: 200,
-                  backgroundColor: AppColors.transparent,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          InkWell(
-            onTap: () => _signatureController.clear(),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                context.loc.clearSignature,
-                style: context.styles.subtitle.copyWith(
-                  decoration: TextDecoration.underline,
-                  decorationStyle: TextDecorationStyle.dotted,
-                ),
-              ),
-            ),
+          AppSignatureCanvas(
+            controller: _signatureController,
+            padding: EdgeInsets.zero,
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(
@@ -390,3 +356,4 @@ final summary = [
     );
   }
 }
+

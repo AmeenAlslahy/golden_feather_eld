@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
@@ -18,7 +18,7 @@ import '../../domain/dvir_submission.dart';
 import '../../domain/entities/dvir_report.dart';
 
 
-import '../widgets/signature_canvas.dart';
+import '../../../../core/widgets/app_signature_canvas.dart';
 import '../widgets/dvir_form_components.dart';
 import '../widgets/defect_card.dart';
 
@@ -51,11 +51,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   late TextEditingController _companyController;
   late TextEditingController _remarksController;
 
-  final SignatureController _signatureController = SignatureController(
-    penStrokeWidth: 3,
-    penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
-  );
+  // Initialised in didChangeDependencies so pen/background colours
+  // match the active theme (light / dark) from the very first frame.
+  late SignatureController _signatureController;
+  bool _signatureReady = false;
 
   bool _isSubmitting = false;
 
@@ -114,6 +113,23 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       }
     }
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Build the controller once using the active theme colours.
+    // Re-building it on every dependency change would silently drop any
+    // signature the driver has already started drawing.
+    if (_signatureReady) return;
+    _signatureReady = true;
+    final cs = Theme.of(context).colorScheme;
+    _signatureController = SignatureController(
+      penStrokeWidth: 3,
+      penColor: cs.onSurface,
+      exportBackgroundColor: cs.surface,
+    );
+  }
+
 
   /// Fills the read-only view from a report (list summary or full detail).
   void _applyReport(DvirReport r) {
@@ -556,9 +572,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             ),
 
             // Signature Section
-            DvirSignatureCanvas(
+            AppSignatureCanvas(
               controller: _signatureController,
-              borderColor: borderColor,
             ),
 
             Padding(
