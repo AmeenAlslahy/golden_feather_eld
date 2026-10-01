@@ -309,11 +309,11 @@ class _DvirCard extends StatelessWidget {
                   color: AppColors.successGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.check_circle,
+                    const Icon(Icons.check_circle,
                         color: AppColors.successGreen, size: 16),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Reviewed §396.13',
                       style: context.styles.success.copyWith(fontSize: 13),
