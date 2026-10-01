@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_styles.dart';
 
 /// امتدادات BuildContext
@@ -74,3 +75,38 @@ extension ContextExtensions on BuildContext {
 
 
 
+
+/// الألوان الدلالية المحسومة حسب الوضع.
+///
+/// **القاعدة:** الصفحات لا تتفرع على `isDark` ولا تستدعي `xxxFor(brightness)` —
+/// كل اختيار وضع يحدث هنا مرة واحدة، والصفحة تطلب اللون الدلالي جاهزاً.
+extension AppSemanticColors on BuildContext {
+  /// النص الأساسي حسب الوضع.
+  Color get textPrimary =>
+      isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
+  /// النص الثانوي حسب الوضع.
+  Color get textSecondary =>
+      isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+  /// حد الفواصل حسب الوضع.
+  Color get border => isDark ? AppColors.darkBorder : AppColors.border;
+
+  /// سطح الشاشة العام حسب الوضع.
+  Color get screenSurface =>
+      isDark ? AppColors.surfaceDark : AppColors.surface;
+
+  /// الذهبي الآمن للنص حسب الخلفية (goldDeep فاتح / primaryGold داكن).
+  Color get gold => isDark ? AppColors.primaryGold : AppColors.goldDeep;
+
+  /// شريط قسم وضع التفتيش (داكن دائم بدرجتين).
+  Color get inspectionBand =>
+      isDark ? AppColors.inspectionBandDark : AppColors.inspectionBand;
+
+  /// خلفية قسم دليل الأعطال.
+  Color get manualBand =>
+      isDark ? AppColors.manualBandDark : AppColors.manualBand;
+
+  /// شريط رأس معاينة التفتيش — داكن في الوضعين بدرجة لكل وضع.
+  Color get previewBand => isDark ? AppColors.darkBorder : AppColors.surfaceDark;
+}

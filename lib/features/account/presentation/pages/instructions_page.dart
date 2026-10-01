@@ -63,7 +63,7 @@ class InstructionsPage extends StatelessWidget {
   Widget _buildInspectionModeSection(AppLocalizations loc, BuildContext context) {
     // شريط داكن دائم حسب التصميم المرجعي — في الوضعين.
     final sectionColor =
-        context.isDark ? AppColors.inspectionBandDark : AppColors.inspectionBand;
+        context.inspectionBand;
 
     return Container(
       decoration: AppDecorations.band(sectionColor),
@@ -156,7 +156,7 @@ class InstructionsPage extends StatelessWidget {
       AppLocalizations loc, BuildContext context) {
     // خلفية رمادية فاتحة فاتحة / داكنة داكنة حسب الوضع.
     final sectionColor =
-        context.isDark ? AppColors.manualBandDark : AppColors.manualBand;
+        context.manualBand;
 
     return Container(
       decoration: AppDecorations.band(sectionColor),

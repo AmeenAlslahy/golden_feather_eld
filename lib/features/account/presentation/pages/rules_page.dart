@@ -24,7 +24,6 @@ class RulesPage extends ConsumerStatefulWidget {
 }
 
 class _RulesPageState extends ConsumerState<RulesPage> {
-  final _formKey = GlobalKey<FormState>();
   // Form State
   String? _cycleRule;
   String? _cargoType;
@@ -50,9 +49,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   }
 
   Future<void> _saveRules(RulesScreenModel model) async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    // لا يوجد Form ولا validators حالياً (القوائم قيم من الخادم) —
+    // بوابة _formKey كانت ترمي NPE مبتلعة داخل try/catch فتقتل الحفظ.
+    // عندما تُضاف validators حقيقية تُعاد البوابة إلى هنا.
     setState(() => _isSaving = true);
     try {
       final useCase = ref.read(updateRulesUseCaseProvider);

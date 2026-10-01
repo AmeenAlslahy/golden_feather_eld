@@ -171,9 +171,7 @@ class FormTab extends ConsumerWidget {
           ),
           if (onEdit != null)
             IconButton(
-              icon: const Icon(Icons.edit, size: 18),
-              splashColor: Colors.black26,
-              highlightColor: Colors.black12,
+              icon: Icon(Icons.edit, size: 18, color: context.styles.body.color),
               onPressed: onEdit,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),

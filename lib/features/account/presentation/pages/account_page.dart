@@ -232,9 +232,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                           children: [
                             Icon(
                               Icons.info,
-                              color: AppColors.textSecondaryFor(
-                                Theme.of(context).brightness,
-                              ),
+                              color: context.textSecondary,
                               size: 18,
                             ),
                             const SizedBox(width: AppSpacing.sm),
@@ -243,9 +241,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                 account?.notice ??
                                     (loc.pleaseContactYourFleetManagerTo),
                                 style: context.styles.body.copyWith(
-                                  color: AppColors.textSecondaryFor(
-                                    Theme.of(context).brightness,
-                                  ),
+                                  color: context.textSecondary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
