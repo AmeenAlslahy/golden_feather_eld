@@ -9,10 +9,19 @@ import '../eld_endpoints.dart';
 /// Traccar `SessionResource`, which sets `JSESSIONID`. A stored backend label
 /// is not an authentication scheme, so this does not send `Authorization:
 /// Bearer` or `?token=`.
+///
+/// **أمان الجلسة المخزنة:** رفض 401 لا يُعتبر «انتهاء جلسة» إلا إذا كان
+/// الطلب يحمل جلسة فعلاً. الطلبات التي تخرج بلا جلسة (مثل طلب تهيئة
+/// الإعدادات عند الإقلاع قبل اكتمال قراءة Keystore) يردّها الخادم 401
+/// بشكل طبيعي — اعتبارها انتهاء جلسة كان يمسح التوكن المخزن عند كل
+/// إقلاع ويجبر السائق على تسجيل الدخول في كل مرة.
 class AuthInterceptor extends Interceptor {
   final AuthLocalDataSource localDataSource;
   final String backendType;
   final void Function()? onUnauthenticated;
+
+  /// علامة على RequestOptions تفيد أن هذا الطلب حمل جلسة فعلاً.
+  static const _sessionAttachedKey = 'gf_session_attached';
 
   AuthInterceptor({
     required this.localDataSource,
@@ -38,6 +47,7 @@ class AuthInterceptor extends Interceptor {
         final existingCookie = options.headers['Cookie'];
         options.headers['Cookie'] =
             existingCookie != null ? '$existingCookie; $cookie' : cookie;
+        options.extra[_sessionAttachedKey] = true;
       }
     } catch (e) {
       AppLogger.error('AuthInterceptor failed to read session for $backendType: $e');
@@ -48,7 +58,8 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.statusCode == 401) {
+    if (err.response?.statusCode == 401 &&
+        err.requestOptions.extra[_sessionAttachedKey] == true) {
       onUnauthenticated?.call();
     }
     super.onError(err, handler);
