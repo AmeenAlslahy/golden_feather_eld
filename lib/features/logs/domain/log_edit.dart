@@ -1,4 +1,4 @@
-import '../../../core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'entities/daily_log.dart';
 import '../../../domain/duty_status/duty_status_code.dart';
 

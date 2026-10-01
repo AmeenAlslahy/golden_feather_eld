@@ -5,7 +5,7 @@ import '../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
 import '../../features/hos/presentation/providers/hos_provider.dart';
 import '../../features/hos/domain/engine/hos_rules_engine.dart';
-import '../../core/domain/entities/hos_models.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../core/utils/logger.dart';
 
 final trackingOrchestratorProvider = Provider<void>((ref) {
