@@ -18,6 +18,10 @@ String dutyChangeMessage(BuildContext context, String code) {
       return arabic ? 'حالة الواجب غير جاهزة.' : 'Duty status is not ready.';
     case DutyStampRefusal.unmapped:
       return arabic ? 'حالة الواجب غير معروفة.' : 'Duty status is not recognized.';
+    case DutyStampRefusal.serverRejected:
+      return arabic
+          ? 'لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.'
+          : 'The server did not accept the duty status change. Check your connection and try again.';
     default:
       return code;
   }

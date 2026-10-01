@@ -5,13 +5,19 @@ import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_stat
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
+import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
+import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
+import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
+import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 
 class MockSyncEngine implements SyncEngine {
   final List<PendingEvent> submitted = [];
@@ -31,6 +37,77 @@ class MockSyncEngine implements SyncEngine {
 
   @override
   Future<void> triggerSync() async {}
+}
+
+class MockDashboardBackend implements StatusDashboardBackend {
+  Either<AppError, StatusDashboard> updateResult = Right(_sampleDashboard());
+  DutyStatusCode? lastStatus;
+  String? lastNotes;
+
+  @override
+  Future<Result<StatusDashboard>> updateDutyStatus({
+    required DutyStatusCode status,
+    String? notes,
+  }) async {
+    lastStatus = status;
+    lastNotes = notes;
+    return updateResult;
+  }
+
+  @override
+  Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) async =>
+      Right(_sampleDashboard());
+
+  @override
+  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async =>
+      throw UnimplementedError();
+}
+
+StatusDashboard _sampleDashboard() {
+  return const StatusDashboard(
+    driver: DriverRef(
+      id: DriverId(101),
+      name: 'Ahmed',
+      displayText: 'Ahmed - 101',
+    ),
+    operationalAlerts: OperationalAlerts(
+      toolIcon: false,
+      warningTriangleIcon: false,
+      connectionStatus: ConnectionStatus.ok,
+    ),
+    currentDutyStatus: DutyStatusCode.onDutyNotDriving,
+    remainingCircle: RemainingCircle(
+      remaining: Duration(hours: 8, minutes: 37),
+      label: 'Remaining',
+      progress: 0.62,
+    ),
+    hosIndicators: HosIndicators(
+      drive: HosIndicator(
+        label: 'DRIVE',
+        value: Duration(hours: 2, minutes: 23),
+        type: IndicatorType.used,
+      ),
+      shift: HosIndicator(
+        label: 'SHIFT',
+        value: Duration(hours: 5, minutes: 23),
+        type: IndicatorType.used,
+      ),
+      breakTime: HosIndicator(
+        label: 'BREAK',
+        value: Duration(minutes: 30),
+        type: IndicatorType.remaining,
+      ),
+      cycle: HosIndicator(
+        label: 'CYCLE',
+        value: Duration(hours: 61, minutes: 23),
+        type: IndicatorType.used,
+      ),
+    ),
+    regulatoryConstraints: RegulatoryConstraints(
+      ruleSet: CycleRule.usa70_8,
+      limits: [],
+    ),
+  );
 }
 
 class MockLogRepository implements LogRepository {
@@ -170,6 +247,7 @@ void main() {
         logRepository: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
+        dashboardBackend: MockDashboardBackend(),
         timeProvider: clock,
       );
     });
@@ -289,6 +367,7 @@ void main() {
         logRepository: mockRepo,
         localStorage: newDb,
         syncEngine: MockSyncEngine(),
+        dashboardBackend: MockDashboardBackend(),
         timeProvider: clock,
       );
       // The status should hydrate to driving, and stationarySince should be intact.
@@ -319,6 +398,7 @@ void main() {
         logRepository: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
+        dashboardBackend: MockDashboardBackend(),
         timeProvider: clock,
       );
     });
@@ -453,6 +533,7 @@ void main() {
     late MockLogRepository mockRepo;
     late FakeLocalStorage db;
     late MockSyncEngine sync;
+    late MockDashboardBackend dashboard;
 
     DutyStatusTracker build({
       TrustedTimeProvider? time,
@@ -462,6 +543,7 @@ void main() {
         logRepository: mockRepo,
         localStorage: db,
         syncEngine: sync,
+        dashboardBackend: dashboard,
         timeProvider: time ?? FakeTrustedTimeProvider(),
         readDriverId: readDriverId,
       );
@@ -471,6 +553,7 @@ void main() {
       mockRepo = MockLogRepository();
       db = FakeLocalStorage();
       sync = MockSyncEngine();
+      dashboard = MockDashboardBackend();
     });
 
     test('missing trusted time rejects the duty event and does not stamp it', () {
@@ -497,20 +580,22 @@ void main() {
       tracker.dispose();
     });
 
-    test('accepted manual change is stamped with trusted time, not device time',
+    test('accepted manual change hits the dashboard endpoint, not the queue',
         () async {
       final trusted = DateTime.utc(2026, 9, 23, 8, 15);
       final clock = FakeTrustedTimeProvider(initialUtcTime: trusted);
       final tracker = build(time: clock, readDriverId: () => 106);
 
-      final refusal = await tracker.submitManualChange('on_duty');
+      final refusal = await tracker.submitManualChange('on_duty',
+          annotation: 'Available');
 
       expect(refusal, isNull);
       expect(tracker.currentStatus, 'on_duty');
-      expect(sync.reported, hasLength(1));
+      expect(dashboard.lastStatus, DutyStatusCode.onDutyNotDriving);
+      expect(dashboard.lastNotes, 'Available');
+      // المسار اليدوي لم يعد يمر بطابور الأحداث (دلالة 02.3 لا 05.2)
       expect(sync.submitted, isEmpty);
-      expect(sync.reported.single.payload['startTime'], trusted.toIso8601String());
-      expect(sync.reported.single.createdAt, trusted);
+      expect(sync.reported, isEmpty);
       tracker.dispose();
     });
 
@@ -518,14 +603,15 @@ void main() {
       final clock = FakeTrustedTimeProvider(
         initialUtcTime: DateTime.utc(2026, 9, 23, 8),
       );
-      sync.reportResult = const Left(ServerFailure(message: 'rejected by server'));
+      dashboard.updateResult = const Left(ServerError(code: 'server.rejected'));
       final tracker = build(time: clock, readDriverId: () => 106);
 
       final refusal = await tracker.submitManualChange('sleeper');
 
-      expect(refusal, 'rejected by server');
+      expect(refusal, DutyStampRefusal.serverRejected);
       expect(tracker.currentStatus, 'off_duty');
-      expect(sync.reported, hasLength(1));
+      expect(dashboard.lastStatus, DutyStatusCode.sleeperBerth);
+      expect(sync.reported, isEmpty);
       tracker.dispose();
     });
   });

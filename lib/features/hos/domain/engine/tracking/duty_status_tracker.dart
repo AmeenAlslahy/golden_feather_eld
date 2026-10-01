@@ -10,6 +10,8 @@ import '../../../../sync/domain/usecases/sync_engine.dart';
 import '../../../../sync/domain/entities/pending_event.dart';
 import 'package:uuid/uuid.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
+import '../../../../../backend/contracts/status_dashboard_backend.dart';
+import '../../../../../domain/duty_status/duty_status_code.dart';
 
 
 
@@ -19,6 +21,7 @@ abstract final class DutyStampRefusal {
   static const unmapped = 'unmapped_duty_status';
   static const moving = 'moving';
   static const notReady = 'duty_status_not_ready';
+  static const serverRejected = 'server_rejected';
 }
 
 String? _wireDutyStatus(String status) {
@@ -46,6 +49,7 @@ class DutyStatusTracker {
   final LogRepository _logRepository;
   final LocalStorageService _localStorage;
   final SyncEngine _syncEngine;
+  final StatusDashboardBackend _dashboardBackend;
   final TrustedTimeProvider _timeProvider;
   final int? Function()? _readDriverId;
 
@@ -67,11 +71,13 @@ class DutyStatusTracker {
     required LogRepository logRepository,
     required LocalStorageService localStorage,
     required SyncEngine syncEngine,
+    required StatusDashboardBackend dashboardBackend,
     required TrustedTimeProvider timeProvider,
     int? Function()? readDriverId,
   })  : _logRepository = logRepository,
         _localStorage = localStorage,
         _syncEngine = syncEngine,
+        _dashboardBackend = dashboardBackend,
         _timeProvider = timeProvider,
         _readDriverId = readDriverId {
     _initStationaryState();
@@ -339,6 +345,11 @@ class DutyStatusTracker {
   }
 
   /// Stamp with trusted time, send, and change local status only after accept.
+  ///
+  /// التحديث اليدوي من الواجهة دلالته «تحديث حالة السائق» في لوحة الحالة:
+  /// POST /eld/status/duty-status بحِمل {dutyStatus, notes} — هوية السائق
+  /// تُستخرج من التوكن الأمني على الخادم ولا تُرسل في الحِمل. تسجيل الأحداث
+  /// الآلية (المحرّك) يبقى على POST /eld/duty-status عبر SyncEngine.
   Future<String?> submitManualChange(String newStatus,
       {double? lat, double? lon, String? annotation}) async {
     final refusal = _legalRefusal();
@@ -353,16 +364,14 @@ class DutyStatusTracker {
       return DutyStampRefusal.unmapped;
     }
 
-    final result = await _syncEngine.submitEventAndReport(_stampedDutyEvent(
-      wireStatus: wireStatus,
-      trustedUtc: trusted,
-      latitude: lat,
-      longitude: lon,
-      annotation: annotation,
-    ));
-    return result.fold((failure) {
-      final message = failure.message.trim();
-      return message.isEmpty ? 'Duty status was rejected' : message;
+    final result = await _dashboardBackend.updateDutyStatus(
+      status: DutyStatusCode.fromWire(wireStatus),
+      notes: (annotation == null || annotation.isEmpty) ? null : annotation,
+    );
+    return result.fold((error) {
+      AppLogger.warning(
+          'Duty status change rejected by server: ${error.code}');
+      return DutyStampRefusal.serverRejected;
     }, (_) {
       _applyManualLocal(
         newStatus: newStatus,

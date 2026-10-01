@@ -7,6 +7,7 @@ import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../logs/data/providers/log_repository_providers.dart';
 import '../../../sync/data/providers/sync_providers.dart';
+import '../../../../backend/providers/backend_providers.dart';
 import '../../domain/engine/hos_state_machine.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import '../../domain/engine/hos_calculator.dart';
@@ -41,12 +42,14 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
   final repo = ref.watch(logRepositoryProvider);
   final localStorage = ref.watch(localStorageProvider);
   final syncEngine = ref.watch(syncEngineProvider);
+  final dashboardBackend = ref.watch(statusDashboardBackendProvider);
   final timeProvider = ref.watch(trustedTimeProvider);
 
   final tracker = DutyStatusTracker(
     logRepository: repo,
     localStorage: localStorage,
     syncEngine: syncEngine,
+    dashboardBackend: dashboardBackend,
     timeProvider: timeProvider,
     readDriverId: () => ref.read(currentDriverIdProvider),
   );
