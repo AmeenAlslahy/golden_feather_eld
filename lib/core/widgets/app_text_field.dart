@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// حقل إدخال موحد يستخدم نمط التطبيق الثيم الموحد
 class AppTextField extends StatelessWidget {
@@ -20,6 +21,12 @@ class AppTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final Iterable<String>? autofillHints;
   final TextCapitalization? textCapitalization;
+  final TextStyle? style;
+  final bool isDense;
+  final InputBorder? customBorder;
+  final int? maxLength;
+  final bool autofocus;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -41,6 +48,12 @@ class AppTextField extends StatelessWidget {
     this.focusNode,
     this.autofillHints,
     this.textCapitalization,
+    this.style,
+    this.isDense = false,
+    this.customBorder,
+    this.maxLength,
+    this.autofocus = false,
+    this.inputFormatters,
   });
 
   @override
@@ -62,22 +75,27 @@ class AppTextField extends StatelessWidget {
       focusNode: focusNode,
       autofillHints: autofillHints,
       textCapitalization: textCapitalization ?? TextCapitalization.none,
-      style: theme.textTheme.bodyLarge,
+      style: style ?? theme.textTheme.bodyLarge,
+      maxLength: maxLength,
+      autofocus: autofocus,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
-        // استخدام حدود من الثيم إذا لم يكن النمط تحت الخط
-        border: isUnderlined
-            ? const UnderlineInputBorder()
-            : inputDecorationTheme.border,
-        enabledBorder: isUnderlined
-            ? const UnderlineInputBorder()
-            : inputDecorationTheme.enabledBorder,
-        focusedBorder: isUnderlined
-            ? const UnderlineInputBorder()
-            : inputDecorationTheme.focusedBorder,
+        border: customBorder ??
+            (isUnderlined
+                ? const UnderlineInputBorder()
+                : inputDecorationTheme.border),
+        enabledBorder: customBorder ??
+            (isUnderlined
+                ? const UnderlineInputBorder()
+                : inputDecorationTheme.enabledBorder),
+        focusedBorder: customBorder ??
+            (isUnderlined
+                ? const UnderlineInputBorder()
+                : inputDecorationTheme.focusedBorder),
         disabledBorder: isUnderlined
             ? const UnderlineInputBorder()
             : inputDecorationTheme.disabledBorder,
@@ -87,11 +105,9 @@ class AppTextField extends StatelessWidget {
         focusedErrorBorder: isUnderlined
             ? const UnderlineInputBorder()
             : inputDecorationTheme.focusedErrorBorder,
-        // استخدام الحشوة والأنماط من الثيم إن وجدت، دون قيم يدوية
         contentPadding: inputDecorationTheme.contentPadding,
         filled: inputDecorationTheme.filled,
         fillColor: inputDecorationTheme.fillColor,
-        // أي خصائص أخرى من الثيم يمكن تمريرها بشكل صريح
         alignLabelWithHint: inputDecorationTheme.alignLabelWithHint,
         floatingLabelBehavior: inputDecorationTheme.floatingLabelBehavior,
         floatingLabelAlignment: inputDecorationTheme.floatingLabelAlignment,
@@ -102,6 +118,7 @@ class AppTextField extends StatelessWidget {
         iconColor: inputDecorationTheme.iconColor,
         errorStyle: inputDecorationTheme.errorStyle,
         errorMaxLines: inputDecorationTheme.errorMaxLines,
+        isDense: isDense || inputDecorationTheme.isDense,
       ),
     );
   }

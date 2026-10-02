@@ -1,5 +1,6 @@
 ﻿import '../providers/dvir_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,13 +101,11 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
                         if (checked)
                           Padding(
                             padding: const EdgeInsets.only(left: 40, bottom: 8),
-                            child: TextField(
+                            child: AppTextField(
                               controller: _noteFor(item),
                               style: context.styles.caption,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                hintText: loc.dvirDescriptionOptional,
-                              ),
+                              isDense: true,
+                              hint: loc.dvirDescriptionOptional,
                               onChanged: (text) =>
                                   _picked[item.code] = DvirDefectSelection(
                                     item: item,

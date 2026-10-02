@@ -16,6 +16,7 @@ import '../../pages/shipping_documents_page.dart';
 import '../../providers/logs_provider.dart';
 import '../../../domain/daily_form_rules.dart';
 import '../../../domain/entities/daily_log.dart';
+import '../../../domain/entities/daily_form_update.dart';
 import '../../../../../core/widgets/app_feedback.dart';
 
 class FormTab extends ConsumerStatefulWidget {
@@ -179,7 +180,7 @@ class _FormTabState extends ConsumerState<FormTab> {
 
                 final saved = await ref
                     .read(logRepositoryProvider)
-                    .saveForm(logId: selectedLog.id, form: form.body);
+                    .saveForm(logId: selectedLog.id, form: form.update!);
                 if (!context.mounted) return;
                 saved.fold(
                   (error) {
@@ -292,10 +293,10 @@ class _FormTabState extends ConsumerState<FormTab> {
 }
 
 class _DailyFormPayload {
-  final Map<String, dynamic> body;
+  final DailyFormUpdate? update;
   final String? error;
 
-  const _DailyFormPayload(this.body, this.error);
+  const _DailyFormPayload(this.update, this.error);
 }
 
 /// Builds `UpdateDailyFormRequest` from the live contract.
@@ -310,21 +311,21 @@ _DailyFormPayload _dailyFormPayload(
       readOperableUniqueId(logUniqueId) ??
       '';
   if (uniqueId.isEmpty) {
-    return _DailyFormPayload(const {}, loc.selectVehicleBeforeSavingForm);
+    return _DailyFormPayload(null, loc.selectVehicleBeforeSavingForm);
   }
 
-  final trailers = <Map<String, String>>[];
+  final trailers = <String>[];
   for (final trailer in splitFormList(dashboard.trailerId)) {
     final error = trailerNumberError(trailer, loc);
-    if (error != null) return _DailyFormPayload(const {}, error);
-    trailers.add({'trailerNumber': trailer});
+    if (error != null) return _DailyFormPayload(null, error);
+    trailers.add(trailer);
   }
 
-  final documents = <Map<String, String>>[];
+  final documents = <String>[];
   for (final document in splitFormList(dashboard.shippingDocuments)) {
     final error = shippingDocumentError(document, loc);
-    if (error != null) return _DailyFormPayload(const {}, error);
-    documents.add({'documentNumber': document});
+    if (error != null) return _DailyFormPayload(null, error);
+    documents.add(document);
   }
 
   int? coDriverId;
@@ -332,16 +333,19 @@ _DailyFormPayload _dailyFormPayload(
   if (rawCoDriver != null && rawCoDriver.isNotEmpty && rawCoDriver != 'none') {
     coDriverId = int.tryParse(rawCoDriver);
     if (coDriverId == null) {
-      return _DailyFormPayload(const {}, loc.coDriverMustBeServerId);
+      return _DailyFormPayload(null, loc.coDriverMustBeServerId);
     }
   }
 
   // SRS 5.13: عند غياب المساعد يُرسل coDriverId: null صراحةً — لا يُحذف
   // الحقل — والقوائم تُرسل [] حتى عند الفراغ.
-  return _DailyFormPayload({
-    'uniqueId': uniqueId,
-    'coDriverId': coDriverId,
-    'trailers': trailers,
-    'shippingDocuments': documents,
-  }, null);
+  return _DailyFormPayload(
+    DailyFormUpdate(
+      vehicleUniqueId: uniqueId,
+      coDriverId: coDriverId,
+      trailers: trailers,
+      shippingDocuments: documents,
+    ),
+    null,
+  );
 }

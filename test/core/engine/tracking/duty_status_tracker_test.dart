@@ -19,6 +19,8 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/log_readiness.dart';
 import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 
 class MockSyncEngine implements SyncEngine {
   final List<PendingEvent> submitted = [];
@@ -115,9 +117,12 @@ class MockLogRepository implements LogRepository {
   List<DutyPeriod> savedPeriods = [];
 
   @override
+  Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId) async => throw UnimplementedError();
+
+  @override
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
-    required Map<String, dynamic> form,
+    required DailyFormUpdate form,
   }) async => throw UnimplementedError();
 
   @override

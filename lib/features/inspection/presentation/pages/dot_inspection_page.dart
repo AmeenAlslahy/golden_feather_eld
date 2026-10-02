@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -442,28 +442,20 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
               style: context.styles.muted,
             ),
             const SizedBox(height: 12),
-            TextField(
+            AppTextField(
               controller: _pin,
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                labelText: context.loc.pinLabel,
-                counterText: '',
-              ),
+              label: context.loc.pinLabel,
             ),
-            TextField(
+            AppTextField(
               controller: _confirm,
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              label: context.loc.confirmPinLabel,
               onSubmitted: (_) => _submit(context),
-              decoration: InputDecoration(
-                labelText: context.loc.confirmPinLabel,
-                counterText: '',
-              ),
             ),
             if (_error != null)
               Padding(
@@ -544,18 +536,14 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
               style: context.styles.muted,
             ),
             const SizedBox(height: 12),
-            TextField(
+            AppTextField(
               controller: _pin,
               obscureText: true,
               autofocus: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              label: context.loc.pinLabel,
               onSubmitted: (_) => _submit(context),
-              decoration: InputDecoration(
-                labelText: context.loc.pinLabel,
-                counterText: '',
-              ),
             ),
             if (_error != null)
               Padding(

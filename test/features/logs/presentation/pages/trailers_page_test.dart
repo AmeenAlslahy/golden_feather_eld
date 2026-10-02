@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/features/logs/domain/daily_form_rules.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/shipping_documents_page.dart';
@@ -31,6 +32,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const DailyLogId(0));
     registerFallbackValue(DateTime(2026));
+    registerFallbackValue(const DailyFormUpdate(vehicleUniqueId: '', trailers: [], shippingDocuments: []));
   });
 
   group('daily_form_rules', () {
@@ -182,7 +184,6 @@ void main() {
   });
 
   group('Form tab SAVE', () {
-    late _Logs logs;
     late _Repo repo;
     final log = DailyLog(
       id: const DailyLogId(42),
@@ -194,7 +195,6 @@ void main() {
     );
 
     setUp(() {
-      logs = _Logs();
       repo = _Repo();
       // selectLog now loads the day's events (SRS 5.2); the Form tab does
       // not need them, so answer with an empty list.
@@ -254,14 +254,9 @@ void main() {
                   form: captureAny(named: 'form'),
                 ),
               ).captured.single
-              as Map<String, dynamic>;
-      expect(captured['trailers'], [
-        {'trailerNumber': 'TR-1402'},
-        {'trailerNumber': 'AB12'},
-      ]);
-      expect(captured['shippingDocuments'], [
-        {'documentNumber': 'BOL 2026/09-1'},
-      ]);
+              as DailyFormUpdate;
+      expect(captured.trailers, ['TR-1402', 'AB12']);
+      expect(captured.shippingDocuments, ['BOL 2026/09-1']);
       expect(find.text('server.500'), findsNothing);
       // Pump past the AppFeedback auto-dismiss timer (3s).
       await tester.pump(const Duration(seconds: 3));

@@ -6,6 +6,8 @@ import '../entities/audit_entry.dart';
 import '../saved_form_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../entities/log_readiness.dart';
+import '../entities/daily_form_data.dart';
+import '../entities/daily_form_update.dart';
 
 abstract class LogRepository {
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -14,11 +16,15 @@ abstract class LogRepository {
     int offset = 0,
   });
 
+  /// Reads the saved daily log form snapshot from the backend.
+  /// Returns null if the form is empty or doesn't exist on the server.
+  Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId);
+
   /// Saves the daily log form. If offline, the form is queued and will be
   /// dispatched later when connectivity is restored.
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
-    required Map<String, dynamic> form,
+    required DailyFormUpdate form,
   });
 
   /// Duty-status events of one daily log.

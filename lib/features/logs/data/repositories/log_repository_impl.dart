@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../features/sync/domain/entities/pending_event.dart';
 import '../../../../features/sync/domain/repositories/offline_queue.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:golden_feather_eld/core/error/exception.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../backend/contracts/daily_logs_backend.dart';
@@ -19,6 +20,8 @@ import '../models/daily_log_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../domain/entities/log_readiness.dart';
 import '../../domain/saved_form_status.dart';
+import '../../domain/entities/daily_form_data.dart';
+import '../../domain/entities/daily_form_update.dart';
 
 // جسر توافق (المرحلة 3b): تعريف logRepositoryProvider انتقل إلى
 // data/providers/log_repository_providers.dart — التصدير هنا يبقي
@@ -197,17 +200,65 @@ class LogRepositoryImpl implements LogRepository {
     });
   }
 
+  Map<String, dynamic> _mapFormUpdateToJson(DailyFormUpdate form) {
+    return {
+      'uniqueId': form.vehicleUniqueId,
+      'coDriverId': form.coDriverId,
+      'trailers': form.trailers.map((t) => {'trailerNumber': t}).toList(),
+      'shippingDocuments': form.shippingDocuments
+          .map((d) => {'documentNumber': d})
+          .toList(),
+    };
+  }
+
+  @override
+  Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId) async {
+    if (!_networkInfo.isConnected) {
+      // Phase 1: offline fetch not implemented yet
+      return const Left(NetworkFailure());
+    }
+
+    return executeWithHandling(() async {
+      final response = await _dailyLogsBackend.getForm(logId);
+      return response.fold((error) => throw ServerException(message: error.code), (json) {
+        final data = json['data'] is Map
+            ? Map<String, dynamic>.from(json['data'] as Map)
+            : json;
+        if (data.isEmpty) return null;
+
+        final trailersList = (data['trailers'] as List<dynamic>? ?? [])
+            .map((e) => e is Map ? e['trailerNumber']?.toString() ?? '' : '')
+            .where((e) => e.isNotEmpty)
+            .toList();
+
+        final docsList = (data['shippingDocuments'] as List<dynamic>? ?? [])
+            .map((e) => e is Map ? e['documentNumber']?.toString() ?? '' : '')
+            .where((e) => e.isNotEmpty)
+            .toList();
+
+        return DailyFormData(
+          vehicleUniqueId: data['uniqueId']?.toString(),
+          coDriverId: data['coDriverId'] as int?,
+          trailers: trailersList,
+          shippingDocuments: docsList,
+        );
+      });
+    }, tag: 'LogRepositoryImpl.getForm');
+  }
+
   @override
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
-    required Map<String, dynamic> form,
+    required DailyFormUpdate form,
   }) async {
+    final payload = _mapFormUpdateToJson(form);
+
     if (!_networkInfo.isConnected) {
       await _offlineQueue.enqueue(
         PendingEvent(
           id: _uuid.v4(),
           type: 'daily_log_form',
-          payload: {'logId': logId.value, 'form': form},
+          payload: {'logId': logId.value, 'form': payload},
           createdAt: DateTime.now().toUtc(),
         ),
       );
@@ -217,14 +268,14 @@ class LogRepositoryImpl implements LogRepository {
     return executeWithHandling(() async {
       final response = await _dailyLogsBackend.saveForm(
         logId: logId,
-        form: form,
+        form: payload,
       );
 
       return response.fold((error) => throw Exception(error.code), (json) {
         final read = readSavedForm(json);
         return FormSaveResult.online(read);
       });
-    });
+    }, tag: 'LogRepositoryImpl.saveForm');
   }
 
   @override

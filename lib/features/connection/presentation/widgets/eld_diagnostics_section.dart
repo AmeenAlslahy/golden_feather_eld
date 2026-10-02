@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../pages/eld_connection_page.dart';
 import '../providers/hardware_status_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -340,14 +341,12 @@ class _ManualModeReasonDialogState extends State<_ManualModeReasonDialog> {
             ? loc.eldMalfunctionReasonStart
             : loc.eldMalfunctionReasonEnd,
       ),
-      content: TextField(
+      content: AppTextField(
         controller: _controller,
         maxLines: 2,
-        decoration: InputDecoration(
-          hintText: enable
-              ? loc.eldMalfunctionHintStart
-              : loc.eldMalfunctionHintEnd,
-        ),
+        hint: enable
+            ? loc.eldMalfunctionHintStart
+            : loc.eldMalfunctionHintEnd,
       ),
       actions: [
         TextButton(
