@@ -7,7 +7,6 @@ import '../features/tracking/data/services/tracking_service.dart';
 import '../core/services/local_database_service.dart';
 import '../core/services/local_storage_service.dart';
 import 'services/push_notification_service.dart';
-import 'services/remote_config_service.dart';
 import '../core/services/utc_sync_service.dart';
 import '../core/config/app_environment.dart';
 import '../core/utils/logger.dart';
@@ -103,15 +102,8 @@ class AppInitializer {
     // جلب إعدادات الخادم لم يعد يحجب الإقلاع: كان أول إطار ينتظر دورة
     // شبكة كاملة (حتى 30 ثانية على شبكة ضعيفة). يعمل الآن بالخلفية،
     // والواجهة تُفتح فوراً على القيم المخزنة محلياً.
-    Future.delayed(const Duration(seconds: 2), () {
-      unawaited(() async {
-        try {
-          await RemoteConfigService.fetchOnStartup(container);
-        } catch (e) {
-          AppLogger.error('Background remote-config fetch failed', e);
-        }
-      }());
-    });
+    // /eld/config/settings (وسم 19) خارج نطاق تطبيق السائق —
+    // الخادم يرد 500 NPE دائماً. الاستدعاء أُزيل وفق قرار المالك.
 
     // تمت إزالة الاستدعاء المتوازي لـ getSession() لأنه كان يسبب Deadlock
     // مع شاشة الإقلاع (SplashPage) في مكتبة flutter_secure_storage على أندرويد
