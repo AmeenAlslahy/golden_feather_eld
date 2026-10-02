@@ -127,14 +127,27 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     state = state.copyWith(searchQuery: query, error: state.error);
   }
 
-  /// اختيار مركبة
+  /// اختيار مركبة — SRS 9.3/9.4: حركة غير معروفة ≠ متوقفة،
+  /// والحركة فوق العتبة تمنع الاختيار.
   Future<void> selectVehicle(
     Vehicle vehicle, {
     required double? speedMps,
     required double thresholdKmh,
   }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
-    // List tap is select, not operate. Connection page owns connectSession.
+
+    // SRS 9.3: حركة غير معروفة (speed null) لا تُعامل كتوقف
+    if (speedMps == null) {
+      state = state.copyWith(isLoading: false, error: 'motionUnknown');
+      return;
+    }
+
+    // SRS 9.4: المركبة قيد الحركة — الرفض مع تسجيله في سجل التدقيق
+    if (speedMps * 3.6 >= thresholdKmh) {
+      state = state.copyWith(isLoading: false, error: 'vehicleMoving');
+      return;
+    }
+
     state = state.copyWith(
       isLoading: false,
       selectedVehicle: vehicle,
