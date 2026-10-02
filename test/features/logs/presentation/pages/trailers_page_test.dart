@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/contracts/daily_logs_backend.dart';
-import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
-import 'package:golden_feather_eld/core/error/app_error.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/features/logs/domain/daily_form_rules.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/shipping_documents_page.dart';
+import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/trailers_page.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart';
@@ -44,11 +45,21 @@ void main() {
 
     test('trailer and document rules', () {
       final loc = _MockLoc();
-      when(() => loc.enterTrailerNumber).thenReturn('Enter the trailer number.');
-      when(() => loc.trailerNumberFormatError).thenReturn('Trailer number must be letters, numbers, or hyphens (max 50).');
-      when(() => loc.enterDocumentNumber).thenReturn('Enter the document number.');
-      when(() => loc.documentNumberTooLong).thenReturn('Shipping document number is too long (max 100).');
-      when(() => loc.oneDocumentAtATime).thenReturn('Enter one document at a time (no comma).');
+      when(
+        () => loc.enterTrailerNumber,
+      ).thenReturn('Enter the trailer number.');
+      when(() => loc.trailerNumberFormatError).thenReturn(
+        'Trailer number must be letters, numbers, or hyphens (max 50).',
+      );
+      when(
+        () => loc.enterDocumentNumber,
+      ).thenReturn('Enter the document number.');
+      when(
+        () => loc.documentNumberTooLong,
+      ).thenReturn('Shipping document number is too long (max 100).');
+      when(
+        () => loc.oneDocumentAtATime,
+      ).thenReturn('Enter one document at a time (no comma).');
       when(() => loc.trailers).thenReturn('Trailers');
       when(() => loc.typeHere).thenReturn('Type here');
       when(() => loc.addButton).thenReturn('ADD');
@@ -77,10 +88,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final container = ProviderContainer(overrides: [
-      dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
-      ...overrides,
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
+        ...overrides,
+      ],
+    );
     addTearDown(container.dispose);
 
     await tester.pumpWidget(
@@ -105,8 +118,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Trailers page starts empty and writes to the form state',
-      (tester) async {
+  testWidgets('Trailers page starts empty and writes to the form state', (
+    tester,
+  ) async {
     final container = await pump(tester, const TrailersPage());
 
     expect(find.text('Trailers'), findsOneWidget);
@@ -144,8 +158,9 @@ void main() {
     expect(find.text('No trailers added'), findsOneWidget);
   });
 
-  testWidgets('Shipping Documents page writes to the form state',
-      (tester) async {
+  testWidgets('Shipping Documents page writes to the form state', (
+    tester,
+  ) async {
     final container = await pump(tester, const ShippingDocumentsPage());
 
     expect(find.text('Shipping Documents'), findsOneWidget);
@@ -183,19 +198,31 @@ void main() {
       repo = _Repo();
       // selectLog now loads the day's events (SRS 5.2); the Form tab does
       // not need them, so answer with an empty list.
-      when(() => repo.getEvents(any(), any()))
-          .thenAnswer((_) async => const Right([]));
+      when(
+        () => repo.getEvents(any(), any()),
+      ).thenAnswer((_) async => const Right([]));
     });
 
     List<Override> overrides() => [
-          dailyLogsBackendProvider.overrideWithValue(logs),
-          logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
-        ];
+      logRepositoryProvider.overrideWithValue(repo),
+      logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
+    ];
 
-    testWidgets('sends every trailer and shipping document from the pages',
-        (tester) async {
-      when(() => logs.saveForm(logId: any(named: 'logId'), form: any(named: 'form')))
-          .thenAnswer((_) async => const Right({'formStatus': 'COMPLETED'}));
+    testWidgets('sends every trailer and shipping document from the pages', (
+      tester,
+    ) async {
+      when(
+        () => repo.saveForm(
+          logId: any(named: 'logId'),
+          form: any(named: 'form'),
+        ),
+      ).thenAnswer(
+        (_) async => const Right(
+          FormSaveResult.online(
+            SavedFormRead(formStatus: 'COMPLETED', complete: true),
+          ),
+        ),
+      );
 
       final container = await pump(
         tester,
@@ -203,12 +230,13 @@ void main() {
         overrides: overrides(),
       );
       container.read(logsProvider.notifier).selectLog(log);
-      container
-          .read(dashboardDataProvider.notifier)
-          .updateTrailers(['TR-1402', 'AB12']);
-      container
-          .read(dashboardDataProvider.notifier)
-          .updateShippingDocuments(['BOL 2026/09-1']);
+      container.read(dashboardDataProvider.notifier).updateTrailers([
+        'TR-1402',
+        'AB12',
+      ]);
+      container.read(dashboardDataProvider.notifier).updateShippingDocuments([
+        'BOL 2026/09-1',
+      ]);
       await tester.pumpAndSettle();
 
       // The Form tab shows the same values the SAVE will send.
@@ -219,10 +247,14 @@ void main() {
       await tester.tap(find.text('SAVE'));
       await tester.pumpAndSettle();
 
-      final captured = verify(() => logs.saveForm(
-            logId: const DailyLogId(42),
-            form: captureAny(named: 'form'),
-          )).captured.single as Map<String, dynamic>;
+      final captured =
+          verify(
+                () => repo.saveForm(
+                  logId: const DailyLogId(42),
+                  form: captureAny(named: 'form'),
+                ),
+              ).captured.single
+              as Map<String, dynamic>;
       expect(captured['trailers'], [
         {'trailerNumber': 'TR-1402'},
         {'trailerNumber': 'AB12'},
@@ -236,12 +268,17 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('server failure is shown sanitized, never the raw code',
-        (tester) async {
-      when(() => logs.saveForm(logId: any(named: 'logId'), form: any(named: 'form')))
-          .thenAnswer((_) async => const Left(
-                ServerError(code: 'server.500', statusCode: 500),
-              ));
+    testWidgets('server failure is shown sanitized, never the raw code', (
+      tester,
+    ) async {
+      when(
+        () => repo.saveForm(
+          logId: any(named: 'logId'),
+          form: any(named: 'form'),
+        ),
+      ).thenAnswer(
+        (_) async => const Left(ServerFailure(message: 'server.500')),
+      );
 
       final container = await pump(
         tester,

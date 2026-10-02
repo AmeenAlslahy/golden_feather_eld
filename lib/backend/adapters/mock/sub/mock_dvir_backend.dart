@@ -55,6 +55,10 @@ class MockDvirBackend implements DvirBackend {
         ],
       });
 
+    @override
+  Future<Result<RawJson>> syncDvirs(List<RawJson> reports) async =>
+      ok({'synced': reports.length});
+
   @override
   Future<Result<RawJson>> getPreviousDvir(String uniqueId) async =>
       // Live shape when the vehicle has no DVIR yet (2026-09-25).

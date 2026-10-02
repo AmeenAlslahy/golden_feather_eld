@@ -110,6 +110,9 @@ class EldEndpoints {
   static const String configRegulations = '/eld/config/rules';
 
   // 14. Roadside Inspection
+  /// POST /eld/dvir/sync — bulk offline DVIR sync
+  static const String dvirSync = '/eld/dvir/sync';
+
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
   /// تفتيش الطرق
   static const String inspections = '/eld/dot-inspection';

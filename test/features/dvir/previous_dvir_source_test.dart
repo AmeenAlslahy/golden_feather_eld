@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/features/dvir/data/repositories/dvir_reposito
 import 'package:golden_feather_eld/features/dvir/domain/entities/dvir_report.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/providers/dvir_provider.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
 
 class _Backend extends Mock implements DvirBackend {}
 
@@ -25,7 +26,11 @@ void main() {
 
   setUp(() {
     backend = _Backend();
-    repo = DvirRepositoryImpl(dvirBackend: backend, networkInfo: _Online());
+    repo = DvirRepositoryImpl(
+      dvirBackend: backend,
+      networkInfo: _Online(),
+      offlineQueue: MemoryOfflineQueue(),
+    );
   });
 
   test('live "No Records" body → Right(null): nothing to review', () async {
@@ -52,7 +57,11 @@ void main() {
         'status': 'Has Defects',
         'hasDefects': true,
         'defects': [
-          {'itemCode': 'SERVICE_BRAKES', 'itemName': 'Service Brakes', 'category': 'VEHICLE'},
+          {
+            'itemCode': 'SERVICE_BRAKES',
+            'itemName': 'Service Brakes',
+            'category': 'VEHICLE',
+          },
         ],
         'nextDriverReviewed': false,
         'driver': {'id': 101, 'name': 'Prev Driver'},
@@ -72,7 +81,8 @@ void main() {
     expect((await repo.getPreviousDvir('X')).isLeft(), isTrue);
 
     when(() => backend.getPreviousDvir('Y')).thenAnswer(
-      (_) async => err(const NetworkError(code: 'NET_DOWN', l10nKey: 'error.network')),
+      (_) async =>
+          err(const NetworkError(code: 'NET_DOWN', l10nKey: 'error.network')),
     );
     expect((await repo.getPreviousDvir('Y')).isLeft(), isTrue);
   });
@@ -84,7 +94,8 @@ void main() {
   });
 
   group('DvirState.previousToReview precedence', () {
-    DvirReport report(String id, String vehicle, {bool reviewed = false}) => DvirReport(
+    DvirReport report(String id, String vehicle, {bool reviewed = false}) =>
+        DvirReport(
           id: id,
           type: InspectionType.preTrip,
           date: DateTime.utc(2026, 9, 24),

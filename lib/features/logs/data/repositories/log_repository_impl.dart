@@ -18,6 +18,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import '../models/daily_log_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../domain/entities/log_readiness.dart';
+import '../../domain/saved_form_status.dart';
 
 // جسر توافق (المرحلة 3b): تعريف logRepositoryProvider انتقل إلى
 // data/providers/log_repository_providers.dart — التصدير هنا يبقي
@@ -196,21 +197,34 @@ class LogRepositoryImpl implements LogRepository {
     });
   }
 
-  /// SRS 5.5 — offline: save the form payload to the sync queue.
-  /// The SyncEngine dispatches it when connection returns.
-  Future<Either<Failure, bool>> queueFormSave({
+  @override
+  Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
     required Map<String, dynamic> form,
   }) async {
-    await _offlineQueue.enqueue(
-      PendingEvent(
-        id: _uuid.v4(),
-        type: 'daily_log_form',
-        payload: {'logId': logId.value, 'form': form},
-        createdAt: DateTime.now().toUtc(),
-      ),
-    );
-    return const Right(true);
+    if (!_networkInfo.isConnected) {
+      await _offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'daily_log_form',
+          payload: {'logId': logId.value, 'form': form},
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+      return const Right(FormSaveResult.offline());
+    }
+
+    return executeWithHandling(() async {
+      final response = await _dailyLogsBackend.saveForm(
+        logId: logId,
+        form: form,
+      );
+
+      return response.fold((error) => throw Exception(error.code), (json) {
+        final read = readSavedForm(json);
+        return FormSaveResult.online(read);
+      });
+    });
   }
 
   @override
