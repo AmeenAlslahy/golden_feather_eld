@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/vehicle_repository_providers.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/vehicle.dart';
-import '../../domain/vehicle_selection.dart';
 
 /// حالة شاشة المركبات
 class VehicleState {
@@ -135,15 +134,6 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     required double thresholdKmh,
   }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
-    final refusal = refuseVehicleOperate(
-      speedMps: speedMps,
-      thresholdKmh: thresholdKmh,
-      uniqueId: vehicle.uniqueId,
-    );
-    if (refusal != null) {
-      state = state.copyWith(isLoading: false, error: refusal.name);
-      return;
-    }
     // List tap is select, not operate. Connection page owns connectSession.
     state = state.copyWith(
       isLoading: false,
