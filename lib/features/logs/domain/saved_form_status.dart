@@ -25,3 +25,12 @@ SavedFormRead readSavedForm(Map<String, dynamic> json) {
   };
   return SavedFormRead(formStatus: raw, complete: complete, message: text);
 }
+
+class FormSaveResult {
+  final bool isOffline;
+  final SavedFormRead? syncedData;
+
+  const FormSaveResult.offline() : isOffline = true, syncedData = null;
+
+  const FormSaveResult.online(this.syncedData) : isOffline = false;
+}

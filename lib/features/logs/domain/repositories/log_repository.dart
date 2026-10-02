@@ -3,6 +3,7 @@ import '../../../../core/error/failure.dart';
 import '../entities/daily_log.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../entities/audit_entry.dart';
+import '../saved_form_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../entities/log_readiness.dart';
 
@@ -12,13 +13,23 @@ abstract class LogRepository {
     int limit = 50,
     int offset = 0,
   });
+
+  /// Saves the daily log form. If offline, the form is queued and will be
+  /// dispatched later when connectivity is restored.
+  Future<Either<Failure, FormSaveResult>> saveForm({
+    required DailyLogId logId,
+    required Map<String, dynamic> form,
+  });
+
   /// Duty-status events of one daily log.
   ///
   /// Online: the official `GET /eld/daily-logs/{id}/graph-grid` (server is the
   /// source of truth). Offline / on failure: the locally recorded events of
   /// [date] so the driver still sees what was captured on the device.
   Future<Either<Failure, List<LogEvent>>> getEvents(
-      DailyLogId logId, DateTime date);
+    DailyLogId logId,
+    DateTime date,
+  );
 
   /// Records a new manual duty-status event (`POST /eld/duty-status`).
   /// Falls back to the local store when offline so nothing is lost (SRS 6.8).
@@ -30,8 +41,10 @@ abstract class LogRepository {
   /// تعديل حدث: يعيد الحدث **كما أكده الخادم** (DutyEventDto من عقد
   /// PUT /eld/duty-status/{id})، أو null إذا لم يُعِد الخادم جسماً
   /// (أحداث محلية/أوفلاين — حُفظت محلياً).
-  Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
-      {required String reason});
+  Future<Either<Failure, LogEvent?>> updateEvent(
+    LogEvent event, {
+    required String reason,
+  });
   Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({
     required DailyLogId logId,

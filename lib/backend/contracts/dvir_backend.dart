@@ -33,4 +33,7 @@ abstract interface class DvirBackend {
 
   /// GET /eld/dvir/pre-trip/{uniqueId}
   Future<Result<RawJson>> getPreviousDvir(String uniqueId);
+
+  /// POST /eld/dvir/sync — bulk offline DVIR sync with server-side dedup
+  Future<Result<RawJson>> syncDvirs(List<RawJson> reports);
 }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
@@ -517,7 +517,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             children: [
               for (final d in _selectedDefects)
                 DefectCard(
-                  key: const Key('dvir_defect_card_'),
+                  key: ObjectKey(d),
                   defect: d,
                   textColor: textColor,
                   readOnly: _readOnly,

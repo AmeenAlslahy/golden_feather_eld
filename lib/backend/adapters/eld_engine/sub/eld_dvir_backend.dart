@@ -99,6 +99,16 @@ class EldDvirBackend implements DvirBackend {
   }
 
   @override
+  Future<Result<RawJson>> syncDvirs(List<RawJson> reports) async {
+    final res = await _apiClient.post<RawJson>(
+      EldEndpoints.dvirSync,
+      data: reports,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
   Future<Result<RawJson>> getPreviousDvir(String uniqueId) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dvirPrevious(uniqueId),
