@@ -160,6 +160,9 @@ abstract class RegulatoryConstraints with _$RegulatoryConstraints {
 enum CycleRule {
   usa70_8('USA 70/8', 70, 8),
   usa60_7('USA 60/7', 60, 7),
+  california80_8('CALIFORNIA_80_8', 80, 8),
+  texas70_7('TEXAS_70_7', 70, 7),
+  mexicoOnly('MEXICO_ONLY', 60, 7),
   canadaSouth70_7('CANADA_SOUTH_70_7', 70, 7),
   canadaSouth120_14('CANADA_SOUTH_120_14', 120, 14),
   unknown('UNKNOWN', 0, 0);
