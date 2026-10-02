@@ -1056,5 +1056,6 @@
   "companyName": "Compañía",
   "edit": "Editar",
   "diagnosticsScreen": "Diagnósticos",
-  "diagnosticEvents": "Eventos de diagnóstico de datos"
+  "diagnosticEvents": "Eventos de diagnóstico de datos",
+  "formSavedOffline": "Formulario guardado sin conexión — se sincronizará al conectarse."
 }

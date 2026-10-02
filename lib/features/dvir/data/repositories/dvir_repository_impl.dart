@@ -1,4 +1,7 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:uuid/uuid.dart';
+import '../../../sync/domain/entities/pending_event.dart';
+import '../../../sync/domain/repositories/offline_queue.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
@@ -15,50 +18,53 @@ import '../../../../domain/shared/value_objects.dart';
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
   final NetworkInfo networkInfo;
+  final OfflineQueue offlineQueue;
+  final Uuid _uuid;
 
   DvirRepositoryImpl({
     required this.dvirBackend,
     required this.networkInfo,
-  });
+    required this.offlineQueue,
+  }) : _uuid = const Uuid();
 
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
-      String vehicleId) async {
+    String vehicleId,
+  ) async {
     return guardedNetwork(networkInfo, () async {
-    final result = vehicleId.trim().isEmpty || vehicleId == 'unknown_vehicle'
-        ? await dvirBackend.list()
-        : await dvirBackend.list(uniqueId: vehicleId);
+      final result = vehicleId.trim().isEmpty || vehicleId == 'unknown_vehicle'
+          ? await dvirBackend.list()
+          : await dvirBackend.list(uniqueId: vehicleId);
 
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (rawJson) {
+      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+        rawJson,
+      ) {
         final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
         final reports = rawReports.map((json) {
           final dto = DvirDto.fromJson(json as Map<String, dynamic>);
           return _mapDtoToEntity(dto);
         }).toList();
         return Right(reports);
-      }
-    );
+      });
     });
   }
 
   @override
   Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
     return guardedNetwork(networkInfo, () async {
-    final id = vehicleId.trim();
-    if (id.isEmpty || id == 'unknown_vehicle' || id == 'No Vehicle') {
-      return const Right(null);
-    }
-    final Result<RawJson> result;
-    try {
-      result = await dvirBackend.getPreviousDvir(id);
-    } catch (_) {
-      return const Left(ServerFailure(message: 'pre-trip read failed'));
-    }
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
-      (raw) {
+      final id = vehicleId.trim();
+      if (id.isEmpty || id == 'unknown_vehicle' || id == 'No Vehicle') {
+        return const Right(null);
+      }
+      final Result<RawJson> result;
+      try {
+        result = await dvirBackend.getPreviousDvir(id);
+      } catch (_) {
+        return const Left(ServerFailure(message: 'pre-trip read failed'));
+      }
+      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+        raw,
+      ) {
         final nested = raw['data'];
         final body = nested is Map ? Map<String, dynamic>.from(nested) : raw;
         // Live shape with no record: {message:"No Records", hasPreviousDvir:false}.
@@ -66,15 +72,16 @@ class DvirRepositoryImpl implements DvirRepository {
         final candidate = _previousDvirObject(body);
         if (candidate == null) {
           // Caller falls back to the vehicle list; never guess a report.
-          return const Left(ServerFailure(message: 'pre-trip body has no DVIR'));
+          return const Left(
+            ServerFailure(message: 'pre-trip body has no DVIR'),
+          );
         }
         try {
           return Right(_mapDtoToEntity(DvirDto.fromJson(candidate)));
         } catch (_) {
           return const Left(ServerFailure(message: 'pre-trip body unreadable'));
         }
-      },
-    );
+      });
     });
   }
 
@@ -99,16 +106,17 @@ class DvirRepositoryImpl implements DvirRepository {
         return const Left(ServerFailure(message: 'Invalid DVIR ID'));
       }
       final result = await dvirBackend.getById(DvirId(parsedId));
-      return result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
-        (rawJson) {
-          try {
-            return Right(_mapDtoToEntity(DvirDto.fromJson(rawJson)));
-          } catch (e) {
-            return const Left(ServerFailure(message: 'Failed to parse DVIR details'));
-          }
-        },
-      );
+      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+        rawJson,
+      ) {
+        try {
+          return Right(_mapDtoToEntity(DvirDto.fromJson(rawJson)));
+        } catch (e) {
+          return const Left(
+            ServerFailure(message: 'Failed to parse DVIR details'),
+          );
+        }
+      });
     });
   }
 
@@ -118,6 +126,38 @@ class DvirRepositoryImpl implements DvirRepository {
     required int driverId,
     required String status,
   }) async {
+    // SRS 6.8 — offline: enqueue DVIR for sync, never lose the driver's report.
+    if (!networkInfo.isConnected) {
+      final body = buildDvirCreateBody(
+        driverId: driverId,
+        uniqueId: report.vehicleId,
+        status: status,
+        signatureData: report.signature,
+        inspectionTime: report.date.toUtc().toIso8601String(),
+        location: report.location,
+        odometer: report.odometer,
+        trailerNumber: report.trailerId,
+        companyName: report.companyName,
+        remarks: report.notes,
+        vehicleDefects: report.vehicleDefects,
+        trailerDefects: report.trailerDefects,
+        catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
+      );
+      if (body != null) {
+        await offlineQueue.enqueue(
+          PendingEvent(
+            id: _uuid.v4(),
+            type: 'dvir_create',
+            payload: body,
+            createdAt: DateTime.now().toUtc(),
+          ),
+        );
+        return const Right(true);
+      }
+      return const Left(
+        ServerFailure(message: 'Driver, vehicle, or signature is missing.'),
+      );
+    }
     return guardedNetwork(networkInfo, () async {
       final body = buildDvirCreateBody(
         driverId: driverId,
@@ -135,9 +175,9 @@ class DvirRepositoryImpl implements DvirRepository {
         catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
       );
       if (body == null) {
-        return const Left(ServerFailure(
-          message: 'Driver, vehicle, or signature is missing.',
-        ));
+        return const Left(
+          ServerFailure(message: 'Driver, vehicle, or signature is missing.'),
+        );
       }
       final result = await dvirBackend.create(body);
       return result.fold(
@@ -146,8 +186,6 @@ class DvirRepositoryImpl implements DvirRepository {
       );
     });
   }
-
-
 
   @override
   Future<Either<Failure, bool>> reviewDvir({
@@ -158,6 +196,31 @@ class DvirRepositoryImpl implements DvirRepository {
     required bool driverAgreed,
     String? reviewNotes,
   }) async {
+    // SRS 6.8 / 7.9 — offline: enqueue §396.13 review for sync.
+    if (!networkInfo.isConnected) {
+      final parsedId = int.tryParse(dvirId);
+      if (parsedId != null) {
+        await offlineQueue.enqueue(
+          PendingEvent(
+            id: _uuid.v4(),
+            type: 'dvir_review',
+            payload: {
+              'dvirId': parsedId,
+              'review': ReviewDvirRequestDto(
+                reviewingDriverId: reviewingDriverId,
+                reviewingDriverName: reviewingDriverName,
+                signatureData: signatureData,
+                driverAgreed: driverAgreed,
+                reviewNotes: reviewNotes,
+              ).toJson(),
+            },
+            createdAt: DateTime.now().toUtc(),
+          ),
+        );
+        return const Right(true);
+      }
+      return const Left(ServerFailure(message: 'Invalid DVIR ID for review'));
+    }
     return guardedNetwork(networkInfo, () async {
       final parsedId = int.tryParse(dvirId);
       if (parsedId == null) {
@@ -241,9 +304,15 @@ class DvirRepositoryImpl implements DvirRepository {
     if (c == 'Vehicle Condition Satisfactory') return VehicleCondition.safe;
     if (c == 'Has Defects') return VehicleCondition.needsRepair;
     // أسماء enum (توافقية مع التخزين المحلي والقيم السابقة):
-    if (c == VehicleCondition.needsRepair.name) return VehicleCondition.needsRepair;
-    if (c == VehicleCondition.unsafe.name) return VehicleCondition.unsafe;
-    if (c == VehicleCondition.safe.name) return VehicleCondition.safe;
+    if (c == VehicleCondition.needsRepair.name) {
+      return VehicleCondition.needsRepair;
+    }
+    if (c == VehicleCondition.unsafe.name) {
+      return VehicleCondition.unsafe;
+    }
+    if (c == VehicleCondition.safe.name) {
+      return VehicleCondition.safe;
+    }
     // حالة غير معروفة: لا نُقرّ بأنها "آمنة" — الأمان يفضّل التحفظ.
     return VehicleCondition.needsRepair;
   }

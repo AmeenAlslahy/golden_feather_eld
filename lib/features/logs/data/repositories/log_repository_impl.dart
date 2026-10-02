@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:uuid/uuid.dart';
+import '../../../../features/sync/domain/entities/pending_event.dart';
+import '../../../../features/sync/domain/repositories/offline_queue.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_info.dart';
@@ -27,16 +30,21 @@ class LogRepositoryImpl implements LogRepository {
   final DailyLogsBackend _dailyLogsBackend;
   final DutyStatusBackend _dutyStatusBackend;
   final NetworkInfo _networkInfo;
+  final OfflineQueue _offlineQueue;
+  final Uuid _uuid;
 
   LogRepositoryImpl({
     required LogLocalDataSource localDataSource,
     required DailyLogsBackend dailyLogsBackend,
     required DutyStatusBackend dutyStatusBackend,
     required NetworkInfo networkInfo,
-  })  : _localDataSource = localDataSource,
-        _dailyLogsBackend = dailyLogsBackend,
-        _dutyStatusBackend = dutyStatusBackend,
-        _networkInfo = networkInfo;
+    required OfflineQueue offlineQueue,
+  }) : _localDataSource = localDataSource,
+       _dailyLogsBackend = dailyLogsBackend,
+       _dutyStatusBackend = dutyStatusBackend,
+       _networkInfo = networkInfo,
+       _offlineQueue = offlineQueue,
+       _uuid = const Uuid();
 
   @override
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -56,43 +64,40 @@ class LogRepositoryImpl implements LogRepository {
       return const Left(NetworkFailure());
     }
 
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.list(
-          driverId: DriverId(driverId),
-          limit: limit,
-          offset: offset,
-        );
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.list(
+        driverId: DriverId(driverId),
+        limit: limit,
+        offset: offset,
+      );
 
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) {
-            final logsJson = (data['data'] as List<dynamic>? ?? const [])
-                .whereType<Map<String, dynamic>>()
-                .toList();
-            if (offset == 0) {
-              // Fire-and-forget; a cache failure must not fail the read.
-              _cacheQuietly(_localDataSource.cacheDailyLogs(driverId, logsJson));
-            }
-            return _toDailyLogs(logsJson);
-          },
-        );
-      },
-      tag: 'LogRepositoryImpl.getDailyLogs',
-    );
+      return result.match((failure) => throw Exception(failure.l10nKey), (
+        data,
+      ) {
+        final logsJson = (data['data'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .toList();
+        if (offset == 0) {
+          // Fire-and-forget; a cache failure must not fail the read.
+          _cacheQuietly(_localDataSource.cacheDailyLogs(driverId, logsJson));
+        }
+        return _toDailyLogs(logsJson);
+      });
+    }, tag: 'LogRepositoryImpl.getDailyLogs');
   }
 
   /// Snapshot writes are best-effort: they never delay or fail a read.
   void _cacheQuietly(Future<void> write) =>
       unawaited(write.catchError((Object _) {}));
 
-  List<DailyLog> _toDailyLogs(List<Map<String, dynamic>> logsJson) => logsJson
-      .map((json) => DailyLogDto.fromJson(json).toEntity())
-      .toList();
+  List<DailyLog> _toDailyLogs(List<Map<String, dynamic>> logsJson) =>
+      logsJson.map((json) => DailyLogDto.fromJson(json).toEntity()).toList();
 
   @override
   Future<Either<Failure, List<LogEvent>>> getEvents(
-      DailyLogId logId, DateTime date) async {
+    DailyLogId logId,
+    DateTime date,
+  ) async {
     if (_networkInfo.isConnected) {
       final result = await _dailyLogsBackend.getGraphGrid(logId);
       final remoteJson = result.fold(
@@ -110,24 +115,23 @@ class LogRepositoryImpl implements LogRepository {
 
     // SRS 6.8 — offline / no answer: last server snapshot for this day,
     // then any events recorded locally while disconnected.
-    return executeWithHandling(
-      () async {
-        final cached = await _localDataSource.getCachedLogEvents(logId);
-        final local = await _localDataSource.getEvents(date);
-        if (cached == null) return local;
-        final cachedIds = cached.map((e) => '${e['id']}').toSet();
-        return [
-          ...cached.map(LogEventModel.fromJson),
-          ...local.where((e) => !cachedIds.contains(e.id)),
-        ];
-      },
-      tag: 'LogRepositoryImpl.getEvents',
-    );
+    return executeWithHandling(() async {
+      final cached = await _localDataSource.getCachedLogEvents(logId);
+      final local = await _localDataSource.getEvents(date);
+      if (cached == null) return local;
+      final cachedIds = cached.map((e) => '${e['id']}').toSet();
+      return [
+        ...cached.map(LogEventModel.fromJson),
+        ...local.where((e) => !cachedIds.contains(e.id)),
+      ];
+    }, tag: 'LogRepositoryImpl.getEvents');
   }
 
   @override
-  Future<Either<Failure, bool>> addEvent(LogEvent event,
-      {String? reason}) async {
+  Future<Either<Failure, bool>> addEvent(
+    LogEvent event, {
+    String? reason,
+  }) async {
     if (!_networkInfo.isConnected) {
       // SRS 6.8 — offline: keep it on the device, never lose it.
       return executeWithHandling(
@@ -135,7 +139,8 @@ class LogRepositoryImpl implements LogRepository {
         tag: 'LogRepositoryImpl.addEvent(offline)',
       );
     }
-    final wire = DutyStatusCode.fromShortCode(event.status)?.wire ??
+    final wire =
+        DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
     final result = await _dutyStatusBackend.record({
       'status': wire,
@@ -151,8 +156,10 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, LogEvent?>> updateEvent(LogEvent event,
-      {required String reason}) async {
+  Future<Either<Failure, LogEvent?>> updateEvent(
+    LogEvent event, {
+    required String reason,
+  }) async {
     final statusId = int.tryParse(event.id);
     if (!_networkInfo.isConnected || statusId == null) {
       // Local-only event (never reached the server) or offline: local store.
@@ -160,12 +167,10 @@ class LogRepositoryImpl implements LogRepository {
         () => _localDataSource.updateEvent(event),
         tag: 'LogRepositoryImpl.updateEvent(local)',
       );
-      return localResult.fold(
-        (failure) => Left(failure),
-        (_) => Right(event),
-      );
+      return localResult.fold((failure) => Left(failure), (_) => Right(event));
     }
-    final wire = DutyStatusCode.fromShortCode(event.status)?.wire ??
+    final wire =
+        DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
     final result = await _dutyStatusBackend.update(
       statusId: DutyStatusId(statusId),
@@ -176,20 +181,36 @@ class LogRepositoryImpl implements LogRepository {
         'editReason': reason.trim(),
       },
     );
-    return result.fold(
-      (error) => Left(ServerFailure(message: error.l10nKey)),
-      (raw) {
-        // العقد: 200 يعيد DutyEventDto المعدّل — نعتمده مرجعاً للواجهة
-        // بدل إعادة الجلب عبر graph-grid (كان يرمي الاستجابة فيرتد
-        // التعديل عند أي تأخير/فشل في الجلب التالي).
-        try {
-          final confirmed = LogEventModel.fromJson(raw);
-          return Right(confirmed);
-        } catch (_) {
-          return const Right(null);
-        }
-      },
+    return result.fold((error) => Left(ServerFailure(message: error.l10nKey)), (
+      raw,
+    ) {
+      // العقد: 200 يعيد DutyEventDto المعدّل — نعتمده مرجعاً للواجهة
+      // بدل إعادة الجلب عبر graph-grid (كان يرمي الاستجابة فيرتد
+      // التعديل عند أي تأخير/فشل في الجلب التالي).
+      try {
+        final confirmed = LogEventModel.fromJson(raw);
+        return Right(confirmed);
+      } catch (_) {
+        return const Right(null);
+      }
+    });
+  }
+
+  /// SRS 5.5 — offline: save the form payload to the sync queue.
+  /// The SyncEngine dispatches it when connection returns.
+  Future<Either<Failure, bool>> queueFormSave({
+    required DailyLogId logId,
+    required Map<String, dynamic> form,
+  }) async {
+    await _offlineQueue.enqueue(
+      PendingEvent(
+        id: _uuid.v4(),
+        type: 'daily_log_form',
+        payload: {'logId': logId.value, 'form': form},
+        createdAt: DateTime.now().toUtc(),
+      ),
     );
+    return const Right(true);
   }
 
   @override
@@ -197,36 +218,36 @@ class LogRepositoryImpl implements LogRepository {
     if (!_networkInfo.isConnected) {
       return const Left(NetworkFailure());
     }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.getReadiness(logId);
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) {
-             return LogReadiness(
-               dailyLogId: data.dailyLogId,
-               driverId: data.driverId,
-               driverName: data.driverName,
-               logDate: data.logDate,
-               readinessStatus: data.readinessStatus,
-               missingRequirements: data.missingRequirements,
-               legalStatement: data.legalStatement,
-               availableActions: data.availableActions,
-               carrierProposedEditsPending: data.carrierProposedEditsPending,
-               pendingCarrierEdits: data.pendingCarrierEdits.map((e) => CarrierProposedEditEntity(
-                 id: e.id,
-                 carrierName: e.carrierName,
-                 carrierReason: e.carrierReason,
-                 proposedStatus: e.proposedStatus,
-                 previousValuesSummary: e.previousValuesSummary,
-                 newValuesSummary: e.newValuesSummary,
-               )).toList(),
-             );
-          },
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.getReadiness(logId);
+      return result.match((failure) => throw Exception(failure.l10nKey), (
+        data,
+      ) {
+        return LogReadiness(
+          dailyLogId: data.dailyLogId,
+          driverId: data.driverId,
+          driverName: data.driverName,
+          logDate: data.logDate,
+          readinessStatus: data.readinessStatus,
+          missingRequirements: data.missingRequirements,
+          legalStatement: data.legalStatement,
+          availableActions: data.availableActions,
+          carrierProposedEditsPending: data.carrierProposedEditsPending,
+          pendingCarrierEdits: data.pendingCarrierEdits
+              .map(
+                (e) => CarrierProposedEditEntity(
+                  id: e.id,
+                  carrierName: e.carrierName,
+                  carrierReason: e.carrierReason,
+                  proposedStatus: e.proposedStatus,
+                  previousValuesSummary: e.previousValuesSummary,
+                  newValuesSummary: e.newValuesSummary,
+                ),
+              )
+              .toList(),
         );
-      },
-      tag: 'LogRepositoryImpl.getReadiness',
-    );
+      });
+    }, tag: 'LogRepositoryImpl.getReadiness');
   }
 
   @override
@@ -245,27 +266,39 @@ class LogRepositoryImpl implements LogRepository {
       return const Left(ServerFailure(message: 'Log date must be YYYY-MM-DD'));
     }
     if (!_networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      // SRS 6.8 — offline: enqueue for sync, never lose the driver's certification.
+      await _offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'certification',
+          payload: {
+            'logId': logId.value,
+            'logDate': logDate,
+            'signatureCertificateId': signatureCertificateId,
+            'signatureConfirmation': signatureConfirmation,
+            'certifiedTrue': certifiedTrue,
+          },
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+      return const Right(true);
     }
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.certify(
-          CertifyRequestDto(
-            dailyLogId: logId.value,
-            driverId: driverId,
-            logDate: logDate,
-            signatureCertificateId: signatureCertificateId,
-            signatureConfirmation: signatureConfirmation,
-            certifiedTrue: certifiedTrue,
-          ),
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (data) => data.isCertified,
-        );
-      },
-      tag: 'LogRepositoryImpl.certifyLog',
-    );
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.certify(
+        CertifyRequestDto(
+          dailyLogId: logId.value,
+          driverId: driverId,
+          logDate: logDate,
+          signatureCertificateId: signatureCertificateId,
+          signatureConfirmation: signatureConfirmation,
+          certifiedTrue: certifiedTrue,
+        ),
+      );
+      return result.match(
+        (failure) => throw Exception(failure.l10nKey),
+        (data) => data.isCertified,
+      );
+    }, tag: 'LogRepositoryImpl.certifyLog');
   }
 
   @override
@@ -275,21 +308,18 @@ class LogRepositoryImpl implements LogRepository {
     required String action,
     String? driverNotes,
   }) {
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.respondToCarrierEdit(
-          logId: logId,
-          editId: EditId(editId),
-          action: action,
-          driverNotes: driverNotes,
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (_) => true,
-        );
-      },
-      tag: 'LogRepositoryImpl.respondToCarrierEdit',
-    );
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.respondToCarrierEdit(
+        logId: logId,
+        editId: EditId(editId),
+        action: action,
+        driverNotes: driverNotes,
+      );
+      return result.match(
+        (failure) => throw Exception(failure.l10nKey),
+        (_) => true,
+      );
+    }, tag: 'LogRepositoryImpl.respondToCarrierEdit');
   }
 
   @override
@@ -299,21 +329,18 @@ class LogRepositoryImpl implements LogRepository {
     required int targetCoDriverId,
     required String annotation,
   }) {
-    return executeWithHandling(
-      () async {
-        final result = await _dailyLogsBackend.reassignDriving(
-          logId: logId,
-          statusId: DutyStatusId(statusId),
-          targetCoDriverId: DriverId(targetCoDriverId),
-          annotation: annotation,
-        );
-        return result.match(
-          (failure) => throw Exception(failure.l10nKey),
-          (_) => true,
-        );
-      },
-      tag: 'LogRepositoryImpl.reassignDriving',
-    );
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.reassignDriving(
+        logId: logId,
+        statusId: DutyStatusId(statusId),
+        targetCoDriverId: DriverId(targetCoDriverId),
+        annotation: annotation,
+      );
+      return result.match(
+        (failure) => throw Exception(failure.l10nKey),
+        (_) => true,
+      );
+    }, tag: 'LogRepositoryImpl.reassignDriving');
   }
 
   @override

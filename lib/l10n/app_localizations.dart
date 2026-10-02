@@ -5583,6 +5583,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أحداث تشخيص البيانات'**
   String get diagnosticEvents;
+
+  /// No description provided for @formSavedOffline.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال.'**
+  String get formSavedOffline;
 }
 
 class _AppLocalizationsDelegate

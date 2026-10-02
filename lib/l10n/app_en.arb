@@ -1056,5 +1056,6 @@
   "companyName": "Company",
   "edit": "Edit",
   "diagnosticsScreen": "Diagnostics",
-  "diagnosticEvents": "Data Diagnostic Events"
+  "diagnosticEvents": "Data Diagnostic Events",
+  "formSavedOffline": "Form saved offline — will sync when connected."
 }

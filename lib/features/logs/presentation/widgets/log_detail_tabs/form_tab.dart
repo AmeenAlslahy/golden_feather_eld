@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+import '../../../../../core/network/core_providers.dart';
+import '../../../../../features/sync/data/providers/sync_providers.dart';
+import '../../../../../features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
@@ -166,6 +170,22 @@ class _FormTabState extends ConsumerState<FormTab> {
                 return;
               }
 
+              // SRS 6.8 — offline: enqueue for sync, never lose the form.
+              final networkInfo = ref.read(networkInfoProvider);
+              if (!networkInfo.isConnected) {
+                await ref.read(offlineQueueProvider).enqueue(
+                  PendingEvent(
+                    id: const Uuid().v4(),
+                    type: 'daily_log_form',
+                    payload: {'logId': selectedLog.id.value, 'form': form.body},
+                    createdAt: DateTime.now().toUtc(),
+                  ),
+                );
+                if (!context.mounted) return;
+                AppFeedback.success(
+                    context, context.loc.formSavedOffline);
+                return;
+              }
               final saved = await ref.read(dailyLogsBackendProvider).saveForm(
                 logId: selectedLog.id,
                 form: form.body,

@@ -2940,4 +2940,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get diagnosticEvents => 'أحداث تشخيص البيانات';
+
+  @override
+  String get formSavedOffline =>
+      'حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال.';
 }

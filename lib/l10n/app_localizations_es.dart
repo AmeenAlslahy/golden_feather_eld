@@ -2984,4 +2984,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get diagnosticEvents => 'Eventos de diagnóstico de datos';
+
+  @override
+  String get formSavedOffline =>
+      'Formulario guardado sin conexión — se sincronizará al conectarse.';
 }

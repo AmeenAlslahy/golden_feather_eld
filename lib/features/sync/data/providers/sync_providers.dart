@@ -49,9 +49,11 @@ class FailClosedRemoteEventDispatcher implements RemoteEventDispatcher {
   @override
   Future<Either<Failure, bool>> dispatch(PendingEvent event) async {
     // حماية (Fail-closed): نمنع فقدان البيانات بحظر الحذف الوهمي في الإنتاج
-    return const Left(ServerFailure(
-      message: 'Production dispatcher not implemented yet. Event retained.',
-    ));
+    return const Left(
+      ServerFailure(
+        message: 'Production dispatcher not implemented yet. Event retained.',
+      ),
+    );
   }
 }
 
@@ -70,8 +72,15 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   }
 
   final dutyStatusBackend = ref.watch(dutyStatusBackendProvider);
+  final dailyLogsBackend = ref.watch(dailyLogsBackendProvider);
+  final dvirBackend = ref.watch(dvirBackendProvider);
   final localDataSource = ref.watch(authLocalDataSourceProvider);
-  return TraccarRemoteEventDispatcher(dutyStatusBackend, localDataSource);
+  return TraccarRemoteEventDispatcher(
+    dutyStatusBackend,
+    dailyLogsBackend,
+    dvirBackend,
+    localDataSource,
+  );
 });
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {
@@ -97,10 +106,12 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
 
   // SRS 6.8 — also flush the queue when *network* connectivity returns,
   // not only when the vehicle link reconnects.
-  final networkSubscription =
-      ref.watch(networkInfoProvider).onConnectionChange.listen((online) {
-    if (online) engine.triggerSync();
-  });
+  final networkSubscription = ref
+      .watch(networkInfoProvider)
+      .onConnectionChange
+      .listen((online) {
+        if (online) engine.triggerSync();
+      });
 
   ref.onDispose(() {
     subscription.cancel();

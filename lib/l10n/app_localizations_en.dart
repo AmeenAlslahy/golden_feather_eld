@@ -2957,4 +2957,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get diagnosticEvents => 'Data Diagnostic Events';
+
+  @override
+  String get formSavedOffline =>
+      'Form saved offline — will sync when connected.';
 }
