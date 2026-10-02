@@ -2934,4 +2934,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get edit => 'تعديل';
+
+  @override
+  String get diagnosticsScreen => 'التشخيصات';
+
+  @override
+  String get diagnosticEvents => 'أحداث تشخيص البيانات';
 }

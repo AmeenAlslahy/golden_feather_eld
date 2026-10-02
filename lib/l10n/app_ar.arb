@@ -1047,5 +1047,7 @@
   "tooManyPinAttempts": "محاولات خاطئة كثيرة. انتظر قليلاً ثم حاول مجدداً.",
   "reviewedBy": "باسم مُراجِع التقرير",
   "companyName": "الشركة",
-  "edit": "تعديل"
+  "edit": "تعديل",
+  "diagnosticsScreen": "التشخيصات",
+  "diagnosticEvents": "أحداث تشخيص البيانات"
 }

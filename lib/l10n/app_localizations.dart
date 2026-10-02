@@ -5571,6 +5571,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعديل'**
   String get edit;
+
+  /// No description provided for @diagnosticsScreen.
+  ///
+  /// In ar, this message translates to:
+  /// **'التشخيصات'**
+  String get diagnosticsScreen;
+
+  /// No description provided for @diagnosticEvents.
+  ///
+  /// In ar, this message translates to:
+  /// **'أحداث تشخيص البيانات'**
+  String get diagnosticEvents;
 }
 
 class _AppLocalizationsDelegate

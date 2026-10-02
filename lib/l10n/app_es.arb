@@ -1054,5 +1054,7 @@
   "tooManyPinAttempts": "Demasiados intentos incorrectos. Espere e intente de nuevo.",
   "reviewedBy": "Revisado por",
   "companyName": "Compañía",
-  "edit": "Editar"
+  "edit": "Editar",
+  "diagnosticsScreen": "Diagnósticos",
+  "diagnosticEvents": "Eventos de diagnóstico de datos"
 }

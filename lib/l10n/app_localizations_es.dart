@@ -2978,4 +2978,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get edit => 'Editar';
+
+  @override
+  String get diagnosticsScreen => 'Diagnósticos';
+
+  @override
+  String get diagnosticEvents => 'Eventos de diagnóstico de datos';
 }

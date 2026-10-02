@@ -13,6 +13,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
+import '../../../connection/presentation/pages/diagnostics_page.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
 import '../../../connection/presentation/widgets/eld_diagnostics_section.dart';
@@ -252,6 +253,22 @@ class AboutPage extends ConsumerWidget {
                 const EldReadinessPanel(),
                 const SizedBox(height: AppSpacing.sm),
                 const ManualRecordingSection(),
+                const SizedBox(height: AppSpacing.sm),
+                // SRS 7.14: الشاشة المستقلة للتشخيصات والأعطال.
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.monitor_heart, size: 18),
+                    label: Text(context.loc.diagnosticsScreen),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const DiagnosticsPage(),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
