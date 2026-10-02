@@ -190,6 +190,8 @@ class DvirDefectDto {
   final String? correctionNotes;
   final String? correctedBy;
   final String? correctedAt;
+  final String? severity;
+  final String? stage;
 
   const DvirDefectDto({
     this.itemCode,
@@ -202,6 +204,8 @@ class DvirDefectDto {
     this.correctionNotes,
     this.correctedBy,
     this.correctedAt,
+    this.severity,
+    this.stage,
   });
 
   factory DvirDefectDto.fromJson(Map<String, dynamic> json) {

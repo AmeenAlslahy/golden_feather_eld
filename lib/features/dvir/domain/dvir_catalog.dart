@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'defect_enums.dart';
 
 /// One §396.11 catalog item from `GET /eld/dvir/catalog`.
 class DvirCatalogItem extends Equatable {
@@ -31,8 +32,15 @@ class DvirCatalogItem extends Equatable {
 class DvirDefectSelection extends Equatable {
   final DvirCatalogItem item;
   final String? description;
+  final DefectSeverity? severity;
+  final DefectLifecycleStage stage;
 
-  const DvirDefectSelection({required this.item, this.description});
+  const DvirDefectSelection({
+    required this.item,
+    this.description,
+    this.severity,
+    this.stage = DefectLifecycleStage.open,
+  });
 
   /// Wire shape of `DvirDefectItem` on `InsertDvirRequest`.
   Map<String, dynamic> toWire() {
@@ -41,6 +49,8 @@ class DvirDefectSelection extends Equatable {
       'itemCode': item.code,
       'itemName': item.name,
       'category': item.category,
+      if (severity != null) 'severity': severity!.wire,
+      'stage': stage.wire,
       'safetyAffecting': item.critical,
       if (note.isNotEmpty) 'description': note,
     };

@@ -8,6 +8,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_info_row.dart';
+import '../../domain/defect_enums.dart';
+import '../../domain/dvir_catalog.dart';
 import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../pages/dvir_form_page.dart';
@@ -117,26 +119,7 @@ class _DetailBody extends StatelessWidget {
             title: loc.defectsFound,
             children: [
               for (final defect in report.selectedDefects)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.warning_amber,
-                          size: 16,
-                          color: report.outOfService
-                              ? AppColors.dangerText
-                              : AppColors.warningText),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          defect.item.label(loc),
-                          style: context.styles.body,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _DefectCard(defect: defect),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -284,5 +267,96 @@ class _SignatureImage extends StatelessWidget {
     } catch (_) {
       return Text('Image not available', style: context.styles.muted);
     }
+  }
+}
+
+/// SRS 7.6 — بطاقة عيب: اسم + Stepper دورة الحياة + تلوين حسب الشدة.
+class _DefectCard extends StatelessWidget {
+  final DvirDefectSelection defect;
+
+  const _DefectCard({required this.defect});
+
+  Color _severityColor(BuildContext context) {
+    final severity = defect.severity;
+    if (severity == DefectSeverity.high) return AppColors.dangerText;
+    if (severity == DefectSeverity.medium) return AppColors.warningText;
+    return context.styles.subtitle.color!;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sevColor = _severityColor(context);
+    const stages = DefectLifecycleStage.values;
+    final currentIdx = stages.indexOf(defect.stage);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: sevColor, width: 3),
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withValues(alpha: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(defect.item.label(context.loc),
+                    style: context.styles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                    )),
+              ),
+              if (defect.severity != null)
+                Text(defect.severity!.wire,
+                    style: context.styles.caption
+                        .copyWith(color: sevColor, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          if (defect.description != null && defect.description!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(defect.description!,
+                  style: context.styles.subtitle),
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          // SRS 7.6 Stepper: OPEN → UNDER_REPAIR → REPAIRED → CERTIFIED → CLOSED
+          Row(
+            children: [
+              for (var i = 0; i < stages.length; i++) ...[
+                if (i > 0)
+                  Expanded(
+                    child: Container(
+                      height: 2,
+                      color: i <= currentIdx
+                          ? AppColors.primaryGold
+                          : Theme.of(context).dividerColor,
+                    ),
+                  ),
+                Icon(
+                  i < currentIdx
+                      ? Icons.check_circle
+                      : i == currentIdx
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                  size: 14,
+                  color: i <= currentIdx
+                      ? AppColors.primaryGold
+                      : Theme.of(context).dividerColor,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(defect.stage.wire,
+              style: context.styles.caption
+                  .copyWith(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
   }
 }
