@@ -47,6 +47,20 @@ class InspectionState {
   /// نص الخادم عند قبول نقل السجلات (شاشة Send Logs).
   final String? transferMessage;
 
+  /// الوضع مقفل؟ (مطلوب لبوابة الرجوع وقفلAppBar).
+  bool get locked => isInspectionMode && isPinLocked;
+
+  /// اليوم المعروض — آمن الحدود دائماً؛ الصفحة لا تحسب الفهارس.
+  DotInspectionCycleDay? get selectedDay {
+    final index = selectedDayIndex;
+    if (index < 0 || index >= cycle.length) return null;
+    return cycle[index];
+  }
+
+  /// خطأ الشاشة النشطة: خطأ اليوم أولاً ثم خطأ lifecycle — القرار في
+  /// الحالة لا في الواجهة.
+  String? get bannerError => dayError ?? error;
+
   const InspectionState({
     this.isInspectionMode = false,
     this.isPinLocked = false,

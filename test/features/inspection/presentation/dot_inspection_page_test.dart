@@ -14,6 +14,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
 import 'package:golden_feather_eld/features/inspection/domain/repositories/inspection_repository.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/pages/dot_inspection_page.dart';
+import 'package:golden_feather_eld/features/inspection/presentation/pages/inspection_start_view.dart';
 import 'package:golden_feather_eld/features/inspection/data/providers/inspection_repository_providers.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/providers/dot_inspection_providers.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/providers/inspection_provider.dart';
