@@ -46,8 +46,10 @@ app.*.map.json
 .kotlin/
 android/.kotlin/
 
-# Environment files (keep .env.example tracked; never commit real .env)
-.env
+# Environment: .env is a TRACKED non-secret default (server URL only —
+# no credentials live here). Local overrides go to .env.local (ignored).
+.env.local
+.env.*.local
 
 # Local scratch area and archives (never commit)
 scratch/
