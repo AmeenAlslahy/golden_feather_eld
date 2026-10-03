@@ -145,25 +145,31 @@ DotInspectionLog _logFor(DateTime date) => DotInspectionLog(
 
 /// An inspection already running and locked with PIN 1234 (no log loaded, so
 /// the page shows the empty body plus the lock icon in the app bar).
+/// Locks the notifier through the public API only (owner decision D:
+/// no PIN backdoor) — the repository stub supplies one displayable day
+/// and the test drives `startInspection` before pumping.
 class _LockedInspection extends InspectionNotifier {
   _LockedInspection(InspectionRepository repository)
     : super(
         repository: repository,
         driverId: 101,
         loc: lookupAppLocalizations(const Locale('en')),
-      ) {
-    state = const InspectionState(
-      isInspectionMode: true,
-      isPinLocked: true,
-      pinCode: '1234',
-    );
-  }
+      );
 }
 
 /// The mock `GET /eld/dot-inspection` declares every capability false and
 /// returns its own guidance copy. The start view must reflect both.
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('isValidInspectionPin: exactly four digits', () {
+    expect(isValidInspectionPin('1234'), isTrue);
+    expect(isValidInspectionPin(' 1234 '), isTrue); // trim
+    expect(isValidInspectionPin('123'), isFalse);
+    expect(isValidInspectionPin('12345'), isFalse);
+    expect(isValidInspectionPin('12a4'), isFalse);
+    expect(isValidInspectionPin(''), isFalse);
+  });
 
   test('inspectionDisplayText policy (SRS 8.1): Arabic shows the local '
       'translation, English shows the server text when present', () {
@@ -301,6 +307,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Inspection PIN'), findsOneWidget);
 
+      // Non-digit paste attempt → stripped by the digits-only formatter.
+      await tester.enterText(find.byType(TextField).first, 'abcd');
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      expect(find.text('PIN must be 4 digits.'), findsOneWidget);
+
       // Too short → refused inside the dialog.
       await tester.enterText(find.byType(TextField).first, '12');
       await tester.tap(find.text('Start'));
@@ -329,11 +341,30 @@ void main() {
     final repository = _MockInspectionRepository();
     registerFallbackValue(const DriverId(101));
     registerFallbackValue(TransferMethod.webService);
+    registerFallbackValue(DateTime.utc(2026));
+    final d0 = DateTime.utc(2026, 1, 13);
     // عرض البداية (بعد نجاح الخروج) يجلب شاشته عبر المستودع — نجيب جواباً
     // لا يهم، والاختبار نفسه يتأكد أن الخروج لم يستدعِ دورة/سجلات/إرسال.
     when(
       () => repository.getScreen(),
     ).thenAnswer((_) async => const Left(ServerFailure(message: 'ignored')));
+    when(
+      () => repository.getCycle(
+        driverId: any(named: 'driverId'),
+        days: any(named: 'days'),
+      ),
+    ).thenAnswer((_) async => Right([_cycleDay(d0)]));
+    when(
+      () => repository.getLogs(
+        driverId: any(named: 'driverId'),
+        date: any(named: 'date'),
+      ),
+    ).thenAnswer((_) async => Right(_logFor(d0)));
+
+    // Decision D: the PIN is seeded through startInspection — the public
+    // lifecycle — never by writing state directly.
+    final notifier = _LockedInspection(repository);
+    await notifier.startInspection(pin: '1234');
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -345,9 +376,7 @@ void main() {
           activeBackendProvider.overrideWithValue(MockAdapter()),
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
           inspectionRepositoryProvider.overrideWithValue(repository),
-          inspectionProvider.overrideWith(
-            (ref) => _LockedInspection(repository),
-          ),
+          inspectionProvider.overrideWith((ref) => notifier),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -363,7 +392,13 @@ void main() {
     // Locked: the app bar shows the lock, not the drawer menu.
     await tester.tap(find.byIcon(Icons.lock));
     await tester.pumpAndSettle();
-    expect(find.text('Driver exit'), findsOneWidget);
+    // Scoped to the dialog: the active view behind it shows its own
+    // 'Driver exit' button now that the seed renders a full log.
+    final dialogTitle = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text('Driver exit'),
+    );
+    expect(dialogTitle, findsOneWidget);
 
     // Empty → required.
     await tester.tap(find.text('Exit'));
@@ -375,7 +410,7 @@ void main() {
     await tester.tap(find.text('Exit'));
     await tester.pumpAndSettle();
     expect(find.text('Incorrect PIN.'), findsOneWidget);
-    expect(find.text('Driver exit'), findsOneWidget);
+    expect(dialogTitle, findsOneWidget);
 
     // Correct PIN → inspection ends. The exit itself never touched the
     // server: no cycle/log reload, no transfer — the only repository call
@@ -385,18 +420,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Driver exit'), findsNothing);
     expect(find.byIcon(Icons.lock), findsNothing);
-    verifyNever(
+    // Seed made exactly one cycle+log call; the exit added none.
+    verify(
       () => repository.getCycle(
         driverId: any(named: 'driverId'),
         days: any(named: 'days'),
       ),
-    );
-    verifyNever(
+    ).called(1);
+    verify(
       () => repository.getLogs(
         driverId: any(named: 'driverId'),
         date: any(named: 'date'),
       ),
-    );
+    ).called(1);
     verifyNever(
       () => repository.sendLogs(
         driverId: any(named: 'driverId'),

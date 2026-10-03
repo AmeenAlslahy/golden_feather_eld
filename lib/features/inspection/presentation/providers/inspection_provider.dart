@@ -14,6 +14,13 @@ import '../../../../l10n/app_localizations.dart';
 
 // --- State ---
 
+/// قاعدة رمز التفتيش (SRS 7.5): أربعة أرقام بالضبط — واحدة للحوارين
+/// (الإنشاء والخروج)، نقية وقابلة للاختبار بلا widget.
+bool isValidInspectionPin(String pin) {
+  final value = pin.trim();
+  return value.length == 4 && int.tryParse(value) != null;
+}
+
 /// حالة التفتيش — جواب سؤالين فقط:
 /// 1) هل نحن في وضع التفتيش؟ ([isInspectionMode] + [isPinLocked])
 /// 2) ماذا نعرض الآن؟ ([cycle] + [selectedDayIndex] + [log])
@@ -23,9 +30,6 @@ import '../../../../l10n/app_localizations.dart';
 class InspectionState {
   final bool isInspectionMode;
   final bool isPinLocked;
-
-  /// رمز الخروج — يبقى في الذاكرة حتى يخرج السائق (SRS 7.5).
-  final String? pinCode;
   final List<DotInspectionCycleDay> cycle;
 
   /// اليوم المعروض ضمن [cycle] — يتقدم مع [log] في commit واحد.
@@ -64,7 +68,6 @@ class InspectionState {
   const InspectionState({
     this.isInspectionMode = false,
     this.isPinLocked = false,
-    this.pinCode,
     this.cycle = const [],
     this.selectedDayIndex = 0,
     this.log,
@@ -80,7 +83,6 @@ class InspectionState {
   InspectionState copyWith({
     bool? isInspectionMode,
     bool? isPinLocked,
-    String? pinCode,
     List<DotInspectionCycleDay>? cycle,
     int? selectedDayIndex,
     DotInspectionLog? log,
@@ -97,7 +99,6 @@ class InspectionState {
     return InspectionState(
       isInspectionMode: isInspectionMode ?? this.isInspectionMode,
       isPinLocked: isPinLocked ?? this.isPinLocked,
-      pinCode: pinCode ?? this.pinCode,
       cycle: cycle ?? this.cycle,
       selectedDayIndex: selectedDayIndex ?? this.selectedDayIndex,
       log: clearLog ? log : (log ?? this.log),
@@ -146,6 +147,11 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   final int _driverId;
   final AppLocalizations _loc;
 
+  /// رمز التفتيش — خاص بالـ notifier ولا يظهر في الحالة إطلاقاً
+  /// (قرار المالك D: لا backdoor للاختبارات؛ الاختبارات تقود دورة
+  /// الحياة من API العام). يُمسح عند الخروج وعند هدم المزود.
+  String? _inspectionPin;
+
   InspectionNotifier({
     required InspectionRepository repository,
     required int driverId,
@@ -178,7 +184,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       state.copyWith(isLoading: false, isInspectionMode: false, error: message);
 
   InspectionState _active({
-    required String pin,
     required List<DotInspectionCycleDay> cycle,
     required DotInspectionLog? log,
   }) {
@@ -186,7 +191,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       isLoading: false,
       isInspectionMode: true,
       isPinLocked: true,
-      pinCode: pin,
       cycle: cycle,
       selectedDayIndex: 0,
       log: log,
@@ -237,6 +241,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   /// لا نداء لـ `POST /eld/dot-inspection/start` هنا: الوضع حالة واجهة
   /// محلية، والخادم يرفض الاستدعاء في هذه المرحلة (ينقصه حقول المفتش).
   Future<void> startInspection({required String pin}) async {
+    _inspectionPin = null; // بدء جديد — لا رمز عالق من محاولة سابقة
     state = _starting();
 
     if (_driverId <= 0) {
@@ -269,12 +274,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       return;
     }
 
-    state = _active(pin: pin, cycle: cycle, log: log);
+    _inspectionPin = pin; // يُخزَّن خاصاً بعد نجاح الدخول فقط
+    state = _active(cycle: cycle, log: log);
   }
 
   /// الخروج بالرمز — تحقق محلي، لا شبكة (SRS 7.5).
   bool exitWithPin(String pin) {
-    if (state.pinCode == null || pin != state.pinCode) return false;
+    if (_inspectionPin == null || pin.trim() != _inspectionPin) return false;
     endInspection();
     return true;
   }
@@ -323,8 +329,9 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// إنهاء التفتيش — يعيد الحالة كاملة إلى الافتراضي.
+  /// إنهاء التفتيش — يعيد الحالة كاملة إلى الافتراضي ويمسح الرمز.
   void endInspection() {
+    _inspectionPin = null;
     state = _ended();
   }
 

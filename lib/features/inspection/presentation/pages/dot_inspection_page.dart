@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
@@ -119,7 +120,8 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
   }
 
   void _submit(BuildContext context) {
-    if (_pin.text.length != 4) {
+    // القاعدة نفسها التي يتحقق بها الخروج — دالة نقية مشتركة.
+    if (!isValidInspectionPin(_pin.text)) {
       setState(() => _error = context.loc.enter4Digits);
       return;
     }
@@ -146,6 +148,7 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               label: context.loc.pinLabel,
             ),
             AppTextField(
@@ -153,6 +156,7 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
               obscureText: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               label: context.loc.confirmPinLabel,
               onSubmitted: (_) => _submit(context),
             ),
@@ -202,7 +206,7 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
 
   void _submit(BuildContext context) {
     final pin = _pin.text.trim();
-    if (pin.isEmpty) {
+    if (!isValidInspectionPin(pin)) {
       setState(() => _error = context.loc.enterInspectionPin);
       return;
     }
@@ -233,6 +237,7 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
               autofocus: true,
               keyboardType: TextInputType.number,
               maxLength: 4,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               label: context.loc.pinLabel,
               onSubmitted: (_) => _submit(context),
             ),
