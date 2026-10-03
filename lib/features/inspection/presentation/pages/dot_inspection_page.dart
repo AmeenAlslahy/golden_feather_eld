@@ -26,8 +26,6 @@ class DotInspectionPage extends ConsumerStatefulWidget {
 }
 
 class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
-  int _currentDayIndex = 0;
-
   @override
   void initState() {
     super.initState();
@@ -39,7 +37,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
   @override
   Widget build(BuildContext context) {
     final inspectionState = ref.watch(inspectionProvider);
-    final locked = inspectionState.isInspectionMode && inspectionState.isPinLocked;
+    final locked =
+        inspectionState.isInspectionMode && inspectionState.isPinLocked;
 
     return PopScope(
       canPop: !locked,
@@ -72,8 +71,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
         body: inspectionState.isLoading
             ? const Center(child: CircularProgressIndicator())
             : !inspectionState.isInspectionMode
-                ? _buildStartInspection()
-                : _buildInspectionView(inspectionState),
+            ? _buildStartInspection()
+            : _buildInspectionView(inspectionState),
       ),
     );
   }
@@ -91,11 +90,17 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     }
 
     final guidance = serverOrLocal(
-        screen?.guidanceText, context.loc.inspectLogs24);
+      screen?.guidanceText,
+      context.loc.inspectLogs24,
+    );
     final handOver = serverOrLocal(
-        screen?.handOverDeviceNotice, context.loc.setPinGuidance);
+      screen?.handOverDeviceNotice,
+      context.loc.setPinGuidance,
+    );
     final compliance = serverOrLocal(
-        screen?.carrierComplianceStatement, context.loc.eldCertifies);
+      screen?.carrierComplianceStatement,
+      context.loc.eldCertifies,
+    );
     // fail-closed: حتى يجيب الخادم تبقى الأزرار مقفلة — جهاز امتثال لا
     // يفتح إجراءات التفتيش بناءً على غياب الجواب.
     final canStart = screen?.canStartInspection ?? false;
@@ -113,15 +118,20 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               if (error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(error,
-                      textAlign: TextAlign.center, style: context.styles.error),
+                  child: Text(
+                    error,
+                    textAlign: TextAlign.center,
+                    style: context.styles.error,
+                  ),
                 ),
               if (screenAsync.hasError) ...[
-                Text(context.loc.errRequestFailed,
-                    textAlign: TextAlign.center, style: context.styles.error),
+                Text(
+                  context.loc.errRequestFailed,
+                  textAlign: TextAlign.center,
+                  style: context.styles.error,
+                ),
                 TextButton(
-                  onPressed: () =>
-                      ref.invalidate(dotInspectionScreenProvider),
+                  onPressed: () => ref.invalidate(dotInspectionScreenProvider),
                   child: Text(context.loc.retryAction),
                 ),
                 const SizedBox(height: 8),
@@ -154,9 +164,9 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
             ],
           ),
         ),
-        
+
         const Divider(height: 1, thickness: 1),
-        
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Column(
@@ -181,22 +191,26 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => const SendLogsPage()),
+                            builder: (_) => const SendLogsPage(),
+                          ),
                         );
                       }
                     : null,
               ),
               if (!canSend) ...[
                 const SizedBox(height: 8),
-                Text(notAllowed,
-                    textAlign: TextAlign.center, style: context.styles.muted),
+                Text(
+                  notAllowed,
+                  textAlign: TextAlign.center,
+                  style: context.styles.muted,
+                ),
               ],
             ],
           ),
         ),
-        
+
         const Divider(height: 1, thickness: 1),
-        
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Column(
@@ -230,15 +244,18 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               ),
               if (!canEmail) ...[
                 const SizedBox(height: 8),
-                Text(notAllowed,
-                    textAlign: TextAlign.center, style: context.styles.muted),
+                Text(
+                  notAllowed,
+                  textAlign: TextAlign.center,
+                  style: context.styles.muted,
+                ),
               ],
             ],
           ),
         ),
-        
+
         const Divider(height: 1, thickness: 1),
-        
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Column(
@@ -258,8 +275,11 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               ),
               if (!canPacket) ...[
                 const SizedBox(height: 8),
-                Text(notAllowed,
-                    textAlign: TextAlign.center, style: context.styles.muted),
+                Text(
+                  notAllowed,
+                  textAlign: TextAlign.center,
+                  style: context.styles.muted,
+                ),
               ],
             ],
           ),
@@ -271,21 +291,29 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
 
   Widget _buildInspectionView(InspectionState state) {
     final log = state.log;
-    final day = _currentDayIndex >= 0 && _currentDayIndex < state.cycle.length
-        ? state.cycle[_currentDayIndex]
+    final day =
+        state.selectedDayIndex >= 0 &&
+            state.selectedDayIndex < state.cycle.length
+        ? state.cycle[state.selectedDayIndex]
         : null;
     final loc = context.loc;
     final account = ref.watch(accountProvider).accountData;
     final co = ref.watch(codriverProvider).currentCoDriver;
+    // dayError خاص بتحميل اليوم؛ error lifecycle/بدء فقط — الأولوية
+    // لخطأ اليوم في هذه الشاشة حتى لا يضيع خلف رسالة أقدم.
+    final bannerError = state.dayError ?? state.error;
     return Column(
       children: [
-        if (state.error != null)
+        if (bannerError != null)
           Material(
             color: AppColors.warningYellow.withValues(alpha: 0.15),
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(state.error!,
-                  textAlign: TextAlign.center, style: context.styles.warning),
+              child: Text(
+                bannerError,
+                textAlign: TextAlign.center,
+                style: context.styles.warning,
+              ),
             ),
           ),
         Container(
@@ -296,35 +324,44 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left),
-                onPressed: _currentDayIndex < state.cycle.length - 1
-                    ? () {
-                        final next = _currentDayIndex + 1;
-                        if (next >= state.cycle.length) return;
-                        setState(() => _currentDayIndex = next);
-                        ref
-                            .read(inspectionProvider.notifier)
-                            .loadLog(state.cycle[next].logDate);
-                      }
-                    : null,
+                // Option A: الأسهم معطلة أثناء تحميل اليوم — الفهرس
+                // والسجل لا يتقدمان قبل نجاح الطلب (selectDay هو من
+                // يزامنهما داخل الـ notifier).
+                onPressed:
+                    state.isDayLoading ||
+                        state.selectedDayIndex >= state.cycle.length - 1
+                    ? null
+                    : () => ref
+                          .read(inspectionProvider.notifier)
+                          .selectDay(state.selectedDayIndex + 1),
               ),
-              Text(
-                day?.displayDate.isNotEmpty == true
-                    ? day!.displayDate
-                    : (log?.displayDate ?? ''),
-                style: context.styles.bodyBold,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    day?.displayDate.isNotEmpty == true
+                        ? day!.displayDate
+                        : (log?.displayDate ?? ''),
+                    key: const Key('inspection-day-label'),
+                    style: context.styles.bodyBold,
+                  ),
+                  if (state.isDayLoading) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ],
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
-                onPressed: _currentDayIndex > 0
-                    ? () {
-                        final next = _currentDayIndex - 1;
-                        if (next < 0) return;
-                        setState(() => _currentDayIndex = next);
-                        ref
-                            .read(inspectionProvider.notifier)
-                            .loadLog(state.cycle[next].logDate);
-                      }
-                    : null,
+                onPressed: state.isDayLoading || state.selectedDayIndex <= 0
+                    ? null
+                    : () => ref
+                          .read(inspectionProvider.notifier)
+                          .selectDay(state.selectedDayIndex - 1),
               ),
             ],
           ),
@@ -350,8 +387,9 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                         driverLicense: account?.license.number ?? '-',
                         driverLicenseState: account?.license.state ?? '-',
                         coDriver: co?.name ?? '',
-                        coDriverId:
-                            co?.isLinked == true ? '${co!.coDriverId}' : '',
+                        coDriverId: co?.isLinked == true
+                            ? '${co!.coDriverId}'
+                            : '',
                       ),
                       const Divider(height: 1),
                       InspectionDutyGraph(events: log.events),
@@ -379,8 +417,6 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     final pin = await _askNewPin();
     if (pin == null || !mounted) return;
     await ref.read(inspectionProvider.notifier).startInspection(pin: pin);
-    if (!mounted) return;
-    setState(() => _currentDayIndex = 0);
   }
 
   Future<String?> _askNewPin() {
@@ -394,14 +430,12 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
   }
 
   Future<void> _promptDriverExit() async {
-    final ok = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => const _DriverExitDialog(),
     );
-    if (ok == true && mounted) {
-      setState(() => _currentDayIndex = 0);
-    }
+    // الخروج يعيد state الـ provider بالكامل — لا تنظيف محلي هنا.
   }
 }
 
@@ -450,10 +484,7 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              loc.setPinGuidanceDialog,
-              style: context.styles.muted,
-            ),
+            Text(loc.setPinGuidanceDialog, style: context.styles.muted),
             const SizedBox(height: 12),
             AppTextField(
               controller: _pin,
@@ -575,5 +606,3 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
     );
   }
 }
-
-
