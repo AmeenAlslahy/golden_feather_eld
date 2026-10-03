@@ -4873,7 +4873,7 @@ abstract class AppLocalizations {
   /// No description provided for @dvirImageNotAvailable.
   ///
   /// In ar, this message translates to:
-  /// **'الصورة غير متاحة.'**
+  /// **'الصورة غير متاحة'**
   String get dvirImageNotAvailable;
 
   /// No description provided for @dvirClearSignature.
@@ -5589,6 +5589,48 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال.'**
   String get formSavedOffline;
+
+  /// No description provided for @transferMethodWebServices.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدمات الويب'**
+  String get transferMethodWebServices;
+
+  /// No description provided for @transferMethodEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني'**
+  String get transferMethodEmail;
+
+  /// No description provided for @dvirRepairCert.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهادة إصلاح'**
+  String get dvirRepairCert;
+
+  /// No description provided for @dvirReviewed39613.
+  ///
+  /// In ar, this message translates to:
+  /// **'تمت مراجعة §396.13'**
+  String get dvirReviewed39613;
+
+  /// No description provided for @dvirReportId.
+  ///
+  /// In ar, this message translates to:
+  /// **'معرّف التقرير'**
+  String get dvirReportId;
+
+  /// No description provided for @dvirRetentionUntil.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاحتفاظ حتى (§396.11)'**
+  String get dvirRetentionUntil;
+
+  /// No description provided for @dvirPrevReviewSection.
+  ///
+  /// In ar, this message translates to:
+  /// **'مراجعة تقرير الفحص السابق (§396.13)'**
+  String get dvirPrevReviewSection;
 }
 
 class _AppLocalizationsDelegate

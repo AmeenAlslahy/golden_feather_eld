@@ -1057,5 +1057,14 @@
   "edit": "Edit",
   "diagnosticsScreen": "Diagnostics",
   "diagnosticEvents": "Data Diagnostic Events",
-  "formSavedOffline": "Form saved offline — will sync when connected."
+  "formSavedOffline": "Form saved offline — will sync when connected.",
+  "transferMethodWebServices": "Web Services",
+  "transferMethodEmail": "Email",
+  "dvirSigned": "SIGNED",
+  "dvirRepairCert": "Repair Cert",
+  "dvirReviewed39613": "Reviewed §396.13",
+  "dvirReportId": "Report ID",
+  "dvirRetentionUntil": "Retention Until (§396.11)",
+  "dvirPrevReviewSection": "Previous DVIR Review (§396.13)",
+  "dvirImageNotAvailable": "Image not available"
 }

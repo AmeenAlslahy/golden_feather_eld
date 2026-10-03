@@ -2553,7 +2553,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get remarks => 'ملاحظات';
 
   @override
-  String get dvirImageNotAvailable => 'الصورة غير متاحة.';
+  String get dvirImageNotAvailable => 'الصورة غير متاحة';
 
   @override
   String get dvirClearSignature => 'مسح التوقيع';
@@ -2944,4 +2944,25 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get formSavedOffline =>
       'حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال.';
+
+  @override
+  String get transferMethodWebServices => 'خدمات الويب';
+
+  @override
+  String get transferMethodEmail => 'البريد الإلكتروني';
+
+  @override
+  String get dvirRepairCert => 'شهادة إصلاح';
+
+  @override
+  String get dvirReviewed39613 => 'تمت مراجعة §396.13';
+
+  @override
+  String get dvirReportId => 'معرّف التقرير';
+
+  @override
+  String get dvirRetentionUntil => 'الاحتفاظ حتى (§396.11)';
+
+  @override
+  String get dvirPrevReviewSection => 'مراجعة تقرير الفحص السابق (§396.13)';
 }

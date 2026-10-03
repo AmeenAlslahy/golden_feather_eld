@@ -1057,5 +1057,14 @@
   "edit": "Editar",
   "diagnosticsScreen": "Diagnósticos",
   "diagnosticEvents": "Eventos de diagnóstico de datos",
-  "formSavedOffline": "Formulario guardado sin conexión — se sincronizará al conectarse."
+  "formSavedOffline": "Formulario guardado sin conexión — se sincronizará al conectarse.",
+  "transferMethodWebServices": "Servicios web",
+  "transferMethodEmail": "Correo electrónico",
+  "dvirSigned": "FIRMADO",
+  "dvirRepairCert": "Cert. de reparación",
+  "dvirReviewed39613": "Revisado §396.13",
+  "dvirReportId": "ID del informe",
+  "dvirRetentionUntil": "Retención hasta (§396.11)",
+  "dvirPrevReviewSection": "Revisión del DVIR anterior (§396.13)",
+  "dvirImageNotAvailable": "Imagen no disponible"
 }

@@ -1050,5 +1050,14 @@
   "edit": "تعديل",
   "diagnosticsScreen": "التشخيصات",
   "diagnosticEvents": "أحداث تشخيص البيانات",
-  "formSavedOffline": "حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال."
+  "formSavedOffline": "حُفظ النموذج محلياً — سيُزامن عند عودة الاتصال.",
+  "transferMethodWebServices": "خدمات الويب",
+  "transferMethodEmail": "البريد الإلكتروني",
+  "dvirSigned": "تم التوقيع",
+  "dvirRepairCert": "شهادة إصلاح",
+  "dvirReviewed39613": "تمت مراجعة §396.13",
+  "dvirReportId": "معرّف التقرير",
+  "dvirRetentionUntil": "الاحتفاظ حتى (§396.11)",
+  "dvirPrevReviewSection": "مراجعة تقرير الفحص السابق (§396.13)",
+  "dvirImageNotAvailable": "الصورة غير متاحة"
 }

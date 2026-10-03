@@ -2587,13 +2587,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get remarks => 'Observaciones';
 
   @override
-  String get dvirImageNotAvailable => 'Imagen no disponible.';
+  String get dvirImageNotAvailable => 'Imagen no disponible';
 
   @override
   String get dvirClearSignature => 'Firma clara';
 
   @override
-  String get dvirSigned => 'SIGNED';
+  String get dvirSigned => 'FIRMADO';
 
   @override
   String get dvirSign => 'SIGN';
@@ -2988,4 +2988,25 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get formSavedOffline =>
       'Formulario guardado sin conexión — se sincronizará al conectarse.';
+
+  @override
+  String get transferMethodWebServices => 'Servicios web';
+
+  @override
+  String get transferMethodEmail => 'Correo electrónico';
+
+  @override
+  String get dvirRepairCert => 'Cert. de reparación';
+
+  @override
+  String get dvirReviewed39613 => 'Revisado §396.13';
+
+  @override
+  String get dvirReportId => 'ID del informe';
+
+  @override
+  String get dvirRetentionUntil => 'Retención hasta (§396.11)';
+
+  @override
+  String get dvirPrevReviewSection => 'Revisión del DVIR anterior (§396.13)';
 }

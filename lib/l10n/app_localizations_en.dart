@@ -2564,7 +2564,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remarks => 'Remarks';
 
   @override
-  String get dvirImageNotAvailable => 'Image not available.';
+  String get dvirImageNotAvailable => 'Image not available';
 
   @override
   String get dvirClearSignature => 'Clear signature';
@@ -2961,4 +2961,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get formSavedOffline =>
       'Form saved offline — will sync when connected.';
+
+  @override
+  String get transferMethodWebServices => 'Web Services';
+
+  @override
+  String get transferMethodEmail => 'Email';
+
+  @override
+  String get dvirRepairCert => 'Repair Cert';
+
+  @override
+  String get dvirReviewed39613 => 'Reviewed §396.13';
+
+  @override
+  String get dvirReportId => 'Report ID';
+
+  @override
+  String get dvirRetentionUntil => 'Retention Until (§396.11)';
+
+  @override
+  String get dvirPrevReviewSection => 'Previous DVIR Review (§396.13)';
 }
