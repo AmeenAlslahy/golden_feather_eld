@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 
 /// Dense striped header matching the Inspection Logs screenshot.
+///
+/// العناوين إنجليزية عمداً: هذا شكل RODS الورقي الرسمي (49 CFR 395.8 /
+/// SRS 8.3) الذي يقرؤه الضابط على الطريق — ليست رسالة مترجمة، لذا لا
+/// تمر عبر arb. الألوان من السمة حتى لا ينكسر الوضع الداكن.
 class InspectionLogHeaderTable extends StatelessWidget {
   const InspectionLogHeaderTable({
     super.key,
@@ -100,81 +103,82 @@ class InspectionLogHeaderTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _headerRow(const [
+        _headerRow(context, const [
           'Driver Name',
           'Driver ID',
           'Driver License',
           'Driver License State',
         ]),
-        _valueRow([
+        _valueRow(context, [
           _driverName,
           _driverId,
           log?.driverLicenseNumber ?? driverLicense,
           log?.driverLicenseState ?? driverLicenseState,
         ]),
-        _headerRow(const [
+        _headerRow(context, const [
           'Exempt Driver Status',
           'Unidentified Driving Records',
           'Co-driver',
           'Co-driver ID',
         ]),
-        _valueRow([
+        _valueRow(context, [
           _exempt ? 'Yes' : 'No',
           _unidentified ? 'Yes' : 'No',
           log?.coDriverName ?? coDriver,
           log?.coDriverId?.toString() ?? coDriverId,
         ]),
-        _headerRow(const [
+        _headerRow(context, const [
           'Log Date',
           'Display Date',
           'Display Location',
           'Driver Certified',
         ]),
-        _valueRow([
+        _valueRow(context, [
           _logDate,
           _logDate,
           _location,
           _certified ? 'Yes' : 'No',
         ]),
-        _headerRow(const [
+        _headerRow(context, const [
           'ELD Registration ID',
           'ELD Identifier',
           'Provider',
         ]),
-        _valueRow([_reg, _eldId, _provider]),
-        _headerRow(const [
+        _valueRow(context, [_reg, _eldId, _provider]),
+        _headerRow(context, const [
           '24 Period Starting Time',
           'Data Diag. Indicators',
           'Device Malfn. Indicators',
         ]),
-        _valueRow([
+        _valueRow(context, [
           log?.period24HourStartTime ?? '—',
           _diag ? _diagCodes : 'No',
           _malf ? _malfCodes : 'No',
         ]),
-        _headerRow(const [
+        _headerRow(context, const [
           'Vehicle',
           'VIN',
           'Odometer',
           'Distance',
           'Engine Hours',
         ]),
-        _valueRow([_vehicle, _vin, _odometer, _distance, _engine]),
-        _headerRow(const [
+        _valueRow(context, [_vehicle, _vin, _odometer, _distance, _engine]),
+        _headerRow(context, const [
           'Trailers',
           'Shipping Docs',
           'Carrier',
           'Main Office',
           'Home Terminal',
         ]),
-        _valueRow([_trailers, _shipping, _carrier, _office, _terminal]),
+        _valueRow(context, [_trailers, _shipping, _carrier, _office, _terminal]),
       ],
     );
   }
 
-  Widget _headerRow(List<String> labels) {
+  Widget _headerRow(BuildContext context, List<String> labels) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      color: AppColors.rodsHeaderBg,
+      color: cs.surfaceContainerHighest,
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,11 +189,11 @@ class InspectionLogHeaderTable extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 6),
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     height: 1.15,
-                    color: AppColors.rodsHeaderText,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -199,9 +203,10 @@ class InspectionLogHeaderTable extends StatelessWidget {
     );
   }
 
-  Widget _valueRow(List<String> values) {
+  Widget _valueRow(BuildContext context, List<String> values) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: cs.surface,
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,10 +217,10 @@ class InspectionLogHeaderTable extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 6),
                 child: Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     height: 1.25,
-                    color: AppColors.rodsHeaderSubtext,
+                    color: cs.onSurface,
                   ),
                 ),
               ),

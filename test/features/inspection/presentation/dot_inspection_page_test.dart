@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/inspection/dot_inspection.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
 import 'package:golden_feather_eld/features/inspection/domain/repositories/inspection_repository.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/pages/dot_inspection_page.dart';
 import 'package:golden_feather_eld/features/inspection/data/providers/inspection_repository_providers.dart';
@@ -187,6 +190,13 @@ void main() {
   testWidgets('driver exit checks the inspection PIN locally, no server call',
       (tester) async {
     final repository = _MockInspectionRepository();
+    registerFallbackValue(const DriverId(101));
+    registerFallbackValue(TransferMethod.webService);
+    // عرض البداية (بعد نجاح الخروج) يجلب شاشته عبر المستودع — نجيب جواباً
+    // لا يهم، والاختبار نفسه يتأكد أن الخروج لم يستدعِ دورة/سجلات/إرسال.
+    when(() => repository.getScreen()).thenAnswer(
+      (_) async => const Left(ServerFailure(message: 'ignored')),
+    );
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -229,14 +239,24 @@ void main() {
     expect(find.text('Incorrect PIN.'), findsOneWidget);
     expect(find.text('Driver exit'), findsOneWidget);
 
-    // Correct PIN → inspection ends. Nothing was sent to the server:
-    // not the inspection backend, and no login re-auth.
+    // Correct PIN → inspection ends. The exit itself never touched the
+    // server: no cycle/log reload, no transfer — the only repository call
+    // after unlock is the start view's own screen fetch (stubbed above).
     await tester.enterText(find.byType(TextField), '1234');
     await tester.tap(find.text('Exit'));
     await tester.pumpAndSettle();
     expect(find.text('Driver exit'), findsNothing);
     expect(find.byIcon(Icons.lock), findsNothing);
-    verifyZeroInteractions(repository);
+    verifyNever(() => repository.getCycle(
+        driverId: any(named: 'driverId'), days: any(named: 'days')));
+    verifyNever(() => repository.getLogs(
+        driverId: any(named: 'driverId'), date: any(named: 'date')));
+    verifyNever(() => repository.sendLogs(
+        driverId: any(named: 'driverId'),
+        method: any(named: 'method'),
+        email: any(named: 'email'),
+        routingCode: any(named: 'routingCode'),
+        comment: any(named: 'comment')));
     expect(tester.takeException(), isNull);
   });
 }

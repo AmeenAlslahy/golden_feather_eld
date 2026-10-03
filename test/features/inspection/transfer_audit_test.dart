@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/inspection/domain/transfer_audit.dart';
+import 'package:golden_feather_eld/features/inspection/data/mappers/inspection_mappers.dart';
 
 void main() {
   test('transfer audit reads a wrapped server list without inventing rows', () {

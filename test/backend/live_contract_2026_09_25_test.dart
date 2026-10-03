@@ -135,10 +135,9 @@ void main() {
     });
 
     test('send-logs outputFileComment is validated to 4–60 chars client-side', () {
-      final loc = lookupAppLocalizations(const Locale('en'));
-      expect(inspectionCommentError('abc', loc: loc), isNotNull);
-      expect(inspectionCommentError('roadside check', loc: loc), isNull);
-      expect(inspectionCommentError('x' * 61, loc: loc), isNotNull);
+      expect(isValidInspectionComment('abc'), isFalse);
+      expect(isValidInspectionComment('roadside check'), isTrue);
+      expect(isValidInspectionComment('x' * 61), isFalse);
     });
   });
 

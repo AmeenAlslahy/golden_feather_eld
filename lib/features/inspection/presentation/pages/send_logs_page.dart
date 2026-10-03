@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +8,6 @@ import '../../../../features/auth/presentation/providers/auth_state_provider.dar
 import '../../../../features/logs/domain/entities/audit_entry.dart';
 import '../../../../features/logs/presentation/providers/logs_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
 import '../providers/inspection_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -33,6 +30,10 @@ class SendLogsPage extends ConsumerStatefulWidget {
 }
 
 class _SendLogsPageState extends ConsumerState<SendLogsPage> {
+  /// تحقق بريد فعلي (شكل محلي) بدل مجرد احتواء على '@' و'.'.
+  static final RegExp _emailPattern =
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   final _emailController = TextEditingController();
   final _routingCodeController = TextEditingController();
   final _commentController = TextEditingController();
@@ -64,7 +65,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
   bool get _emailValid {
     final email = _emailController.text.trim();
-    return email.contains('@') && email.contains('.');
+    return _emailPattern.hasMatch(email);
   }
 
   /// القناة الفعالة: شاشة البريد بريد دائماً، وشاشة الإرسال حسب الاختيار.
@@ -74,7 +75,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   bool get _canSend {
     if (_isSending) return false;
     if (_usesEmail && !_emailValid) return false;
-    return inspectionCommentError(_commentController.text, loc: context.loc) == null;
+    return isValidInspectionComment(_commentController.text);
   }
 
   Future<void> _handleSend() async {
@@ -84,10 +85,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     }
     // SRS 8.4: output-file comment 4–60 on both channels (the email screen
     // starts with a default the officer may replace).
-    final commentError = inspectionCommentError(
-      _commentController.text,
-      loc: context.loc,
-    );
+    final commentError = isValidInspectionComment(_commentController.text)
+        ? null
+        : context.loc.inspectionCommentErrorLength;
     if (commentError != null) {
       _snack(commentError);
       return;
@@ -121,9 +121,10 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     try {
       final driverId = ref.read(currentDriverIdProvider);
       final userName = ref.read(authStateProvider).user?.fullName;
-      final errorText =
-          success ? null : ref.read(inspectionProvider).error;
-      unawaited(ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
+      final errorText = success ? null : ref.read(inspectionProvider).error;
+      // await لا unawaited داخل try — الاستثناء غير المتزامن كان يهرب من
+      // الـ try/catch بلا التقاط؛ الكتابة بعد إظهار النتيجة فلا تأخير يُرى.
+      await ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
             id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
             timestamp: DateTime.now(),
             driverId: driverId?.toString() ?? '',
@@ -134,7 +135,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
             entityId: driverId?.toString(),
             userName: userName,
             userRole: 'driver',
-          )));
+          ));
     } catch (e) {
       AppLogger.error('Transfer audit entry failed', e);
     }
@@ -222,11 +223,13 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       items: [
                         DropdownMenuItem(
                           value: TransferMethod.webService,
-                          child: Text('Web Services', style: context.styles.body),
+                          child: Text(loc.transferMethodWebServices,
+                              style: context.styles.body),
                         ),
                         DropdownMenuItem(
                           value: TransferMethod.email,
-                          child: Text('Email', style: context.styles.body),
+                          child: Text(loc.transferMethodEmail,
+                              style: context.styles.body),
                         ),
                       ],
                       onChanged: (method) {

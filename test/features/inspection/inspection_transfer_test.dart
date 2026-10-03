@@ -1,15 +1,13 @@
-import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/features/inspection/data/mappers/inspection_mappers.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
 
 void main() {
   test('comment is refused outside 4 to 60 characters', () {
-    final loc = lookupAppLocalizations(const Locale('en'));
-    expect(inspectionCommentError('abc', loc: loc), isNotNull);
-    expect(inspectionCommentError('a' * 61, loc: loc), isNotNull);
-    expect(inspectionCommentError('road', loc: loc), isNull);
-    expect(inspectionCommentError('  road  ', loc: loc), isNull);
+    expect(isValidInspectionComment('abc'), isFalse);
+    expect(isValidInspectionComment('a' * 61), isFalse);
+    expect(isValidInspectionComment('road'), isTrue);
+    expect(isValidInspectionComment('  road  '), isTrue);
   });
 
 

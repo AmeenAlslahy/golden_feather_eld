@@ -3,13 +3,11 @@ import '../../../../core/error/failure.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../inspection_transfer.dart';
-import '../entities/inspection_data.dart';
+import '../transfer_audit.dart';
 
 abstract class InspectionRepository {
-  Future<Either<Failure, void>> startInspection({required DriverId driverId});
-
   Future<Either<Failure, List<DotInspectionCycleDay>>> getCycle({
-    required DriverId driverId,
+    DriverId? driverId,
     required int days,
   });
 
@@ -27,6 +25,12 @@ abstract class InspectionRepository {
   });
 
   Future<Either<Failure, InformationPacketView>> getInformationPacket({
+    DriverId? driverId,
+  });
+
+  Future<Either<Failure, DotInspectionScreen>> getScreen({DriverId? driverId});
+
+  Future<Either<Failure, List<TransferAuditRow>>> getTransfers({
     DriverId? driverId,
   });
 }

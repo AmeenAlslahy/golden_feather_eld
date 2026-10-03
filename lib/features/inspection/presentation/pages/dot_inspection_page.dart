@@ -80,7 +80,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
 
   Widget _buildStartInspection() {
     final error = ref.watch(inspectionProvider).error;
-    final screen = ref.watch(dotInspectionScreenProvider).asData?.value;
+    final screenAsync = ref.watch(dotInspectionScreenProvider);
+    final screen = screenAsync.asData?.value;
     // نصوص الخادم إنجليزية فقط: في العربية نعرض الترجمات المحلية،
     // وفي الإنجليزية نعرض نص الخادم (SRS 8.1: الخادم يخصص الإرشاد).
     final useLocalText = context.isArabic;
@@ -95,10 +96,12 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
         screen?.handOverDeviceNotice, context.loc.setPinGuidance);
     final compliance = serverOrLocal(
         screen?.carrierComplianceStatement, context.loc.eldCertifies);
-    final canStart = screen?.canStartInspection ?? true;
-    final canSend = screen?.canSendLogs ?? true;
-    final canEmail = screen?.canEmailLogs ?? true;
-    final canPacket = screen?.canViewInformationPacket ?? true;
+    // fail-closed: حتى يجيب الخادم تبقى الأزرار مقفلة — جهاز امتثال لا
+    // يفتح إجراءات التفتيش بناءً على غياب الجواب.
+    final canStart = screen?.canStartInspection ?? false;
+    final canSend = screen?.canSendLogs ?? false;
+    final canEmail = screen?.canEmailLogs ?? false;
+    final canPacket = screen?.canViewInformationPacket ?? false;
     final notAllowed = context.loc.notAllowedByServer;
     return ListView(
       padding: EdgeInsets.zero,
@@ -113,6 +116,16 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                   child: Text(error,
                       textAlign: TextAlign.center, style: context.styles.error),
                 ),
+              if (screenAsync.hasError) ...[
+                Text(context.loc.errRequestFailed,
+                    textAlign: TextAlign.center, style: context.styles.error),
+                TextButton(
+                  onPressed: () =>
+                      ref.invalidate(dotInspectionScreenProvider),
+                  child: Text(context.loc.retryAction),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(
                 guidance,
                 textAlign: TextAlign.center,
@@ -481,8 +494,9 @@ class _InspectionPinDialogState extends State<_InspectionPinDialog> {
 
 /// Exit gate for inspection mode (SRS 7.5): the driver re-enters the PIN he
 /// composed when the inspection started. Checked locally against the PIN held
-/// in `inspectionProvider` — no network call, so the driver can always leave
-/// at the roadside, and the login password is never re-sent to the server.
+/// in `inspectionProvider` — no network call, no lockout: the driver must
+/// always be able to leave at the roadside, and the login password is never
+/// re-sent to the server.
 class _DriverExitDialog extends ConsumerStatefulWidget {
   const _DriverExitDialog();
 
@@ -493,8 +507,6 @@ class _DriverExitDialog extends ConsumerStatefulWidget {
 class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
   final _pin = TextEditingController();
   String? _error;
-  int _failedAttempts = 0;
-  static const _maxAttempts = 5;
 
   @override
   void dispose() {
@@ -512,11 +524,8 @@ class _DriverExitDialogState extends ConsumerState<_DriverExitDialog> {
     }
     final accepted = ref.read(inspectionProvider.notifier).exitWithPin(pin);
     if (!accepted) {
-      _failedAttempts++;
       setState(() {
-        _error = _failedAttempts >= _maxAttempts
-            ? context.loc.tooManyPinAttempts
-            : context.loc.incorrectPin;
+        _error = context.loc.incorrectPin;
       });
       return;
     }

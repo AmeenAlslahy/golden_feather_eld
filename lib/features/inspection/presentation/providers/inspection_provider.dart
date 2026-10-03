@@ -7,12 +7,9 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
-import '../../domain/entities/inspection_data.dart';
 import '../../domain/inspection_transfer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/utils/provider_cache.dart';
-
-// --- Dependency Injection Providers ---
 
 // --- State and Notifier ---
 
@@ -21,7 +18,6 @@ class InspectionState {
   final bool isInspectionMode;
   final bool isPinLocked;
   final String? pinCode;
-  final List<InspectionDayData> days;
   final List<DotInspectionCycleDay> cycle;
   final DotInspectionLog? log;
   final bool isLoading;
@@ -32,7 +28,6 @@ class InspectionState {
     this.isInspectionMode = false,
     this.isPinLocked = false,
     this.pinCode,
-    this.days = const [],
     this.cycle = const [],
     this.log,
     this.isLoading = false,
@@ -44,7 +39,6 @@ class InspectionState {
     bool? isInspectionMode,
     bool? isPinLocked,
     String? pinCode,
-    List<InspectionDayData>? days,
     List<DotInspectionCycleDay>? cycle,
     DotInspectionLog? log,
     bool clearLog = false,
@@ -58,7 +52,6 @@ class InspectionState {
       isInspectionMode: isInspectionMode ?? this.isInspectionMode,
       isPinLocked: isPinLocked ?? this.isPinLocked,
       pinCode: pinCode ?? this.pinCode,
-      days: days ?? this.days,
       cycle: cycle ?? this.cycle,
       log: clearLog ? log : (log ?? this.log),
       isLoading: isLoading ?? this.isLoading,
@@ -69,13 +62,16 @@ class InspectionState {
   }
 }
 
-/// مزود التفتيش
+/// مزود التفتيش.
+///
+/// اللغة تُقرأ (`ref.read`) لا تُراقَب: إعادة بناء المزود عند تغيير اللغة
+/// كانت تمحو وضع التفتيش والـ PIN في منتصف تفتيش فعلي على الطريق.
 final inspectionProvider =
     StateNotifierProvider<InspectionNotifier, InspectionState>((ref) {
   return InspectionNotifier(
     repository: ref.watch(inspectionRepositoryProvider),
     driverId: ref.watch(currentDriverIdProvider) ?? 0,
-    loc: lookupAppLocalizations(ref.watch(localeProvider)),
+    loc: lookupAppLocalizations(ref.read(localeProvider)),
   );
 });
 
@@ -108,6 +104,9 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   }
 
   /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
+  ///
+  /// لا نداء لـ `POST /eld/dot-inspection/start` هنا: الوضع حالة واجهة
+  /// محلية، والخادم يرفض الاستدعاء في هذه المرحلة (ينقصه حقول المفتش).
   Future<void> startInspection({required String pin}) async {
     state = state.copyWith(isLoading: true, clearError: true, clearLog: true);
 
@@ -120,10 +119,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     }
 
     final driver = DriverId(_driverId);
-    final started = await _repository.startInspection(driverId: driver);
-    if (!mounted) return;
-    final startWarning = started.fold(_message, (_) => null);
-
     final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
     if (!mounted) return;
     final cycle =
@@ -139,9 +134,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       state = state.copyWith(
         isLoading: false,
         isInspectionMode: false,
-        error: startWarning ??
-            logError ??
-            cycleResult.fold(_message, (_) => null),
+        error: logError ?? cycleResult.fold(_message, (_) => null),
       );
       return;
     }
@@ -154,7 +147,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       cycle: cycle,
       log: log,
       clearLog: log == null,
-      error: startWarning,
+      clearError: true,
     );
   }
 
@@ -194,15 +187,18 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     String? routingCode,
     required String comment,
   }) async {
-    final commentError = inspectionCommentError(comment, loc: _loc);
-    if (commentError != null) {
-      state = state.copyWith(isLoading: false, error: commentError, clearTransferMessage: true);
+    if (!isValidInspectionComment(comment)) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _loc.inspectionCommentErrorLength,
+        clearTransferMessage: true,
+      );
       return false;
     }
     if (_driverId <= 0) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Driver session is missing. Sign in again before sending logs.',
+        error: _loc.driverSessionMissingSignIn,
         clearTransferMessage: true,
       );
       return false;
@@ -210,15 +206,14 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
     state = state.copyWith(isLoading: true, clearError: true, clearTransferMessage: true);
     final driver = DriverId(_driverId);
-    final note = comment.trim();
-    final route = routingCode?.trim();
     final recipient = email?.trim() ?? '';
+    final route = routingCode?.trim();
     final result = await _repository.sendLogs(
-        driverId: driver,
-        method: method,
-        email: recipient.isEmpty ? null : recipient,
-        comment: note,
-        routingCode: route,
+      driverId: driver,
+      method: method,
+      email: recipient.isEmpty ? null : recipient,
+      comment: comment.trim(),
+      routingCode: (route == null || route.isEmpty) ? null : route,
     );
 
     if (!mounted) return false;
