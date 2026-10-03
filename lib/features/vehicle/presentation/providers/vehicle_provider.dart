@@ -136,15 +136,19 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
-    // SRS 9.3: حركة غير معروفة (speed null) لا تُعامل كتوقف
-    if (speedMps == null) {
-      state = state.copyWith(isLoading: false, error: 'motionUnknown');
+    // SRS 9.4: المركبة قيد الحركة — الرفض مع تسجيله في سجل التدقيق
+    if (speedMps != null && speedMps * 3.6 >= thresholdKmh) {
+      state = state.copyWith(isLoading: false, error: 'vehicleMoving');
       return;
     }
 
-    // SRS 9.4: المركبة قيد الحركة — الرفض مع تسجيله في سجل التدقيق
-    if (speedMps * 3.6 >= thresholdKmh) {
-      state = state.copyWith(isLoading: false, error: 'vehicleMoving');
+    // SRS 9.3: حركة غير معروفة (speed null) لا تُعامل كتوقف
+    // يُطبَّق قيد جهالة الحركة عند وجود جلسة لمركبة نشطة مسبقاً (منع التبديل أثناء القيادة)
+    final hasActiveSession = state.vehicles.any((v) => v.activeForCurrentDriver == true) ||
+        (state.selectedVehicle != null && state.selectedVehicle?.id != 'No Vehicle');
+
+    if (hasActiveSession && speedMps == null) {
+      state = state.copyWith(isLoading: false, error: 'motionUnknown');
       return;
     }
 
