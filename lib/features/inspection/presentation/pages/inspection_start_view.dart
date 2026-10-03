@@ -34,6 +34,12 @@ class InspectionStartView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenAsync = ref.watch(dotInspectionScreenProvider);
     final screen = screenAsync.asData?.value;
+    // fail-closed مع تمييز الحالات: قبل وصول الرد الأزرار مقفلة بلا رسالة
+    // رفض (الخادم لم يُسأل بعد) — الرفض يُعرض فقط عند وجود جواب فعلي.
+    final capabilitiesReady = screen != null;
+    bool enabled(bool serverFlag) => capabilitiesReady && serverFlag;
+    String? denial(bool serverFlag, String message) =>
+        capabilitiesReady && !serverFlag ? message : null;
     final error = ref.watch(inspectionProvider.select((s) => s.error));
     final loc = context.loc;
     final isArabic = context.isArabic;
@@ -50,31 +56,43 @@ class InspectionStartView extends ConsumerWidget {
         title: text(screen?.guidanceText, loc.inspectLogs24),
         description: text(screen?.handOverDeviceNotice, loc.setPinGuidance),
         buttonLabel: loc.startInspectionUpper,
-        enabled: screen?.canStartInspection ?? false,
-        disabledMessage: loc.serverDoesNotAllow,
+        enabled: enabled(screen?.canStartInspection ?? false),
+        disabledMessage: denial(
+          screen?.canStartInspection ?? false,
+          loc.serverDoesNotAllow,
+        ),
         onPressed: onStartInspection,
       ),
       InspectionSectionData(
         title: loc.sendLogsFor24,
         description: loc.sendLogsToOfficer,
         buttonLabel: loc.sendLogsUpper,
-        enabled: screen?.canSendLogs ?? false,
-        disabledMessage: loc.notAllowedByServer,
+        enabled: enabled(screen?.canSendLogs ?? false),
+        disabledMessage: denial(
+          screen?.canSendLogs ?? false,
+          loc.notAllowedByServer,
+        ),
         onPressed: () => _push(context, const SendLogsPage()),
       ),
       InspectionSectionData(
         title: loc.emailLogs24Pdf,
         description: loc.emailLogsPdf,
         buttonLabel: loc.emailLogsUpper,
-        enabled: screen?.canEmailLogs ?? false,
-        disabledMessage: loc.notAllowedByServer,
+        enabled: enabled(screen?.canEmailLogs ?? false),
+        disabledMessage: denial(
+          screen?.canEmailLogs ?? false,
+          loc.notAllowedByServer,
+        ),
         onPressed: () => _push(context, const SendLogsPage(isEmailMode: true)),
       ),
       InspectionSectionData(
         title: text(screen?.carrierComplianceStatement, loc.eldCertifies),
         buttonLabel: loc.infoPacketUpper,
-        enabled: screen?.canViewInformationPacket ?? false,
-        disabledMessage: loc.notAllowedByServer,
+        enabled: enabled(screen?.canViewInformationPacket ?? false),
+        disabledMessage: denial(
+          screen?.canViewInformationPacket ?? false,
+          loc.notAllowedByServer,
+        ),
         onPressed: () => context.push(AppRoutes.infoPacket),
       ),
     ];
@@ -82,6 +100,11 @@ class InspectionStartView extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
+        if (screenAsync.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
         if (error != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
