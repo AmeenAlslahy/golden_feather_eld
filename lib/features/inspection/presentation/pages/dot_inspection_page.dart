@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
@@ -17,7 +18,20 @@ import '../widgets/inspection_events_table.dart';
 import '../widgets/inspection_log_header_table.dart';
 import 'send_logs_page.dart';
 
-/// شاشة DOT Inspection
+/// سياسة عرض نصوص التوجيه (SRS 8.1): نصوص الخادم إنجليزية فقط — في
+/// العربية تُعرض الترجمة المحلية، وفي الإنجليزية نص الخادم إن وُجد
+/// وإلا الترجمة المحلية. دالة صرفة قابلة للاختبار بلا widget.
+String inspectionDisplayText({
+  required bool isArabic,
+  required String? serverText,
+  required String localFallback,
+}) {
+  final value = serverText?.trim() ?? '';
+  return (isArabic || value.isEmpty) ? localFallback : value;
+}
+
+/// شاشة DOT Inspection — غلاف رقيق: يقرر أي عرض يُبنى ويمتلك بوابة
+/// البدء/الخروج (حوارا PIN)؛ العرضان أنفسهما أدناه.
 class DotInspectionPage extends ConsumerStatefulWidget {
   const DotInspectionPage({super.key});
 
@@ -36,9 +50,8 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final inspectionState = ref.watch(inspectionProvider);
-    final locked =
-        inspectionState.isInspectionMode && inspectionState.isPinLocked;
+    final state = ref.watch(inspectionProvider);
+    final locked = state.isInspectionMode && state.isPinLocked;
 
     return PopScope(
       canPop: !locked,
@@ -68,63 +81,80 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                 ),
         ),
         drawer: locked ? null : const EldDrawer(),
-        body: inspectionState.isLoading
+        body: state.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : !inspectionState.isInspectionMode
-            ? _buildStartInspection()
-            : _buildInspectionView(inspectionState),
+            : !state.isInspectionMode
+            ? InspectionStartView(onStartInspection: _startWithPin)
+            : InspectionActiveView(
+                state: state,
+                onExitRequest: _promptDriverExit,
+              ),
       ),
     );
   }
 
-  Widget _buildStartInspection() {
-    final error = ref.watch(inspectionProvider).error;
-    final screenAsync = ref.watch(dotInspectionScreenProvider);
-    final screen = screenAsync.asData?.value;
-    // نصوص الخادم إنجليزية فقط: في العربية نعرض الترجمات المحلية،
-    // وفي الإنجليزية نعرض نص الخادم (SRS 8.1: الخادم يخصص الإرشاد).
-    final useLocalText = context.isArabic;
-    String serverOrLocal(String? serverText, String local) {
-      final v = serverText?.trim() ?? '';
-      return (useLocalText || v.isEmpty) ? local : v;
-    }
+  Future<void> _startWithPin() async {
+    final pin = await _askNewPin();
+    if (pin == null || !mounted) return;
+    await ref.read(inspectionProvider.notifier).startInspection(pin: pin);
+  }
 
-    final guidance = serverOrLocal(
-      screen?.guidanceText,
-      context.loc.inspectLogs24,
+  Future<String?> _askNewPin() {
+    // The dialog owns its controllers: disposing them right after
+    // `showDialog` returns throws during the exit animation.
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _InspectionPinDialog(),
     );
-    final handOver = serverOrLocal(
-      screen?.handOverDeviceNotice,
-      context.loc.setPinGuidance,
+  }
+
+  Future<void> _promptDriverExit() {
+    // الخروج يتم داخل الحوار عبر exitWithPin — الحالة تعاد كاملة
+    // وإعادة البناء تجري من تلقاء نفسها.
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _DriverExitDialog(),
     );
-    final compliance = serverOrLocal(
-      screen?.carrierComplianceStatement,
-      context.loc.eldCertifies,
-    );
-    // fail-closed: حتى يجيب الخادم تبقى الأزرار مقفلة — جهاز امتثال لا
-    // يفتح إجراءات التفتيش بناءً على غياب الجواب.
-    final canStart = screen?.canStartInspection ?? false;
-    final canSend = screen?.canSendLogs ?? false;
-    final canEmail = screen?.canEmailLogs ?? false;
-    final canPacket = screen?.canViewInformationPacket ?? false;
-    final notAllowed = context.loc.notAllowedByServer;
+  }
+}
+
+// =============================================================================
+// عرض البداية — الإرشاد + الصلاحيات الأربع من الخادم (fail-closed)
+// =============================================================================
+
+class InspectionStartView extends ConsumerWidget {
+  const InspectionStartView({super.key, required this.onStartInspection});
+
+  /// بوابة الدخول: حوار PIN ثم startInspection — يملكها الصفحة الأم.
+  final VoidCallback onStartInspection;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final screenAsync = ref.watch(dotInspectionScreenProvider);
+    final lifecycleError = ref.watch(inspectionProvider.select((s) => s.error));
+    final screen = screenAsync.asData?.value;
+    final loc = context.loc;
+    final isArabic = context.isArabic;
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-          child: Column(
-            children: [
-              if (error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    error,
-                    textAlign: TextAlign.center,
-                    style: context.styles.error,
-                  ),
-                ),
-              if (screenAsync.hasError) ...[
+        if (lifecycleError != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            child: Text(
+              lifecycleError,
+              textAlign: TextAlign.center,
+              style: context.styles.error,
+            ),
+          ),
+        if (screenAsync.hasError)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Column(
+              children: [
                 Text(
                   context.loc.errRequestFailed,
                   textAlign: TextAlign.center,
@@ -134,174 +164,154 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                   onPressed: () => ref.invalidate(dotInspectionScreenProvider),
                   child: Text(context.loc.retryAction),
                 ),
-                const SizedBox(height: 8),
               ],
-              Text(
-                guidance,
-                textAlign: TextAlign.center,
-                style: context.styles.body,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                handOver,
-                textAlign: TextAlign.center,
-                style: context.styles.muted,
-              ),
-              const SizedBox(height: 16),
-              AppButton(
-                label: context.loc.startInspectionUpper,
-                type: EldButtonType.dark,
-                onPressed: canStart ? _startWithPin : null,
-              ),
-              if (!canStart) ...[
-                const SizedBox(height: 8),
-                Text(
-                  context.loc.serverDoesNotAllow,
-                  textAlign: TextAlign.center,
-                  style: context.styles.muted,
-                ),
-              ],
-            ],
+            ),
+          ),
+        InspectionActionSection(
+          title: inspectionDisplayText(
+            isArabic: isArabic,
+            serverText: screen?.guidanceText,
+            localFallback: loc.inspectLogs24,
+          ),
+          description: inspectionDisplayText(
+            isArabic: isArabic,
+            serverText: screen?.handOverDeviceNotice,
+            localFallback: loc.setPinGuidance,
+          ),
+          buttonLabel: loc.startInspectionUpper,
+          enabled: screen?.canStartInspection ?? false,
+          disabledMessage: loc.serverDoesNotAllow,
+          onPressed: onStartInspection,
+        ),
+        const Divider(height: 1, thickness: 1),
+        InspectionActionSection(
+          title: loc.sendLogsFor24,
+          description: loc.sendLogsToOfficer,
+          buttonLabel: loc.sendLogsUpper,
+          enabled: screen?.canSendLogs ?? false,
+          disabledMessage: loc.notAllowedByServer,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SendLogsPage()),
           ),
         ),
-
         const Divider(height: 1, thickness: 1),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            children: [
-              Text(
-                context.loc.sendLogsFor24,
-                textAlign: TextAlign.center,
-                style: context.styles.body,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.loc.sendLogsToOfficer,
-                textAlign: TextAlign.center,
-                style: context.styles.muted,
-              ),
-              const SizedBox(height: 16),
-              AppButton(
-                label: context.loc.sendLogsUpper,
-                type: EldButtonType.dark,
-                onPressed: canSend
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SendLogsPage(),
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-              if (!canSend) ...[
-                const SizedBox(height: 8),
-                Text(
-                  notAllowed,
-                  textAlign: TextAlign.center,
-                  style: context.styles.muted,
-                ),
-              ],
-            ],
+        InspectionActionSection(
+          title: loc.emailLogs24Pdf,
+          description: loc.emailLogsPdf,
+          buttonLabel: loc.emailLogsUpper,
+          enabled: screen?.canEmailLogs ?? false,
+          disabledMessage: loc.notAllowedByServer,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const SendLogsPage(isEmailMode: true),
+            ),
           ),
         ),
-
         const Divider(height: 1, thickness: 1),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            children: [
-              Text(
-                context.loc.emailLogs24Pdf,
-                textAlign: TextAlign.center,
-                style: context.styles.body,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.loc.emailLogsPdf,
-                textAlign: TextAlign.center,
-                style: context.styles.muted,
-              ),
-              const SizedBox(height: 16),
-              AppButton(
-                label: context.loc.emailLogsUpper,
-                type: EldButtonType.dark,
-                onPressed: canEmail
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                const SendLogsPage(isEmailMode: true),
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-              if (!canEmail) ...[
-                const SizedBox(height: 8),
-                Text(
-                  notAllowed,
-                  textAlign: TextAlign.center,
-                  style: context.styles.muted,
-                ),
-              ],
-            ],
+        InspectionActionSection(
+          title: inspectionDisplayText(
+            isArabic: isArabic,
+            serverText: screen?.carrierComplianceStatement,
+            localFallback: loc.eldCertifies,
           ),
-        ),
-
-        const Divider(height: 1, thickness: 1),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            children: [
-              Text(
-                compliance,
-                textAlign: TextAlign.center,
-                style: context.styles.body,
-              ),
-              const SizedBox(height: 16),
-              AppButton(
-                label: context.loc.infoPacketUpper,
-                type: EldButtonType.dark,
-                onPressed: canPacket
-                    ? () => context.push(AppRoutes.infoPacket)
-                    : null,
-              ),
-              if (!canPacket) ...[
-                const SizedBox(height: 8),
-                Text(
-                  notAllowed,
-                  textAlign: TextAlign.center,
-                  style: context.styles.muted,
-                ),
-              ],
-            ],
-          ),
+          buttonLabel: loc.infoPacketUpper,
+          enabled: screen?.canViewInformationPacket ?? false,
+          disabledMessage: loc.notAllowedByServer,
+          onPressed: () => context.push(AppRoutes.infoPacket),
         ),
         const SizedBox(height: 32),
       ],
     );
   }
+}
 
-  Widget _buildInspectionView(InspectionState state) {
+/// قسم إجراء واحد في عرض البداية: عنوان + وصف اختياري + زر + رسالة رفض
+/// عند تعطيل الزر. (كانت أربعة أقسام مكررة يدوياً.)
+class InspectionActionSection extends StatelessWidget {
+  const InspectionActionSection({
+    super.key,
+    required this.title,
+    required this.buttonLabel,
+    required this.enabled,
+    required this.onPressed,
+    this.description,
+    this.disabledMessage,
+  });
+
+  final String title;
+  final String? description;
+  final String buttonLabel;
+  final bool enabled;
+  final VoidCallback? onPressed;
+  final String? disabledMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      child: Column(
+        children: [
+          Text(title, textAlign: TextAlign.center, style: context.styles.body),
+          if (description != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              description!,
+              textAlign: TextAlign.center,
+              style: context.styles.muted,
+            ),
+          ],
+          const SizedBox(height: 16),
+          AppButton(
+            label: buttonLabel,
+            type: EldButtonType.dark,
+            onPressed: enabled ? onPressed : null,
+          ),
+          if (!enabled && disabledMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              disabledMessage!,
+              textAlign: TextAlign.center,
+              style: context.styles.muted,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// عرض التفتيش النشط — محمي بـ PIN؛ التاريخ والسجل زوج ذري من الحالة
+// =============================================================================
+
+DotInspectionCycleDay? _selectedCycleDay(InspectionState state) {
+  final index = state.selectedDayIndex;
+  if (index < 0 || index >= state.cycle.length) return null;
+  return state.cycle[index];
+}
+
+class InspectionActiveView extends ConsumerWidget {
+  const InspectionActiveView({
+    super.key,
+    required this.state,
+    required this.onExitRequest,
+  });
+
+  final InspectionState state;
+  final VoidCallback onExitRequest;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final log = state.log;
-    final day =
-        state.selectedDayIndex >= 0 &&
-            state.selectedDayIndex < state.cycle.length
-        ? state.cycle[state.selectedDayIndex]
-        : null;
-    final loc = context.loc;
+    final day = _selectedCycleDay(state);
     final account = ref.watch(accountProvider).accountData;
     final co = ref.watch(codriverProvider).currentCoDriver;
     // dayError خاص بتحميل اليوم؛ error lifecycle/بدء فقط — الأولوية
     // لخطأ اليوم في هذه الشاشة حتى لا يضيع خلف رسالة أقدم.
     final bannerError = state.dayError ?? state.error;
+
     return Column(
       children: [
         if (bannerError != null)
@@ -316,56 +326,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
               ),
             ),
           ),
-        Container(
-          color: AppColors.primaryGold.withValues(alpha: 0.05),
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                // Option A: الأسهم معطلة أثناء تحميل اليوم — الفهرس
-                // والسجل لا يتقدمان قبل نجاح الطلب (selectDay هو من
-                // يزامنهما داخل الـ notifier).
-                onPressed:
-                    state.isDayLoading ||
-                        state.selectedDayIndex >= state.cycle.length - 1
-                    ? null
-                    : () => ref
-                          .read(inspectionProvider.notifier)
-                          .selectDay(state.selectedDayIndex + 1),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    day?.displayDate.isNotEmpty == true
-                        ? day!.displayDate
-                        : (log?.displayDate ?? ''),
-                    key: const Key('inspection-day-label'),
-                    style: context.styles.bodyBold,
-                  ),
-                  if (state.isDayLoading) ...[
-                    const SizedBox(width: AppSpacing.sm),
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ],
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: state.isDayLoading || state.selectedDayIndex <= 0
-                    ? null
-                    : () => ref
-                          .read(inspectionProvider.notifier)
-                          .selectDay(state.selectedDayIndex - 1),
-              ),
-            ],
-          ),
-        ),
+        _DaySelector(state: state),
         const Divider(height: 1),
         Expanded(
           child: log == null
@@ -399,9 +360,9 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: AppButton(
-                          label: loc.driverExit,
+                          label: context.loc.driverExit,
                           type: EldButtonType.danger,
-                          onPressed: _promptDriverExit,
+                          onPressed: onExitRequest,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
@@ -412,32 +373,71 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
       ],
     );
   }
+}
 
-  Future<void> _startWithPin() async {
-    final pin = await _askNewPin();
-    if (pin == null || !mounted) return;
-    await ref.read(inspectionProvider.notifier).startInspection(pin: pin);
-  }
+/// شريط التنقل بين أيام الدورة — السهمان يعطلان أثناء أي تحميل يوم،
+/// والتاريخ لا يتقدم قبل نجاح الطلب (الالتزام الذري في الـ notifier).
+class _DaySelector extends ConsumerWidget {
+  const _DaySelector({required this.state});
 
-  Future<String?> _askNewPin() {
-    // The dialog owns its controllers: disposing them right after
-    // `showDialog` returns throws during the exit animation.
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _InspectionPinDialog(),
+  final InspectionState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final day = _selectedCycleDay(state);
+    return Container(
+      color: AppColors.primaryGold.withValues(alpha: 0.05),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed:
+                state.isDayLoading ||
+                    state.selectedDayIndex >= state.cycle.length - 1
+                ? null
+                : () => ref
+                      .read(inspectionProvider.notifier)
+                      .selectDay(state.selectedDayIndex + 1),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                day?.displayDate.isNotEmpty == true
+                    ? day!.displayDate
+                    : (state.log?.displayDate ?? ''),
+                key: const Key('inspection-day-label'),
+                style: context.styles.bodyBold,
+              ),
+              if (state.isDayLoading) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ],
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right),
+            onPressed: state.isDayLoading || state.selectedDayIndex <= 0
+                ? null
+                : () => ref
+                      .read(inspectionProvider.notifier)
+                      .selectDay(state.selectedDayIndex - 1),
+          ),
+        ],
+      ),
     );
-  }
-
-  Future<void> _promptDriverExit() async {
-    await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _DriverExitDialog(),
-    );
-    // الخروج يعيد state الـ provider بالكامل — لا تنظيف محلي هنا.
   }
 }
+
+// =============================================================================
+// حوارا PIN (SRS 7.5)
+// =============================================================================
 
 /// Sets the 4-digit inspection PIN (SRS 7.5). Pops with the PIN or null.
 class _InspectionPinDialog extends StatefulWidget {

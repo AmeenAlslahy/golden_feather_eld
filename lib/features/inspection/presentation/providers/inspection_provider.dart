@@ -6,34 +6,45 @@ import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/localization/locale_provider.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/provider_cache.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../domain/inspection_transfer.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/utils/logger.dart';
-import '../../../../core/utils/provider_cache.dart';
 
-// --- State and Notifier ---
+// --- State ---
 
-/// حالة التفتيش
+/// حالة التفتيش — جواب سؤالين فقط:
+/// 1) هل نحن في وضع التفتيش؟ ([isInspectionMode] + [isPinLocked])
+/// 2) ماذا نعرض الآن؟ ([cycle] + [selectedDayIndex] + [log])
+///
+/// الكتابة تمر حصراً عبر تحولات [InspectionNotifier] المسماة؛ هذه
+/// الصفحة بيانات، والقراءة تتم من أسماء التحولات لا من copyWith.
 class InspectionState {
   final bool isInspectionMode;
   final bool isPinLocked;
+
+  /// رمز الخروج — يبقى في الذاكرة حتى يخرج السائق (SRS 7.5).
   final String? pinCode;
   final List<DotInspectionCycleDay> cycle;
 
-  /// اليوم المعروض ضمن [cycle] — يملكه الـ provider لا الصفحة، ويتقدم
-  /// مع السجل في commit واحد (انظر [InspectionNotifier.selectDay]).
+  /// اليوم المعروض ضمن [cycle] — يتقدم مع [log] في commit واحد.
   final int selectedDayIndex;
   final DotInspectionLog? log;
+
+  /// تحميل مسار البدء (startInspection) — لا يخفي شاشة تفتيش نشطة.
   final bool isLoading;
 
-  /// تحميل يوم بديل — مستقل عن [isLoading] (مسار البدء)؛ يحفظ آخر زوج
-  /// صالح معروضاً بدل إخفاء الشاشة كلها.
+  /// تحميل يوم بديل — يحفظ آخر زوج صالح معروضاً بدل إخفاء الشاشة.
   final bool isDayLoading;
+
+  /// خطأ lifecycle (بدء/إرسال) — النص جاهز للعرض.
   final String? error;
 
-  /// خطأ تحميل/تطابق اليوم فقط — منفصل عن [error] (lifecycle).
+  /// خطأ تحميل/تطابق اليوم فقط — منفصل عن [error].
   final String? dayError;
+
+  /// نص الخادم عند قبول نقل السجلات (شاشة Send Logs).
   final String? transferMessage;
 
   const InspectionState({
@@ -50,6 +61,8 @@ class InspectionState {
     this.transferMessage,
   });
 
+  /// المنفذ الميكانيكي الوحيد للكتابة — لا تستدعِها خارج تحولات
+  /// [InspectionNotifier]؛ الأعلام الـ `clear*` تفرّق "امسح" عن "أبقِ".
   InspectionState copyWith({
     bool? isInspectionMode,
     bool? isPinLocked,
@@ -112,6 +125,8 @@ final informationPacketProvider =
       return result.fold((error) => throw error, (packet) => packet);
     });
 
+// --- Notifier ---
+
 class InspectionNotifier extends StateNotifier<InspectionState> {
   final InspectionRepository _repository;
   final int _driverId;
@@ -130,48 +145,30 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     return anyErrorUserMessage(error, loc: _loc);
   }
 
-  /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
-  ///
-  /// لا نداء لـ `POST /eld/dot-inspection/start` هنا: الوضع حالة واجهة
-  /// محلية، والخادم يرفض الاستدعاء في هذه المرحلة (ينقصه حقول المفتش).
-  Future<void> startInspection({required String pin}) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearLog: true);
+  // =========================================================================
+  // تحولات الحالة المسماة — كل كتابة حالة في هذا الملف من هنا، والقراءة
+  // تتم بالأسماء: بدء، نشط، تحميل يوم، التزام يوم، فشل يوم، انتهاء.
+  // =========================================================================
 
-    if (_driverId <= 0) {
-      state = state.copyWith(
-        isLoading: false,
-        error: _loc.driverSessionMissingSignIn,
-      );
-      return;
-    }
+  InspectionState _starting() =>
+      state.copyWith(isLoading: true, clearError: true, clearLog: true);
 
-    final driver = DriverId(_driverId);
-    final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
-    if (!mounted) return;
-    final cycle = cycleResult.fold(
-      (_) => const <DotInspectionCycleDay>[],
-      (days) => days,
-    );
-    final logResult = cycle.isEmpty
-        ? await _repository.getLogs(driverId: driver)
-        : await _repository.getLogs(
-            driverId: driver,
-            date: cycle.first.logDate,
-          );
-    if (!mounted) return;
+  /// رفض قبل أي طلب (تحقق مدخلات) — يمسح رسالة نجاح سابقة.
+  InspectionState _refused(String message) => state.copyWith(
+    isLoading: false,
+    error: message,
+    clearTransferMessage: true,
+  );
 
-    final log = logResult.fold((_) => null, (log) => log);
-    final logError = logResult.fold(_message, (_) => null);
-    if (cycle.isEmpty && log == null) {
-      state = state.copyWith(
-        isLoading: false,
-        isInspectionMode: false,
-        error: logError ?? cycleResult.fold(_message, (_) => null),
-      );
-      return;
-    }
+  InspectionState _startFailed(String message) =>
+      state.copyWith(isLoading: false, isInspectionMode: false, error: message);
 
-    state = state.copyWith(
+  InspectionState _active({
+    required String pin,
+    required List<DotInspectionCycleDay> cycle,
+    required DotInspectionLog? log,
+  }) {
+    return state.copyWith(
       isLoading: false,
       isInspectionMode: true,
       isPinLocked: true,
@@ -185,6 +182,83 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     );
   }
 
+  InspectionState _dayLoadStarted() =>
+      state.copyWith(isDayLoading: true, clearDayError: true);
+
+  /// الالتزام الذري: الفهرس والسجل يتحركان معاً أم لا يتحركان.
+  InspectionState _dayCommitted(int index, DotInspectionLog log) =>
+      state.copyWith(
+        selectedDayIndex: index,
+        log: log,
+        isDayLoading: false,
+        clearDayError: true,
+      );
+
+  /// فشل تحميل اليوم — آخر زوج صالح يبقى معروضاً (لا clearLog).
+  InspectionState _dayFailed(String message) =>
+      state.copyWith(isDayLoading: false, dayError: message);
+
+  InspectionState _ended() => const InspectionState();
+
+  InspectionState _sending() => state.copyWith(
+    isLoading: true,
+    clearError: true,
+    clearTransferMessage: true,
+  );
+
+  /// فشل نقل — يبقي transferMessage القديمة (سلوك محفوظ حرفياً عن
+  /// الكود السابق؛ فصل أخطاء الإرسال لالتزام I8 لاحق).
+  InspectionState _sendFailed(String message) =>
+      state.copyWith(isLoading: false, error: message);
+
+  InspectionState _sendAccepted(String text) =>
+      state.copyWith(isLoading: false, clearError: true, transferMessage: text);
+
+  // =========================================================================
+  // الأوامر — الواجهة تستدعي هذه فقط.
+  // =========================================================================
+
+  /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
+  ///
+  /// لا نداء لـ `POST /eld/dot-inspection/start` هنا: الوضع حالة واجهة
+  /// محلية، والخادم يرفض الاستدعاء في هذه المرحلة (ينقصه حقول المفتش).
+  Future<void> startInspection({required String pin}) async {
+    state = _starting();
+
+    if (_driverId <= 0) {
+      state = _startFailed(_loc.driverSessionMissingSignIn);
+      return;
+    }
+
+    final driver = DriverId(_driverId);
+    final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
+    if (!mounted) return;
+    final cycle = cycleResult.fold(
+      (_) => const <DotInspectionCycleDay>[],
+      (days) => days,
+    );
+
+    final logResult = cycle.isEmpty
+        ? await _repository.getLogs(driverId: driver)
+        : await _repository.getLogs(
+            driverId: driver,
+            date: cycle.first.logDate,
+          );
+    if (!mounted) return;
+
+    final log = logResult.fold((_) => null, (log) => log);
+    if (cycle.isEmpty && log == null) {
+      // لا بيانات قابلة للعرض إطلاقاً — لا دخول لوضع التفتيش.
+      state = _startFailed(
+        logResult.fold(_message, (_) => _loc.errRequestFailed),
+      );
+      return;
+    }
+
+    state = _active(pin: pin, cycle: cycle, log: log);
+  }
+
+  /// الخروج بالرمز — تحقق محلي، لا شبكة (SRS 7.5).
   bool exitWithPin(String pin) {
     if (state.pinCode == null || pin != state.pinCode) return false;
     endInspection();
@@ -193,53 +267,40 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   /// تغيير اليوم المعروض — الأمر الوحيد الذي يملك مزامنة index ↔ log.
   ///
-  /// العقد (Option A): أثناء التحميل يبقى آخر زوج صالح (فهرس + سجل)
-  /// معروضاً كما هو؛ الاثنان يُكتبان معاً في commit واحد عند نجاح الطلب
-  /// فقط، وبعد تحقق أن سجل الرد يخص التاريخ المطلوب فعلاً. الفشل يغيّر
-  /// [InspectionState.dayError] وحده — لا يمس الزوج المعروض ولا يمحوه.
+  /// العقد (Option A): أثناء التحميل يبقى آخر زوج صالح معروضاً كما هو؛
+  /// الاثنان يُكتبان معاً عند نجاح الطلب فقط، وبعد تحقق أن سجل الرد
+  /// يخص التاريخ المطلوب فعلاً. الفشل يغيّر dayError وحده.
   Future<void> selectDay(int index) async {
-    if (state.isDayLoading) return; // تسلسل بنيوي: لا طلبات متوازية
-    if (index < 0 || index >= state.cycle.length) return;
-    if (index == state.selectedDayIndex) return;
+    if (state.isDayLoading) return; // ① لا طلبات متوازية
+    if (index < 0 || index >= state.cycle.length) return; // ② الحدود
+    if (index == state.selectedDayIndex) return; // ③ اليوم نفسه معروض
     if (_driverId <= 0) return;
 
     final requestedDate = state.cycle[index].logDate;
-    state = state.copyWith(isDayLoading: true, clearDayError: true);
+    state = _dayLoadStarted(); // ④ آخر زوج صالح يبقى معروضاً
+
     final result = await _repository.getLogs(
       driverId: DriverId(_driverId),
       date: requestedDate,
     );
     if (!mounted) return;
-    result.fold(
-      (error) => state = state.copyWith(
-        isDayLoading: false,
-        dayError: _message(error),
-      ),
-      (log) {
-        // Backstop ضد الرد القديم/غير المتطابق: لا commit ولا fallback
-        // تاريخ — الرد الذي لا يخص اليوم المطلوب يُرفض كفشل. السبب في
-        // السجلات فقط؛ المستخدم يرى رسالة عامة عبر anyErrorUserMessage.
-        if (!_sameCycleDay(log.logDate, requestedDate)) {
-          AppLogger.warning(
-            'selectDay: response logDate does not match requested cycle '
-            'day — refused ($requestedDate)',
-          );
-          state = state.copyWith(
-            isDayLoading: false,
-            dayError: _message(
-              const ServerFailure(message: 'day log mismatch'),
-            ),
-          );
-          return;
-        }
-        state = state.copyWith(
-          selectedDayIndex: index,
-          log: log,
-          isDayLoading: false,
-          clearDayError: true,
+
+    result.fold((error) => state = _dayFailed(_message(error)), (log) {
+      // ⑤ Backstop ضد الرد القديم/غير المتطابق: لا commit ولا
+      // fallback تاريخ — السبب في السجلات فقط، والمستخدم يرى رسالة
+      // عامة عبر anyErrorUserMessage.
+      if (!_sameCycleDay(log.logDate, requestedDate)) {
+        AppLogger.warning(
+          'selectDay: response logDate does not match requested cycle '
+          'day — refused ($requestedDate)',
         );
-      },
-    );
+        state = _dayFailed(
+          _message(const ServerFailure(message: 'day log mismatch')),
+        );
+        return;
+      }
+      state = _dayCommitted(index, log); // ⑥ الالتزام الذري
+    });
   }
 
   /// هوية يوم الدورة: مقارنة تقويمية على القيم كما حللها الـ mapper —
@@ -248,12 +309,14 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// إنهاء التفتيش
+  /// إنهاء التفتيش — يعيد الحالة كاملة إلى الافتراضي.
   void endInspection() {
-    state = const InspectionState();
+    state = _ended();
   }
 
-  /// إرسال السجلات
+  /// إرسال السجلات (SRS 8.4) — النتيجة تُعرض من state.error /
+  /// transferMessage (فصل أخطاء الإرسال إلى شاشة الإرسال نفسها هو
+  /// تحسين لاحق مستقل، I8).
   Future<bool> sendLogs(
     TransferMethod method, {
     String? email,
@@ -261,27 +324,15 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     required String comment,
   }) async {
     if (!isValidInspectionComment(comment)) {
-      state = state.copyWith(
-        isLoading: false,
-        error: _loc.inspectionCommentErrorLength,
-        clearTransferMessage: true,
-      );
+      state = _refused(_loc.inspectionCommentErrorLength);
       return false;
     }
     if (_driverId <= 0) {
-      state = state.copyWith(
-        isLoading: false,
-        error: _loc.driverSessionMissingSignIn,
-        clearTransferMessage: true,
-      );
+      state = _refused(_loc.driverSessionMissingSignIn);
       return false;
     }
 
-    state = state.copyWith(
-      isLoading: true,
-      clearError: true,
-      clearTransferMessage: true,
-    );
+    state = _sending();
     final driver = DriverId(_driverId);
     final recipient = email?.trim() ?? '';
     final route = routingCode?.trim();
@@ -296,16 +347,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (!mounted) return false;
     return result.fold(
       (error) {
-        state = state.copyWith(isLoading: false, error: _message(error));
+        state = _sendFailed(_message(error));
         return false;
       },
       (outcome) {
-        state = state.copyWith(
-          isLoading: false,
-          clearError: outcome.accepted,
-          error: outcome.accepted ? null : outcome.text,
-          transferMessage: outcome.accepted ? outcome.text : null,
-        );
+        state = outcome.accepted
+            ? _sendAccepted(outcome.text)
+            : _sendFailed(outcome.text);
         return outcome.accepted;
       },
     );

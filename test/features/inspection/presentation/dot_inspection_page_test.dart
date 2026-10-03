@@ -164,6 +164,34 @@ class _LockedInspection extends InspectionNotifier {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test('inspectionDisplayText policy (SRS 8.1): Arabic shows the local '
+      'translation, English shows the server text when present', () {
+    expect(
+      inspectionDisplayText(
+        isArabic: true,
+        serverText: 'Server guidance',
+        localFallback: 'Local',
+      ),
+      'Local',
+    );
+    expect(
+      inspectionDisplayText(
+        isArabic: false,
+        serverText: 'Server guidance',
+        localFallback: 'Local',
+      ),
+      'Server guidance',
+    );
+    expect(
+      inspectionDisplayText(
+        isArabic: false,
+        serverText: '   ',
+        localFallback: 'Local',
+      ),
+      'Local',
+    );
+  });
+
   Future<void> pump(WidgetTester tester, {bool allowStart = false}) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
