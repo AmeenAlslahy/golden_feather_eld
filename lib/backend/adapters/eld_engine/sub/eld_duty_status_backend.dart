@@ -35,15 +35,6 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   }
 
   @override
-  Future<Result<RawJson>> getEditForm(DutyStatusId statusId) async {
-    final res = await _apiClient.get<RawJson>(
-      EldEndpoints.editDutyStatusForm(statusId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
   Future<Result<RawJson>> getGraphGrid({
     DriverId? driverId,
     required DateTime logDate,

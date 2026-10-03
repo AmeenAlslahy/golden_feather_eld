@@ -47,15 +47,6 @@ class EldDriverSessionBackend implements DriverSessionBackend {
   }
 
   @override
-  Future<Result<RawJson>> getMembers(int sessionId) async {
-    final res = await _apiClient.get<RawJson>(
-      EldEndpoints.sessionMembers(sessionId),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,

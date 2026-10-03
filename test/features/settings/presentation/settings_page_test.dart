@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/backend/contracts/config_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/account_backend.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -21,14 +20,11 @@ class _Storage extends Mock implements LocalStorageService {}
 class _Adapter extends Mock implements BackendAdapter {}
 
 class _Account extends Mock implements AccountBackend {}
-class _Config extends Mock implements ConfigBackend {}
-
 /// Settings — interface language, theme and server URL. The read-only
 /// fleet settings card was removed by product decision, so there is no
 /// `GET /eld/config/settings` coverage here anymore.
 void main() {
   late _Storage storage;
-  late _Config config;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -40,7 +36,6 @@ void main() {
     when(() => storage.setTheme(any())).thenAnswer((_) async {});
     when(() => storage.setServerUrl(any())).thenAnswer((_) async {});
     when(() => storage.setBackendType(any())).thenAnswer((_) async {});
-    config = _Config();
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -53,7 +48,6 @@ void main() {
     final account = _Account();
     when(() => account.getMyAccount()).thenAnswer((_) async => const Left(UnknownError(code: 'test')));
     when(() => adapter.account).thenReturn(account);
-    when(() => adapter.config).thenReturn(config);
     when(() => adapter.isMock).thenReturn(true);
 
 

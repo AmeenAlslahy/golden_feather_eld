@@ -13,11 +13,6 @@ import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 
-// final fleetSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-//   final result = await ref.watch(configBackendProvider).getSettings();
-//   return result.fold((error) => throw error, (json) => json);
-// });
-
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 

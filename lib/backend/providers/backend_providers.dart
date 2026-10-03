@@ -11,7 +11,6 @@ import '../../core/services/local_storage_service.dart';
 import '../../core/network/core_providers.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';
-import '../contracts/config_backend.dart';
 import '../contracts/daily_logs_backend.dart';
 import '../contracts/driver_session_backend.dart';
 import '../contracts/duty_status_backend.dart';
@@ -65,11 +64,6 @@ final authBackendProvider = Provider<AuthBackend>((ref) {
 final accountBackendProvider = Provider<AccountBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
   return adapter.account ?? (throw StateError('AccountBackend not supported by active adapter'));
-});
-
-final configBackendProvider = Provider<ConfigBackend>((ref) {
-  final adapter = ref.watch(activeBackendProvider);
-  return adapter.config ?? (throw StateError('ConfigBackend not supported by active adapter'));
 });
 
 final dailyLogsBackendProvider = Provider<DailyLogsBackend>((ref) {

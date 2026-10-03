@@ -26,10 +26,6 @@ class MockDriverSessionBackend implements DriverSessionBackend {
   }
 
   @override
-  Future<Result<RawJson>> getMembers(int sessionId) =>
-      throw UnimplementedError('MockDriverSessionBackend.getMembers — Phase 2');
-
-  @override
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,

@@ -1,5 +1,4 @@
 import '../../core/result/result.dart';
-import '../../domain/hardware/telemetry_reading.dart';
 import '../../domain/shared/value_objects.dart';
 import 'raw_json.dart';
 
@@ -32,9 +31,4 @@ abstract interface class HardwareBackend {
     DriverId? driverId,
   });
 
-  /// POST /eld/hardware/telemetry
-  ///
-  /// Sends a real telemetry reading. **Never fabricate values.**
-  /// Nullable fields are omitted from the request.
-  Future<Result<void>> sendTelemetry(TelemetryReading reading);
 }

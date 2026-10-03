@@ -43,7 +43,6 @@ void main() {
       expect(adapter.unidentifiedEvents, isNotNull);
       expect(adapter.vehicle, isNotNull);
       expect(adapter.hardware, isNotNull);
-      expect(adapter.config, isNotNull);
     });
   });
 

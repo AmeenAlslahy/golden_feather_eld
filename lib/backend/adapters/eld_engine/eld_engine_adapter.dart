@@ -1,6 +1,5 @@
 import '../../contracts/account_backend.dart';
 import '../../contracts/auth_backend.dart';
-import '../../contracts/config_backend.dart';
 import '../../contracts/daily_logs_backend.dart';
 import '../../contracts/driver_session_backend.dart';
 import '../../contracts/duty_status_backend.dart';
@@ -17,7 +16,6 @@ import '../../core/backend_identity.dart';
 import '../../http/api_client.dart';
 import 'sub/eld_account_backend.dart';
 import 'sub/eld_auth_backend.dart';
-import 'sub/eld_config_backend.dart';
 import 'sub/eld_daily_logs_backend.dart';
 import 'sub/eld_driver_session_backend.dart';
 import 'sub/eld_duty_status_backend.dart';
@@ -93,9 +91,6 @@ class EldEngineAdapter implements BackendAdapter {
 
   @override
   late final HardwareBackend hardware = EldHardwareBackend(_apiClient);
-
-  @override
-  late final ConfigBackend config = EldConfigBackend(_apiClient);
 
   // ==========================================================================
 

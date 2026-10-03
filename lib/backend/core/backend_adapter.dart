@@ -1,5 +1,4 @@
 import '../contracts/account_backend.dart';
-import '../contracts/config_backend.dart';
 import '../contracts/daily_logs_backend.dart';
 import '../contracts/driver_session_backend.dart';
 import '../contracts/duty_status_backend.dart';
@@ -53,7 +52,6 @@ abstract class BackendAdapter {
 
   HardwareBackend? get hardware;
 
-  ConfigBackend? get config;
 
   SignatureBackend? get signature;
 

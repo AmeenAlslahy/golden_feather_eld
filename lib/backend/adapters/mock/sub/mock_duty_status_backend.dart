@@ -20,10 +20,6 @@ class MockDutyStatusBackend implements DutyStatusBackend {
       ok(<String, dynamic>{'id': statusId.value, ...update});
 
   @override
-  Future<Result<RawJson>> getEditForm(DutyStatusId statusId) =>
-      throw UnimplementedError('MockDutyStatusBackend.getEditForm — Phase 2');
-
-  @override
   Future<Result<RawJson>> getGraphGrid({
     DriverId? driverId,
     required DateTime logDate,

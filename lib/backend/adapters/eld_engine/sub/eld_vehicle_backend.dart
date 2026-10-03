@@ -47,14 +47,4 @@ class EldVehicleBackend implements VehicleBackend {
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
-  @override
-  Future<Result<List<dynamic>>> getLegacyVehicles() async {
-    final response = await _apiClient.get<List<dynamic>>(EldEndpoints.devices);
-    return response.map((res) {
-      if (res.isSuccess && res.data != null) {
-        return res.data!;
-      }
-      throw Exception(res.message ?? 'Failed to fetch vehicles');
-    });
-  }
 }

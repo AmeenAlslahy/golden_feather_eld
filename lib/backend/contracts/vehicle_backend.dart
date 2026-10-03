@@ -9,6 +9,4 @@ abstract interface class VehicleBackend {
   /// GET /eld/company-vehicles/my-vehicles
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId});
 
-  // --- Legacy methods for P5.5 ---
-  Future<Result<List<dynamic>>> getLegacyVehicles();
 }

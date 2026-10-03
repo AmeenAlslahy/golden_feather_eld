@@ -13,9 +13,6 @@ class EldEndpoints {
   // ==========================================================================
   /// جلسة
   static const String session = '/session';
-  /// أجهزة
-  static const String devices = '/devices';
-
   // ==========================================================================
   // ELD Module APIs (as per openapi.yaml)
   // ==========================================================================
@@ -97,20 +94,7 @@ class EldEndpoints {
   /// فحص المركبات السابق 
   static String dvirPrevious(String uniqueId) => '/eld/dvir/pre-trip/$uniqueId';
 
-  // 9. System Configuration
-  /// إعدادات النظام 
-  static const String config = '/eld/config';
-  /// Live contract: `GET /eld/config/settings`.
-  /// إعدادات قاعدة البيانات
-  static const String configDbSettings = '/eld/config/settings';
-  /// Live contract: `GET /eld/config/rules`.
-  /// قواعد العمل
-  static const String configRegulations = '/eld/config/rules';
-
   // 14. Roadside Inspection
-  /// POST /eld/dvir/sync — bulk offline DVIR sync
-  static const String dvirSync = '/eld/dvir/sync';
-
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
   /// تفتيش الطرق
   static const String inspections = '/eld/dot-inspection';
@@ -124,8 +108,6 @@ class EldEndpoints {
   static const String hardwareReadiness = '/eld/hardware/readiness';
   /// حالة الجهاز
   static const String hardwareStatus = '/eld/hardware/status';
-  /// قياسات الجهاز
-  static const String hardwareTelemetry = '/eld/hardware/telemetry';
 
   // Driver-scope contract paths (SRS §7.13, §7.15, §9.1, §11).
   /// الاحداث الغير معرفة 
