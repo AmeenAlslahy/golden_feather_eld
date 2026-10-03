@@ -4,6 +4,10 @@ import 'package:equatable/equatable.dart';
 class Vehicle extends Equatable {
   final String id;
   final String? uniqueId;
+
+  /// معرف جهاز المركبة الرقمي (Traccar deviceId) — مطلوب في جسم إنشاء
+  /// DVIR من الخادم؛ لا يُستبدل بـ uniqueId ولا يُخترع.
+  final int? deviceId;
   final String name;
   final String year;
   final String? type;
@@ -19,6 +23,7 @@ class Vehicle extends Equatable {
   const Vehicle({
     required this.id,
     this.uniqueId,
+    this.deviceId,
     required this.name,
     required this.year,
     this.type,
@@ -47,6 +52,7 @@ class Vehicle extends Equatable {
   List<Object?> get props => [
         id,
         uniqueId,
+        deviceId,
         name,
         year,
         type,

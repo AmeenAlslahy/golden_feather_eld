@@ -1,4 +1,5 @@
 import '../../domain/dvir_catalog.dart';
+import '../../domain/entities/dvir_report.dart';
 import '../../domain/dvir_vehicle.dart';
 
 /// بناء أجسام الطلب وقراءة أجسام الخادم لـ DVIR — كل التعامل مع الـ wire
@@ -17,16 +18,20 @@ List<DvirCatalogItem>? parseDvirCatalog(Object? body) {
     final code = _text(raw['code'] ?? raw['itemCode']);
     final name = _text(raw['name'] ?? raw['itemName']);
     if (code == null || name == null) continue;
-    items.add(DvirCatalogItem(
-      code: code,
-      name: name,
-      nameAr: _text(raw['nameAr']),
-      category: _text(raw['category']) ?? '',
-      mandatory: raw['statutoryMandatory'] == true || raw['mandatory'] == true,
-      critical: raw['criticalSafety'] == true ||
-          raw['safetyAffecting'] == true ||
-          raw['outOfService'] == true,
-    ));
+    items.add(
+      DvirCatalogItem(
+        code: code,
+        name: name,
+        nameAr: _text(raw['nameAr']),
+        category: _text(raw['category']) ?? '',
+        mandatory:
+            raw['statutoryMandatory'] == true || raw['mandatory'] == true,
+        critical:
+            raw['criticalSafety'] == true ||
+            raw['safetyAffecting'] == true ||
+            raw['outOfService'] == true,
+      ),
+    );
   }
   return items;
 }
@@ -93,6 +98,7 @@ List<Map<String, dynamic>> _defects({
 /// Returns null when a required create field is missing. Does not invent an id.
 Map<String, dynamic>? buildDvirCreateBody({
   required int? driverId,
+  required int? deviceId,
   required String uniqueId,
   required String status,
   required String? signatureData,
@@ -109,12 +115,32 @@ Map<String, dynamic>? buildDvirCreateBody({
   final vehicle = uniqueId.trim();
   final signature = signatureData?.trim() ?? '';
   if (driverId == null || driverId <= 0) return null;
+  // الخادم يرفض إنشاء الفحص بلا معرف جهاز المركبة (deviceId) — لا
+  // جسم ناقص ولا اختراع قيمة.
+  if (deviceId == null || deviceId <= 0) return null;
   // "No Vehicle" اسم معروض من لوحة القيادة، وليس مركبة — ولا جسم فارغ.
   if (isUnassignedVehicleId(vehicle)) return null;
   if (status.trim().isEmpty) return null;
   if (signature.isEmpty || signature.startsWith('signature_')) return null;
+  if (odometer != null &&
+      (odometer < 0 || odometer.isNaN || odometer.isInfinite)) {
+    return null;
+  }
+  final defects = _defects(
+    vehicle: vehicleDefects,
+    trailer: trailerDefects,
+    catalog: catalogDefects,
+  );
+  // DVIR-09: تقرير بعيوب لا يُقبل على السلك بحالة "سليمة" — مصالحة
+  // إلزامية إلى Has Defects (اتساق SRS 7.1/7.6، لا تناقض قانوني).
+  var wireStatus = status.trim();
+  if (defects.isNotEmpty &&
+      wireStatus == DvirConditionStatus.satisfactory.wire) {
+    wireStatus = DvirConditionStatus.hasDefects.wire;
+  }
   return {
     'driverId': driverId,
+    'deviceId': deviceId,
     'uniqueId': vehicle,
     'vehicleName': vehicle,
     'inspectionType': 'Pre-Trip',
@@ -124,12 +150,8 @@ Map<String, dynamic>? buildDvirCreateBody({
     'trailerNumber': trailerNumber,
     'companyName': companyName,
     'remarks': remarks,
-    'status': status.trim(),
-    'defects': _defects(
-      vehicle: vehicleDefects,
-      trailer: trailerDefects,
-      catalog: catalogDefects,
-    ),
+    'status': wireStatus,
+    'defects': defects,
     'signatureData': signature,
   };
 }

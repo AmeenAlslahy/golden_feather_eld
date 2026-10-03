@@ -22,18 +22,21 @@ enum DvirConditionStatus {
   satisfactory('Vehicle Condition Satisfactory'),
   hasDefects('Has Defects'),
   defectsCorrected('Defects Corrected'),
-  defectsNotCorrected('Defects Need Not Be Corrected');
+  defectsNotCorrected('Defects Need Not Be Corrected'),
+  unknown('Unknown');
 
   const DvirConditionStatus(this.wire);
   final String wire;
 
-  /// حالة غير معروفة → satisfactory (الافتراضي عند الإنشاء).
+  /// حالة غير معروفة → unknown (تحفظ الأمان، لا تتحول بصمت إلى satisfactory).
   static DvirConditionStatus fromWire(String? value) {
     final v = value?.trim() ?? '';
+    if (v.isEmpty) return DvirConditionStatus.unknown;
     for (final status in DvirConditionStatus.values) {
-      if (status.wire == v) return status;
+      if (status == DvirConditionStatus.unknown) continue;
+      if (status.wire.toLowerCase() == v.toLowerCase()) return status;
     }
-    return DvirConditionStatus.satisfactory;
+    return DvirConditionStatus.unknown;
   }
 }
 
@@ -56,9 +59,13 @@ enum VehicleOperationalStatus {
 class DvirReport extends Equatable {
   final String id;
   final InspectionType type;
-  final DateTime date;
+  final DateTime? date;
   final String driverName;
   final String vehicleId;
+
+  /// معرف جهاز المركبة الرقمي — شرط الخادم في POST /eld/dvir (لا
+  /// اختراع؛ يمر كما قرأته قائمة المركبات).
+  final int? deviceId;
   final String? trailerId;
   final double? odometer;
   final String? notes;
@@ -93,12 +100,29 @@ class DvirReport extends Equatable {
     return VehicleOperationalStatus.available;
   }
 
+  /// FMCSA requires retaining DVIR records for 3 months from the date of inspection.
+  /// يحسب 3 أشهر بدقة مع مراعاة نهايات الأشهر المختلفة.
+  DateTime? get retentionUntil {
+    final d = date;
+    if (d == null) return null;
+    var targetYear = d.year;
+    var targetMonth = d.month + 3;
+    if (targetMonth > 12) {
+      targetYear += (targetMonth - 1) ~/ 12;
+      targetMonth = (targetMonth - 1) % 12 + 1;
+    }
+    final daysInTargetMonth = DateTime(targetYear, targetMonth + 1, 0).day;
+    final targetDay = d.day > daysInTargetMonth ? daysInTargetMonth : d.day;
+    return DateTime(targetYear, targetMonth, targetDay, d.hour, d.minute);
+  }
+
   const DvirReport({
     required this.id,
     required this.type,
-    required this.date,
+    this.date,
     required this.driverName,
     required this.vehicleId,
+    this.deviceId,
     this.trailerId,
     this.odometer,
     this.notes,
@@ -128,6 +152,7 @@ class DvirReport extends Equatable {
     DateTime? date,
     String? driverName,
     String? vehicleId,
+    int? deviceId,
     String? trailerId,
     double? odometer,
     String? notes,
@@ -149,6 +174,7 @@ class DvirReport extends Equatable {
     String? reviewingDriverName,
     bool? nextDriverReviewed,
     List<DvirDefectSelection>? selectedDefects,
+    bool clearSelectedDefects = false,
   }) {
     return DvirReport(
       id: id ?? this.id,
@@ -156,6 +182,7 @@ class DvirReport extends Equatable {
       date: date ?? this.date,
       driverName: driverName ?? this.driverName,
       vehicleId: vehicleId ?? this.vehicleId,
+      deviceId: deviceId ?? this.deviceId,
       trailerId: trailerId ?? this.trailerId,
       odometer: odometer ?? this.odometer,
       notes: notes ?? this.notes,
@@ -176,7 +203,9 @@ class DvirReport extends Equatable {
       repairNotes: repairNotes ?? this.repairNotes,
       reviewingDriverName: reviewingDriverName ?? this.reviewingDriverName,
       nextDriverReviewed: nextDriverReviewed ?? this.nextDriverReviewed,
-      selectedDefects: selectedDefects ?? this.selectedDefects,
+      selectedDefects: clearSelectedDefects
+          ? const []
+          : (selectedDefects ?? this.selectedDefects),
     );
   }
 
@@ -187,6 +216,7 @@ class DvirReport extends Equatable {
         date,
         driverName,
         vehicleId,
+        deviceId,
         trailerId,
         odometer,
         notes,

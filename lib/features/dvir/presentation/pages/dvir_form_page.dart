@@ -22,6 +22,7 @@ import '../widgets/status_modal.dart';
 import '../widgets/defects_modal.dart';
 
 import '../providers/dvir_provider.dart';
+import '../extensions/dvir_status_extensions.dart';
 import '../widgets/previous_dvir_review_modal.dart';
 import '../../../../core/widgets/app_feedback.dart';
 
@@ -116,11 +117,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     // signature the driver has already started drawing.
     if (_signatureReady) return;
     _signatureReady = true;
-    final cs = Theme.of(context).colorScheme;
     _signatureController = SignatureController(
       penStrokeWidth: 3,
-      penColor: cs.onSurface,
-      exportBackgroundColor: cs.surface,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
     );
     // زر الإرسال يعكس حالة التوقيع لحظياً — كان يبقى "SIGN" للأبد في
     // التقارير الجديدة لأن لا أحد يحدّث _signed.
@@ -154,20 +154,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   bool get _readOnly => widget.existingReport != null;
-
-  String _statusLabel(DvirConditionStatus status) {
-    final loc = context.loc;
-    switch (status) {
-      case DvirConditionStatus.satisfactory:
-        return loc.dvirSatisfactory;
-      case DvirConditionStatus.hasDefects:
-        return loc.dvirHasDefects;
-      case DvirConditionStatus.defectsCorrected:
-        return loc.dvirDefectsCorrected;
-      case DvirConditionStatus.defectsNotCorrected:
-        return loc.dvirDefectsNotCorrected;
-    }
-  }
 
   Future<void> _openDefectCatalog() async {
     if (_readOnly) return;
@@ -343,8 +329,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       date: time.utc,
       driverName: dashboard.driverName,
       vehicleId: dashboard.vehicleId,
-      trailerId: dashboard.trailerId,
-      odometer: double.tryParse(_odometerController.text),
+      deviceId: dashboard.deviceId,
+      // الافتراضي المعروض 'None' لا يصل إلى السجل الرسمي — يُرسل null.
+      trailerId:
+          (dashboard.trailerId == 'None' ||
+              dashboard.trailerId?.trim().isEmpty == true)
+          ? null
+          : dashboard.trailerId,
+      odometer: () {
+        final text = _odometerController.text.trim().replaceAll(',', '');
+        if (text.isEmpty) return null;
+        final val = double.tryParse(text);
+        if (val != null && !val.isNaN && !val.isNegative) return val;
+        return null;
+      }(),
       notes: _remarksController.text.isNotEmpty
           ? _remarksController.text
           : null,
@@ -366,9 +364,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     if (!saved) {
-      _snack(
-        ref.read(dvirProvider).error ?? context.loc.errServerRejected,
-      );
+      _snack(ref.read(dvirProvider).error ?? context.loc.errServerRejected);
       return;
     }
     AppFeedback.success(context, context.loc.reportSavedSuccess);
@@ -400,7 +396,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final timeAvailable = trusted is TrustedTimeAvailable;
     // select على النص النهائي فقط: كيان الموقع يحمل timestamp يتغير كل
     // نبضة GPS، لذا مراقبة الكيان نفسه كانت تعيد بناء الصفحة كاملة كل ثانية.
-    final automaticLocation = _report?.location ??
+    final automaticLocation =
+        _report?.location ??
         ref.watch(
           trackingStateProvider.select((s) {
             final l = s.currentLocation;
@@ -410,12 +407,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           }),
         ) ??
         context.loc.dvirLocationUnavailable;
-    final companyName = _report?.companyName ??
+    final companyName =
+        _report?.companyName ??
         account?.carrier ??
         context.loc.dvirCompanyUnavailable;
-    final textColor = context.styles.body.color!;
-    final borderColor = context.colorScheme.outline;
-
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
         : context.loc.dvirTimeUnavailableShort;
@@ -436,7 +431,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           IconButton(
             key: const Key('dvir_form_refresh'),
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(dvirProvider.notifier).refresh(),
+            onPressed: () {
+              ref.invalidate(dvirCatalogProvider);
+              ref.read(dvirProvider.notifier).refresh();
+            },
           ),
         ],
       ),
@@ -457,57 +455,47 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
             DvirTimeLocationSection(
               currentTime: currentTime,
               automaticLocation: automaticLocation,
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirOdometerSection(
               controller: _odometerController,
               readOnly: _readOnly,
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirVehicleSection(
               dashboard: dashboard,
               defectsController: _vehicleDefectsController,
               readOnly: _readOnly,
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirTrailerSection(
               dashboard: dashboard,
               defectsController: _trailerDefectsController,
               readOnly: _readOnly,
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildCatalogDefects(textColor),
+              child: _buildCatalogDefects(),
             ),
-            DvirCompanySection(
-              companyName: companyName,
-              borderColor: borderColor,
-              textColor: textColor,
-            ),
+            DvirCompanySection(companyName: companyName),
             DvirRemarksSection(
               controller: _remarksController,
               readOnly: _readOnly,
-              borderColor: borderColor,
-              textColor: textColor,
             ),
             DvirStatusSection(
-              selectedStatusLabel: _statusLabel(_selectedStatus),
+              selectedStatusLabel: _selectedStatus.label(context.loc),
               onOpenStatusModal: _openStatusModal,
-              borderColor: borderColor,
-              textColor: textColor,
+              readOnly: _readOnly,
             ),
-            DvirSignatureSection(controller: _signatureController),
-            DvirSubmitButtonSection(
-              isSigned: _signed,
-              isSubmitting: _isSubmitting,
-              timeAvailable: timeAvailable,
-              onSubmit: _handleSubmit,
+            DvirSignatureSection(
+              controller: _signatureController,
+              readOnly: _readOnly,
+              signatureData: _report?.signature,
             ),
+            if (!_readOnly)
+              DvirSubmitButtonSection(
+                isSigned: _signed,
+                isSubmitting: _isSubmitting,
+                timeAvailable: timeAvailable,
+                onSubmit: _handleSubmit,
+              ),
             const SizedBox(height: 32.0),
           ],
         ),
@@ -515,7 +503,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
   }
 
-  Widget _buildCatalogDefects(Color textColor) {
+  Widget _buildCatalogDefects() {
     final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +517,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 DefectCard(
                   key: ObjectKey(d),
                   defect: d,
-                  textColor: textColor,
                   readOnly: _readOnly,
                   onRemove: () {
                     setState(() {

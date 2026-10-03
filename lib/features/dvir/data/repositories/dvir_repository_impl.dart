@@ -76,14 +76,22 @@ class DvirRepositoryImpl implements DvirRepository {
       ) {
         final nested = raw['data'];
         final body = nested is Map ? Map<String, dynamic>.from(nested) : raw;
-        // Live shape with no record: {message:"No Records", hasPreviousDvir:false}.
-        if (body['hasPreviousDvir'] == false) return const Right(null);
+        // Live shape with no record: {message:"No Records", hasPreviousDvir:false} or empty data.
+        if (body['hasPreviousDvir'] == false ||
+            (raw['data'] == null && body['hasPreviousDvir'] != true) ||
+            (body['message'] == 'No Records' && body['hasPreviousDvir'] != true)) {
+          return const Right(null);
+        }
         final candidate = _previousDvirObject(body);
         if (candidate == null) {
-          // Caller falls back to the vehicle list; never guess a report.
-          return const Left(
-            ServerFailure(message: 'pre-trip body has no DVIR'),
-          );
+          // If server explicitly stated hasPreviousDvir: true but provided no DVIR object,
+          // it is malformed, so return Left so caller can fall back to the vehicle list.
+          if (body['hasPreviousDvir'] == true) {
+            return const Left(
+              ServerFailure(message: 'pre-trip body has no DVIR'),
+            );
+          }
+          return const Right(null);
         }
         try {
           return Right(_mapDtoToEntity(DvirDto.fromJson(candidate)));
@@ -191,12 +199,21 @@ class DvirRepositoryImpl implements DvirRepository {
     required int driverId,
     required DvirConditionStatus status,
   }) {
+    // Reconcile status: if the report has defects, status cannot be satisfactory.
+    final effectiveStatus =
+        (report.hasDefects || report.selectedDefects.isNotEmpty) &&
+                status == DvirConditionStatus.satisfactory
+            ? DvirConditionStatus.hasDefects
+            : status;
+
     return buildDvirCreateBody(
       driverId: driverId,
+      deviceId: report.deviceId,
       uniqueId: report.vehicleId,
-      status: status.wire,
+      status: effectiveStatus.wire,
       signatureData: report.signature,
-      inspectionTime: report.date.toUtc().toIso8601String(),
+      inspectionTime: report.date?.toUtc().toIso8601String() ??
+          DateTime.now().toUtc().toIso8601String(),
       location: report.location,
       odometer: report.odometer,
       trailerNumber: report.trailerId,
@@ -256,13 +273,25 @@ class DvirRepositoryImpl implements DvirRepository {
     });
   }
 
+  static DateTime? _parseDate(DvirDto dto) {
+    final raw = dto.inspectionTime?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    final created = dto.createdAt?.trim();
+    if (created != null && created.isNotEmpty) {
+      final parsed = DateTime.tryParse(created);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
   DvirReport _mapDtoToEntity(DvirDto dto) {
     return DvirReport(
       id: dto.id.toString(),
       type: _parseInspectionType(dto.inspectionType),
-      // وقت غير قابل للتحليل → الآن للعرض فقط؛ لا يُخترع تاريخ رسمي بديل
-      // في أي مسار إرسال (الإرسال يبني وقته من TrustedTime).
-      date: DateTime.tryParse(dto.inspectionTime ?? '') ?? DateTime.now(),
+      date: _parseDate(dto),
       driverName: dto.driver?.name ?? '',
       vehicleId: dto.uniqueId ?? '',
       trailerId: dto.trailerNumber,

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../logs/domain/daily_form_rules.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
-import '../../../vehicle/domain/vehicle_selection.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 
 /// بيانات لوحة القيادة
@@ -10,6 +9,9 @@ class DashboardData {
   final String driverName;
   final String? driverLicense;
   final String vehicleId;
+
+  /// معرف جهاز المركبة الرقمي — يمر إلى جسم إنشاء DVIR (شرط الخادم).
+  final int? deviceId;
   final String vehicleDisplayName;
   final String? trailerId;
   final String? shippingDocuments;
@@ -21,6 +23,7 @@ class DashboardData {
     required this.driverName,
     this.driverLicense,
     required this.vehicleId,
+    this.deviceId,
     required this.vehicleDisplayName,
     this.trailerId,
     this.shippingDocuments,
@@ -33,6 +36,7 @@ class DashboardData {
     String? driverName,
     String? driverLicense,
     String? vehicleId,
+    int? deviceId,
     String? vehicleDisplayName,
     String? trailerId,
     String? shippingDocuments,
@@ -44,6 +48,7 @@ class DashboardData {
       driverName: driverName ?? this.driverName,
       driverLicense: driverLicense ?? this.driverLicense,
       vehicleId: vehicleId ?? this.vehicleId,
+      deviceId: deviceId ?? this.deviceId,
       vehicleDisplayName: vehicleDisplayName ?? this.vehicleDisplayName,
       trailerId: trailerId ?? this.trailerId,
       shippingDocuments: shippingDocuments ?? this.shippingDocuments,
@@ -86,7 +91,8 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
 
     if (vehicle is Vehicle) {
       state = state.copyWith(
-        vehicleId: readOperableUniqueId(vehicle.uniqueId) ?? 'No Vehicle',
+        vehicleId: vehicle.id.isNotEmpty ? vehicle.id : 'No Vehicle',
+        deviceId: vehicle.deviceId,
         vehicleDisplayName: vehicle.displayName,
       );
       return;

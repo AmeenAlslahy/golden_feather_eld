@@ -66,11 +66,16 @@ Vehicle? readVehicle(Map<String, dynamic> json) {
   final vehicleId = _text(json['vehicleId'] ?? json['id']);
   final id = uniqueId ?? vehicleId;
   if (id == null) return null;
+  // deviceId الرقمي للجهاز — حقل مستقل عن uniqueId النصي (SRS: لا
+  // استبدال ولا اختراع؛ يُقرأ كما يرسله الخادم فقط).
+  final rawDeviceId = json['deviceId'] ?? json['id'];
+  final deviceId = rawDeviceId == null ? null : int.tryParse(rawDeviceId.toString());
   final assigned = _bool(json['assignedToCurrentDriver']);
   final mine = _bool(json['myVehicle']);
   return Vehicle(
     id: id,
     uniqueId: uniqueId,
+    deviceId: deviceId,
     name: _text(json['vehicleName'] ?? json['name']) ?? '',
     year: _text(json['model'] ?? json['year']) ?? '',
     type: _text(json['category']),
