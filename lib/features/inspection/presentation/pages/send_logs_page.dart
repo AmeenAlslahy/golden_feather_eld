@@ -37,6 +37,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   final _commentController = TextEditingController();
   bool _isSending = false;
   bool _sent = false;
+  String? _outcomeText;
   TransferMethod _selectedMethod = TransferMethod.webService;
 
   @override
@@ -91,7 +92,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
     setState(() => _isSending = true);
     final comment = _commentController.text;
-    final success = await ref
+    // I8: النتيجة تعود من الـ notifier كقيمة — لا تلمس حالة التفتيش.
+    final outcome = await ref
         .read(inspectionProvider.notifier)
         .sendLogs(
           widget.isEmailMode ? TransferMethod.email : _selectedMethod,
@@ -104,11 +106,11 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     if (!mounted) return;
     setState(() {
       _isSending = false;
-      _sent = success;
+      _sent = outcome.accepted;
+      _outcomeText = outcome.text;
     });
-    if (!success) {
-      final error = ref.read(inspectionProvider).error;
-      if (error != null) _snack(error);
+    if (!outcome.accepted) {
+      _snack(outcome.text);
     }
 
     // SRS 8.10: كل عملية نقل تُدوَّن في سجل التدقيق — القناة والنتيجة
@@ -117,7 +119,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     try {
       final driverId = ref.read(currentDriverIdProvider);
       final userName = ref.read(authStateProvider).user?.fullName;
-      final errorText = success ? null : ref.read(inspectionProvider).error;
+      final errorText = outcome.accepted ? null : outcome.text;
       // await لا unawaited داخل try — الاستثناء غير المتزامن كان يهرب من
       // الـ try/catch بلا التقاط؛ الكتابة بعد إظهار النتيجة فلا تأخير يُرى.
       await ref
@@ -127,7 +129,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
               id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
               timestamp: DateTime.now(),
               driverId: driverId?.toString() ?? '',
-              newStatus: success ? 'SENT' : 'FAILED',
+              newStatus: outcome.accepted ? 'SENT' : 'FAILED',
               reason: errorText ?? _commentController.text,
               action: widget.isEmailMode ? 'email_logs' : 'send_logs',
               entityType: 'transfer',
@@ -147,7 +149,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final message = ref.watch(inspectionProvider).transferMessage;
+    final message = _outcomeText;
     final loc = context.loc;
     final title = widget.isEmailMode ? loc.emailLogs : loc.sendLogs;
 
@@ -188,30 +190,21 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       controller: _emailController,
                       hint: 'some@email.com',
                       keyboardType: TextInputType.emailAddress,
-                      isUnderlined: true,
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _FieldLabel(loc.comment),
-                    AppTextField(
-                      controller: _commentController,
-                      hint: '',
-                      isUnderlined: true,
-                    ),
+                    AppTextField(controller: _commentController, hint: ''),
                   ] else ...[
                     _FieldLabel(loc.comment),
-                    AppTextField(
-                      controller: _commentController,
-                      hint: '',
-                      isUnderlined: true,
-                    ),
+                    AppTextField(controller: _commentController, hint: ''),
                     const SizedBox(height: AppSpacing.xl),
                     _FieldLabel(loc.dataTransferType),
                     DropdownButtonFormField<TransferMethod>(
                       initialValue: _selectedMethod,
-                      decoration: const InputDecoration(
-                        border: UnderlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      ),
+                      dropdownColor: Theme.of(
+                        context,
+                      ).inputDecorationTheme.fillColor,
+                      decoration: const InputDecoration(),
                       items: [
                         DropdownMenuItem(
                           value: TransferMethod.webService,
@@ -242,7 +235,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         controller: _emailController,
                         hint: 'some@email.com',
                         keyboardType: TextInputType.emailAddress,
-                        isUnderlined: true,
                       ),
                     ],
                   ],

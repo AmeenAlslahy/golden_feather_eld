@@ -48,8 +48,6 @@ class InspectionState {
   /// خطأ تحميل/تطابق اليوم فقط — منفصل عن [error].
   final String? dayError;
 
-  /// نص الخادم عند قبول نقل السجلات (شاشة Send Logs).
-  final String? transferMessage;
 
   /// الوضع مقفل؟ (مطلوب لبوابة الرجوع وقفلAppBar).
   bool get locked => isInspectionMode && isPinLocked;
@@ -75,7 +73,6 @@ class InspectionState {
     this.isDayLoading = false,
     this.error,
     this.dayError,
-    this.transferMessage,
   });
 
   /// المنفذ الميكانيكي الوحيد للكتابة — لا تستدعِها خارج تحولات
@@ -93,7 +90,6 @@ class InspectionState {
     bool clearError = false,
     String? dayError,
     bool clearDayError = false,
-    String? transferMessage,
     bool clearTransferMessage = false,
   }) {
     return InspectionState(
@@ -106,9 +102,6 @@ class InspectionState {
       isDayLoading: isDayLoading ?? this.isDayLoading,
       error: clearError ? null : (error ?? this.error),
       dayError: clearDayError ? dayError : (dayError ?? this.dayError),
-      transferMessage: clearTransferMessage
-          ? transferMessage
-          : (transferMessage ?? this.transferMessage),
     );
   }
 }
@@ -173,13 +166,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   InspectionState _starting() =>
       state.copyWith(isLoading: true, clearError: true, clearLog: true);
 
-  /// رفض قبل أي طلب (تحقق مدخلات) — يمسح رسالة نجاح سابقة.
-  InspectionState _refused(String message) => state.copyWith(
-    isLoading: false,
-    error: message,
-    clearTransferMessage: true,
-  );
-
   InspectionState _startFailed(String message) =>
       state.copyWith(isLoading: false, isInspectionMode: false, error: message);
 
@@ -217,20 +203,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       state.copyWith(isDayLoading: false, dayError: message);
 
   InspectionState _ended() => const InspectionState();
-
-  InspectionState _sending() => state.copyWith(
-    isLoading: true,
-    clearError: true,
-    clearTransferMessage: true,
-  );
-
-  /// فشل نقل — يبقي transferMessage القديمة (سلوك محفوظ حرفياً عن
-  /// الكود السابق؛ فصل أخطاء الإرسال لالتزام I8 لاحق).
-  InspectionState _sendFailed(String message) =>
-      state.copyWith(isLoading: false, error: message);
-
-  InspectionState _sendAccepted(String text) =>
-      state.copyWith(isLoading: false, clearError: true, transferMessage: text);
 
   // =========================================================================
   // الأوامر — الواجهة تستدعي هذه فقط.
@@ -335,25 +307,22 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     state = _ended();
   }
 
-  /// إرسال السجلات (SRS 8.4) — النتيجة تُعرض من state.error /
-  /// transferMessage (فصل أخطاء الإرسال إلى شاشة الإرسال نفسها هو
-  /// تحسين لاحق مستقل، I8).
-  Future<bool> sendLogs(
+  /// إرسال السجلات (SRS 8.4) — أمر بلا أثر على حالة التفتيش: النتيجة
+  /// (القبول + نص الخادم) تُعاد لشاشة الإرسال فحسب، فلا يعبر خطأ النقل
+  /// إلى شاشة الطريق الفلاحي (I8).
+  Future<TransferOutcome> sendLogs(
     TransferMethod method, {
     String? email,
     String? routingCode,
     required String comment,
   }) async {
     if (!isValidInspectionComment(comment)) {
-      state = _refused(_loc.inspectionCommentErrorLength);
-      return false;
+      return TransferOutcome(accepted: false, text: _loc.inspectionCommentErrorLength);
     }
     if (_driverId <= 0) {
-      state = _refused(_loc.driverSessionMissingSignIn);
-      return false;
+      return TransferOutcome(accepted: false, text: _loc.driverSessionMissingSignIn);
     }
 
-    state = _sending();
     final driver = DriverId(_driverId);
     final recipient = email?.trim() ?? '';
     final route = routingCode?.trim();
@@ -365,18 +334,12 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       routingCode: (route == null || route.isEmpty) ? null : route,
     );
 
-    if (!mounted) return false;
+    if (!mounted) {
+      return const TransferOutcome(accepted: false, text: 'cancelled');
+    }
     return result.fold(
-      (error) {
-        state = _sendFailed(_message(error));
-        return false;
-      },
-      (outcome) {
-        state = outcome.accepted
-            ? _sendAccepted(outcome.text)
-            : _sendFailed(outcome.text);
-        return outcome.accepted;
-      },
+      (error) => TransferOutcome(accepted: false, text: _message(error)),
+      (outcome) => outcome,
     );
   }
 }
