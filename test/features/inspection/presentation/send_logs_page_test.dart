@@ -26,7 +26,10 @@ class _Storage extends Mock implements LocalStorageService {
 /// Records what the page sends; the server answer is scripted per test.
 class _Backend extends MockInspectionBackend {
   final calls = <String>[];
-  RawJson sendAnswer = const {'status': 'PENDING', 'message': 'Transfer queued.'};
+  RawJson sendAnswer = const {
+    'status': 'PENDING',
+    'message': 'Transfer queued.',
+  };
   AppError? sendError;
   List<Map<String, dynamic>> transfers = const [];
 
@@ -40,7 +43,9 @@ class _Backend extends MockInspectionBackend {
     int? daysCount,
     DateTime? endDate,
   }) async {
-    calls.add('send:${driverId.value}:${transferType.name}:$outputFileComment:${routingCode ?? ''}');
+    calls.add(
+      'send:${driverId.value}:${transferType.name}:$outputFileComment:${routingCode ?? ''}',
+    );
     if (sendError != null) return err(sendError!);
     return ok(sendAnswer);
   }
@@ -54,7 +59,9 @@ class _Backend extends MockInspectionBackend {
     int? daysCount,
     DateTime? endDate,
   }) async {
-    calls.add('email:${driverId.value}:$recipientEmail:${comment ?? ''}:${routingCode ?? ''}');
+    calls.add(
+      'email:${driverId.value}:$recipientEmail:${comment ?? ''}:${routingCode ?? ''}',
+    );
     if (sendError != null) return err(sendError!);
     return ok(sendAnswer);
   }
@@ -116,8 +123,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('send mode: comment 4–60 chars is enforced before any request',
-      (tester) async {
+  testWidgets('send mode: comment 4–60 chars is enforced before any request', (
+    tester,
+  ) async {
     await pump(tester);
 
     expect(find.text('Send 8 Logs'), findsOneWidget);
@@ -126,20 +134,26 @@ void main() {
     expect(find.text('Comment'), findsOneWidget);
     expect(find.text('Data Transfer Type'), findsOneWidget);
     expect(find.text('Web Services'), findsOneWidget);
-    // SRS 8.4: Comment + Routing Code on the telematics screen.
-    expect(find.byType(TextField), findsNWidgets(2));
+    // SRS 8.4 deviation (owner 2026-10-03): the routing code field was
+    // removed — the telematics screen collects the comment only.
+    expect(find.byType(TextField), findsNWidgets(1));
+    expect(find.text('Routing Code'), findsNothing);
 
     await tester.enterText(find.byType(TextField).first, 'abc');
     await tapSend(tester);
-    expect(find.text('The comment must be 4 to 60 characters.'), findsOneWidget);
+    expect(
+      find.text('The comment must be 4 to 60 characters.'),
+      findsOneWidget,
+    );
     expect(backend.calls, isEmpty);
     // Pump past the AppFeedback auto-dismiss timer (3s).
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
-  testWidgets('send mode: valid comment → send-logs (WEB SERVICES default)',
-      (tester) async {
+  testWidgets('send mode: valid comment → send-logs (WEB SERVICES default)', (
+    tester,
+  ) async {
     await pump(tester);
 
     await tester.enterText(find.byType(TextField).first, 'Roadside check I-80');
@@ -151,14 +165,16 @@ void main() {
     expect(find.widgetWithText(AppButton, 'SEND'), findsNothing);
   });
 
-  testWidgets('email mode: invalid address refused; valid → email endpoint',
-      (tester) async {
+  testWidgets('email mode: invalid address refused; valid → email endpoint', (
+    tester,
+  ) async {
     await pump(tester, email: true);
     expect(find.text('Send logs via email'), findsOneWidget);
-    // Reference layout (screenshot 3): recipient + SRS 8.4 routing code.
+    // Reference layout (screenshot 3): recipient + comment; the routing
+    // code field was removed (SRS 8.4 deviation, owner 2026-10-03).
     expect(find.text('Recipient Email'), findsOneWidget);
-    expect(find.text('Routing Code'), findsOneWidget);
-    expect(find.byType(TextField), findsNWidgets(3));
+    expect(find.text('Routing Code'), findsNothing);
+    expect(find.byType(TextField), findsNWidgets(2));
 
     await tester.enterText(find.byType(TextField).first, 'nope');
     await tapSend(tester);
@@ -175,9 +191,13 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('server FAILED status is a refusal, not a success screen',
-      (tester) async {
-    backend.sendAnswer = const {'status': 'FAILED', 'message': 'Routing code unknown.'};
+  testWidgets('server FAILED status is a refusal, not a success screen', (
+    tester,
+  ) async {
+    backend.sendAnswer = const {
+      'status': 'FAILED',
+      'message': 'Routing code unknown.',
+    };
     await pump(tester);
 
     await tester.enterText(find.byType(TextField).first, 'Roadside check');
@@ -191,7 +211,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a transport error never leaks raw text to the driver', (tester) async {
+  testWidgets('a transport error never leaks raw text to the driver', (
+    tester,
+  ) async {
     backend.sendError = const ServerError(
       code: 'HTTP_500',
       context: {'raw': 'DioException Hibernate could not extract ResultSet'},

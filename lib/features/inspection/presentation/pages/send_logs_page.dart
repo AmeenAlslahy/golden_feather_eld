@@ -31,16 +31,13 @@ class SendLogsPage extends ConsumerStatefulWidget {
 
 class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   /// تحقق بريد فعلي (شكل محلي) بدل مجرد احتواء على '@' و'.'.
-  static final RegExp _emailPattern =
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   final _emailController = TextEditingController();
-  final _routingCodeController = TextEditingController();
   final _commentController = TextEditingController();
   bool _isSending = false;
   bool _sent = false;
   TransferMethod _selectedMethod = TransferMethod.webService;
-
 
   @override
   void initState() {
@@ -58,7 +55,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   @override
   void dispose() {
     _emailController.dispose();
-    _routingCodeController.dispose();
     _commentController.dispose();
     super.dispose();
   }
@@ -100,9 +96,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
         .sendLogs(
           widget.isEmailMode ? TransferMethod.email : _selectedMethod,
           email: _usesEmail ? _emailController.text.trim() : null,
-          routingCode: _routingCodeController.text.trim().isEmpty
-              ? null
-              : _routingCodeController.text.trim(),
+          // SRS 8.4 deviation (owner decision 2026-10-03): the routing
+          // code field was removed from both channels; the contract and
+          // repository keep accepting it, the UI no longer collects it.
           comment: comment,
         );
     if (!mounted) return;
@@ -124,18 +120,22 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
       final errorText = success ? null : ref.read(inspectionProvider).error;
       // await لا unawaited داخل try — الاستثناء غير المتزامن كان يهرب من
       // الـ try/catch بلا التقاط؛ الكتابة بعد إظهار النتيجة فلا تأخير يُرى.
-      await ref.read(logsProvider.notifier).saveAuditEntry(AuditEntry(
-            id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
-            timestamp: DateTime.now(),
-            driverId: driverId?.toString() ?? '',
-            newStatus: success ? 'SENT' : 'FAILED',
-            reason: errorText ?? _commentController.text,
-            action: widget.isEmailMode ? 'email_logs' : 'send_logs',
-            entityType: 'transfer',
-            entityId: driverId?.toString(),
-            userName: userName,
-            userRole: 'driver',
-          ));
+      await ref
+          .read(logsProvider.notifier)
+          .saveAuditEntry(
+            AuditEntry(
+              id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
+              timestamp: DateTime.now(),
+              driverId: driverId?.toString() ?? '',
+              newStatus: success ? 'SENT' : 'FAILED',
+              reason: errorText ?? _commentController.text,
+              action: widget.isEmailMode ? 'email_logs' : 'send_logs',
+              entityType: 'transfer',
+              entityId: driverId?.toString(),
+              userName: userName,
+              userRole: 'driver',
+            ),
+          );
     } catch (e) {
       AppLogger.error('Transfer audit entry failed', e);
     }
@@ -191,14 +191,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       isUnderlined: true,
                     ),
                     const SizedBox(height: AppSpacing.lg),
-                    // SRS 8.4: the inspector hands over a routing code.
-                    _FieldLabel(loc.routingCode),
-                    AppTextField(
-                      controller: _routingCodeController,
-                      hint: loc.routingCodeHint,
-                      isUnderlined: true,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
                     _FieldLabel(loc.comment),
                     AppTextField(
                       controller: _commentController,
@@ -223,13 +215,17 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                       items: [
                         DropdownMenuItem(
                           value: TransferMethod.webService,
-                          child: Text(loc.transferMethodWebServices,
-                              style: context.styles.body),
+                          child: Text(
+                            loc.transferMethodWebServices,
+                            style: context.styles.body,
+                          ),
                         ),
                         DropdownMenuItem(
                           value: TransferMethod.email,
-                          child: Text(loc.transferMethodEmail,
-                              style: context.styles.body),
+                          child: Text(
+                            loc.transferMethodEmail,
+                            style: context.styles.body,
+                          ),
                         ),
                       ],
                       onChanged: (method) {
@@ -238,8 +234,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         }
                       },
                     ),
-                    // SRS 8.4: عند اختيار Email يظهر حقل المرسل إليه؛
-                    // ورمز التوجيه يظهر على القناتين (خدمات الويب/البريد).
+                    // SRS 8.4: عند اختيار Email يظهر حقل المرسل إليه.
                     if (_selectedMethod == TransferMethod.email) ...[
                       const SizedBox(height: AppSpacing.lg),
                       _FieldLabel(loc.recipientEmail),
@@ -250,13 +245,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         isUnderlined: true,
                       ),
                     ],
-                    const SizedBox(height: AppSpacing.lg),
-                    _FieldLabel(loc.routingCode),
-                    AppTextField(
-                      controller: _routingCodeController,
-                      hint: loc.routingCodeHint,
-                      isUnderlined: true,
-                    ),
                   ],
                   const SizedBox(height: 40),
                   AppButton(
@@ -279,9 +267,6 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: context.styles.sectionTitle,
-    );
+    return Text(text, style: context.styles.sectionTitle);
   }
 }
