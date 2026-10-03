@@ -54,7 +54,7 @@ class DvirState {
     List<DvirReport>? reports,
     DvirReport? currentReport,
     bool? isLoading,
-    // FIX: Use a sentinel to distinguish "clear error" from "keep current error".
+    // Sentinel to distinguish "clear error" from "keep current error".
     Object? error = _keepError,
     DvirReport? previousDvir,
     bool clearPreviousDvir = false,
@@ -66,7 +66,6 @@ class DvirState {
       reports: reports ?? this.reports,
       currentReport: currentReport ?? this.currentReport,
       isLoading: isLoading ?? this.isLoading,
-      // FIX: only overwrite error when explicitly provided.
       error: identical(error, _keepError) ? this.error : (error as String?),
       previousDvir: clearPreviousDvir ? null : (previousDvir ?? this.previousDvir),
       previousVehicleId: previousVehicleId ?? this.previousVehicleId,
@@ -86,7 +85,7 @@ final dvirProvider =
   final repository = ref.watch(dvirRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
   final notifier = DvirNotifier(repository: repository, storageService: storageService);
-  // FIX: load lazily here (outside the constructor) so the constructor is pure.
+  // Load lazily here (outside the constructor) so the constructor is pure.
   notifier.refresh();
   return notifier;
 });
@@ -95,7 +94,6 @@ class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
   final TrackingConfigStorageService _storageService;
 
-  // FIX: constructor no longer kicks off a network call.
   DvirNotifier({
     required DvirRepository repository,
     required TrackingConfigStorageService storageService,
@@ -117,7 +115,6 @@ class DvirNotifier extends StateNotifier<DvirState> {
         previousLookupDone: true,
         previousLookupFailed: true,
         clearPreviousDvir: true,
-        // FIX: preserve existing error — use sentinel (no error: argument).
       ),
       (report) => state = state.copyWith(
         previousVehicleId: vehicleId,
@@ -125,7 +122,6 @@ class DvirNotifier extends StateNotifier<DvirState> {
         previousLookupFailed: false,
         previousDvir: report,
         clearPreviousDvir: report == null,
-        // FIX: preserve existing error.
       ),
     );
   }
@@ -134,9 +130,9 @@ class DvirNotifier extends StateNotifier<DvirState> {
     // Explicitly clear the error when starting a fresh load.
     state = state.copyWith(isLoading: true, error: null);
 
+    // معرّف غير معيّن (فارغ) يمر كما هو؛ المستودع هو من يعامل الفراغ.
     final vehicleId = _storageService.deviceId;
-    final result = await _repository
-        .getDvirReports(vehicleId.isEmpty ? 'unknown_vehicle' : vehicleId);
+    final result = await _repository.getDvirReports(vehicleId);
 
     if (mounted) {
       result.fold(
@@ -157,7 +153,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
   Future<bool> createReport(
     DvirReport report, {
     required int driverId,
-    required String status,
+    required DvirConditionStatus status,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     final result = await _repository.submitDvirReport(
@@ -172,14 +168,15 @@ class DvirNotifier extends StateNotifier<DvirState> {
         return false;
       },
       (_) {
-        // FIX: refresh in background, don't block the UI.
+        // Refresh in background, don't block the UI.
         _loadDvirs();
         return true;
       },
     );
   }
 
-  /// مراجعة وتوقيع السائق التالي
+  /// مراجعة وتوقيع السائق التالي. الرسالة تُرجع للواجهة لتعرضها؛
+  /// null = نجاح. التحقق من التوقيع الأولي في النموذج قبل الوصول إلى هنا.
   Future<String?> reviewDvir({
     required String dvirId,
     required int reviewingDriverId,
@@ -189,7 +186,8 @@ class DvirNotifier extends StateNotifier<DvirState> {
     String? reviewNotes,
   }) async {
     if (signatureData.trim().isEmpty) {
-      const message = 'A signature is required to review the previous report.';
+      // دفاع داخلي: النموذج يمنع الوصول بتوقيع فارغ أصلاً.
+      const message = 'signature required';
       state = state.copyWith(isLoading: false, error: message);
       return message;
     }
@@ -202,7 +200,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
       driverAgreed: driverAgreed,
       reviewNotes: reviewNotes,
     );
-    if (!mounted) return 'Review was interrupted.';
+    if (!mounted) return null;
     return result.fold(
       (failure) {
         state = state.copyWith(isLoading: false, error: failure.message);
@@ -215,10 +213,9 @@ class DvirNotifier extends StateNotifier<DvirState> {
     );
   }
 
-  /// استرجاع تفاصيل تقرير DVIR محدد.
-  /// FIX: uses a local loading flag to avoid flickering the whole list.
+  /// استرجاع تفاصيل تقرير DVIR محدد. التحميل صامت (بلا مؤشر عام) —
+  /// الشاشة التي تطلب التفاصيل تدير حالتها المحلية.
   Future<void> loadDvirDetails(String dvirId) async {
-    // Don't set global isLoading — detail load is silent.
     final result = await _repository.getDvirDetails(dvirId);
 
     if (mounted) {
@@ -233,7 +230,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 }
 
-/// `GET /eld/dvir/catalog` — the §396.11 item list.
+/// `GET /eld/dvir/catalog` — the §396.11 item list, عبر المستودع.
 /// keepAlive for 30 min so repeated dialog opens don't hit the network.
 final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((ref) async {
   // Keep the catalog alive for 30 minutes after last use.
@@ -243,12 +240,6 @@ final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((r
   // ويفجّر فحص timersPending في الاختبارات.
   ref.onDispose(timer.cancel);
 
-  final result = await ref.watch(dvirBackendProviderAlias).getDefectsCatalog();
-  return result.fold((error) => throw error, (json) {
-    final items = parseDvirCatalog(json);
-    if (items == null) {
-      throw const FormatException('catalog body is not a list');
-    }
-    return items;
-  });
+  final result = await ref.watch(dvirRepositoryProvider).getDefectsCatalog();
+  return result.fold((f) => throw f, (items) => items);
 });

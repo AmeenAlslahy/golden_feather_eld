@@ -101,7 +101,6 @@ void main() {
           date: DateTime.utc(2026, 9, 24),
           driverName: 'D',
           vehicleId: vehicle,
-          items: const [],
           nextDriverReviewed: reviewed,
         );
 

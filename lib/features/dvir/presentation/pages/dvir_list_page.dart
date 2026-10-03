@@ -274,7 +274,7 @@ class _DvirCard extends StatelessWidget {
                            Icon(Icons.build, color: context.styles.subtitle.color, size: 14),
                           const SizedBox(width: 8),
                           Text(
-                            'Repair Cert · ${report.repairStatus}',
+                            '${context.loc.dvirRepairCert} · ${report.repairStatus}',
                             style: context.styles.caption,
                           ),
                         ],
@@ -299,7 +299,7 @@ class _DvirCard extends StatelessWidget {
                         color: AppColors.successGreen, size: 16),
                     const SizedBox(width: 8),
                     Text(
-                      'Reviewed §396.13',
+                      context.loc.dvirReviewed39613,
                       style: context.styles.success.copyWith(fontSize: 13),
                     ),
                   ],

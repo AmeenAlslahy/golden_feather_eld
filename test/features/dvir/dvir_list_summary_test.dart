@@ -15,7 +15,6 @@ DvirReport _report({
     date: DateTime(2026, 9, 24),
     driverName: 'A',
     vehicleId: '1001',
-    items: const [],
     hasDefects: hasDefects,
     certified: certified,
     outOfService: outOfService,

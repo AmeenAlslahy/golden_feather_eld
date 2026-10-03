@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/dvir/data/providers/dvir_repository_providers.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_dvir_backend.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -140,7 +139,7 @@ void main() {
         overrides: [
           activeBackendProvider.overrideWithValue(MockAdapter()),
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-          dvirBackendProviderAlias.overrideWithValue(backend),
+          dvirBackendProvider.overrideWithValue(backend),
           networkInfoProvider.overrideWithValue(_OnlineNetwork()),
           trackingConfigStorageProvider.overrideWithValue(_FakeTrackingStorage()),
         ],

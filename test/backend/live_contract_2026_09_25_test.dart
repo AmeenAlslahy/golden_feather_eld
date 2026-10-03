@@ -6,6 +6,7 @@ import 'package:golden_feather_eld/backend/adapters/eld_engine/mappers/dot_inspe
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
 import 'package:golden_feather_eld/features/codriver/domain/current_codriver.dart';
+import 'package:golden_feather_eld/features/dvir/data/mappers/dvir_mappers.dart';
 import 'package:golden_feather_eld/features/dvir/domain/dvir_catalog.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/extensions/dvir_catalog_extensions.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
@@ -114,7 +115,8 @@ void main() {
         name: 'Service Brakes',
         category: 'VEHICLE',
       );
-      final json = const DvirDefectSelection(item: item, description: 'leak').toWire();
+      final json = defectSelectionToWire(
+          const DvirDefectSelection(item: item, description: 'leak'));
       expect(json['itemCode'], 'SERVICE_BRAKES');
       expect(json['itemName'], 'Service Brakes');
       expect(json['category'], 'VEHICLE');

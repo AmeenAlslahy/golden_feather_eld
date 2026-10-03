@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../dvir_catalog.dart';
 import '../entities/dvir_report.dart';
 
 abstract class DvirRepository {
@@ -10,10 +11,14 @@ abstract class DvirRepository {
   /// no previous DVIR for this vehicle (`hasPreviousDvir:false`).
   Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId);
   Future<Either<Failure, DvirReport>> getDvirDetails(String id);
+
+  /// §396.11 defect catalog from `GET /eld/dvir/catalog`.
+  Future<Either<Failure, List<DvirCatalogItem>>> getDefectsCatalog();
+
   Future<Either<Failure, bool>> submitDvirReport(
     DvirReport report, {
     required int driverId,
-    required String status,
+    required DvirConditionStatus status,
   });
 
   Future<Either<Failure, bool>> reviewDvir({

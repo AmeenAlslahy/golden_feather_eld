@@ -6,6 +6,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_signature_canvas.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/dvir_vehicle.dart';
 import 'package:signature/signature.dart';
 
 import 'dvir_form_components.dart';
@@ -134,7 +135,8 @@ class DvirVehicleSection extends StatelessWidget {
       left: FormField<String>(
         initialValue: dashboard.vehicleId,
         validator: (value) {
-          if (value == null || value.trim().isEmpty || value == 'No Vehicle') {
+          // قاعدة صرفة في domain/dvir_vehicle.dart — لا سينتينل هنا.
+          if (isUnassignedVehicleId(value)) {
             return loc.dvirVehicleIdMissing;
           }
           return null;
@@ -359,21 +361,18 @@ class DvirSubmitButtonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 28,
         vertical: AppSpacing.sm,
       ),
       child: AppButton(
-        label: isSigned
-            ? (isAr ? 'تم التوقيع' : 'SIGNED')
-            : (isAr ? 'توقيع' : 'SIGN'),
+        label: isSigned ? loc.dvirSigned : loc.dvirSign,
         type: EldButtonType.agree,
         isLoading: isSubmitting,
-        onPressed: isSubmitting || !timeAvailable || isSigned
-            ? null
-            : onSubmit,
+        // زر الإرسال نفسه؛ التوقيع يُفرَض عبر validator نموذج التوقيع.
+        onPressed: isSubmitting || !timeAvailable ? null : onSubmit,
       ),
     );
   }

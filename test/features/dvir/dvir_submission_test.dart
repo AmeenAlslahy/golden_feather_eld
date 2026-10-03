@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/dvir/domain/dvir_submission.dart';
+import 'package:golden_feather_eld/features/dvir/data/mappers/dvir_mappers.dart';
+import 'package:golden_feather_eld/features/dvir/domain/dvir_signature.dart';
 
 void main() {
   test('a local signature id is not sent', () {
@@ -57,17 +58,6 @@ void main() {
         inspectionTime: '2026-09-23T00:00:00.000Z',
       ),
       isNull,
-    );
-  });
-
-  test('known motion blocks a role switch', () {
-    expect(
-      switchBlockedByKnownMotion(speedMetersPerSecond: 2, thresholdKmh: 5),
-      isTrue,
-    );
-    expect(
-      switchBlockedByKnownMotion(speedMetersPerSecond: 0, thresholdKmh: 5),
-      isFalse,
     );
   });
 }

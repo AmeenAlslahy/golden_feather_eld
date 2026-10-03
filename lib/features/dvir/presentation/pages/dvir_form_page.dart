@@ -11,7 +11,7 @@ import '../../../../core/time/trusted_time_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
 import '../extensions/dvir_catalog_extensions.dart';
-import '../../domain/dvir_submission.dart';
+import '../../domain/dvir_signature.dart';
 import '../../domain/entities/dvir_report.dart';
 
 import '../widgets/dvir_form_sections.dart';
@@ -52,7 +52,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   bool _isSubmitting = false;
 
-  String _selectedStatus = 'Vehicle Condition Satisfactory';
+  DvirConditionStatus _selectedStatus = DvirConditionStatus.satisfactory;
   bool _signed = false;
 
   /// §396.11 items marked defective (from the live catalog).
@@ -122,6 +122,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       penColor: cs.onSurface,
       exportBackgroundColor: cs.surface,
     );
+    // زر الإرسال يعكس حالة التوقيع لحظياً — كان يبقى "SIGN" للأبد في
+    // التقارير الجديدة لأن لا أحد يحدّث _signed.
+    _signatureController.addListener(() {
+      if (!mounted || _readOnly) return;
+      final has = _signatureController.isNotEmpty;
+      if (has != _signed) setState(() => _signed = has);
+    });
   }
 
   /// Fills the read-only view from a report (list summary or full detail).
@@ -137,10 +144,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     _companyController.text = r.companyName ?? _companyController.text;
     _remarksController.text = r.notes ?? _remarksController.text;
     _selectedStatus = r.condition == VehicleCondition.safe
-        ? 'Vehicle Condition Satisfactory'
-        : 'Has Defects';
+        ? DvirConditionStatus.satisfactory
+        : DvirConditionStatus.hasDefects;
     _signed = r.signature != null;
-    // FIX: only overwrite local selection if the server report has defects.
+    // Only overwrite local selection if the server report has defects.
     if (r.selectedDefects.isNotEmpty) {
       _selectedDefects = r.selectedDefects;
     }
@@ -148,19 +155,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   bool get _readOnly => widget.existingReport != null;
 
-  String _statusLabel(String wire) {
+  String _statusLabel(DvirConditionStatus status) {
     final loc = context.loc;
-    switch (wire) {
-      case 'Vehicle Condition Satisfactory':
+    switch (status) {
+      case DvirConditionStatus.satisfactory:
         return loc.dvirSatisfactory;
-      case 'Has Defects':
+      case DvirConditionStatus.hasDefects:
         return loc.dvirHasDefects;
-      case 'Defects Corrected':
+      case DvirConditionStatus.defectsCorrected:
         return loc.dvirDefectsCorrected;
-      case 'Defects Need Not Be Corrected':
+      case DvirConditionStatus.defectsNotCorrected:
         return loc.dvirDefectsNotCorrected;
-      default:
-        return wire;
     }
   }
 
@@ -173,7 +178,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (picked == null || !mounted) return;
     setState(() {
       _selectedDefects = picked;
-      if (picked.isNotEmpty) _selectedStatus = 'Has Defects';
+      if (picked.isNotEmpty) _selectedStatus = DvirConditionStatus.hasDefects;
     });
   }
 
@@ -190,7 +195,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   }
 
   Future<void> _openStatusModal() async {
-    final selected = await showDialog<String>(
+    final selected = await showDialog<DvirConditionStatus>(
       context: context,
       builder: (context) => DvirStatusModal(
         hasDefect: _hasAnyDefect,
@@ -200,28 +205,29 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (selected == null || !mounted) return;
     setState(() => _selectedStatus = selected);
     // SRS 7.6: choosing Has Defects with nothing recorded opens the defects list.
-    if (selected == 'Has Defects' && !_hasAnyDefect) {
+    if (selected == DvirConditionStatus.hasDefects && !_hasAnyDefect) {
       await _openDefectCatalog();
-      // FIX: mounted check after the second awaited dialog.
+      // Mounted check after the second awaited dialog.
       if (!mounted) return;
     }
   }
 
-  String _automaticLocation() {
+  /// موقع الإحداثيات من التتبع أو التقرير؛ null يعني "غير متاح" — لا يُرسل
+  /// نص بديل إلى سجل رسمي (الواجهة تعرض الترجمة المحلية عند العرض فقط).
+  String? _automaticLocation() {
     final existing = _report?.location;
+    if (existing != null && existing.isNotEmpty) return existing;
     final point = ref.read(trackingStateProvider).currentLocation;
     if (point != null) {
       return '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
     }
-    if (existing != null && existing.isNotEmpty) return existing;
-    return 'Location unavailable';
+    return null;
   }
 
-  String _companyName() {
+  String? _companyName() {
     final existing = _report?.companyName;
     if (existing != null && existing.isNotEmpty) return existing;
-    return ref.read(accountProvider).accountData?.carrier ??
-        'Company unavailable';
+    return ref.read(accountProvider).accountData?.carrier;
   }
 
   Future<bool> _reviewPreviousDvirIfNeeded({
@@ -306,7 +312,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       await _signatureController.toPngBytes(),
     );
     if (!mounted) return;
-    if (signatureData == null) return;
+    if (signatureData == null) {
+      // توقيع فارغ يُرفض بصوت مسموع — كان ينهي الطلب بصمت.
+      _snack(context.loc.dvirSignatureRequired);
+      return;
+    }
     final driverId = ref.read(currentDriverIdProvider);
     if (driverId == null || driverId <= 0) {
       _snack(context.loc.dvirDriverSessionMissing);
@@ -325,6 +335,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
     setState(() => _isSubmitting = true);
     final hasDefects = _hasAnyDefect;
+    final withDefects =
+        hasDefects || _selectedStatus == DvirConditionStatus.hasDefects;
     final report = DvirReport(
       id: '',
       type: InspectionType.preTrip,
@@ -333,12 +345,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       vehicleId: dashboard.vehicleId,
       trailerId: dashboard.trailerId,
       odometer: double.tryParse(_odometerController.text),
-      items: const [],
       notes: _remarksController.text.isNotEmpty
           ? _remarksController.text
           : null,
       signature: signatureData,
-      condition: hasDefects || _selectedStatus == 'Has Defects'
+      condition: withDefects
           ? VehicleCondition.needsRepair
           : VehicleCondition.safe,
       isSubmitted: false,
@@ -346,7 +357,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       companyName: _companyName(),
       vehicleDefects: _vehicleDefectsController.text,
       trailerDefects: _trailerDefectsController.text,
-      hasDefects: hasDefects || _selectedStatus == 'Has Defects',
+      hasDefects: withDefects,
       selectedDefects: _selectedDefects,
     );
     final saved = await ref
@@ -356,7 +367,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     setState(() => _isSubmitting = false);
     if (!saved) {
       _snack(
-        ref.read(dvirProvider).error ?? 'The server did not accept the report.',
+        ref.read(dvirProvider).error ?? context.loc.errServerRejected,
       );
       return;
     }
@@ -389,7 +400,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final timeAvailable = trusted is TrustedTimeAvailable;
     // select على النص النهائي فقط: كيان الموقع يحمل timestamp يتغير كل
     // نبضة GPS، لذا مراقبة الكيان نفسه كانت تعيد بناء الصفحة كاملة كل ثانية.
-    final automaticLocation =
+    final automaticLocation = _report?.location ??
         ref.watch(
           trackingStateProvider.select((s) {
             final l = s.currentLocation;
@@ -398,9 +409,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                 : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
           }),
         ) ??
-        (_report?.location ?? context.loc.dvirLocationUnavailable);
-    final companyName =
-        _report?.companyName ??
+        context.loc.dvirLocationUnavailable;
+    final companyName = _report?.companyName ??
         account?.carrier ??
         context.loc.dvirCompanyUnavailable;
     final textColor = context.styles.body.color!;
@@ -527,7 +537,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
                           .where((x) => x != d)
                           .toList();
                       if (_selectedDefects.isEmpty) {
-                        _selectedStatus = 'Vehicle Condition Satisfactory';
+                        _selectedStatus = DvirConditionStatus.satisfactory;
                       }
                     });
                   },

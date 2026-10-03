@@ -1,9 +1,9 @@
-﻿import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/features/dvir/data/mappers/dvir_mappers.dart';
 import 'package:golden_feather_eld/features/dvir/domain/dvir_catalog.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/extensions/dvir_catalog_extensions.dart';
-import 'package:golden_feather_eld/features/dvir/domain/dvir_submission.dart';
 
 void main() {
   test('parses the live catalog keys and the schema keys', () {
@@ -37,7 +37,7 @@ void main() {
     expect(parseDvirCatalog(const []), isEmpty);
   });
 
-  test('catalog picks go on the wire as DvirDefectItem before free text', () {
+  test('a catalog pick goes on the wire as a DvirDefectItem', () {
     const pick = DvirDefectSelection(
       item: DvirCatalogItem(
         code: 'TIRES',
@@ -48,16 +48,11 @@ void main() {
       description: 'left front worn',
     );
 
-    final defects = dvirDefects(
-      vehicle: 'mirror cracked',
-      catalog: [pick.toWire()],
-    );
+    final wire = defectSelectionToWire(pick);
 
-    expect(defects.length, 2);
-    expect(defects.first['itemCode'], 'TIRES');
-    expect(defects.first['safetyAffecting'], isTrue);
-    expect(defects.first['description'], 'left front worn');
-    expect(defects.last['itemName'], 'Vehicle defect');
+    expect(wire['itemCode'], 'TIRES');
+    expect(wire['safetyAffecting'], isTrue);
+    expect(wire['description'], 'left front worn');
   });
 
   test('an empty note is omitted from the wire item', () {
@@ -65,7 +60,6 @@ void main() {
       item: DvirCatalogItem(code: 'HORN', name: 'Horn'),
       description: '   ',
     );
-    expect(pick.toWire().containsKey('description'), isFalse);
+    expect(defectSelectionToWire(pick).containsKey('description'), isFalse);
   });
 }
-

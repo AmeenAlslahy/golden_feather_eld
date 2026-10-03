@@ -29,14 +29,18 @@ class DvirDetailPage extends ConsumerStatefulWidget {
 }
 
 class _DvirDetailPageState extends ConsumerState<DvirDetailPage> {
+  // التحميل صامت في المزود (بلا مؤشر عام)، فتدير الشاشة مؤشرها المحلي —
+  // وإلا ومض "لا سجلات" قبل وصول التفاصيل.
+  bool _loading = true;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dvirProvider.notifier).loadDvirDetails(widget.dvirId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(dvirProvider.notifier).loadDvirDetails(widget.dvirId);
+      if (mounted) setState(() => _loading = false);
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +51,7 @@ class _DvirDetailPageState extends ConsumerState<DvirDetailPage> {
       appBar: AppBar(
         title: Text(context.loc.dvirTitle, style: context.styles.appBarTitle),
       ),
-      body: state.isLoading && report == null
+      body: _loading
           ? const Center(child: CircularProgressIndicator())
           : report == null
               ? Center(
@@ -72,26 +76,41 @@ class _DetailBody extends StatelessWidget {
     final loc = context.loc;
     final retention = _retentionUntil(report.date);
 
+    final (statusLabel, statusColor) = switch (report.vehicleOperationalStatus) {
+      VehicleOperationalStatus.outOfService => (
+          loc.vehicleStatusOutOfService,
+          AppColors.dangerText,
+        ),
+      VehicleOperationalStatus.restricted => (
+          loc.vehicleStatusRestricted,
+          AppColors.warningText,
+        ),
+      VehicleOperationalStatus.available => (
+          loc.vehicleStatusAvailable,
+          AppColors.successText,
+        ),
+    };
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         _Section(
           title: loc.dvirTitle,
           children: [
-            EldInfoRow(label: 'Report ID', value: report.id),
+            EldInfoRow(label: loc.dvirReportId, value: report.id),
             EldInfoRow(
               label: loc.status,
-              value: _statusWire(report),
-              valueColor: _statusColor(context, report),
+              value: statusLabel,
+              valueColor: statusColor,
             ),
             EldInfoRow(label: loc.driverName, value: report.driverName),
             EldInfoRow(
-                label: loc.dvirTimeUnavailableShort.isEmpty
-                    ? 'Time (ET)'
-                    : loc.dvirTimeUnavailableShort,
-                value: _formatTime(report.date)),
+                label: loc.dvirTimeET, value: _formatTime(report.date)),
             EldInfoRow(
-                label: loc.location, value: report.location ?? loc.dvirLocationUnavailable),
+                label: loc.location,
+                value: (report.location ?? '').isEmpty
+                    ? loc.dvirLocationUnavailable
+                    : report.location!),
             EldInfoRow(
               label: loc.dvirOdometerMi,
               value:
@@ -101,13 +120,15 @@ class _DetailBody extends StatelessWidget {
             if ((report.trailerId ?? '').isNotEmpty)
               EldInfoRow(label: loc.trailer, value: report.trailerId!),
             EldInfoRow(
-                label: loc.dvirCompanyUnavailable.isEmpty ? 'Company' : loc.companyName,
-                value: report.companyName ?? loc.dvirCompanyUnavailable),
+                label: loc.companyName,
+                value: (report.companyName ?? '').isEmpty
+                    ? loc.dvirCompanyUnavailable
+                    : report.companyName!),
             EldInfoRow(
                 label: loc.remarks,
                 value: (report.notes ?? '').isEmpty ? '—' : report.notes!),
             EldInfoRow(
-              label: 'Retention Until (§396.11)',
+              label: loc.dvirRetentionUntil,
               value:
                   '${retention.year}-${retention.month.toString().padLeft(2, '0')}-${retention.day.toString().padLeft(2, '0')}',
             ),
@@ -144,7 +165,7 @@ class _DetailBody extends StatelessWidget {
         if (report.nextDriverReviewed) ...[
           const SizedBox(height: AppSpacing.md),
           _Section(
-            title: 'Previous DVIR Review (§396.13)',
+            title: loc.dvirPrevReviewSection,
             children: [
               EldInfoRow(
                   label: loc.reviewedBy,
@@ -163,26 +184,11 @@ class _DetailBody extends StatelessWidget {
     );
   }
 
-  String _statusWire(DvirReport report) {
-    switch (report.vehicleOperationalStatus) {
-      case VehicleOperationalStatus.outOfService:
-        return 'OUT_OF_SERVICE';
-      case VehicleOperationalStatus.restricted:
-        return 'RESTRICTED';
-      case VehicleOperationalStatus.available:
-        return 'AVAILABLE';
-    }
-  }
-
-  Color? _statusColor(BuildContext context, DvirReport report) {
-    switch (report.vehicleOperationalStatus) {
-      case VehicleOperationalStatus.outOfService:
-        return AppColors.dangerText;
-      case VehicleOperationalStatus.restricted:
-        return AppColors.warningText;
-      case VehicleOperationalStatus.available:
-        return AppColors.successText;
-    }
+  DateTime _retentionUntil(DateTime inspectedAt) {
+    final y = inspectedAt.year;
+    final m = inspectedAt.month;
+    return DateTime(y, m + 3, inspectedAt.day, inspectedAt.hour,
+        inspectedAt.minute);
   }
 
   String _formatTime(DateTime dt) {
@@ -190,13 +196,6 @@ class _DetailBody extends StatelessWidget {
     return '${dt.year}-${two(dt.month)}-${two(dt.day)} '
         '${two(dt.hour)}:${two(dt.minute)}';
   }
-}
-
-DateTime _retentionUntil(DateTime inspectedAt) {
-  final y = inspectedAt.year;
-  final m = inspectedAt.month;
-  return DateTime(y, m + 3, inspectedAt.day, inspectedAt.hour,
-      inspectedAt.minute);
 }
 
 /// التقرير غير المُرسل (مسودة) يبقى قابلاً للتحرير من نموذج الإدراج.
@@ -265,7 +264,8 @@ class _SignatureImage extends StatelessWidget {
         child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
       );
     } catch (_) {
-      return Text('Image not available', style: context.styles.muted);
+      return Text(context.loc.dvirImageNotAvailable,
+          style: context.styles.muted);
     }
   }
 }

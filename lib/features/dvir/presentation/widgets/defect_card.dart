@@ -39,9 +39,11 @@ class DefectCard extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
+              // الاسم دائماً، والوصف (إن وُجد) يلحقه — كان المنطق معكوساً
+              // فيعرض شرطة وحيدة بدل العيب صاحب الملاحظة.
               (defect.description ?? '').trim().isEmpty
                   ? defect.item.label(loc)
-                  : ' — ',
+                  : '${defect.item.label(loc)} — ${defect.description!.trim()}',
               style: context.styles.subtitle,
             ),
           ),

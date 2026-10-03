@@ -2,11 +2,13 @@ import 'package:fpdart/fpdart.dart';
 import 'package:uuid/uuid.dart';
 import '../../../sync/domain/entities/pending_event.dart';
 import '../../../sync/domain/repositories/offline_queue.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
-import '../../domain/dvir_submission.dart';
+import '../../../../core/utils/logger.dart';
 import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_vehicle.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 import '../../../../backend/contracts/dvir_backend.dart';
@@ -14,6 +16,7 @@ import '../../../../backend/contracts/raw_json.dart';
 import '../../../../core/result/result.dart';
 import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
 import '../../../../domain/shared/value_objects.dart';
+import '../mappers/dvir_mappers.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
@@ -27,16 +30,22 @@ class DvirRepositoryImpl implements DvirRepository {
     required this.offlineQueue,
   }) : _uuid = const Uuid();
 
+  Failure _failure(AppError error) {
+    AppLogger.error('DvirRepository backend error: ${error.code}');
+    return ServerFailure(message: error.code);
+  }
+
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
     String vehicleId,
   ) async {
     return guardedNetwork(networkInfo, () async {
-      final result = vehicleId.trim().isEmpty || vehicleId == 'unknown_vehicle'
+      // معرّف غير معيّن (فارغ أو "No Vehicle") يعني قائمة بلا تصفية مركبة.
+      final result = isUnassignedVehicleId(vehicleId)
           ? await dvirBackend.list()
           : await dvirBackend.list(uniqueId: vehicleId);
 
-      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+      return result.fold((error) => Left(_failure(error)), (
         rawJson,
       ) {
         final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
@@ -52,17 +61,17 @@ class DvirRepositoryImpl implements DvirRepository {
   @override
   Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
     return guardedNetwork(networkInfo, () async {
-      final id = vehicleId.trim();
-      if (id.isEmpty || id == 'unknown_vehicle' || id == 'No Vehicle') {
+      if (isUnassignedVehicleId(vehicleId)) {
         return const Right(null);
       }
       final Result<RawJson> result;
       try {
-        result = await dvirBackend.getPreviousDvir(id);
-      } catch (_) {
+        result = await dvirBackend.getPreviousDvir(vehicleId.trim());
+      } catch (e, stackTrace) {
+        AppLogger.error('DvirRepository: pre-trip read failed', e, stackTrace);
         return const Left(ServerFailure(message: 'pre-trip read failed'));
       }
-      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+      return result.fold((error) => Left(_failure(error)), (
         raw,
       ) {
         final nested = raw['data'];
@@ -78,7 +87,12 @@ class DvirRepositoryImpl implements DvirRepository {
         }
         try {
           return Right(_mapDtoToEntity(DvirDto.fromJson(candidate)));
-        } catch (_) {
+        } catch (e, stackTrace) {
+          AppLogger.error(
+            'DvirRepository: pre-trip body unreadable',
+            e,
+            stackTrace,
+          );
           return const Left(ServerFailure(message: 'pre-trip body unreadable'));
         }
       });
@@ -106,12 +120,17 @@ class DvirRepositoryImpl implements DvirRepository {
         return const Left(ServerFailure(message: 'Invalid DVIR ID'));
       }
       final result = await dvirBackend.getById(DvirId(parsedId));
-      return result.fold((error) => Left(ServerFailure(message: error.code)), (
+      return result.fold((error) => Left(_failure(error)), (
         rawJson,
       ) {
         try {
           return Right(_mapDtoToEntity(DvirDto.fromJson(rawJson)));
-        } catch (e) {
+        } catch (e, stackTrace) {
+          AppLogger.error(
+            'DvirRepository: failed to parse DVIR details',
+            e,
+            stackTrace,
+          );
           return const Left(
             ServerFailure(message: 'Failed to parse DVIR details'),
           );
@@ -121,70 +140,73 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   @override
+  Future<Either<Failure, List<DvirCatalogItem>>> getDefectsCatalog() async {
+    return guardedNetwork(networkInfo, () async {
+      final result = await dvirBackend.getDefectsCatalog();
+      return result.fold((error) => Left(_failure(error)), (raw) {
+        final items = parseDvirCatalog(raw);
+        // جسم غير مقروء خطأ، وليس كتالوجاً فارغاً.
+        return items == null
+            ? const Left(ServerFailure(message: 'catalog body is not a list'))
+            : Right(items);
+      });
+    });
+  }
+
+  @override
   Future<Either<Failure, bool>> submitDvirReport(
     DvirReport report, {
     required int driverId,
-    required String status,
+    required DvirConditionStatus status,
   }) async {
     // SRS 6.8 — offline: enqueue DVIR for sync, never lose the driver's report.
-    if (!networkInfo.isConnected) {
-      final body = buildDvirCreateBody(
-        driverId: driverId,
-        uniqueId: report.vehicleId,
-        status: status,
-        signatureData: report.signature,
-        inspectionTime: report.date.toUtc().toIso8601String(),
-        location: report.location,
-        odometer: report.odometer,
-        trailerNumber: report.trailerId,
-        companyName: report.companyName,
-        remarks: report.notes,
-        vehicleDefects: report.vehicleDefects,
-        trailerDefects: report.trailerDefects,
-        catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
-      );
-      if (body != null) {
-        await offlineQueue.enqueue(
-          PendingEvent(
-            id: _uuid.v4(),
-            type: 'dvir_create',
-            payload: body,
-            createdAt: DateTime.now().toUtc(),
-          ),
-        );
-        return const Right(true);
-      }
+    final body = _buildCreateBody(report, driverId: driverId, status: status);
+    if (body == null) {
       return const Left(
         ServerFailure(message: 'Driver, vehicle, or signature is missing.'),
       );
     }
-    return guardedNetwork(networkInfo, () async {
-      final body = buildDvirCreateBody(
-        driverId: driverId,
-        uniqueId: report.vehicleId,
-        status: status,
-        signatureData: report.signature,
-        inspectionTime: report.date.toUtc().toIso8601String(),
-        location: report.location,
-        odometer: report.odometer,
-        trailerNumber: report.trailerId,
-        companyName: report.companyName,
-        remarks: report.notes,
-        vehicleDefects: report.vehicleDefects,
-        trailerDefects: report.trailerDefects,
-        catalogDefects: report.selectedDefects.map((d) => d.toWire()).toList(),
+    if (!networkInfo.isConnected) {
+      await offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'dvir_create',
+          payload: body,
+          createdAt: DateTime.now().toUtc(),
+        ),
       );
-      if (body == null) {
-        return const Left(
-          ServerFailure(message: 'Driver, vehicle, or signature is missing.'),
-        );
-      }
+      return const Right(true);
+    }
+    return guardedNetwork(networkInfo, () async {
       final result = await dvirBackend.create(body);
       return result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
+        (error) => Left(_failure(error)),
         (_) => const Right(true),
       );
     });
+  }
+
+  Map<String, dynamic>? _buildCreateBody(
+    DvirReport report, {
+    required int driverId,
+    required DvirConditionStatus status,
+  }) {
+    return buildDvirCreateBody(
+      driverId: driverId,
+      uniqueId: report.vehicleId,
+      status: status.wire,
+      signatureData: report.signature,
+      inspectionTime: report.date.toUtc().toIso8601String(),
+      location: report.location,
+      odometer: report.odometer,
+      trailerNumber: report.trailerId,
+      companyName: report.companyName,
+      remarks: report.notes,
+      vehicleDefects: report.vehicleDefects,
+      trailerDefects: report.trailerDefects,
+      catalogDefects:
+          report.selectedDefects.map(defectSelectionToWire).toList(),
+    );
   }
 
   @override
@@ -196,49 +218,39 @@ class DvirRepositoryImpl implements DvirRepository {
     required bool driverAgreed,
     String? reviewNotes,
   }) async {
-    // SRS 6.8 / 7.9 — offline: enqueue §396.13 review for sync.
-    if (!networkInfo.isConnected) {
-      final parsedId = int.tryParse(dvirId);
-      if (parsedId != null) {
-        await offlineQueue.enqueue(
-          PendingEvent(
-            id: _uuid.v4(),
-            type: 'dvir_review',
-            payload: {
-              'dvirId': parsedId,
-              'review': ReviewDvirRequestDto(
-                reviewingDriverId: reviewingDriverId,
-                reviewingDriverName: reviewingDriverName,
-                signatureData: signatureData,
-                driverAgreed: driverAgreed,
-                reviewNotes: reviewNotes,
-              ).toJson(),
-            },
-            createdAt: DateTime.now().toUtc(),
-          ),
-        );
-        return const Right(true);
-      }
+    final parsedId = int.tryParse(dvirId);
+    if (parsedId == null) {
       return const Left(ServerFailure(message: 'Invalid DVIR ID for review'));
     }
-    return guardedNetwork(networkInfo, () async {
-      final parsedId = int.tryParse(dvirId);
-      if (parsedId == null) {
-        return const Left(ServerFailure(message: 'Invalid DVIR ID for review'));
-      }
-      final dto = ReviewDvirRequestDto(
-        reviewingDriverId: reviewingDriverId,
-        reviewingDriverName: reviewingDriverName,
-        signatureData: signatureData,
-        driverAgreed: driverAgreed,
-        reviewNotes: reviewNotes,
+    final dto = ReviewDvirRequestDto(
+      reviewingDriverId: reviewingDriverId,
+      reviewingDriverName: reviewingDriverName,
+      signatureData: signatureData,
+      driverAgreed: driverAgreed,
+      reviewNotes: reviewNotes,
+    );
+    // SRS 6.8 / 7.9 — offline: enqueue §396.13 review for sync.
+    if (!networkInfo.isConnected) {
+      await offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'dvir_review',
+          payload: {
+            'dvirId': parsedId,
+            'review': dto.toJson(),
+          },
+          createdAt: DateTime.now().toUtc(),
+        ),
       );
+      return const Right(true);
+    }
+    return guardedNetwork(networkInfo, () async {
       final result = await dvirBackend.review(
         dvirId: DvirId(parsedId),
         review: dto.toJson(),
       );
       return result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
+        (error) => Left(_failure(error)),
         (_) => const Right(true),
       );
     });
@@ -248,6 +260,8 @@ class DvirRepositoryImpl implements DvirRepository {
     return DvirReport(
       id: dto.id.toString(),
       type: _parseInspectionType(dto.inspectionType),
+      // وقت غير قابل للتحليل → الآن للعرض فقط؛ لا يُخترع تاريخ رسمي بديل
+      // في أي مسار إرسال (الإرسال يبني وقته من TrustedTime).
       date: DateTime.tryParse(dto.inspectionTime ?? '') ?? DateTime.now(),
       driverName: dto.driver?.name ?? '',
       vehicleId: dto.uniqueId ?? '',
@@ -269,13 +283,6 @@ class DvirRepositoryImpl implements DvirRepository {
       repairNotes: dto.repairNotes,
       reviewingDriverName: dto.reviewingDriverName,
       nextDriverReviewed: dto.nextDriverReviewed,
-      items: dto.defects.map((defect) {
-        return ItemInspectionResult(
-          item: _parseInspectionItem(defect.itemName),
-          isDefective: true,
-          defectDescription: defect.description,
-        );
-      }).toList(),
       // Server defects with a catalog code are shown as catalog chips on the saved report.
       selectedDefects: [
         for (final defect in dto.defects)
@@ -299,28 +306,11 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   VehicleCondition _parseVehicleCondition(String? condition) {
-    final c = condition?.trim() ?? '';
-    // نص السلك الذي يبنيه التطبيق نفسه في buildDvirCreateBody:
-    if (c == 'Vehicle Condition Satisfactory') return VehicleCondition.safe;
-    if (c == 'Has Defects') return VehicleCondition.needsRepair;
-    // أسماء enum (توافقية مع التخزين المحلي والقيم السابقة):
-    if (c == VehicleCondition.needsRepair.name) {
-      return VehicleCondition.needsRepair;
-    }
-    if (c == VehicleCondition.unsafe.name) {
-      return VehicleCondition.unsafe;
-    }
-    if (c == VehicleCondition.safe.name) {
-      return VehicleCondition.safe;
-    }
-    // حالة غير معروفة: لا نُقرّ بأنها "آمنة" — الأمان يفضّل التحفظ.
-    return VehicleCondition.needsRepair;
-  }
-
-  InspectionItem _parseInspectionItem(String? name) {
-    return InspectionItem.values.firstWhere(
-      (item) => item.name == name,
-      orElse: () => InspectionItem.engine,
-    );
+    // الحالة الرسمية من الخادم عبر الـ enum؛ أي حالة غير معروفة تبقى
+    // متحفظة (needsRepair) — الأمان يفضّل التحفظ على التفاؤل.
+    final status = DvirConditionStatus.fromWire(condition);
+    return status == DvirConditionStatus.satisfactory
+        ? VehicleCondition.safe
+        : VehicleCondition.needsRepair;
   }
 }

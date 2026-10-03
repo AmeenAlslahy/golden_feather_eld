@@ -15,50 +15,31 @@ enum VehicleCondition {
   unsafe;
 }
 
-/// أجزاء المركبة للفحص
-enum InspectionItem {
-  brakes,
-  tires,
-  lights,
-  steering,
-  trailerCoupling,
-  emergencyEquipment,
-  engine,
-  fuelSystem,
-  exhaustSystem,
-  suspension,
-  mirrors,
-  windshield;
-}
+/// حالة DVIR الرسمية كما يعرّفها FMCSA — قيم `wire` هي النصوص التي يرسلها
+/// الخادم ويستقبلها؛ لا تُستخدم النصوص كمعرّفات في الكود أبداً، الـ enum
+/// فقط (SRS 7.6).
+enum DvirConditionStatus {
+  satisfactory('Vehicle Condition Satisfactory'),
+  hasDefects('Has Defects'),
+  defectsCorrected('Defects Corrected'),
+  defectsNotCorrected('Defects Need Not Be Corrected');
 
-/// نتيجة فحص عنصر
-class ItemInspectionResult extends Equatable {
-  final InspectionItem item;
-  final bool isDefective;
-  final String? defectDescription;
+  const DvirConditionStatus(this.wire);
+  final String wire;
 
-  const ItemInspectionResult({
-    required this.item,
-    this.isDefective = false,
-    this.defectDescription,
-  });
-
-  ItemInspectionResult copyWith({
-    bool? isDefective,
-    String? defectDescription,
-  }) {
-    return ItemInspectionResult(
-      item: item,
-      isDefective: isDefective ?? this.isDefective,
-      defectDescription: defectDescription ?? this.defectDescription,
-    );
+  /// حالة غير معروفة → satisfactory (الافتراضي عند الإنشاء).
+  static DvirConditionStatus fromWire(String? value) {
+    final v = value?.trim() ?? '';
+    for (final status in DvirConditionStatus.values) {
+      if (status.wire == v) return status;
+    }
+    return DvirConditionStatus.satisfactory;
   }
-
-  @override
-  List<Object?> get props => [item, isDefective, defectDescription];
 }
 
-/// كيان تقرير DVIR
+/// نتيجة فحص عنصر — يُستبدل حقل العيوب في الكيان بـ [DvirDefectSelection]
+/// (مواضع §396.11 من كتالوج الخادم)؛ هذه القائمة لم تعد جزءاً من الكيان.
+///
 /// حالة تشغيل المركبة المشتقة من عيوب التقرير (SRS 7.1).
 ///
 /// تُحسب من العيوب **غير المُعالجة** فقط:
@@ -80,8 +61,6 @@ class DvirReport extends Equatable {
   final String vehicleId;
   final String? trailerId;
   final double? odometer;
-  final List<ItemInspectionResult> items;
-  final List<String>? dtcCodes;
   final String? notes;
   final String? signature;
   final VehicleCondition condition;
@@ -122,8 +101,6 @@ class DvirReport extends Equatable {
     required this.vehicleId,
     this.trailerId,
     this.odometer,
-    required this.items,
-    this.dtcCodes,
     this.notes,
     this.signature,
     this.condition = VehicleCondition.safe,
@@ -153,8 +130,6 @@ class DvirReport extends Equatable {
     String? vehicleId,
     String? trailerId,
     double? odometer,
-    List<ItemInspectionResult>? items,
-    List<String>? dtcCodes,
     String? notes,
     String? signature,
     VehicleCondition? condition,
@@ -183,8 +158,6 @@ class DvirReport extends Equatable {
       vehicleId: vehicleId ?? this.vehicleId,
       trailerId: trailerId ?? this.trailerId,
       odometer: odometer ?? this.odometer,
-      items: items ?? this.items,
-      dtcCodes: dtcCodes ?? this.dtcCodes,
       notes: notes ?? this.notes,
       signature: signature ?? this.signature,
       condition: condition ?? this.condition,
@@ -216,8 +189,6 @@ class DvirReport extends Equatable {
         vehicleId,
         trailerId,
         odometer,
-        items,
-        dtcCodes,
         notes,
         signature,
         condition,

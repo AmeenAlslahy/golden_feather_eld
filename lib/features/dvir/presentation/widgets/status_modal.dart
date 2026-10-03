@@ -1,10 +1,12 @@
-import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/extensions/context_extensions.dart';
+import '../../domain/entities/dvir_report.dart';
 
+/// اختيار حالة DVIR الرسمية — يُرجع [DvirConditionStatus]، لا نصوص wire.
 class DvirStatusModal extends StatelessWidget {
   final bool hasDefect;
-  final String? selectedStatus;
+  final DvirConditionStatus? selectedStatus;
 
   const DvirStatusModal({
     super.key,
@@ -29,13 +31,15 @@ class DvirStatusModal extends StatelessWidget {
                 ? null
                 : () => Navigator.pop(
                       context,
-                      'Vehicle Condition Satisfactory',
+                      DvirConditionStatus.satisfactory,
                     ),
           ),
           ListTile(
             title: Text(loc.dvirHasDefects),
-            onTap: () => Navigator.pop(context, 'Has Defects'),
+            onTap: () => Navigator.pop(context, DvirConditionStatus.hasDefects),
           ),
+          // حالتا الإصلاح يضبطهما الناقل بعد شهادة الإصلاح — ليست قراراً
+          // للسائق هنا (SRS 7.6).
           ListTile(
             enabled: false,
             title: Text(loc.dvirDefectsCorrected),

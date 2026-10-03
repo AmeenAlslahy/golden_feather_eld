@@ -16,7 +16,6 @@ void main() {
         date: DateTime.utc(2026, 9, 28),
         driverName: 'Driver',
         vehicleId: 'vehicle-1',
-        items: const [],
         hasDefects: hasDefects,
         outOfService: outOfService,
       );
