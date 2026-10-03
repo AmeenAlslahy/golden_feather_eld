@@ -25,7 +25,6 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final subtitleBits = <String>[
       if (vehicle.year.isNotEmpty) vehicle.year,
       if (vehicle.name.isNotEmpty) vehicle.name,
@@ -80,10 +79,7 @@ class VehicleCard extends StatelessWidget {
 
   AppStatusBadge? _rowBadge(AppLocalizations loc) {
     if (vehicle.inUseByOther == true) {
-      return AppStatusBadge(
-        label: loc.inUse,
-        type: AppStatusBadgeType.error,
-      );
+      return AppStatusBadge(label: loc.inUse, type: AppStatusBadgeType.error);
     }
     if (!operable) {
       return AppStatusBadge(
@@ -126,4 +122,3 @@ String vehicleErrorText(String raw, AppLocalizations loc) {
       return raw;
   }
 }
-

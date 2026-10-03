@@ -34,21 +34,28 @@ void main() {
     expect(parseVehicleList({'companyName': 'Carrier'}), isNull);
   });
 
-  test('a classification row does not become assigned or selected by default', () {
-    final vehicles = parseVehicleList([
-      {'vehicleId': 7, 'vehicleName': 'Truck', 'inUseByOtherDriver': true},
-    ]);
+  test(
+    'a classification row does not become assigned or selected by default',
+    () {
+      final vehicles = parseVehicleList([
+        {'vehicleId': 7, 'vehicleName': 'Truck', 'inUseByOtherDriver': true},
+      ]);
 
-    expect(vehicles, isNotNull);
-    expect(vehicles!.single.uniqueId, isNull);
-    expect(vehicles.single.isAssigned, isFalse);
-    expect(vehicles.single.selectedByServer, isNull);
-    expect(vehicles.single.inUseByOther, isTrue);
-  });
+      expect(vehicles, isNotNull);
+      expect(vehicles!.single.uniqueId, isNull);
+      expect(vehicles.single.isAssigned, isFalse);
+      expect(vehicles.single.selectedByServer, isNull);
+      expect(vehicles.single.inUseByOther, isTrue);
+    },
+  );
 
   test('company fleet browse does not operate an unassigned vehicle', () {
     final vehicles = parseVehicleList([
-      {'vehicleId': 7, 'vehicleName': 'Truck', 'assignedToCurrentDriver': false},
+      {
+        'vehicleId': 7,
+        'vehicleName': 'Truck',
+        'assignedToCurrentDriver': false,
+      },
       {
         'uniqueId': '1001',
         'vehicleName': 'Mine',
@@ -79,12 +86,25 @@ void main() {
     );
   });
 
-  test('HTTP rejection names come from the status when the body has no sentence', () {
-    expect(vehicleOperateFailure(code: 'permission.denied', statusCode: 403), 'unauthorized');
-    expect(vehicleOperateFailure(code: 'conflict', statusCode: 409), 'in_use');
-    expect(
-      vehicleOperateFailure(code: 'x', statusCode: 403, serverMessage: 'Already in use'),
-      'Already in use',
-    );
-  });
+  test(
+    'HTTP rejection names come from the status when the body has no sentence',
+    () {
+      expect(
+        vehicleOperateFailure(code: 'permission.denied', statusCode: 403),
+        'unauthorized',
+      );
+      expect(
+        vehicleOperateFailure(code: 'conflict', statusCode: 409),
+        'in_use',
+      );
+      expect(
+        vehicleOperateFailure(
+          code: 'x',
+          statusCode: 403,
+          serverMessage: 'Already in use',
+        ),
+        'Already in use',
+      );
+    },
+  );
 }

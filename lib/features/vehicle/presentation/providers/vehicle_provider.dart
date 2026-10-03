@@ -58,11 +58,10 @@ class VehicleState {
 }
 
 /// مزود المركبات
-final vehicleProvider =
-    StateNotifierProvider<VehicleNotifier, VehicleState>((ref) {
-  return VehicleNotifier(
-    ref.watch(vehicleRepositoryProvider),
-  );
+final vehicleProvider = StateNotifierProvider<VehicleNotifier, VehicleState>((
+  ref,
+) {
+  return VehicleNotifier(ref.watch(vehicleRepositoryProvider));
 });
 
 class VehicleNotifier extends StateNotifier<VehicleState> {
@@ -79,37 +78,40 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
 
     final result = await _repository.getVehicles();
 
-    result.match((failure) {
-      state = state.copyWith(
-        isLoading: false,
-        error: failure.message,
-      );
-    }, (vehicles) {
-      final selected = _serverSelected(vehicles);
-      state = state.copyWith(
-        vehicles: vehicles,
-        selectedVehicle: selected,
-        clearSelected: selected == null,
-        isLoading: false,
-        isInitialized: true,
-        error: null,
-      );
-    });
+    result.match(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+      },
+      (vehicles) {
+        final selected = _serverSelected(vehicles);
+        state = state.copyWith(
+          vehicles: vehicles,
+          selectedVehicle: selected,
+          clearSelected: selected == null,
+          isLoading: false,
+          isInitialized: true,
+          error: null,
+        );
+      },
+    );
   }
 
   Future<void> loadCompanyVehicles() async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
     final result = await _repository.getCompanyVehicles();
-    result.match((failure) {
-      state = state.copyWith(isLoading: false, error: failure.message);
-    }, (vehicles) {
-      state = state.copyWith(
-        vehicles: vehicles,
-        isLoading: false,
-        isInitialized: true,
-        error: null,
-      );
-    });
+    result.match(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+      },
+      (vehicles) {
+        state = state.copyWith(
+          vehicles: vehicles,
+          isLoading: false,
+          isInitialized: true,
+          error: null,
+        );
+      },
+    );
   }
 
   Vehicle? _serverSelected(List<Vehicle> vehicles) {
@@ -133,21 +135,25 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     Vehicle vehicle, {
     required double? speedMps,
     required double thresholdKmh,
+    required bool trackingLive,
   }) async {
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
 
-    // SRS 9.4: المركبة قيد الحركة — الرفض مع تسجيله في سجل التدقيق
-    if (speedMps != null && speedMps * 3.6 >= thresholdKmh) {
+    // SRS 9.4: المركبة قيد الحركة فعلياً (تيار موقع حي) — رفض فوري.
+    if (trackingLive && speedMps != null && speedMps * 3.6 >= thresholdKmh) {
       state = state.copyWith(isLoading: false, error: 'vehicleMoving');
       return;
     }
 
-    // SRS 9.3: حركة غير معروفة (speed null) لا تُعامل كتوقف
-    // يُطبَّق قيد جهالة الحركة عند وجود جلسة لمركبة نشطة مسبقاً (منع التبديل أثناء القيادة)
-    final hasActiveSession = state.vehicles.any((v) => v.activeForCurrentDriver == true) ||
-        (state.selectedVehicle != null && state.selectedVehicle?.id != 'No Vehicle');
+    // SRS 9.3: حارس التبديل يعمل فقط حين يكون تيار الموقع حياً —
+    // تتبع مغلق يعني لا دليل قيادة أصلاً؛ الاختيار هو بدء الجلسة الجديدة
+    // والتحقق القانوني يتكفل به الخادم عند connectSession.
+    final hasActiveSession =
+        state.vehicles.any((v) => v.activeForCurrentDriver == true) ||
+        (state.selectedVehicle != null &&
+            state.selectedVehicle?.id != 'No Vehicle');
 
-    if (hasActiveSession && speedMps == null) {
+    if (hasActiveSession && trackingLive && speedMps == null) {
       state = state.copyWith(isLoading: false, error: 'motionUnknown');
       return;
     }

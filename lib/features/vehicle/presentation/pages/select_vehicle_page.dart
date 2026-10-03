@@ -35,24 +35,34 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   }
 
   Future<void> _handleVehicleSelected(Vehicle vehicle) async {
-    
     if (!listedVehicleIsOperable(
       browsingCompanyFleet: _browsingCompany,
       vehicle: vehicle,
     )) {
-      AppFeedback.error(context, vehicleErrorText(vehicle.inUseByOther == true ? 'in_use' : 'unauthorized', context.loc));
+      AppFeedback.error(
+        context,
+        vehicleErrorText(
+          vehicle.inUseByOther == true ? 'in_use' : 'unauthorized',
+          context.loc,
+        ),
+      );
       return;
     }
-    await ref.read(vehicleProvider.notifier).selectVehicle(
+    await ref
+        .read(vehicleProvider.notifier)
+        .selectVehicle(
           vehicle,
           speedMps: ref.read(currentVehicleSpeedProvider),
-          thresholdKmh:
-              ref.read(hosConfigurationProvider).movingSpeedThresholdKmh,
+          thresholdKmh: ref
+              .read(hosConfigurationProvider)
+              .movingSpeedThresholdKmh,
+          // الحارس يعمل فقط حين يكون تيار الموقع حياً — تتبع مغلق =
+          // لا دليل حركة، والاختيار بدء طبيعي لجلسة جديدة (SRS 9.3).
+          trackingLive: ref.read(trackingStateProvider).isTracking,
         );
   }
 
   void _showUnassignedDialog(BuildContext context) {
-    
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -60,12 +70,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         content: Text.rich(
           TextSpan(
             children: [
-              TextSpan(
-                text: context.loc.vehiclesAssignedViaPortal,
-              ),
+              TextSpan(text: context.loc.vehiclesAssignedViaPortal),
               TextSpan(
                 text: context.loc.contactFleetManager,
-                style: context.styles.error.copyWith(fontWeight: FontWeight.w600),
+                style: context.styles.error.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -111,8 +121,10 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     // الاستماع لتغييرات الحالة من Provider للانتقال أو إظهار خطأ
     ref.listen<VehicleState>(vehicleProvider, (previous, current) {
       if (current.error != null && (previous?.error != current.error)) {
-        
-        AppFeedback.error(context, vehicleErrorText(current.error!, context.loc));
+        AppFeedback.error(
+          context,
+          vehicleErrorText(current.error!, context.loc),
+        );
       }
 
       // SRS 9.1 — the "No Vehicles Assigned" prompt is for drivers with no
@@ -129,12 +141,13 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       }
 
       if (current.isSuccess && !(previous?.isSuccess ?? false)) {
-        
         final name = current.selectedVehicle?.displayName ?? '';
-        AppFeedback.success(context, 
-              // Select ≠ Operate: the server session is opened on the
-              // Connection page, so nothing is claimed as accepted here.
-              context.loc.vehicleSelectedConnect(name));
+        AppFeedback.success(
+          context,
+          // Select ≠ Operate: the server session is opened on the
+          // Connection page, so nothing is claimed as accepted here.
+          context.loc.vehicleSelectedConnect(name),
+        );
         // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
         context.go(AppRoutes.connection);
       }
@@ -190,8 +203,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             child: vehicleState.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
-                        color: Theme.of(context).colorScheme.primary,
-                        backgroundColor: context.colorScheme.surface,
+                    color: Theme.of(context).colorScheme.primary,
+                    backgroundColor: context.colorScheme.surface,
                     onRefresh: () {
                       if (_browsingCompany) {
                         return ref
@@ -203,51 +216,56 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                           .loadVehicles(forceRefresh: true);
                     },
                     child: filteredVehicles.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.45,
-                            child: EldRetryView(
-                              message: vehicleState.error != null
-                                  ? vehicleErrorText(vehicleState.error!, context.loc)
-                                  : context.loc.noVehiclesFound,
-                              isError: vehicleState.error != null,
-                              onRetry: () {
-                                if (_browsingCompany) {
-                                  ref
-                                      .read(vehicleProvider.notifier)
-                                      .loadCompanyVehicles();
-                                } else {
-                                  ref
-                                      .read(vehicleProvider.notifier)
-                                      .loadVehicles(forceRefresh: true);
-                                }
-                              },
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.45,
+                                child: EldRetryView(
+                                  message: vehicleState.error != null
+                                      ? vehicleErrorText(
+                                          vehicleState.error!,
+                                          context.loc,
+                                        )
+                                      : context.loc.noVehiclesFound,
+                                  isError: vehicleState.error != null,
+                                  onRetry: () {
+                                    if (_browsingCompany) {
+                                      ref
+                                          .read(vehicleProvider.notifier)
+                                          .loadCompanyVehicles();
+                                    } else {
+                                      ref
+                                          .read(vehicleProvider.notifier)
+                                          .loadVehicles(forceRefresh: true);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
                             ),
+                            itemCount: filteredVehicles.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final vehicle = filteredVehicles[index];
+                              return VehicleCard(
+                                key: ValueKey(vehicle.id),
+                                vehicle: vehicle,
+                                operable: listedVehicleIsOperable(
+                                  browsingCompanyFleet: _browsingCompany,
+                                  vehicle: vehicle,
+                                ),
+                                onTap: () => _handleVehicleSelected(vehicle),
+                              );
+                            },
                           ),
-                        ],
-                      )
-                    : ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                        ),
-                        itemCount: filteredVehicles.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final vehicle = filteredVehicles[index];
-                          return VehicleCard(
-                            key: ValueKey(vehicle.id),
-                            vehicle: vehicle,
-                            operable: listedVehicleIsOperable(
-                              browsingCompanyFleet: _browsingCompany,
-                              vehicle: vehicle,
-                            ),
-                            onTap: () => _handleVehicleSelected(vehicle),
-                          );
-                        },
-                      ),
                   ),
           ),
         ],
@@ -276,7 +294,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
 
 //   @override
 //   Widget build(BuildContext context) {
-    
+
 //     final subtitleBits = <String>[
 //       if (vehicle.year.isNotEmpty) vehicle.year,
 //       if (vehicle.name.isNotEmpty) vehicle.name,
@@ -377,4 +395,3 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
 //       return raw;
 //   }
 // }
-

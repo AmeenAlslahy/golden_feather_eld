@@ -10,11 +10,14 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
+import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
 import 'package:golden_feather_eld/features/vehicle/presentation/pages/select_vehicle_page.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repo extends Mock implements VehicleRepository {}
+
+class _MockTrackingRepository extends Mock implements TrackingRepository {}
 
 class _Storage extends Mock implements LocalStorageService {}
 
@@ -58,12 +61,19 @@ void main() {
 
   setUp(() {
     repo = _Repo();
-    when(() => repo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
+    when(
+      () => repo.getSelectedVehicle(),
+    ).thenAnswer((_) async => const Right(null));
     when(() => repo.getCompanyVehicles()).thenAnswer(
-        (_) async => const Right([companyUnassigned, companyBusy, spare]));
+      (_) async => const Right([companyUnassigned, companyBusy, spare]),
+    );
   });
 
-  Future<void> pump(WidgetTester tester, {double? speedMps}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    double? speedMps,
+    bool trackingLive = false,
+  }) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -72,14 +82,19 @@ void main() {
     final storage = _Storage();
     when(() => storage.hosConfiguration).thenReturn(HosConfiguration.usa70_8());
 
-    final router = GoRouter(routes: [
-      GoRoute(path: '/', builder: (_, __) => const SelectVehiclePage()),
-      GoRoute(
-        path: '/connection',
-        builder: (_, __) => const Scaffold(body: Text('CONNECTION ROUTE')),
-      ),
-      GoRoute(path: '/home', builder: (_, __) => const Scaffold(body: Text('HOME'))),
-    ]);
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, __) => const SelectVehiclePage()),
+        GoRoute(
+          path: '/connection',
+          builder: (_, __) => const Scaffold(body: Text('CONNECTION ROUTE')),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (_, __) => const Scaffold(body: Text('HOME')),
+        ),
+      ],
+    );
 
     await tester.pumpWidget(
       ProviderScope(
@@ -87,6 +102,13 @@ void main() {
           vehicleRepositoryProvider.overrideWithValue(repo),
           localStorageProvider.overrideWithValue(storage),
           currentVehicleSpeedProvider.overrideWith((ref) => speedMps),
+          trackingStateProvider.overrideWith((ref) {
+            final notifier = TrackingNotifier(_MockTrackingRepository(), ref);
+            if (trackingLive) {
+              notifier.state = notifier.state.copyWith(isTracking: true);
+            }
+            return notifier;
+          }),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -101,38 +123,63 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('my vehicles: tapping one while stopped selects it and goes to Connection',
-      (tester) async {
-    when(() => repo.getVehicles()).thenAnswer((_) async => const Right([mine, spare]));
-    await pump(tester, speedMps: 0.0);
+  testWidgets(
+    'my vehicles: tapping one while stopped selects it and goes to Connection',
+    (tester) async {
+      when(
+        () => repo.getVehicles(),
+      ).thenAnswer((_) async => const Right([mine, spare]));
+      await pump(tester, speedMps: 0.0);
 
-    expect(find.text('Select Vehicle'), findsOneWidget);
-    expect(find.text('TRK-101'), findsOneWidget);
-    expect(find.text('2021 Volvo VNL'), findsOneWidget);
-    // A server-selected vehicle exists → no "Unassigned" prompt.
-    expect(find.text('No Vehicles Assigned'), findsNothing);
+      expect(find.text('Select Vehicle'), findsOneWidget);
+      expect(find.text('TRK-101'), findsOneWidget);
+      expect(find.text('2021 Volvo VNL'), findsOneWidget);
+      // A server-selected vehicle exists → no "Unassigned" prompt.
+      expect(find.text('No Vehicles Assigned'), findsNothing);
+
+      await tester.tap(find.text('TRK-102'));
+      await tester.pumpAndSettle();
+
+      // Nothing is claimed as accepted by the server on this screen.
+      expect(find.textContaining('server accepted'), findsNothing);
+      expect(
+        find.text(
+          'Selected TRK-102 | 2021 | Volvo VNL. Connect to the ELD to operate it. Hours were not copied.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('CONNECTION ROUTE'), findsOneWidget);
+      // The list never opens the hardware session itself: the repository has
+      // no operate call at all — only the connection screen owns it.
+      // Pump past the AppFeedback auto-dismiss timer (3s).
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('tracking off: selection proceeds even with unknown motion', (
+    tester,
+  ) async {
+    when(
+      () => repo.getVehicles(),
+    ).thenAnswer((_) async => const Right([mine, spare]));
+    await pump(tester); // speed null + tracking OFF — لا دليل حركة أصلاً
 
     await tester.tap(find.text('TRK-102'));
     await tester.pumpAndSettle();
 
-    // Nothing is claimed as accepted by the server on this screen.
-    expect(find.textContaining('server accepted'), findsNothing);
-    expect(
-      find.text(
-          'Selected TRK-102 | 2021 | Volvo VNL. Connect to the ELD to operate it. Hours were not copied.'),
-      findsOneWidget,
-    );
     expect(find.text('CONNECTION ROUTE'), findsOneWidget);
-    // The list never opens the hardware session itself: the repository has
-    // no operate call at all — only the connection screen owns it.
+    expect(find.textContaining('Vehicle motion is unknown'), findsNothing);
     // Pump past the AppFeedback auto-dismiss timer (3s).
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
   testWidgets('unknown motion refuses the selection and stays', (tester) async {
-    when(() => repo.getVehicles()).thenAnswer((_) async => const Right([mine, spare]));
-    await pump(tester); // speed null
+    when(
+      () => repo.getVehicles(),
+    ).thenAnswer((_) async => const Right([mine, spare]));
+    await pump(tester, trackingLive: true); // speed null + tracking live
 
     await tester.tap(find.text('TRK-102'));
     await tester.pumpAndSettle();
@@ -147,50 +194,57 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('no assigned vehicle → Unassigned dialog; VIEW ALL is view-only for the fleet',
-      (tester) async {
-    when(() => repo.getVehicles()).thenAnswer((_) async => const Right([]));
-    await pump(tester, speedMps: 0.0);
-    await tester.pumpAndSettle();
+  testWidgets(
+    'no assigned vehicle → Unassigned dialog; VIEW ALL is view-only for the fleet',
+    (tester) async {
+      when(() => repo.getVehicles()).thenAnswer((_) async => const Right([]));
+      await pump(tester, speedMps: 0.0);
+      await tester.pumpAndSettle();
 
-    expect(find.text('No Vehicles Assigned'), findsOneWidget);
-    expect(find.textContaining('Contact your fleet manager'), findsOneWidget);
+      expect(find.text('No Vehicles Assigned'), findsOneWidget);
+      expect(find.textContaining('Contact your fleet manager'), findsOneWidget);
 
-    await tester.tap(find.text('VIEW ALL VEHICLES'));
-    await tester.pumpAndSettle();
-    verify(() => repo.getCompanyVehicles()).called(1);
-    expect(find.text('TRK-900'), findsOneWidget);
-    expect(find.text('TRK-901'), findsOneWidget);
-    expect(find.text('TRK-102'), findsOneWidget);
-    // SRS 9.2/9.4: the row says so *before* the tap.
-    expect(find.text('View only'), findsOneWidget);
-    expect(find.text('In use'), findsOneWidget);
-    expect(find.text('Assigned to you'), findsOneWidget);
+      await tester.tap(find.text('VIEW ALL VEHICLES'));
+      await tester.pumpAndSettle();
+      verify(() => repo.getCompanyVehicles()).called(1);
+      expect(find.text('TRK-900'), findsOneWidget);
+      expect(find.text('TRK-901'), findsOneWidget);
+      expect(find.text('TRK-102'), findsOneWidget);
+      // SRS 9.2/9.4: the row says so *before* the tap.
+      expect(find.text('View only'), findsOneWidget);
+      expect(find.text('In use'), findsOneWidget);
+      expect(find.text('Assigned to you'), findsOneWidget);
 
-    // Unassigned company vehicle: visible, not operable.
-    await tester.tap(find.text('TRK-900'));
-    await tester.pumpAndSettle();
-    expect(find.text('You are not authorized to operate this vehicle.'), findsOneWidget);
-    expect(find.text('CONNECTION ROUTE'), findsNothing);
-    await tester.pump(const Duration(seconds: 5));
+      // Unassigned company vehicle: visible, not operable.
+      await tester.tap(find.text('TRK-900'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('You are not authorized to operate this vehicle.'),
+        findsOneWidget,
+      );
+      expect(find.text('CONNECTION ROUTE'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
 
-    // In use by another driver: visible, not operable.
-    await tester.tap(find.text('TRK-901'));
-    await tester.pumpAndSettle();
-    expect(find.text('The vehicle is in use.'), findsOneWidget);
-    expect(find.text('CONNECTION ROUTE'), findsNothing);
-    await tester.pump(const Duration(seconds: 5));
+      // In use by another driver: visible, not operable.
+      await tester.tap(find.text('TRK-901'));
+      await tester.pumpAndSettle();
+      expect(find.text('The vehicle is in use.'), findsOneWidget);
+      expect(find.text('CONNECTION ROUTE'), findsNothing);
+      await tester.pump(const Duration(seconds: 5));
 
-    // Assigned to me even in the fleet view: selectable.
-    await tester.tap(find.text('TRK-102'));
-    await tester.pumpAndSettle();
-    expect(find.text('CONNECTION ROUTE'), findsOneWidget);
-    // Pump past the AppFeedback auto-dismiss timer (3s).
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
-  });
+      // Assigned to me even in the fleet view: selectable.
+      await tester.tap(find.text('TRK-102'));
+      await tester.pumpAndSettle();
+      expect(find.text('CONNECTION ROUTE'), findsOneWidget);
+      // Pump past the AppFeedback auto-dismiss timer (3s).
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+    },
+  );
 
-  testWidgets('load failure shows a sanitized message with retry', (tester) async {
+  testWidgets('load failure shows a sanitized message with retry', (
+    tester,
+  ) async {
     when(() => repo.getVehicles()).thenAnswer((_) async => const Right([]));
     await pump(tester, speedMps: 0.0);
     await tester.pumpAndSettle();

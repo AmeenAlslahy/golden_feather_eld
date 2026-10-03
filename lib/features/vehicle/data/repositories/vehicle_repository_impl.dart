@@ -19,8 +19,8 @@ class VehicleRepositoryImpl implements VehicleRepository {
   VehicleRepositoryImpl({
     required VehicleBackend vehicleBackend,
     required NetworkInfo networkInfo,
-  })  : _vehicleBackend = vehicleBackend,
-        _networkInfo = networkInfo;
+  }) : _vehicleBackend = vehicleBackend,
+       _networkInfo = networkInfo;
 
   @override
   Future<Either<Failure, List<Vehicle>>> getVehicles() {
@@ -43,7 +43,9 @@ class VehicleRepositoryImpl implements VehicleRepository {
         (data) {
           final vehicles = parseVehicleList(data);
           if (vehicles == null) {
-            return const Left(ServerFailure(message: 'vehicle_list_unreadable'));
+            return const Left(
+              ServerFailure(message: 'vehicle_list_unreadable'),
+            );
           }
           return Right(vehicles);
         },
