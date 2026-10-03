@@ -112,7 +112,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsTitle => 'الإعدادات';
 
   @override
-  String get statusTitle => 'السجلات';
+  String get statusTitle => 'الحالة';
 
   @override
   String get saveButton => 'حفظ';

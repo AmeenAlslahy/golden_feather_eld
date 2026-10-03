@@ -28,10 +28,15 @@ class DailyLogDto {
   });
 
   factory DailyLogDto.fromJson(Map<String, dynamic> json) {
+    final logDateStr = json['logDate'] as String?;
+    if (logDateStr == null || logDateStr.trim().isEmpty) {
+      throw const FormatException('Missing or empty logDate in DailyLog payload');
+    }
+
     return DailyLogDto(
       id: json['id'] as int? ?? 0,
       uniqueId: json['uniqueId'] as String? ?? '',
-      logDate: json['logDate'] as String? ?? DateTime.now().toIso8601String(),
+      logDate: logDateStr,
       formattedTotalWorkTime: json['formattedTotalWorkTime'] as String? ?? '',
       totalDurationMinutes: json['totalDurationMinutes'] as int? ?? 0,
       formStatus: json['formStatus'] as String? ?? 'UNKNOWN',
@@ -76,7 +81,7 @@ class DailyLogDto {
     return DailyLog(
       id: DailyLogId(id),
       uniqueId: uniqueId,
-      date: DateTime.tryParse(logDate) ?? DateTime.now(),
+      date: DateTime.tryParse(logDate) ?? (throw FormatException('Invalid logDate format: $logDate')),
       formattedTotalWorkTime: formattedTotalWorkTime,
       totalDrivingHours: totalDurationMinutes / 60.0,
       formStatus: mappedFormStatus,

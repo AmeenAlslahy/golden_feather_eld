@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,8 +11,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../domain/defect_enums.dart';
 import '../../domain/dvir_catalog.dart';
-import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/entities/dvir_report.dart';
+import '../extensions/dvir_catalog_extensions.dart';
+import '../extensions/dvir_status_extensions.dart';
 import '../pages/dvir_form_page.dart';
 import '../providers/dvir_provider.dart';
 
@@ -74,22 +76,10 @@ class _DetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final retention = _retentionUntil(report.date);
+    final retention = report.retentionUntil;
 
-    final (statusLabel, statusColor) = switch (report.vehicleOperationalStatus) {
-      VehicleOperationalStatus.outOfService => (
-          loc.vehicleStatusOutOfService,
-          AppColors.dangerText,
-        ),
-      VehicleOperationalStatus.restricted => (
-          loc.vehicleStatusRestricted,
-          AppColors.warningText,
-        ),
-      VehicleOperationalStatus.available => (
-          loc.vehicleStatusAvailable,
-          AppColors.successText,
-        ),
-    };
+    final statusLabel = report.vehicleOperationalStatus.label(loc);
+    final statusColor = report.vehicleOperationalStatus.color(context.styles);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -105,7 +95,11 @@ class _DetailBody extends StatelessWidget {
             ),
             EldInfoRow(label: loc.driverName, value: report.driverName),
             EldInfoRow(
-                label: loc.dvirTimeET, value: _formatTime(report.date)),
+                label: loc.dvirTimeET,
+                value: report.date != null
+                    ? DateFormat('d MMM yy, hh:mm a', loc.localeName)
+                        .format(report.date!.toLocal())
+                    : '—'),
             EldInfoRow(
                 label: loc.location,
                 value: (report.location ?? '').isEmpty
@@ -129,8 +123,9 @@ class _DetailBody extends StatelessWidget {
                 value: (report.notes ?? '').isEmpty ? '—' : report.notes!),
             EldInfoRow(
               label: loc.dvirRetentionUntil,
-              value:
-                  '${retention.year}-${retention.month.toString().padLeft(2, '0')}-${retention.day.toString().padLeft(2, '0')}',
+              value: retention != null
+                  ? '${retention.year}-${retention.month.toString().padLeft(2, '0')}-${retention.day.toString().padLeft(2, '0')}'
+                  : '—',
             ),
           ],
         ),
@@ -182,19 +177,6 @@ class _DetailBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
       ],
     );
-  }
-
-  DateTime _retentionUntil(DateTime inspectedAt) {
-    final y = inspectedAt.year;
-    final m = inspectedAt.month;
-    return DateTime(y, m + 3, inspectedAt.day, inspectedAt.hour,
-        inspectedAt.minute);
-  }
-
-  String _formatTime(DateTime dt) {
-    String two(int v) => v.toString().padLeft(2, '0');
-    return '${dt.year}-${two(dt.month)}-${two(dt.day)} '
-        '${two(dt.hour)}:${two(dt.minute)}';
   }
 }
 

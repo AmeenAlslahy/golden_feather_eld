@@ -47,8 +47,8 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     _signatureReady = true;
     _signatureController = SignatureController(
       penStrokeWidth: 3,
-      penColor: Theme.of(context).colorScheme.primary,
-      exportBackgroundColor: Theme.of(context).colorScheme.surface,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
       // SRS 7.11 — the placeholder must disappear as soon as the driver
       // draws (and come back after Clear).
       onDrawStart: () => setState(() {}),

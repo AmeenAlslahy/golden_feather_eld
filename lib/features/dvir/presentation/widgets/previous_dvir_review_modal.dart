@@ -20,7 +20,9 @@ class PreviousDvirReviewModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final dateLabel = DateFormat('yyyy-MM-dd HH:mm').format(latest.date.toLocal());
+    final dateLabel = latest.date != null
+        ? DateFormat('yyyy-MM-dd HH:mm').format(latest.date!.toLocal())
+        : '—';
     final condition = context.translateVehicleCondition(latest.condition.name);
 
     return AlertDialog(

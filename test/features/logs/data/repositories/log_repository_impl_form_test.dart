@@ -169,7 +169,7 @@ void main() {
       
       expect(pendingEvent.type, 'daily_log_form');
       
-      final payload = pendingEvent.payload as Map<String, dynamic>;
+      final payload = pendingEvent.payload;
       expect(payload['logId'], tLogId.value);
       
       // Ensure the exact same payload shape is queued offline

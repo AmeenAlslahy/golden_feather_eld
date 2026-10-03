@@ -60,6 +60,7 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
   void setStatus(String status) =>
       state = state.copyWith(selectedStatus: status);
   void setStartTime(String time) => state = state.copyWith(startTime: time);
+  void setLocation(String location) => state = state.copyWith(location: location);
   void setReason(String reason) => state = state.copyWith(reason: reason);
 }
 
@@ -283,19 +284,17 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             const SizedBox(height: AppSpacing.md),
 
             // 6. إدخال موقع يدوي
-            TextField(
-              decoration: InputDecoration(
-                hintText: context.loc.manualLocation,
-                hintStyle: context.styles.subtitle,
-                border: const UnderlineInputBorder(),
-                suffixIcon: Icon(
-                  Icons.my_location,
-                  color: context.styles.body.color,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            AppTextField(
+              hint: context.loc.manualLocation,
+              suffixIcon: Icon(
+                Icons.my_location,
+                color: context.styles.body.color,
               ),
-              style: context.styles.body,
-              onChanged: (value) {},
+              onChanged: (value) {
+                ref
+                    .read(editLogFormProvider(widget.event).notifier)
+                    .setLocation(value);
+              },
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -350,10 +349,14 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                 final selectedLog = ref.read(logsProvider).selectedLog;
                 final status = statusFromEditValue(formState.selectedStatus);
                 final existing = widget.event is LogEvent ? widget.event : null;
-                final newStart =
-                    parseEditFormTime(formState.startTime, selectedLog?.date) ??
-                    existing?.startTime ??
-                    DateTime.now();
+                final parsedTime = parseEditFormTime(formState.startTime, selectedLog?.date);
+                if (parsedTime == null) {
+                  if (context.mounted) {
+                    AppFeedback.error(context, context.loc.invalidValue);
+                  }
+                  return;
+                }
+                final newStart = parsedTime;
                 if (existing != null) {
                   final refusal = refuseAutomaticDrivingEdit(
                     original: existing,
@@ -372,7 +375,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                 }
 
                 final updatedEvent =
-                    existing?.copyWith(status: status, startTime: newStart) ??
+                    existing?.copyWith(status: status, startTime: newStart, location: formState.location) ??
                     LogEvent(
                       id: DateTime.now().millisecondsSinceEpoch.toString(),
                       status: status,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_styles.dart';
 
 enum EldButtonType {
+  primary,
   connect,
   continueDisconnected,
   send,
@@ -25,7 +27,7 @@ class AppButton extends StatefulWidget {
     super.key,
     required this.label,
     this.onPressed,
-    this.type = EldButtonType.agree,
+    this.type = EldButtonType.primary,
     this.isFullWidth = true,
     this.icon,
     this.isLoading = false,
@@ -47,6 +49,7 @@ class _AppButtonState extends State<AppButton> {
 
   Color _base(ThemeData theme) {
     return switch (widget.type) {
+      EldButtonType.primary => AppColors.primaryGold,
       EldButtonType.connect => const Color(0xFF4CAF50),
       EldButtonType.agree => const Color(0xFF4CAF50),
       EldButtonType.continueDisconnected => const Color(0xFF2C2C2E),

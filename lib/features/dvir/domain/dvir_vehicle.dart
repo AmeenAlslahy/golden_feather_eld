@@ -4,5 +4,5 @@ const String noVehicleSentinel = 'No Vehicle';
 
 bool isUnassignedVehicleId(String? id) {
   final v = id?.trim() ?? '';
-  return v.isEmpty || v == noVehicleSentinel;
+  return v.isEmpty || v.toLowerCase() == noVehicleSentinel.toLowerCase();
 }

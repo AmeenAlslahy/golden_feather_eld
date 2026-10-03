@@ -13,10 +13,11 @@ class DvirState {
   final List<DvirReport> reports;
   final DvirReport? currentReport;
   final bool isLoading;
+  /// مستقل عن [isLoading]: يُضبط فقط أثناء إرسال تقرير جديد.
+  /// يمنع تأثير الإرسال على حالة تحميل قائمة التقارير.
+  final bool isSubmitting;
   final String? error;
 
-  /// Last `GET /eld/dvir/pre-trip/{uniqueId}` answer for [previousVehicleId].
-  /// `previousLookupDone && previousDvir == null` = server said none.
   final DvirReport? previousDvir;
   final String? previousVehicleId;
   final bool previousLookupDone;
@@ -26,6 +27,7 @@ class DvirState {
     this.reports = const [],
     this.currentReport,
     this.isLoading = false,
+    this.isSubmitting = false,
     this.error,
     this.previousDvir,
     this.previousVehicleId,
@@ -53,7 +55,9 @@ class DvirState {
   DvirState copyWith({
     List<DvirReport>? reports,
     DvirReport? currentReport,
+    bool clearCurrentReport = false,
     bool? isLoading,
+    bool? isSubmitting,
     // Sentinel to distinguish "clear error" from "keep current error".
     Object? error = _keepError,
     DvirReport? previousDvir,
@@ -64,8 +68,10 @@ class DvirState {
   }) {
     return DvirState(
       reports: reports ?? this.reports,
-      currentReport: currentReport ?? this.currentReport,
+      currentReport:
+          clearCurrentReport ? null : (currentReport ?? this.currentReport),
       isLoading: isLoading ?? this.isLoading,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
       error: identical(error, _keepError) ? this.error : (error as String?),
       previousDvir: clearPreviousDvir ? null : (previousDvir ?? this.previousDvir),
       previousVehicleId: previousVehicleId ?? this.previousVehicleId,
@@ -155,7 +161,7 @@ class DvirNotifier extends StateNotifier<DvirState> {
     required int driverId,
     required DvirConditionStatus status,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isSubmitting: true, error: null);
     final result = await _repository.submitDvirReport(
       report,
       driverId: driverId,
@@ -164,12 +170,13 @@ class DvirNotifier extends StateNotifier<DvirState> {
     if (!mounted) return false;
     return result.fold(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        state = state.copyWith(isSubmitting: false, error: failure.message);
         return false;
       },
-      (_) {
-        // Refresh in background, don't block the UI.
-        _loadDvirs();
+      (_) async {
+        state = state.copyWith(isSubmitting: false);
+        // Refresh and await so the updated list is in state immediately.
+        await _loadDvirs();
         return true;
       },
     );
@@ -188,10 +195,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
     if (signatureData.trim().isEmpty) {
       // دفاع داخلي: النموذج يمنع الوصول بتوقيع فارغ أصلاً.
       const message = 'signature required';
-      state = state.copyWith(isLoading: false, error: message);
+      state = state.copyWith(isSubmitting: false, error: message);
       return message;
     }
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isSubmitting: true, error: null);
     final result = await _repository.reviewDvir(
       dvirId: dvirId,
       reviewingDriverId: reviewingDriverId,
@@ -203,11 +210,11 @@ class DvirNotifier extends StateNotifier<DvirState> {
     if (!mounted) return null;
     return result.fold(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        state = state.copyWith(isSubmitting: false, error: failure.message);
         return failure.message;
       },
       (_) {
-        state = state.copyWith(isLoading: false, error: null);
+        state = state.copyWith(isSubmitting: false, error: null);
         return null;
       },
     );
@@ -216,6 +223,8 @@ class DvirNotifier extends StateNotifier<DvirState> {
   /// استرجاع تفاصيل تقرير DVIR محدد. التحميل صامت (بلا مؤشر عام) —
   /// الشاشة التي تطلب التفاصيل تدير حالتها المحلية.
   Future<void> loadDvirDetails(String dvirId) async {
+    // Clear stale currentReport and error before loading.
+    state = state.copyWith(clearCurrentReport: true, error: null);
     final result = await _repository.getDvirDetails(dvirId);
 
     if (mounted) {

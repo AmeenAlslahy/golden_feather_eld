@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:golden_feather_eld/backend/contracts/daily_logs_backend.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
@@ -19,8 +18,6 @@ import 'package:golden_feather_eld/features/logs/presentation/providers/logs_pro
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
-
-class _Logs extends Mock implements DailyLogsBackend {}
 
 class _Repo extends Mock implements LogRepository {}
 

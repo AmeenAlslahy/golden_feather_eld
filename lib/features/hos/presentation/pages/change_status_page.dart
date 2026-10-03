@@ -5,11 +5,9 @@ import 'package:golden_feather_eld/core/widgets/eld_card.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../duty_change_message.dart';
 import '../providers/hos_provider.dart';
 import '../widgets/status_option_tiles.dart';
-import '../widgets/location_display_widget.dart';
 import '../providers/hos_engine_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import '../../../account/presentation/providers/rules_screen_provider.dart';
@@ -194,40 +192,40 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ),
 
-            const SizedBox(height: AppSpacing.lg),
+            // const SizedBox(height: AppSpacing.lg),
 
-            // Location & Notes Card
-            EldCard(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.loc.location,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  const LocationDisplayWidget(),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppTextField(
-                    controller: _locationController,
-                    label: context.loc.customLocation,
-                    hint: context.loc.customLocation,
-                    prefixIcon: const Icon(Icons.edit_location_alt),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _notesController,
-                    label: context.loc.notes,
-                    hint: context.loc.notes,
-                    prefixIcon: const Icon(Icons.note_alt_outlined),
-                    maxLines: 3,
-                    minLines: 1,
-                  ),
-                ],
-              ),
-            ),
+            // // Location & Notes Card
+            // EldCard(
+            //   padding: const EdgeInsets.all(AppSpacing.lg),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       Text(
+            //         context.loc.location,
+            //         style: theme.textTheme.titleMedium
+            //             ?.copyWith(fontWeight: FontWeight.bold),
+            //       ),
+            //       const SizedBox(height: AppSpacing.md),
+            //       const LocationDisplayWidget(),
+            //       const SizedBox(height: AppSpacing.lg),
+            //       AppTextField(
+            //         controller: _locationController,
+            //         label: context.loc.customLocation,
+            //         hint: context.loc.customLocation,
+            //         prefixIcon: const Icon(Icons.edit_location_alt),
+            //       ),
+            //       const SizedBox(height: AppSpacing.md),
+            //       AppTextField(
+            //         controller: _notesController,
+            //         label: context.loc.notes,
+            //         hint: context.loc.notes,
+            //         prefixIcon: const Icon(Icons.note_alt_outlined),
+            //         maxLines: 3,
+            //         minLines: 1,
+            //       ),
+            //     ],
+            //   ),
+            // ),
 
             const SizedBox(height: AppSpacing.xl),
 

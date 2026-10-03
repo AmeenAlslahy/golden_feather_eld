@@ -1,4 +1,4 @@
-﻿import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_catalog.dart';
 import '../extensions/dvir_catalog_extensions.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
@@ -8,14 +8,12 @@ import '../../../../core/theme/app_colors.dart';
 
 class DefectCard extends StatelessWidget {
   final DvirDefectSelection defect;
-  final Color textColor;
   final bool readOnly;
   final VoidCallback onRemove;
 
   const DefectCard({
     super.key,
     required this.defect,
-    required this.textColor,
     required this.readOnly,
     required this.onRemove,
   });
@@ -34,7 +32,7 @@ class DefectCard extends StatelessWidget {
             size: 16,
             color: defect.item.critical
                 ? AppColors.dangerRed
-                : textColor,
+                : context.colorScheme.onSurface,
           ),
           const SizedBox(width: 8),
           Expanded(

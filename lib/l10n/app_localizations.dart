@@ -307,7 +307,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusTitle.
   ///
   /// In ar, this message translates to:
-  /// **'السجلات'**
+  /// **'الحالة'**
   String get statusTitle;
 
   /// No description provided for @saveButton.

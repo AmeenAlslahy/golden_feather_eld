@@ -11,6 +11,7 @@ import '../providers/logs_provider.dart';
 import '../providers/unidentified_events_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/app_text_field.dart';
 
 class UnidentifiedEventsPage extends ConsumerStatefulWidget {
   const UnidentifiedEventsPage({super.key});
@@ -130,10 +131,10 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
-        content: TextField(
+        content: AppTextField(
           controller: controller,
           maxLines: 3,
-          decoration: InputDecoration(hintText: hint),
+          hint: hint,
         ),
         actions: [
           TextButton(

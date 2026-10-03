@@ -14,6 +14,7 @@ import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/dvir_list_summary.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
+import '../extensions/dvir_status_extensions.dart';
 import 'dvir_detail_page.dart';
 import 'dvir_form_page.dart';
 
@@ -36,7 +37,10 @@ class DvirListPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(dvirProvider.notifier).refresh(),
+            onPressed: () {
+              ref.invalidate(dvirCatalogProvider);
+              ref.read(dvirProvider.notifier).refresh();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.add),
@@ -54,7 +58,10 @@ class DvirListPage extends ConsumerWidget {
       body: dvirState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () => ref.read(dvirProvider.notifier).refresh(),
+              onRefresh: () async {
+                ref.invalidate(dvirCatalogProvider);
+                await ref.read(dvirProvider.notifier).refresh();
+              },
               child: dvirState.reports.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -67,8 +74,10 @@ class DvirListPage extends ConsumerWidget {
                                 dvirState.error!,
                                 loc: AppLocalizations.of(context)!,
                               ),
-                              onRetry: () =>
-                                  ref.read(dvirProvider.notifier).refresh(),
+                              onRetry: () {
+                                ref.invalidate(dvirCatalogProvider);
+                                ref.read(dvirProvider.notifier).refresh();
+                              },
                             ),
                           )
                         else
@@ -204,44 +213,28 @@ class _DvirCard extends StatelessWidget {
             ),
             const Divider(height: 24),
             // معلومات التقرير
-            _infoRow(context, context.loc.dateLabel,
-                DateFormat('yyyy-MM-dd').format(report.date.toLocal())),
+            _infoRow(
+                context,
+                context.loc.dateLabel,
+                report.date != null
+                    ? DateFormat('yyyy-MM-dd').format(report.date!.toLocal())
+                    : '—'),
             _infoRow(context, context.loc.vehicle, report.vehicleId),
             if (report.trailerId != null)
               _infoRow(context, context.loc.trailer, report.trailerId!),
             _infoRow(context, context.loc.odometerReading,
                 '${report.odometer?.toStringAsFixed(0) ?? "-"} mi'),
-            // SRS 7.1: حالة تشغيل المركبة المحسوبة من العيوب غير المُعالجة.
-            Builder(
-              builder: (context) {
-                final status = report.vehicleOperationalStatus;
-                final (label, color) = switch (status) {
-                  VehicleOperationalStatus.outOfService => (
-                      context.loc.vehicleStatusOutOfService,
-                      context.styles.error.color!,
-                    ),
-                  VehicleOperationalStatus.restricted => (
-                      context.loc.vehicleStatusRestricted,
-                      context.styles.warning.color!,
-                    ),
-                  VehicleOperationalStatus.available => (
-                      context.loc.vehicleStatusAvailable,
-                      context.styles.success.color!,
-                    ),
-                };
-                return Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: AppStatusPill(
-                      icon: Icons.circle,
-                      iconSize: 8,
-                      label: label,
-                      color: color,
-                    ),
-                  ),
-                );
-              },
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppStatusPill(
+                  icon: Icons.circle,
+                  iconSize: 8,
+                  label: report.vehicleOperationalStatus.label(context.loc),
+                  color: report.vehicleOperationalStatus.color(context.styles),
+                ),
+              ),
             ),
             // عدد الأعطال وحالة الإصلاح
             if (report.hasDefects)

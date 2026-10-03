@@ -112,7 +112,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Ajustes';
 
   @override
-  String get statusTitle => 'Logs';
+  String get statusTitle => 'Estado';
 
   @override
   String get saveButton => 'Guardar';

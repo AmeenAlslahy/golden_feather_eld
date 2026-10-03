@@ -345,7 +345,6 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     child: AppTextField(
                       controller: _macController,
                       hint: 'AA:BB:CC:DD:EE:FF',
-                      isUnderlined: true,
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _attemptConnection(),
