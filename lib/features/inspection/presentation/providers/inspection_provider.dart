@@ -171,7 +171,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
   InspectionState _active({
     required List<DotInspectionCycleDay> cycle,
-    required DotInspectionLog? log,
+    required DotInspectionLog log,
   }) {
     return state.copyWith(
       isLoading: false,
@@ -180,7 +180,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       cycle: cycle,
       selectedDayIndex: 0,
       log: log,
-      clearLog: log == null,
       clearError: true,
       clearDayError: true,
     );
@@ -238,8 +237,10 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (!mounted) return;
 
     final log = logResult.fold((_) => null, (log) => log);
-    if (cycle.isEmpty && log == null) {
-      // لا بيانات قابلة للعرض إطلاقاً — لا دخول لوضع التفتيش.
+    // Invariant E (قرار المالك): لا وضع مقفل بلا بيانات قابلة للعرض —
+    // دورة صالحة + سجل أول قابل للعرض. فشل السجل الابتدائي يبقي السائق
+    // في شاشة البداية مع الخطأ وإعادة المحاولة، لا في قفل أعمى.
+    if (cycle.isEmpty || log == null) {
       state = _startFailed(
         logResult.fold(_message, (_) => _loc.errRequestFailed),
       );

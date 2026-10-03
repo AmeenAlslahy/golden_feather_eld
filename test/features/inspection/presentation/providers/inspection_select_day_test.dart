@@ -241,6 +241,26 @@ void main() {
   });
 
   test(
+    'TEST 9: initial log failure refuses locked mode (startup atomicity)',
+    () async {
+      when(
+        () => repo.getLogs(
+          driverId: any(named: 'driverId'),
+          date: any(named: 'date'),
+        ),
+      ).thenAnswer((_) async => const Left(ServerFailure(message: 'log fail')));
+
+      await notifier().startInspection(pin: '1234');
+
+      final s = state();
+      expect(s.isInspectionMode, isFalse);
+      expect(s.isPinLocked, isFalse);
+      expect(s.error, isNotNull);
+      expect(s.log, isNull);
+    },
+  );
+
+  test(
     'TEST 8: empty cycle — selectDay is a safe no-op with no request',
     () async {
       // No startInspection: cycle is empty and driverId is 0 is impossible
