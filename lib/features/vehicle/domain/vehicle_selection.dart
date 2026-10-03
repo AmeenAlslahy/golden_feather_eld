@@ -37,7 +37,9 @@ VehicleOperateRefusal? refuseVehicleOperate({
   if (speedMps == null || !speedMps.isFinite) {
     return VehicleOperateRefusal.motionUnknown;
   }
-  if (speedMps * 3.6 >= thresholdKmh) return VehicleOperateRefusal.vehicleMoving;
+  if (speedMps * 3.6 >= thresholdKmh) {
+    return VehicleOperateRefusal.vehicleMoving;
+  }
   final id = uniqueId?.trim() ?? '';
   if (id.isEmpty || id == 'unknown' || id == 'No Vehicle') {
     return VehicleOperateRefusal.identifierMissing;
@@ -69,7 +71,9 @@ Vehicle? readVehicle(Map<String, dynamic> json) {
   // deviceId الرقمي للجهاز — حقل مستقل عن uniqueId النصي (SRS: لا
   // استبدال ولا اختراع؛ يُقرأ كما يرسله الخادم فقط).
   final rawDeviceId = json['deviceId'] ?? json['id'];
-  final deviceId = rawDeviceId == null ? null : int.tryParse(rawDeviceId.toString());
+  final deviceId = rawDeviceId == null
+      ? null
+      : int.tryParse(rawDeviceId.toString());
   final assigned = _bool(json['assignedToCurrentDriver']);
   final mine = _bool(json['myVehicle']);
   return Vehicle(
