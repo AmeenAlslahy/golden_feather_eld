@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_account_backend.dart';
 import 'package:golden_feather_eld/backend/http/api_client.dart';
 import 'package:golden_feather_eld/backend/http/api_config.dart';
-import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
@@ -39,58 +38,6 @@ void main() {
         dio: dio,
       ),
     );
-  });
-
-  group('EldAccountBackend.getProfile', () {
-    test('requests correct path', () async {
-      adapter.onGet(
-        '/eld/profile/101',
-        (server) => server.reply(200, {
-          'id': 101,
-          'name': 'Ahmed',
-          'email': 'ahmed@eld.com',
-        }),
-      );
-
-      final result = await backend.getProfile(const DriverId(101));
-
-      result.tap(onSuccess: (data) {
-        expect(data['name'], 'Ahmed');
-      });
-    });
-
-    test('returns error on 404', () async {
-      adapter.onGet(
-        '/eld/profile/999',
-        (server) => server.reply(404, {'message': 'Not found'}),
-      );
-
-      final result = await backend.getProfile(const DriverId(999));
-
-      expect(result.errorOrNull, isA<NotFoundError>());
-    });
-  });
-
-  group('EldAccountBackend.updateProfile', () {
-    test('sends PUT to correct path', () async {
-      adapter.onPut(
-        '/eld/profile/101',
-        (server) => server.reply(200, {
-          'id': 101,
-          'name': 'Updated',
-        }),
-        data: {'name': 'Updated'},
-      );
-
-      final result = await backend.updateProfile(
-        driverId: const DriverId(101),
-        update: {'name': 'Updated'},
-      );
-
-      result.tap(onSuccess: (data) {
-        expect(data['name'], 'Updated');
-      });
-    });
   });
 
   group('EldAccountBackend.getMyAccount', () {

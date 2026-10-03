@@ -12,28 +12,6 @@ class EldAccountBackend implements AccountBackend {
 
   const EldAccountBackend(this._apiClient);
 
-  @override
-  Future<Result<RawJson>> getProfile(DriverId driverId) async {
-    final res = await _apiClient.get<RawJson>(
-      EldEndpoints.profile(driverId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
-  Future<Result<RawJson>> updateProfile({
-    required DriverId driverId,
-    required RawJson update,
-  }) async {
-    final res = await _apiClient.put<RawJson>(
-      EldEndpoints.profile(driverId.value),
-      data: update,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
   Map<String, dynamic> _mapAccountJson(Map<String, dynamic> json, {DriverId? fallbackDriverId}) {
     // 1. معالجة المعرف driverId
     if (json['driverId'] == null) {

@@ -1,20 +1,11 @@
 import '../../core/result/result.dart';
 import '../../domain/shared/value_objects.dart';
 import '../../domain/account/driver_account.dart';
-import 'raw_json.dart';
 
+/// بيانات حساب السائق — مصدرها `/eld/account` و`/eld/account/preferences`.
+/// مسار `/eld/profile/{id}` أُزيل من العقد بقرار المالك 2026-10-03
+/// (كان بلا أي مستدعٍ إنتاجي — قراءة/تحديث البروفايل لم تُربك بشاشة).
 abstract interface class AccountBackend {
-  /// GET /eld/profile/{driverId}
-  // TODO(P2): replace with UserProfile
-  Future<Result<RawJson>> getProfile(DriverId driverId);
-
-  /// PUT /eld/profile/{driverId}
-  // TODO(P2): replace with UserProfile
-  Future<Result<RawJson>> updateProfile({
-    required DriverId driverId,
-    required RawJson update,
-  });
-
   /// GET /eld/account
   Future<Result<DriverAccount>> getMyAccount({DriverId? driverId});
 

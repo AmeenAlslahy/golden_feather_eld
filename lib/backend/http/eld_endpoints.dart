@@ -20,9 +20,7 @@ class EldEndpoints {
   // ELD Module APIs (as per openapi.yaml)
   // ==========================================================================
 
-  // 1. Account & Profile
-  /// ملف السائق 
-  static String profile(int driverId) => '/eld/profile/$driverId';
+  // 1. Account
   /// الحساب
   static const String account = '/eld/account';
   /// تفضيلات الحساب
