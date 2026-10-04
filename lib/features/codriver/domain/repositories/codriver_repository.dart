@@ -9,10 +9,4 @@ abstract class CoDriverRepository {
   Future<Either<Failure, CurrentCoDriverRead>> getCurrentCoDriver();
 
   Future<Either<Failure, bool>> switchPrimary({required int coDriverId});
-
-  Future<Either<Failure, bool>> updateSessionCoDriver({
-    required bool remove,
-    int? coDriverId,
-    String? uniqueId,
-  });
 }

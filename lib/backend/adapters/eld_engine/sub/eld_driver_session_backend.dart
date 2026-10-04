@@ -63,28 +63,6 @@ class EldDriverSessionBackend implements DriverSessionBackend {
   }
 
   @override
-  Future<Result<RawJson>> manageCoDriver({
-    required CoDriverAction action,
-    DriverId? coDriverId,
-    DriverId? newCoDriverId,
-    String? uniqueId,
-    String? reason,
-  }) async {
-    final res = await _apiClient.post<RawJson>(
-      EldEndpoints.manageCoDriver,
-      queryParameters: {
-        'action': action.wire,
-        if (coDriverId != null) 'coDriverId': coDriverId.value,
-        if (newCoDriverId != null) 'newCoDriverId': newCoDriverId.value,
-        if (uniqueId != null) 'uniqueId': uniqueId,
-        if (reason != null) 'reason': reason,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
   Future<Result<void>> switchPrimaryDriver({
     required DutyStatusAction action,
     required DriverId coDriverId,

@@ -42,16 +42,6 @@ enum UnidentifiedTab {
   final String wire;
 }
 
-enum CoDriverAction {
-  link('link'),
-  add('add'),
-  replace('replace'),
-  remove('remove');
-
-  const CoDriverAction(this.wire);
-  final String wire;
-}
-
 enum DutyStatusAction {
   switchPrimary('switch-primary'),
   legacySwitch('legacy-switch');

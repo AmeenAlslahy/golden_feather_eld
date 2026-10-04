@@ -27,8 +27,6 @@ void main() {
     });
 
     test('action enums use the exact Swagger values', () {
-      expect(CoDriverAction.values.map((a) => a.wire),
-          ['link', 'add', 'replace', 'remove']);
       expect(DutyStatusAction.values.map((a) => a.wire),
           ['switch-primary', 'legacy-switch']);
     });

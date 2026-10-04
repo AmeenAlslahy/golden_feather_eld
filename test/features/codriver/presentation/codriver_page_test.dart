@@ -43,9 +43,10 @@ class _HosNotifier extends StateNotifier<HosEngineResult>
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// SRS 4.9 / 5.x — Co-driver page: link a session co-driver through the
-/// existing endpoint, and SWITCH is guarded (motion known + stopped) and
-/// explains that hours / duty status are not transferred.
+/// SRS 4.9 / 5.x — Co-driver page: picking a co-driver is a LOCAL selection
+/// for the role switch (linking is a carrier-side action), and SWITCH is
+/// guarded (motion known + stopped) and explains that hours / duty status
+/// are not transferred.
 void main() {
   late _Repo repo;
   late _VehicleRepo vehicleRepo;
@@ -66,13 +67,6 @@ void main() {
         CurrentCoDriverRead(coDriverId: 0, teamDrivingActive: false),
       ),
     );
-    when(
-      () => repo.updateSessionCoDriver(
-        remove: any(named: 'remove'),
-        coDriverId: any(named: 'coDriverId'),
-        uniqueId: any(named: 'uniqueId'),
-      ),
-    ).thenAnswer((_) async => const Right(true));
     when(
       () => repo.switchPrimary(coDriverId: any(named: 'coDriverId')),
     ).thenAnswer((_) async => const Right(true));
@@ -155,7 +149,7 @@ void main() {
   );
 
   testWidgets(
-    'picking a co-driver links the session via the existing endpoint',
+    'picking a co-driver selects it locally — no management endpoint call',
     (tester) async {
       await pump(tester);
 
@@ -168,16 +162,12 @@ void main() {
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      verify(
-        () => repo.updateSessionCoDriver(
-          remove: false,
-          coDriverId: 7,
-          uniqueId: null,
-        ),
-      ).called(1);
-      // Selector reflects the pick and the server link is re-read.
+      // الربط إجراء إدارة للناقل — السائق يختار محلياً فقط من سيبدأ معه
+      // تبديل الأدوار، فلا نداء إدارة ولا إعادة قراءة جلسة.
       expect(find.text('ALEX RIVERA'), findsOneWidget);
-      verify(() => repo.getCurrentCoDriver()).called(2);
+      verifyNever(
+        () => repo.switchPrimary(coDriverId: any(named: 'coDriverId')),
+      );
 
       final button = tester.widget<AppButton>(
         find.widgetWithText(AppButton, 'SWITCH'),

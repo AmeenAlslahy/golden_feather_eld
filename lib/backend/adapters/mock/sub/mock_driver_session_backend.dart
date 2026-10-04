@@ -33,20 +33,6 @@ class MockDriverSessionBackend implements DriverSessionBackend {
       throw UnimplementedError('MockDriverSessionBackend.connect — Phase 2');
 
   @override
-  Future<Result<RawJson>> manageCoDriver({
-    required CoDriverAction action,
-    DriverId? coDriverId,
-    DriverId? newCoDriverId,
-    String? uniqueId,
-    String? reason,
-  }) async {
-    return ok(<String, dynamic>{
-      'action': action.wire,
-      if (coDriverId != null) 'coDriverId': coDriverId.value,
-    });
-  }
-
-  @override
   Future<Result<void>> switchPrimaryDriver({
     required DutyStatusAction action,
     required DriverId coDriverId,

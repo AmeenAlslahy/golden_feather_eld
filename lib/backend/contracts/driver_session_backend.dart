@@ -22,16 +22,6 @@ abstract interface class DriverSessionBackend {
     bool disconnected = false,
   });
 
-  /// POST /eld/sessions/co-driver
-  // TODO(P2): replace with DriverSession
-  Future<Result<RawJson>> manageCoDriver({
-    required CoDriverAction action,
-    DriverId? coDriverId,
-    DriverId? newCoDriverId,
-    String? uniqueId,
-    String? reason,
-  });
-
   /// POST /eld/sessions/primary-driver/switch
   Future<Result<void>> switchPrimaryDriver({
     required DutyStatusAction action,

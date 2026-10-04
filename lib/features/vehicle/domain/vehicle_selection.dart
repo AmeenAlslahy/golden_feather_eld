@@ -14,18 +14,6 @@ String? readOperableUniqueId(String? uniqueId) {
   return id;
 }
 
-/// Wire identity for session operations (co-driver link, DVIR create).
-/// Prefers the selected vehicle's uniqueId; falls back to the connected
-/// tracking device id — the same persisted source the DVIR list trusts.
-/// Null when neither holds an operable identifier.
-String? resolveSessionVehicleUniqueId({
-  String? selectedUniqueId,
-  String? connectedDeviceId,
-}) {
-  return readOperableUniqueId(selectedUniqueId) ??
-      readOperableUniqueId(connectedDeviceId);
-}
-
 /// Company-fleet browse is view. Operate only if this driver is assigned
 /// and another driver is not already using the vehicle.
 bool listedVehicleIsOperable({
