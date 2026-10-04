@@ -62,19 +62,6 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> proposeCarrierEdit({
-    required DailyLogId logId,
-    required RawJson edit,
-  }) async {
-    final res = await _apiClient.post<RawJson>(
-      EldEndpoints.proposeCarrierEdit(logId.value),
-      data: edit,
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
   Future<Result<void>> respondToCarrierEdit({
     required DailyLogId logId,
     required EditId editId,

@@ -26,13 +26,6 @@ abstract interface class DailyLogsBackend {
   /// GET /eld/daily-logs/{id}/team — team status + HOS isolation (§5.8).
   Future<Result<RawJson>> getTeamStatus(DailyLogId logId);
 
-  /// POST /eld/daily-logs/{id}/carrier-edits
-  // TODO(P2): replace with CarrierEdit
-  Future<Result<RawJson>> proposeCarrierEdit({
-    required DailyLogId logId,
-    required RawJson edit,
-  });
-
   /// POST /eld/daily-logs/{id}/carrier-edits/{editId}/respond
   Future<Result<void>> respondToCarrierEdit({
     required DailyLogId logId,

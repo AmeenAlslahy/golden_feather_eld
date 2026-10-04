@@ -64,15 +64,6 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> proposeCarrierEdit({
-    required DailyLogId logId,
-    required RawJson edit,
-  }) =>
-      throw UnimplementedError(
-        'MockDailyLogsBackend.proposeCarrierEdit — Phase 2',
-      );
-
-  @override
   Future<Result<void>> respondToCarrierEdit({
     required DailyLogId logId,
     required EditId editId,

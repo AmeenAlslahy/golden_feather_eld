@@ -198,6 +198,10 @@ void main() {
       when(
         () => repo.getEvents(any(), any()),
       ).thenAnswer((_) async => const Right([]));
+      // وتفاصيل الخادم (GET /eld/daily-logs/{id}) — لا يخص هذه الاختبارات.
+      when(() => repo.getLogById(any())).thenAnswer(
+        (_) async => const Left(NetworkFailure()),
+      );
     });
 
     List<Override> overrides() => [

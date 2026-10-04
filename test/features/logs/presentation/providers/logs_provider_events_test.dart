@@ -50,6 +50,10 @@ void main() {
           limit: any(named: 'limit'),
           offset: any(named: 'offset'),
         )).thenAnswer((_) async => Right([day]));
+    // تفاصيل الخادم تُجلب الآن عند selectLog — هذه الاختبارات تخص الأحداث.
+    when(() => repo.getLogById(any())).thenAnswer(
+      (_) async => const Left(NetworkFailure()),
+    );
     container = ProviderContainer(overrides: [
       logRepositoryProvider.overrideWithValue(repo),
       currentDriverIdProvider.overrideWithValue(106),

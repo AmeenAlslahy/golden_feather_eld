@@ -135,7 +135,28 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
   void selectLog(DailyLog log) {
     state = state.copyWith(selectedLog: log, clearEventsError: true);
+    loadSelectedLogDetail();
     loadSelectedLogEvents();
+  }
+
+  /// تفاصيل السجل من الخادم (`GET /eld/daily-logs/{id}`) — مصدر الحقيقة
+  /// لبيانات الترويسة (السائق/المركبة/الناقل/العناوين/الشاحنات). صف
+  /// القائمة يبقى معروضاً حتى يصل الرد، والفشل هنا صامت: الأحداث لها
+  /// مسار خطأها الخاص، وبيانات الصف لا تُختلع محلياً أبداً.
+  Future<void> loadSelectedLogDetail() async {
+    final log = state.selectedLog;
+    if (log == null) return;
+    final result = await _repository.getLogById(log.id);
+    if (!mounted) return;
+    if (state.selectedLog?.id != log.id) return; // فُتح يوم آخر أثناء الانتظار
+
+    result.match(
+      (_) {}, // فشل التفاصيل لا يمسح المعروض ولا يخترع بيانات.
+      (fresh) {
+        // أحداث graph-grid تُحفظ — التفاصيل والحدثان يتكاملان لا يتنافسان.
+        _replaceSelected(fresh.copyWith(events: state.selectedLog!.events));
+      },
+    );
   }
 
   /// (إعادة) جلب أحداث السجل المحدد. آمنة للاستدعاء من زر «إعادة المحاولة».

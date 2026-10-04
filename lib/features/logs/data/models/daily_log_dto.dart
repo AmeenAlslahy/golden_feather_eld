@@ -14,6 +14,19 @@ class DailyLogDto {
   final List<Map<String, dynamic>> events;
   final bool requiresAction;
 
+  /// حقول التفاصيل — موجودة في جسم `GET /eld/daily-logs/{id}` وقد تتوافر
+  /// في صفوف القائمة؛ null يعني "ليست في هذا الرد" وليست قيمة مزيفة.
+  final String? driverName;
+  final String? vehicleName;
+  final String? vin;
+  final String? licensePlate;
+  final String? carrierName;
+  final String? usdotNumber;
+  final String? mainOfficeAddress;
+  final String? homeTerminalAddress;
+  final List<String> trailers;
+  final List<String> shippingDocuments;
+
   const DailyLogDto({
     required this.id,
     required this.uniqueId,
@@ -25,6 +38,16 @@ class DailyLogDto {
     required this.today,
     this.events = const [],
     this.requiresAction = false,
+    this.driverName,
+    this.vehicleName,
+    this.vin,
+    this.licensePlate,
+    this.carrierName,
+    this.usdotNumber,
+    this.mainOfficeAddress,
+    this.homeTerminalAddress,
+    this.trailers = const [],
+    this.shippingDocuments = const [],
   });
 
   factory DailyLogDto.fromJson(Map<String, dynamic> json) {
@@ -32,6 +55,10 @@ class DailyLogDto {
     if (logDateStr == null || logDateStr.trim().isEmpty) {
       throw const FormatException('Missing or empty logDate in DailyLog payload');
     }
+
+    final driver = json['driver'];
+    List<String> stringList(Object? raw) =>
+        (raw as List?)?.map((e) => e.toString()).toList() ?? const [];
 
     return DailyLogDto(
       id: json['id'] as int? ?? 0,
@@ -47,6 +74,16 @@ class DailyLogDto {
               .toList() ??
           [],
       requiresAction: json['requiresAction'] as bool? ?? false,
+      driverName: driver is Map ? driver['name']?.toString() : null,
+      vehicleName: (json['vehicleName'] as String?)?.trim(),
+      vin: (json['vin'] as String?)?.trim(),
+      licensePlate: (json['licensePlate'] as String?)?.trim(),
+      carrierName: (json['carrierName'] as String?)?.trim(),
+      usdotNumber: (json['usdotNumber'] as String?)?.trim(),
+      mainOfficeAddress: (json['mainOfficeAddress'] as String?)?.trim(),
+      homeTerminalAddress: (json['homeTerminalAddress'] as String?)?.trim(),
+      trailers: stringList(json['trailers']),
+      shippingDocuments: stringList(json['shippingDocuments']),
     );
   }
 
@@ -91,6 +128,16 @@ class DailyLogDto {
       requiresAction: requiresAction,
       today: today,
       events: events.map((e) => LogEventModel.fromJson(e)).toList(),
+      driverName: driverName,
+      vehicleName: vehicleName,
+      vin: vin,
+      licensePlate: licensePlate,
+      carrierName: carrierName,
+      usdotNumber: usdotNumber,
+      mainOfficeAddress: mainOfficeAddress,
+      homeTerminalAddress: homeTerminalAddress,
+      trailers: trailers,
+      shippingDocuments: shippingDocuments,
     );
   }
 }

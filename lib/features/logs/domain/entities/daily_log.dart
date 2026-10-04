@@ -19,6 +19,19 @@ class DailyLog extends Equatable {
   final bool today;
   final List<LogEvent> events;
 
+  /// حقول التفاصيل من الخادم (`GET /eld/daily-logs/{id}`) — null عندما
+  /// يأتي الكائن من صف قائمة لا يحملها، والشاشة تعرض احتياطيها حينها.
+  final String? driverName;
+  final String? vehicleName;
+  final String? vin;
+  final String? licensePlate;
+  final String? carrierName;
+  final String? usdotNumber;
+  final String? mainOfficeAddress;
+  final String? homeTerminalAddress;
+  final List<String> trailers;
+  final List<String> shippingDocuments;
+
   const DailyLog({
     required this.id,
     this.uniqueId = '',
@@ -32,6 +45,16 @@ class DailyLog extends Equatable {
     this.requiresAction = false,
     this.today = false,
     this.events = const [],
+    this.driverName,
+    this.vehicleName,
+    this.vin,
+    this.licensePlate,
+    this.carrierName,
+    this.usdotNumber,
+    this.mainOfficeAddress,
+    this.homeTerminalAddress,
+    this.trailers = const [],
+    this.shippingDocuments = const [],
   });
 
   DailyLog copyWith({
@@ -47,6 +70,16 @@ class DailyLog extends Equatable {
     bool? requiresAction,
     bool? today,
     List<LogEvent>? events,
+    String? driverName,
+    String? vehicleName,
+    String? vin,
+    String? licensePlate,
+    String? carrierName,
+    String? usdotNumber,
+    String? mainOfficeAddress,
+    String? homeTerminalAddress,
+    List<String>? trailers,
+    List<String>? shippingDocuments,
   }) {
     return DailyLog(
       id: id ?? this.id,
@@ -61,6 +94,16 @@ class DailyLog extends Equatable {
       requiresAction: requiresAction ?? this.requiresAction,
       today: today ?? this.today,
       events: events ?? this.events,
+      driverName: driverName ?? this.driverName,
+      vehicleName: vehicleName ?? this.vehicleName,
+      vin: vin ?? this.vin,
+      licensePlate: licensePlate ?? this.licensePlate,
+      carrierName: carrierName ?? this.carrierName,
+      usdotNumber: usdotNumber ?? this.usdotNumber,
+      mainOfficeAddress: mainOfficeAddress ?? this.mainOfficeAddress,
+      homeTerminalAddress: homeTerminalAddress ?? this.homeTerminalAddress,
+      trailers: trailers ?? this.trailers,
+      shippingDocuments: shippingDocuments ?? this.shippingDocuments,
     );
   }
 
@@ -125,6 +168,16 @@ class DailyLog extends Equatable {
         requiresAction,
         today,
         events,
+        driverName,
+        vehicleName,
+        vin,
+        licensePlate,
+        carrierName,
+        usdotNumber,
+        mainOfficeAddress,
+        homeTerminalAddress,
+        trailers,
+        shippingDocuments,
       ];
 }
 

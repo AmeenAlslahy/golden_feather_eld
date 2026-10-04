@@ -16,6 +16,11 @@ abstract class LogRepository {
     int offset = 0,
   });
 
+  /// تفاصيل سجل واحد من الخادم (`GET /eld/daily-logs/{id}`) — مصدر الحقيقة
+  /// لشاشة التفاصيل (السائق/المركبة/الناقل/العناوين/الشاحنات). قراءة شبكية
+  /// فقط: القائمة المخزّنة محلياً تغطي وضع عدم الاتصال.
+  Future<Either<Failure, DailyLog>> getLogById(DailyLogId logId);
+
   /// Reads the saved daily log form snapshot from the backend.
   /// Returns null if the form is empty or doesn't exist on the server.
   Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId);

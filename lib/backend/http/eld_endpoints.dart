@@ -39,8 +39,6 @@ class EldEndpoints {
   static const String dailyLogs = '/eld/daily-logs';
   /// تفاصيل السجلات اليومية
   static String dailyLogDetails(int logId) => '/eld/daily-logs/$logId';
-  /// تعديلات الناقل
-  static String proposeCarrierEdit(int logId) => '/eld/daily-logs/$logId/carrier-edits';
   /// الرد على تعديلات الناقل
   static String respondCarrierEdit(int logId, String editId) => '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
   /// المصادقة على السجل

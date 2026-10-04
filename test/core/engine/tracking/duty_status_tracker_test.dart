@@ -117,6 +117,10 @@ class MockLogRepository implements LogRepository {
   List<DutyPeriod> savedPeriods = [];
 
   @override
+  Future<Either<Failure, DailyLog>> getLogById(DailyLogId logId) async =>
+      throw UnimplementedError();
+
+  @override
   Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId) async => throw UnimplementedError();
 
   @override

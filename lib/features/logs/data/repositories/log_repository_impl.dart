@@ -99,6 +99,20 @@ class LogRepositoryImpl implements LogRepository {
       logsJson.map((json) => DailyLogDto.fromJson(json).toEntity()).toList();
 
   @override
+  Future<Either<Failure, DailyLog>> getLogById(DailyLogId logId) async {
+    if (!_networkInfo.isConnected) {
+      return const Left(NetworkFailure());
+    }
+    return executeWithHandling(() async {
+      final result = await _dailyLogsBackend.getById(logId);
+      return result.match(
+        (failure) => throw Exception(failure.l10nKey),
+        (data) => DailyLogDto.fromJson(data).toEntity(),
+      );
+    }, tag: 'LogRepositoryImpl.getLogById');
+  }
+
+  @override
   Future<Either<Failure, List<LogEvent>>> getEvents(
     DailyLogId logId,
     DateTime date,
