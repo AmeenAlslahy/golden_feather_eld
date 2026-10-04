@@ -1,17 +1,70 @@
 # Architecture enforcement script (PowerShell version for Windows).
 # Mirrors scripts/check_architecture.sh.
+#
+# Modes
+# -----
+#   default    Hard-fail on untagged package-import violations and Dio leaks.
+#              Relative-import violations are REPORTED but do not fail the gate.
+#   -Strict    Relative-import violations also fail (target mode after the
+#              cross-feature refactor waves land).
+#
+# Lines carrying `// ignore_architecture` are treated as acknowledged:
+# listed under ACKNOWLEDGED, never counted as failures.
+#
+# NOTE: this script now resolves RELATIVE imports as well. The previous
+# version only matched `package:golden_feather_eld/...` imports, so the
+# majority of cross-feature/upward violations (relative form) were invisible.
+
+param([switch]$Strict)
 
 $ErrorActionPreference = "Stop"
 
-$violationCount = 0
+$hardCount = 0
+$warnCount = 0
+$taggedCount = 0
 
 function Fail($msg) {
     Write-Host "X $msg" -ForegroundColor Red
-    $script:violationCount++
+    $script:hardCount++
+}
+
+function Warn($msg) {
+    Write-Host "! $msg" -ForegroundColor Yellow
+    $script:warnCount++
+}
+
+function Acknowledged($msg) {
+    $script:taggedCount++
+    Write-Host "  acknowledged: $msg"
 }
 
 function Pass($msg) {
     Write-Host "OK $msg" -ForegroundColor Green
+}
+
+function Resolve-ImportTarget([string]$sourceFile, [string]$imp) {
+    # Returns the normalized absolute path for a relative import,
+    # or $null for external/dart/package imports (package handled separately).
+    $dir = Split-Path $sourceFile -Parent
+    $full = [System.IO.Path]::GetFullPath((Join-Path $dir $imp))
+    return $full -replace '\\', '/'
+}
+
+function RegionOf([string]$pathIn) {
+    # Normalize: forward slashes, then reduce any absolute path to its
+    # lib/-relative form so both package imports and resolved relative
+    # imports classify identically.
+    $path = $pathIn -replace '\\', '/'
+    if ($path -match '/lib/') { $path = 'lib/' + ($path -replace '^.*?/lib/', '') }
+    if ($path -like 'lib/core/*') { return 'core' }
+    if ($path -like 'lib/domain/*') { return 'domain' }
+    if ($path -like 'lib/backend/*') { return 'backend' }
+    if ($path -like 'lib/app/*') { return 'app' }
+    if ($path -like 'lib/features/*') {
+        $rest = $path.Substring('lib/features/'.Length)
+        return 'feature:' + ($rest -split '/')[0]
+    }
+    return 'root'
 }
 
 # ============================================================================
@@ -22,101 +75,130 @@ Write-Host "-> Rule 1: no package:dio outside lib/backend/"
 
 $dioViolations = Get-ChildItem -Path lib -Recurse -Filter *.dart |
     Select-String -Pattern "import 'package:dio" |
-    Where-Object {
-        $_.Path -notmatch "lib\\backend\\" -and
-        $_.Line -notmatch "// ignore_architecture"
-    }
+    Where-Object { $_.Path -notmatch 'lib[\\/]backend[\\/]' }
 
 if ($dioViolations) {
-    $dioViolations | ForEach-Object {
-        Fail "Dio imported outside backend: $($_.Path):$($_.LineNumber)"
+    foreach ($v in $dioViolations) {
+        if ($v.Line -match '// ignore_architecture') {
+            Acknowledged "dio leak - $($v.Path):$($v.LineNumber)"
+        } else {
+            Fail "Dio imported outside backend: $($v.Path):$($v.LineNumber)"
+        }
     }
 } else {
     Pass "No Dio imports outside backend"
 }
 
 # ============================================================================
-# Rule 2: No upward imports
+# Rules 2 + 3: upward imports and cross-feature imports
+# (package: and relative: - relative was previously invisible to this script)
 # ============================================================================
 
-Write-Host "`n-> Rule 2: no upward imports"
+Write-Host ""
+Write-Host "-> Rule 2: no upward imports (core/domain/backend)"
+Write-Host "-> Rule 3: no cross-feature imports"
 
-# core/ must not import from domain, backend, features, app
-$coreViolations = Get-ChildItem -Path lib\core -Recurse -Filter *.dart |
-    Select-String -Pattern "import 'package:golden_feather_eld/(domain|backend|features|app)/" |
-    Where-Object { $_.Line -notmatch "// ignore_architecture" }
+$upwardHard = 0
+$crossPkgHard = 0
+$crossRel = 0
+$crossPairs = @{}
 
-if ($coreViolations) {
-    $coreViolations | ForEach-Object {
-        Fail "core/ imports upward: $($_.Path):$($_.LineNumber)"
-    }
-} else {
-    Pass "core/ has no upward imports"
-}
+$importRegex = 'import\s+[''"]([^''"]+)[''"]'
 
-# domain/ must not import from backend, features, app
-$domainViolations = Get-ChildItem -Path lib\domain -Recurse -Filter *.dart -ErrorAction SilentlyContinue |
-    Select-String -Pattern "import 'package:golden_feather_eld/(backend|features|app)/"
+foreach ($file in (Get-ChildItem -Path lib -Recurse -Filter *.dart)) {
+    $srcRegion = RegionOf ($file.FullName -replace '\\', '/' -replace '^.*/lib/', 'lib/')
+    foreach ($m in (Select-String -Path $file.FullName -Pattern $importRegex)) {
+        $imp = [regex]::Match($m.Line, $importRegex).Groups[1].Value
+        $tagged = $m.Line -match '// ignore_architecture'
 
-if ($domainViolations) {
-    $domainViolations | ForEach-Object {
-        Fail "domain/ imports upward: $($_.Path):$($_.LineNumber)"
-    }
-} else {
-    Pass "domain/ has no upward imports"
-}
+        $tgtRegion = $null
+        $kind = 'external'
+        if ($imp -like 'package:golden_feather_eld/*') {
+            $tgtRegion = RegionOf ('lib/' + $imp.Substring('package:golden_feather_eld/'.Length))
+            $kind = 'package'
+        }
+        elseif ($imp -like './*' -or $imp -like '../*') {
+            $tgtRegion = RegionOf (Resolve-ImportTarget $file.FullName $imp)
+            $kind = 'relative'
+        }
+        if ($null -eq $tgtRegion) { continue }
 
-# backend/ must not import from features, app
-$backendViolations = Get-ChildItem -Path lib\backend -Recurse -Filter *.dart |
-    Select-String -Pattern "import 'package:golden_feather_eld/(features|app)/"
+        $label = "$($file.FullName):$($m.LineNumber)"
 
-if ($backendViolations) {
-    $backendViolations | ForEach-Object {
-        Fail "backend/ imports upward: $($_.Path):$($_.LineNumber)"
-    }
-} else {
-    Pass "backend/ has no upward imports"
-}
+        # Rule 2: upward imports.
+        $isUpward = $false
+        if ($srcRegion -eq 'core' -and ($tgtRegion -eq 'domain' -or $tgtRegion -eq 'backend' -or $tgtRegion -eq 'app' -or $tgtRegion -like 'feature:*')) { $isUpward = $true }
+        if ($srcRegion -eq 'domain' -and ($tgtRegion -eq 'backend' -or $tgtRegion -eq 'app' -or $tgtRegion -like 'feature:*')) { $isUpward = $true }
+        if ($srcRegion -eq 'backend' -and ($tgtRegion -eq 'app' -or $tgtRegion -like 'feature:*')) { $isUpward = $true }
 
-# ============================================================================
-# Rule 3: No cross-feature imports
-# ============================================================================
-
-Write-Host "`n-> Rule 3: no cross-feature imports"
-
-$featureDirs = Get-ChildItem -Path lib\features -Directory
-$crossCount = 0
-
-foreach ($dir in $featureDirs) {
-    $feature = $dir.Name
-    $violations = Get-ChildItem -Path $dir.FullName -Recurse -Filter *.dart |
-        Select-String -Pattern "import 'package:golden_feather_eld/features/" |
-        Where-Object {
-            $_.Line -notmatch "features/$feature/" -and
-            $_.Line -notmatch "// ignore_architecture"
+        if ($isUpward) {
+            if ($tagged) {
+                Acknowledged "upward ($srcRegion) - $label"
+            }
+            elseif ($kind -eq 'package' -or $Strict) {
+                Fail "$srcRegion/ imports upward: $label -> $imp"
+                $upwardHard++
+            }
+            else {
+                Warn "$srcRegion/ imports upward (relative): $label -> $imp"
+            }
+            continue
         }
 
-    if ($violations) {
-        foreach ($v in $violations) {
-            Fail "features/$feature/ imports another feature: $($v.Path):$($v.LineNumber)"
-            $script:crossCount++
+        # Rule 3: cross-feature imports.
+        if ($srcRegion -like 'feature:*' -and $tgtRegion -like 'feature:*') {
+            $srcFeat = $srcRegion.Substring('feature:'.Length)
+            $tgtFeat = $tgtRegion.Substring('feature:'.Length)
+            if ($srcFeat -eq $tgtFeat) { continue }
+
+            $pair = "$srcFeat->$tgtFeat"
+            if (-not $crossPairs.ContainsKey($pair)) { $crossPairs[$pair] = 0 }
+            $crossPairs[$pair]++
+
+            if ($tagged) {
+                Acknowledged "cross-feature $pair - $label"
+            }
+            elseif ($kind -eq 'package') {
+                Fail "features/$srcFeat/ imports another feature (package): $label -> $imp"
+                $crossPkgHard++
+            }
+            elseif ($Strict) {
+                Fail "features/$srcFeat/ imports another feature (relative): $label -> $imp"
+                $crossRel++
+            }
+            else {
+                Warn "features/$srcFeat/ imports another feature (relative): $label -> $imp"
+                $crossRel++
+            }
         }
     }
 }
 
-if ($crossCount -eq 0) {
-    Pass "No cross-feature imports"
+if ($upwardHard -eq 0) { Pass "No untagged upward imports (package or relative)" }
+if ($crossPkgHard -eq 0) { Pass "No untagged package cross-feature imports" }
+
+Write-Host ""
+Write-Host "-> Relative cross-feature summary (informational; fails under -Strict):"
+if ($crossPairs.Count -eq 0) { Write-Host "  none" }
+else {
+    $crossPairs.GetEnumerator() | Sort-Object Name | ForEach-Object {
+        Write-Host "  $($_.Key): $($_.Value)"
+    }
 }
 
 # ============================================================================
 # Summary
 # ============================================================================
 
-Write-Host "`n=============================="
-if ($violationCount -eq 0) {
+Write-Host ""
+Write-Host "=============================="
+Write-Host "acknowledged via // ignore_architecture: $taggedCount"
+Write-Host "relative violations (warn-only; fail under -Strict): $warnCount"
+
+if ($hardCount -eq 0) {
     Write-Host "Architecture checks passed" -ForegroundColor Green
     exit 0
 } else {
-    Write-Host "$violationCount violation(s) found" -ForegroundColor Red
+    Write-Host "$hardCount violation(s) found" -ForegroundColor Red
     exit 1
 }
