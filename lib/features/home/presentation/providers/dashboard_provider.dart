@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../logs/domain/daily_form_rules.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../codriver/domain/entities/codriver.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 
@@ -80,7 +81,7 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
     );
   }
 
-  void updateVehicle(dynamic vehicle) {
+  void updateVehicle(Vehicle? vehicle) {
     if (vehicle == null) {
       state = state.copyWith(
         vehicleId: 'No Vehicle',
@@ -89,18 +90,10 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       return;
     }
 
-    if (vehicle is Vehicle) {
-      state = state.copyWith(
-        vehicleId: vehicle.id.isNotEmpty ? vehicle.id : 'No Vehicle',
-        deviceId: vehicle.deviceId,
-        vehicleDisplayName: vehicle.displayName,
-      );
-      return;
-    }
-
     state = state.copyWith(
-      vehicleId: vehicle.id?.toString() ?? '',
-      vehicleDisplayName: vehicle.name ?? vehicle.year ?? '',
+      vehicleId: vehicle.id.isNotEmpty ? vehicle.id : 'No Vehicle',
+      deviceId: vehicle.deviceId,
+      vehicleDisplayName: vehicle.displayName,
     );
   }
 
@@ -115,7 +108,7 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
     state = state.copyWith(shippingDocuments: joinFormList(documents));
   }
 
-  void updateCoDriver(dynamic coDriver) {
+  void updateCoDriver(CoDriver? coDriver) {
     if (coDriver == null) return;
     state = state.copyWith(
       coDriverId: coDriver.id,

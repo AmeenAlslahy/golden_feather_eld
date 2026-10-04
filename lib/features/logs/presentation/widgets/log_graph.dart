@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../domain/entities/daily_log.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
@@ -12,7 +13,7 @@ final logGraphEventsProvider = StreamProvider.autoDispose<EldEvent>((ref) {
 });
 
 class LogGraph extends ConsumerWidget {
-  final List<dynamic> events;
+  final List<LogEvent> events;
   final DateTime? logDate;
 
   const LogGraph({super.key, required this.events, this.logDate});
@@ -47,7 +48,7 @@ class LogGraph extends ConsumerWidget {
 }
 
 class _LogGraphPainter extends CustomPainter {
-  final List<dynamic> events;
+  final List<LogEvent> events;
   final DateTime? logDate;
   final EldEvent? latestEldEvent;
   final Color textColor;
@@ -173,8 +174,8 @@ class _LogGraphPainter extends CustomPainter {
     final Map<String, double> stats = {'OFF': 0, 'SB': 0, 'D': 0, 'ON': 0};
     
     for (final event in events) {
-      final status = event.status as String;
-      final duration = event.duration as Duration;
+      final status = event.status;
+      final duration = event.duration;
       
       String normalized;
       if (status == 'PC') {
@@ -214,17 +215,18 @@ class _LogGraphPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.miter; // Miter makes sharp right angles
 
     final path = Path();
-    final sortedEvents = List<dynamic>.from(events)..sort((a, b) => a.startTime.compareTo(b.startTime));
-    
+    final sortedEvents = List<LogEvent>.from(events)
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
     final referenceDate = (logDate ?? sortedEvents.first.startTime).toLocal();
     final midnight = DateTime(referenceDate.year, referenceDate.month, referenceDate.day);
 
     final firstEvent = sortedEvents.first;
-    final firstStartHour = (firstEvent.startTime as DateTime).toLocal().difference(midnight).inMinutes / 60.0;
-    
+    final firstStartHour = firstEvent.startTime.toLocal().difference(midnight).inMinutes / 60.0;
+
     // If the first event doesn't start exactly at midnight, assume OFF duty for the carry-over gap
-    final String initialStatus = firstStartHour > 0.05 ? 'OFF' : firstEvent.status as String;
-    
+    final String initialStatus = firstStartHour > 0.05 ? 'OFF' : firstEvent.status;
+
     final double startY = _getYPosition(initialStatus, rowHeight);
     path.moveTo(offsetX, startY);
 
@@ -232,9 +234,9 @@ class _LogGraphPainter extends CustomPainter {
     double currentY = startY;
 
     for (final event in sortedEvents) {
-      final startTime = (event.startTime as DateTime).toLocal();
-      final duration = event.duration as Duration;
-      final status = event.status as String;
+      final startTime = event.startTime.toLocal();
+      final duration = event.duration;
+      final status = event.status;
 
       // Calculate absolute hours since midnight of the logDate
       double startHour = startTime.difference(midnight).inMinutes / 60.0;
@@ -274,11 +276,11 @@ class _LogGraphPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
       
     for (final event in sortedEvents) {
-      final status = event.status as String;
+      final status = event.status;
       if (status != 'PC' && status != 'YM') continue;
-      
-      final startTime = event.startTime as DateTime;
-      final duration = event.duration as Duration;
+
+      final startTime = event.startTime;
+      final duration = event.duration;
       final startHour = startTime.hour + startTime.minute / 60.0;
       final endHour = startHour + (duration.inMinutes / 60.0);
       final xStart = offsetX + (startHour / 24.0) * chartWidth;
