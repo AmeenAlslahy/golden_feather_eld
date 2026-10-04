@@ -7,6 +7,7 @@ import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/vehicle_selection.dart';
 import '../providers/vehicle_provider.dart';
@@ -60,6 +61,14 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           // لا دليل حركة، والاختيار بدء طبيعي لجلسة جديدة (SRS 9.3).
           trackingLive: ref.read(trackingStateProvider).isTracking,
         );
+    // هوية موحّدة: نجاح الاختيار يكتب لوحة القيادة فوراً (uniqueId +
+    // deviceId الرقمي) حتى لا يبقى نموذج الفحص وربط السائق على قيم افتراضية.
+    final state = ref.read(vehicleProvider);
+    if (state.isSuccess && state.selectedVehicle != null) {
+      ref
+          .read(dashboardDataProvider.notifier)
+          .updateVehicle(state.selectedVehicle);
+    }
   }
 
   void _showUnassignedDialog(BuildContext context) {

@@ -8,8 +8,10 @@ import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_vehicle.dart';
 import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/dvir_signature.dart';
 import '../../domain/entities/dvir_report.dart';
@@ -90,8 +92,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       // still owes a §396.13 review for.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final vehicleId = ref.read(dashboardDataProvider).vehicleId;
-        ref.read(dvirProvider.notifier).loadPreviousDvir(vehicleId);
+        final dash = ref.read(dashboardDataProvider);
+        ref
+            .read(dvirProvider.notifier)
+            .loadPreviousDvir(_dvirVehicleId(dash.vehicleId));
       });
     }
     if (r != null) {
@@ -276,6 +280,25 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return true;
   }
 
+  /// القراءة المتسامحة لهوية الجهاز المتصل — بيئة بلا تفضيلات مهيأة
+  /// (اختبارات) تعيد null بدل الانهيار.
+  String? _connectedDeviceId() {
+    try {
+      return ref.read(localStorageProvider).deviceId;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// هوية المركبة للفحص: لوحة القيادة أولاً، وإلا هوية الجهاز المتصل
+  /// (نفس المصدر المُخزَّن الذي تثق به قائمة الفحص).
+  String _dvirVehicleId(String? dashboardVehicleId) {
+    if (!isUnassignedVehicleId(dashboardVehicleId)) {
+      return dashboardVehicleId!;
+    }
+    return _connectedDeviceId() ?? dashboardVehicleId ?? '';
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
     final time = ref.read(trustedTimeProvider).currentTime;
@@ -285,9 +308,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
 
     final dashboard = ref.read(dashboardDataProvider);
+    final reportVehicleId = _dvirVehicleId(dashboard.vehicleId);
     final previousToReview = ref
         .read(dvirProvider)
-        .previousToReview(dashboard.vehicleId);
+        .previousToReview(reportVehicleId);
 
     if (widget.existingReport != null) {
       _snack(context.loc.dvirSavedCannotEdit);
@@ -328,8 +352,10 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       type: InspectionType.preTrip,
       date: time.utc,
       driverName: dashboard.driverName,
-      vehicleId: dashboard.vehicleId,
-      deviceId: dashboard.deviceId,
+      vehicleId: reportVehicleId,
+      deviceId: (dashboard.deviceId == null || dashboard.deviceId! <= 0)
+          ? int.tryParse(_connectedDeviceId() ?? '')
+          : dashboard.deviceId,
       // الافتراضي المعروض 'None' لا يصل إلى السجل الرسمي — يُرسل null.
       trailerId:
           (dashboard.trailerId == 'None' ||
@@ -449,7 +475,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               hasPreviousToReview:
                   ref
                       .watch(dvirProvider)
-                      .previousToReview(dashboard.vehicleId) !=
+                      .previousToReview(
+                        _dvirVehicleId(dashboard.vehicleId),
+                      ) !=
                   null,
             ),
             DvirTimeLocationSection(

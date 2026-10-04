@@ -8,6 +8,46 @@ void main() {
     expect(readOperableUniqueId('1001'), '1001');
   });
 
+  group('resolveSessionVehicleUniqueId', () {
+    test('prefers the selected vehicle uniqueId', () {
+      expect(
+        resolveSessionVehicleUniqueId(
+          selectedUniqueId: '90926373',
+          connectedDeviceId: 'other-device',
+        ),
+        '90926373',
+      );
+    });
+
+    test('falls back to the connected device id when selection has none', () {
+      expect(
+        resolveSessionVehicleUniqueId(
+          selectedUniqueId: null,
+          connectedDeviceId: '90926373',
+        ),
+        '90926373',
+      );
+      expect(
+        resolveSessionVehicleUniqueId(
+          selectedUniqueId: 'unknown',
+          connectedDeviceId: '90926373',
+        ),
+        '90926373',
+      );
+    });
+
+    test('rejects sentinel and empty values in both sources', () {
+      expect(
+        resolveSessionVehicleUniqueId(
+          selectedUniqueId: 'No Vehicle',
+          connectedDeviceId: '',
+        ),
+        isNull,
+      );
+      expect(resolveSessionVehicleUniqueId(), isNull);
+    });
+  });
+
   test('unknown speed is not treated as stopped', () {
     expect(
       refuseVehicleOperate(speedMps: null, thresholdKmh: 8, uniqueId: '1001'),
