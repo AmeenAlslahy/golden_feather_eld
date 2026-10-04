@@ -5,6 +5,7 @@ import '../../../../features/sync/domain/repositories/offline_queue.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/error/exception.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../backend/contracts/daily_logs_backend.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
@@ -194,7 +195,15 @@ class LogRepositoryImpl implements LogRepository {
       try {
         final confirmed = LogEventModel.fromJson(raw);
         return Right(confirmed);
-      } catch (_) {
+      } catch (e, st) {
+        // الخادم طبّق التعديل فعلاً (200) — لا نحوّلها لفشل كاذب، لكن انحراف
+        // العقد (echo غير قابل للتحليل) يجب أن يبقى مرئياً في السجلات.
+        AppLogger.error(
+          'LogRepositoryImpl.updateEvent: 200 body was not a parseable '
+          'DutyEventDto — UI keeps optimistic state without confirmation',
+          e,
+          st,
+        );
         return const Right(null);
       }
     });

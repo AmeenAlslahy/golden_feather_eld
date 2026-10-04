@@ -68,7 +68,14 @@ class TrackingService {
       if (uri.port != osmAndPort) {
         serverUrl = uri.replace(port: osmAndPort, path: '/').toString();
       }
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.warning(
+        'TrackingService: serverUrl "$serverUrl" could not be normalized to '
+        'the OsmAnd port — using it as-is',
+        e,
+        st,
+      );
+    }
 
     return {
       'serverUrl': serverUrl,

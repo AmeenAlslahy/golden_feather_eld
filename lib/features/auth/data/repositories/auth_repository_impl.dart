@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
@@ -176,7 +177,14 @@ class AuthRepositoryImpl implements AuthRepository {
               return Right(user);
             }
           }
-        } catch (_) {}
+        } catch (e, st) {
+          AppLogger.warning(
+            'AuthRepositoryImpl.getCurrentSession: saved session could not be '
+            'validated against origin "$serverUrl" — treating as missing',
+            e,
+            st,
+          );
+        }
       }
     }
     return const Left(SessionMissingFailure());

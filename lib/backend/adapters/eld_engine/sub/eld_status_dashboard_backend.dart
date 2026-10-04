@@ -1,6 +1,7 @@
 import 'dart:convert' as dart_convert;
 import 'package:dio/dio.dart';
 import '../../../../core/result/result.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
@@ -57,7 +58,18 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
                   // No, ApiResponse just takes the parsed body.
                   return parsed;
                 }
-              } catch (_) {}
+                AppLogger.warning(
+                  'updateDutyStatus: 200 body is JSON but not an object '
+                  '(${parsed.runtimeType})',
+                );
+              } catch (e) {
+                // جسم 200 غير فارغ وغير JSON = انحراف عقد يجب أن يبقى مرئياً.
+                AppLogger.warning(
+                  'updateDutyStatus: 200 body (${data.length} chars) is not '
+                  'JSON — mapper will treat it as empty',
+                  e,
+                );
+              }
             }
             if (data is Map<String, dynamic>) return data;
             return <String, dynamic>{};
