@@ -2679,6 +2679,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get eldMalfunctionStep3 => 'استمر بالتسجيل الورقي حتى إصلاح الجهاز.';
 
   @override
+  String get notifyCarrier => 'إخطار الناقل';
+
+  @override
+  String get requestExtension => 'طلب تمديد';
+
+  @override
+  String get simulateMalfunction => 'محاكاة عطل';
+
+  @override
+  String get simulateMalfunctionDebug => 'محاكاة عطل (تصحيح)';
+
+  @override
+  String get simulatedMalfunctionRecorded => 'تم تسجيل عطل محاكى (تصحيح فقط)';
+
+  @override
+  String get inspectionLogsTitle => 'سجلات التفتيش';
+
+  @override
   String get eldMalfunctionManualActive => 'التسجيل اليدوي مفعّل حالياً.';
 
   @override

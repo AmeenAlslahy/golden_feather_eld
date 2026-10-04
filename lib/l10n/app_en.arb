@@ -955,6 +955,12 @@
   "eldMalfunctionStep1": "Note the malfunction and notify the carrier in writing within 24 hours.",
   "eldMalfunctionStep2": "Reconstruct the current 24 hours and the previous 7 days on paper if the ELD cannot provide them.",
   "eldMalfunctionStep3": "Continue paper logs until the device is repaired.",
+  "notifyCarrier": "Notify Carrier",
+  "requestExtension": "Request Extension",
+  "simulateMalfunction": "Simulate Malfunction",
+  "simulateMalfunctionDebug": "Simulate Malfunction (debug)",
+  "simulatedMalfunctionRecorded": "Simulated malfunction recorded (debug only)",
+  "inspectionLogsTitle": "Inspection Logs",
   "eldMalfunctionManualActive": "Manual recording is active.",
   "eldMalfunctionManualActiveWithReason": "Manual recording is active — {reason}.",
   "@eldMalfunctionManualActiveWithReason": {

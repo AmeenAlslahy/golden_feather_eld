@@ -5098,6 +5098,42 @@ abstract class AppLocalizations {
   /// **'استمر بالتسجيل الورقي حتى إصلاح الجهاز.'**
   String get eldMalfunctionStep3;
 
+  /// No description provided for @notifyCarrier.
+  ///
+  /// In ar, this message translates to:
+  /// **'إخطار الناقل'**
+  String get notifyCarrier;
+
+  /// No description provided for @requestExtension.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب تمديد'**
+  String get requestExtension;
+
+  /// No description provided for @simulateMalfunction.
+  ///
+  /// In ar, this message translates to:
+  /// **'محاكاة عطل'**
+  String get simulateMalfunction;
+
+  /// No description provided for @simulateMalfunctionDebug.
+  ///
+  /// In ar, this message translates to:
+  /// **'محاكاة عطل (تصحيح)'**
+  String get simulateMalfunctionDebug;
+
+  /// No description provided for @simulatedMalfunctionRecorded.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تسجيل عطل محاكى (تصحيح فقط)'**
+  String get simulatedMalfunctionRecorded;
+
+  /// No description provided for @inspectionLogsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجلات التفتيش'**
+  String get inspectionLogsTitle;
+
   /// No description provided for @eldMalfunctionManualActive.
   ///
   /// In ar, this message translates to:

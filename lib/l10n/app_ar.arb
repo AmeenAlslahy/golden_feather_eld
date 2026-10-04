@@ -948,6 +948,12 @@
   "eldMalfunctionStep1": "دوّن العطل وأبلغ الناقل كتابياً خلال 24 ساعة.",
   "eldMalfunctionStep2": "أعد بناء سجل 24 ساعة الحالية والأيام السبعة السابقة على الورق إن لم تكن متاحة من الجهاز.",
   "eldMalfunctionStep3": "استمر بالتسجيل الورقي حتى إصلاح الجهاز.",
+  "notifyCarrier": "إخطار الناقل",
+  "requestExtension": "طلب تمديد",
+  "simulateMalfunction": "محاكاة عطل",
+  "simulateMalfunctionDebug": "محاكاة عطل (تصحيح)",
+  "simulatedMalfunctionRecorded": "تم تسجيل عطل محاكى (تصحيح فقط)",
+  "inspectionLogsTitle": "سجلات التفتيش",
   "eldMalfunctionManualActive": "التسجيل اليدوي مفعّل حالياً.",
   "eldMalfunctionManualActiveWithReason": "التسجيل اليدوي مفعّل حالياً — {reason}.",
   "@eldMalfunctionManualActiveWithReason": {

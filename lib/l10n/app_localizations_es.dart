@@ -2717,6 +2717,25 @@ class AppLocalizationsEs extends AppLocalizations {
       'Continúe los registros de papel hasta que el dispositivo esté reparado.';
 
   @override
+  String get notifyCarrier => 'Notificar al transportista';
+
+  @override
+  String get requestExtension => 'Solicitar prórroga';
+
+  @override
+  String get simulateMalfunction => 'Simular falla';
+
+  @override
+  String get simulateMalfunctionDebug => 'Simular falla (depuración)';
+
+  @override
+  String get simulatedMalfunctionRecorded =>
+      'Falla simulada registrada (solo depuración)';
+
+  @override
+  String get inspectionLogsTitle => 'Registros de inspección';
+
+  @override
   String get eldMalfunctionManualActive => 'La grabación manual está activa.';
 
   @override

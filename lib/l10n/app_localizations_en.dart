@@ -2693,6 +2693,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Continue paper logs until the device is repaired.';
 
   @override
+  String get notifyCarrier => 'Notify Carrier';
+
+  @override
+  String get requestExtension => 'Request Extension';
+
+  @override
+  String get simulateMalfunction => 'Simulate Malfunction';
+
+  @override
+  String get simulateMalfunctionDebug => 'Simulate Malfunction (debug)';
+
+  @override
+  String get simulatedMalfunctionRecorded =>
+      'Simulated malfunction recorded (debug only)';
+
+  @override
+  String get inspectionLogsTitle => 'Inspection Logs';
+
+  @override
   String get eldMalfunctionManualActive => 'Manual recording is active.';
 
   @override

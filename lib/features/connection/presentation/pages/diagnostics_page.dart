@@ -73,13 +73,13 @@ class DiagnosticsPage extends ConsumerWidget {
               ],
               if (kDebugMode) ...[
                 const SizedBox(height: AppSpacing.xl),
-                Text('Simulate Malfunction (debug)',
+                Text(loc.simulateMalfunctionDebug,
                     style: context.styles.caption),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
                   onPressed: () => AppFeedback.info(
-                      context, 'Simulated malfunction recorded (debug only)'),
-                  child: const Text('Simulate Malfunction'),
+                      context, loc.simulatedMalfunctionRecorded),
+                  child: Text(loc.simulateMalfunction),
                 ),
               ],
             ],
@@ -208,7 +208,7 @@ class _ActiveMalfunctionActions extends StatelessWidget {
       children: [
         OutlinedButton.icon(
           icon: const Icon(Icons.notifications_active, size: 18),
-          label: const Text('Notify Carrier'),
+          label: Text(context.loc.notifyCarrier),
           onPressed: () => AppFeedback.info(
               context, context.loc.eldMalfunctionStep1),
         ),
@@ -222,7 +222,7 @@ class _ActiveMalfunctionActions extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         OutlinedButton.icon(
           icon: const Icon(Icons.schedule, size: 18),
-          label: const Text('Request Extension'),
+          label: Text(context.loc.requestExtension),
           onPressed: () => AppFeedback.info(
               context, context.loc.eldMalfunctionStep3),
         ),

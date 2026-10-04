@@ -70,7 +70,8 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.pop(context),
             ),
-            title: Text('Inspection Logs', style: context.styles.appBarTitle),
+            title: Text(loc.inspectionLogsTitle,
+                style: context.styles.appBarTitle),
             centerTitle: true,
           ),
           body: selectedLog == null
