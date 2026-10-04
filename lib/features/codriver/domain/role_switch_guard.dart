@@ -15,6 +15,7 @@ RoleSwitchRefusal? refuseRoleSwitch({
   required double? speedMps,
   required double thresholdKmh,
   required bool? currentStatusIsDriving,
+  required bool trackingLive,
 }) {
   if (currentDriverId == null || currentDriverId <= 0) {
     return RoleSwitchRefusal.sessionMissing;
@@ -23,10 +24,14 @@ RoleSwitchRefusal? refuseRoleSwitch({
   if (!thresholdKmh.isFinite || thresholdKmh <= 0) {
     return RoleSwitchRefusal.thresholdMissing;
   }
-  if (speedMps == null || !speedMps.isFinite) {
-    return RoleSwitchRefusal.motionUnknown;
+  // نفس قاعدة اختيار المركبة: الحارس يعمل فقط حين يكون تيار الموقع حياً —
+  // تتبع مغلق يعني لا دليل قيادة أصلاً؛ التحقق القانوني عند connectSession.
+  if (trackingLive) {
+    if (speedMps == null || !speedMps.isFinite) {
+      return RoleSwitchRefusal.motionUnknown;
+    }
+    if (speedMps * 3.6 >= thresholdKmh) return RoleSwitchRefusal.vehicleMoving;
   }
-  if (speedMps * 3.6 >= thresholdKmh) return RoleSwitchRefusal.vehicleMoving;
 
   final other = int.tryParse(coDriverId?.trim() ?? '');
   if (other == null || other <= 0) return RoleSwitchRefusal.coDriverMissing;

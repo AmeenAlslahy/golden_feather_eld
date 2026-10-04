@@ -11,6 +11,7 @@ void main() {
         speedMps: null,
         thresholdKmh: 8,
         currentStatusIsDriving: false,
+        trackingLive: true,
       ),
       RoleSwitchRefusal.motionUnknown,
     );
@@ -24,6 +25,7 @@ void main() {
         speedMps: 8 / 3.6,
         thresholdKmh: 8,
         currentStatusIsDriving: false,
+        trackingLive: true,
       ),
       RoleSwitchRefusal.vehicleMoving,
     );
@@ -37,6 +39,7 @@ void main() {
         speedMps: 0,
         thresholdKmh: 8,
         currentStatusIsDriving: false,
+        trackingLive: true,
       ),
       isNull,
     );
@@ -50,6 +53,7 @@ void main() {
         speedMps: 0,
         thresholdKmh: 8,
         currentStatusIsDriving: false,
+        trackingLive: true,
       ),
       RoleSwitchRefusal.sameDriver,
     );
@@ -63,18 +67,58 @@ void main() {
         speedMps: 0,
         thresholdKmh: 8,
         currentStatusIsDriving: true,
+        trackingLive: true,
       ),
       RoleSwitchRefusal.stillDriving,
     );
   });
 
-  test('coDriverId 0 is an empty link, and a session id is not a co-driver', () {
+  test('tracking off: unknown speed does not refuse — no driving evidence', () {
     expect(
-      parseCurrentCoDriver({'id': 9, 'coDriverId': 0, 'teamDrivingActive': false})
-          ?.isLinked,
-      isFalse,
+      refuseRoleSwitch(
+        currentDriverId: 101,
+        coDriverId: '102',
+        speedMps: null,
+        thresholdKmh: 8,
+        currentStatusIsDriving: false,
+        trackingLive: false,
+      ),
+      isNull,
     );
-    expect(parseCurrentCoDriver(['102']), isNull);
-    expect(parseCurrentCoDriver({'coDriver': {'id': 102, 'name': 'Sam'}})?.coDriverId, 102);
   });
+
+  test('tracking off: stale high speed does not refuse either', () {
+    expect(
+      refuseRoleSwitch(
+        currentDriverId: 101,
+        coDriverId: '102',
+        speedMps: 30,
+        thresholdKmh: 8,
+        currentStatusIsDriving: false,
+        trackingLive: false,
+      ),
+      isNull,
+    );
+  });
+
+  test(
+    'coDriverId 0 is an empty link, and a session id is not a co-driver',
+    () {
+      expect(
+        parseCurrentCoDriver({
+          'id': 9,
+          'coDriverId': 0,
+          'teamDrivingActive': false,
+        })?.isLinked,
+        isFalse,
+      );
+      expect(parseCurrentCoDriver(['102']), isNull);
+      expect(
+        parseCurrentCoDriver({
+          'coDriver': {'id': 102, 'name': 'Sam'},
+        })?.coDriverId,
+        102,
+      );
+    },
+  );
 }

@@ -128,7 +128,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                         ),
                                         loc,
                                       ).toUpperCase(),
-                                      style: context.styles.bodyBold.copyWith(fontSize: 18),
+                                      style: context.styles.bodyBold.copyWith(
+                                        fontSize: 18,
+                                      ),
                                     ),
                                   ),
                                   Icon(
@@ -172,9 +174,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                               padding: const EdgeInsets.only(
                                 bottom: AppSpacing.md,
                               ),
-                              child: Text(
-                                loc.coDriverSwitching,
-                              ),
+                              child: Text(loc.coDriverSwitching),
                             ),
 
                           // Switch Button
@@ -205,6 +205,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                           .read(hosConfigurationProvider)
                                           .movingSpeedThresholdKmh,
                                       currentStatusIsDriving: driving,
+                                      trackingLive: ref
+                                          .read(trackingStateProvider)
+                                          .isTracking,
                                     );
                                     if (refusal != null) {
                                       AppFeedback.error(
@@ -270,7 +273,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                             loc.coDriverRolesSwitchedTitle,
                                           ),
                                           content: Text(
-                                            loc.coDriverRolesSwitchedBody(newPrimary ?? loc.coDriverDefaultNewPrimary),
+                                            loc.coDriverRolesSwitchedBody(
+                                              newPrimary ??
+                                                  loc.coDriverDefaultNewPrimary,
+                                            ),
                                             style: context.styles.success,
                                           ),
                                           actions: [
@@ -299,10 +305,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     // reference layout so it does not change it).
                     Padding(
                       padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
-                      child: _LinkedCoDriver(
-                        state: codriverState,
-                        loc: loc,
-                      ),
+                      child: _LinkedCoDriver(state: codriverState, loc: loc),
                     ),
                   ],
                 ),
@@ -330,7 +333,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               backgroundColor: surfaceColor,
               title: Text(
                 context.loc.coDriver,
-                style: context.styles.body.copyWith(fontWeight: FontWeight.normal),
+                style: context.styles.body.copyWith(
+                  fontWeight: FontWeight.normal,
+                ),
               ),
               contentPadding: const EdgeInsets.only(top: 16),
               content: SizedBox(
@@ -401,10 +406,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     });
                     Navigator.of(context).pop();
                   },
-                  child: Text(
-                    context.loc.okButton,
-                    style: context.styles.gold,
-                  ),
+                  child: Text(context.loc.okButton, style: context.styles.gold),
                 ),
               ],
             );
@@ -475,10 +477,7 @@ class _LinkedCoDriver extends StatelessWidget {
         : null;
     return Column(
       children: [
-        Text(
-          loc.coDriverLinkedTitle,
-          style: context.styles.bodyBold,
-        ),
+        Text(loc.coDriverLinkedTitle, style: context.styles.bodyBold),
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
@@ -528,9 +527,7 @@ class _HosIsolationLine extends ConsumerWidget {
           child: Column(
             children: [
               Text(
-                isolated
-                    ? loc.coDriverHosIsolated
-                    : loc.coDriverHosNotIsolated,
+                isolated ? loc.coDriverHosIsolated : loc.coDriverHosNotIsolated,
                 textAlign: TextAlign.center,
                 style: isolated ? context.styles.success : context.styles.error,
               ),
