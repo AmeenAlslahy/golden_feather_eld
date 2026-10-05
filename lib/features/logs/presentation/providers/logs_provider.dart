@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../domain/entities/daily_form_data.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../../data/providers/log_repository_providers.dart';
 import '../../domain/entities/audit_entry.dart';
@@ -67,14 +69,26 @@ class LogsState {
 final logsProvider = StateNotifierProvider<LogsNotifier, LogsState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
   final driverId = ref.watch(currentDriverIdProvider);
-  return LogsNotifier(repository, driverId);
+  return LogsNotifier(
+    repository,
+    driverId,
+    (form) => ref.read(dashboardDataProvider.notifier).applyServerForm(form),
+  );
 });
 
 class LogsNotifier extends StateNotifier<LogsState> {
   final LogRepository _repository;
   final int? _driverId;
 
-  LogsNotifier(this._repository, this._driverId) : super(const LogsState()) {
+  /// استلام نموذج اليوم المحفوظ من الخادم — تُطبق على لوحة القيادة
+  /// ليقرأها تبويب النموذج (null في الاختبارات المباشرة = لا تطبيق).
+  final void Function(DailyFormData form)? _onServerForm;
+
+  LogsNotifier(
+    this._repository,
+    this._driverId,
+    this._onServerForm,
+  ) : super(const LogsState()) {
     if (_driverId != null) {
       loadLogs();
     }
@@ -137,6 +151,27 @@ class LogsNotifier extends StateNotifier<LogsState> {
     state = state.copyWith(selectedLog: log, clearEventsError: true);
     loadSelectedLogDetail();
     loadSelectedLogEvents();
+    loadSelectedForm();
+  }
+
+  /// نموذج اليوم المحفوظ في الخادم (`GET /eld/daily-logs/{id}/form`) —
+  /// يُطبق على حقول النموذج في لوحة القيادة ليقرأها تبويب النموذج بدل
+  /// بيانات جلسة قديمة. الفشل صامت: تبقى قيم اللوحة الحالية ولا تُختلق
+  /// بيانات، والقوائم الفارغة تُترك كما هي.
+  Future<void> loadSelectedForm() async {
+    final log = state.selectedLog;
+    if (log == null) return;
+    final result = await _repository.getForm(log.id);
+    if (!mounted) return;
+    if (state.selectedLog?.id != log.id) return; // فُتح يوم آخر أثناء الانتظار
+
+    result.match(
+      (_) {}, // فشل جلب النموذج لا يمسح المعروض ولا يخترع بيانات.
+      (form) {
+        if (form == null) return; // لا نموذج محفوظ على الخادم لهذا اليوم.
+        _onServerForm?.call(form);
+      },
+    );
   }
 
   /// تفاصيل السجل من الخادم (`GET /eld/daily-logs/{id}`) — مصدر الحقيقة

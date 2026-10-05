@@ -202,11 +202,15 @@ void main() {
       when(() => repo.getLogById(any())).thenAnswer(
         (_) async => const Left(NetworkFailure()),
       );
+      // ونموذج اليوم (GET /eld/daily-logs/{id}/form) — لا يخصها كذلك.
+      when(() => repo.getForm(any())).thenAnswer(
+        (_) async => const Right(null),
+      );
     });
 
     List<Override> overrides() => [
       logRepositoryProvider.overrideWithValue(repo),
-      logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
+      logsProvider.overrideWith((ref) => LogsNotifier(repo, null, null)),
     ];
 
     testWidgets('sends every trailer and shipping document from the pages', (

@@ -54,6 +54,10 @@ void main() {
     when(() => repo.getLogById(any())).thenAnswer(
       (_) async => const Left(NetworkFailure()),
     );
+    // وكذلك نموذج اليوم — لا نموذج محفوظ في سياق هذه الاختبارات.
+    when(() => repo.getForm(any())).thenAnswer(
+      (_) async => const Right(null),
+    );
     container = ProviderContainer(overrides: [
       logRepositoryProvider.overrideWithValue(repo),
       currentDriverIdProvider.overrideWithValue(106),

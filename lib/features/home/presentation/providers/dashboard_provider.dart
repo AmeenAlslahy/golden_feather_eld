@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../logs/domain/daily_form_rules.dart';
+import '../../../logs/domain/entities/daily_form_data.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
@@ -115,6 +116,22 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       coDriverName: coDriver.name,
     );
   }
+
+  /// تطبيق نموذج اليوم المحفوظ في الخادم (`GET /eld/daily-logs/{id}/form`)
+  /// على الحقول التي يديرها النموذج — ليقرأ تبويب النموذج قيم اليوم
+  /// المحفوظة لا بيانات جلسة قديمة. لا يمس deviceId ولا بيانات الجلسة
+  /// الحية، والقوائم الفارغة تُترك كما هي (الحفظ لاحقاً هو قرار السائق).
+  void applyServerForm(DailyFormData form) {
+    if (form.trailers.isNotEmpty) {
+      updateTrailers(form.trailers);
+    }
+    if (form.shippingDocuments.isNotEmpty) {
+      updateShippingDocuments(form.shippingDocuments);
+    }
+    if (form.coDriverId != null && form.coDriverId! > 0) {
+      state = state.copyWith(coDriverId: '${form.coDriverId}');
+    }
+  }
 }
 
 final dashboardDataProvider =
@@ -136,7 +153,9 @@ final dashboardDataProvider =
   ref.listen(
     vehicleProvider,
     (previous, next) {
-      notifier.updateVehicle(next.selectedVehicle);
+      if (next.selectedVehicle != null) {
+        notifier.updateVehicle(next.selectedVehicle);
+      }
     },
     fireImmediately: true,
   );
