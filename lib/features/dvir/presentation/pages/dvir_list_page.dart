@@ -14,6 +14,7 @@ import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/dvir_list_summary.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../providers/dvir_provider.dart';
+import '../widgets/active_defects_section.dart';
 import '../extensions/dvir_status_extensions.dart';
 import 'dvir_detail_page.dart';
 import 'dvir_form_page.dart';
@@ -62,11 +63,12 @@ class DvirListPage extends ConsumerWidget {
                 ref.invalidate(dvirCatalogProvider);
                 await ref.read(dvirProvider.notifier).refresh();
               },
-              child: dvirState.reports.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        if (dvirState.error != null)
+                  child: dvirState.reports.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const ActiveDefectsSection(),
+                            if (dvirState.error != null)
                           SizedBox(
                             height: MediaQuery.of(context).size.height * 0.5,
                             child: EldRetryView(
@@ -96,14 +98,18 @@ class DvirListPage extends ConsumerWidget {
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(AppSpacing.md),
-                      itemCount: dvirState.reports.length + 1,
+                      itemCount: dvirState.reports.length + 2,
                       itemBuilder: (context, index) {
                         if (index == 0) {
                           return _DvirSummaryRow(
                             summary: summarizeDvirReports(dvirState.reports),
                           );
                         }
-                        final report = dvirState.reports[index - 1];
+                        if (index == 1) {
+                          // العيوب النشطة لمركبة السائق — قسم قراءة فقط.
+                          return const ActiveDefectsSection();
+                        }
+                        final report = dvirState.reports[index - 2];
                         return _DvirCard(
                           report: report,
                           // SRS 7.12: النقر على أي تقرير في القائمة يفتح

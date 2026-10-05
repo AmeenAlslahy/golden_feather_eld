@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../dvir_catalog.dart';
+import '../entities/dvir_defect.dart';
 import '../entities/dvir_report.dart';
 
 abstract class DvirRepository {
@@ -28,5 +29,15 @@ abstract class DvirRepository {
     required String signatureData,
     required bool driverAgreed,
     String? reviewNotes,
+  });
+
+  /// تفاصيل عيب DVIR من الخادم (`GET /eld/dvir/defects/{id}`) — سجل
+  /// الإصلاحات واعتمادات الناقل. قراءة شبكية فقط.
+  Future<Either<Failure, DvirDefect>> getDefectDetails(int defectId);
+
+  /// العيوب النشطة لمركبة السائق (`GET /eld/dvir/defects/device/{uniqueId}`):
+  /// المفتوحة/قيد الإصلاح/بانتظار اعتماد الناقل.
+  Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
+    required String uniqueId,
   });
 }

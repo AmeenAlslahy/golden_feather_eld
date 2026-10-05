@@ -34,4 +34,10 @@ abstract interface class DvirBackend {
   /// GET /eld/dvir/pre-trip/{uniqueId}
   Future<Result<RawJson>> getPreviousDvir(String uniqueId);
 
+  /// GET /eld/dvir/defects/{id} — تفاصيل العيب وسجل الإصلاحات والاعتمادات
+  Future<Result<RawJson>> getDefectDetails(int defectId);
+
+  /// GET /eld/dvir/defects/device/{uniqueId} — العيوب النشطة لمركبة
+  Future<Result<RawJson>> getVehicleDefects(String uniqueId);
+
 }

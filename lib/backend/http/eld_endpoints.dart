@@ -89,8 +89,13 @@ class EldEndpoints {
   static String dvirNextDriverReview(int id) => '/eld/dvir/$id/review';
   /// كتالوج فحص المركبات 
   static const String dvirCatalog = '/eld/dvir/catalog';
-  /// فحص المركبات السابق 
+  /// فحص المركبات السابق
   static String dvirPrevious(String uniqueId) => '/eld/dvir/pre-trip/$uniqueId';
+  /// تفاصيل عيب DVIR (سجل الإصلاحات والاعتمادات)
+  static String dvirDefectDetails(int id) => '/eld/dvir/defects/$id';
+  /// العيوب النشطة لمركبة محددة
+  static String dvirVehicleDefects(String uniqueId) =>
+      '/eld/dvir/defects/device/$uniqueId';
 
   // 14. Roadside Inspection
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.

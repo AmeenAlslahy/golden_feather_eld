@@ -5134,6 +5134,60 @@ abstract class AppLocalizations {
   /// **'سجلات التفتيش'**
   String get inspectionLogsTitle;
 
+  /// No description provided for @dvirActiveDefectsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'العيوب النشطة لمركبتك'**
+  String get dvirActiveDefectsTitle;
+
+  /// No description provided for @dvirDefectDetailsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل العيب'**
+  String get dvirDefectDetailsTitle;
+
+  /// No description provided for @dvirDefectSeverity.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطورة'**
+  String get dvirDefectSeverity;
+
+  /// No description provided for @dvirDefectStage.
+  ///
+  /// In ar, this message translates to:
+  /// **'المرحلة'**
+  String get dvirDefectStage;
+
+  /// No description provided for @dvirDefectOutOfService.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركبة متوقفة عن الخدمة'**
+  String get dvirDefectOutOfService;
+
+  /// No description provided for @dvirDefectRepairs.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجل الإصلاحات'**
+  String get dvirDefectRepairs;
+
+  /// No description provided for @dvirDefectNoRepairs.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا إصلاحات مسجلة بعد'**
+  String get dvirDefectNoRepairs;
+
+  /// No description provided for @dvirDefectCertifications.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعتمادات الناقل'**
+  String get dvirDefectCertifications;
+
+  /// No description provided for @dvirDefectNoCertifications.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا اعتمادات بعد'**
+  String get dvirDefectNoCertifications;
+
   /// No description provided for @eldMalfunctionManualActive.
   ///
   /// In ar, this message translates to:

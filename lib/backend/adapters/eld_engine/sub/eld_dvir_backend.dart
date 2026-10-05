@@ -106,4 +106,22 @@ class EldDvirBackend implements DvirBackend {
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
+
+  @override
+  Future<Result<RawJson>> getDefectDetails(int defectId) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dvirDefectDetails(defectId),
+      parser: _asMap,
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dvirVehicleDefects(uniqueId),
+      parser: _asMap,
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 }

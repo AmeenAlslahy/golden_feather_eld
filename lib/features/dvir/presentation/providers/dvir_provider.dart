@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/dvir_repository_providers.dart';
 import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_vehicle.dart';
+import '../../domain/entities/dvir_defect.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
@@ -251,4 +253,17 @@ final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((r
 
   final result = await ref.watch(dvirRepositoryProvider).getDefectsCatalog();
   return result.fold((f) => throw f, (items) => items);
+});
+
+/// العيوب النشطة لمركبة السائق (`GET /eld/dvir/defects/device/{uniqueId}`)
+/// — الهوية من الجهاز المتصل (نفس مصدر قائمة الفحوصات). القائمة الفارغة
+/// أو الفشل يعني "لا قسم يُعرض" — لا يكسر شاشة القائمة.
+final activeVehicleDefectsProvider =
+    FutureProvider.autoDispose<List<DvirDefect>>((ref) async {
+  final vehicleId = ref.watch(trackingConfigStorageProvider).deviceId;
+  if (isUnassignedVehicleId(vehicleId)) return const [];
+  final result = await ref
+      .watch(dvirRepositoryProvider)
+      .getActiveDefects(uniqueId: vehicleId);
+  return result.fold((failure) => throw failure, (defects) => defects);
 });

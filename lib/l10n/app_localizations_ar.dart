@@ -2697,6 +2697,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get inspectionLogsTitle => 'سجلات التفتيش';
 
   @override
+  String get dvirActiveDefectsTitle => 'العيوب النشطة لمركبتك';
+
+  @override
+  String get dvirDefectDetailsTitle => 'تفاصيل العيب';
+
+  @override
+  String get dvirDefectSeverity => 'الخطورة';
+
+  @override
+  String get dvirDefectStage => 'المرحلة';
+
+  @override
+  String get dvirDefectOutOfService => 'المركبة متوقفة عن الخدمة';
+
+  @override
+  String get dvirDefectRepairs => 'سجل الإصلاحات';
+
+  @override
+  String get dvirDefectNoRepairs => 'لا إصلاحات مسجلة بعد';
+
+  @override
+  String get dvirDefectCertifications => 'اعتمادات الناقل';
+
+  @override
+  String get dvirDefectNoCertifications => 'لا اعتمادات بعد';
+
+  @override
   String get eldMalfunctionManualActive => 'التسجيل اليدوي مفعّل حالياً.';
 
   @override

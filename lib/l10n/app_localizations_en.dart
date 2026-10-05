@@ -2712,6 +2712,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inspectionLogsTitle => 'Inspection Logs';
 
   @override
+  String get dvirActiveDefectsTitle => 'Active Defects';
+
+  @override
+  String get dvirDefectDetailsTitle => 'Defect Details';
+
+  @override
+  String get dvirDefectSeverity => 'Severity';
+
+  @override
+  String get dvirDefectStage => 'Stage';
+
+  @override
+  String get dvirDefectOutOfService => 'Vehicle out of service';
+
+  @override
+  String get dvirDefectRepairs => 'Repair Log';
+
+  @override
+  String get dvirDefectNoRepairs => 'No repair actions recorded yet';
+
+  @override
+  String get dvirDefectCertifications => 'Carrier Certifications';
+
+  @override
+  String get dvirDefectNoCertifications => 'No certifications yet';
+
+  @override
   String get eldMalfunctionManualActive => 'Manual recording is active.';
 
   @override

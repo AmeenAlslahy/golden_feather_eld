@@ -17,6 +17,8 @@ import '../../../../core/result/result.dart';
 import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../mappers/dvir_mappers.dart';
+import '../mappers/dvir_defect_mappers.dart';
+import '../../domain/entities/dvir_defect.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
@@ -157,6 +159,35 @@ class DvirRepositoryImpl implements DvirRepository {
         return items == null
             ? const Left(ServerFailure(message: 'catalog body is not a list'))
             : Right(items);
+      });
+    });
+  }
+
+  @override
+  Future<Either<Failure, DvirDefect>> getDefectDetails(int defectId) async {
+    return guardedNetwork(networkInfo, () async {
+      final result = await dvirBackend.getDefectDetails(defectId);
+      return result.fold((error) => Left(_failure(error)), (raw) {
+        final body = raw['data'] is Map ? raw['data'] : raw;
+        final defect = parseDvirDefect(body);
+        return defect == null
+            ? const Left(ServerFailure(message: 'defectDetailsUnreadable'))
+            : Right(defect);
+      });
+    });
+  }
+
+  @override
+  Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
+    required String uniqueId,
+  }) async {
+    return guardedNetwork(networkInfo, () async {
+      final result = await dvirBackend.getVehicleDefects(uniqueId);
+      return result.fold((error) => Left(_failure(error)), (raw) {
+        final defects = parseDvirDefectList(raw['data'] ?? raw['items'] ?? raw);
+        return defects == null
+            ? const Left(ServerFailure(message: 'vehicleDefectsUnreadable'))
+            : Right(defects);
       });
     });
   }

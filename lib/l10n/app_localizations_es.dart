@@ -2736,6 +2736,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inspectionLogsTitle => 'Registros de inspección';
 
   @override
+  String get dvirActiveDefectsTitle => 'Defectos activos';
+
+  @override
+  String get dvirDefectDetailsTitle => 'Detalles del defecto';
+
+  @override
+  String get dvirDefectSeverity => 'Gravedad';
+
+  @override
+  String get dvirDefectStage => 'Etapa';
+
+  @override
+  String get dvirDefectOutOfService => 'Vehículo fuera de servicio';
+
+  @override
+  String get dvirDefectRepairs => 'Registro de reparaciones';
+
+  @override
+  String get dvirDefectNoRepairs => 'Aún no hay reparaciones registradas';
+
+  @override
+  String get dvirDefectCertifications => 'Certificaciones del transportista';
+
+  @override
+  String get dvirDefectNoCertifications => 'Aún sin certificaciones';
+
+  @override
   String get eldMalfunctionManualActive => 'La grabación manual está activa.';
 
   @override
