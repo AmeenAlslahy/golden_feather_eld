@@ -33,4 +33,11 @@ abstract class InspectionRepository {
   Future<Either<Failure, List<TransferAuditRow>>> getTransfers({
     DriverId? driverId,
   });
+
+  /// تسجيل بدء وضع التفتيش على الخادم (`POST /eld/dot-inspection/start`)
+  /// ليصبح القفل موثقاً مركزياً (49 CFR § 395.22). الاستدعاء غير معيق:
+  /// فشله لا يمنع وضع التفتيش المحلي على الجهاز.
+  Future<Either<Failure, Unit>> registerInspectionStart({
+    required DriverId driverId,
+  });
 }

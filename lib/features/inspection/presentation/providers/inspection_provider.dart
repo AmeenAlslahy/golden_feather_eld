@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/inspection_repository_providers.dart';
 import '../../domain/repositories/inspection_repository.dart';
@@ -249,6 +251,23 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
     _inspectionPin = pin; // يُخزَّن خاصاً بعد نجاح الدخول فقط
     state = _active(cycle: cycle, log: log);
+    // تسجيل القفل مركزياً (POST /eld/dot-inspection/start) — غير معيق:
+    // التفتيش الميداني يجب أن يعمل بلا شبكة (SRS 6.8)، وفشل التسجيل
+    // يُسجَّل ليبقى مرئياً بدل منع تسليم الجهاز للمفتش.
+    unawaited(_registerServerStart(driver));
+  }
+
+  Future<void> _registerServerStart(DriverId driver) async {
+    final result = await _repository.registerInspectionStart(
+      driverId: driver,
+    );
+    if (!mounted) return;
+    result.fold(
+      (failure) => AppLogger.warning(
+        'DOT inspection start not registered on server: ${failure.message}',
+      ),
+      (_) => AppLogger.info('DOT inspection start registered on server'),
+    );
   }
 
   /// الخروج بالرمز — تحقق محلي، لا شبكة (SRS 7.5).

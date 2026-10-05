@@ -163,4 +163,14 @@ class InspectionRepositoryImpl implements InspectionRepository {
       );
     });
   }
+
+  @override
+  Future<Either<Failure, Unit>> registerInspectionStart({
+    required DriverId driverId,
+  }) {
+    return guardedNetwork(_networkInfo, () async {
+      final result = await _backend.startInspection(driverId: driverId);
+      return _done(result).map((_) => unit);
+    });
+  }
 }

@@ -70,6 +70,12 @@ void main() {
       final date = inv.namedArguments[#date] as DateTime?;
       return Right(_log(date ?? d0));
     });
+    // بدء التفتيش يسجّل القفل على الخادم (غير معيق) — نجاح صامت هنا.
+    when(
+      () => repo.registerInspectionStart(
+        driverId: any(named: 'driverId'),
+      ),
+    ).thenAnswer((_) async => const Right(unit));
   });
 
   InspectionNotifier notifier() => container.read(inspectionProvider.notifier);

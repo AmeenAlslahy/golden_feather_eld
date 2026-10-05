@@ -360,6 +360,12 @@ void main() {
         date: any(named: 'date'),
       ),
     ).thenAnswer((_) async => Right(_logFor(d0)));
+    // بدء التفتيش يسجّل القفل على الخادم الآن (غير معيق) — نجيب نجاحاً.
+    when(
+      () => repository.registerInspectionStart(
+        driverId: any(named: 'driverId'),
+      ),
+    ).thenAnswer((_) async => const Right(unit));
 
     // Decision D: the PIN is seeded through startInspection — the public
     // lifecycle — never by writing state directly.
@@ -495,7 +501,7 @@ void main() {
           .widget<Text>(find.byKey(const Key('inspection-day-label')))
           .data!;
 
-      expect(dayLabel(), 'Day 13');
+      expect(dayLabel(), '2026-01-13');
       expect(
         tester
             .widget<IconButton>(
@@ -517,13 +523,14 @@ void main() {
             .onPressed,
         isNull,
       );
-      expect(dayLabel(), 'Day 13');
+      expect(dayLabel(), '2026-01-13');
 
       gate.complete(Right(_logFor(d1)));
       await tester.pumpAndSettle();
       // Success: the index and the log advanced together (newest-day edge
-      // disables chevron_left again, chevron_right is available).
-      expect(dayLabel(), 'Day 12');
+      // disables chevron_left again, chevron_right is available). The label
+      // is the record's own logDate, not the constant displayDate.
+      expect(dayLabel(), '2026-01-12');
       expect(
         tester
             .widget<IconButton>(

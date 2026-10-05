@@ -21,6 +21,16 @@ class InspectionActiveView extends ConsumerWidget {
 
   final VoidCallback onExitRequest;
 
+  /// ملصق اليوم = تاريخ السجل (logDate) لا displayDate — الثاني ثابت لكل
+  /// الأيام (تاريخ محطة التفتيش من الخادم) فكان يجعل التنقل يبدو ميّتاً.
+  String _dayLabel(InspectionState state) {
+    final date = state.selectedDay?.logDate ?? state.log?.logDate;
+    if (date == null) return '';
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$m-$d';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(inspectionProvider);
@@ -39,14 +49,18 @@ class InspectionActiveView extends ConsumerWidget {
       children: [
         if (state.bannerError != null) _Banner(text: state.bannerError!),
         _DaySelector(
-          dateLabel: day?.displayDate.isNotEmpty == true
-              ? day!.displayDate
-              : (log?.displayDate ?? ''),
+          dateLabel: _dayLabel(state),
           isDayLoading: state.isDayLoading,
-          canGoNewer: state.selectedDayIndex < state.cycle.length - 1,
-          canGoOlder: state.selectedDayIndex > 0,
-          onSelectDay: (index) =>
-              ref.read(inspectionProvider.notifier).selectDay(index),
+          // ترتيب cycle: index 0 = الأحدث. الأيسر = يوم أقدم (index+1)
+          // والأيمن = يوم أحدث (index-1) — فهارس مطلقة لا دلتا نسبية.
+          canGoOlder: state.selectedDayIndex < state.cycle.length - 1,
+          canGoNewer: state.selectedDayIndex > 0,
+          onSelectOlder: () => ref
+              .read(inspectionProvider.notifier)
+              .selectDay(state.selectedDayIndex + 1),
+          onSelectNewer: () => ref
+              .read(inspectionProvider.notifier)
+              .selectDay(state.selectedDayIndex - 1),
         ),
         const Divider(height: 1),
         Expanded(
@@ -117,21 +131,24 @@ class _Banner extends StatelessWidget {
 }
 
 /// شريط التنقل بين الأيام — عميل أعمى: يستقبل التسمية وحالتي الحدود
-/// ويبث الاختيار؛ تعطيل الأسهم أثناء التحميل قرار الحالة لا قراره.
+/// وcallback بحيث يستقبل فهرساً مطلقاً محسوباً في الأب (لا دلتا نسبية)
+///؛ تعطيل الأسهم أثناء التحميل قرار الحالة لا قراره.
 class _DaySelector extends StatelessWidget {
   const _DaySelector({
     required this.dateLabel,
     required this.isDayLoading,
-    required this.canGoNewer,
     required this.canGoOlder,
-    required this.onSelectDay,
+    required this.canGoNewer,
+    required this.onSelectOlder,
+    required this.onSelectNewer,
   });
 
   final String dateLabel;
   final bool isDayLoading;
-  final bool canGoNewer;
   final bool canGoOlder;
-  final ValueChanged<int> onSelectDay;
+  final bool canGoNewer;
+  final VoidCallback onSelectOlder;
+  final VoidCallback onSelectNewer;
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +160,8 @@ class _DaySelector extends StatelessWidget {
         children: [
           _Arrow(
             icon: Icons.chevron_left,
-            enabled: !isDayLoading && canGoNewer,
-            onPressed: () => onSelectDay(1),
+            enabled: !isDayLoading && canGoOlder,
+            onPressed: onSelectOlder,
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -166,8 +183,8 @@ class _DaySelector extends StatelessWidget {
           ),
           _Arrow(
             icon: Icons.chevron_right,
-            enabled: !isDayLoading && canGoOlder,
-            onPressed: () => onSelectDay(-1),
+            enabled: !isDayLoading && canGoNewer,
+            onPressed: onSelectNewer,
           ),
         ],
       ),
