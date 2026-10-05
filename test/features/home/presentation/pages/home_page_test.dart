@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/features/home/presentation/pages/home_page.dart';
 import 'package:golden_feather_eld/features/hos/presentation/pages/status_dashboard_page.dart';
+import 'package:golden_feather_eld/features/connection/domain/entities/hardware_alert.dart';
 import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_alerts_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 

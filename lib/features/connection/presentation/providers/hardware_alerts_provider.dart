@@ -1,31 +1,21 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../backend/providers/backend_providers.dart';
+import '../../../../core/error/failure.dart';
+import '../../domain/entities/hardware_alert.dart';
 
-class HardwareAlert {
-  final String id;
-  final String type;
-  final String message;
-  final DateTime? timestamp;
-
-  HardwareAlert({
-    required this.id,
-    required this.type,
-    required this.message,
-    this.timestamp,
-  });
-
-  factory HardwareAlert.fromJson(Map<String, dynamic> json) {
-    final rawTime = json['timestamp']?.toString();
-    return HardwareAlert(
-      id: json['id']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
-      message: json['message']?.toString() ?? '',
-      timestamp: rawTime == null || rawTime.isEmpty
-          ? null
-          : DateTime.tryParse(rawTime),
-    );
-  }
+/// تحليل رد التنبيهات — يبقى هنا حتى موجة نقل الـ parsing إلى
+/// data/mappers؛ الكيان نفسه نقي في domain.
+HardwareAlert _hardwareAlertFromJson(Map<String, dynamic> json) {
+  final rawTime = json['timestamp']?.toString();
+  return HardwareAlert(
+    id: json['id']?.toString() ?? '',
+    type: json['type']?.toString() ?? '',
+    message: json['message']?.toString() ?? '',
+    timestamp: rawTime == null || rawTime.isEmpty
+        ? null
+        : DateTime.tryParse(rawTime),
+  );
 }
 
 class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert>> {
@@ -64,33 +54,27 @@ class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert
   Future<List<HardwareAlert>> _fetchFromBackend() async {
     final backend = ref.read(hardwareBackendProvider);
     final result = await backend.getAlerts();
-    
+
     return result.fold(
-      (failure) => throw Exception(failure.l10nKey),
+      // نرمي Failure مكتوبة النوع (لا Exception خام) — المستهلك يعرضها
+      // عبر anyErrorUserMessage.
+      (failure) => throw failure,
       (json) {
         final alertsList = _alertList(json);
         if (alertsList == null) {
-          throw Exception('Hardware alerts response was not a list');
+          throw const ServerFailure(message: 'hardwareAlertsUnreadable');
         }
         if (alertsList.isEmpty) return [];
 
         return alertsList.map((e) {
           // If the API returns a string directly
           if (e is String) {
-            return HardwareAlert(
-              id: '',
-              type: '',
-              message: e,
-            );
+            return HardwareAlert(id: '', type: '', message: e);
           }
           if (e is Map<String, dynamic>) {
-            return HardwareAlert.fromJson(e);
+            return _hardwareAlertFromJson(e);
           }
-          return HardwareAlert(
-            id: '',
-            type: '',
-            message: e.toString(),
-          );
+          return HardwareAlert(id: '', type: '', message: e.toString());
         }).where((alert) => alert.message.trim().isNotEmpty).toList();
       },
     );

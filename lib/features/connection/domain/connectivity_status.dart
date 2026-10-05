@@ -1,5 +1,3 @@
-import '../../../../l10n/app_localizations.dart';
-
 class ConnectivityStatus {
   final String? connectionStatus;
   final String? vehicleName;
@@ -114,13 +112,3 @@ List<String>? _strings(dynamic value) {
 /// connection form so both agree on what a MAC looks like.
 bool isMacAddress(String value) =>
     RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$').hasMatch(value.trim());
-
-/// Field error for the ELD MAC input, or null when acceptable.
-/// Only "required" is enforced: the identifier printed on real devices is not
-/// always colon-separated, so the format is not rejected client-side.
-String? macAddressError(String? value, {required AppLocalizations loc}) {
-  if ((value?.trim() ?? '').isEmpty) {
-    return loc.macAddressRequired;
-  }
-  return null;
-}

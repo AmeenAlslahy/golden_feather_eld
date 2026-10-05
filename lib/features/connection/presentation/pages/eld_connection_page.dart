@@ -10,6 +10,7 @@ import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../providers/hardware_status_provider.dart';
+import '../mac_address_validation.dart';
 
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/user_facing_message.dart';

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/entities/hardware_alert.dart';
 import '../../presentation/providers/hardware_alerts_provider.dart';
 
 /// SRS 7.14 — شاشة التشخيصات والأعطال (مستقلة عن شاشة الاتصال).
@@ -38,7 +40,10 @@ class DiagnosticsPage extends ConsumerWidget {
       body: alertsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-          child: Text('$e', style: context.styles.error),
+          child: Text(
+            anyErrorUserMessage(e, loc: loc),
+            style: context.styles.error,
+          ),
         ),
         data: (alerts) {
           final malfunctions =

@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/eld_info_row.dart';
 import 'package:golden_feather_eld/features/about/presentation/pages/about_page.dart';
+import 'package:golden_feather_eld/features/connection/domain/entities/hardware_alert.dart';
 import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_alerts_provider.dart';
 import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_status_provider.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_providers.dart';
