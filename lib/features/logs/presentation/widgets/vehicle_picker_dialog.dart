@@ -11,18 +11,36 @@ import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 class VehiclePickerDialog extends ConsumerStatefulWidget {
   final String? currentVehicleId;
 
-  const VehiclePickerDialog({super.key, this.currentVehicleId});
+  /// تقييد الحوار بمركبات السائق — يُستخدم في النموذج اليومي كي لا يُلحق
+  /// أي مركبة من أسطول الشركة بالسجل (الافتراضي true للتوافق مع بقية
+  /// المستخدمين، ومعه يعود التحويل التلقائي لأسطول الشركة عند قائمة فارغة).
+  final bool allowCompanyFleet;
+
+  const VehiclePickerDialog({
+    super.key,
+    this.currentVehicleId,
+    this.allowCompanyFleet = true,
+  });
 
   @override
   ConsumerState<VehiclePickerDialog> createState() => _VehiclePickerDialogState();
 }
 
 class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
+  bool _browsingCompany = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final notifier = ref.read(vehicleProvider.notifier);
+      await notifier.loadVehicles(forceRefresh: true);
+      if (mounted &&
+          widget.allowCompanyFleet &&
+          ref.read(vehicleProvider).vehicles.isEmpty) {
+        setState(() => _browsingCompany = true);
+        await notifier.loadCompanyVehicles();
+      }
     });
   }
 
@@ -32,7 +50,11 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
     final vehicles = vehicleState.vehicles;
 
     return AlertDialog(
-      title: Text(context.loc.selectVehicle),
+      title: Text(
+        _browsingCompany
+            ? '${context.loc.selectVehicle} (${context.loc.viewAllVehicles})'
+            : context.loc.selectVehicle,
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: vehicleState.isLoading
@@ -53,7 +75,24 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(context.loc.noVehiclesFound),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(context.loc.noVehiclesFound),
+                              if (!_browsingCompany && widget.allowCompanyFleet) ...[
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() => _browsingCompany = true);
+                                    ref
+                                        .read(vehicleProvider.notifier)
+                                        .loadCompanyVehicles();
+                                  },
+                                  child: Text(context.loc.viewAllVehicles),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       )
                     : RadioGroup<String>(
@@ -85,9 +124,32 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
                       ),
       ),
       actions: [
+        if (widget.allowCompanyFleet)
+          TextButton(
+            onPressed: vehicleState.isLoading
+                ? null
+                : () {
+                    final nextBrowsing = !_browsingCompany;
+                    setState(() => _browsingCompany = nextBrowsing);
+                    if (nextBrowsing) {
+                      ref.read(vehicleProvider.notifier).loadCompanyVehicles();
+                    } else {
+                      ref
+                          .read(vehicleProvider.notifier)
+                          .loadVehicles(forceRefresh: true);
+                    }
+                  },
+            child: Text(
+              _browsingCompany
+                  ? context.loc.viewMyVehicles
+                  : context.loc.viewAllVehicles,
+            ),
+          ),
         if (!vehicleState.isLoading && vehicleState.error != null)
           TextButton(
-            onPressed: () => ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true),
+            onPressed: () => _browsingCompany
+                ? ref.read(vehicleProvider.notifier).loadCompanyVehicles()
+                : ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true),
             child: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
           ),
         TextButton(

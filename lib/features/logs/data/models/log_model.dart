@@ -1,5 +1,6 @@
 import '../../domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
+import '../../../../core/utils/logger.dart';
 
 class LogEventModel extends LogEvent {
   const LogEventModel({
@@ -20,13 +21,23 @@ class LogEventModel extends LogEvent {
   /// `durationMinutes`, `odometerKm`, `origin`, `editable`) or the compact
   /// local shape written by [toJson] (`status` = `D`/`ON`/…, `duration` in
   /// seconds, `odometer` in miles).
+  ///
+  /// Throws [FormatException] when `id` or `startTime` is missing: an ELD
+  /// record is never given an invented identity or an invented time.
   factory LogEventModel.fromJson(Map<String, dynamic> json) {
+    final id = json['id']?.toString();
+    if (id == null || id.isEmpty) {
+      throw const FormatException('LogEvent without id');
+    }
+    final startTimeStr =
+        json['startTime']?.toString() ?? json['time']?.toString();
+    if (startTimeStr == null || startTimeStr.isEmpty) {
+      throw FormatException('LogEvent $id without startTime');
+    }
+
     final rawStatus = json['status']?.toString() ?? 'OFF';
     final code = DutyStatusCode.fromShortCode(rawStatus) ??
         DutyStatusCode.fromWire(rawStatus);
-
-    final startTimeStr =
-        json['startTime']?.toString() ?? json['time']?.toString();
 
     final Duration duration;
     if (json['durationMinutes'] != null) {
@@ -60,12 +71,9 @@ class LogEventModel extends LogEvent {
         'Unknown Location';
 
     return LogEventModel(
-      id: json['id']?.toString() ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: id,
       status: code.shortCode,
-      startTime: startTimeStr != null
-          ? DateTime.parse(startTimeStr).toLocal()
-          : DateTime.now(),
+      startTime: DateTime.parse(startTimeStr).toLocal(),
       duration: duration,
       location: location,
       odometer: odometer,
@@ -78,6 +86,23 @@ class LogEventModel extends LogEvent {
   }
 
   static const double _kmToMiles = 0.621371;
+
+  /// Parses a list of events, skipping (and logging) any malformed entry so a
+  /// single bad record never hides the rest of the driver's day.
+  static List<LogEventModel> parseList(
+    Iterable<Map<String, dynamic>> raw, {
+    required String source,
+  }) {
+    final events = <LogEventModel>[];
+    for (final json in raw) {
+      try {
+        events.add(LogEventModel.fromJson(json));
+      } on FormatException catch (e, st) {
+        AppLogger.warning('LogEventModel.parseList($source): skipped', e, st);
+      }
+    }
+    return events;
+  }
 
   Map<String, dynamic> toJson() {
     return {

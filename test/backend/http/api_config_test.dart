@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/backend/http/api_config.dart';
+import 'package:golden_feather_eld/core/network/api_config.dart';
 
 void main() {
   group('ApiConfig — construction', () {

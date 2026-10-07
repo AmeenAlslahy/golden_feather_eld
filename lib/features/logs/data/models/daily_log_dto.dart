@@ -127,7 +127,7 @@ class DailyLogDto {
       isCertified: mappedCertStatus == CertificationStatus.certified,
       requiresAction: requiresAction,
       today: today,
-      events: events.map((e) => LogEventModel.fromJson(e)).toList(),
+      events: LogEventModel.parseList(events, source: 'daily-log $id'),
       driverName: driverName,
       vehicleName: vehicleName,
       vin: vin,

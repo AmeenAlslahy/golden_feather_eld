@@ -15,6 +15,7 @@ import 'package:golden_feather_eld/features/auth/presentation/providers/auth_sta
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/unidentified_events_page.dart';
+import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
@@ -189,6 +190,9 @@ void main() {
       (tester) async {
     backend = _Backend(rows: List.of(rows));
     await pump(tester);
+    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final sub = container.listen(logsProvider, (_, __) {});
+    addTearDown(sub.close);
 
     await tester.tap(find.text('ASSUME').first);
     await tester.pumpAndSettle();
@@ -239,6 +243,9 @@ void main() {
       (tester) async {
     backend = _Backend(rows: List.of(rows));
     await pump(tester);
+    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final sub = container.listen(logsProvider, (_, __) {});
+    addTearDown(sub.close);
 
     await tester.tap(find.text('NOT MINE').at(1));
     await tester.pumpAndSettle();
@@ -263,6 +270,9 @@ void main() {
         context: {'message': 'This event was already assigned.'},
       );
     await pump(tester);
+    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final sub = container.listen(logsProvider, (_, __) {});
+    addTearDown(sub.close);
 
     await tester.tap(find.text('ASSUME').first);
     await tester.pumpAndSettle();

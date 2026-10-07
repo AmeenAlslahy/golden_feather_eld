@@ -132,19 +132,29 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<List<LogEvent>> getEvents(DateTime date) async {
     final data = await _getFromBox(_eventsBox, date, 'events');
-    return data
-        .map((e) => LogEvent(
-              id: e['id'] as String? ??
-                  DateTime.now().millisecondsSinceEpoch.toString(),
-              status: e['status'] as String,
-              startTime: DateTime.parse(e['startTime'] as String),
-              duration: Duration(
-                  seconds: _readDurationSeconds(e)),
-              location: e['location'] as String? ?? 'Unknown',
-              odometer: (e['odometer'] as num?)?.toDouble(),
-              engineHours: (e['engineHours'] as num?)?.toDouble(),
-            ))
-        .toList();
+    final events = <LogEvent>[];
+    for (final e in data) {
+      final id = e['id'] as String?;
+      final startTimeStr = e['startTime'] as String?;
+      if (id == null || id.isEmpty || startTimeStr == null || startTimeStr.isEmpty) {
+        AppLogger.warning('LogLocalDataSource.getEvents: skipped malformed event');
+        continue;
+      }
+      try {
+        events.add(LogEvent(
+          id: id,
+          status: e['status'] as String,
+          startTime: DateTime.parse(startTimeStr),
+          duration: Duration(seconds: _readDurationSeconds(e)),
+          location: e['location'] as String? ?? 'Unknown',
+          odometer: (e['odometer'] as num?)?.toDouble(),
+          engineHours: (e['engineHours'] as num?)?.toDouble(),
+        ));
+      } catch (ex, st) {
+        AppLogger.warning('LogLocalDataSource.getEvents: failed to parse event $id', ex, st);
+      }
+    }
+    return events;
   }
 
   /// يقبل 'durationSeconds' (الصيغة المحلية) أو 'duration' (صيغة الخادم).

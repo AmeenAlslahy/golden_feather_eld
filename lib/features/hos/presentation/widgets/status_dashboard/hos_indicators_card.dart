@@ -70,23 +70,9 @@ class HosIndicatorsCard extends StatelessWidget {
   /// otherwise the localized reference wording is used.
   List<String> _descriptions(BuildContext context) {
     final loc = context.loc;
-    final limits = constraints?.limits ?? const <String>[];
-
-
-    String? hoursFor(List<String> keys) {
-      for (final limit in limits) {
-        final lower = limit.toLowerCase();
-        if (keys.any(lower.contains)) {
-          final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(limit);
-          if (match != null) return match.group(1);
-        }
-      }
-      return null;
-    }
-
-    final drive = hoursFor(['driving', 'drive']);
-    final shift = hoursFor(['shift', 'onduty', 'on duty', 'on_duty']);
-    final rest = hoursFor(['break']);
+    final drive = constraints?.limitHoursFor(['driving', 'drive']);
+    final shift = constraints?.limitHoursFor(['shift', 'onduty', 'on duty', 'on_duty']);
+    final rest = constraints?.limitHoursFor(['break']);
     final ruleSet = constraints?.ruleSet ?? CycleRule.unknown;
 
     return [

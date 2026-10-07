@@ -16,9 +16,9 @@ import '../../../hos/domain/engine/hos_rules_engine.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class CoDriverPage extends ConsumerStatefulWidget {
@@ -180,13 +180,15 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           // Switch Button
                           AppButton(
                             label: loc.coDriverSwitchAction,
-                            type: EldButtonType.agree,
+                            type: EldButtonType.primary,
                             isLoading: codriverState.isSwitching,
                             onPressed:
                                 (codriverState.isSwitching ||
-                                    codriverState.selectedCoDriver == null)
-                                ? null
-                                : () async {
+                                        codriverState.selectedCoDriver == null ||
+                                        codriverState.selectedCoDriver?.id ==
+                                            CoDriver.none.id)
+                                    ? null
+                                    : () async {
                                     final hos = ref.read(hosStatusProvider);
                                     final driving = hos is HosEngineReady
                                         ? hos.update.currentStatus ==
@@ -258,7 +260,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                           .switchDrivers();
                                       if (!context.mounted) return;
                                       if (error != null) {
-                                        AppFeedback.error(context, error);
+                                        AppFeedback.error(
+                                          context,
+                                          anyErrorUserMessage(error, loc: loc),
+                                        );
                                         return;
                                       }
                                       // SRS 10.4: show the new roles before leaving
@@ -379,28 +384,15 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () async {
+                  onPressed: () {
+                    // الربط (link/add) إجراء إدارة للناقل عبر البوابة —
+                    // السائق يختار محلياً من سيبدأ معه تبديل الأدوار.
                     final selected = drivers.firstWhere(
                       (d) => d.id == dialogSelectedId,
                     );
-                    final uniqueId = ref
-                        .read(vehicleProvider)
-                        .selectedVehicle
-                        ?.uniqueId;
-                    final error = await ref
+                    ref
                         .read(codriverProvider.notifier)
-                        .applySessionCoDriver(
-                          driver: selected,
-                          uniqueId: uniqueId,
-                        );
-                    if (!context.mounted) return;
-                    if (error != null) {
-                      final text = error == 'vehicle_identifier_missing'
-                          ? context.loc.coDriverVehicleMissing
-                          : error;
-                      AppFeedback.error(context, text);
-                      return;
-                    }
+                        .selectCoDriver(selected);
                     setState(() {
                       _selectedId = dialogSelectedId;
                     });

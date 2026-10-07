@@ -36,7 +36,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null, null)),
+          logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null)),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

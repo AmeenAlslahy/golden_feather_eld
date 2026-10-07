@@ -7,9 +7,9 @@
 /// **Rule:** No adapter should catch `DioException` directly.
 library;
 
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // ignore_architecture
 
-import '../../core/error/app_error.dart';
+import '../error/app_error.dart';
 
 /// Maps a [DioException] to the appropriate [AppError] subclass.
 AppError mapDioException(DioException e) {

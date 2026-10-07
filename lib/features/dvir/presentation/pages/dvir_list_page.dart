@@ -38,6 +38,7 @@ class DvirListPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            color: AppColors.surface,
             onPressed: () {
               ref.invalidate(dvirCatalogProvider);
               ref.read(dvirProvider.notifier).refresh();

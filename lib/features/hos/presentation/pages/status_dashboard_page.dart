@@ -46,42 +46,34 @@ class _DashboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        children: [
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),
-              child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(top: AppSpacing.lg),
-              child: Column(
-                children: [
-                  const SizedBox(height: AppSpacing.md),
-                  MainCircularTimer(
-                    circle: dashboard.remainingCircle,
-                    statusLabel: dashboard.currentDutyStatus.displayName(context),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const ChangeStatusPage(),
-                        ),
-                      ).then((_) {
-                        ref.read(statusDashboardProvider.notifier).refresh();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  // Reference layout: full-width table, no card inset.
-                  HosIndicatorsCard(
-                    indicators: dashboard.hosIndicators,
-                    constraints: dashboard.regulatoryConstraints,
-                  ),
-                ],
+      child: RefreshIndicator(
+        onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(top: AppSpacing.lg),
+          child: Column(
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              MainCircularTimer(
+                circle: dashboard.remainingCircle,
+                statusLabel: dashboard.currentDutyStatus.displayName(context),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ChangeStatusPage(),
+                    ),
+                  );
+                },
               ),
-            ),
-            ),
+              const SizedBox(height: AppSpacing.xl),
+              // Reference layout: full-width table, no card inset.
+              HosIndicatorsCard(
+                indicators: dashboard.hosIndicators,
+                constraints: dashboard.regulatoryConstraints,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

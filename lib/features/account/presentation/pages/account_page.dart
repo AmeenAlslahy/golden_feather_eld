@@ -73,6 +73,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 )
               : IconButton(
                   icon: const Icon(Icons.refresh),
+                  color: AppColors.surface,
                   onPressed: () {
                     ref.read(accountProvider.notifier).fetchMyAccount();
                   },
@@ -328,6 +329,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: safeValue.isEmpty ? null : safeValue,
+                dropdownColor: Theme.of(context).colorScheme.surface,
                 icon: Icon(
                   Icons.keyboard_arrow_down,
                   color: context.styles.body.color,

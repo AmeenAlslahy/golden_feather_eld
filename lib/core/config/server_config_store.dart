@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage/ports/secure_storage_port.dart';
 import '../storage/storage_providers.dart';
-import '../../domain/config/server_config.dart';
+import 'package:golden_feather_eld/domain/config/server_config.dart'; // ignore_architecture
 
 /// Persisted server config. Network reads this store directly.
 /// A null value means no saved config, not that the app is in mock mode.

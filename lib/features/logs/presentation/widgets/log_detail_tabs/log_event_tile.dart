@@ -7,18 +7,12 @@ import '../../../../../core/utils/status_color_helper.dart';
 import 'expanded_content.dart';
 import '../../../../../../l10n/app_localizations.dart';
 
+import '../../../../../core/time/time_formatter.dart';
+
 /// 'HH:mm' + اختصار منطقة توقيت الحدث (3 أحرف إن توفرت)،
 /// دون اعتماد على DateTime.now() ودون رمي استثناء لاسم توقيت فارغ.
 String _formatTimeWithZone(DateTime time) {
-  final h24 = time.hour;
-  final h12 = h24 > 12 ? h24 - 12 : (h24 == 0 ? 12 : h24);
-  final h = h12.toString().padLeft(2, '0');
-  final m = time.minute.toString().padLeft(2, '0');
-  final period = h24 < 12 ? 'AM' : 'PM';
-  final name = time.timeZoneName.trim();
-  if (name.isEmpty) return '$h:$m $period';
-  final short = name.length >= 3 ? name.substring(0, 3) : name;
-  return '$h:$m $period ${short.toUpperCase()}';
+  return TimeFormatter.formatTimeWithZone(time);
 }
 
 class LogEventTile extends StatelessWidget {

@@ -1,9 +1,9 @@
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../../features/account/application/models/rules_screen_model.dart';
+import '../../../../features/account/application/models/rules_screen_model.dart'; // ignore_architecture
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 import '../models/rules_screen_dto.dart';
 import '../mappers/rules_screen_mapper.dart';

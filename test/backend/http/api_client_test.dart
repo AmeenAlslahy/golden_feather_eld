@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/backend/http/api_client.dart';
-import 'package:golden_feather_eld/backend/http/api_config.dart';
+import 'package:golden_feather_eld/core/network/api_client.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
+import 'package:golden_feather_eld/core/network/api_config.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
@@ -32,10 +32,12 @@ void main() {
       final result = await client.get<Map<String, dynamic>>('/eld/status');
 
       expect(result.isSuccess, isTrue);
-      result.tap(onSuccess: (response) {
-        expect(response.isSuccess, isTrue);
-        expect(response.data, {'driver': 'Ahmed'});
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.isSuccess, isTrue);
+          expect(response.data, {'driver': 'Ahmed'});
+        },
+      );
     });
 
     test('unwraps enveloped response', () async {
@@ -50,9 +52,11 @@ void main() {
 
       final result = await client.get<Map<String, dynamic>>('/eld/status');
 
-      result.tap(onSuccess: (response) {
-        expect(response.data, {'driver': 'Ahmed'});
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.data, {'driver': 'Ahmed'});
+        },
+      );
     });
 
     test('applies parser', () async {
@@ -66,9 +70,11 @@ void main() {
         parser: (data) => (data as Map)['name'] as String,
       );
 
-      result.tap(onSuccess: (response) {
-        expect(response.data, 'Ahmed');
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.data, 'Ahmed');
+        },
+      );
     });
 
     test('returns NetworkError on timeout (retries disabled)', () async {
@@ -121,10 +127,7 @@ void main() {
     test('sends body and parses response', () async {
       adapter.onPost(
         '/eld/duty-status',
-        (server) => server.reply(200, {
-          'id': 1,
-          'status': 'DRIVING',
-        }),
+        (server) => server.reply(200, {'id': 1, 'status': 'DRIVING'}),
         data: {'status': 'DRIVING'},
       );
 
@@ -133,9 +136,11 @@ void main() {
         data: {'status': 'DRIVING'},
       );
 
-      result.tap(onSuccess: (response) {
-        expect(response.data, {'id': 1, 'status': 'DRIVING'});
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.data, {'id': 1, 'status': 'DRIVING'});
+        },
+      );
     });
 
     test('empty 200 body is success, not FormatException', () async {
@@ -153,9 +158,11 @@ void main() {
       );
 
       expect(result.isSuccess, isTrue);
-      result.tap(onSuccess: (response) {
-        expect(response.isSuccess, isTrue);
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.isSuccess, isTrue);
+        },
+      );
     });
 
     test('handles 400 validation error', () async {
@@ -191,26 +198,27 @@ void main() {
         data: {'cycleRule': 'USA 70/8'},
       );
 
-      result.tap(onSuccess: (response) {
-        expect(response.data, {'cycleRule': 'USA 70/8'});
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.data, {'cycleRule': 'USA 70/8'});
+        },
+      );
     });
   });
 
   group('ApiClient — DELETE', () {
     test('deletes and returns success', () async {
-      adapter.onDelete(
-        '/eld/documents/1',
-        (server) => server.reply(200, {}),
-      );
+      adapter.onDelete('/eld/documents/1', (server) => server.reply(200, {}));
 
       final result = await client.delete<Map<String, dynamic>>(
         '/eld/documents/1',
       );
 
-      result.tap(onSuccess: (response) {
-        expect(response.isSuccess, isTrue);
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.isSuccess, isTrue);
+        },
+      );
     });
   });
 
@@ -258,10 +266,12 @@ void main() {
 
       final result = await client.download('/eld/reports/101/pdf');
 
-      result.tap(onSuccess: (data) {
-        expect(data, isA<Uint8List>());
-        expect(data, equals(Uint8List.fromList(bytes)));
-      });
+      result.tap(
+        onSuccess: (data) {
+          expect(data, isA<Uint8List>());
+          expect(data, equals(Uint8List.fromList(bytes)));
+        },
+      );
     });
 
     test('returns error on 404', () async {
@@ -282,10 +292,7 @@ void main() {
 
       adapter.onPost(
         '/eld/documents/101/upload-file',
-        (server) => server.reply(201, {
-          'id': 42,
-          'fileName': 'doc.pdf',
-        }),
+        (server) => server.reply(201, {'id': 42, 'fileName': 'doc.pdf'}),
         data: Matchers.any,
       );
 
@@ -296,9 +303,11 @@ void main() {
         fileName: 'doc.pdf',
       );
 
-      result.tap(onSuccess: (response) {
-        expect(response.data, {'id': 42, 'fileName': 'doc.pdf'});
-      });
+      result.tap(
+        onSuccess: (response) {
+          expect(response.data, {'id': 42, 'fileName': 'doc.pdf'});
+        },
+      );
     });
   });
 
@@ -348,42 +357,46 @@ void main() {
     // `replyCallback` — whose data callback runs per request — is the way
     // to both count attempts and vary the outcome.
     ApiClient fastRetryClient(Dio dio) => ApiClient(
-          config: const ApiConfig(baseUrl: 'https://api.example.com'),
-          dio: dio,
-          // Zero backoff keeps these tests deterministic and fast.
-          retryBackoff: Duration.zero,
-        );
+      config: const ApiConfig(baseUrl: 'https://api.example.com'),
+      dio: dio,
+      // Zero backoff keeps these tests deterministic and fast.
+      retryBackoff: Duration.zero,
+    );
 
     DioException transientTimeout(String path) => DioException(
-          requestOptions: RequestOptions(path: path),
-          type: DioExceptionType.connectionTimeout,
-        );
+      requestOptions: RequestOptions(path: path),
+      type: DioExceptionType.connectionTimeout,
+    );
 
-    test('GET retries a transient timeout and succeeds on the next attempt',
-        () async {
-      final retryDio = Dio();
-      final retryAdapter = DioAdapter(dio: retryDio);
-      final client = fastRetryClient(retryDio);
-      var attempts = 0;
+    test(
+      'GET retries a transient timeout and succeeds on the next attempt',
+      () async {
+        final retryDio = Dio();
+        final retryAdapter = DioAdapter(dio: retryDio);
+        final client = fastRetryClient(retryDio);
+        var attempts = 0;
 
-      retryAdapter.onGet('/eld/status', (server) {
-        server.replyCallback(200, (options) {
-          attempts++;
-          if (attempts == 1) {
-            throw transientTimeout('/eld/status');
-          }
-          return {'driver': 'Ahmed'};
+        retryAdapter.onGet('/eld/status', (server) {
+          server.replyCallback(200, (options) {
+            attempts++;
+            if (attempts == 1) {
+              throw transientTimeout('/eld/status');
+            }
+            return {'driver': 'Ahmed'};
+          });
         });
-      });
 
-      final result = await client.get<Map<String, dynamic>>('/eld/status');
+        final result = await client.get<Map<String, dynamic>>('/eld/status');
 
-      expect(result.isSuccess, isTrue);
-      expect(attempts, 2);
-      result.tap(onSuccess: (response) {
-        expect(response.data, {'driver': 'Ahmed'});
-      });
-    });
+        expect(result.isSuccess, isTrue);
+        expect(attempts, 2);
+        result.tap(
+          onSuccess: (response) {
+            expect(response.data, {'driver': 'Ahmed'});
+          },
+        );
+      },
+    );
 
     test('GET stops after maxRetries and maps the last error', () async {
       final retryDio = Dio();

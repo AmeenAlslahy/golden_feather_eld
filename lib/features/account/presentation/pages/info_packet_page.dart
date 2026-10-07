@@ -140,7 +140,7 @@ class _PacketBlock extends StatelessWidget {
           const SizedBox(height: AppSpacing.xl),
           AppButton(
             label: buttonLabel,
-            type: EldButtonType.dark,
+            type: EldButtonType.primary,
             onPressed: onPressed,
           ),
         ],

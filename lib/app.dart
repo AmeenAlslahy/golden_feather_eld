@@ -10,6 +10,9 @@ import 'app/services/quick_actions_initializer.dart';
 import 'routes.dart';
 import 'core/widgets/app_feedback.dart';
 import 'features/hos/presentation/providers/hos_provider.dart';
+import 'features/hos/presentation/providers/status_dashboard_providers.dart';
+import 'features/hos/presentation/providers/recap_provider.dart';
+import 'features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'features/hos/domain/engine/hos_rules_engine.dart';
 
@@ -21,6 +24,15 @@ class GoldenFeatherApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Invalidate driver-specific HOS providers whenever user logs in, logs out, or switches account
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (previous?.user?.id != next.user?.id) {
+        ref.invalidate(statusDashboardProvider);
+        ref.invalidate(recapProvider);
+        ref.invalidate(hosStatusProvider);
+      }
+    });
+
     // Global listener for automatic tracking UI side-effects
     ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
       if (next is HosEngineReady) {

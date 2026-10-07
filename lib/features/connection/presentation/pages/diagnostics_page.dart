@@ -5,12 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_feedback.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/hardware_alert.dart';
 import '../../presentation/providers/hardware_alerts_provider.dart';
+import '../widgets/diagnostics/active_malfunction_actions.dart';
+import '../widgets/diagnostics/event_card.dart';
+import '../widgets/diagnostics/stat_row.dart';
 
 /// SRS 7.14 — شاشة التشخيصات والأعطال (مستقلة عن شاشة الاتصال).
 ///
@@ -33,6 +34,7 @@ class DiagnosticsPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            color: AppColors.surface,
             onPressed: () => ref.invalidate(hardwareAlertsProvider),
           ),
         ],
@@ -54,7 +56,7 @@ class DiagnosticsPage extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              _StatRow(alerts: alerts, malfunctions: malfunctions),
+              StatRow(alerts: alerts, malfunctions: malfunctions),
               const SizedBox(height: AppSpacing.lg),
               Text(loc.diagnosticEvents, style: context.styles.sectionTitle),
               const SizedBox(height: AppSpacing.sm),
@@ -62,7 +64,7 @@ class DiagnosticsPage extends ConsumerWidget {
                 Text(loc.dvirListNoRecords, style: context.styles.muted)
               else
                 for (final a in diagnostics)
-                  _EventCard(alert: a, malfunction: false),
+                  EventCard(alert: a, malfunction: false),
               const SizedBox(height: AppSpacing.lg),
               Text(loc.eldMalfunctionTitle,
                   style: context.styles.sectionTitle),
@@ -70,11 +72,11 @@ class DiagnosticsPage extends ConsumerWidget {
               if (malfunctions.isEmpty)
                 Text(loc.dvirListNoRecords, style: context.styles.muted)
               else ...[
-                for (final a in malfunctions) _EventCard(alert: a, malfunction: true),
+                for (final a in malfunctions) EventCard(alert: a, malfunction: true),
                 const SizedBox(height: AppSpacing.md),
                 // SRS 3.7 / 7.14: إجراءات العطل النشط — إخطار الناقل +
                 // التسجيل اليدوي + طلب التمديد. الأزرار إرشادية للسائق.
-                _ActiveMalfunctionActions(),
+                const ActiveMalfunctionActions(),
               ],
               if (kDebugMode) ...[
                 const SizedBox(height: AppSpacing.xl),
@@ -95,143 +97,5 @@ class DiagnosticsPage extends ConsumerWidget {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  final List<HardwareAlert> alerts;
-  final List<HardwareAlert> malfunctions;
 
-  const _StatRow({required this.alerts, required this.malfunctions});
 
-  @override
-  Widget build(BuildContext context) {
-    final diagnostics = alerts.length - malfunctions.length;
-    String two(int v) => v.toString().padLeft(2, '0');
-    return Row(
-      children: [
-        _StatCard(context.loc.active, two(alerts.length)),
-        _StatCard('ACTIVE DIAG', two(diagnostics)),
-        _StatCard('ACTIVE MALF', two(malfunctions.length)),
-        _StatCard('TOTAL DIAG', two(diagnostics)),
-        _StatCard('TOTAL MALF', two(malfunctions.length)),
-      ].map((w) => Expanded(child: w)).toList(),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatCard(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 3),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.sm, horizontal: 4),
-        child: Column(
-          children: [
-            Text(value, style: context.styles.number),
-            const SizedBox(height: 2),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: context.styles.caption.copyWith(fontSize: 9)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EventCard extends StatelessWidget {
-  final HardwareAlert alert;
-  final bool malfunction;
-
-  const _EventCard({required this.alert, required this.malfunction});
-
-  @override
-  Widget build(BuildContext context) {
-    final kind =
-        malfunction ? 'MALFUNCTION' : 'DATA_DIAGNOSTIC';
-    final detectedAt = alert.timestamp;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: malfunction
-            ? AppColors.dangerBg.withValues(alpha: 0.35)
-            : AppColors.warningBg.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppRadius.input),
-        border: Border.all(
-          color: malfunction ? AppColors.dangerRed : AppColors.warningYellow,
-          width: malfunction ? 1.4 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // تمييز بصري صريح: MALFUNCTION ≠ DATA_DIAGNOSTIC
-              Text(kind,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: malfunction
-                        ? AppColors.dangerText
-                        : AppColors.warningText,
-                  )),
-              const Spacer(),
-              Text('DETECTED',
-                  style: context.styles.caption
-                      .copyWith(fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(alert.message, style: context.styles.body),
-          if (detectedAt != null)
-            Text(
-              AppLocalizations.of(context)!.startedOnDate(
-                  '${detectedAt.month}/${detectedAt.day}/${detectedAt.year}'),
-              style: context.styles.caption,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// إجراءات العطل النشط وفق SRS 3.7: تدوين العطل وإخطار الناقل خلال 24 ساعة،
-/// إعادة بناء السجل (24 ساعة + 7 أيام نماذج ورقية)، والاستمرار اليدوي حتى
-/// إصلاح ELD.
-class _ActiveMalfunctionActions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutlinedButton.icon(
-          icon: const Icon(Icons.notifications_active, size: 18),
-          label: Text(context.loc.notifyCarrier),
-          onPressed: () => AppFeedback.info(
-              context, context.loc.eldMalfunctionStep1),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.edit_note, size: 18),
-          label: Text(context.loc.eldMalfunctionManualActive),
-          onPressed: () => AppFeedback.info(
-              context, context.loc.eldMalfunctionStep2),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.schedule, size: 18),
-          label: Text(context.loc.requestExtension),
-          onPressed: () => AppFeedback.info(
-              context, context.loc.eldMalfunctionStep3),
-        ),
-      ],
-    );
-  }
-}

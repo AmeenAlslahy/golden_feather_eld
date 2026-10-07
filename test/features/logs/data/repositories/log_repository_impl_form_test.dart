@@ -12,6 +12,13 @@ import 'package:golden_feather_eld/features/logs/data/datasources/log_local_data
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import '../../../../helpers/fake_time_authority.dart';
+import 'package:golden_feather_eld/core/utils/id_generator.dart';
+
+class FakeIdGenerator implements IdGenerator {
+  @override
+  String v4() => 'test-uuid';
+}
 
 class MockLogLocalDataSource extends Mock implements LogLocalDataSource {}
 class MockDailyLogsBackend extends Mock implements DailyLogsBackend {}
@@ -50,6 +57,8 @@ void main() {
       dutyStatusBackend: mockDutyStatusBackend,
       networkInfo: mockNetworkInfo,
       offlineQueue: mockOfflineQueue,
+      timeAuthority: FakeTimeAuthority(),
+      idGenerator: FakeIdGenerator(),
     );
   });
 
@@ -82,6 +91,40 @@ void main() {
           expect(form.coDriverId, 42);
           expect(form.trailers, const ['T1', 'T2']);
           expect(form.shippingDocuments, const ['D1']);
+        },
+      );
+    });
+
+    test('returns DailyFormData with Swagger 05.3 format (strings and coDriver object)', () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(true);
+      
+      final Map<String, dynamic> responseData = {
+        'uniqueId': '1001',
+        'vehicleName': 'Truck 1001',
+        'coDriver': {
+          'id': 102,
+          'name': 'Ali Ahmed',
+        },
+        'trailers': ['3888', '3889'],
+        'shippingDocuments': ['DOC-001', 'DOC-002'],
+      };
+
+      when(() => mockDailyLogsBackend.getForm(tLogId))
+          .thenAnswer((_) async => Right(responseData));
+
+      final result = await repository.getForm(tLogId);
+
+      expect(result.isRight(), true);
+      result.fold(
+        (l) => fail('Should be right'),
+        (form) {
+          expect(form, isNotNull);
+          expect(form!.vehicleUniqueId, '1001');
+          expect(form.vehicleName, 'Truck 1001');
+          expect(form.coDriverId, 102);
+          expect(form.coDriverName, 'Ali Ahmed');
+          expect(form.trailers, const ['3888', '3889']);
+          expect(form.shippingDocuments, const ['DOC-001', 'DOC-002']);
         },
       );
     });

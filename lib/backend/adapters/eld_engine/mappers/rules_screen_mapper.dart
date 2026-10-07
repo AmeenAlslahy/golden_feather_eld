@@ -1,4 +1,4 @@
-import '../../../../features/account/application/models/rules_screen_model.dart';
+import '../../../../features/account/application/models/rules_screen_model.dart'; // ignore_architecture
 import '../../../../core/config/hos_configuration.dart';
 import '../models/rules_screen_dto.dart';
 

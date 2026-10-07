@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/core/time/time_authority_provider.dart';
 import 'package:golden_feather_eld/core/time/time_authority.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/edit_log_page.dart';
+import 'package:golden_feather_eld/features/logs/presentation/providers/edit_log_form_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
@@ -16,17 +17,37 @@ import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
+import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 
 class MockLogsNotifier extends StateNotifier<LogsState> with Mock implements LogsNotifier {
   MockLogsNotifier(super.state);
 }
 
+class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+  MockAuthNotifier(super.state);
+  
+  @override
+  Future<bool> login({required String username, required String password, String? serverUrl}) async => true;
+  @override
+  void forceLogout() {}
+  @override
+  Future<void> logout() async {}
+  @override
+  Future<void> checkAuthStatus() async {}
+  @override
+  void clearError() {}
+}
+
 class MockTimeAuthority extends Mock implements TimeAuthority {}
+
+class MockLogRepository extends Mock implements LogRepository {}
 
 void main() {
   group('EditLogPage Bug Fixes', () {
     late MockLogsNotifier logsNotifier;
     late MockTimeAuthority mockTimeAuth;
+    late MockLogRepository mockRepo;
 
     final testEvent = LogEvent(
       id: 'e1',
@@ -51,6 +72,8 @@ void main() {
         ),
       ));
       
+      mockRepo = MockLogRepository();
+
       mockTimeAuth = MockTimeAuthority();
       when(() => mockTimeAuth.nowUtc()).thenReturn(DateTime.utc(2026, 1, 1, 10, 0, 0));
 
@@ -80,8 +103,9 @@ void main() {
       return ProviderScope(
         overrides: [
           logsProvider.overrideWith((ref) => logsNotifier),
+          logRepositoryProvider.overrideWithValue(mockRepo),
           timeAuthorityProvider.overrideWithValue(mockTimeAuth),
-          authStateProvider.overrideWith((ref) => StateController(mockAuth) as AuthNotifier),
+          authStateProvider.overrideWith((ref) => MockAuthNotifier(mockAuth)),
           dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
         ],
         child: MaterialApp(
@@ -95,7 +119,7 @@ void main() {
 
     testWidgets('BUG B: invalid time -> mutation is not called -> localized error', (tester) async {
       when(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')))
-          .thenAnswer((_) async => true);
+          .thenAnswer((_) async => const Right(null));
           
       await tester.pumpWidget(createTestApp(
         EditLogPage(event: testEvent, isNewEvent: false),
@@ -106,7 +130,6 @@ void main() {
       final container = ProviderScope.containerOf(context);
       container.read(editLogFormProvider(testEvent).notifier).setStartTime('invalid-time');
 
-      debugDumpApp();
       await tester.ensureVisible(find.byType(AppButton).first);
       await tester.tap(find.byType(AppButton).first);
       await tester.pump(const Duration(milliseconds: 100)); // wait for snackbar animation
@@ -114,12 +137,15 @@ void main() {
       verifyNever(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')));
       // AppFeedback shows an Overlay, not a SnackBar.
       expect(find.byWidgetPredicate((w) => w is Text && (w.data?.toLowerCase().contains('invalid') ?? false)), findsWidgets);
+
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('BUG C: user enters manual location -> saved LogEvent receives exactly that location', (tester) async {
       when(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')))
-          .thenAnswer((_) async => true);
-      when(() => logsNotifier.saveAuditEntry(any()))
+          .thenAnswer((_) async => const Right(null));
+      when(() => mockRepo.logAudit(any()))
           .thenAnswer((_) async => const Right(true));
 
       await tester.pumpWidget(createTestApp(
@@ -156,6 +182,8 @@ void main() {
         any(that: predicate<LogEvent>((e) => e.location == 'New Manual Location')),
         reason: any(named: 'reason'),
       )).called(1);
+
+      await tester.pump(const Duration(seconds: 4));
     });
   });
 }

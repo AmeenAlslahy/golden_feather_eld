@@ -161,6 +161,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   value: currentValue,
+                  dropdownColor: Theme.of(context).colorScheme.surface,
                   icon: Icon(
                     Icons.keyboard_arrow_down,
                     color: context.textPrimary,
@@ -424,7 +425,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     ),
                     child: AppButton(
                       label: loc.saveButton,
-                      type: EldButtonType.send,
+                      type: EldButtonType.primary,
                       isLoading: _isSaving,
                       onPressed: _isSaving ? null : () => _saveRules(model),
                     ),

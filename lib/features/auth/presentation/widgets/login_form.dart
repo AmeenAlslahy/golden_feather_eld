@@ -123,7 +123,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           // زر تسجيل الدخول
           AppButton(
             label: context.loc.login,
-            type: EldButtonType.connect,
+            type: EldButtonType.primary,
             isLoading: isLoading,
             onPressed: isLoading ? null : _handleLogin,
           ),

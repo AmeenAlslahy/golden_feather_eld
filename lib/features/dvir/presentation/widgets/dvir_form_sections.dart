@@ -369,7 +369,7 @@ class DvirSubmitButtonSection extends StatelessWidget {
       ),
       child: AppButton(
         label: isSigned ? loc.dvirSigned : loc.dvirSign,
-        type: EldButtonType.agree,
+        type: EldButtonType.primary,
         isLoading: isSubmitting,
         // زر الإرسال نفسه؛ التوقيع يُفرَض عبر validator نموذج التوقيع.
         onPressed: isSubmitting || !timeAvailable ? null : onSubmit,

@@ -12,4 +12,10 @@ abstract final class DurationFormat {
     return '$sign${hours.toString().padLeft(2, '0')}:'
         '${minutes.toString().padLeft(2, '0')}';
   }
+
+  /// تنسيق الساعات العشرية (مثل 08.50) لجدول الملخص الأسبوعي
+  static String decimalHours(Duration d) {
+    final hours = d.inMinutes / 60.0;
+    return hours.abs().toStringAsFixed(2).padLeft(5, '0');
+  }
 }

@@ -2,96 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
-import '../../domain/entities/audit_entry.dart';
-import '../../domain/entities/daily_log.dart';
-import 'package:uuid/uuid.dart';
-import '../../domain/log_edit.dart';
 import '../../../../core/time/time_authority_provider.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../domain/entities/daily_log.dart';
+import '../../domain/log_edit.dart';
+import '../controllers/edit_log_controller.dart';
 
-@visibleForTesting
-String? resolveDriverIdForAudit(WidgetRef ref) {
-  return ref.read(authStateProvider).user?.id;
-}
-
-class EditLogFormState {
-  final String selectedStatus;
-  final String startTime;
-  final String duration;
-  final String location;
-  final String reason;
-
-  EditLogFormState({
-    required this.selectedStatus,
-    required this.startTime,
-    required this.duration,
-    required this.location,
-    this.reason = '',
-  });
-
-  EditLogFormState copyWith({
-    String? selectedStatus,
-    String? startTime,
-    String? duration,
-    String? location,
-    String? reason,
-  }) {
-    return EditLogFormState(
-      selectedStatus: selectedStatus ?? this.selectedStatus,
-      startTime: startTime ?? this.startTime,
-      duration: duration ?? this.duration,
-      location: location ?? this.location,
-      reason: reason ?? this.reason,
-    );
-  }
-}
-
-class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
-  EditLogFormNotifier(super.state);
-
-  void setStatus(String status) =>
-      state = state.copyWith(selectedStatus: status);
-  void setStartTime(String time) => state = state.copyWith(startTime: time);
-  void setLocation(String location) => state = state.copyWith(location: location);
-  void setReason(String reason) => state = state.copyWith(reason: reason);
-}
-
-// دالة مساعدة لتنسيق الوقت الحالي
-String _formatCurrentTime() {
-  final now = DateTime.now();
-  final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
-  final hourStr = hour.toString().padLeft(2, '0');
-  final minute = now.minute.toString().padLeft(2, '0');
-  final second = now.second.toString().padLeft(2, '0');
-  final period = now.hour < 12 ? 'AM' : 'PM';
-  return '$hourStr:$minute:$second $period';
-}
-
-final editLogFormProvider = StateNotifierProvider.autoDispose
-    .family<EditLogFormNotifier, EditLogFormState, dynamic>((ref, event) {
-      return EditLogFormNotifier(
-        EditLogFormState(
-          // الرمز المخزن (D/ON/...) يُعاد إلى قيمة القائمة (Driving/On Duty/...)
-          // حتى تُحدد الحالة الحالية في الواجهة.
-          selectedStatus: editValueForStatus(event.status),
-          startTime: event.formattedStartTime ?? _formatCurrentTime(),
-          duration: event.formattedDuration ?? '00:00',
-          location: event.location ?? '',
-        ),
-      );
-    });
+import '../providers/edit_log_form_provider.dart';
+import '../../../../core/widgets/dashed_line_painter.dart';
+import '../widgets/time_picker_sheet.dart';
+import '../widgets/status_radio_group.dart';
+import '../widgets/time_field_widget.dart';
 
 /// شاشة تعديل الحدث
 class EditLogPage extends ConsumerStatefulWidget {
-  final dynamic event;
+  final LogEvent? event;
   final bool isNewEvent;
 
   const EditLogPage({super.key, required this.event, this.isNewEvent = false});
@@ -104,13 +34,19 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
   final _formKey = GlobalKey<FormState>();
 
   void _showTimePicker(BuildContext context, WidgetRef ref) {
+    final formState = ref.read(editLogFormProvider(widget.event));
+    final logDate = ref.read(logsProvider).selectedLog?.date;
+    final initial = parseEditFormTime(formState.startTime, logDate) ??
+        ref.read(timeAuthorityProvider).nowUtc().toLocal();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => _TimePickerSheet(
+      builder: (context) => TimePickerSheet(
+        initialTime: initial,
         onDone: (time) {
           ref.read(editLogFormProvider(widget.event).notifier).setStartTime(time);
           Navigator.pop(context);
@@ -121,21 +57,46 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<void>>(
+      editLogControllerProvider,
+      (_, state) {
+        if (state.isLoading) return;
+        
+        if (state.hasError) {
+          final err = state.error;
+          if (err is EditLogError) {
+            switch (err.code) {
+              case EditLogErrorCode.invalidTime:
+                AppFeedback.error(context, context.loc.invalidValue);
+                break;
+              case EditLogErrorCode.autoDrivingRefused:
+                AppFeedback.error(context, context.loc.automaticDrivingTimeCannotBeShortened);
+                break;
+              case EditLogErrorCode.saveFailed:
+                AppFeedback.error(context, context.loc.theEventCouldNotBeSaved);
+                break;
+              case EditLogErrorCode.auditFailed:
+                AppFeedback.error(context, context.loc.theEventWasSavedButThe);
+                break;
+              case EditLogErrorCode.authMissing:
+                AppFeedback.error(context, context.loc.sessionMissing);
+                break;
+            }
+          } else {
+            AppFeedback.error(context, context.loc.theEventCouldNotBeSaved);
+          }
+        } else if (state.hasValue) {
+          AppFeedback.success(context, context.loc.eventSavedSuccessfully);
+          Navigator.pop(context, true);
+        }
+      },
+    );
+
     final dashboard = ref.watch(dashboardDataProvider);
     final formState = ref.watch(editLogFormProvider(widget.event));
     final selectedLog = ref
         .watch(logsProvider)
         .selectedLog; // جلب اليوم المختار
-
-
-    final List<Map<String, String>> statuses = [
-      {'value': 'Off Duty', 'label': context.loc.offDuty},
-      {'value': 'Sleeper', 'label': context.loc.sleeperBerth},
-      {'value': 'Driving', 'label': context.loc.drivingStatus},
-      {'value': 'On Duty', 'label': context.loc.onDuty},
-      {'value': 'Personal Use', 'label': context.loc.personalUse},
-      {'value': 'Yard Moves', 'label': context.loc.yardMoves},
-    ];
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -170,19 +131,17 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             Row(
               children: [
                 Expanded(
-                  child: _buildTimeField(
-                    context,
-                    context.loc.startTime,
-                    formState.startTime,
-                    () => _showTimePicker(context, ref),
+                  child: TimeFieldWidget(
+                    label: context.loc.startTime,
+                    value: formState.startTime,
+                    onTap: () => _showTimePicker(context, ref),
                   ),
                 ),
                 Expanded(
-                  child: _buildTimeField(
-                    context,
-                    context.loc.duration,
-                    formState.duration,
-                    () {},
+                  child: TimeFieldWidget(
+                    label: context.loc.duration,
+                    value: formState.duration,
+                    onTap: () {},
                   ),
                 ),
               ],
@@ -199,43 +158,11 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             const SizedBox(height: AppSpacing.lg),
 
             // 3. قائمة الحالات
-            RadioGroup<String>(
+            StatusRadioGroup(
               groupValue: formState.selectedStatus,
               onChanged: (value) {
-                if (value == null) return;
                 ref.read(editLogFormProvider(widget.event).notifier).setStatus(value);
               },
-              child: Column(
-                children: statuses.map((status) {
-                  final isSelected =
-                      formState.selectedStatus == status['value'];
-                  return Column(
-                    children: [
-                      RadioListTile<String>(
-                        title: Text(
-                          status['label']!,
-                          style: context.styles.body.copyWith(
-                            fontWeight: isSelected
-                                ? AppTypography.semiBold
-                                : AppTypography.regular,
-                            color: isSelected ? context.styles.gold.color : null,
-                          ),
-                        ),
-                        value: status['value']!,
-                        activeColor: AppColors.primaryGold,
-                        controlAffinity: ListTileControlAffinity.trailing,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      Divider(
-                        color: Theme.of(
-                          context,
-                        ).dividerColor.withValues(alpha: 0.5),
-                        height: 1,
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -326,115 +253,22 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                   ? context.loc.addButton
                   : context.loc.saveButton,
               type: EldButtonType.agree,
-              onPressed: () async {
+              isLoading: ref.watch(editLogControllerProvider).isLoading,
+              onPressed: () {
                 if (!_formKey.currentState!.validate()) {
                   return;
                 }
-                // حفظ التعديلات وسجل التدقيق
-                final notifier = ref.read(logsProvider.notifier);
+                final formState = ref.read(editLogFormProvider(widget.event));
+                final controller = ref.read(editLogControllerProvider.notifier);
 
-                final driverId = resolveDriverIdForAudit(ref);
-
-                if (driverId == null || driverId.isEmpty) {
-                  if (context.mounted) {
-                    AppFeedback.error(
-                      context,
-                      context.loc.cannotSaveDriverSessionNotFound,
-                    );
-                  }
-                  return;
-                }
-
-                // بناء الحدث كما عدّله المستخدم (القيمة الحالية للنموذج)
-                final selectedLog = ref.read(logsProvider).selectedLog;
-                final status = statusFromEditValue(formState.selectedStatus);
-                final existing = widget.event is LogEvent ? widget.event : null;
-                final parsedTime = parseEditFormTime(formState.startTime, selectedLog?.date);
-                if (parsedTime == null) {
-                  if (context.mounted) {
-                    AppFeedback.error(context, context.loc.invalidValue);
-                  }
-                  return;
-                }
-                final newStart = parsedTime;
-                if (existing != null) {
-                  final refusal = refuseAutomaticDrivingEdit(
-                    original: existing,
-                    newStatusCode: status,
-                    newStart: newStart,
-                  );
-                  if (refusal != null) {
-                    if (context.mounted) {
-                      AppFeedback.error(
-                        context,
-                        context.loc.automaticDrivingTimeCannotBeShortened,
-                      );
-                    }
-                    return;
-                  }
-                }
-
-                final updatedEvent =
-                    existing?.copyWith(status: status, startTime: newStart, location: formState.location) ??
-                    LogEvent(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      status: status,
-                      startTime: newStart,
-                      duration: Duration.zero,
-                      location: formState.location,
-                    );
-
-                // حفظ الحدث أولاً؛ الفشل يبقى المستخدم على الشاشة.
-                final saved = widget.isNewEvent
-                    ? await notifier.addEvent(
-                        updatedEvent,
-                        reason: formState.reason,
-                      )
-                    : await notifier.updateEvent(
-                        updatedEvent,
-                        reason: formState.reason,
-                      );
-                if (!saved) {
-                  if (context.mounted) {
-                    AppFeedback.error(
-                      context,
-                      context.loc.theEventCouldNotBeSaved,
-                    );
-                  }
-                  return;
-                }
-
-                final timeAuthority = ref.read(timeAuthorityProvider);
-
-                final entry = AuditEntry(
-                  id: const Uuid().v4(),
-                  timestamp: timeAuthority.nowUtc(),
-                  driverId: driverId,
-                  oldStatus: widget.isNewEvent ? null : (existing?.status),
-                  newStatus: status,
+                controller.saveEvent(
+                  isNewEvent: widget.isNewEvent,
+                  existing: widget.event,
+                  selectedStatus: formState.selectedStatus,
+                  startTimeStr: formState.startTime,
+                  location: formState.location,
                   reason: formState.reason,
                 );
-
-                final auditSaved = (await notifier.saveAuditEntry(
-                  entry,
-                )).fold((_) => false, (ok) => ok);
-                if (!auditSaved) {
-                  if (context.mounted) {
-                    AppFeedback.error(
-                      context,
-                      context.loc.theEventWasSavedButThe,
-                    );
-                  }
-                  return;
-                }
-
-                if (context.mounted) {
-                  AppFeedback.success(
-                    context,
-                    context.loc.eventSavedSuccessfully,
-                  );
-                  Navigator.pop(context, true);
-                }
               },
             ),
             const SizedBox(height: AppSpacing.md),
@@ -444,238 +278,4 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       ),
     );
   }
-
-  Widget _buildTimeField(
-    BuildContext context,
-    String label,
-    String value,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.sm,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: context.styles.sectionTitle.copyWith(
-                fontSize: AppTypography.subtitleSize,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(value, style: context.styles.body),
-                Icon(
-                  Icons.access_time,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// منتقي الوقت (Picker Wheel)
-class _TimePickerSheet extends StatefulWidget {
-  final Function(String) onDone;
-
-  const _TimePickerSheet({required this.onDone});
-
-  @override
-  State<_TimePickerSheet> createState() => _TimePickerSheetState();
-}
-
-class _TimePickerSheetState extends State<_TimePickerSheet> {
-  int _selectedHour = 12;
-  int _selectedMinute = 0;
-  int _selectedSecond = 0;
-  String _selectedPeriod = 'AM';
-
-  // تُنشأ مرة واحدة مع الـ State وتُدمَّر معه — كانت سابقاً تُنشأ داخل
-  // كل build (تسريب متحكمات جديد مع كل setState) وبلا أي dispose.
-  late final FixedExtentScrollController _hourWheel;
-  late final FixedExtentScrollController _minuteWheel;
-  late final FixedExtentScrollController _secondWheel;
-
-  @override
-  void initState() {
-    super.initState();
-    final now = DateTime.now();
-    _selectedHour = now.hour > 12
-        ? now.hour - 12
-        : (now.hour == 0 ? 12 : now.hour);
-    _selectedMinute = now.minute;
-    _selectedSecond = now.second;
-    _selectedPeriod = now.hour < 12 ? 'AM' : 'PM';
-    _hourWheel = FixedExtentScrollController(initialItem: _selectedHour - 1);
-    _minuteWheel = FixedExtentScrollController(initialItem: _selectedMinute);
-    _secondWheel = FixedExtentScrollController(initialItem: _selectedSecond);
-  }
-
-  @override
-  void dispose() {
-    _hourWheel.dispose();
-    _minuteWheel.dispose();
-    _secondWheel.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      height: 300,
-      child: Column(
-        children: [
-          // أزرار CANCEL / DONE
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  context.loc.cancelButton,
-                  style: context.styles.error,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  final time =
-                      '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} ${_selectedPeriod == 'AM' ? context.loc.am : context.loc.pm}';
-                  widget.onDone(time);
-                },
-                child: Text(context.loc.saveButton, style: context.styles.gold),
-              ),
-            ],
-          ),
-          const Divider(),
-          // العجلات
-          Expanded(
-            child: Row(
-              children: [
-                _buildWheel(
-                  12,
-                  _hourWheel,
-                  _selectedHour,
-                  (v) => setState(() => _selectedHour = v),
-                  offset: 1,
-                ),
-                _buildWheel(
-                  60,
-                  _minuteWheel,
-                  _selectedMinute,
-                  (v) => setState(() => _selectedMinute = v),
-                ),
-                _buildWheel(
-                  60,
-                  _secondWheel,
-                  _selectedSecond,
-                  (v) => setState(() => _selectedSecond = v),
-                ),
-                _buildPeriodWheel(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWheel(
-    int max,
-    FixedExtentScrollController controller,
-    int selected,
-    Function(int) onChanged, {
-    int offset = 0,
-  }) {
-    return Expanded(
-      child: ListWheelScrollView.useDelegate(
-        itemExtent: 40,
-        diameterRatio: 1.5,
-        onSelectedItemChanged: (index) => onChanged(index + offset),
-        controller: controller,
-        childDelegate: ListWheelChildBuilderDelegate(
-          builder: (context, index) {
-            final val = index + offset;
-            return Center(
-              child: Text(
-                val.toString().padLeft(2, '0'),
-                style: context.styles.body.copyWith(
-                  fontSize: AppTypography.headerSize,
-                  fontWeight: val == selected
-                      ? AppTypography.bold
-                      : AppTypography.regular,
-                  color: val == selected
-                      ? context.styles.gold.color
-                      : context.styles.subtitle.color,
-                ),
-              ),
-            );
-          },
-          childCount: max,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPeriodWheel() {
-    return Expanded(
-      child: ListWheelScrollView.useDelegate(
-        itemExtent: 40,
-        diameterRatio: 1.5,
-        onSelectedItemChanged: (index) {
-          setState(() => _selectedPeriod = index == 0 ? 'AM' : 'PM');
-        },
-        childDelegate: ListWheelChildBuilderDelegate(
-          builder: (context, index) => Center(
-            child: Text(
-              index == 0 ? context.loc.am : context.loc.pm,
-              style: context.styles.body.copyWith(
-                fontWeight: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
-                    ? AppTypography.bold
-                    : AppTypography.regular,
-                color: _selectedPeriod == (index == 0 ? 'AM' : 'PM')
-                    ? context.styles.gold.color
-                    : context.styles.subtitle.color,
-              ),
-            ),
-          ),
-          childCount: 2,
-        ),
-      ),
-    );
-  }
-}
-
-class DashedLinePainter extends CustomPainter {
-  final Color color;
-  DashedLinePainter({required this.color});
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    var max = size.width;
-    var dashWidth = 5;
-    var dashSpace = 3;
-    double startX = 0;
-    while (startX < max) {
-      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

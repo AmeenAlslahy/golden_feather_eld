@@ -6,7 +6,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/unidentified_events_backend.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// Driver claim/reject of unidentified driving (SRS §7.13, §8.8, §11).

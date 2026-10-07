@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
+import 'package:golden_feather_eld/core/widgets/eld_date_paginator.dart';
 import 'package:golden_feather_eld/domain/inspection/dot_inspection.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
@@ -498,7 +499,9 @@ void main() {
       await tester.pumpAndSettle();
 
       String dayLabel() => tester
-          .widget<Text>(find.byKey(const Key('inspection-day-label')))
+          .widget<Text>(find.descendant(
+              of: find.byType(EldDatePaginator),
+              matching: find.byType(Text)).first)
           .data!;
 
       expect(dayLabel(), '2026-01-13');

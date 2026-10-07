@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'traccar_websocket_client.dart';
+import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
 
 /// تنفيذ عميل WebSocket الخاص بـ Traccar عبر /api/socket.
 /// يدعم إعادة الاتصال التلقائي مع تراجع أسي وبث حالة الاتصال.
@@ -50,7 +51,7 @@ class TraccarWebSocketClientImpl implements TraccarWebSocketClient {
       // استخدام Uri لاستبدال scheme بشكل آمن
       final uri = Uri.parse(_serverUrl!);
       final wsScheme = uri.scheme == 'https' ? 'wss' : 'ws';
-      final wsUri = uri.replace(scheme: wsScheme, path: '/api/socket');
+      final wsUri = uri.replace(scheme: wsScheme, path: '/api${EldEndpoints.socket}');
       final wsUrl = wsUri.toString();
 
       _webSocket = await WebSocket.connect(

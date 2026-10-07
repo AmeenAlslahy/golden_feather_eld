@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/audit_trail_page.dart';
+import 'package:golden_feather_eld/features/logs/presentation/providers/audit_trail_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 void main() {

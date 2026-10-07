@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../backend/providers/backend_providers.dart';
+import 'package:golden_feather_eld/backend/providers/backend_providers.dart'; // ignore_architecture
 import '../../core/network/core_providers.dart';
 import '../../core/services/local_storage_service.dart';
 
-import '../../features/auth/domain/repositories/auth_repository.dart';
+import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart'; // ignore_architecture
 
 // Import data implementations (ONLY ALLOWED IN THIS FILE)
-import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:golden_feather_eld/features/auth/data/repositories/auth_repository_impl.dart'; // ignore_architecture
 import 'auth_local_data_source_provider.dart';
 
 export 'auth_local_data_source_provider.dart';

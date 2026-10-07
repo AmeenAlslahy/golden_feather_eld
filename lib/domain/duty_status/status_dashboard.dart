@@ -156,6 +156,20 @@ abstract class RegulatoryConstraints with _$RegulatoryConstraints {
   }) = _RegulatoryConstraints;
 }
 
+extension RegulatoryConstraintsX on RegulatoryConstraints {
+  /// يبحث عن الساعات الرقمية لقيد معين (مثل driving أو shift) في قائمة القيود التنظيمية
+  String? limitHoursFor(List<String> keys) {
+    for (final limit in limits) {
+      final lower = limit.toLowerCase();
+      if (keys.any(lower.contains)) {
+        final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(limit);
+        if (match != null) return match.group(1);
+      }
+    }
+    return null;
+  }
+}
+
 /// Cycle rule sets supported by the backend.
 enum CycleRule {
   usa70_8('USA 70/8', 70, 8),

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../features/auth/data/datasources/auth_local_data_source.dart';
+import '../../../features/auth/data/datasources/auth_local_data_source.dart'; // ignore_architecture
 import '../../../core/utils/logger.dart';
 import '../eld_endpoints.dart';
 

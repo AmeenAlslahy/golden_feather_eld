@@ -61,7 +61,7 @@ void main() {
       (tester) async {
     final repo = _Repo();
     when(() => repo.getReadiness(any())).thenAnswer((_) async =>
-        const Left(ServerFailure(message: 'An unexpected error occurred')));
+        const Left(ServerFailure(message: 'Exception: An unexpected error occurred')));
 
     await pump(tester, repo, 'ar');
 

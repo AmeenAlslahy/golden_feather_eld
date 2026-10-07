@@ -27,15 +27,17 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
           (error) => Left(ServerFailure(message: error.code)),
           (rawDrivers) {
             final drivers = rawDrivers
-            .map((json) => CoDriver(
-                  id: json['id']?.toString() ?? '',
-                  name: json['name'] ?? 'Unknown',
-                  licenseNumber: json['attributes']?['licenseNumber'],
-                ))
-            .toList();
+                .map(
+                  (json) => CoDriver(
+                    id: json['id']?.toString() ?? '',
+                    name: json['name'] ?? 'Unknown',
+                    licenseNumber: json['attributes']?['licenseNumber'],
+                  ),
+                )
+                .toList();
 
             return Right(drivers);
-          }
+          },
         );
       } catch (e) {
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
@@ -69,49 +71,32 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> switchPrimary({required int coDriverId}) async {
+  Future<Either<Failure, bool>> switchPrimary({
+    required int coDriverId,
+    String? reason,
+  }) async {
     return guardedNetwork(networkInfo, () async {
       if (coDriverId <= 0) {
         return const Left(
-            ServerFailure(message: 'Select a co-driver before switching.'));
+          ServerFailure(message: 'Select a co-driver before switching.'),
+        );
       }
-      final result = await driverSessionBackend.switchPrimaryDriver(
-        action: DutyStatusAction.switchPrimary,
+      // Attempt 1: legacy-switch without reason (OAS: legacy-switch only accepts coDriverId)
+      final legacyResult = await driverSessionBackend.switchPrimaryDriver(
+        action: DutyStatusAction.legacySwitch,
         coDriverId: DriverId(coDriverId),
       );
-      return result.fold(
-        (error) => Left(ServerFailure(message: error.code)),
-        (_) => const Right(true),
-      );
-    });
-  }
-
-  @override
-  Future<Either<Failure, bool>> updateSessionCoDriver({
-    required bool remove,
-    int? coDriverId,
-    String? uniqueId,
-  }) async {
-    return guardedNetwork(networkInfo, () async {
-      final action = remove ? CoDriverAction.remove : CoDriverAction.link;
-      if (!remove) {
-        final id = uniqueId?.trim() ?? '';
-        if (id.isEmpty || id == 'unknown' || id == 'No Vehicle') {
-          return const Left(ServerFailure(message: 'vehicle_identifier_missing'));
-        }
-        if (coDriverId == null || coDriverId <= 0) {
-          return const Left(
-            ServerFailure(message: 'Select a co-driver before linking.'),
-          );
-        }
+      if (legacyResult.isRight()) {
+        return const Right(true);
       }
-      final trimmed = uniqueId?.trim();
-      final result = await driverSessionBackend.manageCoDriver(
-        action: action,
-        coDriverId: coDriverId == null ? null : DriverId(coDriverId),
-        uniqueId: trimmed == null || trimmed.isEmpty ? null : trimmed,
+
+      // Attempt 2: switch-primary with reason (FMCSA role switch requiring reason)
+      final primaryResult = await driverSessionBackend.switchPrimaryDriver(
+        action: DutyStatusAction.switchPrimary,
+        coDriverId: DriverId(coDriverId),
+        reason: reason ?? 'تبادل القيادة أثناء الاستراحة',
       );
-      return result.fold(
+      return primaryResult.fold(
         (error) => Left(ServerFailure(message: error.code)),
         (_) => const Right(true),
       );

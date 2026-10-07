@@ -43,4 +43,28 @@ class RulesScreenModel {
     required this.notice,
     required this.limits,
   });
+
+  /// الخادم قد يرسل مفاتيح نصية (personalConveyance: "Allowed")
+  /// أو الصيغة المنطقية (*Enabled: true) — هذا الفاحص الموحد يقبل الصيغتين.
+  bool get isPersonalConveyanceAllowed => _isSettingAllowed(const [
+        'personalConveyance',
+        'personalConveyanceEnabled',
+      ]);
+
+  bool get isYardMoveAllowed => _isSettingAllowed(const [
+        'yardMoves',
+        'yardMoveEnabled',
+      ]);
+
+  bool _isSettingAllowed(List<String> keys) {
+    for (final key in keys) {
+      final v = fixedSettings[key];
+      if (v == null) continue;
+      if (v is bool) return v;
+      final t = v.toString().trim().toLowerCase();
+      if (t == 'allowed' || t == 'true') return true;
+      if (t == 'forbidden' || t == 'false' || t.isNotEmpty) return false;
+    }
+    return false;
+  }
 }

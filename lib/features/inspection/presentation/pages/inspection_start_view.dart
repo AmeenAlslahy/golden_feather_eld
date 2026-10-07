@@ -173,7 +173,7 @@ class InspectionActionSection extends StatelessWidget {
           const SizedBox(height: 16),
           AppButton(
             label: data.buttonLabel,
-            type: EldButtonType.dark,
+            type: EldButtonType.primary,
             onPressed: data.enabled ? data.onPressed : null,
           ),
           if (!data.enabled && data.disabledMessage != null) ...[

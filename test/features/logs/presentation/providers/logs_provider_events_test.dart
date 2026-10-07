@@ -62,7 +62,11 @@ void main() {
       logRepositoryProvider.overrideWithValue(repo),
       currentDriverIdProvider.overrideWithValue(106),
     ]);
-    addTearDown(container.dispose);
+    final sub = container.listen(logsProvider, (_, __) {});
+    addTearDown(() {
+      sub.close();
+      container.dispose();
+    });
   });
 
   test('selectLog fetches events for that log id and fills selectedLog',
@@ -128,7 +132,7 @@ void main() {
         reason: 'Wrong status selected');
     await Future<void>.delayed(Duration.zero);
 
-    expect(ok, isTrue);
+    expect(ok.isRight(), isTrue);
     verify(() =>
             repo.updateEvent(any(), reason: 'Wrong status selected'))
         .called(1);

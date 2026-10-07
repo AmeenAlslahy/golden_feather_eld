@@ -86,8 +86,8 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
         final selected = _serverSelected(vehicles);
         state = state.copyWith(
           vehicles: vehicles,
-          selectedVehicle: selected,
-          clearSelected: selected == null,
+          selectedVehicle: selected ?? (vehicles.isEmpty ? state.selectedVehicle : null),
+          clearSelected: selected == null && vehicles.isNotEmpty,
           isLoading: false,
           isInitialized: true,
           error: null,

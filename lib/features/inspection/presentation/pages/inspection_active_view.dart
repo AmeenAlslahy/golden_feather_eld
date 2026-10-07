@@ -9,9 +9,9 @@ import '../../../account/presentation/providers/account_provider.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
 import '../providers/inspection_provider.dart';
 import '../widgets/inspection_duty_graph.dart';
-import '../widgets/inspection_events_table.dart';
 import '../widgets/inspection_log_header_table.dart';
-
+import '../../../../core/widgets/eld_date_paginator.dart';
+import '../../../../core/widgets/eld_events_table.dart';
 /// عرض التفتيش النشط (مقفل بـ PIN).
 ///
 /// الـ ref يُقرأ في قمة الـ build فقط؛ كل ما تحته ودجات عميقة تستقبل
@@ -48,9 +48,12 @@ class InspectionActiveView extends ConsumerWidget {
     return Column(
       children: [
         if (state.bannerError != null) _Banner(text: state.bannerError!),
-        _DaySelector(
+        EldDatePaginator(
           dateLabel: _dayLabel(state),
-          isDayLoading: state.isDayLoading,
+          isLoading: state.isDayLoading,
+          backgroundColor: AppColors.primaryGold.withValues(alpha: 0.05),
+          textColor: context.styles.bodyBold.color,
+          iconColor: context.theme.iconTheme.color ?? context.styles.body.color,
           // ترتيب cycle: index 0 = الأحدث. الأيسر = يوم أقدم (index+1)
           // والأيمن = يوم أحدث (index-1) — فهارس مطلقة لا دلتا نسبية.
           canGoOlder: state.selectedDayIndex < state.cycle.length - 1,
@@ -88,7 +91,17 @@ class InspectionActiveView extends ConsumerWidget {
                       const Divider(height: 1),
                       InspectionDutyGraph(events: log.events),
                       const Divider(height: 1),
-                      InspectionEventsTable(events: log.events),
+                      EldEventsTable(
+                        rows: log.events.map((e) => EldTableRow(
+                          time: e.timeEt,
+                          status: e.eventCode,
+                          location: e.location,
+                          odom: e.odometer.toStringAsFixed(0),
+                          eng: e.engineHours.toStringAsFixed(1),
+                          src: e.origin,
+                          statusColor: null,
+                        )).toList(),
+                      ),
                       const SizedBox(height: AppSpacing.lg),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -130,81 +143,3 @@ class _Banner extends StatelessWidget {
   }
 }
 
-/// شريط التنقل بين الأيام — عميل أعمى: يستقبل التسمية وحالتي الحدود
-/// وcallback بحيث يستقبل فهرساً مطلقاً محسوباً في الأب (لا دلتا نسبية)
-///؛ تعطيل الأسهم أثناء التحميل قرار الحالة لا قراره.
-class _DaySelector extends StatelessWidget {
-  const _DaySelector({
-    required this.dateLabel,
-    required this.isDayLoading,
-    required this.canGoOlder,
-    required this.canGoNewer,
-    required this.onSelectOlder,
-    required this.onSelectNewer,
-  });
-
-  final String dateLabel;
-  final bool isDayLoading;
-  final bool canGoOlder;
-  final bool canGoNewer;
-  final VoidCallback onSelectOlder;
-  final VoidCallback onSelectNewer;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.primaryGold.withValues(alpha: 0.05),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _Arrow(
-            icon: Icons.chevron_left,
-            enabled: !isDayLoading && canGoOlder,
-            onPressed: onSelectOlder,
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                dateLabel,
-                key: const Key('inspection-day-label'),
-                style: context.styles.bodyBold,
-              ),
-              if (isDayLoading) ...[
-                const SizedBox(width: AppSpacing.sm),
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ],
-            ],
-          ),
-          _Arrow(
-            icon: Icons.chevron_right,
-            enabled: !isDayLoading && canGoNewer,
-            onPressed: onSelectNewer,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Arrow extends StatelessWidget {
-  const _Arrow({
-    required this.icon,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(icon: Icon(icon), onPressed: enabled ? onPressed : null);
-  }
-}

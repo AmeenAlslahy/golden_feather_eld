@@ -13,6 +13,18 @@ class EldEndpoints {
   // ==========================================================================
   /// جلسة
   static const String session = '/session';
+  /// طلب إعادة تعيين كلمة المرور
+  static const String password = '/password';
+  /// قائمة الأجهزة
+  static const String devices = '/devices';
+  /// المواقع وبيانات التتبع
+  static const String positions = '/positions';
+  /// أحداث الأجهزة والنظام
+  static const String events = '/events';
+  /// قائمة السائقين
+  static const String drivers = '/drivers';
+  /// اتصال مقبس الويب المباشر
+  static const String socket = '/socket';
   // ==========================================================================
   // ELD Module APIs (as per openapi.yaml)
   // ==========================================================================

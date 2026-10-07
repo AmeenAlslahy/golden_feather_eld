@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/result/result.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../contracts/auth_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
-import '../../../http/error_mapper.dart';
+import '../../../../core/network/error_mapper.dart';
 import '../../../http/eld_endpoints.dart';
 
 class EldAuthBackend implements AuthBackend {
@@ -171,7 +171,7 @@ class EldAuthBackend implements AuthBackend {
           ? serverUrl.substring(0, serverUrl.length - 1)
           : serverUrl;
       final response = await _apiClient.dio.post(
-        '$baseUrl/api/password',
+        '$baseUrl/api${EldEndpoints.password}',
         data: {'email': email},
         options: Options(
           contentType: 'application/x-www-form-urlencoded',

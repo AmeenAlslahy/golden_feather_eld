@@ -4,6 +4,7 @@ import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
@@ -457,6 +458,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           IconButton(
             key: const Key('dvir_form_refresh'),
             icon: const Icon(Icons.refresh),
+            color: AppColors.surface,
             onPressed: () {
               ref.invalidate(dvirCatalogProvider);
               ref.read(dvirProvider.notifier).refresh();

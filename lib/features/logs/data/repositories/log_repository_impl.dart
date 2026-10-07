@@ -1,12 +1,14 @@
 import 'dart:async';
-import 'package:uuid/uuid.dart';
+import '../../../../core/utils/id_generator.dart';
 import '../../../../features/sync/domain/entities/pending_event.dart';
 import '../../../../features/sync/domain/repositories/offline_queue.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/error/exception.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/time/time_authority.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/network/network_info.dart';
+
 import '../../../../backend/contracts/daily_logs_backend.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
@@ -36,7 +38,8 @@ class LogRepositoryImpl implements LogRepository {
   final DutyStatusBackend _dutyStatusBackend;
   final NetworkInfo _networkInfo;
   final OfflineQueue _offlineQueue;
-  final Uuid _uuid;
+  final TimeAuthority _timeAuthority;
+  final IdGenerator _idGenerator;
 
   LogRepositoryImpl({
     required LogLocalDataSource localDataSource,
@@ -44,12 +47,15 @@ class LogRepositoryImpl implements LogRepository {
     required DutyStatusBackend dutyStatusBackend,
     required NetworkInfo networkInfo,
     required OfflineQueue offlineQueue,
+    required TimeAuthority timeAuthority,
+    required IdGenerator idGenerator,
   }) : _localDataSource = localDataSource,
        _dailyLogsBackend = dailyLogsBackend,
        _dutyStatusBackend = dutyStatusBackend,
        _networkInfo = networkInfo,
        _offlineQueue = offlineQueue,
-       _uuid = const Uuid();
+       _timeAuthority = timeAuthority,
+       _idGenerator = idGenerator;
 
   @override
   Future<Either<Failure, List<DailyLog>>> getDailyLogs({
@@ -128,7 +134,7 @@ class LogRepositoryImpl implements LogRepository {
       // الخادم هو مصدر الحقيقة؛ المحلي احتياطي عند غياب الرد فقط.
       if (remoteJson != null) {
         _cacheQuietly(_localDataSource.cacheLogEvents(logId, remoteJson));
-        return Right(remoteJson.map(LogEventModel.fromJson).toList());
+        return Right(LogEventModel.parseList(remoteJson, source: 'graph-grid'));
       }
     }
 
@@ -140,7 +146,7 @@ class LogRepositoryImpl implements LogRepository {
       if (cached == null) return local;
       final cachedIds = cached.map((e) => '${e['id']}').toSet();
       return [
-        ...cached.map(LogEventModel.fromJson),
+        ...LogEventModel.parseList(cached, source: 'graph-grid cache'),
         ...local.where((e) => !cachedIds.contains(e.id)),
       ];
     }, tag: 'LogRepositoryImpl.getEvents');
@@ -167,6 +173,7 @@ class LogRepositoryImpl implements LogRepository {
       if (event.location.isNotEmpty) 'locationText': event.location,
       if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
       'origin': 'DRIVER',
+      'clientId': event.id,
     });
     return result.fold(
       (error) => Left(ServerFailure(message: error.l10nKey)),
@@ -180,26 +187,43 @@ class LogRepositoryImpl implements LogRepository {
     required String reason,
   }) async {
     final statusId = int.tryParse(event.id);
-    if (!_networkInfo.isConnected || statusId == null) {
-      // Local-only event (never reached the server) or offline: local store.
+    
+    // If offline, always go local.
+    if (!_networkInfo.isConnected) {
       final localResult = await executeWithHandling(
         () => _localDataSource.updateEvent(event),
         tag: 'LogRepositoryImpl.updateEvent(local)',
       );
       return localResult.fold((failure) => Left(failure), (_) => Right(event));
     }
+    
+    // We are online. If statusId is null (it's a UUID), we can't use PUT /status/{id}.
+    // We must use POST /status (record) and pass the clientId to let the server deduplicate or create.
     final wire =
         DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
-    final result = await _dutyStatusBackend.update(
-      statusId: DutyStatusId(statusId),
-      update: {
-        'status': wire,
-        'startTime': event.startTime.toUtc().toIso8601String(),
-        if (event.location.isNotEmpty) 'locationText': event.location,
-        'editReason': reason.trim(),
-      },
-    );
+        
+    final base = {
+      'status': wire,
+      'startTime': event.startTime.toUtc().toIso8601String(),
+      if (event.location.isNotEmpty) 'locationText': event.location,
+    };
+
+    // §395.30 — the driver's reason must reach the server on BOTH paths, in
+    // the field each endpoint actually reads: POST /status takes `notes`
+    // (same as addEvent), PUT /status/{id} takes `editReason`.
+    final result = statusId == null
+        ? await _dutyStatusBackend.record({
+            ...base,
+            'notes': reason.trim(),
+            'origin': 'DRIVER',
+            'clientId': event.id,
+          })
+        : await _dutyStatusBackend.update(
+            statusId: DutyStatusId(statusId),
+            update: {...base, 'editReason': reason.trim()},
+          );
+
     return result.fold((error) => Left(ServerFailure(message: error.l10nKey)), (
       raw,
     ) {
@@ -249,19 +273,48 @@ class LogRepositoryImpl implements LogRepository {
             : json;
         if (data.isEmpty) return null;
 
-        final trailersList = (data['trailers'] as List<dynamic>? ?? [])
-            .map((e) => e is Map ? e['trailerNumber']?.toString() ?? '' : '')
+        List<dynamic> extractList(dynamic val) {
+          if (val is List) return val;
+          if (val is String && val.trim().isNotEmpty) return val.split(',');
+          return [];
+        }
+
+        final trailersList = extractList(data['trailers'])
+            .map((e) {
+              if (e is Map) return e['trailerNumber']?.toString() ?? '';
+              if (e is String) return e.trim();
+              return e?.toString() ?? '';
+            })
             .where((e) => e.isNotEmpty)
             .toList();
 
-        final docsList = (data['shippingDocuments'] as List<dynamic>? ?? [])
-            .map((e) => e is Map ? e['documentNumber']?.toString() ?? '' : '')
+        final docsList = extractList(data['shippingDocuments'])
+            .map((e) {
+              if (e is Map) return e['documentNumber']?.toString() ?? '';
+              if (e is String) return e.trim();
+              return e?.toString() ?? '';
+            })
             .where((e) => e.isNotEmpty)
             .toList();
+
+        int? coDriverId = data['coDriverId'] as int?;
+        String? coDriverName;
+        if (data['coDriver'] is Map) {
+          final coDriverMap = data['coDriver'] as Map<dynamic, dynamic>;
+          coDriverId ??= coDriverMap['id'] is int
+              ? coDriverMap['id'] as int
+              : int.tryParse(coDriverMap['id']?.toString() ?? '');
+          coDriverName = coDriverMap['name']?.toString();
+        }
+
+        final vehicleUniqueId = data['uniqueId']?.toString();
+        final vehicleName = data['vehicleName']?.toString();
 
         return DailyFormData(
-          vehicleUniqueId: data['uniqueId']?.toString(),
-          coDriverId: data['coDriverId'] as int?,
+          vehicleUniqueId: vehicleUniqueId,
+          vehicleName: vehicleName,
+          coDriverId: coDriverId,
+          coDriverName: coDriverName,
           trailers: trailersList,
           shippingDocuments: docsList,
         );
@@ -279,10 +332,10 @@ class LogRepositoryImpl implements LogRepository {
     if (!_networkInfo.isConnected) {
       await _offlineQueue.enqueue(
         PendingEvent(
-          id: _uuid.v4(),
+          id: _idGenerator.v4(),
           type: 'daily_log_form',
           payload: {'logId': logId.value, 'form': payload},
-          createdAt: DateTime.now().toUtc(),
+          createdAt: _timeAuthority.nowUtc(),
         ),
       );
       return const Right(FormSaveResult.offline());
@@ -357,7 +410,7 @@ class LogRepositoryImpl implements LogRepository {
       // SRS 6.8 — offline: enqueue for sync, never lose the driver's certification.
       await _offlineQueue.enqueue(
         PendingEvent(
-          id: _uuid.v4(),
+          id: _idGenerator.v4(),
           type: 'certification',
           payload: {
             'logId': logId.value,
@@ -366,7 +419,7 @@ class LogRepositoryImpl implements LogRepository {
             'signatureConfirmation': signatureConfirmation,
             'certifiedTrue': certifiedTrue,
           },
-          createdAt: DateTime.now().toUtc(),
+          createdAt: _timeAuthority.nowUtc(),
         ),
       );
       return const Right(true);

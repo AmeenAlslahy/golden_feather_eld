@@ -33,6 +33,7 @@ class AppTheme {
     splashColor: PressFeedback.ink,
     highlightColor: Colors.black.withValues(alpha: 0.06),
     textTheme: AppTypography.lightTextTheme,
+    iconTheme: const IconThemeData(color: AppColors.textPrimary),
 
     // ========== شريط العنوان ==========
     appBarTheme: AppBarTheme(
@@ -42,6 +43,7 @@ class AppTheme {
       centerTitle: true,
       titleTextStyle: AppStyles.fromBrightness(Brightness.light).appBarTitle,
       iconTheme: const IconThemeData(color: AppColors.surface),
+      actionsIconTheme: const IconThemeData(color: AppColors.surface),
     ),
 
     // ========== البطاقات ==========
@@ -58,7 +60,7 @@ class AppTheme {
     // ========== الأزرار ==========
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.successGreen,
+        backgroundColor: AppColors.primaryGold,
         foregroundColor: AppColors.surface,
         minimumSize: const Size(double.infinity, AppSpacing.buttonHeight),
         shape: RoundedRectangleBorder(
@@ -73,6 +75,8 @@ class AppTheme {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: AppColors.primaryGold,
+        foregroundColor: AppColors.surface,
         shape: const StadiumBorder(),
         splashFactory: PressFeedback.splashFactory,
         animationDuration: const Duration(milliseconds: 90),
@@ -82,6 +86,9 @@ class AppTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primaryGold,
+        side: const BorderSide(color: AppColors.primaryGold, width: 1.5),
+        shape: const StadiumBorder(),
         splashFactory: PressFeedback.splashFactory,
       ).copyWith(
         overlayColor: PressFeedback.overlay(),
@@ -89,6 +96,7 @@ class AppTheme {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
+        foregroundColor: AppColors.primaryGold,
         splashFactory: PressFeedback.splashFactory,
       ).copyWith(
         overlayColor: PressFeedback.overlay(),
@@ -96,6 +104,7 @@ class AppTheme {
     ),
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
+        foregroundColor: AppColors.textPrimary,
         splashFactory: PressFeedback.splashFactory,
       ).copyWith(
         overlayColor: PressFeedback.overlay(),
@@ -180,9 +189,19 @@ class AppTheme {
       onError: AppColors.surfaceDark,
       surface: AppColors.surfaceDark,
       onSurface: AppColors.darkTextPrimary,
+      onSurfaceVariant: AppColors.darkTextSecondary,
     ),
     scaffoldBackgroundColor: AppColors.darkBackground,
     textTheme: AppTypography.darkTextTheme,
+    iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        foregroundColor: AppColors.darkTextPrimary,
+        splashFactory: PressFeedback.splashFactory,
+      ).copyWith(
+        overlayColor: PressFeedback.overlay(onDark: true),
+      ),
+    ),
     cardTheme: light.cardTheme.copyWith(
       color: AppColors.surfaceDark,
     ),

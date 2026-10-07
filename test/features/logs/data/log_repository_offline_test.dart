@@ -7,10 +7,16 @@ import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/logs/data/datasources/log_local_data_source.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
+import '../../../helpers/fake_time_authority.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
+import 'package:golden_feather_eld/core/utils/id_generator.dart';
 
+class FakeIdGenerator implements IdGenerator {
+  @override
+  String v4() => 'test-uuid';
+}
 class _Local extends Mock implements LogLocalDataSource {}
 
 class _DailyLogs extends Mock implements DailyLogsBackend {}
@@ -69,6 +75,8 @@ void main() {
       dutyStatusBackend: _DutyStatus(),
       networkInfo: net,
       offlineQueue: MemoryOfflineQueue(),
+      timeAuthority: FakeTimeAuthority(),
+      idGenerator: FakeIdGenerator(),
     );
     when(() => local.cacheDailyLogs(any(), any())).thenAnswer((_) async {});
     when(() => local.cacheLogEvents(any(), any())).thenAnswer((_) async {});

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
@@ -33,5 +34,19 @@ extension DutyStatusCodeL10n on DutyStatusCode {
       // Fallback if l10n key missing.
       return shortCode;
     }
+  }
+}
+
+/// Localized display names for [DutyStatus] (ELD engine enum).
+extension DutyStatusL10n on DutyStatus {
+  String displayName(BuildContext context) {
+    final loc = context.loc;
+    return switch (this) {
+      DutyStatus.offDuty => loc.offDuty,
+      DutyStatus.sleeperBerth => loc.sleeperBerth,
+      DutyStatus.driving => loc.drivingStatus,
+      DutyStatus.onDutyNotDriving => loc.onDuty,
+      DutyStatus.personalUse => loc.personalUse,
+    };
   }
 }

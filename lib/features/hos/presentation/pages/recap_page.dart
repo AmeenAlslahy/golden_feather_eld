@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/utils/duration_format.dart';
+import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
@@ -28,42 +30,34 @@ class RecapPage extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 // 7 Days Table
-                ...data.days.map((dayData) => _buildRow(
-                      context,
-                      title: dayData.dayOfWeek,
-                      subtitle: DateFormat('MMM d').format(dayData.date),
-                      value: _decimalHours(dayData.totalWork),
-                    )),
+                ...data.days.map(
+                  (dayData) => _buildRow(
+                    context,
+                    title: dayData.dayOfWeek,
+                    subtitle: DateFormat('MMM d').format(dayData.date),
+                    value: DurationFormat.decimalHours(dayData.totalWork),
+                  ),
+                ),
                 _buildRow(
                   context,
                   title: context.loc.total,
                   subtitle: context.loc.last7Days,
-                  value: _decimalHours(data.cycleUsed),
+                  value: DurationFormat.decimalHours(data.cycleUsed),
                 ),
                 _buildRow(
                   context,
                   title: context.loc.hoursWorkedToday,
-                  value: () {
-                    final now = DateTime.now();
-                    for (final day in data.days) {
-                      if (day.date.year == now.year &&
-                          day.date.month == now.month &&
-                          day.date.day == now.day) {
-                        return _decimalHours(day.totalWork);
-                      }
-                    }
-                    return '00.00';
-                  }(),
+                  value: DurationFormat.decimalHours(data.todayWork),
                 ),
                 _buildRow(
                   context,
                   title: context.loc.hoursAvailableToday,
-                  value: _decimalHours(data.cycleRemaining),
+                  value: DurationFormat.decimalHours(data.cycleRemaining),
                 ),
                 _buildRow(
                   context,
                   title: context.loc.hoursAvailableTomorrow,
-                  value: _decimalHours(data.availableTomorrow),
+                  value: DurationFormat.decimalHours(data.availableTomorrow),
                 ),
               ],
             ),
@@ -72,17 +66,15 @@ class RecapPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
           return EldRetryView(
-            message: anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
+            message: anyErrorUserMessage(
+              err,
+              loc: AppLocalizations.of(context)!,
+            ),
             onRetry: () => ref.invalidate(recapProvider),
           );
         },
       ),
     );
-  }
-
-  String _decimalHours(Duration d) {
-    final hours = d.inMinutes / 60.0;
-    return hours.abs().toStringAsFixed(2).padLeft(5, '0');
   }
 
   Widget _buildRow(

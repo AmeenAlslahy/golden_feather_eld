@@ -3,14 +3,13 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/daily_form_data.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../../data/providers/log_repository_providers.dart';
-import '../../domain/entities/audit_entry.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/events/app_events.dart';
 
 /// حالة شاشة السجلات
 class LogsState {
@@ -37,7 +36,10 @@ class LogsState {
     this.hasReachedMax = false,
     this.isLoadingEvents = false,
     this.eventsError,
+    this.serverForm,
   });
+
+  final DailyFormData? serverForm;
 
   LogsState copyWith({
     List<DailyLog>? logs,
@@ -50,6 +52,8 @@ class LogsState {
     bool? isLoadingEvents,
     String? eventsError,
     bool clearEventsError = false,
+    DailyFormData? serverForm,
+    bool clearServerForm = false,
   }) {
     return LogsState(
       logs: logs ?? this.logs,
@@ -61,33 +65,35 @@ class LogsState {
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
       eventsError:
           clearEventsError ? null : (eventsError ?? this.eventsError),
+      serverForm: clearServerForm ? null : (serverForm ?? this.serverForm),
     );
   }
 }
 
 /// مزود السجلات
-final logsProvider = StateNotifierProvider<LogsNotifier, LogsState>((ref) {
+final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
   final driverId = ref.watch(currentDriverIdProvider);
-  return LogsNotifier(
-    repository,
-    driverId,
-    (form) => ref.read(dashboardDataProvider.notifier).applyServerForm(form),
-  );
+  final notifier = LogsNotifier(repository, driverId);
+  
+  final sub = ref.read(appEventBusProvider).stream.listen((event) {
+    if (event == AppEvent.logDataChanged) {
+      notifier.loadLogs(refresh: true);
+    }
+  });
+  
+  ref.onDispose(sub.cancel);
+  
+  return notifier;
 });
 
 class LogsNotifier extends StateNotifier<LogsState> {
   final LogRepository _repository;
   final int? _driverId;
 
-  /// استلام نموذج اليوم المحفوظ من الخادم — تُطبق على لوحة القيادة
-  /// ليقرأها تبويب النموذج (null في الاختبارات المباشرة = لا تطبيق).
-  final void Function(DailyFormData form)? _onServerForm;
-
   LogsNotifier(
     this._repository,
     this._driverId,
-    this._onServerForm,
   ) : super(const LogsState()) {
     if (_driverId != null) {
       loadLogs();
@@ -96,7 +102,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
   Future<void> loadLogs({bool refresh = false}) async {
     if (_driverId == null) return;
-    if (state.isLoading) return;
+    if (state.isLoading && !refresh) return;
     if (!refresh && state.hasReachedMax) return;
 
     final isFirstLoad = state.logs.isEmpty || refresh;
@@ -148,7 +154,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// قائمة `GET /eld/daily-logs` لا تتضمن الأحداث؛ لذلك تُجلب عند فتح اليوم
   /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
   void selectLog(DailyLog log) {
-    state = state.copyWith(selectedLog: log, clearEventsError: true);
+    state = state.copyWith(selectedLog: log, clearEventsError: true, clearServerForm: true);
     loadSelectedLogDetail();
     loadSelectedLogEvents();
     loadSelectedForm();
@@ -169,7 +175,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (_) {}, // فشل جلب النموذج لا يمسح المعروض ولا يخترع بيانات.
       (form) {
         if (form == null) return; // لا نموذج محفوظ على الخادم لهذا اليوم.
-        _onServerForm?.call(form);
+        state = state.copyWith(serverForm: form);
       },
     );
   }
@@ -256,63 +262,55 @@ class LogsNotifier extends StateNotifier<LogsState> {
     state = state.copyWith(selectedLog: updatedLog);
   }
 
-  /// تصديق السجل
-  void certifyLog(DailyLogId logId) {
-    final updatedLogs = state.logs.map((log) {
-      if (log.id == logId) {
-        return log.copyWith(isCertified: true);
-      }
-      return log;
-    }).toList();
 
-    state = state.copyWith(logs: updatedLogs);
-  }
 
   /// إضافة حدث جديد للسجل المحدد (POST /eld/duty-status، أو محلياً دون اتصال).
-  Future<bool> addEvent(LogEvent event, {String? reason}) async {
-    if (state.selectedLog == null) return false;
+  Future<Either<Failure, void>> addEvent(LogEvent event, {String? reason}) async {
+    if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
 
-    // الحفظ في المستودع أولاً؛ لا تحديث للواجهة عند فشل الحفظ.
-    final persisted = (await _repository.addEvent(event, reason: reason))
-        .fold((_) => false, (ok) => ok);
-    if (!persisted || !mounted) return persisted;
+    final result = await _repository.addEvent(event, reason: reason);
+    if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    _replaceSelected(state.selectedLog!.copyWith(
-      events: <LogEvent>[...state.selectedLog!.events, event],
-    ));
-    // الخادم يعيد حساب المدد والمعرّفات — أعد الجلب لتطابق الشبكة الرسمية.
-    unawaited(loadSelectedLogEvents());
-    return true;
+    return result.fold(
+      (failure) => Left(failure),
+      (ok) {
+        if (!ok) return const Left(ServerFailure(message: 'Failed to save event'));
+        _replaceSelected(state.selectedLog!.copyWith(
+          events: <LogEvent>[...state.selectedLog!.events, event],
+        ));
+        unawaited(loadSelectedLogEvents());
+        return const Right(null);
+      },
+    );
   }
 
   /// تعديل حدث (PUT /eld/duty-status/{id} مع سبب إلزامي).
-  ///
-  /// الخادم يعيد DutyEventDto المعدّل — يُعتمد مرجعاً للواجهة بدل
-  /// التخمين المحلي، ثم إعادة جلب للتأكيد (الخادم يعيد حساب المدد).
-  Future<bool> updateEvent(LogEvent event, {required String reason}) async {
-    if (state.selectedLog == null) return false;
+  Future<Either<Failure, void>> updateEvent(LogEvent event, {required String reason}) async {
+    if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
 
     final confirmed = await _repository.updateEvent(event, reason: reason);
-    if (!mounted) return false;
-    final persistedEvent = confirmed.fold((_) => null, (e) => e);
-    if (persistedEvent == null) {
-      // حدث محلي/أوفلاين أو استجابة بلا جسم: السلوك الاحتياطي السابق.
-      _replaceSelected(state.selectedLog!.copyWith(
-        events: state.selectedLog!.events
-            .map((e) => e.id == event.id ? event : e)
-            .toList(),
-      ));
-      unawaited(loadSelectedLogEvents());
-      return true;
-    }
+    if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    _replaceSelected(state.selectedLog!.copyWith(
-      events: state.selectedLog!.events
-          .map((e) => e.id == persistedEvent.id ? persistedEvent : e)
-          .toList(),
-    ));
-    unawaited(loadSelectedLogEvents());
-    return true;
+    return confirmed.fold(
+      (failure) => Left(failure),
+      (persistedEvent) {
+        if (persistedEvent == null) {
+          _replaceSelected(state.selectedLog!.copyWith(
+            events: state.selectedLog!.events
+                .map((e) => e.id == event.id ? event : e)
+                .toList(),
+          ));
+        } else {
+          _replaceSelected(state.selectedLog!.copyWith(
+            events: state.selectedLog!.events
+                .map((e) => e.id == persistedEvent.id ? persistedEvent : e)
+                .toList(),
+          ));
+        }
+        unawaited(loadSelectedLogEvents());
+        return const Right(null);
+      },
+    );
   }
 
   /// تحديث سجل بالكامل (مثل إكمال النموذج)
@@ -326,16 +324,5 @@ class LogsNotifier extends StateNotifier<LogsState> {
           .map((log) => log.id == updatedLog.id ? updatedLog : log)
           .toList(),
     );
-  }
-
-  /// جلب سجل التدقيق ليوم محدد
-  Future<List<AuditEntry>> getAuditEntries(DateTime date) async {
-    final result = await _repository.getAuditEntries(date);
-    return result.match((l) => [], (r) => r);
-  }
-
-  /// حفظ سجل تدقيق جديد
-  Future<Either<Failure, bool>> saveAuditEntry(AuditEntry entry) async {
-    return await _repository.logAudit(entry);
   }
 }

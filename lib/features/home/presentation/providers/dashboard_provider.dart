@@ -5,6 +5,7 @@ import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
+import '../../../codriver/presentation/providers/codriver_provider.dart';
 
 /// بيانات لوحة القيادة
 class DashboardData {
@@ -65,10 +66,10 @@ class DashboardData {
     driverLicense: '',
     vehicleId: 'No Vehicle',
     vehicleDisplayName: 'Select a vehicle',
-    trailerId: 'None',
-    shippingDocuments: 'None',
-    coDriverName: 'None',
-    coDriverId: 'none',
+    trailerId: null,
+    shippingDocuments: null,
+    coDriverName: null,
+    coDriverId: null,
     documentsInfo: null,
   );
 }
@@ -129,7 +130,22 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
       updateShippingDocuments(form.shippingDocuments);
     }
     if (form.coDriverId != null && form.coDriverId! > 0) {
-      state = state.copyWith(coDriverId: '${form.coDriverId}');
+      state = state.copyWith(
+        coDriverId: '${form.coDriverId}',
+        coDriverName: form.coDriverName ?? state.coDriverName,
+      );
+    }
+    if (form.vehicleUniqueId != null &&
+        form.vehicleUniqueId!.trim().isNotEmpty) {
+      final uniqueId = form.vehicleUniqueId!.trim();
+      final displayName = form.vehicleName != null &&
+              form.vehicleName!.trim().isNotEmpty
+          ? form.vehicleName!.trim()
+          : uniqueId;
+      state = state.copyWith(
+        vehicleId: uniqueId,
+        vehicleDisplayName: displayName,
+      );
     }
   }
 }
@@ -155,6 +171,23 @@ final dashboardDataProvider =
     (previous, next) {
       if (next.selectedVehicle != null) {
         notifier.updateVehicle(next.selectedVehicle);
+      }
+    },
+    fireImmediately: true,
+  );
+
+  // Listen to CoDriver State
+  ref.listen(
+    codriverProvider,
+    (previous, next) {
+      if (next.currentCoDriver != null) {
+        notifier.updateCoDriver(CoDriver(
+          id: next.currentCoDriver!.coDriverId.toString(),
+          name: next.currentCoDriver!.name ?? 'Unknown',
+        ));
+      } else {
+        // If the live session has no co-driver, we might clear it or keep what was saved on the form
+        // For now, let's just update it to null to clear it if it's not set
       }
     },
     fireImmediately: true,

@@ -6,11 +6,12 @@ import '../../../../core/utils/logger.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../../../features/logs/domain/entities/audit_entry.dart';
-import '../../../../features/logs/presentation/providers/logs_provider.dart';
+import '../../../../features/logs/data/providers/log_repository_providers.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/inspection_transfer.dart';
 import '../providers/inspection_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/error/user_facing_message.dart';
 
 /// FMCSA ELD submission mailbox (49 CFR §395 Appendix A, telematics email
 /// option). Shown pre-filled; the officer can replace it.
@@ -69,12 +70,6 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   bool get _usesEmail =>
       widget.isEmailMode || _selectedMethod == TransferMethod.email;
 
-  bool get _canSend {
-    if (_isSending) return false;
-    if (_usesEmail && !_emailValid) return false;
-    return isValidInspectionComment(_commentController.text);
-  }
-
   Future<void> _handleSend() async {
     if (_usesEmail && !_emailValid) {
       _snack(context.loc.enterValidEmail);
@@ -123,8 +118,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
       // await لا unawaited داخل try — الاستثناء غير المتزامن كان يهرب من
       // الـ try/catch بلا التقاط؛ الكتابة بعد إظهار النتيجة فلا تأخير يُرى.
       await ref
-          .read(logsProvider.notifier)
-          .saveAuditEntry(
+          .read(logRepositoryProvider)
+          .logAudit(
             AuditEntry(
               id: 'transfer-${DateTime.now().millisecondsSinceEpoch}',
               timestamp: DateTime.now(),
@@ -144,7 +139,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   }
 
   void _snack(String message) {
-    AppFeedback.error(context, message);
+    AppFeedback.error(context, anyErrorUserMessage(message, loc: context.loc));
   }
 
   @override
@@ -241,7 +236,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                   const SizedBox(height: 40),
                   AppButton(
                     label: loc.sendAction,
-                    type: _canSend ? EldButtonType.agree : EldButtonType.send,
+                    type: EldButtonType.primary,
                     isLoading: _isSending,
                     onPressed: _handleSend,
                   ),

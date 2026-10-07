@@ -1,0 +1,323 @@
+[
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\about\\presentation\\pages\\about_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\pages\\account_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\pages\\info_packet_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\pages\\instructions_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\pages\\rules_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\pages\\user_manual_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\providers\\account_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\account\\presentation\\providers\\rules_screen_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\pages\\auth_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\pages\\splash_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\providers\\auth_mode_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\providers\\auth_providers.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\providers\\auth_state_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\providers\\login_form_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\widgets\\forgot_password_form.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\auth\\presentation\\widgets\\login_form.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\codriver\\presentation\\pages\\codriver_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\codriver\\presentation\\providers\\codriver_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\codriver\\presentation\\providers\\team_status_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\mac_address_validation.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\pages\\diagnostics_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\pages\\eld_connection_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\providers\\hardware_alerts_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\providers\\hardware_status_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\eld_connectivity_panel.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\eld_diagnostics_section.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\eld_readiness_panel.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\manual_recording_section.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\diagnostics\\active_malfunction_actions.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\diagnostics\\event_card.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\diagnostics\\stat_row.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\connection\\presentation\\widgets\\dialogs\\manual_mode_reason_dialog.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\extensions\\dvir_catalog_extensions.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\extensions\\dvir_status_extensions.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\pages\\dvir_detail_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\pages\\dvir_form_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\pages\\dvir_list_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\providers\\dvir_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\active_defects_section.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\defects_modal.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\defect_card.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\dvir_form_components.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\dvir_form_sections.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\previous_dvir_review_modal.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\dvir\\presentation\\widgets\\status_modal.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\home\\presentation\\pages\\home_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\home\\presentation\\providers\\dashboard_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\home\\presentation\\providers\\home_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\home\\presentation\\widgets\\eld_bottom_nav.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\home\\presentation\\widgets\\eld_drawer.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\duty_change_message.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\extensions\\duty_status_l10n.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\pages\\change_status_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\pages\\recap_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\pages\\status_dashboard_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\providers\\change_status_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\providers\\hos_engine_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\providers\\hos_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\providers\\recap_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\providers\\status_dashboard_providers.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\driving_lock_screen.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\location_display_widget.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\status_option_tiles.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\status_dashboard\\hos_indicators_card.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\status_dashboard\\main_circular_timer.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\hos\\presentation\\widgets\\status_dashboard\\operational_alerts_banner.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\pages\\dot_inspection_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\pages\\inspection_active_view.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\pages\\inspection_start_view.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\pages\\send_logs_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\providers\\dot_inspection_providers.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\providers\\inspection_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\widgets\\inspection_duty_graph.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\widgets\\inspection_events_table.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\inspection\\presentation\\widgets\\inspection_log_header_table.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\audit_trail_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\edit_log_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\inspection_preview_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\logs_list_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\log_detail_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\shipping_documents_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\suggested_events_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\trailers_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\pages\\unidentified_events_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\providers\\certify_log_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\providers\\logs_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\providers\\log_detail_tab_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\providers\\unidentified_events_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\codriver_picker_dialog.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_graph.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\vehicle_picker_dialog.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_detail_tabs\\certify_tab.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_detail_tabs\\events_tab.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_detail_tabs\\expanded_content.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_detail_tabs\\form_tab.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\logs\\presentation\\widgets\\log_detail_tabs\\log_event_tile.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\onboarding\\presentation\\pages\\onboarding_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\permissions\\presentation\\pages\\permissions_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\settings\\presentation\\pages\\settings_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\sync\\presentation\\providers\\sync_engine_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\sync\\presentation\\providers\\sync_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\sync\\presentation\\widgets\\sync_status_indicator.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\tracking\\presentation\\providers\\tracking_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\tracking\\presentation\\providers\\tracking_providers.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\vehicle\\presentation\\pages\\select_vehicle_page.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\vehicle\\presentation\\providers\\vehicle_provider.dart"
+    },
+    {
+        "FullName":  "D:\\Flutter projects\\golden_feather_eld\\lib\\features\\vehicle\\presentation\\widget\\vehicle_card.dart"
+    }
+]

@@ -1,6 +1,4 @@
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'entities/daily_log.dart';
-import '../../../domain/duty_status/duty_status_code.dart';
 
 /// Automatic driving time cannot be shortened or removed by a driver edit.
 bool isAutomaticDrivingEvent(LogEvent event) {
@@ -21,51 +19,7 @@ String? refuseAutomaticDrivingEdit({
   return null;
 }
 
-/// يحول قيمة قائمة الحالات في نموذج تعديل الحدث إلى
-/// (رمز مختصر، اسم عربي).
-///
-/// الرموز هي معجم التطبيق نفسه ([DutyStatus]). 'Yard Moves' يُطابق
-/// الرمز السلكي YM عبر [DutyStatusCode.yardMove] — كان سابقاً يُمرر
-/// نصياً فيتعذر على fromShortCode التعرف عليه فأُرسل OFF_DUTY!
-String statusFromEditValue(String value) {
-  switch (value) {
-    case 'Off Duty':
-      return DutyStatus.offDuty.toShortCode();
-    case 'Sleeper':
-      return DutyStatus.sleeperBerth.toShortCode();
-    case 'Driving':
-      return DutyStatus.driving.toShortCode();
-    case 'On Duty':
-      return DutyStatus.onDutyNotDriving.toShortCode();
-    case 'Personal Use':
-      return DutyStatus.personalUse.toShortCode();
-    case 'Yard Moves':
-      return DutyStatusCode.yardMove.shortCode;
-    default:
-      return value;
-  }
-}
 
-/// قيمة قائمة الحالات في النموذج المقابلة لرمز مخزن.
-/// الرمز غير المعروف يُعاد كما هو (مثلاً 'Yard Moves').
-String editValueForStatus(String? code) {
-  switch (code) {
-    case 'OFF':
-      return 'Off Duty';
-    case 'SB':
-      return 'Sleeper';
-    case 'D':
-      return 'Driving';
-    case 'ON':
-      return 'On Duty';
-    case 'PC':
-      return 'Personal Use';
-    case 'YM':
-      return 'Yard Moves';
-    default:
-      return code ?? 'Sleeper';
-  }
-}
 
 /// يحول وقت نموذج التعديل إلى [DateTime] على يوم السجل.
 ///

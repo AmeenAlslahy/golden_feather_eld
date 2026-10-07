@@ -216,7 +216,8 @@ final trustedTimeProvider = Provider<TrustedTimeProvider>((ref) {
       ref
           .read(localStorageProvider)
           .prefs
-          .setString('trusted_time_anchor', json);
+          .setString('trusted_time_anchor', json)
+          .ignore();
     } catch (_) {
       // لا تخزين متاح — المرساة تبقى داخل الجلسة فقط.
     }

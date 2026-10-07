@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -59,19 +60,12 @@ class LogDetailPage extends ConsumerWidget {
             icon:  const Icon(Icons.add, size: 28),
             onPressed: () async {
               final successMsg = context.loc.eventAddedSuccess;
-              final newEvent = LogEvent(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                status: 'OFF',
-                startTime: DateTime.now(),
-                duration: Duration.zero,
-                location: '',
-              );
 
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EditLogPage(
-                    event: newEvent,
+                  builder: (_) => const EditLogPage(
+                    event: null,
                     isNewEvent: true,
                   ),
                 ),

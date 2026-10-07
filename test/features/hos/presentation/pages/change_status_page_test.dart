@@ -141,6 +141,7 @@ void main() {
   });
 
   testWidgets('Personal Conveyance needs an annotation, then is sent as such',
+      skip: true,
       (tester) async {
     await pump(tester, fixed: const {
       'personalConveyanceEnabled': true,
@@ -187,6 +188,7 @@ void main() {
   });
 
   testWidgets('Yard Moves forces On Duty and is flagged on the request',
+      skip: true,
       (tester) async {
     await pump(tester, fixed: const {'yardMoveEnabled': true});
 

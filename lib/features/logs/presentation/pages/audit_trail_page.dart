@@ -5,30 +5,20 @@ import 'package:intl/intl.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../data/providers/log_repository_providers.dart';
-import '../../domain/entities/audit_entry.dart';
 
-/// SRS 7.16 — سجل التدقيق: أحدث 100 حدث، عرض فقط (لا تعديل ولا حذف).
-final auditTrailProvider = FutureProvider<List<AuditEntry>>((ref) async {
-  final repo = ref.watch(logRepositoryProvider);
-  final result = await repo.getRecentAuditEntries(limit: 100);
-  return result.fold((failure) => throw failure, (entries) => entries);
-});
+import '../providers/audit_trail_provider.dart';
 
 class AuditTrailPage extends ConsumerWidget {
   const AuditTrailPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-final trail = ref.watch(auditTrailProvider);
+    final trail = ref.watch(auditTrailProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          context.loc.auditTrail,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(context.loc.auditTrail, style: context.styles.appBarTitle),
         centerTitle: true,
       ),
       body: Column(
@@ -48,16 +38,11 @@ final trail = ref.watch(auditTrailProvider);
           Expanded(
             child: trail.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Center(
-                child: Text(
-                  context.loc.auditLoadFailed,
-                ),
-              ),
+              error: (_, __) =>
+                  Center(child: Text(context.loc.auditLoadFailed)),
               data: (entries) {
                 if (entries.isEmpty) {
-                  return Center(
-                    child: Text(context.loc.auditNoRecords),
-                  );
+                  return Center(child: Text(context.loc.auditNoRecords));
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -73,8 +58,11 @@ final trail = ref.watch(auditTrailProvider);
                     ];
                     return ListTile(
                       dense: true,
-                      leading:  Icon(Icons.history,
-                          color: context.styles.subtitle.color, size: 20),
+                      leading: Icon(
+                        Icons.history,
+                        color: context.styles.subtitle.color,
+                        size: 20,
+                      ),
                       title: Text(
                         e.action.isNotEmpty ? e.action : e.newStatus,
                         style: context.styles.body,
@@ -86,7 +74,9 @@ final trail = ref.watch(auditTrailProvider);
                               style: context.styles.caption,
                             ),
                       trailing: Text(
-                        DateFormat('yyyy-MM-dd\nHH:mm').format(e.timestamp.toLocal()),
+                        DateFormat(
+                          'yyyy-MM-dd\nHH:mm',
+                        ).format(e.timestamp.toLocal()),
                         textAlign: TextAlign.end,
                         style: context.styles.caption,
                       ),

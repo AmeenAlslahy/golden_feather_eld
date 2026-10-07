@@ -1,3 +1,4 @@
+import '../../../core/network/api_client.dart';
 import '../../contracts/account_backend.dart';
 import '../../contracts/auth_backend.dart';
 import '../../contracts/daily_logs_backend.dart';
@@ -13,7 +14,6 @@ import '../../contracts/unidentified_events_backend.dart';
 import '../../contracts/vehicle_backend.dart';
 import '../../core/backend_adapter.dart';
 import '../../core/backend_identity.dart';
-import '../../http/api_client.dart';
 import 'sub/eld_account_backend.dart';
 import 'sub/eld_auth_backend.dart';
 import 'sub/eld_daily_logs_backend.dart';

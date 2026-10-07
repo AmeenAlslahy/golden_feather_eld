@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../http/api_client.dart';
-import '../http/api_config.dart';
+import '../../core/network/api_client.dart';
+import '../../core/network/api_config.dart';
 import '../http/interceptors/auth_interceptor.dart';
 import '../../core/di/auth_local_data_source_provider.dart';
 import '../http/interceptors/request_logger.dart';
 import '../http/interceptors/time_drift_interceptor.dart';
 import '../../core/time/trusted_time_provider.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
-import '../../features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart';
+import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client.dart'; // ignore_architecture
+import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart'; // ignore_architecture
+import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart'; // ignore_architecture
 import '../../core/config/app_environment.dart';
 import '../../core/network/core_providers.dart';
 
@@ -48,23 +48,25 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
   final localDataSource = ref.watch(authLocalDataSourceProvider);
   final backendType = ref.watch(backendTypeProvider);
-  
+
   final unauthController = ref.watch(unauthenticatedEventProvider);
-  
-  dio.interceptors.add(AuthInterceptor(
-    localDataSource: localDataSource,
-    backendType: backendType,
-    onUnauthenticated: () {
-      // Trigger event instead of directly depending on AuthStateProvider
-      unauthController.add(null);
-    },
-  ));
-  
+
+  dio.interceptors.add(
+    AuthInterceptor(
+      localDataSource: localDataSource,
+      backendType: backendType,
+      onUnauthenticated: () {
+        // Trigger event instead of directly depending on AuthStateProvider
+        unauthController.add(null);
+      },
+    ),
+  );
+
   if (kDebugMode) dio.interceptors.add(RequestLogger());
   // Added once per client. Do not add it again when the backend provider rebuilds.
-  dio.interceptors.add(TimeDriftInterceptor(
-    timeProvider: ref.read(trustedTimeProvider),
-  ));
+  dio.interceptors.add(
+    TimeDriftInterceptor(timeProvider: ref.read(trustedTimeProvider)),
+  );
 
   return client;
 });

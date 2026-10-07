@@ -210,7 +210,7 @@ void main() {
 
     List<Override> overrides() => [
       logRepositoryProvider.overrideWithValue(repo),
-      logsProvider.overrideWith((ref) => LogsNotifier(repo, null, null)),
+      logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
     ];
 
     testWidgets('sends every trailer and shipping document from the pages', (
@@ -234,6 +234,9 @@ void main() {
         const Scaffold(body: FormTab()),
         overrides: overrides(),
       );
+      final sub = container.listen(logsProvider, (_, __) {});
+      addTearDown(sub.close);
+      
       container.read(logsProvider.notifier).selectLog(log);
       container.read(dashboardDataProvider.notifier).updateTrailers([
         'TR-1402',
@@ -277,7 +280,7 @@ void main() {
           form: any(named: 'form'),
         ),
       ).thenAnswer(
-        (_) async => const Left(ServerFailure(message: 'server.500')),
+        (_) async => const Left(ServerFailure(message: 'Exception: server.500')),
       );
 
       final container = await pump(
@@ -285,6 +288,9 @@ void main() {
         const Scaffold(body: FormTab()),
         overrides: overrides(),
       );
+      final sub = container.listen(logsProvider, (_, __) {});
+      addTearDown(sub.close);
+      
       container.read(logsProvider.notifier).selectLog(log);
       await tester.pumpAndSettle();
 
@@ -292,7 +298,7 @@ void main() {
       await tester.tap(find.text('SAVE'));
       await tester.pumpAndSettle();
 
-      expect(find.text('server.500'), findsNothing);
+      expect(find.text('Exception: server.500'), findsNothing);
       // Feedback now renders as the AppFeedback top overlay.
       expect(find.byType(SnackBar), findsNothing);
       expect(find.textContaining('server.'), findsNothing);

@@ -2,10 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../core/error/app_error.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-
+import '../../../../core/events/app_events.dart';
 
 /// Reads the live list shape: a raw array, or an object containing that array.
 /// Server rows are keyed by `statusId`, not a local id.
@@ -75,9 +76,9 @@ class UnidentifiedListState {
 }
 
 class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
-  UnidentifiedEventsNotifier(this._ref) : super(const UnidentifiedListState());
+  UnidentifiedEventsNotifier(this.ref) : super(const UnidentifiedListState());
 
-  final Ref _ref;
+  final Ref ref;
 
   List<Map<String, dynamic>> _parse(Map<String, dynamic> json) =>
       parseUnidentifiedList(json);
@@ -92,8 +93,8 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
   /// (`GET /eld/unidentified-events?uniqueId=`); null = all vehicles.
   Future<void> load(UnidentifiedTab tab, {String? uniqueId}) async {
     state = state.copyWith(loading: true, clearError: true);
-    final driverId = _ref.read(currentDriverIdProvider);
-    final backend = _ref.read(unidentifiedEventsBackendProvider);
+    final driverId = ref.read(currentDriverIdProvider);
+    final backend = ref.read(unidentifiedEventsBackendProvider);
     final driver = driverId == null ? null : DriverId(driverId);
     final other = tab == UnidentifiedTab.unclaimed
         ? UnidentifiedTab.rejected
@@ -128,28 +129,38 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     );
   }
 
-  Future<String?> claim(int id, String annotation) async {
-    final driverId = _ref.read(currentDriverIdProvider);
-    if (driverId == null) return 'Driver session is missing.';
-    if (annotation.trim().isEmpty) return 'An annotation is required.';
-    final result = await _ref.read(unidentifiedEventsBackendProvider).claim(
+  Future<Failure?> claim(int id, String annotation) async {
+    final driverId = ref.read(currentDriverIdProvider);
+    if (driverId == null) return const ServerFailure(message: 'Driver session is missing.');
+    if (annotation.trim().isEmpty) return const ServerFailure(message: 'An annotation is required.');
+    final result = await ref.read(unidentifiedEventsBackendProvider).claim(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
           annotation: annotation.trim(),
         );
-    return result.fold(_message, (_) => null);
+    return result.fold((e) => ServerFailure(message: _message(e)), (_) {
+      _refreshDependencies();
+      return null;
+    });
   }
 
-  Future<String?> reject(int id, String reason) async {
-    final driverId = _ref.read(currentDriverIdProvider);
-    if (driverId == null) return 'Driver session is missing.';
-    if (reason.trim().isEmpty) return 'A rejection reason is required.';
-    final result = await _ref.read(unidentifiedEventsBackendProvider).reject(
+  Future<Failure?> reject(int id, String reason) async {
+    final driverId = ref.read(currentDriverIdProvider);
+    if (driverId == null) return const ServerFailure(message: 'Driver session is missing.');
+    if (reason.trim().isEmpty) return const ServerFailure(message: 'A rejection reason is required.');
+    final result = await ref.read(unidentifiedEventsBackendProvider).reject(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
           rejectionReason: reason.trim(),
         );
-    return result.fold(_message, (_) => null);
+    return result.fold((e) => ServerFailure(message: _message(e)), (_) {
+      _refreshDependencies();
+      return null;
+    });
+  }
+
+  void _refreshDependencies() {
+    ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
   }
 }
 

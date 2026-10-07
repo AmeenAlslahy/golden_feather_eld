@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/core/network/api_config.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_status_dashboard_backend.dart';
-import 'package:golden_feather_eld/backend/http/api_client.dart';
-import 'package:golden_feather_eld/backend/http/api_config.dart';
+import 'package:golden_feather_eld/core/network/api_client.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
@@ -37,14 +37,17 @@ void main() {
         queryParameters: {'driverId': 101},
       );
 
-      final result = await backend.getDashboard(
-        driverId: const DriverId(101),
-      );
+      final result = await backend.getDashboard(driverId: const DriverId(101));
 
-      result.tap(onSuccess: (StatusDashboard data) {
-        expect(data.currentDutyStatus, equals(DutyStatusCode.onDutyNotDriving));
-        expect(data.driver.id, equals(const DriverId(101)));
-      });
+      result.tap(
+        onSuccess: (StatusDashboard data) {
+          expect(
+            data.currentDutyStatus,
+            equals(DutyStatusCode.onDutyNotDriving),
+          );
+          expect(data.driver.id, equals(const DriverId(101)));
+        },
+      );
       expect(result.isSuccess, isTrue);
     });
   });
@@ -62,9 +65,11 @@ void main() {
         notes: 'Trip started',
       );
 
-      result.tap(onSuccess: (StatusDashboard data) {
-        expect(data.currentDutyStatus, equals(DutyStatusCode.driving));
-      });
+      result.tap(
+        onSuccess: (StatusDashboard data) {
+          expect(data.currentDutyStatus, equals(DutyStatusCode.driving));
+        },
+      );
       expect(result.isSuccess, isTrue);
     });
 
@@ -72,16 +77,18 @@ void main() {
       adapter.onPost(
         '/eld/status/duty-status',
         (server) => server.reply(200, {'currentDutyStatus': 'OFF_DUTY'}),
-        data: {'dutyStatus': 'OFF_DUTY'},
+        data: {'dutyStatus': 'OFF_DUTY', 'notes': 'Off Duty'},
       );
 
       final result = await backend.updateDutyStatus(
         status: DutyStatusCode.offDuty,
       );
 
-      result.tap(onSuccess: (StatusDashboard data) {
-        expect(data.currentDutyStatus, equals(DutyStatusCode.offDuty));
-      });
+      result.tap(
+        onSuccess: (StatusDashboard data) {
+          expect(data.currentDutyStatus, equals(DutyStatusCode.offDuty));
+        },
+      );
       expect(result.isSuccess, isTrue);
     });
   });
@@ -94,24 +101,23 @@ void main() {
           'cycleUsed': '61:23',
           'cycleRemaining': '08:37',
           'days': [
-            {
-              'date': '2026-09-18T10:00:00Z',
-              'dayOfWeek': 'Friday',
-            }
-          ]
+            {'date': '2026-09-18T10:00:00Z', 'dayOfWeek': 'Friday'},
+          ],
         }),
       );
 
       final result = await backend.getWeeklyRecap();
 
-      result.tap(onSuccess: (WeeklyRecap data) {
-        expect(
-          data.cycleUsed,
-          equals(const Duration(hours: 61, minutes: 23)),
-        );
-        expect(data.days.length, 1);
-        expect(data.days.first.dayOfWeek, 'Friday');
-      });
+      result.tap(
+        onSuccess: (WeeklyRecap data) {
+          expect(
+            data.cycleUsed,
+            equals(const Duration(hours: 61, minutes: 23)),
+          );
+          expect(data.days.length, 1);
+          expect(data.days.first.dayOfWeek, 'Friday');
+        },
+      );
       expect(result.isSuccess, isTrue);
     });
   });

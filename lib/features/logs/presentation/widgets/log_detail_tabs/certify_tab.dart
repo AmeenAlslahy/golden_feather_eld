@@ -7,12 +7,8 @@ import '../../../../../core/widgets/app_signature_canvas.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../domain/entities/daily_log.dart';
-import '../../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../../domain/shared/value_objects.dart';
-import 'package:intl/intl.dart';
 import '../../../domain/entities/log_readiness.dart';
 import '../../providers/certify_log_provider.dart';
-import '../../providers/logs_provider.dart';
 import '../../../../../core/widgets/app_feedback.dart';
 
 class CertifyTab extends ConsumerStatefulWidget {
@@ -29,13 +25,8 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   late SignatureController _signatureController;
   bool _signatureReady = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(certifyLogProvider.notifier).checkReadiness(widget.selectedLog.id);
-    });
-  }
+  CertifyLogNotifier get _notifier =>
+      ref.read(certifyLogProvider(widget.selectedLog.id).notifier);
 
   @override
   void didChangeDependencies() {
@@ -67,81 +58,37 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     super.dispose();
   }
 
-  void _showError(String message) {
-    if (!mounted) return;
-    AppFeedback.error(context, message);
-  }
-
-  void _showSuccess(String message) {
-    if (!mounted) return;
-    AppFeedback.success(context, message);
-  }
-
-  String _formatDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
-  }
-
-  /// Accept / reject one carrier-proposed edit through the existing respond API.
-  Future<void> _respondToEdit(String editId, String action) async {
-final error = await ref.read(certifyLogProvider.notifier).respondToCarrierEdit(
-          logId: widget.selectedLog.id,
-          editId: editId,
-          action: action,
-        );
-    if (!mounted) return;
-    if (error != null) {
-      _showError(error);
-      return;
+  /// Renders an outcome decided by the notifier. Returns true on success.
+  bool _show(CertifyOutcome? outcome) {
+    if (outcome == null || !mounted) return false;
+    switch (outcome) {
+      case CertifySucceeded(:final message):
+        AppFeedback.success(context, message);
+        return true;
+      case CertifyFailed(:final message):
+        AppFeedback.error(context, message);
+        return false;
     }
-    _showSuccess(
-      action.toUpperCase() == 'ACCEPT'
-          ? (context.loc.carrierEditAcceptedReCertifyThe)
-          : (context.loc.carrierEditRejected),
-    );
+  }
+
+  Future<void> _respondToEdit(String editId, CarrierEditResponse response) async {
+    _show(await _notifier.respondToCarrierEdit(editId: editId, response: response));
   }
 
   Future<void> _onAgree() async {
-final signatureBytes = await _signatureController.toPngBytes();
+    if (!_formKey.currentState!.validate()) return;
+    final signatureBytes = await _signatureController.toPngBytes();
     if (!mounted) return;
-    if (signatureBytes == null || signatureBytes.isEmpty) {
-      _showError(
-        context.loc.pleaseDrawASignatureFirst,
-      );
-      return;
-    }
-
-    final driverId = ref.read(authStateProvider).user?.id;
-    if (driverId == null || driverId.isEmpty) {
-      _showError(context.loc.sessionMissingPleaseLogInAgain);
-      return;
-    }
-
-    final logId = widget.selectedLog.id;
-    
-    await ref.read(certifyLogProvider.notifier).saveAndCertify(
-      logId: logId,
-      driverId: DriverId(int.parse(driverId)),
-      logDate: _formatDate(widget.selectedLog.date),
+    final outcome = await _notifier.certify(
+      log: widget.selectedLog,
       signatureBytes: signatureBytes,
     );
-    
-    if (!mounted) return;
-    
-    final certifyState = ref.read(certifyLogProvider);
-    if (certifyState.isSuccess) {
-      _showSuccess(
-        context.loc.logSuccessfullyCertified,
-      );
-      ref.read(logsProvider.notifier).loadLogs(refresh: true);
-      if (mounted) Navigator.of(context).pop();
-    } else if (certifyState.error != null) {
-      _showError(certifyState.error!);
-    }
+    if (_show(outcome) && mounted) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(certifyLogProvider);
+    final state = ref.watch(certifyLogProvider(widget.selectedLog.id));
 
     if (state.isLoading && state.readinessData == null) {
       return const Center(
@@ -163,7 +110,7 @@ final signatureBytes = await _signatureController.toPngBytes();
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: context.loc.retryButton,
-              onPressed: () => ref.read(certifyLogProvider.notifier).checkReadiness(widget.selectedLog.id),
+              onPressed: _notifier.checkReadiness,
             )
           ],
         ),
@@ -216,7 +163,7 @@ final signatureBytes = await _signatureController.toPngBytes();
             ],
             AppButton(
               label: context.loc.notReady,
-              type: EldButtonType.send,
+              type: EldButtonType.secondary,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -275,28 +222,15 @@ final signatureBytes = await _signatureController.toPngBytes();
             ),
           AppButton(
             label: context.loc.notReady,
-            type: EldButtonType.muted,
+            type: EldButtonType.secondary,
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(height: AppSpacing.md),
-          ListenableBuilder(
-            listenable: _signatureController,
-            builder: (context, _) {
-              return AppButton(
-                label: context.loc.agree.toUpperCase(),
-                type: EldButtonType.agree,
-                isLoading: state.isLoading,
-                onPressed: () {
-                  if (state.isLoading) return;
-                  if (!_formKey.currentState!.validate()) return;
-                  if (!widget.selectedLog.isFormComplete) {
-                    _showError(context.loc.fillFormFirst);
-                    return;
-                  }
-                  _onAgree();
-                },
-              );
-            },
+          AppButton(
+            label: context.loc.agree.toUpperCase(),
+            type: EldButtonType.agree,
+            isLoading: state.isLoading,
+            onPressed: _onAgree,
           ),
         ],
       ),
@@ -314,7 +248,7 @@ class _CarrierEditCard extends StatelessWidget {
 
   final CarrierProposedEditEntity edit;
   final bool busy;
-  final void Function(String action) onRespond;
+  final void Function(CarrierEditResponse response) onRespond;
 
   @override
   Widget build(BuildContext context) {
@@ -348,7 +282,7 @@ final summary = [
                 child: AppButton(
                   label: context.loc.reject,
                   type: EldButtonType.danger,
-                  onPressed: busy ? null : () => onRespond('REJECT'),
+                  onPressed: busy ? null : () => onRespond(CarrierEditResponse.reject),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -356,7 +290,7 @@ final summary = [
                 child: AppButton(
                   label: context.loc.accept,
                   type: EldButtonType.agree,
-                  onPressed: busy ? null : () => onRespond('ACCEPT'),
+                  onPressed: busy ? null : () => onRespond(CarrierEditResponse.accept),
                 ),
               ),
             ],

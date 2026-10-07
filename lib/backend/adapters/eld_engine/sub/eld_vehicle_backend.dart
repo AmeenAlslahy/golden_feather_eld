@@ -5,7 +5,7 @@ import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/vehicle_backend.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [VehicleBackend].
@@ -19,8 +19,7 @@ class EldVehicleBackend implements VehicleBackend {
   Future<Result<RawJson>> getCompanyFleet({DriverId? driverId}) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.companyVehicles,
-      queryParameters:
-          driverId != null ? {'driverId': driverId.value} : null,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: (data) {
         if (data is Map<String, dynamic>) return data;
         if (data is Map) return Map<String, dynamic>.from(data);
@@ -35,8 +34,7 @@ class EldVehicleBackend implements VehicleBackend {
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.myVehicles,
-      queryParameters:
-          driverId != null ? {'driverId': driverId.value} : null,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: (data) {
         if (data is Map<String, dynamic>) return data;
         if (data is Map) return Map<String, dynamic>.from(data);
@@ -46,5 +44,4 @@ class EldVehicleBackend implements VehicleBackend {
     );
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
-
 }

@@ -16,8 +16,16 @@ import 'package:golden_feather_eld/features/logs/domain/repositories/log_reposit
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/certify_tab.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/core/localization/locale_provider.dart';
 
 class _ReadyLogRepository extends Mock implements LogRepository {}
+
+/// Production wires MaterialApp.locale from localeProvider; keep both on 'en'.
+class _EnLocale extends StateNotifier<Locale> implements LocaleNotifier {
+  _EnLocale() : super(const Locale('en'));
+  @override
+  Future<void> setLocale(String languageCode) async => state = Locale(languageCode);
+}
 
 class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   MockAuthNotifier(super.state);
@@ -90,6 +98,7 @@ void main() {
             activeBackendProvider.overrideWithValue(mockAdapter),
             logRepositoryProvider.overrideWithValue(logRepository),
             authStateProvider.overrideWith((ref) => MockAuthNotifier(authState)),
+            localeProvider.overrideWith((ref) => _EnLocale()),
           ],
           child: MaterialApp(
             theme: AppTheme.light,

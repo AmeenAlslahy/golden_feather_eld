@@ -1,8 +1,8 @@
+import '../../../../core/network/api_client.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/daily_logs_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 import '../models/certify_dto.dart';
 import '../models/readiness_dto.dart';

@@ -7,7 +7,7 @@ import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/status_dashboard_backend.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 import '../mappers/status_dashboard_mapper.dart';
 
@@ -38,12 +38,16 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
   }) {
+    final effectiveNote = (notes != null && notes.trim().isNotEmpty)
+        ? notes.trim()
+        : _defaultNoteFor(status);
+
     return _apiClient
         .post<Map<String, dynamic>>(
           EldEndpoints.updateDutyStatus,
           data: {
             'dutyStatus': status.wire,
-            if (notes != null) 'notes': notes,
+            'notes': effectiveNote,
           },
           responseType: ResponseType.plain,
           parser: (data) {
@@ -96,5 +100,22 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
             response.data ?? const {},
           ),
         ));
+  }
+
+  static String _defaultNoteFor(DutyStatusCode status) {
+    switch (status) {
+      case DutyStatusCode.onDutyNotDriving:
+        return 'Available';
+      case DutyStatusCode.sleeperBerth:
+        return 'Sleeper Berth';
+      case DutyStatusCode.driving:
+        return 'Driving';
+      case DutyStatusCode.offDuty:
+        return 'Off Duty';
+      case DutyStatusCode.yardMove:
+        return 'Yard Move';
+      case DutyStatusCode.personalConveyance:
+        return 'Personal Conveyance';
+    }
   }
 }

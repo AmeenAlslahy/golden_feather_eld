@@ -241,7 +241,11 @@ class AboutPage extends ConsumerWidget {
                     // Retry for both server reads (data pages: retry + refresh).
                     IconButton(
                       tooltip: loc.refresh,
-                      icon: const Icon(Icons.refresh),
+                      color: context.styles.body.color,
+                      icon: Icon(
+                        Icons.refresh,
+                        color: context.styles.body.color,
+                      ),
                       onPressed: () {
                         ref.invalidate(hardwareStatusProvider);
                         ref.invalidate(hardwareReadinessProvider);

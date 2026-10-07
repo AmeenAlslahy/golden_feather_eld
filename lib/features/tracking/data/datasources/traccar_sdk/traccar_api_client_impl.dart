@@ -1,5 +1,6 @@
+import '../../../../../core/network/api_client.dart';
 import 'traccar_api_client.dart';
-import 'package:golden_feather_eld/backend/http/api_client.dart';
+import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
 
 /// تنفيذ واجهة TraccarApiClient باستخدام مكتبة ApiClient الموحدة.
 /// يتصل بالمسارات (Endpoints) الحقيقية الموثقة لـ Traccar.
@@ -15,7 +16,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
       String email, String password) async {
     try {
       final response = await _apiClient.post<dynamic>(
-        '/session',
+        EldEndpoints.session,
         data: {
           'email': email,
           'password': password,
@@ -43,7 +44,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   @override
   Future<List<Map<String, dynamic>>> getDevices() async {
     try {
-      final response = await _apiClient.get<dynamic>('/devices');
+      final response = await _apiClient.get<dynamic>(EldEndpoints.devices);
       return await response.match(
         (error) => throw Exception('Error getting devices: ${error.code}'),
         (res) {
@@ -63,7 +64,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   Future<List<Map<String, dynamic>>> getPositions(String deviceId) async {
     try {
       final response = await _apiClient.get<dynamic>(
-        '/positions',
+        EldEndpoints.positions,
         queryParameters: {'deviceId': deviceId},
       );
       return await response.match(
@@ -90,7 +91,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
       if (to != null) queryParams['to'] = to.toUtc().toIso8601String();
 
       final response = await _apiClient.get<dynamic>(
-        '/events',
+        EldEndpoints.events,
         queryParameters: queryParams,
       );
       return await response.match(
@@ -111,8 +112,10 @@ class TraccarApiClientImpl implements TraccarApiClient {
   @override
   Future<void> updatePosition(Map<String, dynamic> positionData) async {
     try {
-      final response = await _apiClient.post<dynamic>('/positions',
-          data: positionData);
+      final response = await _apiClient.post<dynamic>(
+        EldEndpoints.positions,
+        data: positionData,
+      );
       response.match(
         (error) => throw Exception('Error updating position: ${error.code}'),
         (res) {

@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/eld_engine_adapter.dart';
 import 'package:golden_feather_eld/backend/core/backend_kind.dart';
-import 'package:golden_feather_eld/backend/http/api_client.dart';
-import 'package:golden_feather_eld/backend/http/api_config.dart';
+import 'package:golden_feather_eld/core/network/api_client.dart';
+import 'package:golden_feather_eld/core/network/api_config.dart';
 
 void main() {
   late EldEngineAdapter adapter;

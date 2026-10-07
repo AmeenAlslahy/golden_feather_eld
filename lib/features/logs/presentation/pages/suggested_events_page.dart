@@ -49,13 +49,13 @@ return Scaffold(
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: context.loc.logsTitle,
-              type: EldButtonType.dark,
+              type: EldButtonType.primary,
               onPressed: () => context.go(AppRoutes.logs),
             ),
             const SizedBox(height: AppSpacing.md),
             AppButton(
               label: context.loc.unidentifiedEvents,
-              type: EldButtonType.dark,
+              type: EldButtonType.secondary,
               onPressed: () => context.push(AppRoutes.unidentifiedEvents),
             ),
           ],

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/time/time_authority_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../hos/presentation/providers/recap_provider.dart';
-import '../../../hos/presentation/providers/status_dashboard_providers.dart';
-import '../providers/logs_provider.dart';
 import '../providers/unidentified_events_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/error/user_facing_message.dart';
 
 class UnidentifiedEventsPage extends ConsumerStatefulWidget {
   const UnidentifiedEventsPage({super.key});
@@ -82,7 +82,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
   }
 
   Future<void> _pickDate() async {
-    final now = DateTime.now();
+    final now = ref.read(timeAuthorityProvider).nowUtc().toLocal();
     final picked = await showDatePicker(
       context: context,
       initialDate: _dateFilter ?? now,
@@ -124,7 +124,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
   Future<void> _annotate({
     required String title,
     required String hint,
-    required Future<String?> Function(String text) action,
+    required Future<Failure?> Function(String text) action,
   }) async {
     final controller = _annotation..clear();
     final text = await showDialog<String>(
@@ -158,16 +158,11 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
     final error = await action(text);
     if (!mounted) return;
     if (error != null) {
-      AppFeedback.error(context, error);
+      AppFeedback.error(context, anyErrorUserMessage(error, loc: context.loc));
       return;
     }
     _load();
-    // SRS 11.4 / 11.7: an accepted (or rejected) event changes the driver's
-    // daily record on the server — re-read logs, dashboard and recap so the
-    // new driving time and any re-certification flag show without a restart.
-    ref.read(logsProvider.notifier).loadLogs(refresh: true);
-    ref.invalidate(statusDashboardProvider);
-    ref.invalidate(recapProvider);
+    // Note: Dependencies (logs, dashboard, recap) are refreshed inside the notifier.
     AppFeedback.success(
       context,
       context.loc.yourRecordWasUpdatedReviewThe,
@@ -229,6 +224,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            color: AppColors.surface,
             onPressed: _load,
           ),
         ],
@@ -282,6 +278,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
                     ),
                   ),
                 _StatsRow(
+                  now: ref.read(timeAuthorityProvider).nowUtc(),
                   items: items,
                   tab: _tab,
                   unclaimedCount: state.unclaimedCount,
@@ -315,12 +312,14 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
 
 class _StatsRow extends StatelessWidget {
   const _StatsRow({
+    required this.now,
     required this.items,
     required this.tab,
     this.unclaimedCount,
     this.rejectedCount,
   });
 
+  final DateTime now;
   final List<Map<String, dynamic>> items;
   final UnidentifiedTab tab;
   final int? unclaimedCount;
@@ -331,7 +330,7 @@ class _StatsRow extends StatelessWidget {
     // SRS 11.6 counts unidentified *driving* inside a rolling 24-hour window,
     // not every driving row the server ever returned. A row without a
     // parseable time is still counted rather than silently hidden.
-    final since = DateTime.now().toUtc().subtract(const Duration(hours: 24));
+    final since = now.subtract(const Duration(hours: 24));
     final driving = items.where((item) {
       final status = '${item['dutyStatus'] ?? ''}'.toUpperCase();
       if (!status.contains('DRIV')) return false;

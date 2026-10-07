@@ -33,7 +33,7 @@ class RequestLogger extends Interceptor {
       'api_key',
       'credential',
       'auth',
-      'bearer'
+      'bearer',
     };
 
     if (data is Map) {
@@ -56,7 +56,15 @@ class RequestLogger extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     AppLogger.debug(
-        '✅ Response [${response.statusCode}] ${response.requestOptions.uri}');
+      '✅ Response [${response.statusCode}] ${response.requestOptions.uri}',
+    );
+    if (response.data != null &&
+        (response.requestOptions.uri.path.contains('/sessions') ||
+            response.requestOptions.uri.path.contains('/drivers'))) {
+      AppLogger.debug(
+        '📦 Response data: ${_redactSensitiveData(response.data)}',
+      );
+    }
     super.onResponse(response, handler);
   }
 
@@ -75,7 +83,8 @@ class RequestLogger extends Interceptor {
     if (err.type == DioExceptionType.badResponse) {
       final serverMsg = err.response?.statusMessage;
       AppLogger.error(
-          'Message: ${serverMsg ?? 'Server returned status code $statusCode'}');
+        'Message: ${serverMsg ?? 'Server returned status code $statusCode'}',
+      );
     } else if (err.error is FormatException) {
       AppLogger.error('Message: Response was not JSON');
     } else if (err.message != null && err.message!.isNotEmpty) {
@@ -88,20 +97,33 @@ class RequestLogger extends Interceptor {
       final data = err.response?.data;
       if (data is String) {
         if (data.trim().startsWith('<html')) {
-          final titleMatch =
-              RegExp(r'<title>(.*?)</title>', caseSensitive: false)
-                  .firstMatch(data);
-          final title =
-              titleMatch != null ? titleMatch.group(1) : 'HTML Error Page';
+          final titleMatch = RegExp(
+            r'<title>(.*?)</title>',
+            caseSensitive: false,
+          ).firstMatch(data);
+          final title = titleMatch != null
+              ? titleMatch.group(1)
+              : 'HTML Error Page';
           AppLogger.error('Data: [Server responded with HTML page: $title]');
         } else if (data.contains('org.hibernate') ||
             data.contains('PSQLException') ||
             data.contains('ELDPersistenceException')) {
-          AppLogger.error(
-              'Data: [Server database error — stack omitted from driver logs]');
+          final errorSnippet = data
+              .split(RegExp(r'[\r\n]+'))
+              .firstWhere(
+                (line) =>
+                    line.contains('Exception:') ||
+                    line.contains('ERROR:') ||
+                    line.contains('violates') ||
+                    line.contains('null value'),
+                orElse: () => data.length > 200 ? data.substring(0, 200) : data,
+              )
+              .trim();
+          AppLogger.error('Data: [Server database error: $errorSnippet]');
         } else {
           AppLogger.error(
-              'Data: ${data.length > 500 ? '${data.substring(0, 500)}...' : data}');
+            'Data: ${data.length > 500 ? '${data.substring(0, 500)}...' : data}',
+          );
         }
       } else {
         AppLogger.error('Data: $data');

@@ -27,3 +27,19 @@ abstract class RecapDay with _$RecapDay {
     required Duration totalWork,
   }) = _RecapDay;
 }
+
+/// ملحقات مساعدة لبيانات الملخص الأسبوعي
+extension WeeklyRecapX on WeeklyRecap {
+  /// ساعات العمل المسجلة لليوم الحالي (مطابقة لتاريخ اليوم).
+  Duration get todayWork {
+    final now = DateTime.now();
+    for (final day in days) {
+      if (day.date.year == now.year &&
+          day.date.month == now.month &&
+          day.date.day == now.day) {
+        return day.totalWork;
+      }
+    }
+    return Duration.zero;
+  }
+}

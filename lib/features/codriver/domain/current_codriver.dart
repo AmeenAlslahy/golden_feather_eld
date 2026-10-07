@@ -23,7 +23,8 @@ CurrentCoDriverRead? parseCurrentCoDriver(dynamic data) {
       : _asInt(nested['coDriverId'] ?? nested['id'] ?? nested['driverId']);
   final bodyId = _asInt(body['coDriverId']);
   final id = nestedId != null && nestedId > 0 ? nestedId : bodyId;
-  final team = body['teamDrivingActive'] == true ||
+  final team =
+      body['teamDrivingActive'] == true ||
       body['teamMode'] == true ||
       body['teamModeActive'] == true;
   if (id == null || id <= 0) {

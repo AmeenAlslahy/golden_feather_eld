@@ -4,17 +4,27 @@ import '../theme/app_spacing.dart';
 import '../theme/app_styles.dart';
 
 enum EldButtonType {
+  /// الزر الأساسي بلون الهوية الذهبي (Golden Feather Primary Gold)
   primary,
+
+  /// الزر الثانوي المؤطر (Outlined) بإطار ولون ذهبي أنيق وخلفية شفافة
+  secondary,
+
+  /// زر الاتصال والإجراءات الإيجابية والاعتماد (Success Green)
   connect,
+  agree,
+
+  /// الزر التحذيري أو الحذف أو الإلغاء الحرج (Danger Red)
+  danger,
+
+  /// للمطابقة مع الاستخدامات السابقة وتوجيهها للمظهر المناسب:
   continueDisconnected,
   send,
-  agree,
-  danger,
   dark,
   muted,
 }
 
-/// زر ملعب. حالة الضغط تغميق فوري (وليس Ripple فقط) حتى يظهر النقر.
+/// زر موحد في التطبيق مع رد فعل بصري فوري ودعم كامل للأشكال الدلالية.
 class AppButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -40,46 +50,84 @@ class AppButton extends StatefulWidget {
 class _AppButtonState extends State<AppButton> {
   bool _pressed = false;
 
-  bool get _onDark =>
-      widget.type == EldButtonType.continueDisconnected ||
-      widget.type == EldButtonType.dark ||
-      widget.type == EldButtonType.danger;
-
   bool get _enabled => widget.onPressed != null && !widget.isLoading;
 
+  bool get _isOutlined =>
+      widget.type == EldButtonType.secondary ||
+      widget.type == EldButtonType.continueDisconnected ||
+      widget.type == EldButtonType.dark ||
+      widget.type == EldButtonType.muted;
+
   Color _base(ThemeData theme) {
+    if (_isOutlined) return Colors.transparent;
     return switch (widget.type) {
-      EldButtonType.primary => AppColors.primaryGold,
-      EldButtonType.connect => const Color(0xFF4CAF50),
-      EldButtonType.agree => const Color(0xFF4CAF50),
-      EldButtonType.continueDisconnected => const Color(0xFF2C2C2E),
-      EldButtonType.dark => const Color(0xFF3A3A3C),
-      EldButtonType.send => const Color(0xFFB5EAD7),
-      EldButtonType.danger => theme.colorScheme.error,
-      EldButtonType.muted => const Color(0xFFC8C8C8),
+      EldButtonType.primary ||
+      EldButtonType.send =>
+        theme.colorScheme.primary,
+      EldButtonType.connect ||
+      EldButtonType.agree =>
+        AppColors.successGreen,
+      EldButtonType.danger =>
+        theme.colorScheme.error,
+      _ =>
+        theme.colorScheme.primary,
     };
   }
 
   Color _foreground(ThemeData theme) {
+    if (!_enabled) {
+      return theme.colorScheme.onSurface.withValues(alpha: 0.38);
+    }
+    if (_isOutlined) {
+      return AppColors.primaryGold;
+    }
     return switch (widget.type) {
-      EldButtonType.send => Colors.white,
-      EldButtonType.muted => Colors.white,
-      _ => Colors.white,
+      EldButtonType.primary ||
+      EldButtonType.send =>
+        theme.colorScheme.onPrimary,
+      EldButtonType.connect ||
+      EldButtonType.agree =>
+        Colors.white,
+      EldButtonType.danger =>
+        theme.colorScheme.onError,
+      _ =>
+        theme.colorScheme.onPrimary,
     };
+  }
+
+  OutlinedBorder _shape(ThemeData theme) {
+    if (_isOutlined) {
+      final borderColor = _enabled
+          ? AppColors.primaryGold
+          : theme.disabledColor.withValues(alpha: 0.35);
+      return StadiumBorder(
+        side: BorderSide(
+          color: borderColor,
+          width: 1.5,
+        ),
+      );
+    }
+    return const StadiumBorder();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final base = !_enabled &&
-            widget.type != EldButtonType.send &&
-            widget.type != EldButtonType.muted
-        ? theme.disabledColor
+    final base = !_enabled
+        ? (_isOutlined
+            ? Colors.transparent
+            : theme.colorScheme.onSurface.withValues(alpha: 0.12))
         : _base(theme);
-    final overlay = _onDark
-        ? Colors.white.withValues(alpha: 0.28)
-        : Colors.black.withValues(alpha: 0.28);
-    final color = _pressed && _enabled ? Color.alphaBlend(overlay, base) : base;
+
+    final overlay = _isOutlined
+        ? AppColors.primaryGold.withValues(alpha: 0.12)
+        : (widget.type == EldButtonType.danger
+            ? Colors.white.withValues(alpha: 0.28)
+            : Colors.black.withValues(alpha: 0.24));
+
+    final color = _pressed && _enabled
+        ? (_isOutlined ? overlay : Color.alphaBlend(overlay, base))
+        : base;
 
     return SizedBox(
       width: widget.isFullWidth ? double.infinity : null,
@@ -87,33 +135,19 @@ class _AppButtonState extends State<AppButton> {
       child: Material(
         color: color,
         elevation: 0,
-        shape: const StadiumBorder(),
+        shape: _shape(theme),
         clipBehavior: Clip.antiAlias,
-        child: Listener(
-          onPointerDown: _enabled
-              ? (_) {
-                  if (!_pressed) setState(() => _pressed = true);
-                }
-              : null,
-          onPointerUp: (_) {
-            if (_pressed) setState(() => _pressed = false);
-          },
-          onPointerCancel: (_) {
-            if (_pressed) setState(() => _pressed = false);
-          },
-          child: InkWell(
+        child: InkWell(
           onTap: _enabled ? widget.onPressed : null,
           onHighlightChanged: (value) {
             if (_pressed == value) return;
             setState(() => _pressed = value);
           },
-          customBorder: const StadiumBorder(),
+          customBorder: _shape(theme),
           splashColor: overlay,
           highlightColor: overlay,
           splashFactory: InkRipple.splashFactory,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 80),
-            color: Colors.transparent,
+          child: Container(
             alignment: Alignment.center,
             child: widget.isLoading
                 ? SizedBox(
@@ -127,7 +161,6 @@ class _AppButtonState extends State<AppButton> {
                 : _child(theme),
           ),
         ),
-        ),
       ),
     );
   }
@@ -135,6 +168,7 @@ class _AppButtonState extends State<AppButton> {
   Widget _child(ThemeData theme) {
     final style = theme.extension<AppStyles>()!.button.copyWith(
       color: _foreground(theme),
+      fontWeight: FontWeight.w700,
     );
     if (widget.icon != null) {
       return FittedBox(
@@ -155,3 +189,4 @@ class _AppButtonState extends State<AppButton> {
     );
   }
 }
+

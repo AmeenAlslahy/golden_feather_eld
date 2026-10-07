@@ -10,6 +10,9 @@ String anyErrorUserMessage(Object error, {required AppLocalizations loc}) {
     if (error is NetworkFailure || error.message == 'noInternet') {
       return loc.errNoInternet;
     }
+    if (error is ServerFailure && error.message.isNotEmpty && _isSafeUserFacingText(error.message)) {
+      return error.message;
+    }
     return loc.errRequestFailed;
   }
   if (error is String) {

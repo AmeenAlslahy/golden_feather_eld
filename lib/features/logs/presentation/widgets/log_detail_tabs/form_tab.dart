@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/error/user_facing_message.dart';
 import '../../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../vehicle/domain/entities/vehicle.dart';
 import '../../../../vehicle/domain/vehicle_selection.dart';
+import '../../controllers/form_tab_controller.dart';
 import '../../widgets/vehicle_picker_dialog.dart';
 import '../../widgets/codriver_picker_dialog.dart';
 import '../../pages/trailers_page.dart';
 import '../../pages/shipping_documents_page.dart';
 import '../../providers/logs_provider.dart';
 import '../../../domain/daily_form_rules.dart';
-import '../../../domain/entities/daily_log.dart';
 import '../../../domain/entities/daily_form_update.dart';
 import '../../../../../core/widgets/app_feedback.dart';
 
@@ -66,6 +64,9 @@ class _FormTabState extends ConsumerState<FormTab> {
                     context: context,
                     builder: (_) => VehiclePickerDialog(
                       currentVehicleId: dashboard.vehicleId,
+                      // النموذج اليومي يسجل المركبة المشغَّلة — ليس اختياراً
+                      // من أسطول الشركة بأكمله.
+                      allowCompanyFleet: false,
                     ),
                   );
                   if (vehicle != null && context.mounted) {
@@ -161,11 +162,13 @@ class _FormTabState extends ConsumerState<FormTab> {
             const SizedBox(height: AppSpacing.xl),
             AppButton(
               label: context.loc.saveButton.toUpperCase(),
-              type: EldButtonType.agree,
+              type: EldButtonType.primary,
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
                 final selectedLog = ref.read(logsProvider).selectedLog;
                 if (selectedLog == null) return;
+                
+                final controller = ref.read(formTabControllerProvider(selectedLog).notifier);
 
                 final form = _dailyFormPayload(
                   dashboard,
@@ -178,52 +181,20 @@ class _FormTabState extends ConsumerState<FormTab> {
                   return;
                 }
 
-                final saved = await ref
-                    .read(logRepositoryProvider)
-                    .saveForm(logId: selectedLog.id, form: form.update!);
-                if (!context.mounted) return;
-                saved.fold(
-                  (error) {
-                    AppFeedback.error(
-                      context,
-                      anyErrorUserMessage(
-                        error,
-                        loc: AppLocalizations.of(context)!,
-                      ),
-                    );
+                final error = await controller.saveForm(
+                  update: form.update!,
+                  loc: context.loc,
+                  onSuccess: (msg) {
+                    if (context.mounted) AppFeedback.success(context, msg);
                   },
-                  (result) {
-                    if (result.isOffline) {
-                      AppFeedback.success(
-                        context,
-                        context.loc.formSavedOffline,
-                      );
-                      return;
-                    }
-
-                    final read = result.syncedData!;
-                    if (read.complete != null) {
-                      ref
-                          .read(logsProvider.notifier)
-                          .updateLog(
-                            selectedLog.copyWith(
-                              isFormComplete: read.complete,
-                              formStatus: read.complete!
-                                  ? FormStatus.completed
-                                  : FormStatus.incomplete,
-                            ),
-                          );
-                    }
-                    final text =
-                        read.message ??
-                        (read.complete == true
-                            ? context.loc.successMessage
-                            : read.complete == false
-                            ? context.loc.serverSavedFormIncomplete
-                            : context.loc.serverSavedFormNoStatus);
-                    AppFeedback.info(context, text);
+                  onOffline: (msg) {
+                    if (context.mounted) AppFeedback.success(context, msg);
                   },
                 );
+
+                if (error != null && context.mounted) {
+                  AppFeedback.error(context, error);
+                }
               },
             ),
           ],

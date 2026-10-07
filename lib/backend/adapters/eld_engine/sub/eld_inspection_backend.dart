@@ -4,7 +4,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/inspection_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 import '../mappers/dot_inspection_mapper.dart';
 

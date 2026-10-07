@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart' as fp;
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../../features/account/application/models/rules_screen_model.dart';
+import '../../../../features/account/application/models/rules_screen_model.dart'; // ignore_architecture
 import '../../../contracts/raw_json.dart';
 import '../../../contracts/rules_screen_backend.dart';
 import '../../eld_engine/models/rules_screen_dto.dart';

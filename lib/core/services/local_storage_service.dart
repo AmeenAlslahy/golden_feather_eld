@@ -64,6 +64,7 @@ class LocalStorageService implements ServerConfigProvider {
           'backend_type',
           'hos_configuration',
           'onboarding_seen',
+          'trusted_time_anchor',
         },
       ),
     );

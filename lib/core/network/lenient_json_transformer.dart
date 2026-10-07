@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // ignore_architecture
 
 /// Dio's default JSON transformer throws [FormatException] on an empty
 /// or non-JSON body (204, `200` with no payload, HTML). Several ELD

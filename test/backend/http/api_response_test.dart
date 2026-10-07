@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/backend/http/api_response.dart';
+import 'package:golden_feather_eld/core/network/api_response.dart';
 
 void main() {
   group('ApiResponse — direct response', () {

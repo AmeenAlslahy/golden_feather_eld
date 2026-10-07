@@ -3,7 +3,7 @@ import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/dvir_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [DvirBackend].

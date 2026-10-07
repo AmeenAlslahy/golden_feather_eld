@@ -49,6 +49,8 @@ Map<String, dynamic>? _asMap(dynamic data) {
 
 String? _text(dynamic value) {
   final text = value?.toString().trim();
-  if (text == null || text.isEmpty || text == 'null' || text == 'string') return null;
+  if (text == null || text.isEmpty || text == 'null' || text == 'string') {
+    return null;
+  }
   return text;
 }

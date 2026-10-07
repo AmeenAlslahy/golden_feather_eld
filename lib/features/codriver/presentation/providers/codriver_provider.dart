@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/providers/codriver_repository_providers.dart';
 import '../../domain/current_codriver.dart';
 import '../../domain/entities/codriver.dart';
@@ -40,10 +41,12 @@ class CoDriverState {
     return CoDriverState(
       availableDrivers: availableDrivers ?? this.availableDrivers,
       selectedCoDriver: selectedCoDriver ?? this.selectedCoDriver,
-      currentCoDriver:
-          clearCurrent ? currentCoDriver : (currentCoDriver ?? this.currentCoDriver),
-      currentError:
-          clearCurrentError ? currentError : (currentError ?? this.currentError),
+      currentCoDriver: clearCurrent
+          ? currentCoDriver
+          : (currentCoDriver ?? this.currentCoDriver),
+      currentError: clearCurrentError
+          ? currentError
+          : (currentError ?? this.currentError),
       isLoading: isLoading ?? this.isLoading,
       isSwitching: isSwitching ?? this.isSwitching,
       error: error,
@@ -52,17 +55,26 @@ class CoDriverState {
 }
 
 /// مزود السائق المساعد
-final codriverProvider =
-    StateNotifierProvider<CoDriverNotifier, CoDriverState>((ref) {
-  return CoDriverNotifier(repository: ref.watch(coDriverRepositoryProvider));
-});
+final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>(
+  (ref) {
+    return CoDriverNotifier(
+      repository: ref.watch(coDriverRepositoryProvider),
+      driverId: ref.watch(currentDriverIdProvider) ?? 0,
+    );
+  },
+);
 
 class CoDriverNotifier extends StateNotifier<CoDriverState> {
   final CoDriverRepository _repository;
 
-  CoDriverNotifier({required CoDriverRepository repository})
-      : _repository = repository,
-        super(const CoDriverState()) {
+  /// هوية السائق الحالي — يُستبعد من قائمة المساعدين دائماً (لا يربط
+  /// السائق نفسه كمساعد ولا يبدّل الأدوار مع نفسه).
+  final int _driverId;
+
+  CoDriverNotifier({required CoDriverRepository repository, int driverId = 0})
+    : _repository = repository,
+      _driverId = driverId,
+      super(const CoDriverState()) {
     _loadDrivers();
   }
 
@@ -78,7 +90,13 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
     var next = state.copyWith(isLoading: false, error: null);
     driversResult.fold(
       (failure) => next = next.copyWith(error: failure.message),
-      (drivers) => next = next.copyWith(availableDrivers: drivers, error: null),
+      (drivers) => next = next.copyWith(
+        // استبعاد السائق نفسه من قائمة المساعدين (الرد قد يتضمنه).
+        availableDrivers: drivers
+            .where((d) => int.tryParse(d.id) != _driverId)
+            .toList(),
+        error: null,
+      ),
     );
     currentResult.fold(
       (failure) => next = next.copyWith(
@@ -121,36 +139,8 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
     );
   }
 
-  /// Link or remove the session co-driver. Form co-driver is unchanged.
-  Future<String?> applySessionCoDriver({
-    required CoDriver driver,
-    required String? uniqueId,
-  }) async {
-    final remove = driver.id == 'none' || driver.id.isEmpty;
-    final coId = int.tryParse(driver.id);
-    final result = await _repository.updateSessionCoDriver(
-      remove: remove,
-      coDriverId: remove ? null : coId,
-      uniqueId: uniqueId,
-    );
-    if (!mounted) return 'Link was interrupted.';
-    final message = result.fold(
-      (failure) {
-        state = state.copyWith(error: failure.message);
-        return failure.message;
-      },
-      (_) {
-        selectCoDriver(driver);
-        state = state.copyWith(error: null);
-        return null;
-      },
-    );
-    if (message == null) await _refreshCurrent();
-    return message;
-  }
-
   /// تبديل الأدوار
-  Future<String?> switchDrivers() async {
+  Future<String?> switchDrivers({String? reason}) async {
     final id = int.tryParse(state.selectedCoDriver?.id ?? '');
     if (id == null || id <= 0) {
       const message = 'Select a co-driver before switching.';
@@ -158,7 +148,10 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
       return message;
     }
     state = state.copyWith(isSwitching: true, error: null);
-    final result = await _repository.switchPrimary(coDriverId: id);
+    final result = await _repository.switchPrimary(
+      coDriverId: id,
+      reason: reason,
+    );
     if (!mounted) return 'Switch was interrupted.';
     final message = result.fold(
       (failure) {

@@ -5,6 +5,7 @@ import '../features/logs/presentation/pages/log_detail_page.dart';
 import '../features/logs/presentation/pages/edit_log_page.dart';
 import '../features/logs/presentation/pages/suggested_events_page.dart';
 import '../features/logs/presentation/pages/unidentified_events_page.dart';
+import '../features/logs/domain/entities/daily_log.dart';
 
 class LogsRoutes {
   LogsRoutes._();
@@ -34,7 +35,7 @@ class LogsRoutes {
           path: AppRoutes.editLog,
           name: 'editLog',
           builder: (context, state) {
-            final event = state.extra; // تمرير الـ event كـ extra
+            final event = state.extra as LogEvent?; // تمرير الـ event كـ extra
             return EditLogPage(event: event);
           },
         ),

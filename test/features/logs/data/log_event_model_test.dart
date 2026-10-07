@@ -35,7 +35,7 @@ void main() {
 
     test('maps every wire status to its short code', () {
       String code(String wire) =>
-          LogEventModel.fromJson(<String, dynamic>{'status': wire, 'durationMinutes': 1}).status;
+          LogEventModel.fromJson(<String, dynamic>{'id': 1, 'startTime': '2026-09-24T00:00:00Z', 'status': wire, 'durationMinutes': 1}).status;
       expect(code('OFF_DUTY'), 'OFF');
       expect(code('SLEEPER'), 'SB');
       expect(code('DRIVING'), 'D');

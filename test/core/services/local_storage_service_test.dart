@@ -38,4 +38,13 @@ void main() {
     expect(storage.serverUrl, isA<String>());
     expect(storage.backendType, isA<String>());
   });
+
+  test('trusted_time_anchor reads and writes without allowlist rejection',
+      () async {
+    final storage = LocalStorageService();
+    await storage.init();
+
+    await storage.prefs.setString('trusted_time_anchor', '{"anchor":"test"}');
+    expect(storage.prefs.getString('trusted_time_anchor'), '{"anchor":"test"}');
+  });
 }

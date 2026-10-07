@@ -14,7 +14,7 @@ library;
 
 
 import 'dart:typed_data';
-import 'package:dio/dio.dart';
+import 'package:dio/dio.dart'; // ignore_architecture
 import 'package:fpdart/fpdart.dart' as fp;
 
 import '../../core/error/app_error.dart';

@@ -1,8 +1,8 @@
+import '../../../../core/network/api_client.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/duty_status_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [DutyStatusBackend].
@@ -54,7 +54,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   Future<Result<void>> submitLegacyDutyStatusEvent(
       int driverId, RawJson payload) async {
     final response = await _apiClient.post<dynamic>(
-      '/eld/duty-status',
+      EldEndpoints.recordDutyStatus,
       data: payload,
     );
     return response.map((res) {
@@ -68,7 +68,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   @override
   Future<Result<void>> submitLegacyGenericEvent(RawJson payload) async {
     final response = await _apiClient.post<dynamic>(
-      '/events',
+      EldEndpoints.events,
       data: payload,
     );
     return response.map((res) {

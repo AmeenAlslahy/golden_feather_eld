@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../sync/data/providers/sync_providers.dart';
+import '../../../../core/time/time_authority_provider.dart';
+import '../../../../core/di/id_generator_provider.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../datasources/log_local_data_source.dart';
 import '../repositories/log_repository_impl.dart';
@@ -16,5 +19,7 @@ final logRepositoryProvider = Provider<LogRepository>((ref) {
     dutyStatusBackend: ref.watch(dutyStatusBackendProvider),
     networkInfo: ref.watch(networkInfoProvider),
     offlineQueue: ref.watch(offlineQueueProvider),
+    timeAuthority: ref.watch(timeAuthorityProvider),
+    idGenerator: ref.watch(idGeneratorProvider),
   );
 });

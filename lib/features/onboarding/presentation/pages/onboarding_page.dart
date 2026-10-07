@@ -159,7 +159,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ? loc.onboardingGetStarted
                       : loc.onboardingNext,
                   onPressed: _next,
-                  type: EldButtonType.send,
+                  type: EldButtonType.primary,
                 ),
               ),
             ),

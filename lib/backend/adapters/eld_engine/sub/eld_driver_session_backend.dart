@@ -1,10 +1,10 @@
 import '../../../../core/error/app_error.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/contract_enums.dart';
 import '../../../contracts/driver_session_backend.dart';
 import '../../../contracts/raw_json.dart';
-import '../../../http/api_client.dart';
 import '../../../http/eld_endpoints.dart';
 
 /// ELD Engine implementation of [DriverSessionBackend].
@@ -37,7 +37,7 @@ class EldDriverSessionBackend implements DriverSessionBackend {
 
   @override
   Future<Result<List<dynamic>>> getAvailableDrivers() async {
-    final response = await _apiClient.get<List<dynamic>>('/drivers');
+    final response = await _apiClient.get<List<dynamic>>(EldEndpoints.drivers);
     return response.map((res) {
       if (res.isSuccess && res.data != null) {
         return res.data!;

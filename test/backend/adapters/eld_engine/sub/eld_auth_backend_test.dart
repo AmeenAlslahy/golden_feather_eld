@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_auth_backend.dart';
-import 'package:golden_feather_eld/backend/http/api_client.dart';
+import 'package:golden_feather_eld/core/network/api_client.dart';
 import 'package:golden_feather_eld/core/network/api_config.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 
