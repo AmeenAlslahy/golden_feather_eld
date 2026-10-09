@@ -357,7 +357,21 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      // SRS 6.8 — Offline fallback: allows driver to review and sign offline,
+      // which is then enqueued into the offline sync queue.
+      return Right(
+        LogReadiness(
+          dailyLogId: logId.value,
+          driverId: 0,
+          driverName: '',
+          logDate: '',
+          readinessStatus: 'READY',
+          missingRequirements: const [],
+          legalStatement: '',
+          availableActions: const ['CERTIFY'],
+          pendingCarrierEdits: const [],
+        ),
+      );
     }
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.getReadiness(logId);

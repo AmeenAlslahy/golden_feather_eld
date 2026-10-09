@@ -298,45 +298,30 @@ void main() {
   });
 
   testWidgets(
-    'PIN dialog validates, and closing it does not touch a disposed controller',
+    'starting inspection starts directly without requiring PIN',
     (tester) async {
+      final repository = _MockInspectionRepository();
+      registerFallbackValue(const DriverId(101));
+      final d0 = DateTime.utc(2026, 1, 13);
+      when(() => repository.getCycle(driverId: any(named: 'driverId'), days: any(named: 'days')))
+          .thenAnswer((_) async => Right([_cycleDay(d0)]));
+      when(() => repository.getLogs(driverId: any(named: 'driverId'), date: any(named: 'date')))
+          .thenAnswer((_) async => Right(_logFor(d0)));
+      when(() => repository.registerInspectionStart(driverId: any(named: 'driverId')))
+          .thenAnswer((_) async => const Right(unit));
+
       await pump(tester, allowStart: true);
       final start = find.widgetWithText(AppButton, 'START INSPECTION');
       expect(tester.widget<AppButton>(start).onPressed, isNotNull);
 
       await tester.tap(start);
       await tester.pumpAndSettle();
-      expect(find.text('Inspection PIN'), findsOneWidget);
-
-      // Non-digit paste attempt → stripped by the digits-only formatter.
-      await tester.enterText(find.byType(TextField).first, 'abcd');
-      await tester.tap(find.text('Start'));
-      await tester.pumpAndSettle();
-      expect(find.text('PIN must be 4 digits.'), findsOneWidget);
-
-      // Too short → refused inside the dialog.
-      await tester.enterText(find.byType(TextField).first, '12');
-      await tester.tap(find.text('Start'));
-      await tester.pumpAndSettle();
-      expect(find.text('PIN must be 4 digits.'), findsOneWidget);
-
-      // Mismatch → refused.
-      await tester.enterText(find.byType(TextField).first, '1234');
-      await tester.enterText(find.byType(TextField).last, '4321');
-      await tester.tap(find.text('Start'));
-      await tester.pumpAndSettle();
-      expect(find.text('The PINs do not match.'), findsOneWidget);
-
-      // Cancel: the exit animation used to throw
-      // "A TextEditingController was used after being disposed".
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
       expect(find.text('Inspection PIN'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
-  testWidgets('driver exit checks the inspection PIN locally, no server call', (
+  testWidgets('driver exit directly ends inspection, no server call', (
     tester,
   ) async {
     final repository = _MockInspectionRepository();
@@ -368,10 +353,8 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(unit));
 
-    // Decision D: the PIN is seeded through startInspection — the public
-    // lifecycle — never by writing state directly.
     final notifier = _LockedInspection(repository);
-    await notifier.startInspection(pin: '1234');
+    await notifier.startInspection();
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -396,50 +379,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Locked: the app bar shows the lock, not the drawer menu.
+    // Tap lock icon to exit directly
     await tester.tap(find.byIcon(Icons.lock));
     await tester.pumpAndSettle();
-    // Scoped to the dialog: the active view behind it shows its own
-    // 'Driver exit' button now that the seed renders a full log.
-    final dialogTitle = find.descendant(
-      of: find.byType(AlertDialog),
-      matching: find.text('Driver exit'),
-    );
-    expect(dialogTitle, findsOneWidget);
-
-    // Empty → required.
-    await tester.tap(find.text('Exit'));
-    await tester.pumpAndSettle();
-    expect(find.text('Enter the inspection PIN.'), findsOneWidget);
-
-    // Wrong PIN → refused, still locked.
-    await tester.enterText(find.byType(TextField), '9999');
-    await tester.tap(find.text('Exit'));
-    await tester.pumpAndSettle();
-    expect(find.text('Incorrect PIN.'), findsOneWidget);
-    expect(dialogTitle, findsOneWidget);
-
-    // Correct PIN → inspection ends. The exit itself never touched the
-    // server: no cycle/log reload, no transfer — the only repository call
-    // after unlock is the start view's own screen fetch (stubbed above).
-    await tester.enterText(find.byType(TextField), '1234');
-    await tester.tap(find.text('Exit'));
-    await tester.pumpAndSettle();
-    expect(find.text('Driver exit'), findsNothing);
     expect(find.byIcon(Icons.lock), findsNothing);
-    // Seed made exactly one cycle+log call; the exit added none.
-    verify(
-      () => repository.getCycle(
-        driverId: any(named: 'driverId'),
-        days: any(named: 'days'),
-      ),
-    ).called(1);
-    verify(
-      () => repository.getLogs(
-        driverId: any(named: 'driverId'),
-        date: any(named: 'date'),
-      ),
-    ).called(1);
+
     verifyNever(
       () => repository.sendLogs(
         driverId: any(named: 'driverId'),

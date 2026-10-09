@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -12,10 +14,11 @@ import '../../domain/inspection_transfer.dart';
 import '../providers/inspection_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/error/user_facing_message.dart';
+import '../../../../core/constants/fmcsa_constants.dart';
 
 /// FMCSA ELD submission mailbox (49 CFR §395 Appendix A, telematics email
 /// option). Shown pre-filled; the officer can replace it.
-const String kFmcsaEldEmail = 'fmcsaeldsub@dot.gov';
+const String kFmcsaEldEmail = FmcsaConstants.fmcsaSubEmail;
 
 /// Default output-file comment for the email channel (4–60 chars).
 const String kDefaultEmailComment = 'Email logs transfer';
@@ -157,16 +160,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
         title: Text(title, style: context.styles.appBarTitle),
       ),
       body: _sent
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                child: Text(
-                  message ?? loc.transferAccepted,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            )
+          ? _buildSuccessView(context, message, loc)
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
               child: Column(
@@ -188,10 +182,18 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _FieldLabel(loc.comment),
-                    AppTextField(controller: _commentController, hint: ''),
+                    AppTextField(
+                      controller: _commentController,
+                      hint: '',
+                      keyboardType: TextInputType.text,
+                    ),
                   ] else ...[
                     _FieldLabel(loc.comment),
-                    AppTextField(controller: _commentController, hint: ''),
+                    AppTextField(
+                      controller: _commentController,
+                      hint: '',
+                      keyboardType: TextInputType.text,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     _FieldLabel(loc.dataTransferType),
                     DropdownButtonFormField<TransferMethod>(
@@ -243,6 +245,66 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildSuccessView(
+    BuildContext context,
+    String? message,
+    AppLocalizations loc,
+  ) {
+    final isOffline = message != null && message.startsWith('OFFLINE_GENERATED:');
+    final localPath = isOffline ? message.substring('OFFLINE_GENERATED:'.length) : null;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              color: Color(0xFF28A745),
+              size: 64,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              isOffline
+                  ? loc.offlineEldGeneratedTitle
+                  : (message ?? loc.transferAccepted),
+              textAlign: TextAlign.center,
+              style: context.styles.pageTitle.copyWith(fontSize: 18),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              isOffline
+                  ? loc.offlineEldGeneratedDesc
+                  : (message ?? loc.transferAccepted),
+              textAlign: TextAlign.center,
+              style: context.styles.body,
+            ),
+            if (isOffline && localPath != null) ...[
+              const SizedBox(height: AppSpacing.xl),
+              AppButton(
+                label: loc.shareOrExportCsv,
+                type: EldButtonType.primary,
+                onPressed: () {
+                  Share.shareXFiles(
+                    [XFile(localPath)],
+                    text: 'FMCSA ELD Output File - Roadside Inspection',
+                  );
+                },
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: loc.okButton,
+              type: EldButtonType.secondary,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

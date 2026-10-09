@@ -29,7 +29,47 @@ class _FormTabState extends ConsumerState<FormTab> {
 
   @override
   Widget build(BuildContext context) {
+    final logsState = ref.watch(logsProvider);
+    final selectedLog = logsState.selectedLog;
+    final serverForm = logsState.serverForm;
     final dashboard = ref.watch(dashboardDataProvider);
+
+    // استخراج القيم الفعلية المسترجعة من الخادم للسجل المحدد حالياً
+    final driverDisplayName = (selectedLog?.driverName?.isNotEmpty == true)
+        ? selectedLog!.driverName!
+        : dashboard.driverName;
+
+    final vehicleDisplayName = (serverForm?.vehicleName?.isNotEmpty == true)
+        ? serverForm!.vehicleName!
+        : ((selectedLog?.vehicleName?.isNotEmpty == true)
+            ? selectedLog!.vehicleName!
+            : dashboard.vehicleDisplayName);
+
+    final vehicleUniqueId = (serverForm?.vehicleUniqueId?.isNotEmpty == true)
+        ? serverForm!.vehicleUniqueId!
+        : ((selectedLog?.uniqueId.isNotEmpty == true)
+            ? selectedLog!.uniqueId
+            : dashboard.vehicleId);
+
+    final trailersDisplay = (serverForm?.trailers != null && serverForm!.trailers.isNotEmpty)
+        ? joinFormList(serverForm.trailers)
+        : ((selectedLog != null && selectedLog.trailers.isNotEmpty)
+            ? joinFormList(selectedLog.trailers)
+            : (dashboard.trailerId ?? '-'));
+
+    final shippingDocsDisplay = (serverForm?.shippingDocuments != null && serverForm!.shippingDocuments.isNotEmpty)
+        ? joinFormList(serverForm.shippingDocuments)
+        : ((selectedLog != null && selectedLog.shippingDocuments.isNotEmpty)
+            ? joinFormList(selectedLog.shippingDocuments)
+            : (dashboard.shippingDocuments ?? '-'));
+
+    final coDriverDisplayName = (serverForm?.coDriverName?.isNotEmpty == true)
+        ? serverForm!.coDriverName!
+        : (dashboard.coDriverName ?? '-');
+
+    final coDriverIdValue = (serverForm?.coDriverId != null && serverForm!.coDriverId! > 0)
+        ? '${serverForm.coDriverId}'
+        : (dashboard.coDriverId ?? 'none');
 
     return Form(
       key: _formKey,
@@ -38,15 +78,20 @@ class _FormTabState extends ConsumerState<FormTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildFormRow(context, context.loc.driver, dashboard.driverName),
+            _buildFormRow(
+              context,
+              context.loc.driver,
+              driverDisplayName,
+            ),
             Divider(color: Theme.of(context).dividerColor, height: 1),
             FormField<String>(
-              initialValue: dashboard.vehicleId,
+              key: ValueKey('vehicle_${selectedLog?.id}_${serverForm?.vehicleUniqueId}_$vehicleUniqueId'),
+              initialValue: vehicleUniqueId,
               validator: (_) {
                 final uniqueId =
-                    readOperableUniqueId(dashboard.vehicleId) ??
+                    readOperableUniqueId(vehicleUniqueId) ??
                     readOperableUniqueId(
-                      ref.read(logsProvider).selectedLog?.uniqueId ?? '',
+                      selectedLog?.uniqueId ?? '',
                     ) ??
                     '';
                 if (uniqueId.isEmpty) {
@@ -57,15 +102,13 @@ class _FormTabState extends ConsumerState<FormTab> {
               builder: (field) => _buildFormRow(
                 context,
                 context.loc.vehicles,
-                dashboard.vehicleDisplayName,
+                vehicleDisplayName,
                 errorText: field.errorText,
                 onEdit: () async {
                   final vehicle = await showDialog<Vehicle>(
                     context: context,
                     builder: (_) => VehiclePickerDialog(
-                      currentVehicleId: dashboard.vehicleId,
-                      // النموذج اليومي يسجل المركبة المشغَّلة — ليس اختياراً
-                      // من أسطول الشركة بأكمله.
+                      currentVehicleId: vehicleUniqueId,
                       allowCompanyFleet: false,
                     ),
                   );
@@ -79,7 +122,8 @@ class _FormTabState extends ConsumerState<FormTab> {
             ),
             Divider(color: Theme.of(context).dividerColor, height: 1),
             FormField<String>(
-              initialValue: dashboard.trailerId,
+              key: ValueKey('trailers_${selectedLog?.id}_$trailersDisplay'),
+              initialValue: trailersDisplay == '-' ? '' : trailersDisplay,
               validator: (value) {
                 for (final trailer in splitFormList(value)) {
                   final error = trailerNumberError(trailer, context.loc);
@@ -90,7 +134,7 @@ class _FormTabState extends ConsumerState<FormTab> {
               builder: (field) => _buildFormRow(
                 context,
                 context.loc.trailers,
-                dashboard.trailerId ?? '-',
+                trailersDisplay,
                 errorText: field.errorText,
                 onEdit: () {
                   Navigator.push(
@@ -102,7 +146,8 @@ class _FormTabState extends ConsumerState<FormTab> {
             ),
             Divider(color: Theme.of(context).dividerColor, height: 1),
             FormField<String>(
-              initialValue: dashboard.shippingDocuments,
+              key: ValueKey('shipping_${selectedLog?.id}_$shippingDocsDisplay'),
+              initialValue: shippingDocsDisplay == '-' ? '' : shippingDocsDisplay,
               validator: (value) {
                 for (final doc in splitFormList(value)) {
                   final error = shippingDocumentError(doc, context.loc);
@@ -113,7 +158,7 @@ class _FormTabState extends ConsumerState<FormTab> {
               builder: (field) => _buildFormRow(
                 context,
                 context.loc.shippingDocuments,
-                dashboard.shippingDocuments ?? '-',
+                shippingDocsDisplay,
                 errorText: field.errorText,
                 onEdit: () {
                   Navigator.push(
@@ -127,7 +172,8 @@ class _FormTabState extends ConsumerState<FormTab> {
             ),
             Divider(color: Theme.of(context).dividerColor, height: 1),
             FormField<String>(
-              initialValue: dashboard.coDriverId,
+              key: ValueKey('codriver_${selectedLog?.id}_$coDriverIdValue'),
+              initialValue: coDriverIdValue,
               validator: (value) {
                 final rawCoDriver = value?.trim();
                 if (rawCoDriver != null &&
@@ -142,13 +188,13 @@ class _FormTabState extends ConsumerState<FormTab> {
               builder: (field) => _buildFormRow(
                 context,
                 context.loc.coDriver,
-                dashboard.coDriverName ?? '-',
+                coDriverDisplayName,
                 errorText: field.errorText,
                 onEdit: () async {
                   final coDriver = await showDialog<CoDriver>(
                     context: context,
                     builder: (_) => CoDriverPickerDialog(
-                      currentCoDriverId: dashboard.coDriverId ?? 'none',
+                      currentCoDriverId: coDriverIdValue,
                     ),
                   );
                   if (coDriver != null && context.mounted) {
@@ -165,18 +211,19 @@ class _FormTabState extends ConsumerState<FormTab> {
               type: EldButtonType.primary,
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
-                final selectedLog = ref.read(logsProvider).selectedLog;
                 if (selectedLog == null) return;
                 
                 final controller = ref.read(formTabControllerProvider(selectedLog).notifier);
 
                 final form = _dailyFormPayload(
-                  dashboard,
-                  selectedLog.uniqueId,
-                  context.loc,
+                  vehicleUniqueId: vehicleUniqueId,
+                  trailersRaw: trailersDisplay == '-' ? '' : trailersDisplay,
+                  shippingDocsRaw: shippingDocsDisplay == '-' ? '' : shippingDocsDisplay,
+                  coDriverIdRaw: coDriverIdValue,
+                  logUniqueId: selectedLog.uniqueId,
+                  loc: context.loc,
                 );
                 if (form.error != null) {
-                  // Should be caught by form fields above, but fallback just in case
                   AppFeedback.error(context, form.error!);
                   return;
                 }
@@ -271,14 +318,16 @@ class _DailyFormPayload {
 }
 
 /// Builds `UpdateDailyFormRequest` from the live contract.
-/// Arrays are objects, never bare strings. `coDriverId` is an integer or null.
-_DailyFormPayload _dailyFormPayload(
-  DashboardData dashboard,
-  String logUniqueId,
-  AppLocalizations loc,
-) {
+_DailyFormPayload _dailyFormPayload({
+  required String vehicleUniqueId,
+  required String trailersRaw,
+  required String shippingDocsRaw,
+  required String coDriverIdRaw,
+  required String logUniqueId,
+  required AppLocalizations loc,
+}) {
   final uniqueId =
-      readOperableUniqueId(dashboard.vehicleId) ??
+      readOperableUniqueId(vehicleUniqueId) ??
       readOperableUniqueId(logUniqueId) ??
       '';
   if (uniqueId.isEmpty) {
@@ -286,30 +335,28 @@ _DailyFormPayload _dailyFormPayload(
   }
 
   final trailers = <String>[];
-  for (final trailer in splitFormList(dashboard.trailerId)) {
+  for (final trailer in splitFormList(trailersRaw)) {
     final error = trailerNumberError(trailer, loc);
     if (error != null) return _DailyFormPayload(null, error);
     trailers.add(trailer);
   }
 
   final documents = <String>[];
-  for (final document in splitFormList(dashboard.shippingDocuments)) {
+  for (final document in splitFormList(shippingDocsRaw)) {
     final error = shippingDocumentError(document, loc);
     if (error != null) return _DailyFormPayload(null, error);
     documents.add(document);
   }
 
   int? coDriverId;
-  final rawCoDriver = dashboard.coDriverId?.trim();
-  if (rawCoDriver != null && rawCoDriver.isNotEmpty && rawCoDriver != 'none') {
+  final rawCoDriver = coDriverIdRaw.trim();
+  if (rawCoDriver.isNotEmpty && rawCoDriver != 'none') {
     coDriverId = int.tryParse(rawCoDriver);
     if (coDriverId == null) {
       return _DailyFormPayload(null, loc.coDriverMustBeServerId);
     }
   }
 
-  // SRS 5.13: عند غياب المساعد يُرسل coDriverId: null صراحةً — لا يُحذف
-  // الحقل — والقوائم تُرسل [] حتى عند الفراغ.
   return _DailyFormPayload(
     DailyFormUpdate(
       vehicleUniqueId: uniqueId,

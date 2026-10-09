@@ -19,7 +19,8 @@ class LogDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedLog = ref.watch(logsProvider).selectedLog;
+    final logsState = ref.watch(logsProvider);
+    final selectedLog = logsState.selectedLog;
     final currentIndex = ref.watch(logDetailTabProvider);
 
     if (selectedLog == null) {
@@ -28,6 +29,11 @@ class LogDetailPage extends ConsumerWidget {
         body: Center(child: Text(context.loc.noData)),
       );
     }
+
+    final allLogs = logsState.logs;
+    final logIndex = allLogs.indexWhere((l) => l.id == selectedLog.id);
+    final hasNextDay = logIndex > 0;
+    final hasPrevDay = logIndex >= 0 && logIndex < allLogs.length - 1;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -39,9 +45,59 @@ class LogDetailPage extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
-        title: Text(
-          selectedLog.formattedDate,
-          style: context.styles.appBarTitle,
+        title: Directionality(
+          textDirection: TextDirection.ltr,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_left,
+                    size: 26,
+                    color: hasPrevDay
+                        ? context.styles.appBarTitle.color
+                        : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: hasPrevDay
+                      ? () {
+                          ref
+                              .read(logsProvider.notifier)
+                              .selectLog(allLogs[logIndex + 1]);
+                        }
+                      : null,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    selectedLog.formattedDate,
+                    style: context.styles.appBarTitle,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_right,
+                    size: 26,
+                    color: hasNextDay
+                        ? context.styles.appBarTitle.color
+                        : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: hasNextDay
+                      ? () {
+                          ref
+                              .read(logsProvider.notifier)
+                              .selectLog(allLogs[logIndex - 1]);
+                        }
+                      : null,
+                ),
+              ],
+            ),
+          ),
         ),
         centerTitle: true,
         actions: [

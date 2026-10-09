@@ -213,6 +213,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             // 6. إدخال موقع يدوي
             AppTextField(
               hint: context.loc.manualLocation,
+              keyboardType: TextInputType.streetAddress,
               suffixIcon: Icon(
                 Icons.my_location,
                 color: context.styles.body.color,
@@ -236,6 +237,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(
                   hint: context.loc.enterReasonRequired,
+                  keyboardType: TextInputType.text,
                   validator: (value) => value == null || value.trim().isEmpty ? context.loc.aReasonForTheChangeIs : null,
                   onChanged: (value) {
                     ref

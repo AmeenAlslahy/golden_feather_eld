@@ -30,7 +30,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     return PopScope(
       canPop: !state.locked,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && state.locked) _promptDriverExit();
+        if (!didPop && state.locked) _exitDirectly();
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -43,7 +43,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
           leading: state.locked
               ? IconButton(
                   icon: const Icon(Icons.lock),
-                  onPressed: _promptDriverExit,
+                  onPressed: _exitDirectly,
                 )
               : Builder(
                   builder: (context) => IconButton(
@@ -56,42 +56,24 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
         body: state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : !state.isInspectionMode
-            ? InspectionStartView(onStartInspection: _startWithPin)
-            : InspectionActiveView(onExitRequest: _promptDriverExit),
+            ? InspectionStartView(onStartInspection: _startDirectly)
+            : InspectionActiveView(onExitRequest: _exitDirectly),
       ),
     );
   }
 
-  /// بوابة البدء: حوار PIN → startInspection → عند النجاح فقط يُجلب
-  /// الحساب (احتياطي ترويسة SRS 670-675) — لا طلب عند كل زيارة.
-  Future<void> _startWithPin() async {
-    final pin = await _askNewPin();
-    if (pin == null || !mounted) return;
-    await ref.read(inspectionProvider.notifier).startInspection(pin: pin);
+  /// بدء وضع التفتيش الميداني مباشرة بدون رمز PIN
+  Future<void> _startDirectly() async {
+    await ref.read(inspectionProvider.notifier).startInspection();
     if (!mounted) return;
     if (ref.read(inspectionProvider).isInspectionMode) {
       ref.read(accountProvider.notifier).fetchMyAccount();
     }
   }
 
-  Future<String?> _askNewPin() {
-    // The dialog owns its controllers: disposing them right after
-    // `showDialog` returns throws during the exit animation.
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _InspectionPinDialog(),
-    );
-  }
-
-  /// بوابة الخروج: الحوار يستدعي exitWithPin بنفسه ويعيد الحالة كاملة؛
-  /// إعادة البناء تتبعها تلقائياً.
-  Future<void> _promptDriverExit() {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _DriverExitDialog(),
-    );
+  /// إنهاء وضع التفتيش والعودة مباشرة
+  void _exitDirectly() {
+    ref.read(inspectionProvider.notifier).endInspection();
   }
 }
 

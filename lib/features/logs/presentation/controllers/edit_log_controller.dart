@@ -46,6 +46,13 @@ class EditLogController extends AutoDisposeAsyncNotifier<void> {
       }
 
       final newStart = parsedTime;
+      final timeAuthority = ref.read(timeAuthorityProvider);
+
+      // FMCSA § 395: Duty status events cannot be recorded in the future
+      if (newStart.isAfter(timeAuthority.nowUtc().toLocal().add(const Duration(minutes: 1)))) {
+        throw EditLogError(EditLogErrorCode.invalidTime);
+      }
+
       if (existing != null) {
         final refusal = refuseAutomaticDrivingEdit(
           original: existing,
@@ -57,7 +64,6 @@ class EditLogController extends AutoDisposeAsyncNotifier<void> {
         }
       }
 
-      final timeAuthority = ref.read(timeAuthorityProvider);
       final idGenerator = ref.read(idGeneratorProvider);
       
       final updatedEvent = existing?.copyWith(

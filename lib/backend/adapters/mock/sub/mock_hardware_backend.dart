@@ -1,4 +1,5 @@
 import '../../../../core/result/result.dart';
+import '../../../../domain/hardware/telemetry_reading.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
@@ -62,4 +63,8 @@ class MockHardwareBackend implements HardwareBackend {
     throw UnimplementedError('MockHardwareBackend.getStatus — not implemented');
   }
 
+  @override
+  Future<Result<RawJson>> sendTelemetry(TelemetryReading reading) async {
+    return ok(<String, dynamic>{'success': true});
+  }
 }

@@ -369,8 +369,29 @@ class DutyStatusTracker {
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
     );
     return result.fold((error) {
-      // رفض الخادم (أو فشل الوصول) يجب أن يظهر للسائق — لا يجوز تطبيق
-      // الحالة محلياً ثم إرسالها لاحقاً: الخادم رفض الانتقال صراحةً.
+      // إذا كان الفشل بسبب انقطاع الشبكة / أوفلاين، يجب الالتزام
+      // بـ FMCSA § 395.24 وتطبيق الحالة محلياً وإدراجها في طابور المزامنة:
+      final isNetwork = error.code.contains('network') ||
+          error.code.contains('connection') ||
+          error.code.contains('timeout') ||
+          error.code.contains('offline') ||
+          error.context?['statusCode'] == null;
+
+      if (isNetwork) {
+        AppLogger.info(
+            'Offline network state detected on duty change. Enqueuing event locally...');
+        _applyManualLocal(
+          newStatus: newStatus,
+          timestamp: trusted,
+          lat: lat,
+          lon: lon,
+          annotation: annotation,
+          enqueue: true,
+        );
+        return null;
+      }
+
+      // الرفض الخادمي الفعلي (مثل خطأ تحقق 400/409) يظهر للسائق
       AppLogger.warning(
           'Duty status change rejected by server: ${error.code}');
       return DutyStampRefusal.serverRejected;

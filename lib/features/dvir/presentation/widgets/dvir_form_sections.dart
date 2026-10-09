@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_signature_canvas.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/dvir_vehicle.dart';
+import '../../domain/entities/dvir_report.dart';
 import 'package:signature/signature.dart';
 
 import 'dvir_form_components.dart';
@@ -37,6 +38,49 @@ class DvirNoticeSection extends StatelessWidget {
       );
     }
     return const SizedBox.shrink();
+  }
+}
+
+class DvirInspectionTypeSection extends StatelessWidget {
+  final InspectionType selectedType;
+  final ValueChanged<InspectionType>? onTypeChanged;
+  final bool readOnly;
+
+  const DvirInspectionTypeSection({
+    super.key,
+    required this.selectedType,
+    this.onTypeChanged,
+    this.readOnly = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return DvirFieldGroup(
+      title: loc.inspectionType,
+      child: SegmentedButton<InspectionType>(
+        segments: [
+          ButtonSegment<InspectionType>(
+            value: InspectionType.preTrip,
+            label: Text(context.translateInspectionType(InspectionType.preTrip.name)),
+            icon: const Icon(Icons.play_circle_outline),
+          ),
+          ButtonSegment<InspectionType>(
+            value: InspectionType.postTrip,
+            label: Text(context.translateInspectionType(InspectionType.postTrip.name)),
+            icon: const Icon(Icons.stop_circle_outlined),
+          ),
+        ],
+        selected: {selectedType},
+        onSelectionChanged: readOnly
+            ? null
+            : (newSelection) {
+                if (newSelection.isNotEmpty) {
+                  onTypeChanged?.call(newSelection.first);
+                }
+              },
+      ),
+    );
   }
 }
 
@@ -89,6 +133,9 @@ class DvirOdometerSection extends StatelessWidget {
         hint: loc.dvirOdometerHint,
         readOnly: readOnly,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+        ],
         validator: (value) {
           if (value == null || value.trim().isEmpty) return null;
           final sanitized = value.trim().replaceAll(',', '');
@@ -111,12 +158,14 @@ class DvirVehicleSection extends StatelessWidget {
   final DashboardData dashboard;
   final TextEditingController defectsController;
   final bool readOnly;
+  final VoidCallback? onSelectDefects;
 
   const DvirVehicleSection({
     super.key,
     required this.dashboard,
     required this.defectsController,
     required this.readOnly,
+    this.onSelectDefects,
   });
 
   @override
@@ -162,9 +211,10 @@ class DvirVehicleSection extends StatelessWidget {
       ),
       right: DvirCell(
         title: loc.defectsTitle,
-        child: DvirFlatTextField(
-          controller: defectsController,
+        child: DvirDropdownField(
+          text: defectsController.text,
           hint: loc.defectsTitle,
+          onTap: onSelectDefects,
           readOnly: readOnly,
         ),
       ),
@@ -176,12 +226,14 @@ class DvirTrailerSection extends StatelessWidget {
   final DashboardData dashboard;
   final TextEditingController defectsController;
   final bool readOnly;
+  final VoidCallback? onSelectDefects;
 
   const DvirTrailerSection({
     super.key,
     required this.dashboard,
     required this.defectsController,
     required this.readOnly,
+    this.onSelectDefects,
   });
 
   @override
@@ -201,9 +253,10 @@ class DvirTrailerSection extends StatelessWidget {
       ),
       right: DvirCell(
         title: loc.defectsTitle,
-        child: DvirFlatTextField(
-          controller: defectsController,
+        child: DvirDropdownField(
+          text: defectsController.text,
           hint: loc.defectsTitle,
+          onTap: onSelectDefects,
           readOnly: readOnly,
         ),
       ),
@@ -245,7 +298,7 @@ class DvirRemarksSection extends StatelessWidget {
       title: loc.remarks,
       child: DvirFlatTextField(
         controller: controller,
-        hint: loc.remarks,
+        hint: '',
         readOnly: readOnly,
       ),
     );
@@ -272,13 +325,9 @@ class DvirStatusSection extends StatelessWidget {
           ? Text(selectedStatusLabel, style: context.styles.body)
           : InkWell(
               onTap: onOpenStatusModal,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(selectedStatusLabel, style: context.styles.body),
-                  ),
-                  Icon(Icons.arrow_drop_down, color: context.colorScheme.onSurface),
-                ],
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(selectedStatusLabel, style: context.styles.body),
               ),
             ),
     );
@@ -311,6 +360,15 @@ class DvirSignatureSection extends StatelessWidget {
     }
     return AppSignatureFormField(
       controller: controller,
+      placeholder: 'Image not\navailable.',
+      placeholderStyle: const TextStyle(
+        fontSize: 34,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFBDBDBD),
+      ),
+      centerClear: true,
+      height: 230,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       validator: (hasSignature) {
         if (hasSignature != true) {
           return AppLocalizations.of(context)!.dvirSignatureRequired;
@@ -361,18 +419,42 @@ class DvirSubmitButtonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: 28,
-        vertical: AppSpacing.sm,
+        horizontal: 16,
+        vertical: 16,
       ),
-      child: AppButton(
-        label: isSigned ? loc.dvirSigned : loc.dvirSign,
-        type: EldButtonType.primary,
-        isLoading: isSubmitting,
-        // زر الإرسال نفسه؛ التوقيع يُفرَض عبر validator نموذج التوقيع.
-        onPressed: isSubmitting || !timeAvailable ? null : onSubmit,
+      child: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF28A745),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            elevation: 0,
+          ),
+          onPressed: isSubmitting || !timeAvailable ? null : onSubmit,
+          child: isSubmitting
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'SIGN',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+        ),
       ),
     );
   }

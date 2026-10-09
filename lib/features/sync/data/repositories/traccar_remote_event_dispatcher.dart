@@ -1,4 +1,5 @@
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/usecases/sync_engine.dart';
@@ -6,6 +7,8 @@ import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../../../backend/contracts/daily_logs_backend.dart';
 import '../../../../backend/contracts/dvir_backend.dart';
+import '../../../../backend/contracts/inspection_backend.dart';
+import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/data/datasources/auth_local_data_source.dart';
 
@@ -17,18 +20,21 @@ import '../../../auth/data/datasources/auth_local_data_source.dart';
 /// - `certification` — POST /eld/daily-logs/{id}/certify
 /// - `dvir_create` — POST /eld/dvir
 /// - `dvir_review` — POST /eld/dvir/{id}/review
+/// - `inspection_transfer` — POST /eld/dot-inspection/send-logs or email-logs
 class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final DutyStatusBackend _dutyStatusBackend;
   final DailyLogsBackend _dailyLogsBackend;
   final DvirBackend _dvirBackend;
   final AuthLocalDataSource _localDataSource;
+  final InspectionBackend? _inspectionBackend;
 
   TraccarRemoteEventDispatcher(
     this._dutyStatusBackend,
     this._dailyLogsBackend,
     this._dvirBackend,
-    this._localDataSource,
-  );
+    this._localDataSource, [
+    this._inspectionBackend,
+  ]);
 
   Future<int> _driverId() async {
     final session = await _localDataSource.getSession();
@@ -49,17 +55,82 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
           return await _dispatchDvirCreate(event);
         case 'dvir_review':
           return await _dispatchDvirReview(event);
+        case 'inspection_transfer':
+          return await _dispatchInspectionTransfer(event);
         default:
           final result = await _dutyStatusBackend.submitLegacyGenericEvent(
             event.payload,
           );
           return await result.fold(
-            (error) => Left(ServerFailure(message: error.code)),
+            (error) {
+              final statusCode = (error is ServerError ? error.statusCode : null) ??
+                  (error.context?['statusCode'] as int?);
+              return Left(ServerFailure(
+                message: error.code,
+                statusCode: statusCode,
+              ));
+            },
             (_) => const Right(true),
           );
       }
     } catch (e) {
       return Left(ServerFailure(message: 'Failed to dispatch event: $e'));
+    }
+  }
+
+  Future<Either<Failure, bool>> _dispatchInspectionTransfer(
+    PendingEvent event,
+  ) async {
+    final backend = _inspectionBackend;
+    if (backend == null) return const Right(true);
+
+    final driverId = event.payload['driverId'] as int? ?? await _driverId();
+    if (driverId <= 0) {
+      return const Left(ServerFailure(message: 'Driver session is missing'));
+    }
+
+    final methodStr = event.payload['method'] as String? ?? 'webService';
+    final email = event.payload['email'] as String?;
+    final comment = event.payload['comment'] as String? ?? 'Inspection logs';
+    final routingCode = event.payload['routingCode'] as String?;
+
+    if (methodStr == 'email' && email != null && email.isNotEmpty) {
+      final res = await backend.emailLogs(
+        driverId: DriverId(driverId),
+        recipientEmail: email,
+        routingCode: routingCode,
+        comment: comment,
+      );
+      return res.fold(
+        (error) {
+          final statusCode = (error is ServerError ? error.statusCode : null) ??
+              (error.context?['statusCode'] as int?);
+          return Left(ServerFailure(
+            message: error.code,
+            statusCode: statusCode,
+          ));
+        },
+        (_) => const Right(true),
+      );
+    } else {
+      final res = await backend.sendLogs(
+        driverId: DriverId(driverId),
+        transferType: InspectionTransferType.webServices,
+        outputFileComment: comment,
+        routingCode: routingCode,
+        recipientEmail: email,
+      );
+      return res.fold(
+        (error) {
+          final statusCode = (error is ServerError ? error.statusCode : null) ??
+              (error.context?['statusCode'] as int?);
+          return Left(ServerFailure(
+            message: error.code,
+            statusCode: statusCode,
+          ));
+        },
+        (_) => const Right(true),
+      );
     }
   }
 
@@ -102,7 +173,15 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       payload,
     );
     return await result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
+      (error) {
+        // ValidationError (HTTP 400) stores statusCode in context, not as a property.
+        final statusCode = (error is ServerError ? error.statusCode : null) ??
+            (error.context?['statusCode'] as int?);
+        return Left(ServerFailure(
+          message: error.code,
+          statusCode: statusCode,
+        ));
+      },
       (_) => const Right(true),
     );
   }
@@ -122,7 +201,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       form: form,
     );
     return await result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
+      (error) {
+        final statusCode = (error is ServerError ? error.statusCode : null) ??
+            (error.context?['statusCode'] as int?);
+        return Left(ServerFailure(
+          message: error.code,
+          statusCode: statusCode,
+        ));
+      },
       (_) => const Right(true),
     );
   }
@@ -151,7 +237,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       ),
     );
     return await result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
+      (error) {
+        final statusCode = (error is ServerError ? error.statusCode : null) ??
+            (error.context?['statusCode'] as int?);
+        return Left(ServerFailure(
+          message: error.code,
+          statusCode: statusCode,
+        ));
+      },
       (_) => const Right(true),
     );
   }
@@ -160,7 +253,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     final payload = Map<String, dynamic>.from(event.payload);
     final result = await _dvirBackend.create(payload);
     return await result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
+      (error) {
+        final statusCode = (error is ServerError ? error.statusCode : null) ??
+            (error.context?['statusCode'] as int?);
+        return Left(ServerFailure(
+          message: error.code,
+          statusCode: statusCode,
+        ));
+      },
       (_) => const Right(true),
     );
   }
@@ -178,7 +278,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       review: review,
     );
     return await result.fold(
-      (error) => Left(ServerFailure(message: error.code)),
+      (error) {
+        final statusCode = (error is ServerError ? error.statusCode : null) ??
+            (error.context?['statusCode'] as int?);
+        return Left(ServerFailure(
+          message: error.code,
+          statusCode: statusCode,
+        ));
+      },
       (_) => const Right(true),
     );
   }

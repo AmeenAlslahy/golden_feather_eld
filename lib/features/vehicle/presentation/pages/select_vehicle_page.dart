@@ -14,6 +14,7 @@ import '../providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../widget/vehicle_card.dart';
 
 /// شاشة اختيار المركبة
@@ -65,9 +66,16 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     // deviceId الرقمي) حتى لا يبقى نموذج الفحص وربط السائق على قيم افتراضية.
     final state = ref.read(vehicleProvider);
     if (state.isSuccess && state.selectedVehicle != null) {
+      final v = state.selectedVehicle!;
       ref
           .read(dashboardDataProvider.notifier)
-          .updateVehicle(state.selectedVehicle);
+          .updateVehicle(v);
+      final uid = v.uniqueId;
+      if (v.deviceId != null) {
+        ref.read(localStorageProvider).setDeviceId(v.deviceId.toString());
+      } else if (uid != null && uid.isNotEmpty) {
+        ref.read(localStorageProvider).setDeviceId(uid);
+      }
     }
   }
 
@@ -201,6 +209,8 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               controller: _searchController,
               hint: context.loc.searchVehicle,
               prefixIcon: const Icon(Icons.search),
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.search,
               onChanged: (value) {
                 ref.read(vehicleProvider.notifier).search(value);
               },

@@ -102,4 +102,13 @@ class EldHardwareBackend implements HardwareBackend {
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
 
+  @override
+  Future<Result<RawJson>> sendTelemetry(TelemetryReading reading) async {
+    final res = await _apiClient.post<RawJson>(
+      EldEndpoints.hardwareTelemetry,
+      data: HardwareMapper.telemetryToJson(reading),
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
 }

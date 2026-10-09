@@ -1,11 +1,115 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/entities/hos_models.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../account/application/models/rules_screen_model.dart'; // ignore_architecture: driver rules configuration accessed by HOS change status
 import '../../../account/presentation/providers/rules_screen_provider.dart'; // ignore_architecture: driver rules configuration accessed by HOS change status
 import '../../domain/engine/hos_rules_engine.dart';
 import 'hos_engine_provider.dart';
 import 'hos_provider.dart';
 import 'status_dashboard_providers.dart';
+
+/// خيارات حالة الخدمة المتاحة في الواجهة كاختيارات راديو حصرية
+enum DutyStatusOption {
+  offDuty,
+  sleeperBerth,
+  driving,
+  onDuty,
+  yardMoves,
+  personalConveyance;
+
+  DutyStatus toDutyStatus() {
+    switch (this) {
+      case DutyStatusOption.offDuty:
+        return DutyStatus.offDuty;
+      case DutyStatusOption.sleeperBerth:
+        return DutyStatus.sleeperBerth;
+      case DutyStatusOption.driving:
+        return DutyStatus.driving;
+      case DutyStatusOption.onDuty:
+      case DutyStatusOption.yardMoves:
+        return DutyStatus.onDutyNotDriving;
+      case DutyStatusOption.personalConveyance:
+        return DutyStatus.personalUse;
+    }
+  }
+
+  DutyStatusCode toDutyStatusCode() {
+    switch (this) {
+      case DutyStatusOption.offDuty:
+        return DutyStatusCode.offDuty;
+      case DutyStatusOption.sleeperBerth:
+        return DutyStatusCode.sleeperBerth;
+      case DutyStatusOption.driving:
+        return DutyStatusCode.driving;
+      case DutyStatusOption.onDuty:
+        return DutyStatusCode.onDutyNotDriving;
+      case DutyStatusOption.yardMoves:
+        return DutyStatusCode.yardMove;
+      case DutyStatusOption.personalConveyance:
+        return DutyStatusCode.personalConveyance;
+    }
+  }
+
+  bool get isYardMoves => this == DutyStatusOption.yardMoves;
+
+  String displayName(BuildContext context) {
+    final loc = context.loc;
+    switch (this) {
+      case DutyStatusOption.offDuty:
+        return loc.offDuty;
+      case DutyStatusOption.sleeperBerth:
+        return loc.localeName == 'en' ? 'Sleeper' : loc.sleeperBerth;
+      case DutyStatusOption.driving:
+        return loc.drivingStatus;
+      case DutyStatusOption.onDuty:
+        return loc.onDuty;
+      case DutyStatusOption.yardMoves:
+        return loc.yardMoves;
+      case DutyStatusOption.personalConveyance:
+        return loc.personalUse;
+    }
+  }
+
+  static DutyStatusOption fromCurrent({
+    required DutyStatus status,
+    required bool isYardMoves,
+  }) {
+    if (isYardMoves && status == DutyStatus.onDutyNotDriving) {
+      return DutyStatusOption.yardMoves;
+    }
+    switch (status) {
+      case DutyStatus.offDuty:
+        return DutyStatusOption.offDuty;
+      case DutyStatus.sleeperBerth:
+        return DutyStatusOption.sleeperBerth;
+      case DutyStatus.driving:
+        return DutyStatusOption.driving;
+      case DutyStatus.onDutyNotDriving:
+        return DutyStatusOption.onDuty;
+      case DutyStatus.personalUse:
+        return DutyStatusOption.personalConveyance;
+    }
+  }
+
+  static DutyStatusOption fromStatusCode(DutyStatusCode code) {
+    switch (code) {
+      case DutyStatusCode.offDuty:
+        return DutyStatusOption.offDuty;
+      case DutyStatusCode.sleeperBerth:
+        return DutyStatusOption.sleeperBerth;
+      case DutyStatusCode.driving:
+        return DutyStatusOption.driving;
+      case DutyStatusCode.onDutyNotDriving:
+        return DutyStatusOption.onDuty;
+      case DutyStatusCode.yardMove:
+        return DutyStatusOption.yardMoves;
+      case DutyStatusCode.personalConveyance:
+        return DutyStatusOption.personalConveyance;
+    }
+  }
+}
 
 /// تمثيل نمطي صريح لنتائج تغيير واجب السائق دون سلاسل نصية سحرية
 sealed class DutyChangeResult {
@@ -14,6 +118,10 @@ sealed class DutyChangeResult {
 
 class DutyChangeSuccess extends DutyChangeResult {
   const DutyChangeSuccess();
+}
+
+class DutyChangeAlreadyInProgress extends DutyChangeResult {
+  const DutyChangeAlreadyInProgress();
 }
 
 class DutyChangeAnnotationRequired extends DutyChangeResult {
@@ -31,9 +139,9 @@ class DutyChangeEngineRefusal extends DutyChangeResult {
 
 /// كائن الحالة النقي لنموذج تغيير حالة السائق
 class ChangeStatusState {
-  final DutyStatus selectedStatus;
-  final bool isYardMoves;
+  final DutyStatusOption selectedOption;
   final String location;
+  final String customLocation;
   final String notes;
   final bool isPersonalConveyanceAllowed;
   final bool isYardMoveAllowed;
@@ -43,9 +151,9 @@ class ChangeStatusState {
   final bool isSuccess;
 
   const ChangeStatusState({
-    required this.selectedStatus,
-    this.isYardMoves = false,
+    required this.selectedOption,
     this.location = '',
+    this.customLocation = '',
     this.notes = '',
     this.isPersonalConveyanceAllowed = false,
     this.isYardMoveAllowed = false,
@@ -55,15 +163,18 @@ class ChangeStatusState {
     this.isSuccess = false,
   });
 
+  DutyStatus get selectedStatus => selectedOption.toDutyStatus();
+  bool get isYardMoves => selectedOption.isYardMoves;
+
   /// فحص قاعدة إلزامية الملاحظات للقيادة الشخصية وحركة الساحة
   bool get isAnnotationRequired =>
-      selectedStatus == DutyStatus.personalUse ||
-      (selectedStatus == DutyStatus.onDutyNotDriving && isYardMoves);
+      selectedOption == DutyStatusOption.personalConveyance ||
+      selectedOption == DutyStatusOption.yardMoves;
 
   ChangeStatusState copyWith({
-    DutyStatus? selectedStatus,
-    bool? isYardMoves,
+    DutyStatusOption? selectedOption,
     String? location,
+    String? customLocation,
     String? notes,
     bool? isPersonalConveyanceAllowed,
     bool? isYardMoveAllowed,
@@ -74,9 +185,9 @@ class ChangeStatusState {
     bool? isSuccess,
   }) {
     return ChangeStatusState(
-      selectedStatus: selectedStatus ?? this.selectedStatus,
-      isYardMoves: isYardMoves ?? this.isYardMoves,
+      selectedOption: selectedOption ?? this.selectedOption,
       location: location ?? this.location,
+      customLocation: customLocation ?? this.customLocation,
       notes: notes ?? this.notes,
       isPersonalConveyanceAllowed:
           isPersonalConveyanceAllowed ?? this.isPersonalConveyanceAllowed,
@@ -96,11 +207,17 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
   ChangeStatusNotifier(
     this._ref, {
     required DutyStatus initialStatus,
+    required bool isYardMoves,
+    required String initialLocation,
     required bool isPersonalConveyanceAllowed,
     required bool isYardMoveAllowed,
     required bool isVehicleMoving,
   }) : super(ChangeStatusState(
-          selectedStatus: initialStatus,
+          selectedOption: DutyStatusOption.fromCurrent(
+            status: initialStatus,
+            isYardMoves: isYardMoves,
+          ),
+          location: initialLocation,
           isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
           isYardMoveAllowed: isYardMoveAllowed,
           isVehicleMoving: isVehicleMoving,
@@ -120,20 +237,9 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     });
   }
 
-  void selectStatus(DutyStatus status) {
-    if (status == DutyStatus.driving) return;
+  void selectOption(DutyStatusOption option) {
     state = state.copyWith(
-      selectedStatus: status,
-      isYardMoves: status != DutyStatus.onDutyNotDriving ? false : state.isYardMoves,
-      clearError: true,
-    );
-  }
-
-  void toggleYardMoves() {
-    final next = !state.isYardMoves;
-    state = state.copyWith(
-      isYardMoves: next,
-      selectedStatus: next ? DutyStatus.onDutyNotDriving : state.selectedStatus,
+      selectedOption: option,
       clearError: true,
     );
   }
@@ -141,6 +247,11 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
   void updateNotes(String notes) {
     if (state.notes == notes) return;
     state = state.copyWith(notes: notes, clearError: true);
+  }
+
+  void updateCustomLocation(String customLocation) {
+    if (state.customLocation == customLocation) return;
+    state = state.copyWith(customLocation: customLocation, clearError: true);
   }
 
   void updateLocation(String location) {
@@ -151,11 +262,21 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
   /// إرسال التغيير مع التحقق المنطقي وتحديث اللوحة تفاعلياً
   Future<DutyChangeResult> submit() async {
     if (state.isSaving) {
-      return const DutyChangeSuccess();
+      return const DutyChangeAlreadyInProgress();
     }
 
-    if (state.isVehicleMoving) {
+    if (state.isVehicleMoving && state.selectedStatus != DutyStatus.driving) {
       return const DutyChangeVehicleMoving();
+    }
+
+    if (state.selectedOption == DutyStatusOption.personalConveyance &&
+        !state.isPersonalConveyanceAllowed) {
+      return const DutyChangeEngineRefusal('Personal Conveyance is not permitted');
+    }
+
+    if (state.selectedOption == DutyStatusOption.yardMoves &&
+        !state.isYardMoveAllowed) {
+      return const DutyChangeEngineRefusal('Yard Move is not permitted');
     }
 
     final effectiveNotes = state.notes.trim();
@@ -168,31 +289,58 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       clearError: true,
     );
 
-    final error = await _ref.read(hosStatusProvider.notifier).changeStatus(
-          state.selectedStatus,
-          annotation: effectiveNotes.isNotEmpty ? effectiveNotes : null,
-          isYardMoves: state.isYardMoves,
+    try {
+      final parts = <String>[];
+      if (state.customLocation.trim().isNotEmpty) {
+        parts.add(state.customLocation.trim());
+      }
+      if (effectiveNotes.isNotEmpty) {
+        parts.add(effectiveNotes);
+      }
+      final combinedAnnotation = parts.isNotEmpty ? parts.join(' - ') : null;
+
+      // 1. تحديث محرك HOS الداخلي
+      final error = await _ref.read(hosStatusProvider.notifier).changeStatus(
+            state.selectedStatus,
+            annotation: combinedAnnotation,
+            isYardMoves: state.isYardMoves,
+          );
+
+      if (error != null) {
+        if (mounted) {
+          state = state.copyWith(
+            isSaving: false,
+            errorMessage: error,
+            isSuccess: false,
+          );
+        }
+        return DutyChangeEngineRefusal(error);
+      }
+
+      // 2. تحديث لوحة التحكم الرئيسية فورياً بالحالة الجديدة
+      final dutyStatusCode = state.selectedOption.toDutyStatusCode();
+      await _ref.read(statusDashboardProvider.notifier).changeStatus(
+            dutyStatusCode,
+            notes: combinedAnnotation,
+          );
+
+      if (mounted) {
+        state = state.copyWith(
+          isSaving: false,
+          isSuccess: true,
         );
-
-    if (!mounted) {
-      return error != null
-          ? DutyChangeEngineRefusal(error)
-          : const DutyChangeSuccess();
-    }
-
-    state = state.copyWith(
-      isSaving: false,
-      errorMessage: error,
-      isSuccess: error == null,
-    );
-
-    if (error == null) {
-      // مزامنة تفاعلية: تحديث اللوحة تلقائياً
-      _ref.read(statusDashboardProvider.notifier).refresh();
+      }
       return const DutyChangeSuccess();
+    } catch (e) {
+      if (mounted) {
+        state = state.copyWith(
+          isSaving: false,
+          errorMessage: e.toString(),
+          isSuccess: false,
+        );
+      }
+      return DutyChangeEngineRefusal(e.toString());
     }
-
-    return DutyChangeEngineRefusal(error);
   }
 }
 
@@ -200,10 +348,20 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
 final changeStatusProvider =
     StateNotifierProvider.autoDispose<ChangeStatusNotifier, ChangeStatusState>(
   (ref) {
+    final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
+    final currentCode = dashboard?.currentDutyStatus;
+
     final engineState = ref.read(hosStatusProvider);
-    final initialStatus = (engineState is HosEngineReady)
+    final currentHosStatus = (engineState is HosEngineReady)
         ? engineState.update.currentStatus
         : DutyStatus.offDuty;
+
+    final initialOption = currentCode != null
+        ? DutyStatusOption.fromStatusCode(currentCode)
+        : DutyStatusOption.fromCurrent(
+            status: currentHosStatus,
+            isYardMoves: false,
+          );
 
     final rules = ref.read(rulesScreenProvider).asData?.value;
     final isPersonalConveyanceAllowed =
@@ -213,7 +371,9 @@ final changeStatusProvider =
 
     return ChangeStatusNotifier(
       ref,
-      initialStatus: initialStatus,
+      initialStatus: initialOption.toDutyStatus(),
+      isYardMoves: initialOption.isYardMoves,
+      initialLocation: '',
       isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
       isYardMoveAllowed: isYardMoveAllowed,
       isVehicleMoving: isMoving,

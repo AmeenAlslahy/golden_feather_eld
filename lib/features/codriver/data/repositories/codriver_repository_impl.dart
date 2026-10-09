@@ -13,6 +13,10 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
   final DriverSessionBackend driverSessionBackend;
   final NetworkInfo networkInfo;
 
+  /// Cache for available drivers and current link to survive offline periods
+  static List<CoDriver> _cachedDrivers = [];
+  static CurrentCoDriverRead? _cachedCurrentCoDriver;
+
   CoDriverRepositoryImpl({
     required this.driverSessionBackend,
     required this.networkInfo,
@@ -24,7 +28,10 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       try {
         final result = await driverSessionBackend.getAvailableDrivers();
         return await result.fold(
-          (error) => Left(ServerFailure(message: error.code)),
+          (error) {
+            if (_cachedDrivers.isNotEmpty) return Right(_cachedDrivers);
+            return Left(ServerFailure(message: error.code));
+          },
           (rawDrivers) {
             final drivers = rawDrivers
                 .map(
@@ -36,13 +43,18 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
                 )
                 .toList();
 
+            _cachedDrivers = drivers;
             return Right(drivers);
           },
         );
       } catch (e) {
+        if (_cachedDrivers.isNotEmpty) return Right(_cachedDrivers);
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }
     } else {
+      if (_cachedDrivers.isNotEmpty) {
+        return Right(_cachedDrivers);
+      }
       return const Left(NetworkFailure());
     }
   }
@@ -53,20 +65,37 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       try {
         final result = await driverSessionBackend.getCurrentCoDriver();
         return await result.fold(
-          (error) => Left(ServerFailure(message: error.code)),
+          (error) {
+            if (_cachedCurrentCoDriver != null) {
+              return Right(_cachedCurrentCoDriver!);
+            }
+            return Left(ServerFailure(message: error.code));
+          },
           (json) {
             final read = parseCurrentCoDriver(json);
             if (read == null) {
+              if (_cachedCurrentCoDriver != null) {
+                return Right(_cachedCurrentCoDriver!);
+              }
               return const Left(
                 ServerFailure(message: 'co_driver_response_unreadable'),
               );
             }
+            _cachedCurrentCoDriver = read;
             return Right(read);
           },
         );
       } catch (_) {
+        if (_cachedCurrentCoDriver != null) {
+          return Right(_cachedCurrentCoDriver!);
+        }
         return const Left(ServerFailure(message: 'Unexpected error occurred'));
       }
+    }, offline: () async {
+      if (_cachedCurrentCoDriver != null) {
+        return Right(_cachedCurrentCoDriver!);
+      }
+      return const Left(NetworkFailure());
     });
   }
 
@@ -87,6 +116,10 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
         coDriverId: DriverId(coDriverId),
       );
       if (legacyResult.isRight()) {
+        _cachedCurrentCoDriver = CurrentCoDriverRead(
+          coDriverId: coDriverId,
+          teamDrivingActive: true,
+        );
         return const Right(true);
       }
 
@@ -94,11 +127,17 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       final primaryResult = await driverSessionBackend.switchPrimaryDriver(
         action: DutyStatusAction.switchPrimary,
         coDriverId: DriverId(coDriverId),
-        reason: reason ?? 'تبادل القيادة أثناء الاستراحة',
+        reason: reason ?? 'Co-driver shift change',
       );
       return primaryResult.fold(
         (error) => Left(ServerFailure(message: error.code)),
-        (_) => const Right(true),
+        (_) {
+          _cachedCurrentCoDriver = CurrentCoDriverRead(
+            coDriverId: coDriverId,
+            teamDrivingActive: true,
+          );
+          return const Right(true);
+        },
       );
     });
   }

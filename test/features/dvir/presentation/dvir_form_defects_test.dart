@@ -69,19 +69,17 @@ void main() {
   }
 
   Future<void> openAddDefects(WidgetTester tester) async {
-    final add = find.text('Add Defects');
-    await tester.scrollUntilVisible(add, 200,
-        scrollable: find.byType(Scrollable).first);
-    await tester.tap(add);
+    final defectsCell = find.widgetWithText(InkWell, 'Defects').first;
+    await tester.tap(defectsCell);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  testWidgets('Add Defects opens the live catalog list', (tester) async {
+  testWidgets('tapping defects opens the live catalog list', (tester) async {
     await pump(tester);
     await openAddDefects(tester);
 
-    expect(find.text('Defects (§396.11)'), findsOneWidget);
+    expect(find.text('Vehicle - Defects'), findsOneWidget);
     expect(find.text('Service brakes'), findsOneWidget);
     expect(find.text('Safety affecting'), findsWidgets);
     // The list is lazy; the last regulatory item is reachable by scrolling.
@@ -91,7 +89,7 @@ void main() {
     expect(last, findsOneWidget);
   });
 
-  testWidgets('picking an item adds a chip and switches status to Has Defects',
+  testWidgets('picking an item updates field and switches status to Has Defects',
       (tester) async {
     await pump(tester);
     await openAddDefects(tester);
@@ -105,7 +103,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.descendant(of: find.byKey(const Key('dvir_defect_cards')), matching: find.text('Tires')), findsOneWidget);
+    expect(find.text('Tires'), findsOneWidget);
     // Status label follows the pick (wire value 'Has Defects').
     expect(find.text('Has Defects'), findsOneWidget);
   });
@@ -120,11 +118,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byKey(const Key('dvir_defect_cards')), findsNothing);
     expect(find.text('Vehicle Condition Satisfactory'), findsOneWidget);
   });
 
-  testWidgets('AppBar refresh (SRS 7.2) reloads the catalog without losing the form',
+  testWidgets('re-opening defects catalog preserves previous selections',
       (tester) async {
     await pump(tester);
     await openAddDefects(tester);
@@ -133,17 +130,41 @@ void main() {
     await tester.tap(find.text('OK'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.descendant(of: find.byKey(const Key('dvir_defect_cards')), matching: find.text('Tires')), findsOneWidget);
+    expect(find.text('Tires'), findsOneWidget);
 
-    final refresh = find.byKey(const Key('dvir_form_refresh'));
-    expect(refresh, findsOneWidget);
-    await tester.tap(refresh);
+    await openAddDefects(tester);
+    await tester.scrollUntilVisible(find.text('Tires'), 100, scrollable: find.byType(Scrollable).last);
+    expect(find.text('Tires'), findsWidgets);
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+  });
+
+  testWidgets('tapping on Vehicle defects field opens the vehicle defect catalog',
+      (tester) async {
+    await pump(tester);
+    final vehicleDefectsCell = find.widgetWithText(InkWell, 'Defects').first;
+    await tester.tap(vehicleDefectsCell);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    // Refresh re-fetches server data; the driver's in-progress picks stay.
-    expect(find.descendant(of: find.byKey(const Key('dvir_defect_cards')), matching: find.text('Tires')), findsOneWidget);
-    await openAddDefects(tester);
-    expect(find.widgetWithText(CheckboxListTile, 'Horn'), findsOneWidget);
+    expect(find.text('Vehicle - Defects'), findsOneWidget);
+    expect(find.text('Service brakes'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+  });
+
+  testWidgets('tapping on Trailer defects field opens the trailer defect catalog',
+      (tester) async {
+    await pump(tester);
+    final trailerDefectsCell = find.widgetWithText(InkWell, 'Defects').last;
+    await tester.tap(trailerDefectsCell);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Trailer - Defects'), findsOneWidget);
+    expect(find.text('Brake Connections'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
   });
 }
+

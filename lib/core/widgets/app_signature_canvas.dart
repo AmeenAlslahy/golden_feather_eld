@@ -29,6 +29,12 @@ class AppSignatureCanvas extends StatelessWidget {
   /// Whether to show the "Clear" link below the pad. Defaults to true.
   final bool showClear;
 
+  /// Whether to center the "Clear" link.
+  final bool centerClear;
+
+  /// Optional override style for the placeholder.
+  final TextStyle? placeholderStyle;
+
   /// Optional padding around the entire widget.
   final EdgeInsets padding;
 
@@ -39,8 +45,10 @@ class AppSignatureCanvas extends StatelessWidget {
     super.key,
     required this.controller,
     this.placeholder,
+    this.placeholderStyle,
     this.height = 200,
     this.showClear = true,
+    this.centerClear = false,
     this.padding = const EdgeInsets.all(AppSpacing.xl),
     this.errorText,
   });
@@ -82,7 +90,8 @@ class AppSignatureCanvas extends StatelessWidget {
                         child: Text(
                           placeholder ?? loc.drawYourSignatureHere,
                           textAlign: TextAlign.center,
-                          style: context.styles.subtitle.copyWith(fontSize: 16),
+                          style: placeholderStyle ??
+                              context.styles.subtitle.copyWith(fontSize: 16),
                         ),
                       );
                     },
@@ -101,23 +110,20 @@ class AppSignatureCanvas extends StatelessWidget {
           // ─── Footer (Error Message & Clear Button) ────────────────
           if (showClear || errorText != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: errorText != null
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 6.0, left: 8.0, right: 8.0),
-                          child: Text(
-                            errorText!,
-                            style: context.styles.error.copyWith(fontSize: 12),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+            if (centerClear) ...[
+              if (errorText != null)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Text(
+                      errorText!,
+                      style: context.styles.error.copyWith(fontSize: 12),
+                    ),
+                  ),
                 ),
-                if (showClear)
-                  InkWell(
+              if (showClear)
+                Center(
+                  child: InkWell(
                     onTap: () => controller.clear(),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
@@ -127,15 +133,52 @@ class AppSignatureCanvas extends StatelessWidget {
                       ),
                       child: Text(
                         loc.clearSignature,
-                        style: context.styles.subtitle.copyWith(
+                        style: context.styles.body.copyWith(
+                          fontSize: 14,
+                          color: Colors.black,
                           decoration: TextDecoration.underline,
                           decorationStyle: TextDecorationStyle.dotted,
                         ),
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ] else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: errorText != null
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 6.0, left: 8.0, right: 8.0),
+                            child: Text(
+                              errorText!,
+                              style: context.styles.error.copyWith(fontSize: 12),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  if (showClear)
+                    InkWell(
+                      onTap: () => controller.clear(),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          loc.clearSignature,
+                          style: context.styles.subtitle.copyWith(
+                            decoration: TextDecoration.underline,
+                            decorationStyle: TextDecorationStyle.dotted,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
           ],
         ],
       ),
@@ -150,6 +193,8 @@ class AppSignatureFormField extends FormField<bool> {
     super.key,
     required SignatureController controller,
     String? placeholder,
+    TextStyle? placeholderStyle,
+    bool centerClear = false,
     double height = 200,
     bool showClear = true,
     EdgeInsets padding = const EdgeInsets.all(AppSpacing.xl),
@@ -173,6 +218,8 @@ class AppSignatureFormField extends FormField<bool> {
                 return AppSignatureCanvas(
                   controller: controller,
                   placeholder: placeholder,
+                  placeholderStyle: placeholderStyle,
+                  centerClear: centerClear,
                   height: height,
                   showClear: showClear,
                   padding: padding,

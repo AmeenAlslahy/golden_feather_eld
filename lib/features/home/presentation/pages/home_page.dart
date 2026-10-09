@@ -18,6 +18,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
 import '../../../hos/presentation/pages/change_status_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
+import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
@@ -52,6 +53,7 @@ class HomePage extends ConsumerWidget {
         '';
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
+    final isMoving = ref.watch(isVehicleMovingProvider);
     final developerBypass = ref.watch(developerBypassDrivingScreenProvider);
 
     return Stack(
@@ -198,7 +200,7 @@ class HomePage extends ConsumerWidget {
             },
           ),
         ),
-        if (isDriving && !developerBypass)
+        if (isDriving && isMoving && !developerBypass)
           const Positioned.fill(
             child: DrivingLockScreen(),
           ),

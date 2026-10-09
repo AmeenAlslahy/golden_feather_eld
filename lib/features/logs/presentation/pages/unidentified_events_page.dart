@@ -135,6 +135,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
           controller: controller,
           maxLines: 3,
           hint: hint,
+          keyboardType: TextInputType.text,
         ),
         actions: [
           TextButton(

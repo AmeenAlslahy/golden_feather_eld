@@ -2325,7 +2325,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setPinGuidance =>
-      'Set a PIN, select \"Start Inspection\", and give your device to the officer';
+      'Select \"Start Inspection\" and give your device to the officer';
 
   @override
   String get eldCertifies =>
@@ -3028,4 +3028,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dvirPrevReviewSection => 'Previous DVIR Review (§396.13)';
+
+  @override
+  String get offlineEldGeneratedTitle => 'ELD Output File Generated Offline';
+
+  @override
+  String get offlineEldGeneratedDesc =>
+      'The file has been generated locally in CSV format according to FMCSA standards (49 CFR § 395). Transmission to the server is queued for when connection returns, and you can share the file directly with the officer now.';
+
+  @override
+  String get shareOrExportCsv => 'Share / Export CSV File';
 }

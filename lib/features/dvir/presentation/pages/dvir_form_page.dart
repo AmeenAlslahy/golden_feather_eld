@@ -4,12 +4,11 @@ import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../../core/time/trusted_time_provider.dart';
-import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/dvir_vehicle.dart';
@@ -18,7 +17,6 @@ import '../../domain/dvir_signature.dart';
 import '../../domain/entities/dvir_report.dart';
 
 import '../widgets/dvir_form_sections.dart';
-import '../widgets/defect_card.dart';
 
 import '../widgets/status_modal.dart';
 
@@ -57,6 +55,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   bool _isSubmitting = false;
 
   DvirConditionStatus _selectedStatus = DvirConditionStatus.satisfactory;
+  InspectionType _selectedInspectionType = InspectionType.preTrip;
   bool _signed = false;
 
   /// §396.11 items marked defective (from the live catalog).
@@ -151,14 +150,84 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     _selectedStatus = r.condition == VehicleCondition.safe
         ? DvirConditionStatus.satisfactory
         : DvirConditionStatus.hasDefects;
+    _selectedInspectionType = r.type;
     _signed = r.signature != null;
     // Only overwrite local selection if the server report has defects.
     if (r.selectedDefects.isNotEmpty) {
       _selectedDefects = r.selectedDefects;
+      if (_vehicleDefectsController.text.isEmpty) {
+        _vehicleDefectsController.text = r.selectedDefects
+            .where((d) => d.item.category != 'TRAILER')
+            .map((d) => d.item.name)
+            .join(', ');
+      }
+      if (_trailerDefectsController.text.isEmpty) {
+        _trailerDefectsController.text = r.selectedDefects
+            .where((d) => d.item.category == 'TRAILER')
+            .map((d) => d.item.name)
+            .join(', ');
+      }
     }
   }
 
   bool get _readOnly => widget.existingReport != null;
+
+  Future<void> _openVehicleDefectCatalog() async {
+    if (_readOnly) return;
+    final vehicleDefects = _selectedDefects
+        .where((d) => d.item.category != 'TRAILER')
+        .toList();
+    final picked = await showDialog<List<DvirDefectSelection>>(
+      context: context,
+      builder: (_) => DefectCatalogDialog(
+        title: '${context.loc.vehicle} - ${context.loc.defectsTitle}',
+        initial: vehicleDefects,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final trailerDefects = _selectedDefects
+        .where((d) => d.item.category == 'TRAILER')
+        .toList();
+    setState(() {
+      _selectedDefects = [...picked, ...trailerDefects];
+      _vehicleDefectsController.text =
+          picked.map((d) => d.item.label(context.loc)).join(', ');
+      if (_selectedDefects.isNotEmpty) {
+        _selectedStatus = DvirConditionStatus.hasDefects;
+      } else if (_trailerDefectsController.text.trim().isEmpty) {
+        _selectedStatus = DvirConditionStatus.satisfactory;
+      }
+    });
+  }
+
+  Future<void> _openTrailerDefectCatalog() async {
+    if (_readOnly) return;
+    final trailerDefects = _selectedDefects
+        .where((d) => d.item.category == 'TRAILER')
+        .toList();
+    final picked = await showDialog<List<DvirDefectSelection>>(
+      context: context,
+      builder: (_) => DefectCatalogDialog(
+        title: '${context.loc.trailer} - ${context.loc.defectsTitle}',
+        customItems: kStandardTrailerDefectItems,
+        initial: trailerDefects,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final vehicleDefects = _selectedDefects
+        .where((d) => d.item.category != 'TRAILER')
+        .toList();
+    setState(() {
+      _selectedDefects = [...vehicleDefects, ...picked];
+      _trailerDefectsController.text =
+          picked.map((d) => d.item.label(context.loc)).join(', ');
+      if (_selectedDefects.isNotEmpty) {
+        _selectedStatus = DvirConditionStatus.hasDefects;
+      } else if (_vehicleDefectsController.text.trim().isEmpty) {
+        _selectedStatus = DvirConditionStatus.satisfactory;
+      }
+    });
+  }
 
   Future<void> _openDefectCatalog() async {
     if (_readOnly) return;
@@ -169,7 +238,22 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     if (picked == null || !mounted) return;
     setState(() {
       _selectedDefects = picked;
-      if (picked.isNotEmpty) _selectedStatus = DvirConditionStatus.hasDefects;
+      _vehicleDefectsController.text = picked
+          .where((d) => d.item.category != 'TRAILER')
+          .map((d) => d.item.label(context.loc))
+          .join(', ');
+      final trailerText = picked
+          .where((d) => d.item.category == 'TRAILER')
+          .map((d) => d.item.label(context.loc))
+          .join(', ');
+      if (trailerText.isNotEmpty) {
+        _trailerDefectsController.text = trailerText;
+      }
+      if (picked.isNotEmpty) {
+        _selectedStatus = DvirConditionStatus.hasDefects;
+      } else if (!_hasAnyDefect) {
+        _selectedStatus = DvirConditionStatus.satisfactory;
+      }
     });
   }
 
@@ -281,23 +365,16 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     return true;
   }
 
-  /// القراءة المتسامحة لهوية الجهاز المتصل — بيئة بلا تفضيلات مهيأة
-  /// (اختبارات) تعيد null بدل الانهيار.
-  String? _connectedDeviceId() {
-    try {
-      return ref.read(localStorageProvider).deviceId;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// هوية المركبة للفحص: لوحة القيادة أولاً، وإلا هوية الجهاز المتصل
-  /// (نفس المصدر المُخزَّن الذي تثق به قائمة الفحص).
+  /// هوية المركبة للفحص: لوحة القيادة أولاً، ثم المركبة المختارة في التطبيق.
   String _dvirVehicleId(String? dashboardVehicleId) {
     if (!isUnassignedVehicleId(dashboardVehicleId)) {
       return dashboardVehicleId!;
     }
-    return _connectedDeviceId() ?? dashboardVehicleId ?? '';
+    final selected = ref.read(vehicleProvider).selectedVehicle;
+    if (selected != null && !isUnassignedVehicleId(selected.uniqueId ?? selected.id)) {
+      return selected.uniqueId ?? selected.id;
+    }
+    return dashboardVehicleId ?? '';
   }
 
   Future<void> _handleSubmit() async {
@@ -310,6 +387,42 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
     final dashboard = ref.read(dashboardDataProvider);
     final reportVehicleId = _dvirVehicleId(dashboard.vehicleId);
+    final selectedVehicle = ref.read(vehicleProvider).selectedVehicle;
+
+    // استخراج معرف المركبة الرقمي الصحيح (Traccar deviceId) التابع للمركبة
+    int? resolvedDeviceId = (dashboard.deviceId != null && dashboard.deviceId! > 0)
+        ? dashboard.deviceId
+        : (selectedVehicle?.deviceId != null && selectedVehicle!.deviceId! > 0)
+            ? selectedVehicle.deviceId
+            : null;
+
+    if (resolvedDeviceId == null) {
+      final vehicles = ref.read(vehicleProvider).vehicles;
+      for (final v in vehicles) {
+        if (v.uniqueId == reportVehicleId || v.id == reportVehicleId || v.name == reportVehicleId) {
+          if (v.deviceId != null && v.deviceId! > 0) {
+            resolvedDeviceId = v.deviceId;
+            break;
+          }
+        }
+      }
+    }
+
+    if (resolvedDeviceId == null) {
+      final directInt = int.tryParse(reportVehicleId);
+      if (directInt != null && directInt > 0) {
+        resolvedDeviceId = directInt;
+      } else {
+        final match = RegExp(r'\d+').firstMatch(reportVehicleId);
+        if (match != null) {
+          final digits = int.tryParse(match.group(0)!);
+          if (digits != null && digits > 0) {
+            resolvedDeviceId = digits;
+          }
+        }
+      }
+    }
+
     final previousToReview = ref
         .read(dvirProvider)
         .previousToReview(reportVehicleId);
@@ -350,13 +463,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         hasDefects || _selectedStatus == DvirConditionStatus.hasDefects;
     final report = DvirReport(
       id: '',
-      type: InspectionType.preTrip,
+      type: _selectedInspectionType,
       date: time.utc,
       driverName: dashboard.driverName,
       vehicleId: reportVehicleId,
-      deviceId: (dashboard.deviceId == null || dashboard.deviceId! <= 0)
-          ? int.tryParse(_connectedDeviceId() ?? '')
-          : dashboard.deviceId,
+      deviceId: resolvedDeviceId,
       // الافتراضي المعروض 'None' لا يصل إلى السجل الرسمي — يُرسل null.
       trailerId:
           (dashboard.trailerId == 'None' ||
@@ -453,35 +564,12 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
-        actions: [
-          // SRS 7.2: إعادة جلب بيانات الخادم دون فقدان ما أدخله السائق.
-          IconButton(
-            key: const Key('dvir_form_refresh'),
-            icon: const Icon(Icons.refresh),
-            color: AppColors.surface,
-            onPressed: () {
-              ref.invalidate(dvirCatalogProvider);
-              ref.read(dvirProvider.notifier).refresh();
-            },
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DvirNoticeSection(
-              dashboard: dashboard,
-              hasExistingReport: widget.existingReport != null,
-              hasPreviousToReview:
-                  ref
-                      .watch(dvirProvider)
-                      .previousToReview(
-                        _dvirVehicleId(dashboard.vehicleId),
-                      ) !=
-                  null,
-            ),
             DvirTimeLocationSection(
               currentTime: currentTime,
               automaticLocation: automaticLocation,
@@ -494,15 +582,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               dashboard: dashboard,
               defectsController: _vehicleDefectsController,
               readOnly: _readOnly,
+              onSelectDefects: _openVehicleDefectCatalog,
             ),
             DvirTrailerSection(
               dashboard: dashboard,
               defectsController: _trailerDefectsController,
               readOnly: _readOnly,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildCatalogDefects(),
+              onSelectDefects: _openTrailerDefectCatalog,
             ),
             DvirCompanySection(companyName: companyName),
             DvirRemarksSection(
@@ -530,52 +616,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCatalogDefects() {
-    final loc = context.loc;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_selectedDefects.isNotEmpty)
-          Column(
-            key: const Key('dvir_defect_cards'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final d in _selectedDefects)
-                DefectCard(
-                  key: ObjectKey(d),
-                  defect: d,
-                  readOnly: _readOnly,
-                  onRemove: () {
-                    setState(() {
-                      _selectedDefects = _selectedDefects
-                          .where((x) => x != d)
-                          .toList();
-                      if (_selectedDefects.isEmpty) {
-                        _selectedStatus = DvirConditionStatus.satisfactory;
-                      }
-                    });
-                  },
-                ),
-            ],
-          ),
-        if (!_readOnly)
-          TextButton.icon(
-            onPressed: _openDefectCatalog,
-            icon: const Icon(Icons.add, size: 16),
-            label: Text(
-              loc.addDefects,
-              style: context.styles.body.copyWith(fontSize: 12),
-            ),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(0, 32),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-      ],
     );
   }
 }

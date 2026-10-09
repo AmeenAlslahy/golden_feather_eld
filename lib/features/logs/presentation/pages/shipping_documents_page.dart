@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,6 +92,10 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                     controller: _controller,
                     hint: context.loc.typeHere,
                     textInputAction: TextInputAction.done,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                    ],
                     onSubmitted: (_) => _addDocument(),
                   ),
                 ),

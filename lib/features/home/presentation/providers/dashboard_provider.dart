@@ -123,18 +123,16 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
   /// المحفوظة لا بيانات جلسة قديمة. لا يمس deviceId ولا بيانات الجلسة
   /// الحية، والقوائم الفارغة تُترك كما هي (الحفظ لاحقاً هو قرار السائق).
   void applyServerForm(DailyFormData form) {
-    if (form.trailers.isNotEmpty) {
-      updateTrailers(form.trailers);
-    }
-    if (form.shippingDocuments.isNotEmpty) {
-      updateShippingDocuments(form.shippingDocuments);
-    }
-    if (form.coDriverId != null && form.coDriverId! > 0) {
-      state = state.copyWith(
-        coDriverId: '${form.coDriverId}',
-        coDriverName: form.coDriverName ?? state.coDriverName,
-      );
-    }
+    state = state.copyWith(
+      trailerId: form.trailers.isNotEmpty ? joinFormList(form.trailers) : null,
+      shippingDocuments: form.shippingDocuments.isNotEmpty
+          ? joinFormList(form.shippingDocuments)
+          : null,
+      coDriverId: (form.coDriverId != null && form.coDriverId! > 0)
+          ? '${form.coDriverId}'
+          : null,
+      coDriverName: form.coDriverName,
+    );
     if (form.vehicleUniqueId != null &&
         form.vehicleUniqueId!.trim().isNotEmpty) {
       final uniqueId = form.vehicleUniqueId!.trim();

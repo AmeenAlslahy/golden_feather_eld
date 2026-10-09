@@ -54,11 +54,14 @@ class LogGraph extends ConsumerWidget {
 
       stats[normalized] = stats[normalized]! + (endHour - startHour);
 
+      final isPcOrYm = (status == 'PC' || status == 'YM');
       points.add(
         EldGraphPoint(
           startHour: startHour,
           endHour: endHour,
           status: normalized,
+          tag: isPcOrYm ? status : null,
+          isDashed: isPcOrYm,
         ),
       );
     }

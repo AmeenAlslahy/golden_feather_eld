@@ -57,6 +57,8 @@ class _DashboardView extends ConsumerWidget {
               MainCircularTimer(
                 circle: dashboard.remainingCircle,
                 statusLabel: dashboard.currentDutyStatus.displayName(context),
+                dutyStatus: dashboard.currentDutyStatus,
+                hosIndicators: dashboard.hosIndicators,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(

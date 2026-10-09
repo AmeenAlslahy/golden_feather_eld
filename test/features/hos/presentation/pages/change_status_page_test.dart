@@ -5,7 +5,6 @@ import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
-import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/features/account/application/models/rules_screen_model.dart';
 import 'package:golden_feather_eld/features/account/presentation/providers/rules_screen_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
@@ -92,6 +91,8 @@ void main() {
     hos = _HosNotifier(current);
     final storage = _Storage();
     when(() => storage.hosConfiguration).thenReturn(HosConfiguration.usa70_8());
+    when(() => storage.serverUrl).thenReturn('https://snsoft.cloud');
+    when(() => storage.backendType).thenReturn('mock');
 
     await tester.pumpWidget(
       ProviderScope(
@@ -125,23 +126,22 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  StatusOptionTile tile(WidgetTester tester, DutyStatus status) =>
+  StatusOptionTile tile(WidgetTester tester, String label) =>
       tester.widget<StatusOptionTile>(find.byWidgetPredicate(
-          (w) => w is StatusOptionTile && w.status == status));
+          (w) => w is StatusOptionTile && w.label == label));
 
-  testWidgets('Driving is locked; PC and Yard Moves hidden unless the server allows',
+  testWidgets('Driving is selectable; PC and Yard Moves hidden unless the server allows',
       (tester) async {
     await pump(tester);
 
-    expect(tile(tester, DutyStatus.driving).onTap, isNull);
-    expect(tile(tester, DutyStatus.offDuty).onTap, isNotNull);
-    expect(tile(tester, DutyStatus.onDutyNotDriving).onTap, isNotNull);
+    expect(tile(tester, 'Driving').onTap, isNotNull);
+    expect(tile(tester, 'Off Duty').onTap, isNotNull);
+    expect(tile(tester, 'On Duty').onTap, isNotNull);
     expect(find.text('Personal Use'), findsNothing);
-    expect(find.byType(YardMovesOptionTile), findsNothing);
+    expect(find.text('Yard Moves'), findsNothing);
   });
 
   testWidgets('Personal Conveyance needs an annotation, then is sent as such',
-      skip: true,
       (tester) async {
     await pump(tester, fixed: const {
       'personalConveyanceEnabled': true,
@@ -149,12 +149,12 @@ void main() {
     });
 
     expect(find.text('Personal Use'), findsOneWidget);
-    expect(find.byType(YardMovesOptionTile), findsOneWidget);
+    expect(find.text('Yard Moves'), findsOneWidget);
 
     await tester.tap(find.text('Personal Use'));
     await tester.pump();
-    await tester.ensureVisible(find.widgetWithText(AppButton, 'UPDATE'));
-    await tester.tap(find.widgetWithText(AppButton, 'UPDATE'));
+    await tester.ensureVisible(find.text('UPDATE'));
+    await tester.tap(find.text('UPDATE'));
     await tester.pump();
     expect(
       find.text('An annotation is required for personal conveyance or yard moves.'),
@@ -173,8 +173,8 @@ void main() {
     );
 
     await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Driving home');
-    await tester.ensureVisible(find.widgetWithText(AppButton, 'UPDATE'));
-    await tester.tap(find.widgetWithText(AppButton, 'UPDATE'));
+    await tester.ensureVisible(find.text('UPDATE'));
+    await tester.tap(find.text('UPDATE'));
     await tester.pumpAndSettle();
 
     expect(hos.calls, ['personalUse|Driving home|ym=false']);
@@ -187,17 +187,17 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('Yard Moves forces On Duty and is flagged on the request',
-      skip: true,
+  testWidgets('Yard Moves is an independent option and is flagged on the request',
       (tester) async {
     await pump(tester, fixed: const {'yardMoveEnabled': true});
 
-    await tester.tap(find.byType(YardMovesOptionTile));
+    await tester.tap(find.text('Yard Moves'));
     await tester.pump();
-    expect(tile(tester, DutyStatus.onDutyNotDriving).isSelected, isTrue);
+    expect(tile(tester, 'Yard Moves').isSelected, isTrue);
+    expect(tile(tester, 'On Duty').isSelected, isFalse);
 
     await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Moving to dock 4');
-    await tester.tap(find.widgetWithText(AppButton, 'UPDATE'));
+    await tester.tap(find.text('UPDATE'));
     await tester.pumpAndSettle();
 
     expect(hos.calls, ['onDutyNotDriving|Moving to dock 4|ym=true']);
@@ -206,15 +206,15 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('while moving nothing can be changed and nothing is sent',
+  testWidgets('while moving non-driving options are disabled and nothing is sent',
       (tester) async {
     await pump(tester, speedMps: 10, current: DutyStatus.onDutyNotDriving);
 
     expect(find.text('Cannot change status while the vehicle is moving.'), findsOneWidget);
-    expect(tile(tester, DutyStatus.offDuty).onTap, isNull);
-    expect(tile(tester, DutyStatus.sleeperBerth).onTap, isNull);
+    expect(tile(tester, 'Off Duty').onTap, isNull);
+    expect(tile(tester, 'Sleeper').onTap, isNull);
 
-    await tester.tap(find.widgetWithText(AppButton, 'UPDATE'));
+    await tester.tap(find.text('UPDATE'));
     await tester.pump();
     expect(hos.calls, isEmpty);
     expect(find.byType(ChangeStatusPage), findsOneWidget);
@@ -230,7 +230,7 @@ void main() {
 
     await tester.tap(find.text('Sleeper'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(AppButton, 'UPDATE'));
+    await tester.tap(find.text('UPDATE'));
     await tester.pumpAndSettle();
 
     expect(hos.calls, ['sleeperBerth||ym=false']);

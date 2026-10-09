@@ -9,6 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../core/events/app_events.dart';
 
 /// حالة شاشة السجلات
@@ -74,7 +75,7 @@ class LogsState {
 final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>((ref) {
   final repository = ref.watch(logRepositoryProvider);
   final driverId = ref.watch(currentDriverIdProvider);
-  final notifier = LogsNotifier(repository, driverId);
+  final notifier = LogsNotifier(repository, driverId, ref);
   
   final sub = ref.read(appEventBusProvider).stream.listen((event) {
     if (event == AppEvent.logDataChanged) {
@@ -90,11 +91,13 @@ final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>(
 class LogsNotifier extends StateNotifier<LogsState> {
   final LogRepository _repository;
   final int? _driverId;
+  final Ref? _ref;
 
   LogsNotifier(
     this._repository,
-    this._driverId,
-  ) : super(const LogsState()) {
+    this._driverId, [
+    this._ref,
+  ]) : super(const LogsState()) {
     if (_driverId != null) {
       loadLogs();
     }
@@ -155,6 +158,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
   void selectLog(DailyLog log) {
     state = state.copyWith(selectedLog: log, clearEventsError: true, clearServerForm: true);
+    if (log.trailers.isNotEmpty || log.shippingDocuments.isNotEmpty || (log.vehicleName != null && log.vehicleName!.isNotEmpty)) {
+      _ref?.read(dashboardDataProvider.notifier).applyServerForm(
+        DailyFormData(
+          vehicleUniqueId: log.uniqueId.isNotEmpty ? log.uniqueId : null,
+          vehicleName: log.vehicleName,
+          trailers: log.trailers,
+          shippingDocuments: log.shippingDocuments,
+        ),
+      );
+    }
     loadSelectedLogDetail();
     loadSelectedLogEvents();
     loadSelectedForm();
@@ -176,6 +189,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (form) {
         if (form == null) return; // لا نموذج محفوظ على الخادم لهذا اليوم.
         state = state.copyWith(serverForm: form);
+        _ref?.read(dashboardDataProvider.notifier).applyServerForm(form);
       },
     );
   }
@@ -196,6 +210,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (fresh) {
         // أحداث graph-grid تُحفظ — التفاصيل والحدثان يتكاملان لا يتنافسان.
         _replaceSelected(fresh.copyWith(events: state.selectedLog!.events));
+        if (fresh.trailers.isNotEmpty || fresh.shippingDocuments.isNotEmpty || (fresh.vehicleName != null && fresh.vehicleName!.isNotEmpty)) {
+          _ref?.read(dashboardDataProvider.notifier).applyServerForm(
+            DailyFormData(
+              vehicleUniqueId: fresh.uniqueId.isNotEmpty ? fresh.uniqueId : null,
+              vehicleName: fresh.vehicleName,
+              trailers: fresh.trailers,
+              shippingDocuments: fresh.shippingDocuments,
+            ),
+          );
+        }
       },
     );
   }

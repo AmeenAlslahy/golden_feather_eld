@@ -7,6 +7,8 @@ import '../../domain/entities/dvir_defect.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/repositories/dvir_repository.dart';
 import '../../../../core/services/tracking_config_storage_service.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 
 // --- State and Notifier ---
 
@@ -92,7 +94,17 @@ final dvirProvider =
     StateNotifierProvider.autoDispose<DvirNotifier, DvirState>((ref) {
   final repository = ref.watch(dvirRepositoryProvider);
   final storageService = ref.watch(trackingConfigStorageProvider);
-  final notifier = DvirNotifier(repository: repository, storageService: storageService);
+  final selectedVehicle = ref.watch(vehicleProvider).selectedVehicle;
+  final dashboardVehicle = ref.watch(dashboardDataProvider).vehicleId;
+  final vehicleId = selectedVehicle?.uniqueId ??
+      selectedVehicle?.id ??
+      (!isUnassignedVehicleId(dashboardVehicle) ? dashboardVehicle : null);
+
+  final notifier = DvirNotifier(
+    repository: repository,
+    storageService: storageService,
+    vehicleId: vehicleId,
+  );
   // Load lazily here (outside the constructor) so the constructor is pure.
   notifier.refresh();
   return notifier;
@@ -100,13 +112,14 @@ final dvirProvider =
 
 class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
-  final TrackingConfigStorageService _storageService;
+  final String? _vehicleId;
 
   DvirNotifier({
     required DvirRepository repository,
     required TrackingConfigStorageService storageService,
+    String? vehicleId,
   })  : _repository = repository,
-        _storageService = storageService,
+        _vehicleId = vehicleId,
         super(const DvirState());
 
   Future<void> refresh() => _loadDvirs();
@@ -138,8 +151,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
     // Explicitly clear the error when starting a fresh load.
     state = state.copyWith(isLoading: true, error: null);
 
-    // معرّف غير معيّن (فارغ) يمر كما هو؛ المستودع هو من يعامل الفراغ.
-    final vehicleId = _storageService.deviceId;
+    // Resolve vehicle id: vehicle identifier from dashboard/selection
+    final vehicleId = (_vehicleId != null && !isUnassignedVehicleId(_vehicleId))
+        ? _vehicleId
+        : '';
     final result = await _repository.getDvirReports(vehicleId);
 
     if (mounted) {
@@ -256,12 +271,17 @@ final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((r
 });
 
 /// العيوب النشطة لمركبة السائق (`GET /eld/dvir/defects/device/{uniqueId}`)
-/// — الهوية من الجهاز المتصل (نفس مصدر قائمة الفحوصات). القائمة الفارغة
+/// — الهوية من المركبة المحددة (وليس معرف تتبع هاتف السائق). القائمة الفارغة
 /// أو الفشل يعني "لا قسم يُعرض" — لا يكسر شاشة القائمة.
 final activeVehicleDefectsProvider =
     FutureProvider.autoDispose<List<DvirDefect>>((ref) async {
-  final vehicleId = ref.watch(trackingConfigStorageProvider).deviceId;
-  if (isUnassignedVehicleId(vehicleId)) return const [];
+  final selectedVehicle = ref.watch(vehicleProvider).selectedVehicle;
+  final dashboardVehicle = ref.watch(dashboardDataProvider).vehicleId;
+  final vehicleId = selectedVehicle?.uniqueId ??
+      selectedVehicle?.id ??
+      (!isUnassignedVehicleId(dashboardVehicle) ? dashboardVehicle : null);
+
+  if (vehicleId == null || isUnassignedVehicleId(vehicleId)) return const [];
   final result = await ref
       .watch(dvirRepositoryProvider)
       .getActiveDefects(uniqueId: vehicleId);

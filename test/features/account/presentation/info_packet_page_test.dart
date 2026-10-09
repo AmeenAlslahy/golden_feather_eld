@@ -6,6 +6,8 @@ import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
+import 'package:golden_feather_eld/core/network/core_providers.dart';
+import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
@@ -13,6 +15,8 @@ import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/account/presentation/pages/info_packet_page.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:golden_feather_eld/features/sync/data/providers/sync_providers.dart';
+import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -35,6 +39,13 @@ class _Backend extends MockInspectionBackend {
   }
 }
 
+class _MockNetworkInfo extends Mock implements NetworkInfo {
+  @override
+  bool get isConnected => true;
+}
+
+class _MockSyncEngine extends Mock implements SyncEngine {}
+
 /// SRS 8.2 — Information Packet: completeness comes from the server's
 /// `GET /eld/dot-inspection/information-packet` (never assumed), and the
 /// manual / instructions are reachable from this screen.
@@ -55,6 +66,8 @@ void main() {
           activeBackendProvider.overrideWithValue(adapter),
           localStorageProvider.overrideWithValue(_Storage()),
           currentDriverIdProvider.overrideWithValue(106),
+          networkInfoProvider.overrideWithValue(_MockNetworkInfo()),
+          syncEngineProvider.overrideWithValue(_MockSyncEngine()),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

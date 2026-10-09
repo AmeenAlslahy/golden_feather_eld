@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,6 +19,9 @@ import '../../../../core/network/core_providers.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../tracking/data/providers/tracking_providers.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
+import '../../../../core/services/local_storage_service.dart';
 
 class EldConnectionState {
   final bool isConnecting;
@@ -96,7 +100,21 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
               error: error,
             );
           },
-          (data) {
+          (data) async {
+            // تفعيل خدمة تتبع Traccar Client بالهاتف متزامنة مع المركبة
+            final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+            final vUniqueId = selectedVehicle?.uniqueId;
+            final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
+                ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+            if (targetDeviceId != null) {
+              await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+            }
+            try {
+              final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+              await _ref.read(trackingRepositoryProvider).updateConfig(config);
+              await _ref.read(trackingStateProvider.notifier).startTracking();
+            } catch (_) {}
+
             state = state.copyWith(
               isConnecting: false,
               hasFailed: false,
@@ -144,6 +162,18 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   Future<void> continueDisconnected() async {
     final online = _ref.read(isConnectedProvider).value ?? true;
     if (!online) {
+      final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+      final vUniqueId = selectedVehicle?.uniqueId;
+      final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
+          ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+      if (targetDeviceId != null) {
+        await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+      }
+      try {
+        final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+        await _ref.read(trackingRepositoryProvider).updateConfig(config);
+        await _ref.read(trackingStateProvider.notifier).startTracking();
+      } catch (_) {}
       state = state.copyWith(
         isConnecting: false,
         hasFailed: false,
@@ -181,11 +211,26 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
             error: error,
           );
         },
-        (_) => state = state.copyWith(
-          isConnecting: false,
-          hasFailed: false,
-          infoMessage: 'disconnected_accepted',
-        ),
+        (_) async {
+          final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+          final vUniqueId = selectedVehicle?.uniqueId;
+          final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
+              ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+          if (targetDeviceId != null) {
+            await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+          }
+          try {
+            final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+            await _ref.read(trackingRepositoryProvider).updateConfig(config);
+            await _ref.read(trackingStateProvider.notifier).startTracking();
+          } catch (_) {}
+
+          state = state.copyWith(
+            isConnecting: false,
+            hasFailed: false,
+            infoMessage: 'disconnected_accepted',
+          );
+        },
       );
     } catch (e) {
       if (mounted) {
@@ -348,6 +393,10 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       hint: 'AA:BB:CC:DD:EE:FF',
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.done,
+                      maxLength: 17,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:]')),
+                      ],
                       onSubmitted: (_) => _attemptConnection(),
                       validator: (v) => macAddressError(
                         v,

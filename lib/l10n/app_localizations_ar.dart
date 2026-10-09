@@ -2319,8 +2319,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة';
 
   @override
-  String get setPinGuidance =>
-      'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط';
+  String get setPinGuidance => 'اختر «بدء التفتيش» وسلّم الجهاز للضابط';
 
   @override
   String get eldCertifies =>
@@ -3010,4 +3009,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dvirPrevReviewSection => 'مراجعة تقرير الفحص السابق (§396.13)';
+
+  @override
+  String get offlineEldGeneratedTitle =>
+      'تم توليد ملف ELD بنجاح في وضع عدم الاتصال';
+
+  @override
+  String get offlineEldGeneratedDesc =>
+      'تم إنشاء الملف محلياً بصيغة CSV وفق معايير FMCSA (49 CFR § 395). تم جدولة إرسال السجلات للسيرفر فور عودة الاتصال، ويمكنك مشاركة الملف مباشرة مع ضابط التفتيش الآن.';
+
+  @override
+  String get shareOrExportCsv => 'مشاركة / حفظ ملف CSV';
 }

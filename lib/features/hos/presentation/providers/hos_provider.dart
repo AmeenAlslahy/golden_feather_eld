@@ -59,9 +59,14 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       case 'driving':
         return DutyStatus.driving;
       case 'on_duty':
+      case 'yard_move':
         return DutyStatus.onDutyNotDriving;
+      case 'sleeper':
       case 'sleeper_berth':
         return DutyStatus.sleeperBerth;
+      case 'personal_use':
+      case 'personal_conveyance':
+        return DutyStatus.personalUse;
       default:
         return DutyStatus.offDuty;
     }
@@ -106,7 +111,7 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         statusStr = 'driving';
         break;
       case DutyStatus.onDutyNotDriving:
-        statusStr = 'on_duty';
+        statusStr = isYardMoves ? 'yard_move' : 'on_duty';
         break;
       case DutyStatus.sleeperBerth:
         statusStr = 'sleeper_berth';

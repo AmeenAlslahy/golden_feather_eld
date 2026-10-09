@@ -89,6 +89,10 @@ class _DetailBody extends StatelessWidget {
           children: [
             EldInfoRow(label: loc.dvirReportId, value: report.id),
             EldInfoRow(
+              label: loc.inspectionType,
+              value: context.translateInspectionType(report.type.name),
+            ),
+            EldInfoRow(
               label: loc.status,
               value: statusLabel,
               valueColor: statusColor,

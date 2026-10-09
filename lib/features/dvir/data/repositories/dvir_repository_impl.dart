@@ -237,6 +237,10 @@ class DvirRepositoryImpl implements DvirRepository {
             ? DvirConditionStatus.hasDefects
             : status;
 
+    final inspectionTypeWire = report.type == InspectionType.postTrip
+        ? 'Post-Trip'
+        : 'Pre-Trip';
+
     return buildDvirCreateBody(
       driverId: driverId,
       deviceId: report.deviceId,
@@ -245,6 +249,7 @@ class DvirRepositoryImpl implements DvirRepository {
       signatureData: report.signature,
       inspectionTime: report.date?.toUtc().toIso8601String() ??
           DateTime.now().toUtc().toIso8601String(),
+      inspectionType: inspectionTypeWire,
       location: report.location,
       odometer: report.odometer,
       trailerNumber: report.trailerId,

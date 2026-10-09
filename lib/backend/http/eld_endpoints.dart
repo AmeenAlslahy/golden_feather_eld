@@ -123,6 +123,8 @@ class EldEndpoints {
   static const String hardwareReadiness = '/eld/hardware/readiness';
   /// حالة الجهاز
   static const String hardwareStatus = '/eld/hardware/status';
+  /// بث قراءات المحرك اللحظية
+  static const String hardwareTelemetry = '/eld/hardware/telemetry';
 
   // Driver-scope contract paths (SRS §7.13, §7.15, §9.1, §11).
   /// الاحداث الغير معرفة 

@@ -43,6 +43,13 @@ String? shippingDocumentError(String value, AppLocalizations loc) {
   if (v.length > 100) {
     return loc.documentNumberTooLong;
   }
+  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) {
+    return loc.localeName == 'ar'
+        ? 'يجب أن يحتوي رقم الوثيقة على حروف وأرقام فقط'
+        : (loc.localeName == 'es'
+            ? 'El número de documento solo debe contener letras y números'
+            : 'Document number must contain letters and numbers only');
+  }
   if (v.contains(',')) {
     return loc.oneDocumentAtATime;
   }

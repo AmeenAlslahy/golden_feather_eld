@@ -729,7 +729,7 @@ void main() {
       final clock = FakeTrustedTimeProvider(
         initialUtcTime: DateTime.utc(2026, 9, 23, 8),
       );
-      dashboard.updateResult = const Left(ServerError(code: 'server.rejected'));
+      dashboard.updateResult = const Left(ServerError(code: 'server.rejected', context: {'statusCode': 400}));
       final tracker = build(time: clock, readDriverId: () => 106);
 
       final refusal = await tracker.submitManualChange('sleeper');

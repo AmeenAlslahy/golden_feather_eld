@@ -725,7 +725,7 @@
   "dataTransferType": "Tipo de transferencia de datos",
   "sendAction": "FIN",
   "inspectLogs24": "Registros de inspección para el período de 24 horas y los días anteriores para un ciclo HOS",
-  "setPinGuidance": "Establecer un PIN, seleccione \"Iniciar la Inspección\", y dar su dispositivo al oficial",
+  "setPinGuidance": "Seleccione \"Iniciar la Inspección\" y entregue su dispositivo al oficial",
   "eldCertifies": "Este ELD certifica que el uso de la aplicación con el dispositivo ELD cumple con todos los requisitos para ELD definidos en la regulación Federal Motor Carrier Safety 49 CFR part 395 Subpart B.",
   "notAllowedByServer": "No disponible para esta cuenta por el servidor.",
   "startInspectionUpper": "START INSPECTION",
@@ -1081,5 +1081,8 @@
   "dvirReportId": "ID del informe",
   "dvirRetentionUntil": "Retención hasta (§396.11)",
   "dvirPrevReviewSection": "Revisión del DVIR anterior (§396.13)",
-  "dvirImageNotAvailable": "Imagen no disponible"
+  "dvirImageNotAvailable": "Imagen no disponible",
+  "offlineEldGeneratedTitle": "Archivo de salida ELD generado fuera de línea",
+  "offlineEldGeneratedDesc": "El archivo se generó localmente en formato CSV según los estándares de la FMCSA (49 CFR § 395). La transmisión al servidor está en cola para cuando regrese la conexión, y puede compartir el archivo directamente con el inspector ahora.",
+  "shareOrExportCsv": "Compartir / Exportar archivo CSV"
 }

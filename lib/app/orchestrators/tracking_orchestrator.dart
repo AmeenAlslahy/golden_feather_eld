@@ -7,6 +7,10 @@ import '../../features/hos/presentation/providers/hos_provider.dart';
 import '../../features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../core/utils/logger.dart';
+import '../../domain/hardware/telemetry_reading.dart';
+import '../../domain/shared/value_objects.dart';
+import '../../backend/providers/backend_providers.dart';
+import '../../core/constants/fmcsa_constants.dart';
 
 final trackingOrchestratorProvider = Provider<void>((ref) {
   final notifier = ref.read(trackingStateProvider.notifier);
@@ -16,6 +20,51 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
     return hosState is HosEngineReady &&
         hosState.update.currentStatus == DutyStatus.driving;
   };
+
+  DateTime? lastTelemetrySent;
+  double? lastSpeedSent;
+
+  // بث السرعة والحركة اللحظية إلى خادم الـ API عبر POST /eld/hardware/telemetry
+  ref.listen<TrackingState>(trackingStateProvider, (previous, next) {
+    final loc = next.currentLocation;
+    if (loc == null || !next.isTracking) return;
+
+    final auth = ref.read(authStateProvider);
+    if (!auth.isAuthenticated || auth.user == null) return;
+
+    final now = DateTime.now();
+    final speed = loc.speed ?? 0.0; // meters per second
+
+    // بث عند تغير حالة الحركة (> 5 mph / ~2.235 m/s) أو كل 30 ثانية
+    final isSpeedTrigger = (lastSpeedSent == null) ||
+        (lastSpeedSent! < FmcsaConstants.drivingSpeedThresholdMps &&
+            speed >= FmcsaConstants.drivingSpeedThresholdMps) ||
+        (lastSpeedSent! >= FmcsaConstants.drivingSpeedThresholdMps &&
+            speed < FmcsaConstants.drivingSpeedThresholdMps);
+
+    final isTimeTrigger = lastTelemetrySent == null ||
+        now.difference(lastTelemetrySent!).inSeconds >=
+            FmcsaConstants.telemetryIntervalSeconds;
+
+    if (isSpeedTrigger || isTimeTrigger) {
+      lastTelemetrySent = now;
+      lastSpeedSent = speed;
+
+      final reading = TelemetryReading(
+        driverId: DriverId(int.tryParse(auth.user!.id) ?? 0),
+        speedMps: speed,
+        engineOn: speed > 0,
+      );
+
+      ref.read(hardwareBackendProvider).sendTelemetry(reading).then((result) {
+        result.fold(
+          (err) => AppLogger.warning('Telemetry send failed: ${err.code}'),
+          (_) => AppLogger.info(
+              '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s'),
+        );
+      });
+    }
+  });
 
   ref.listen<AuthState>(authStateProvider, (previous, next) {
     if (next.status == AuthStatus.authenticated &&

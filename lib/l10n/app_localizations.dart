@@ -4453,7 +4453,7 @@ abstract class AppLocalizations {
   /// No description provided for @setPinGuidance.
   ///
   /// In ar, this message translates to:
-  /// **'عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط'**
+  /// **'اختر «بدء التفتيش» وسلّم الجهاز للضابط'**
   String get setPinGuidance;
 
   /// No description provided for @eldCertifies.
@@ -5721,6 +5721,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'مراجعة تقرير الفحص السابق (§396.13)'**
   String get dvirPrevReviewSection;
+
+  /// No description provided for @offlineEldGeneratedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم توليد ملف ELD بنجاح في وضع عدم الاتصال'**
+  String get offlineEldGeneratedTitle;
+
+  /// No description provided for @offlineEldGeneratedDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إنشاء الملف محلياً بصيغة CSV وفق معايير FMCSA (49 CFR § 395). تم جدولة إرسال السجلات للسيرفر فور عودة الاتصال، ويمكنك مشاركة الملف مباشرة مع ضابط التفتيش الآن.'**
+  String get offlineEldGeneratedDesc;
+
+  /// No description provided for @shareOrExportCsv.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة / حفظ ملف CSV'**
+  String get shareOrExportCsv;
 }
 
 class _AppLocalizationsDelegate

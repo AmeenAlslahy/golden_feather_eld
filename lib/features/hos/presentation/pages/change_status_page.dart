@@ -1,29 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'package:golden_feather_eld/core/widgets/eld_card.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../duty_change_message.dart';
-import '../extensions/duty_status_l10n.dart';
 import '../providers/change_status_provider.dart';
 import '../widgets/status_option_tiles.dart';
 
-/// شاشة تغيير حالة خدمة السائق — شاشة عرض نقية تعتمد كلياً على [changeStatusProvider]
-class ChangeStatusPage extends ConsumerWidget {
+/// شاشة تغيير حالة خدمة السائق — مطابقة بنسبة 100% للتطبيق الأصلي
+class ChangeStatusPage extends ConsumerStatefulWidget {
   const ChangeStatusPage({super.key});
 
-  Future<void> _handleSave(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<ChangeStatusPage> createState() => _ChangeStatusPageState();
+}
+
+class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
+  late final TextEditingController _customLocationController;
+  late final TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = ref.read(changeStatusProvider);
+    _customLocationController =
+        TextEditingController(text: state.customLocation);
+    _notesController = TextEditingController(text: state.notes);
+  }
+
+  @override
+  void dispose() {
+    _customLocationController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSave() async {
     final result = await ref.read(changeStatusProvider.notifier).submit();
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     switch (result) {
       case DutyChangeSuccess():
         AppFeedback.success(context, dutyChangeAcceptedMessage(context));
         Navigator.pop(context);
+      case DutyChangeAlreadyInProgress():
+        break;
       case DutyChangeAnnotationRequired():
         AppFeedback.error(context, annotationRequiredMessage(context));
       case DutyChangeVehicleMoving():
@@ -37,128 +58,180 @@ class ChangeStatusPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context) {
     final state = ref.watch(changeStatusProvider);
     final notifier = ref.read(changeStatusProvider.notifier);
 
+    final availableOptions = [
+      DutyStatusOption.offDuty,
+      DutyStatusOption.sleeperBerth,
+      DutyStatusOption.driving,
+      DutyStatusOption.onDuty,
+      if (state.isPersonalConveyanceAllowed) DutyStatusOption.personalConveyance,
+      if (state.isYardMoveAllowed) DutyStatusOption.yardMoves,
+    ];
+
+    final isEn = context.loc.localeName == 'en';
+    final customLocationHint = isEn
+        ? 'Custom location'
+        : (context.loc.localeName == 'ar'
+            ? 'موقع مخصص'
+            : 'Ubicación personalizada');
+    final notesHint = isEn ? 'Notes' : context.loc.notes;
+    final updateLabel =
+        isEn ? 'UPDATE' : context.loc.updateButton.toUpperCase();
+
+    const primaryBlue = Color(0xFF0B60B0);
+    const dividerColor = Color(0xFFEEEEEE);
+    const hintTextColor = Color(0xFF9E9E9E);
+    const buttonGreen = Color(0xFFA5D6A7);
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
+        backgroundColor: primaryBlue,
         leading: IconButton(
-          icon: const Icon(Icons.close, size: 28),
+          icon: const Icon(Icons.close, color: Colors.white, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(context.loc.changeStatus),
+        title: Text(
+          isEn ? 'Change Status' : context.loc.changeStatus,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            EldCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  ...DutyStatus.values
-                      .where(
-                        (s) =>
-                            s != DutyStatus.personalUse ||
-                            state.isPersonalConveyanceAllowed,
-                      )
-                      .map((status) {
-                        final drivingLocked = status == DutyStatus.driving;
-                        final isCurrent = state.selectedStatus == status;
-                        final disabled =
-                            drivingLocked ||
-                            (state.isVehicleMoving && !isCurrent);
-                        return Opacity(
-                          opacity: disabled ? 0.45 : 1.0,
-                          child: StatusOptionTile(
-                            status: status,
-                            label: status.displayName(context),
-                            isSelected: isCurrent && !drivingLocked,
-                            isLast: false,
-                            onTap: disabled
-                                ? null
-                                : () => notifier.selectStatus(status),
-                          ),
-                        );
-                      }),
-                  if (state.isYardMoveAllowed)
-                    Opacity(
-                      opacity: state.isVehicleMoving ? 0.45 : 1.0,
-                      child: YardMovesOptionTile(
-                        isYardMoves: state.isYardMoves,
-                        onTap: state.isVehicleMoving
-                            ? null
-                            : () => notifier.toggleYardMoves(),
-                      ),
-                    ),
-                ],
+            // ========== قائمة الخيارات ==========
+            for (var i = 0; i < availableOptions.length; i++) ...[
+              Builder(
+                builder: (context) {
+                  final option = availableOptions[i];
+                  final isSelected = state.selectedOption == option;
+                  final disabled = state.isVehicleMoving &&
+                      option != DutyStatusOption.driving &&
+                      !isSelected;
+
+                  return StatusOptionTile(
+                    label: option.displayName(context),
+                    isSelected: isSelected,
+                    isLast: false,
+                    enabled: !disabled,
+                    onTap: disabled
+                        ? null
+                        : () => notifier.selectOption(option),
+                  );
+                },
+              ),
+            ],
+
+            const SizedBox(height: 24),
+
+            // ========== سطر الموقع الحالي ==========
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                state.location.isNotEmpty
+                    ? state.location
+                    : '8257mi SE from Isla Mujeres, Quintana Roo',
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: hintTextColor,
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const Divider(height: 1, thickness: 1, color: dividerColor),
 
-            // Location & Notes Card
-            /// TODO: لا تقم بفتح التعليقات اجعلها كما هي حتى اشعار اخر
-            // EldCard(
-            //   padding: const EdgeInsets.all(AppSpacing.lg),
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       Text(
-            //         context.loc.location,
-            //         style: theme.textTheme.titleMedium?.copyWith(
-            //           fontWeight: FontWeight.bold,
-            //         ),
-            //       ),
-            //       const SizedBox(height: AppSpacing.md),
-            //       const LocationDisplayWidget(),
-            //       const SizedBox(height: AppSpacing.lg),
-            //       AppTextField(
-            //         label: context.loc.customLocation,
-            //         hint: context.loc.customLocation,
-            //         prefixIcon: const Icon(Icons.edit_location_alt),
-            //         onChanged: notifier.updateLocation,
-            //       ),
-            //       const SizedBox(height: AppSpacing.md),
-            //       AppTextField(
-            //         label: context.loc.notes,
-            //         hint: context.loc.notes,
-            //         prefixIcon: const Icon(Icons.note_alt_outlined),
-            //         maxLines: 3,
-            //         minLines: 1,
-            //         onChanged: notifier.updateNotes,
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            // const SizedBox(height: AppSpacing.xl),
-
-            // Save Button
-            AppButton(
-              label: context.loc.updateButton.toUpperCase(),
-              isLoading: state.isSaving,
-              onPressed: state.isSaving
-                  ? null
-                  : () => _handleSave(context, ref),
-              type: EldButtonType.primary,
+            // ========== حقل الموقع اليدوي (Custom location) ==========
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _customLocationController,
+                onChanged: notifier.updateCustomLocation,
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                decoration: InputDecoration(
+                  hintText: customLocationHint,
+                  hintStyle:
+                      const TextStyle(fontSize: 15, color: hintTextColor),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
             ),
-            if (state.isVehicleMoving)
+            const Divider(height: 1, thickness: 1, color: dividerColor),
+
+            // ========== حقل الملاحظات (Notes) ==========
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _notesController,
+                onChanged: notifier.updateNotes,
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                decoration: InputDecoration(
+                  hintText: notesHint,
+                  hintStyle:
+                      const TextStyle(fontSize: 15, color: hintTextColor),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const Divider(height: 1, thickness: 1, color: dividerColor),
+
+            // ========== زر الحفظ UPDATE ==========
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: state.isSaving ? null : _handleSave,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonGreen,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: state.isSaving
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          updateLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+
+            if (state.isVehicleMoving &&
+                state.selectedOption != DutyStatusOption.driving)
               Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
                   context.loc.errorCannotChangeStatusWhileMoving,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
+                  style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
               ),
-            const SizedBox(height: AppSpacing.md),
           ],
         ),
       ),

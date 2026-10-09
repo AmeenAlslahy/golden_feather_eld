@@ -75,11 +75,13 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   final dailyLogsBackend = ref.watch(dailyLogsBackendProvider);
   final dvirBackend = ref.watch(dvirBackendProvider);
   final localDataSource = ref.watch(authLocalDataSourceProvider);
+  final inspectionBackend = ref.watch(inspectionBackendProvider);
   return TraccarRemoteEventDispatcher(
     dutyStatusBackend,
     dailyLogsBackend,
     dvirBackend,
     localDataSource,
+    inspectionBackend,
   );
 });
 

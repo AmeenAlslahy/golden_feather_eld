@@ -50,8 +50,13 @@ class EldDvirBackend implements DvirBackend {
 
   @override
   Future<Result<void>> create(RawJson report) async {
+    final query = <String, dynamic>{};
+    if (report['deviceId'] != null) {
+      query['deviceId'] = report['deviceId'];
+    }
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.dvir,
+      queryParameters: query.isNotEmpty ? query : null,
       data: report,
       parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
     );

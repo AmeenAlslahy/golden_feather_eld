@@ -150,7 +150,7 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
             onPressed: () => _browsingCompany
                 ? ref.read(vehicleProvider.notifier).loadCompanyVehicles()
                 : ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true),
-            child: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
+            child: Text(context.loc.retryButton),
           ),
         TextButton(
           onPressed: () => Navigator.pop(context),

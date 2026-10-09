@@ -209,11 +209,11 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   // الأوامر — الواجهة تستدعي هذه فقط.
   // =========================================================================
 
-  /// بدء وضع التفتيش. الرمز يبقى في الذاكرة حتى يخرج السائق.
+  /// بدء وضع التفتيش.
   ///
   /// لا نداء لـ `POST /eld/dot-inspection/start` هنا: الوضع حالة واجهة
   /// محلية، والخادم يرفض الاستدعاء في هذه المرحلة (ينقصه حقول المفتش).
-  Future<void> startInspection({required String pin}) async {
+  Future<void> startInspection({String pin = ''}) async {
     _inspectionPin = null; // بدء جديد — لا رمز عالق من محاولة سابقة
     state = _starting();
 
@@ -249,7 +249,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
       return;
     }
 
-    _inspectionPin = pin; // يُخزَّن خاصاً بعد نجاح الدخول فقط
+    _inspectionPin = pin.trim().isNotEmpty ? pin.trim() : null;
     state = _active(cycle: cycle, log: log);
     // تسجيل القفل مركزياً (POST /eld/dot-inspection/start) — غير معيق:
     // التفتيش الميداني يجب أن يعمل بلا شبكة (SRS 6.8)، وفشل التسجيل
@@ -270,9 +270,11 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     );
   }
 
-  /// الخروج بالرمز — تحقق محلي، لا شبكة (SRS 7.5).
-  bool exitWithPin(String pin) {
-    if (_inspectionPin == null || pin.trim() != _inspectionPin) return false;
+  /// الخروج من وضع التفتيش — إما مباشرة أو بالرمز إن وُجد
+  bool exitWithPin([String? pin]) {
+    if (_inspectionPin != null && _inspectionPin!.isNotEmpty) {
+      if (pin == null || pin.trim() != _inspectionPin) return false;
+    }
     endInspection();
     return true;
   }

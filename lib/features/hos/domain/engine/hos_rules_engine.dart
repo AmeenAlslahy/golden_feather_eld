@@ -100,12 +100,12 @@ class HosRulesEngine {
   List<HosAlert> _generateAlerts(HosLimits limits) {
     final alerts = <HosAlert>[];
 
-    // تنبيهات القيادة
+    // Driving alerts
     if (limits.remainingDriveMinutes <= 15 &&
         limits.remainingDriveMinutes > 0) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
-        message: '⚠️ 15 دقيقة متبقية للقيادة',
+        message: '15 minutes driving time remaining',
         severity: AlertSeverity.critical,
         remainingMinutes: limits.remainingDriveMinutes,
       ));
@@ -113,7 +113,7 @@ class HosRulesEngine {
         limits.remainingDriveMinutes > 15) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
-        message: '⚠️ 30 دقيقة متبقية للقيادة',
+        message: '30 minutes driving time remaining',
         severity: AlertSeverity.warning,
         remainingMinutes: limits.remainingDriveMinutes,
       ));
@@ -121,28 +121,28 @@ class HosRulesEngine {
         limits.remainingDriveMinutes > 30) {
       alerts.add(HosAlert(
         type: HosAlertType.drivingExpiring,
-        message: 'تنبيه: 60 دقيقة متبقية للقيادة',
+        message: '60 minutes driving time remaining',
         severity: AlertSeverity.info,
         remainingMinutes: limits.remainingDriveMinutes,
       ));
     }
 
-    // تنبيه الاستراحة الإلزامية
+    // Required 30-minute rest break alert (FMCSA § 395.3(a)(3)(ii))
     if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
       alerts.add(HosAlert(
         type: HosAlertType.breakRequired,
-        message: 'استراحة مطلوبة: ${limits.breakRemainingMinutes} دقيقة متبقية',
+        message: 'Break required: ${limits.breakRemainingMinutes} min remaining',
         severity: AlertSeverity.warning,
         remainingMinutes: limits.breakRemainingMinutes,
       ));
     }
 
-    // تنبيه نافذة العمل
+    // Shift window alert (FMCSA § 395.3(a)(2) 14-hour window)
     if (limits.remainingShiftMinutes <= 60 &&
         limits.remainingShiftMinutes > 0) {
       alerts.add(HosAlert(
         type: HosAlertType.shiftExpiring,
-        message: 'نافذة العمل على وشك الانتهاء',
+        message: 'Shift window expiring: ${limits.remainingShiftMinutes} min remaining',
         severity: AlertSeverity.warning,
         remainingMinutes: limits.remainingShiftMinutes,
       ));

@@ -49,11 +49,15 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
   // ==========================================================================
 
   StatusDashboard _buildDashboard() {
+    final isRest = _currentStatus == DutyStatusCode.offDuty ||
+        _currentStatus == DutyStatusCode.sleeperBerth ||
+        _currentStatus == DutyStatusCode.personalConveyance;
+
     return StatusDashboard(
       driver: const DriverRef(
-        id: DriverId(101),
-        name: 'سعد بن محمد العتيبي',
-        displayText: 'سعد بن محمد العتيبي - 101',
+        id: DriverId(646),
+        name: 'Naseem Hassan Ali Adam',
+        displayText: 'Naseem Hassan Ali Adam - 646',
       ),
       operationalAlerts: const OperationalAlerts(
         toolIcon: false,
@@ -61,31 +65,52 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
         connectionStatus: ConnectionStatus.ok,
       ),
       currentDutyStatus: _currentStatus,
-      // الحلقة الدائرية تتبع الحالة النشطة — القيمة الثابتة (8:37) كانت
-      // تعرض نفس الرقم أثناء القيادة وخارجها.
       remainingCircle: _remainingCircle(),
-      hosIndicators: const HosIndicators(
-        drive: HosIndicator(
-          label: 'DRIVE',
-          value: Duration(hours: 2, minutes: 23),
-          type: IndicatorType.used,
-        ),
-        shift: HosIndicator(
-          label: 'SHIFT',
-          value: Duration(hours: 5, minutes: 23),
-          type: IndicatorType.used,
-        ),
-        breakTime: HosIndicator(
-          label: 'BREAK',
-          value: Duration(minutes: 30),
-          type: IndicatorType.remaining,
-        ),
-        cycle: HosIndicator(
-          label: 'CYCLE',
-          value: Duration(hours: 61, minutes: 23),
-          type: IndicatorType.used,
-        ),
-      ),
+      hosIndicators: isRest
+          ? const HosIndicators(
+              drive: HosIndicator(
+                label: 'DRIVE',
+                value: Duration(hours: 11),
+                type: IndicatorType.remaining,
+              ),
+              shift: HosIndicator(
+                label: 'SHIFT',
+                value: Duration(hours: 14),
+                type: IndicatorType.remaining,
+              ),
+              breakTime: HosIndicator(
+                label: 'BREAK',
+                value: Duration(hours: 8),
+                type: IndicatorType.remaining,
+              ),
+              cycle: HosIndicator(
+                label: 'CYCLE',
+                value: Duration(hours: 70),
+                type: IndicatorType.remaining,
+              ),
+            )
+          : const HosIndicators(
+              drive: HosIndicator(
+                label: 'DRIVE',
+                value: Duration(minutes: 35),
+                type: IndicatorType.remaining,
+              ),
+              shift: HosIndicator(
+                label: 'SHIFT',
+                value: Duration(hours: 2, minutes: 8),
+                type: IndicatorType.remaining,
+              ),
+              breakTime: HosIndicator(
+                label: 'BREAK',
+                value: Duration(hours: 6, minutes: 15),
+                type: IndicatorType.remaining,
+              ),
+              cycle: HosIndicator(
+                label: 'CYCLE',
+                value: Duration(hours: 52, minutes: 48),
+                type: IndicatorType.remaining,
+              ),
+            ),
       regulatoryConstraints: const RegulatoryConstraints(
         ruleSet: CycleRule.usa70_8,
         limits: [
@@ -99,20 +124,32 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
   }
 
   RemainingCircle _remainingCircle() {
-    const remaining = Duration(hours: 8, minutes: 37);
+    if (_currentStatus == DutyStatusCode.offDuty ||
+        _currentStatus == DutyStatusCode.sleeperBerth ||
+        _currentStatus == DutyStatusCode.personalConveyance) {
+      return const RemainingCircle(
+        remaining: Duration.zero,
+        label: 'Remaining',
+        progress: 0.0,
+      );
+    }
     if (_currentStatus == DutyStatusCode.driving) {
+      // 00:35 remaining of 11:00 -> 10:25 elapsed (94.7% progress clockwise)
+      const remaining = Duration(minutes: 35);
       const total = Duration(hours: 11);
       return RemainingCircle(
         remaining: remaining,
-        label: 'Drive remaining',
-        progress: remaining.inMinutes / total.inMinutes,
+        label: 'Remaining',
+        progress: (total.inMinutes - remaining.inMinutes) / total.inMinutes,
       );
     }
+    // On Duty / Yard Move: 02:08 remaining of 14:00
+    const remaining = Duration(hours: 2, minutes: 8);
     const total = Duration(hours: 14);
     return RemainingCircle(
       remaining: remaining,
-      label: 'Shift remaining',
-      progress: remaining.inMinutes / total.inMinutes,
+      label: 'Remaining',
+      progress: (total.inMinutes - remaining.inMinutes) / total.inMinutes,
     );
   }
 

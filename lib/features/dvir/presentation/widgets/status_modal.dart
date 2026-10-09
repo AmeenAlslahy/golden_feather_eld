@@ -21,48 +21,50 @@ class DvirStatusModal extends StatelessWidget {
     return AlertDialog(
       backgroundColor: context.colorScheme.surface,
       title: Text(loc.status, style: context.styles.sectionTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            title: Text(DvirConditionStatus.satisfactory.label(loc), style: context.styles.body),
-            selected: selectedStatus == DvirConditionStatus.satisfactory,
-            trailing: selectedStatus == DvirConditionStatus.satisfactory
-                ? Icon(Icons.check, color: context.colorScheme.primary)
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text(DvirConditionStatus.satisfactory.label(loc), style: context.styles.body),
+              selected: selectedStatus == DvirConditionStatus.satisfactory,
+              trailing: selectedStatus == DvirConditionStatus.satisfactory
+                  ? Icon(Icons.check, color: context.colorScheme.primary)
+                  : null,
+              enabled: !hasDefect,
+              subtitle: hasDefect 
+                ? Text(loc.dvirDefectRecorded, style: context.styles.subtitle) 
                 : null,
-            enabled: !hasDefect,
-            subtitle: hasDefect 
-              ? Text(loc.dvirDefectRecorded, style: context.styles.subtitle) 
-              : null,
-            onTap: hasDefect
-                ? null
-                : () => Navigator.pop(
-                      context,
-                      DvirConditionStatus.satisfactory,
-                    ),
-          ),
-          ListTile(
-            title: Text(DvirConditionStatus.hasDefects.label(loc), style: context.styles.body),
-            selected: selectedStatus == DvirConditionStatus.hasDefects,
-            trailing: selectedStatus == DvirConditionStatus.hasDefects
-                ? Icon(Icons.check, color: context.colorScheme.primary)
-                : null,
-            onTap: () => Navigator.pop(context, DvirConditionStatus.hasDefects),
-          ),
-          // حالتا الإصلاح يضبطهما الناقل بعد شهادة الإصلاح — ليست قراراً
-          // للسائق هنا (SRS 7.6).
-          ListTile(
-            enabled: false,
-            title: Text(DvirConditionStatus.defectsCorrected.label(loc), style: context.styles.body),
-            subtitle: Text(loc.dvirNoRepairCert, style: context.styles.subtitle),
-          ),
-          ListTile(
-            enabled: false,
-            title: Text(DvirConditionStatus.defectsNotCorrected.label(loc), style: context.styles.body),
-            subtitle: Text(loc.dvirSetByCarrier, style: context.styles.subtitle),
-          ),
-        ],
+              onTap: hasDefect
+                  ? null
+                  : () => Navigator.pop(
+                        context,
+                        DvirConditionStatus.satisfactory,
+                      ),
+            ),
+            ListTile(
+              title: Text(DvirConditionStatus.hasDefects.label(loc), style: context.styles.body),
+              selected: selectedStatus == DvirConditionStatus.hasDefects,
+              trailing: selectedStatus == DvirConditionStatus.hasDefects
+                  ? Icon(Icons.check, color: context.colorScheme.primary)
+                  : null,
+              onTap: () => Navigator.pop(context, DvirConditionStatus.hasDefects),
+            ),
+            // حالتا الإصلاح يضبطهما الناقل بعد شهادة الإصلاح — ليست قراراً
+            // للسائق هنا (SRS 7.6).
+            ListTile(
+              enabled: false,
+              title: Text(DvirConditionStatus.defectsCorrected.label(loc), style: context.styles.body),
+              subtitle: Text(loc.dvirNoRepairCert, style: context.styles.subtitle),
+            ),
+            ListTile(
+              enabled: false,
+              title: Text(DvirConditionStatus.defectsNotCorrected.label(loc), style: context.styles.body),
+              subtitle: Text(loc.dvirSetByCarrier, style: context.styles.subtitle),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(

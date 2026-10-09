@@ -777,7 +777,7 @@
   "dataTransferType": "نوع نقل البيانات",
   "sendAction": "إرسال",
   "inspectLogs24": "افحص سجلات فترة 24 ساعة والأيام السابقة لدورة واحدة",
-  "setPinGuidance": "عيّن رمزاً ثم اختر «بدء التفتيش» وسلّم الجهاز للضابط",
+  "setPinGuidance": "اختر «بدء التفتيش» وسلّم الجهاز للضابط",
   "eldCertifies": "يشهد التطبيق أن استخدامه مع الجهاز يستوفي متطلبات ELD في 49 CFR part 395 Subpart B.",
   "notAllowedByServer": "غير متاح لهذا الحساب حسب الخادم.",
   "startInspectionUpper": "بدء التفتيش",
@@ -1074,5 +1074,8 @@
   "dvirReportId": "معرّف التقرير",
   "dvirRetentionUntil": "الاحتفاظ حتى (§396.11)",
   "dvirPrevReviewSection": "مراجعة تقرير الفحص السابق (§396.13)",
-  "dvirImageNotAvailable": "الصورة غير متاحة"
+  "dvirImageNotAvailable": "الصورة غير متاحة",
+  "offlineEldGeneratedTitle": "تم توليد ملف ELD بنجاح في وضع عدم الاتصال",
+  "offlineEldGeneratedDesc": "تم إنشاء الملف محلياً بصيغة CSV وفق معايير FMCSA (49 CFR § 395). تم جدولة إرسال السجلات للسيرفر فور عودة الاتصال، ويمكنك مشاركة الملف مباشرة مع ضابط التفتيش الآن.",
+  "shareOrExportCsv": "مشاركة / حفظ ملف CSV"
 }

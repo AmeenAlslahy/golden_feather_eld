@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/duty_status/duty_status_code.dart';
@@ -27,6 +29,7 @@ final updateDutyStatusUseCaseProvider = Provider<UpdateDutyStatusUseCase>((ref) 
 /// - Loads initial dashboard on first watch.
 /// - Rebuilds when [getStatusDashboardUseCaseProvider] changes.
 /// - Mutations via [changeStatus] update state in place.
+/// - Performs a quiet periodic refresh every minute to keep HOS indicators updated.
 ///
 /// **Error handling:**
 /// - Errors are surfaced as [AsyncError] with the underlying [Failure].
@@ -52,6 +55,12 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
       if (event == AppEvent.logDataChanged) refresh();
     });
     ref.onDispose(sub.cancel);
+
+    // تحديث دوري هادئ كل دقيقة لتحديث المؤشرات والعدادات
+    final timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      refresh(showLoading: false);
+    });
+    ref.onDispose(timer.cancel);
 
     final useCase = ref.watch(getStatusDashboardUseCaseProvider);
     final result = await useCase.execute();
@@ -86,17 +95,23 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   }
 
   /// Manually reloads the dashboard.
-  Future<void> refresh() async {
-    state = const AsyncValue<StatusDashboard>.loading();
+  Future<void> refresh({bool showLoading = true}) async {
+    if (showLoading && !state.hasValue) {
+      state = const AsyncValue<StatusDashboard>.loading();
+    }
 
-    state = await AsyncValue.guard(() async {
-      final useCase = ref.read(getStatusDashboardUseCaseProvider);
-      final result = await useCase.execute();
-      return result.fold(
-        (failure) => throw failure,
-        (dashboard) => dashboard,
-      );
-    });
+    final useCase = ref.read(getStatusDashboardUseCaseProvider);
+    final result = await useCase.execute();
+    result.fold(
+      (failure) {
+        if (!state.hasValue) {
+          state = AsyncValue.error(failure, StackTrace.current);
+        }
+      },
+      (dashboard) {
+        state = AsyncValue.data(dashboard);
+      },
+    );
   }
 
   /// Clears any error state and reloads.

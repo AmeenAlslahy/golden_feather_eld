@@ -20,6 +20,7 @@ import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 
 class CoDriverPage extends ConsumerStatefulWidget {
   const CoDriverPage({super.key});
@@ -298,6 +299,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                         ),
                                       );
                                       if (!context.mounted) return;
+                                      ref.invalidate(teamStatusProvider);
+                                      ref.invalidate(statusDashboardProvider);
                                       context.go('/home');
                                     }
                                   },

@@ -37,6 +37,7 @@ class _ManualModeReasonDialogState extends State<ManualModeReasonDialog> {
       content: AppTextField(
         controller: _controller,
         maxLines: 2,
+        keyboardType: TextInputType.text,
         hint: enable
             ? loc.eldMalfunctionHintStart
             : loc.eldMalfunctionHintEnd,

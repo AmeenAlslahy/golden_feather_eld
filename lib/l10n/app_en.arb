@@ -784,7 +784,7 @@
   "dataTransferType": "Data Transfer Type",
   "sendAction": "SEND",
   "inspectLogs24": "Inspect logs for the 24-hour period and the previous days for one HOS cycle",
-  "setPinGuidance": "Set a PIN, select \"Start Inspection\", and give your device to the officer",
+  "setPinGuidance": "Select \"Start Inspection\" and give your device to the officer",
   "eldCertifies": "This ELD certifies that use of the app with the ELD device complies with all requirements for ELD as defined in Federal Motor Carrier Safety regulation 49 CFR part 395 Subpart B.",
   "notAllowedByServer": "Not available for this account per the server.",
   "startInspectionUpper": "START INSPECTION",
@@ -1081,5 +1081,8 @@
   "dvirReportId": "Report ID",
   "dvirRetentionUntil": "Retention Until (§396.11)",
   "dvirPrevReviewSection": "Previous DVIR Review (§396.13)",
-  "dvirImageNotAvailable": "Image not available"
+  "dvirImageNotAvailable": "Image not available",
+  "offlineEldGeneratedTitle": "ELD Output File Generated Offline",
+  "offlineEldGeneratedDesc": "The file has been generated locally in CSV format according to FMCSA standards (49 CFR § 395). Transmission to the server is queued for when connection returns, and you can share the file directly with the officer now.",
+  "shareOrExportCsv": "Share / Export CSV File"
 }
