@@ -35,36 +35,46 @@ class _FormTabState extends ConsumerState<FormTab> {
     final dashboard = ref.watch(dashboardDataProvider);
 
     // استخراج القيم الفعلية المسترجعة من الخادم للسجل المحدد حالياً
-    final driverDisplayName = (selectedLog?.driverName?.isNotEmpty == true)
-        ? selectedLog!.driverName!
+    final driverNameRaw = selectedLog?.driverName;
+    final driverDisplayName = (driverNameRaw != null && driverNameRaw.isNotEmpty)
+        ? driverNameRaw
         : dashboard.driverName;
 
-    final vehicleDisplayName = (serverForm?.vehicleName?.isNotEmpty == true)
-        ? serverForm!.vehicleName!
-        : ((selectedLog?.vehicleName?.isNotEmpty == true)
-            ? selectedLog!.vehicleName!
+    final sVehicleName = serverForm?.vehicleName;
+    final lVehicleName = selectedLog?.vehicleName;
+    final vehicleDisplayName = (sVehicleName != null && sVehicleName.isNotEmpty)
+        ? sVehicleName
+        : ((lVehicleName != null && lVehicleName.isNotEmpty)
+            ? lVehicleName
             : dashboard.vehicleDisplayName);
 
-    final vehicleUniqueId = (serverForm?.vehicleUniqueId?.isNotEmpty == true)
-        ? serverForm!.vehicleUniqueId!
-        : ((selectedLog?.uniqueId.isNotEmpty == true)
-            ? selectedLog!.uniqueId
+    final sUniqueId = serverForm?.vehicleUniqueId;
+    final lUniqueId = selectedLog?.uniqueId;
+    final vehicleUniqueId = (sUniqueId != null && sUniqueId.isNotEmpty)
+        ? sUniqueId
+        : ((lUniqueId != null && lUniqueId.isNotEmpty)
+            ? lUniqueId
             : dashboard.vehicleId);
 
-    final trailersDisplay = (serverForm?.trailers != null && serverForm!.trailers.isNotEmpty)
-        ? joinFormList(serverForm.trailers)
-        : ((selectedLog != null && selectedLog.trailers.isNotEmpty)
-            ? joinFormList(selectedLog.trailers)
+    final sTrailers = serverForm?.trailers;
+    final lTrailers = selectedLog?.trailers;
+    final trailersDisplay = (sTrailers != null && sTrailers.isNotEmpty)
+        ? joinFormList(sTrailers)
+        : ((lTrailers != null && lTrailers.isNotEmpty)
+            ? joinFormList(lTrailers)
             : (dashboard.trailerId ?? '-'));
 
-    final shippingDocsDisplay = (serverForm?.shippingDocuments != null && serverForm!.shippingDocuments.isNotEmpty)
-        ? joinFormList(serverForm.shippingDocuments)
-        : ((selectedLog != null && selectedLog.shippingDocuments.isNotEmpty)
-            ? joinFormList(selectedLog.shippingDocuments)
+    final sDocs = serverForm?.shippingDocuments;
+    final lDocs = selectedLog?.shippingDocuments;
+    final shippingDocsDisplay = (sDocs != null && sDocs.isNotEmpty)
+        ? joinFormList(sDocs)
+        : ((lDocs != null && lDocs.isNotEmpty)
+            ? joinFormList(lDocs)
             : (dashboard.shippingDocuments ?? '-'));
 
-    final coDriverDisplayName = (serverForm?.coDriverName?.isNotEmpty == true)
-        ? serverForm!.coDriverName!
+    final sCoDriverName = serverForm?.coDriverName;
+    final coDriverDisplayName = (sCoDriverName != null && sCoDriverName.isNotEmpty)
+        ? sCoDriverName
         : (dashboard.coDriverName ?? '-');
 
     final coDriverIdValue = (serverForm?.coDriverId != null && serverForm!.coDriverId! > 0)

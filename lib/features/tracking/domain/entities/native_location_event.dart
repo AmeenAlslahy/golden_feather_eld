@@ -17,6 +17,7 @@ class NativeLocationEvent extends Equatable {
   final String platform;
   final bool isMock;
   final LocationQualityStatus qualityStatus;
+  final Map<String, dynamic> metadata;
 
   const NativeLocationEvent({
     required this.latitude,
@@ -31,10 +32,12 @@ class NativeLocationEvent extends Equatable {
     required this.platform,
     required this.isMock,
     required this.qualityStatus,
+    this.metadata = const {},
   });
 
   NativeLocationEvent copyWith({
     LocationQualityStatus? qualityStatus,
+    Map<String, dynamic>? metadata,
   }) {
     return NativeLocationEvent(
       latitude: latitude,
@@ -49,6 +52,7 @@ class NativeLocationEvent extends Equatable {
       platform: platform,
       isMock: isMock,
       qualityStatus: qualityStatus ?? this.qualityStatus,
+      metadata: metadata ?? this.metadata,
     );
   }
 
@@ -66,5 +70,6 @@ class NativeLocationEvent extends Equatable {
         platform,
         isMock,
         qualityStatus,
+        metadata,
       ];
 }

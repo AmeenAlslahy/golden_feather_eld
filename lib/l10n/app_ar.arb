@@ -1077,5 +1077,11 @@
   "dvirImageNotAvailable": "الصورة غير متاحة",
   "offlineEldGeneratedTitle": "تم توليد ملف ELD بنجاح في وضع عدم الاتصال",
   "offlineEldGeneratedDesc": "تم إنشاء الملف محلياً بصيغة CSV وفق معايير FMCSA (49 CFR § 395). تم جدولة إرسال السجلات للسيرفر فور عودة الاتصال، ويمكنك مشاركة الملف مباشرة مع ضابط التفتيش الآن.",
-  "shareOrExportCsv": "مشاركة / حفظ ملف CSV"
+  "shareOrExportCsv": "مشاركة / حفظ ملف CSV",
+  "dutyChangeTimeUnavailable": "لم يُسجل الواجب لأن وقت الخادم غير متاح.",
+  "dutyChangeNotReady": "حالة الواجب غير جاهزة.",
+  "dutyChangeUnmapped": "حالة الواجب غير معروفة.",
+  "dutyChangeServerRejected": "لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.",
+  "dutyChangeAccepted": "قبل الخادم تغيير حالة الواجب.",
+  "annotationRequiredForPcYm": "يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة."
 }

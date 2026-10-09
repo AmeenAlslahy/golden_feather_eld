@@ -1084,5 +1084,11 @@
   "dvirImageNotAvailable": "Image not available",
   "offlineEldGeneratedTitle": "ELD Output File Generated Offline",
   "offlineEldGeneratedDesc": "The file has been generated locally in CSV format according to FMCSA standards (49 CFR § 395). Transmission to the server is queued for when connection returns, and you can share the file directly with the officer now.",
-  "shareOrExportCsv": "Share / Export CSV File"
+  "shareOrExportCsv": "Share / Export CSV File",
+  "dutyChangeTimeUnavailable": "Duty status was not recorded because server time is unavailable.",
+  "dutyChangeNotReady": "Duty status is not ready.",
+  "dutyChangeUnmapped": "Duty status is not recognized.",
+  "dutyChangeServerRejected": "The server did not accept the duty status change. Check your connection and try again.",
+  "dutyChangeAccepted": "The server accepted the duty status change.",
+  "annotationRequiredForPcYm": "An annotation is required for personal conveyance or yard moves."
 }

@@ -19,16 +19,10 @@ import 'package:golden_feather_eld/core/services/tracking_config_storage_service
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
-import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart' as dash;
-import 'package:golden_feather_eld/features/hos/domain/repositories/status_dashboard_repository.dart';
-import 'package:golden_feather_eld/features/hos/data/providers/status_dashboard_repository_providers.dart';
-import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
-import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
@@ -51,7 +45,6 @@ class MockLocalStorageService extends Mock implements LocalStorageService {
 }
 class MockTrackingConfigStorageService extends Mock implements TrackingConfigStorageService {}
 class MockVehicleRepository extends Mock implements VehicleRepository {}
-class MockStatusDashboardRepository extends Mock implements StatusDashboardRepository {}
 
 class MockSyncNotifier extends StateNotifier<SyncState> implements SyncNotifier {
   MockSyncNotifier() : super(const SyncState());
@@ -114,7 +107,6 @@ void main() {
     final mockLocalStorage = MockLocalStorageService();
     when(() => mockLocalStorage.currentDutyStatus).thenReturn('off_duty');
     when(() => mockLocalStorage.serverUrl).thenReturn('http://mock.test');
-    when(() => mockLocalStorage.hosConfiguration).thenReturn(HosConfiguration.usa70_8());
     when(() => mockLocalStorage.backendType).thenReturn('mock');
     when(() => mockLocalStorage.deviceId).thenReturn('12345');
 
@@ -124,23 +116,6 @@ void main() {
     final mockVehicleRepo = MockVehicleRepository();
     when(() => mockVehicleRepo.getVehicles()).thenAnswer((_) async => const Right([]));
     when(() => mockVehicleRepo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
-
-    final mockStatusRepo = MockStatusDashboardRepository();
-    when(() => mockStatusRepo.getDashboard(driverId: any(named: 'driverId'))).thenAnswer(
-      (_) async => const Right(dash.StatusDashboard(
-        driver: dash.DriverRef(id: DriverId(1), name: 'Test', displayText: 'Test'),
-        operationalAlerts: dash.OperationalAlerts(toolIcon: false, warningTriangleIcon: false, connectionStatus: dash.ConnectionStatus.ok),
-        currentDutyStatus: DutyStatusCode.offDuty,
-        remainingCircle: dash.RemainingCircle(remaining: Duration.zero, label: 'test', progress: 0),
-        hosIndicators: dash.HosIndicators(
-          drive: dash.HosIndicator(label: '', value: Duration.zero, type: dash.IndicatorType.remaining),
-          shift: dash.HosIndicator(label: '', value: Duration.zero, type: dash.IndicatorType.remaining),
-          cycle: dash.HosIndicator(label: '', value: Duration.zero, type: dash.IndicatorType.remaining),
-          breakTime: dash.HosIndicator(label: '', value: Duration.zero, type: dash.IndicatorType.remaining),
-        ),
-        regulatoryConstraints: dash.RegulatoryConstraints(ruleSet: dash.CycleRule.usa70_8, limits: []),
-      )),
-    );
 
     final container = ProviderContainer(
       overrides: [
@@ -152,7 +127,6 @@ void main() {
         syncStateProvider.overrideWith((ref) => MockSyncNotifier()),
         hosStatusProvider.overrideWith((ref) => MockHosNotifier()),
         hardwareAlertsProvider.overrideWith(() => MockHardwareAlertsNotifier()),
-        statusDashboardRepositoryProvider.overrideWithValue(mockStatusRepo),
       ],
     );
 
@@ -177,12 +151,12 @@ void main() {
   group('HomePage — status dashboard', () {
     testWidgets('shows StatusDashboardPage (single source of truth)',
         (tester) async {
-      final container = await pumpHomePage(tester);
+      await pumpHomePage(tester);
       // Wait for timers/futures to settle. Use pump(Duration) instead of pumpAndSettle
       // to avoid timeout from periodic timers if they aren't fully disposed immediately.
       await tester.pump(const Duration(seconds: 1));
+
       expect(find.byType(StatusDashboardPage), findsOneWidget);
-      container.dispose();
     });
   });
 }

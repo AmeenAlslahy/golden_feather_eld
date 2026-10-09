@@ -18,9 +18,10 @@ class StatusOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF0B60B0);
-    const unselectedRadioColor = Color(0xFFDCDCDC);
-    const dividerColor = Color(0xFFEEEEEE);
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final unselectedRadioColor = theme.disabledColor.withValues(alpha: 0.5);
+    
     final isClickable = enabled && onTap != null;
 
     return Column(
@@ -37,12 +38,10 @@ class StatusOptionTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       color: !enabled
-                          ? Colors.black26
-                          : Colors.black87,
-                      fontWeight: FontWeight.normal,
+                          ? theme.disabledColor
+                          : theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -50,7 +49,7 @@ class StatusOptionTile extends StatelessWidget {
                   isSelected
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
-                  color: isSelected ? primaryBlue : unselectedRadioColor,
+                  color: isSelected ? primaryColor : unselectedRadioColor,
                   size: 24,
                 ),
               ],
@@ -61,11 +60,11 @@ class StatusOptionTile extends StatelessWidget {
           const Divider(
             height: 1,
             thickness: 1,
-            color: dividerColor,
           ),
       ],
     );
   }
 }
+
 
 

@@ -27,7 +27,7 @@ void main() {
     test('returns a fully-populated dashboard', () async {
       final dashboard = expectSuccess(await backend.getDashboard());
 
-      expect(dashboard.driver.id.value, 646);
+      expect(dashboard.driver.id.value, 101);
       expect(dashboard.driver.name, isNotEmpty);
       expect(dashboard.driver.displayText, isNotEmpty);
       expect(dashboard.operationalAlerts.connectionStatus, ConnectionStatus.ok);

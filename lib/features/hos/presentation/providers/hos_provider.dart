@@ -7,8 +7,9 @@ import 'hos_engine_provider.dart';
 import '../../../../core/utils/logger.dart';
 
 import '../../../../features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
+import '../../../../core/events/eld_events_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// مزود حالة HOS
 final hosStatusProvider =
@@ -24,7 +25,6 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   final Ref _ref;
   Timer? _refreshTimer;
   StreamSubscription? _trackerSub;
-  StreamSubscription? _motionSub;
 
   HosNotifier(this._engine, this._tracker, this._ref)
       : super(_engine.currentStatus) {
@@ -42,8 +42,10 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         refresh();
       }
     });
-    _motionSub =
-        _ref.read(liveTrackingDataSourceProvider).events.listen((event) {
+
+    _ref.listen<AsyncValue<EldEvent>>(eldEventsStreamProvider, (_, next) {
+      final event = next.value;
+      if (event == null) return;
       if (!_ref.read(authStateProvider).isAuthenticated) return;
       if (event.timestamp.millisecondsSinceEpoch == 0) return;
       final result = _engine.processEvent(event);
@@ -55,19 +57,18 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   }
 
   DutyStatus _mapStatus(String s) {
-    switch (s) {
-      case 'driving':
+    final code = DutyStatusCode.fromAny(s);
+    switch (code) {
+      case DutyStatusCode.driving:
         return DutyStatus.driving;
-      case 'on_duty':
-      case 'yard_move':
+      case DutyStatusCode.onDutyNotDriving:
+      case DutyStatusCode.yardMove:
         return DutyStatus.onDutyNotDriving;
-      case 'sleeper':
-      case 'sleeper_berth':
+      case DutyStatusCode.sleeperBerth:
         return DutyStatus.sleeperBerth;
-      case 'personal_use':
-      case 'personal_conveyance':
+      case DutyStatusCode.personalConveyance:
         return DutyStatus.personalUse;
-      default:
+      case DutyStatusCode.offDuty:
         return DutyStatus.offDuty;
     }
   }
@@ -105,26 +106,26 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       finalAnnotation = '[YM] $finalAnnotation'.trim();
     }
 
-    String statusStr;
+    DutyStatusCode statusCode;
     switch (newStatus) {
       case DutyStatus.driving:
-        statusStr = 'driving';
+        statusCode = DutyStatusCode.driving;
         break;
       case DutyStatus.onDutyNotDriving:
-        statusStr = isYardMoves ? 'yard_move' : 'on_duty';
+        statusCode = isYardMoves ? DutyStatusCode.yardMove : DutyStatusCode.onDutyNotDriving;
         break;
       case DutyStatus.sleeperBerth:
-        statusStr = 'sleeper_berth';
+        statusCode = DutyStatusCode.sleeperBerth;
         break;
       case DutyStatus.offDuty:
-        statusStr = 'off_duty';
+        statusCode = DutyStatusCode.offDuty;
         break;
       case DutyStatus.personalUse:
-        statusStr = 'personal_use';
+        statusCode = DutyStatusCode.personalConveyance;
         break;
     }
 
-    return _tracker.submitManualChange(statusStr,
+    return _tracker.submitManualChange(statusCode.engineCode,
         annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
   }
 
@@ -149,7 +150,6 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   void dispose() {
     _refreshTimer?.cancel();
     _trackerSub?.cancel();
-    _motionSub?.cancel();
     super.dispose();
   }
 }

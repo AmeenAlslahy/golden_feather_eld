@@ -3066,4 +3066,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get shareOrExportCsv => 'Compartir / Exportar archivo CSV';
+
+  @override
+  String get dutyChangeTimeUnavailable =>
+      'لم يُسجل الواجب لأن وقت الخادم غير متاح.';
+
+  @override
+  String get dutyChangeNotReady => 'حالة الواجب غير جاهزة.';
+
+  @override
+  String get dutyChangeUnmapped => 'حالة الواجب غير معروفة.';
+
+  @override
+  String get dutyChangeServerRejected =>
+      'لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.';
+
+  @override
+  String get dutyChangeAccepted => 'قبل الخادم تغيير حالة الواجب.';
+
+  @override
+  String get annotationRequiredForPcYm =>
+      'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.';
 }

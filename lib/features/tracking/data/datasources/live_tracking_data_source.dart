@@ -60,6 +60,7 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
         speedDurationSeconds: 5,
         odometerMiles: _mockOdometer,
         engineHours: _mockEngineHours,
+        fromEcm: true,
       ));
 
       _locationsController.add(LocationPoint(
@@ -84,6 +85,7 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
       speedDurationSeconds: 0,
       odometerMiles: _mockOdometer,
       engineHours: _mockEngineHours,
+      fromEcm: true,
     ));
   }
 

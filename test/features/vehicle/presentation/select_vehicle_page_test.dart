@@ -83,7 +83,6 @@ void main() {
     when(() => storage.hosConfiguration).thenReturn(HosConfiguration.usa70_8());
     when(() => storage.serverUrl).thenReturn('https://api.goldenfeather.com');
     when(() => storage.backendType).thenReturn('eld');
-    when(() => storage.setDeviceId(any())).thenAnswer((_) async {});
 
     final router = GoRouter(
       routes: [

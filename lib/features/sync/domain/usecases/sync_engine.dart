@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
-import 'package:golden_feather_eld/core/utils/logger.dart';
 import '../entities/pending_event.dart';
 import '../repositories/offline_queue.dart';
 
@@ -124,20 +123,6 @@ class SyncEngine {
   ) async {
     await result.match(
       (failure) async {
-        // أخطاء 4xx من الخادم (مثل duplicate key أو bad request) دائمة ولن تُحَل
-        // بإعادة المحاولة — احذف الحدث فوراً حتى لا يتكرر الإرسال إلى الأبد.
-        final statusCode = failure.statusCode;
-        final isPermanentClientError =
-            statusCode != null && statusCode >= 400 && statusCode < 500;
-        if (isPermanentClientError) {
-          AppLogger.warning(
-            'SyncEngine: dropping event ${event.id} (type=${event.type}) '
-            'after permanent server rejection HTTP $statusCode.',
-          );
-          await _queue.removeEvent(event.id);
-          return;
-        }
-
         final nextRetry = _retryPolicy.calculateNextRetry(
           event.retryCount,
           nowUtc: _timeAuthority.nowUtc(),

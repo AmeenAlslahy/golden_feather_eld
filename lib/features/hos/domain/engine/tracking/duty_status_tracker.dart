@@ -24,26 +24,7 @@ abstract final class DutyStampRefusal {
   static const serverRejected = 'server_rejected';
 }
 
-String? _wireDutyStatus(String status) {
-  switch (status) {
-    case 'driving':
-      return 'DRIVING';
-    case 'on_duty':
-      return 'ON_DUTY';
-    case 'off_duty':
-      return 'OFF_DUTY';
-    case 'sleeper':
-    case 'sleeper_berth':
-      return 'SLEEPER';
-    case 'yard_move':
-      return 'YARD_MOVE';
-    case 'personal_use':
-    case 'personal_conveyance':
-      return 'PERSONAL_CONVEYANCE';
-    default:
-      return null;
-  }
-}
+// Mapping replaced by DutyStatusCode.fromAny()
 
 class DutyStatusTracker {
   final LogRepository _logRepository;
@@ -302,14 +283,14 @@ class DutyStatusTracker {
 
     // The legal stamp is the anchored clock, never the movement timestamp
     // and never DateTime.now(). Missing odometer stays absent.
-    final wireStatus = _wireDutyStatus(newStatus);
+    final code = DutyStatusCode.fromAny(newStatus);
     if (!enqueue) {
       // The caller already sent this stamp and got a server result.
-    } else if (wireStatus == null) {
+    } else if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
       AppLogger.warning('Refusing to sync unmapped duty status: $newStatus');
     } else {
       _syncEngine.submitEvent(_stampedDutyEvent(
-        wireStatus: wireStatus,
+        wireStatus: code.wire,
         trustedUtc: trusted,
         latitude: latitude,
         longitude: longitude,
@@ -358,14 +339,14 @@ class DutyStatusTracker {
       return refusal;
     }
     final trusted = _getCurrentTime()!;
-    final wireStatus = _wireDutyStatus(newStatus);
-    if (wireStatus == null) {
+    final code = DutyStatusCode.fromAny(newStatus);
+    if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
       AppLogger.warning('Refusing to sync unmapped duty status: $newStatus');
       return DutyStampRefusal.unmapped;
     }
 
     final result = await _dashboardBackend.updateDutyStatus(
-      status: DutyStatusCode.fromWire(wireStatus),
+      status: code,
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
     );
     return result.fold((error) {

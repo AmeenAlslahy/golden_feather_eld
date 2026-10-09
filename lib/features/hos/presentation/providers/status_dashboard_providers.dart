@@ -2,12 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../data/providers/status_dashboard_repository_providers.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import '../../domain/usecases/get_status_dashboard_use_case.dart';
-import '../../domain/usecases/update_duty_status_use_case.dart';
 import 'hos_provider.dart';
 import '../../../../core/events/app_events.dart';
 
@@ -16,10 +14,7 @@ import '../../../../core/events/app_events.dart';
 final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((ref) {
   return GetStatusDashboardUseCase(ref.watch(statusDashboardRepositoryProvider));
 });
-
-final updateDutyStatusUseCaseProvider = Provider<UpdateDutyStatusUseCase>((ref) {
-  return UpdateDutyStatusUseCase(ref.watch(statusDashboardRepositoryProvider));
-});
+// Use cases mapped to providers
 
 // --- State Providers ---
 
@@ -70,29 +65,9 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     );
   }
 
-  /// Changes duty status via the use case.
-  ///
-  /// **Optimization:** Skips the network call if the requested
-  /// status equals the current one.
-  Future<void> changeStatus(DutyStatusCode status, {String? notes}) async {
-    final current = state.valueOrNull;
-    if (current != null && current.currentDutyStatus == status) {
-      return;
-    }
-
-    state = const AsyncValue<StatusDashboard>.loading();
-
-    final useCase = ref.read(updateDutyStatusUseCaseProvider);
-    final result = await useCase.execute(
-      status: status,
-      notes: notes,
-    );
-
-    state = result.fold(
-      (failure) => AsyncValue.error(failure, StackTrace.current),
-      (dashboard) => AsyncValue.data(dashboard),
-    );
-  }
+  // Method removed. Duty status changes must route through DutyStatusTracker 
+  // to ensure offline sync queueing, correct HOS engine transitions, and 
+  // single source of truth for backend syncing.
 
   /// Manually reloads the dashboard.
   Future<void> refresh({bool showLoading = true}) async {

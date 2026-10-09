@@ -94,6 +94,7 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isRest = _isRestDuty;
     final isDriving = widget.dutyStatus == DutyStatusCode.driving;
 
@@ -154,13 +155,14 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
     final Color arcColor;
     final Color timeTextColor;
     if (isRest) {
-      arcColor = const Color(0xFF8E8E93);
-      timeTextColor = const Color(0xFF757575);
+      arcColor = theme.disabledColor;
+      timeTextColor = theme.hintColor;
     } else if (liveRemaining <= const Duration(minutes: 15)) {
-      arcColor = const Color(0xFFE53935); // أحمر
-      timeTextColor = const Color(0xFFE53935);
+      arcColor = theme.colorScheme.error;
+      timeTextColor = theme.colorScheme.error;
     } else {
-      arcColor = const Color(0xFF34A853); // أخضر ناصع كما في التطبيق الأصلي
+      // أخضر ناصع (Safe color)
+      arcColor = const Color(0xFF34A853);
       timeTextColor = const Color(0xFF34A853);
     }
 
@@ -182,20 +184,20 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // زر الوضع الليلي في الزاوية العلوية اليسرى كما في الصورة
+              // زر الوضع الليلي في الزاوية العلوية اليسرى
               Positioned(
                 top: 4,
                 left: 16,
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0D47A1),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.nightlight_round,
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                     size: 22,
                   ),
                 ),
@@ -210,27 +212,25 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
                     progress: progress,
                     isRest: isRest,
                     trackColor: isRest
-                        ? const Color(0xFF8E8E93)
-                        : const Color(0xFFE8E8E8),
+                        ? theme.disabledColor.withValues(alpha: 0.3)
+                        : theme.dividerColor,
                     progressColor: arcColor,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Remaining',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF424242),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.hintColor,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         timeString,
-                        style: TextStyle(
+                        style: theme.textTheme.displayLarge?.copyWith(
                           fontSize: 56,
-                          fontWeight: FontWeight.normal,
+                          fontWeight: FontWeight.w400,
                           color: timeTextColor,
                           letterSpacing: -1,
                         ),
@@ -239,17 +239,16 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
                       Text(
                         widget.statusLabel.toUpperCase(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 22,
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF212121),
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Icon(
+                      Icon(
                         Icons.keyboard_arrow_down,
                         size: 26,
-                        color: Color(0xFF212121),
+                        color: theme.colorScheme.onSurface,
                       ),
                     ],
                   ),

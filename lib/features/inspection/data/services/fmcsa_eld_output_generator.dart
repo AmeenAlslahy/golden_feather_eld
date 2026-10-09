@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// Generates compliant FMCSA ELD output files (CSV format)
 /// in offline scenarios according to 49 CFR Part 395 Appendix A.
@@ -208,22 +209,6 @@ class FmcsaEldOutputGenerator {
   }
 
   static String _mapEventCode(String code) {
-    switch (code.toUpperCase()) {
-      case 'OFF':
-      case 'OFF_DUTY':
-        return '1';
-      case 'SB':
-      case 'SLEEPER':
-      case 'SLEEPER_BERTH':
-        return '2';
-      case 'D':
-      case 'DRIVING':
-        return '3';
-      case 'ON':
-      case 'ON_DUTY':
-        return '4';
-      default:
-        return '1';
-    }
+    return DutyStatusCode.fromAny(code).toFmcsaCode();
   }
 }

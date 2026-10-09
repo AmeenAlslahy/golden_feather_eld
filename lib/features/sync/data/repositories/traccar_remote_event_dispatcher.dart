@@ -1,5 +1,4 @@
 import 'package:fpdart/fpdart.dart';
-import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/usecases/sync_engine.dart';
@@ -11,6 +10,7 @@ import '../../../../backend/contracts/inspection_backend.dart';
 import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/data/datasources/auth_local_data_source.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// يوجه أحداث الطابور إلى endpoints الخادم الصحيحة حسب النوع.
 ///
@@ -62,14 +62,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
             event.payload,
           );
           return await result.fold(
-            (error) {
-              final statusCode = (error is ServerError ? error.statusCode : null) ??
-                  (error.context?['statusCode'] as int?);
-              return Left(ServerFailure(
-                message: error.code,
-                statusCode: statusCode,
-              ));
-            },
+            (error) => Left(ServerFailure(message: error.code)),
             (_) => const Right(true),
           );
       }
@@ -102,14 +95,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         comment: comment,
       );
       return res.fold(
-        (error) {
-          final statusCode = (error is ServerError ? error.statusCode : null) ??
-              (error.context?['statusCode'] as int?);
-          return Left(ServerFailure(
-            message: error.code,
-            statusCode: statusCode,
-          ));
-        },
+        (err) => Left(ServerFailure(message: err.code)),
         (_) => const Right(true),
       );
     } else {
@@ -121,14 +107,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         recipientEmail: email,
       );
       return res.fold(
-        (error) {
-          final statusCode = (error is ServerError ? error.statusCode : null) ??
-              (error.context?['statusCode'] as int?);
-          return Left(ServerFailure(
-            message: error.code,
-            statusCode: statusCode,
-          ));
-        },
+        (err) => Left(ServerFailure(message: err.code)),
         (_) => const Right(true),
       );
     }
@@ -144,28 +123,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
 
     if (payload['status'] is String) {
       final s = payload['status'] as String;
-      switch (s) {
-        case 'driving':
-          payload['status'] = 'DRIVING';
-          break;
-        case 'on_duty':
-          payload['status'] = 'ON_DUTY';
-          break;
-        case 'off_duty':
-          payload['status'] = 'OFF_DUTY';
-          break;
-        case 'sleeper':
-        case 'sleeper_berth':
-          payload['status'] = 'SLEEPER';
-          break;
-        case 'yard_move':
-          payload['status'] = 'YARD_MOVE';
-          break;
-        case 'personal_use':
-        case 'personal_conveyance':
-          payload['status'] = 'PERSONAL_CONVEYANCE';
-          break;
-      }
+      payload['status'] = DutyStatusCode.fromAny(s).wire;
     }
 
     final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(
@@ -174,13 +132,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     );
     return await result.fold(
       (error) {
-        // ValidationError (HTTP 400) stores statusCode in context, not as a property.
-        final statusCode = (error is ServerError ? error.statusCode : null) ??
-            (error.context?['statusCode'] as int?);
-        return Left(ServerFailure(
-          message: error.code,
-          statusCode: statusCode,
-        ));
+        final errText = '${error.code} ${error.context?['message'] ?? ''}'.toLowerCase();
+        if (errText.contains('duplicate key') ||
+            errText.contains('eld_daily_logs_pkey')) {
+          // السجل اليومي موجود مسبقاً على الخادم لنفس التاريخ — إقراره بنجاح
+          // لمنع تكرار المحاولة إلى ما لا نهاية في طابور الأحداث المعلقة.
+          return const Right(true);
+        }
+        return Left(ServerFailure(message: error.code));
       },
       (_) => const Right(true),
     );
@@ -201,14 +160,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       form: form,
     );
     return await result.fold(
-      (error) {
-        final statusCode = (error is ServerError ? error.statusCode : null) ??
-            (error.context?['statusCode'] as int?);
-        return Left(ServerFailure(
-          message: error.code,
-          statusCode: statusCode,
-        ));
-      },
+      (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
     );
   }
@@ -237,14 +189,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       ),
     );
     return await result.fold(
-      (error) {
-        final statusCode = (error is ServerError ? error.statusCode : null) ??
-            (error.context?['statusCode'] as int?);
-        return Left(ServerFailure(
-          message: error.code,
-          statusCode: statusCode,
-        ));
-      },
+      (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
     );
   }
@@ -253,14 +198,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     final payload = Map<String, dynamic>.from(event.payload);
     final result = await _dvirBackend.create(payload);
     return await result.fold(
-      (error) {
-        final statusCode = (error is ServerError ? error.statusCode : null) ??
-            (error.context?['statusCode'] as int?);
-        return Left(ServerFailure(
-          message: error.code,
-          statusCode: statusCode,
-        ));
-      },
+      (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
     );
   }
@@ -278,14 +216,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       review: review,
     );
     return await result.fold(
-      (error) {
-        final statusCode = (error is ServerError ? error.statusCode : null) ??
-            (error.context?['statusCode'] as int?);
-        return Left(ServerFailure(
-          message: error.code,
-          statusCode: statusCode,
-        ));
-      },
+      (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
     );
   }

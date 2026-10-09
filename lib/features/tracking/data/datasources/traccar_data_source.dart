@@ -76,6 +76,7 @@ class TraccarDataSource implements TrackingDataSource {
     _nativeEventClient.startListening();
     _nativeEventSubscription ??=
         _nativeEventClient.locationStream.listen((nativeEvent) {
+      final isObd = nativeEvent.metadata['fromEcm'] == true || nativeEvent.metadata['obd'] == true;
       final trackingEvent = TrackingEvent(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         deviceId: AppEnvironmentConfig.traccarDeviceId.isNotEmpty
@@ -88,7 +89,10 @@ class TraccarDataSource implements TrackingDataSource {
         altitude: nativeEvent.altitudeMeters,
         accuracy: nativeEvent.accuracyMeters,
         timestampUtc: nativeEvent.recordedAt,
-        source: TrackingEventSource.gps,
+        odometer: (nativeEvent.metadata['odometer'] as num?)?.toDouble(),
+        engineHours: (nativeEvent.metadata['engineHours'] as num?)?.toDouble(),
+        source: isObd ? TrackingEventSource.obd : TrackingEventSource.gps,
+        metadata: nativeEvent.metadata,
       );
       _eventsController.add(trackingEvent);
     });

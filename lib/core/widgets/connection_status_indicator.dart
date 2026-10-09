@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
-import '../../features/tracking/domain/entities/connection_status.dart'; // ignore_architecture
+import '../../features/tracking/domain/entities/connection_status.dart';
 import '../theme/app_colors.dart';
 import '../extensions/context_extensions.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes.dart';
-
-final connectionStatusStreamProvider =
-    StreamProvider.autoDispose<ConnectionStatus>((ref) async* {
-  final liveTracking = ref.watch(liveTrackingDataSourceProvider);
-  // إرسال حالة ابتدائية "غير متصل" لضمان عدم تعليق الواجهة في حالة التحميل (Loading)
-  // لأن الـ Stream قد يكون Broadcast Event انطلق قبل الاستماع
-  yield ConnectionStatus.disconnected;
-  yield* liveTracking.connectionStatus;
-});
+import '../events/eld_events_provider.dart';
 
 class ConnectionStatusIndicator extends ConsumerWidget {
   final bool showWarningTriangle;
@@ -26,7 +17,7 @@ class ConnectionStatusIndicator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statusAsyncValue = ref.watch(connectionStatusStreamProvider);
+    final statusAsyncValue = ref.watch(eldConnectionStatusProvider);
 
     // لا تسجيل داخل build: المعرّف يظهر في AppBar ويُعاد بناؤه كثيراً.
     final status = statusAsyncValue.value ?? ConnectionStatus.disconnected;

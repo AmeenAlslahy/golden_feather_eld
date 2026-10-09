@@ -5739,6 +5739,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'مشاركة / حفظ ملف CSV'**
   String get shareOrExportCsv;
+
+  /// No description provided for @dutyChangeTimeUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُسجل الواجب لأن وقت الخادم غير متاح.'**
+  String get dutyChangeTimeUnavailable;
+
+  /// No description provided for @dutyChangeNotReady.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الواجب غير جاهزة.'**
+  String get dutyChangeNotReady;
+
+  /// No description provided for @dutyChangeUnmapped.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة الواجب غير معروفة.'**
+  String get dutyChangeUnmapped;
+
+  /// No description provided for @dutyChangeServerRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.'**
+  String get dutyChangeServerRejected;
+
+  /// No description provided for @dutyChangeAccepted.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل الخادم تغيير حالة الواجب.'**
+  String get dutyChangeAccepted;
+
+  /// No description provided for @annotationRequiredForPcYm.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.'**
+  String get annotationRequiredForPcYm;
 }
 
 class _AppLocalizationsDelegate

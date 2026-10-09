@@ -3038,4 +3038,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareOrExportCsv => 'Share / Export CSV File';
+
+  @override
+  String get dutyChangeTimeUnavailable =>
+      'Duty status was not recorded because server time is unavailable.';
+
+  @override
+  String get dutyChangeNotReady => 'Duty status is not ready.';
+
+  @override
+  String get dutyChangeUnmapped => 'Duty status is not recognized.';
+
+  @override
+  String get dutyChangeServerRejected =>
+      'The server did not accept the duty status change. Check your connection and try again.';
+
+  @override
+  String get dutyChangeAccepted =>
+      'The server accepted the duty status change.';
+
+  @override
+  String get annotationRequiredForPcYm =>
+      'An annotation is required for personal conveyance or yard moves.';
 }

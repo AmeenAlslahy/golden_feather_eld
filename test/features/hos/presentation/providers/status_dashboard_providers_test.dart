@@ -60,101 +60,14 @@ void main() {
     });
   });
 
-  // ==========================================================================
-  // changeStatus
-  // ==========================================================================
-
-  group('statusDashboardProvider — changeStatus', () {
-    test('changes status to driving', () async {
-      final container = createContainer();
-      await container.read(statusDashboardProvider.future);
-
-      await container
-          .read(statusDashboardProvider.notifier)
-          .changeStatus(DutyStatusCode.driving);
-
-      final dashboard = container.read(statusDashboardProvider).value!;
-      expect(dashboard.currentDutyStatus, DutyStatusCode.driving);
-    });
-
-    test('same status is a no-op (no state change)', () async {
-      final container = createContainer();
-      final original = await container.read(statusDashboardProvider.future);
-
-      await container
-          .read(statusDashboardProvider.notifier)
-          .changeStatus(original.currentDutyStatus);
-
-      final dashboard = container.read(statusDashboardProvider).value!;
-      expect(dashboard.currentDutyStatus, original.currentDutyStatus);
-    });
-
-    test('accepts optional notes', () async {
-      final container = createContainer();
-      await container.read(statusDashboardProvider.future);
-
-      await container
-          .read(statusDashboardProvider.notifier)
-          .changeStatus(DutyStatusCode.driving, notes: 'Trip started');
-
-      final dashboard = container.read(statusDashboardProvider).value!;
-      expect(dashboard.currentDutyStatus, DutyStatusCode.driving);
-    });
-
-    test('iterates through all statuses', () async {
-      final container = createContainer();
-      await container.read(statusDashboardProvider.future);
-
-      final notifier = container.read(statusDashboardProvider.notifier);
-
-      for (final status in [
-        DutyStatusCode.driving,
-        DutyStatusCode.offDuty,
-        DutyStatusCode.sleeperBerth,
-        DutyStatusCode.onDutyNotDriving,
-        DutyStatusCode.yardMove,
-        DutyStatusCode.personalConveyance,
-      ]) {
-        await notifier.changeStatus(status);
-        expect(
-          container.read(statusDashboardProvider).value!.currentDutyStatus,
-          status,
-        );
-      }
-    });
-
-    test('state stays AsyncData during and after mutation', () async {
-      final container = createContainer();
-      await container.read(statusDashboardProvider.future);
-
-      await container
-          .read(statusDashboardProvider.notifier)
-          .changeStatus(DutyStatusCode.driving);
-
-      final current = container.read(statusDashboardProvider);
-      expect(current, isA<AsyncData<StatusDashboard>>());
-      expect(current.hasError, isFalse);
-    });
-  });
+  // changeStatus tests removed because StatusDashboardNotifier no longer has changeStatus method
 
   // ==========================================================================
   // refresh
   // ==========================================================================
 
   group('statusDashboardProvider — refresh', () {
-    test('reloads dashboard from backend', () async {
-      final container = createContainer();
-      await container.read(statusDashboardProvider.future);
-
-      await container
-          .read(statusDashboardProvider.notifier)
-          .changeStatus(DutyStatusCode.driving);
-
-      await container.read(statusDashboardProvider.notifier).refresh();
-
-      final dashboard = container.read(statusDashboardProvider).value!;
-      expect(dashboard.currentDutyStatus, DutyStatusCode.driving);
-    });
+    // Test removed because it relies on changeStatus, which was removed.
 
     test('state is AsyncData after refresh', () async {
       final container = createContainer();

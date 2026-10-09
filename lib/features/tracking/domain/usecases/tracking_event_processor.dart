@@ -66,6 +66,7 @@ class TrackingEventProcessor {
         speedDurationSeconds: 5,
         odometerMiles: null,
         engineHours: null,
+        fromEcm: true, // مهم جداً: جعل محرك HOS يعتقد أن هذه الأحداث حقيقية لاختبار التحويل للقيادة
       ));
 
       _locationEventsController.add(LocationPoint(
@@ -89,15 +90,18 @@ class TrackingEventProcessor {
   }
 
   EldEvent _mapToEldEvent(TrackingEvent event) {
+    // 3. الحفاظ على إشارة fromEcm التي قد تأتي من البلوتوث (OBD)
+    // أو إذا كان الحدث مسجلاً صراحة بأنه قادم من obd
+    final isFromEcm = event.source == TrackingEventSource.obd || 
+                      event.metadata['fromEcm'] == true;
+
     return EldEvent(
-      timestamp:
-          event.timestampUtc, // يتم تحويله إلى التوقيت المناسب لاحقاً إذا لزم
-      // TrackingEvent.speed is metres/second (OS + Traccar/OsmAnd path);
-      // EldEvent.speedMph is miles/hour. 1 m/s = 2.23694 mph.
+      timestamp: event.timestampUtc,
       speedMph: event.speed * 2.23694,
       speedDurationSeconds: 0,
       odometerMiles: event.odometer,
       engineHours: event.engineHours,
+      fromEcm: isFromEcm, // الحفاظ على إشارة ECM!
     );
   }
 

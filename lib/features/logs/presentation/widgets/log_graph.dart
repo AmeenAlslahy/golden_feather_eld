@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/daily_log.dart';
-import '../providers/log_graph_provider.dart';
+import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/widgets/eld_graph_grid.dart';
 
 class LogGraph extends ConsumerWidget {
@@ -13,7 +13,7 @@ class LogGraph extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final latestEldEvent = ref.watch(logGraphEventsProvider).valueOrNull;
+    final latestEldEvent = ref.watch(eldEventsStreamProvider).valueOrNull;
 
     final sortedEvents = List<LogEvent>.from(events)
       ..sort((a, b) => a.startTime.compareTo(b.startTime));

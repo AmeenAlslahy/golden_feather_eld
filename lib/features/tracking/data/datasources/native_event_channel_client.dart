@@ -143,8 +143,9 @@ class NativeEventChannelClient {
         accuracyMeters: accuracy,
         source: LocationSource.localNative,
         platform: Platform.isIOS ? 'iOS' : 'Android',
-        isMock: false, // Default to false unless provided by native
+        isMock: data['isMock'] == true, // Default to false unless provided by native
         qualityStatus: LocationQualityStatus.valid, // Will be validated later
+        metadata: data, // تمرير كامل الـ Map لاستخراج fromEcm وغيرها لاحقاً
       );
     } catch (_) {
       return null;

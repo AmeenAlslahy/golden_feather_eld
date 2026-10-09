@@ -80,9 +80,14 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
           },
         )
         .then((result) => result.mapValue(
-          (response) => StatusDashboardMapper.fromDashboardJson(
-            response.data ?? const {},
-          ),
+          (response) {
+            final json = response.data ?? const <String, dynamic>{};
+            final map = Map<String, dynamic>.from(json);
+            if (!map.containsKey('currentDutyStatus') || map['currentDutyStatus'] == null) {
+              map['currentDutyStatus'] = status.wire;
+            }
+            return StatusDashboardMapper.fromDashboardJson(map);
+          },
         ));
   }
 

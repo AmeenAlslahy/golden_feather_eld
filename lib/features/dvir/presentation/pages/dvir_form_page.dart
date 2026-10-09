@@ -423,6 +423,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       }
     }
 
+    if (resolvedDeviceId == null ||
+        resolvedDeviceId <= 0 ||
+        isUnassignedVehicleId(reportVehicleId)) {
+      _snack(context.loc.dvirVehicleIdMissing);
+      return;
+    }
+
     final previousToReview = ref
         .read(dvirProvider)
         .previousToReview(reportVehicleId);

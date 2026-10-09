@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
-import '../../../account/application/models/rules_screen_model.dart'; // ignore_architecture: driver rules configuration accessed by HOS change status
-import '../../../account/presentation/providers/rules_screen_provider.dart'; // ignore_architecture: driver rules configuration accessed by HOS change status
+import '../../../../core/providers/driver_rules_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import 'hos_engine_provider.dart';
 import 'hos_provider.dart';
@@ -222,7 +221,7 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
           isYardMoveAllowed: isYardMoveAllowed,
           isVehicleMoving: isVehicleMoving,
         )) {
-    _ref.listen<AsyncValue<RulesScreenModel>>(rulesScreenProvider, (_, next) {
+    _ref.listen<AsyncValue<DriverRules>>(driverRulesProvider, (_, next) {
       final rules = next.asData?.value;
       if (rules != null) {
         state = state.copyWith(
@@ -317,12 +316,9 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
         return DutyChangeEngineRefusal(error);
       }
 
-      // 2. تحديث لوحة التحكم الرئيسية فورياً بالحالة الجديدة
-      final dutyStatusCode = state.selectedOption.toDutyStatusCode();
-      await _ref.read(statusDashboardProvider.notifier).changeStatus(
-            dutyStatusCode,
-            notes: combinedAnnotation,
-          );
+      // لا حاجة لاستدعاء statusDashboardProvider.notifier.changeStatus هنا
+      // لأن statusDashboardProvider يستمع بالفعل لـ hosStatusProvider 
+      // ويقوم بتحديث نفسه (refresh) تلقائياً عند تغيير الحالة في المحرك.
 
       if (mounted) {
         state = state.copyWith(
@@ -363,7 +359,7 @@ final changeStatusProvider =
             isYardMoves: false,
           );
 
-    final rules = ref.read(rulesScreenProvider).asData?.value;
+    final rules = ref.read(driverRulesProvider).asData?.value;
     final isPersonalConveyanceAllowed =
         rules?.isPersonalConveyanceAllowed ?? false;
     final isYardMoveAllowed = rules?.isYardMoveAllowed ?? false;

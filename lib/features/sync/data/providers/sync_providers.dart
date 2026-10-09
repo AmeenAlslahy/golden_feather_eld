@@ -7,7 +7,7 @@ import '../../../../core/di/auth_local_data_source_provider.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
-import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart'; // ignore_architecture
+import '../../../../core/events/eld_events_provider.dart';
 import '../../../tracking/domain/entities/connection_status.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/offline_queue.dart';
@@ -96,11 +96,9 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
     timeAuthority: timeAuthority,
   );
 
-  // استماع لحالة الاتصال من نظام التتبع
-  final liveTracking = ref.watch(liveTrackingDataSourceProvider);
-
-  final subscription = liveTracking.connectionStatus.listen((status) {
-    if (status == ConnectionStatus.connected) {
+  // استماع لحالة الاتصال من نظام التتبع عبر Provider المعماري النظيف
+  ref.listen<AsyncValue<ConnectionStatus>>(eldConnectionStatusProvider, (_, next) {
+    if (next.value == ConnectionStatus.connected) {
       // عند عودة الاتصال، نقوم بمحاولة المزامنة
       engine.triggerSync();
     }
@@ -116,7 +114,6 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
       });
 
   ref.onDispose(() {
-    subscription.cancel();
     networkSubscription.cancel();
   });
 

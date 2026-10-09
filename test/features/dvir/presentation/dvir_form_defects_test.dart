@@ -133,8 +133,7 @@ void main() {
     expect(find.text('Tires'), findsOneWidget);
 
     await openAddDefects(tester);
-    await tester.scrollUntilVisible(find.text('Tires'), 100, scrollable: find.byType(Scrollable).last);
-    expect(find.text('Tires'), findsWidgets);
+    expect(find.widgetWithText(CheckboxListTile, 'Horn'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pump();
   });

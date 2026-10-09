@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/design_system.dart';
 
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../duty_change_message.dart';
 import '../providers/change_status_provider.dart';
 import '../widgets/status_option_tiles.dart';
@@ -71,39 +72,20 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
       if (state.isYardMoveAllowed) DutyStatusOption.yardMoves,
     ];
 
-    final isEn = context.loc.localeName == 'en';
-    final customLocationHint = isEn
-        ? 'Custom location'
-        : (context.loc.localeName == 'ar'
-            ? 'موقع مخصص'
-            : 'Ubicación personalizada');
-    final notesHint = isEn ? 'Notes' : context.loc.notes;
-    final updateLabel =
-        isEn ? 'UPDATE' : context.loc.updateButton.toUpperCase();
+    final customLocationHint = context.loc.customLocation;
+    final notesHint = context.loc.notes;
+    final updateLabel = context.loc.updateButton.toUpperCase();
 
-    const primaryBlue = Color(0xFF0B60B0);
-    const dividerColor = Color(0xFFEEEEEE);
-    const hintTextColor = Color(0xFF9E9E9E);
-    const buttonGreen = Color(0xFFA5D6A7);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: primaryBlue,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white, size: 26),
+          icon: const Icon(Icons.close, size: 26),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          isEn ? 'Change Status' : context.loc.changeStatus,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
+        title: Text(context.loc.changeStatus),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -132,103 +114,92 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
 
             // ========== سطر الموقع الحالي ==========
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               child: Text(
                 state.location.isNotEmpty
                     ? state.location
-                    : '8257mi SE from Isla Mujeres, Quintana Roo',
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: hintTextColor,
+                    : context.loc.location,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.hintColor,
                 ),
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: dividerColor),
+            const Divider(),
 
             // ========== حقل الموقع اليدوي (Custom location) ==========
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: TextField(
                 controller: _customLocationController,
                 onChanged: notifier.updateCustomLocation,
-                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                style: theme.textTheme.bodyLarge,
                 decoration: InputDecoration(
                   hintText: customLocationHint,
-                  hintStyle:
-                      const TextStyle(fontSize: 15, color: hintTextColor),
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.hintColor,
+                  ),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  fillColor: Colors.transparent,
                 ),
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: dividerColor),
+            const Divider(),
 
             // ========== حقل الملاحظات (Notes) ==========
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: TextField(
                 controller: _notesController,
                 onChanged: notifier.updateNotes,
-                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                style: theme.textTheme.bodyLarge,
                 decoration: InputDecoration(
                   hintText: notesHint,
-                  hintStyle:
-                      const TextStyle(fontSize: 15, color: hintTextColor),
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.hintColor,
+                  ),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  fillColor: Colors.transparent,
                 ),
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: dividerColor),
+            const Divider(),
 
             // ========== زر الحفظ UPDATE ==========
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: state.isSaving ? null : _handleSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonGreen,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: state.isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          updateLabel,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                ),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                28,
+                AppSpacing.md,
+                24,
+              ),
+              child: AppButton(
+                label: updateLabel,
+                type: EldButtonType.primary,
+                isLoading: state.isSaving,
+                onPressed: state.isSaving ? null : _handleSave,
               ),
             ),
 
             if (state.isVehicleMoving &&
                 state.selectedOption != DutyStatusOption.driving)
               Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: Text(
                   context.loc.errorCannotChangeStatusWhileMoving,
-                  style: const TextStyle(color: Colors.red),
+                  style: TextStyle(color: theme.colorScheme.error),
                   textAlign: TextAlign.center,
                 ),
               ),

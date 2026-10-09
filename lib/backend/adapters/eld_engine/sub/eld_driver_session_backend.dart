@@ -68,13 +68,15 @@ class EldDriverSessionBackend implements DriverSessionBackend {
     required DriverId coDriverId,
     String? reason,
   }) async {
+    final payload = <String, dynamic>{
+      'action': action.wire,
+      'coDriverId': coDriverId.value,
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+    };
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.switchPrimaryDriver,
-      queryParameters: {
-        'action': action.wire,
-        'coDriverId': coDriverId.value,
-        if (reason != null) 'reason': reason,
-      },
+      queryParameters: payload,
+      data: payload,
       parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.fold(
