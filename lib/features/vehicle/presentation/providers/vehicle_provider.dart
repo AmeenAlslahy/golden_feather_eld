@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/vehicle_repository_providers.dart';
 import '../../domain/repositories/vehicle_repository.dart';
@@ -71,16 +72,20 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     loadVehicles();
   }
 
-  Future<void> loadVehicles({bool forceRefresh = false}) async {
+  Future<void> loadVehicles({bool forceRefresh = false, bool background = false}) async {
     if (state.isInitialized && !forceRefresh) return;
 
-    state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+    if (!background) {
+      state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+    }
 
     final result = await _repository.getVehicles();
 
     result.match(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        if (!background) {
+          state = state.copyWith(isLoading: false, error: failure.message);
+        }
       },
       (vehicles) {
         final selected = _serverSelected(vehicles);

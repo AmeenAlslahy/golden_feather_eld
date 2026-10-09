@@ -114,11 +114,16 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   }
 
   Future<Either<Failure, bool>> _dispatchDutyStatus(PendingEvent event) async {
-    final driverId = await _driverId();
+    final payload = Map<String, dynamic>.from(event.payload);
+    final eventDriverId = payload['driverId'] as int?;
+    
+    final driverId = eventDriverId != null && eventDriverId > 0 
+        ? eventDriverId 
+        : await _driverId();
+
     if (driverId <= 0) {
       return const Left(ServerFailure(message: 'Driver session is missing'));
     }
-    final payload = Map<String, dynamic>.from(event.payload);
     payload['driverId'] = driverId;
 
     if (payload['status'] is String) {
@@ -131,16 +136,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       payload,
     );
     return await result.fold(
-      (error) {
-        final errText = '${error.code} ${error.context?['message'] ?? ''}'.toLowerCase();
-        if (errText.contains('duplicate key') ||
-            errText.contains('eld_daily_logs_pkey')) {
-          // السجل اليومي موجود مسبقاً على الخادم لنفس التاريخ — إقراره بنجاح
-          // لمنع تكرار المحاولة إلى ما لا نهاية في طابور الأحداث المعلقة.
-          return const Right(true);
-        }
-        return Left(ServerFailure(message: error.code));
-      },
+      (error) => Left(ServerFailure(message: error.code)),
       (_) => const Right(true),
     );
   }

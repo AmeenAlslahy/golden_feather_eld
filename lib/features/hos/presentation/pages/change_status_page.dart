@@ -145,9 +145,24 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.hintColor,
                   ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
+                  errorText: !state.isLocationValid && state.customLocation.isEmpty 
+                      ? 'Letters, numbers, punctuation 5 - 60 symbols are allowed.' 
+                      : null,
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                  ),
+                  errorBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
+                  ),
+                  focusedErrorBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   fillColor: Colors.transparent,
                 ),
@@ -167,9 +182,15 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.hintColor,
                   ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
+                  border: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.dividerColor),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   fillColor: Colors.transparent,
                 ),
@@ -189,7 +210,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 label: updateLabel,
                 type: EldButtonType.primary,
                 isLoading: state.isSaving,
-                onPressed: state.isSaving ? null : _handleSave,
+                onPressed: (state.isSaving || !state.isValid) ? null : _handleSave,
               ),
             ),
 

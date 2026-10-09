@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/providers/codriver_repository_providers.dart';
@@ -81,15 +82,19 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
   /// Pull-to-refresh / retry: re-reads the driver list and the current link.
   Future<void> reload() => _loadDrivers();
 
-  Future<void> _loadDrivers() async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> _loadDrivers({bool background = false}) async {
+    if (!background) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
     final driversResult = await _repository.getAvailableDrivers();
     final currentResult = await _repository.getCurrentCoDriver();
     if (!mounted) return;
 
     var next = state.copyWith(isLoading: false, error: null);
     driversResult.fold(
-      (failure) => next = next.copyWith(error: failure.message),
+      (failure) {
+        if (!background) next = next.copyWith(error: failure.message);
+      },
       (drivers) => next = next.copyWith(
         // استبعاد السائق نفسه من قائمة المساعدين (الرد قد يتضمنه).
         availableDrivers: drivers
@@ -99,12 +104,16 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
       ),
     );
     currentResult.fold(
-      (failure) => next = next.copyWith(
-        error: next.error,
-        currentError: failure.message,
-        clearCurrent: true,
-        clearCurrentError: true,
-      ),
+      (failure) {
+        if (!background) {
+          next = next.copyWith(
+            error: next.error,
+            currentError: failure.message,
+            clearCurrent: true,
+            clearCurrentError: true,
+          );
+        }
+      },
       (current) => next = next.copyWith(
         error: next.error,
         currentCoDriver: current,

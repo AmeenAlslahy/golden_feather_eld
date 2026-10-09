@@ -19,22 +19,9 @@ HardwareAlert _hardwareAlertFromJson(Map<String, dynamic> json) {
 }
 
 class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert>> {
-  Timer? _timer;
 
   @override
   Future<List<HardwareAlert>> build() async {
-    // تحديث التنبيهات كل 30 ثانية
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
-      fetchAlerts();
-    });
-
-    // المزوّد autoDispose: عند اختفاء آخر مستمع يُلغى المؤقت ويقف
-    // الاستقصاء الدوري بدل أن يستمر طوال عمر التطبيق.
-    ref.onDispose(() {
-      _timer?.cancel();
-    });
-
     return _fetchFromBackend();
   }
 

@@ -205,6 +205,7 @@ class DutyStatusTracker {
       payload: {
         'status': wireStatus,
         'startTime': stamp.toIso8601String(),
+        if (_readDriverId?.call() != null) 'driverId': _readDriverId!.call(),
         if (annotation != null && annotation.isNotEmpty) 'notes': annotation,
         if (latitude != null) 'latitude': latitude,
         if (longitude != null) 'longitude': longitude,

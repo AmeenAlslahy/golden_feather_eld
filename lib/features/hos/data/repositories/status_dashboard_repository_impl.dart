@@ -62,58 +62,9 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
       );
     }, offline: () async {
       if (_cachedDashboard != null) {
-        final isRest = status == DutyStatusCode.offDuty ||
-            status == DutyStatusCode.sleeperBerth ||
-            status == DutyStatusCode.personalConveyance;
-
         _cachedDashboard = _cachedDashboard!.copyWith(
           currentDutyStatus: status,
           remainingCircle: _circleForStatus(status),
-          hosIndicators: isRest
-              ? const HosIndicators(
-                  drive: HosIndicator(
-                    label: 'DRIVE',
-                    value: Duration(hours: 11),
-                    type: IndicatorType.remaining,
-                  ),
-                  shift: HosIndicator(
-                    label: 'SHIFT',
-                    value: Duration(hours: 14),
-                    type: IndicatorType.remaining,
-                  ),
-                  breakTime: HosIndicator(
-                    label: 'BREAK',
-                    value: Duration(hours: 8),
-                    type: IndicatorType.remaining,
-                  ),
-                  cycle: HosIndicator(
-                    label: 'CYCLE',
-                    value: Duration(hours: 70),
-                    type: IndicatorType.remaining,
-                  ),
-                )
-              : const HosIndicators(
-                  drive: HosIndicator(
-                    label: 'DRIVE',
-                    value: Duration(minutes: 35),
-                    type: IndicatorType.remaining,
-                  ),
-                  shift: HosIndicator(
-                    label: 'SHIFT',
-                    value: Duration(hours: 2, minutes: 8),
-                    type: IndicatorType.remaining,
-                  ),
-                  breakTime: HosIndicator(
-                    label: 'BREAK',
-                    value: Duration(hours: 6, minutes: 15),
-                    type: IndicatorType.remaining,
-                  ),
-                  cycle: HosIndicator(
-                    label: 'CYCLE',
-                    value: Duration(hours: 52, minutes: 48),
-                    type: IndicatorType.remaining,
-                  ),
-                ),
         );
         return Right(_cachedDashboard!);
       }

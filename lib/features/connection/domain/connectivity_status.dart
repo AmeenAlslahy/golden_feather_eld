@@ -19,6 +19,17 @@ class ConnectivityStatus {
   /// `manualRecordingAllowed` — false means the server refuses the toggle.
   final bool? manualRecordingAllowed;
 
+  final String? deviceStatus;
+  final bool? autoDrivingAllowed;
+  final List<String> alerts;
+  final bool? isMotionDataAvailable;
+  final bool? isLocationDataAvailable;
+  final bool? isEngineDataAvailable;
+  final double? currentSpeedKmh;
+  final double? odometerKm;
+  final double? engineHours;
+  final bool? engineOn;
+
   const ConnectivityStatus({
     this.connectionStatus,
     this.vehicleName,
@@ -34,6 +45,16 @@ class ConnectivityStatus {
     this.manualModeActive,
     this.manualModeReason,
     this.manualRecordingAllowed,
+    this.deviceStatus,
+    this.autoDrivingAllowed,
+    this.alerts = const [],
+    this.isMotionDataAvailable,
+    this.isLocationDataAvailable,
+    this.isEngineDataAvailable,
+    this.currentSpeedKmh,
+    this.odometerKm,
+    this.engineHours,
+    this.engineOn,
   });
 
   /// Prefill only a MAC-shaped identifier. Other ELD ids are not invented as MAC.
@@ -58,6 +79,7 @@ ConnectivityStatus? parseConnectivityStatus(dynamic data) {
   final body = _asMap(nested) ?? root;
   final diagnostics = _strings(body['activeDiagnostics']);
   final malfunctions = _strings(body['activeMalfunctions']);
+  final alerts = _strings(body['alerts']) ?? [];
   if (diagnostics == null || malfunctions == null) return null;
   return ConnectivityStatus(
     connectionStatus: _text(body['connectionStatus']),
@@ -74,6 +96,16 @@ ConnectivityStatus? parseConnectivityStatus(dynamic data) {
     manualModeActive: _bool(body['manualModeActive']),
     manualModeReason: _text(body['manualModeReason']),
     manualRecordingAllowed: _bool(body['manualRecordingAllowed']),
+    deviceStatus: _text(body['deviceStatus']),
+    autoDrivingAllowed: _bool(body['autoDrivingAllowed']),
+    alerts: alerts,
+    isMotionDataAvailable: _bool(body['isMotionDataAvailable']),
+    isLocationDataAvailable: _bool(body['isLocationDataAvailable']),
+    isEngineDataAvailable: _bool(body['isEngineDataAvailable']),
+    currentSpeedKmh: _double(body['currentSpeedKmh']),
+    odometerKm: _double(body['odometerKm']),
+    engineHours: _double(body['engineHours']),
+    engineOn: _bool(body['engineOn']),
   );
 }
 
@@ -92,6 +124,11 @@ String? _text(dynamic value) {
 int? _int(dynamic value) {
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '');
+}
+
+double? _double(dynamic value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '');
 }
 
 bool? _bool(dynamic value) {

@@ -84,31 +84,53 @@ class DvirInspectionTypeSection extends StatelessWidget {
   }
 }
 
-class DvirTimeLocationSection extends StatelessWidget {
+class DvirTimeSection extends StatelessWidget {
   final String currentTime;
-  final String automaticLocation;
+  final VoidCallback? onTap;
+  final bool readOnly;
 
-  const DvirTimeLocationSection({
+  const DvirTimeSection({
     super.key,
     required this.currentTime,
-    required this.automaticLocation,
+    this.onTap,
+    this.readOnly = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DvirFieldGroup(
-          title: loc.dvirTimeET,
-          child: Text(currentTime, style: context.styles.body),
-        ),
-        DvirFieldGroup(
-          title: loc.location,
-          child: Text(automaticLocation, style: context.styles.body),
-        ),
-      ],
+    return DvirFieldGroup(
+      title: loc.dvirTimeET,
+      child: GestureDetector(
+        onTap: readOnly ? null : onTap,
+        child: Text(currentTime, style: context.styles.body.copyWith(
+          color: readOnly ? null : context.colorScheme.primary,
+        )),
+      ),
+    );
+  }
+}
+
+class DvirLocationSection extends StatelessWidget {
+  final TextEditingController controller;
+  final bool readOnly;
+
+  const DvirLocationSection({
+    super.key,
+    required this.controller,
+    required this.readOnly,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return DvirFieldGroup(
+      title: loc.location,
+      child: DvirFlatTextField(
+        controller: controller,
+        hint: loc.location,
+        readOnly: readOnly,
+      ),
     );
   }
 }
@@ -159,6 +181,7 @@ class DvirVehicleSection extends StatelessWidget {
   final TextEditingController defectsController;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
+  final VoidCallback? onSelectVehicle;
 
   const DvirVehicleSection({
     super.key,
@@ -166,6 +189,7 @@ class DvirVehicleSection extends StatelessWidget {
     required this.defectsController,
     required this.readOnly,
     this.onSelectDefects,
+    this.onSelectVehicle,
   });
 
   @override
@@ -183,28 +207,30 @@ class DvirVehicleSection extends StatelessWidget {
         builder: (field) {
           final hasError = field.hasError;
           final errorColor = context.colorScheme.error;
-          return DvirCell(
-            title: loc.vehicle,
-            // تجاوز اللون فقط عند وجود خطأ — القيمة null تعني استخدام الثيم.
-            borderColor: hasError ? errorColor : null,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dashboard.vehicleDisplayName,
-                  style: context.styles.body.copyWith(
-                    color: hasError ? errorColor : null,
-                  ),
-                ),
-                if (hasError)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      field.errorText!,
-                      style: context.styles.error.copyWith(fontSize: 12),
+          return GestureDetector(
+            onTap: readOnly ? null : onSelectVehicle,
+            child: DvirCell(
+              title: loc.vehicle,
+              borderColor: hasError ? errorColor : null,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    dashboard.vehicleDisplayName,
+                    style: context.styles.body.copyWith(
+                      color: hasError ? errorColor : null,
                     ),
                   ),
-              ],
+                  if (hasError)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        field.errorText!,
+                        style: context.styles.error.copyWith(fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
@@ -227,6 +253,7 @@ class DvirTrailerSection extends StatelessWidget {
   final TextEditingController defectsController;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
+  final VoidCallback? onSelectTrailer;
 
   const DvirTrailerSection({
     super.key,
@@ -234,6 +261,7 @@ class DvirTrailerSection extends StatelessWidget {
     required this.defectsController,
     required this.readOnly,
     this.onSelectDefects,
+    this.onSelectTrailer,
   });
 
   @override
@@ -242,13 +270,16 @@ class DvirTrailerSection extends StatelessWidget {
     final trailerId = dashboard.trailerId?.trim();
     final hasTrailer = trailerId != null && trailerId.isNotEmpty;
     return DvirTwoColumn(
-      left: DvirCell(
-        title: loc.trailers,
-        child: Text(
-          hasTrailer ? trailerId : loc.trailers,
-          style: hasTrailer
-              ? context.styles.body
-              : context.styles.subtitle,
+      left: GestureDetector(
+        onTap: readOnly ? null : onSelectTrailer,
+        child: DvirCell(
+          title: loc.trailers,
+          child: Text(
+            hasTrailer ? trailerId : loc.trailers,
+            style: hasTrailer
+                ? context.styles.body
+                : context.styles.subtitle,
+          ),
         ),
       ),
       right: DvirCell(
@@ -265,18 +296,24 @@ class DvirTrailerSection extends StatelessWidget {
 }
 
 class DvirCompanySection extends StatelessWidget {
-  final String companyName;
+  final TextEditingController controller;
+  final bool readOnly;
 
   const DvirCompanySection({
     super.key,
-    required this.companyName,
+    required this.controller,
+    required this.readOnly,
   });
 
   @override
   Widget build(BuildContext context) {
     return DvirFieldGroup(
       title: AppLocalizations.of(context)!.company,
-      child: Text(companyName, style: context.styles.body),
+      child: DvirFlatTextField(
+        controller: controller,
+        hint: AppLocalizations.of(context)!.company,
+        readOnly: readOnly,
+      ),
     );
   }
 }

@@ -154,7 +154,7 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
     // تحديد اللون: رمادي عند الراحة، أحمر عند اقتراب النهاية (≤ 15 دقيقة / انتهاء الوقت)، أخضر في الأمان
     final Color arcColor;
     final Color timeTextColor;
-    if (isRest) {
+    if (isRest || liveRemaining <= Duration.zero) {
       arcColor = theme.disabledColor;
       timeTextColor = theme.hintColor;
     } else if (liveRemaining <= const Duration(minutes: 15)) {

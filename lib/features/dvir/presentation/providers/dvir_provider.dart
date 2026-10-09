@@ -120,7 +120,9 @@ class DvirNotifier extends StateNotifier<DvirState> {
     String? vehicleId,
   })  : _repository = repository,
         _vehicleId = vehicleId,
-        super(const DvirState());
+        super(const DvirState()) {
+    _loadDvirs(background: true);
+  }
 
   Future<void> refresh() => _loadDvirs();
 
@@ -147,9 +149,11 @@ class DvirNotifier extends StateNotifier<DvirState> {
     );
   }
 
-  Future<void> _loadDvirs() async {
+  Future<void> _loadDvirs({bool background = false}) async {
     // Explicitly clear the error when starting a fresh load.
-    state = state.copyWith(isLoading: true, error: null);
+    if (!background) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     // Resolve vehicle id: vehicle identifier from dashboard/selection
     final vehicleId = (_vehicleId != null && !isUnassignedVehicleId(_vehicleId))
@@ -159,10 +163,14 @@ class DvirNotifier extends StateNotifier<DvirState> {
 
     if (mounted) {
       result.fold(
-        (failure) => state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        ),
+        (failure) {
+          if (!background) {
+            state = state.copyWith(
+              isLoading: false,
+              error: failure.message,
+            );
+          }
+        },
         (reports) => state = state.copyWith(
           isLoading: false,
           reports: reports,
@@ -231,10 +239,38 @@ class DvirNotifier extends StateNotifier<DvirState> {
         return failure.message;
       },
       (_) {
-        state = state.copyWith(isSubmitting: false, error: null);
+        // تحديث الكيان المتأثر في الذاكرة (Local State Mutation) بدلاً من إعادة الجلب
+        final updatedReports = state.reports.map((r) {
+          if (r.id == dvirId) {
+            return r.copyWith(
+              nextDriverReviewed: true,
+              reviewingDriverName: reviewingDriverName,
+              // يمكن إضافة المزيد من الحقول هنا لو لزم الأمر
+            );
+          }
+          return r;
+        }).toList();
+
+        state = state.copyWith(
+          isSubmitting: false, 
+          error: null,
+          reports: updatedReports,
+        );
         return null;
       },
     );
+  }
+
+  /// تحديث فحص محدد في الذاكرة مباشرة بدون طلب السيرفر
+  void updateLocalReport(DvirReport updatedReport) {
+    if (!mounted) return;
+    final updatedReports = state.reports.map((r) {
+      if (r.id == updatedReport.id) {
+        return updatedReport;
+      }
+      return r;
+    }).toList();
+    state = state.copyWith(reports: updatedReports);
   }
 
   /// استرجاع تفاصيل تقرير DVIR محدد. التحميل صامت (بلا مؤشر عام) —

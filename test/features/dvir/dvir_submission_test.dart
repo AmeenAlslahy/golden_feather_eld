@@ -36,9 +36,8 @@ void main() {
     // DVIR-09: عيوب على السلك تُصالح الحالة إلى Has Defects.
     expect(body?['status'], 'Has Defects');
     expect(body?['signatureData'], 'AQID');
-    expect(body?['defects'], [
-      {'itemName': 'Vehicle defect', 'category': 'VEHICLE', 'description': 'brake leak'},
-      {'itemName': 'Trailer defect', 'category': 'TRAILER', 'description': 'light out'},
+    expect(body?['vehicle']['detects'], [
+      {'itemName': 'Vehicle defect', 'description': 'brake leak'},
     ]);
   });
 

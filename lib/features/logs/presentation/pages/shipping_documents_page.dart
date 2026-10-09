@@ -94,7 +94,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
                     textInputAction: TextInputAction.done,
                     keyboardType: TextInputType.text,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s\-_#.]')),
                     ],
                     onSubmitted: (_) => _addDocument(),
                   ),

@@ -19,7 +19,12 @@ class _Repo extends Mock implements VehicleRepository {}
 
 class _MockTrackingRepository extends Mock implements TrackingRepository {}
 
-class _Storage extends Mock implements LocalStorageService {}
+class _Storage extends Mock implements LocalStorageService {
+  @override
+  Future<void> setDeviceId(String value) async {}
+  @override
+  String? get selectedVehicleId => null;
+}
 
 /// SRS 3.1 — Select Vehicle: View ≠ Select ≠ Operate. My vehicles are
 /// selectable; the company fleet is viewable but only assigned rows can be

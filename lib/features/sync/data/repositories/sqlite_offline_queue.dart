@@ -20,7 +20,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
@@ -33,6 +33,28 @@ class SQLiteOfflineQueue implements OfflineQueue {
             nextRetryAt INTEGER
           )
         ''');
+        await db.execute('''
+          CREATE TABLE dead_letters (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            createdAt INTEGER NOT NULL,
+            failedAt INTEGER NOT NULL
+          )
+        ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE dead_letters (
+              id TEXT PRIMARY KEY,
+              type TEXT NOT NULL,
+              payload TEXT NOT NULL,
+              createdAt INTEGER NOT NULL,
+              failedAt INTEGER NOT NULL
+            )
+          ''');
+        }
       },
     );
   }
@@ -103,6 +125,29 @@ class SQLiteOfflineQueue implements OfflineQueue {
       where: 'id = ?',
       whereArgs: [eventId],
     );
+  }
+
+  @override
+  Future<void> moveToDeadLetter(PendingEvent event) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        _tableName,
+        where: 'id = ?',
+        whereArgs: [event.id],
+      );
+      await txn.insert(
+        'dead_letters',
+        {
+          'id': event.id,
+          'type': event.type,
+          'payload': jsonEncode(event.payload),
+          'createdAt': event.createdAt.millisecondsSinceEpoch,
+          'failedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
   }
 
   @override

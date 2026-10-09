@@ -170,6 +170,17 @@ class ChangeStatusState {
       selectedOption == DutyStatusOption.personalConveyance ||
       selectedOption == DutyStatusOption.yardMoves;
 
+  bool get hasValidCustomLocation => 
+      customLocation.length >= 5 && customLocation.length <= 60;
+
+  bool get isLocationValid {
+    if (customLocation.isNotEmpty) return hasValidCustomLocation;
+    final hasGps = location.isNotEmpty && location != 'Unknown' && location != 'Location';
+    return hasGps;
+  }
+
+  bool get isValid => isLocationValid && (!isAnnotationRequired || notes.length >= 4);
+
   ChangeStatusState copyWith({
     DutyStatusOption? selectedOption,
     String? location,

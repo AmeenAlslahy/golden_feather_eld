@@ -108,6 +108,24 @@ class _TwoReportsDvirBackend extends MockDvirBackend {
       ],
     });
   }
+
+  @override
+  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async {
+    return ok({
+      'data': [
+        {
+          'id': 99,
+          'itemCode': 'TIRES',
+          'itemName': 'Tires',
+          'category': 'REGULATORY_MINIMUM',
+          'safetyAffecting': true,
+          'description': 'left front worn',
+          'stage': 'OPEN',
+          'severity': 'HIGH'
+        },
+      ]
+    });
+  }
 }
 
 class _FakeLocalStorage extends Mock implements LocalStorageService {

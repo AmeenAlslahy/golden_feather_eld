@@ -93,7 +93,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
                     textInputAction: TextInputAction.done,
                     keyboardType: TextInputType.text,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s\-_#.]')),
                     ],
                     onSubmitted: (_) => _addTrailer(),
                   ),

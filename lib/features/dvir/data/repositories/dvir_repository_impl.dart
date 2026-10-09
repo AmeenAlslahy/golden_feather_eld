@@ -19,6 +19,7 @@ import '../../../../domain/shared/value_objects.dart';
 import '../mappers/dvir_mappers.dart';
 import '../mappers/dvir_defect_mappers.dart';
 import '../../domain/entities/dvir_defect.dart';
+import '../../domain/defect_enums.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
@@ -329,7 +330,7 @@ class DvirRepositoryImpl implements DvirRepository {
       type: _parseInspectionType(dto.inspectionType),
       date: _parseDate(dto),
       driverName: dto.driver?.name ?? '',
-      vehicleId: dto.uniqueId ?? '',
+      vehicleId: (dto.uniqueId?.isNotEmpty == true ? dto.uniqueId : dto.vehicleName) ?? '',
       trailerId: dto.trailerNumber,
       odometer: dto.odometer,
       condition: _parseVehicleCondition(dto.status),
@@ -348,20 +349,26 @@ class DvirRepositoryImpl implements DvirRepository {
       repairNotes: dto.repairNotes,
       reviewingDriverName: dto.reviewingDriverName,
       nextDriverReviewed: dto.nextDriverReviewed,
-      // Server defects with a catalog code are shown as catalog chips on the saved report.
       selectedDefects: [
         for (final defect in dto.defects)
-          if ((defect.itemCode ?? '').trim().isNotEmpty)
+          if ((defect.itemCode ?? '').trim().isNotEmpty || (defect.itemName ?? '').trim().isNotEmpty)
             DvirDefectSelection(
               item: DvirCatalogItem(
-                code: defect.itemCode!.trim(),
-                name: defect.itemName ?? defect.itemCode!,
+                code: defect.itemCode?.trim() ?? 'GENERIC',
+                name: defect.itemName ?? defect.itemCode ?? 'Unknown defect',
                 category: defect.category ?? '',
                 critical: defect.safetyAffecting || defect.outOfService,
               ),
               description: defect.description,
+              severity: DefectSeverity.fromWire(defect.severity),
+              stage: DefectLifecycleStage.fromWire(defect.stage),
             ),
       ],
+      photos: dto.photos,
+      trailers: dto.trailers.map((t) => DvirTrailer(
+        trailerNumber: t.trailerNumber,
+        defects: t.defects.map((d) => d.description ?? d.itemName ?? '').where((s) => s.isNotEmpty).toList(),
+      )).toList(),
     );
   }
 

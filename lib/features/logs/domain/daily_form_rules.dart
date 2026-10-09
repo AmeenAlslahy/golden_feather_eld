@@ -28,7 +28,7 @@ String? trailerNumberError(String value, AppLocalizations loc) {
   if (v.isEmpty) {
     return loc.enterTrailerNumber;
   }
-  if (v.length > 50 || !RegExp(r'^[A-Za-z0-9-]+$').hasMatch(v)) {
+  if (v.length > 50 || !RegExp(r'^[A-Za-z0-9\s\-_#]+$').hasMatch(v)) {
     return loc.trailerNumberFormatError;
   }
   return null;
@@ -43,12 +43,12 @@ String? shippingDocumentError(String value, AppLocalizations loc) {
   if (v.length > 100) {
     return loc.documentNumberTooLong;
   }
-  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) {
+  if (!RegExp(r'^[a-zA-Z0-9\s\-_#.]+$').hasMatch(v)) {
     return loc.localeName == 'ar'
-        ? 'يجب أن يحتوي رقم الوثيقة على حروف وأرقام فقط'
+        ? 'يجب أن يحتوي رقم الوثيقة على حروف وأرقام وعلامات بسيطة فقط'
         : (loc.localeName == 'es'
-            ? 'El número de documento solo debe contener letras y números'
-            : 'Document number must contain letters and numbers only');
+            ? 'El número de documento solo debe contener letras, números y signos básicos'
+            : 'Document number must contain letters, numbers, and basic signs only');
   }
   if (v.contains(',')) {
     return loc.oneDocumentAtATime;

@@ -133,6 +133,33 @@ class _DetailBody extends StatelessWidget {
             ),
           ],
         ),
+        
+        // --- Trailers Section ---
+        if (report.trailers.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          _Section(
+            title: 'Trailers', // loc.trailers
+            children: report.trailers.map((t) => _TrailerCard(trailer: t)).toList(),
+          ),
+        ],
+
+        // --- Photos Section ---
+        if (report.photos.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          _Section(
+            title: 'Photos attached', // loc.dvirPhotos
+            children: [
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: report.photos
+                    .where((p) => p.isNotEmpty)
+                    .map((p) => _PhotoThumbnail(dataUrl: p))
+                    .toList(),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
         if (report.hasDefects) ...[
           _Section(
@@ -161,6 +188,27 @@ class _DetailBody extends StatelessWidget {
               Text(loc.dvirSign, style: context.styles.muted),
           ],
         ),
+
+        // --- Mechanic Certification Section ---
+        if (report.certified || (report.mechanicName != null && report.mechanicName!.isNotEmpty)) ...[
+          const SizedBox(height: AppSpacing.md),
+          _Section(
+            title: 'Mechanic Certification',
+            children: [
+              EldInfoRow(label: 'Mechanic', value: report.mechanicName ?? '—'),
+              EldInfoRow(
+                label: 'Status',
+                value: report.repairStatus ?? '—',
+                valueColor: report.repairStatus == 'REPAIRED' 
+                  ? AppColors.successText 
+                  : AppColors.warningText,
+              ),
+              if (report.repairNotes != null && report.repairNotes!.isNotEmpty)
+                EldInfoRow(label: 'Repair Notes', value: report.repairNotes!),
+            ],
+          ),
+        ],
+
         if (report.nextDriverReviewed) ...[
           const SizedBox(height: AppSpacing.md),
           _Section(
@@ -346,3 +394,93 @@ class _DefectCard extends StatelessWidget {
     );
   }
 }
+
+class _TrailerCard extends StatelessWidget {
+  final DvirTrailer trailer;
+
+  const _TrailerCard({required this.trailer});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.directions_car_filled_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                trailer.trailerNumber,
+                style: context.styles.body.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          if (trailer.defects.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            for (final defect in trailer.defects)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• ', style: TextStyle(color: AppColors.dangerText)),
+                    Expanded(child: Text(defect, style: context.styles.subtitle)),
+                  ],
+                ),
+              ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text('No defects reported', style: context.styles.subtitle),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoThumbnail extends StatelessWidget {
+  final String dataUrl;
+
+  const _PhotoThumbnail({required this.dataUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    try {
+      final base64Part = dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
+      final bytes = base64Decode(base64Part);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        child: Image.memory(
+          bytes, 
+          width: 80, 
+          height: 80, 
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _errorPlaceholder(),
+        ),
+      );
+    } catch (_) {
+      return _errorPlaceholder();
+    }
+  }
+
+  Widget _errorPlaceholder() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+      ),
+      child: const Icon(Icons.broken_image, color: Colors.grey),
+    );
+  }
+}
+

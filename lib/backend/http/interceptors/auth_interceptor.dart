@@ -43,11 +43,17 @@ class AuthInterceptor extends Interceptor {
     try {
       final session = await localDataSource.getSession();
       if (session != null && session.sessionCredential.isNotEmpty) {
-        final cookie = 'JSESSIONID=${session.sessionCredential}';
-        final existingCookie = options.headers['Cookie'];
-        options.headers['Cookie'] =
-            existingCookie != null ? '$existingCookie; $cookie' : cookie;
-        options.extra[_sessionAttachedKey] = true;
+        final requestHost = options.uri.host;
+        final baseHost = Uri.tryParse(options.baseUrl)?.host ?? '';
+        
+        // Prevent cross-origin cookie leak: only send session cookie to our backend
+        if (requestHost == baseHost || requestHost.isEmpty || baseHost.isEmpty) {
+          final cookie = 'JSESSIONID=${session.sessionCredential}';
+          final existingCookie = options.headers['Cookie'];
+          options.headers['Cookie'] =
+              existingCookie != null ? '$existingCookie; $cookie' : cookie;
+          options.extra[_sessionAttachedKey] = true;
+        }
       }
     } catch (e) {
       AppLogger.error('AuthInterceptor failed to read session for $backendType: $e');

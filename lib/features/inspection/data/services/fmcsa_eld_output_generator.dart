@@ -135,17 +135,11 @@ class FmcsaEldOutputGenerator {
       allEvents.addAll(l.events);
     }
 
-    if (allEvents.isEmpty) {
-      // Default baseline On-Duty event if cache had no discrete events
-      buffer.writeln(
-        '5,$seq,1,1,4,$fileDate,$fileTime,${(startOdo * 0.621371).toStringAsFixed(1)},${engineHrs.toStringAsFixed(1)},${initialCoords.$1},${initialCoords.$2},0,0,0,00,00',
-      );
-      seq++;
-    } else {
+    if (allEvents.isNotEmpty) {
       for (final event in allEvents) {
         final evDate = fileDate;
         // Parse time string (e.g. "04:19 PM" or ISO) to HHmmss
-        final evTime = _parseTimeToHHmmss(event.timeEt);
+        final evTime = _parseTimeToHHmmss(event.timeEt, fallback: fileTime);
         final evCode = _mapEventCode(event.eventCode);
         final miles = (event.odometer * 0.621371).toStringAsFixed(1);
         final hours = event.engineHours.toStringAsFixed(1);
@@ -194,7 +188,7 @@ class FmcsaEldOutputGenerator {
     return ('', '');
   }
 
-  static String _parseTimeToHHmmss(String timeRaw) {
+  static String _parseTimeToHHmmss(String timeRaw, {required String fallback}) {
     try {
       final parsed = DateFormat('hh:mm a').parseLoose(timeRaw);
       return DateFormat('HHmmss').format(parsed);
@@ -203,7 +197,7 @@ class FmcsaEldOutputGenerator {
         final parsed = DateFormat('HH:mm').parseLoose(timeRaw);
         return DateFormat('HHmmss').format(parsed);
       } catch (_) {
-        return '080000';
+        return fallback;
       }
     }
   }

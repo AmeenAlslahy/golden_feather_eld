@@ -33,6 +33,9 @@ class _FormTabState extends ConsumerState<FormTab> {
     final selectedLog = logsState.selectedLog;
     final serverForm = logsState.serverForm;
     final dashboard = ref.watch(dashboardDataProvider);
+    final formState = selectedLog != null 
+        ? ref.watch(formTabControllerProvider(selectedLog)) 
+        : null;
 
     // استخراج القيم الفعلية المسترجعة من الخادم للسجل المحدد حالياً
     final driverNameRaw = selectedLog?.driverName;
@@ -219,6 +222,7 @@ class _FormTabState extends ConsumerState<FormTab> {
             AppButton(
               label: context.loc.saveButton.toUpperCase(),
               type: EldButtonType.primary,
+              isLoading: formState?.isLoading ?? false,
               onPressed: () async {
                 if (!_formKey.currentState!.validate()) return;
                 if (selectedLog == null) return;

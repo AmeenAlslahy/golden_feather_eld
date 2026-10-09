@@ -205,9 +205,16 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> clearSelectedVehicle() =>
       _preferencesStorage.clearSelectedVehicle();
 
-  /// مسح جميع البيانات
+  /// مسح جميع البيانات (مع الاحتفاظ بإعدادات الخادم)
   Future<void> clearAll() async {
+    final currentUrl = _prefs.getString('url');
+    final currentBackend = _prefs.getString('backend_type');
+    
     await _prefs.clear();
+    
+    if (currentUrl != null) await _prefs.setString('url', currentUrl);
+    if (currentBackend != null) await _prefs.setString('backend_type', currentBackend);
+    
     await _setDefaults();
   }
 }

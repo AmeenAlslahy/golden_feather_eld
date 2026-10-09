@@ -15,4 +15,7 @@ abstract class OfflineQueue {
 
   /// الحصول على عدد الأحداث المتبقية
   Future<int> get count;
+
+  /// نقل الحدث إلى طابور الأحداث الميتة (بعد استنفاد المحاولات)
+  Future<void> moveToDeadLetter(PendingEvent event);
 }

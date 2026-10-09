@@ -133,20 +133,25 @@ class DvirListPage extends ConsumerWidget {
   }
 }
 
-class _DvirSummaryRow extends StatelessWidget {
+class _DvirSummaryRow extends ConsumerWidget {
   const _DvirSummaryRow({required this.summary});
 
   final DvirListSummary summary;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final loc = context.loc;
+    final activeDefects = ref.watch(activeVehicleDefectsProvider).valueOrNull;
+    final openCount = activeDefects != null 
+        ? activeDefects.where((d) => d.stage?.toUpperCase() == 'OPEN').length 
+        : summary.openDefects;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
           _cell(context, loc.dvirListTotal, summary.total),
-          _cell(context, loc.dvirListOpen, summary.openDefects),
+          _cell(context, loc.dvirListOpen, openCount),
           _cell(context, loc.dvirListSigned, summary.signed),
           _cell(context, loc.dvirListOos, summary.outOfService),
         ],

@@ -56,6 +56,19 @@ enum VehicleOperationalStatus {
   available,
 }
 
+class DvirTrailer extends Equatable {
+  final String trailerNumber;
+  final List<String> defects;
+
+  const DvirTrailer({
+    required this.trailerNumber,
+    this.defects = const [],
+  });
+
+  @override
+  List<Object?> get props => [trailerNumber, defects];
+}
+
 class DvirReport extends Equatable {
   final String id;
   final InspectionType type;
@@ -91,6 +104,9 @@ class DvirReport extends Equatable {
 
   /// §396.11 catalog items marked defective on this report.
   final List<DvirDefectSelection> selectedDefects;
+
+  final List<String> photos;
+  final List<DvirTrailer> trailers;
 
   /// SRS 7.1: حالة تشغيل المركبة المشترقة من عيوب هذا التقرير.
   /// الإيقاف (`outOfService` من الخادم) يرجح على التقييد، والتقييد على التوفر.
@@ -144,6 +160,8 @@ class DvirReport extends Equatable {
     this.reviewingDriverName,
     this.nextDriverReviewed = false,
     this.selectedDefects = const [],
+    this.photos = const [],
+    this.trailers = const [],
   });
 
   DvirReport copyWith({
@@ -175,6 +193,8 @@ class DvirReport extends Equatable {
     bool? nextDriverReviewed,
     List<DvirDefectSelection>? selectedDefects,
     bool clearSelectedDefects = false,
+    List<String>? photos,
+    List<DvirTrailer>? trailers,
   }) {
     return DvirReport(
       id: id ?? this.id,
@@ -206,6 +226,8 @@ class DvirReport extends Equatable {
       selectedDefects: clearSelectedDefects
           ? const []
           : (selectedDefects ?? this.selectedDefects),
+      photos: photos ?? this.photos,
+      trailers: trailers ?? this.trailers,
     );
   }
 
@@ -238,5 +260,7 @@ class DvirReport extends Equatable {
         reviewingDriverName,
         nextDriverReviewed,
         selectedDefects,
+        photos,
+        trailers,
       ];
 }

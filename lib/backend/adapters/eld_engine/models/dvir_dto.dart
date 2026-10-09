@@ -15,6 +15,9 @@ class DvirDto {
   final int defectsCount;
   final String? defectsSummary;
   final bool outOfService;
+  final List<String> photos;
+  final List<DvirDefectDto> vehicleDefects;
+  final List<DvirTrailerDto> trailers;
   final List<DvirDefectDto> defects;
   final String? remarks;
   final bool certified;
@@ -44,6 +47,9 @@ class DvirDto {
     this.defectsCount = 0,
     this.defectsSummary,
     this.outOfService = false,
+    this.photos = const [],
+    this.vehicleDefects = const [],
+    this.trailers = const [],
     this.defects = const [],
     this.remarks,
     this.certified = false,
@@ -58,29 +64,54 @@ class DvirDto {
   });
 
   factory DvirDto.fromJson(Map<String, dynamic> json) {
+    final vehicleObj = json['vehicle'] as Map<String, dynamic>?;
+    final trailersArr = json['trailers'] as List<dynamic>?;
+    final firstTrailer = trailersArr?.isNotEmpty == true ? (trailersArr!.first as Map<String, dynamic>) : null;
+
+    final flatDefects = (json['defects'] as List<dynamic>?)
+            ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+
+    final vehicleDefects = (vehicleObj?['detects'] as List<dynamic>?)
+            ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+    
+    final trailerDefects = (firstTrailer?['detects'] as List<dynamic>?)
+            ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
+            .toList() ?? [];
+
+    final photos = (json['photos'] as List<dynamic>?)
+            ?.map((e) => e['url']?.toString() ?? e['fileName']?.toString() ?? e.toString())
+            .where((s) => s.isNotEmpty)
+            .toList() ?? [];
+
+    final trailers = (trailersArr ?? [])
+            .map((e) => DvirTrailerDto.fromJson(e as Map<String, dynamic>))
+            .toList();
+
     return DvirDto(
       id: (json['id'] as num).toInt(),
       driver: json['driver'] == null
           ? null
           : DvirDriverDto.fromJson(json['driver'] as Map<String, dynamic>),
-      uniqueId: json['uniqueId']?.toString(),
-      vehicleName: json['vehicleName']?.toString(),
-      trailerNumber: json['trailerNumber']?.toString(),
-      companyName: json['companyName']?.toString(),
+      uniqueId: json['uniqueId']?.toString() ?? vehicleObj?['uniqueId']?.toString(),
+      vehicleName: json['vehicleName']?.toString() ?? vehicleObj?['name']?.toString() ?? vehicleObj?['uniqueId']?.toString(),
+      trailerNumber: json['trailerNumber']?.toString() ?? firstTrailer?['trailerNumber']?.toString(),
+      companyName: json['companyName']?.toString() ?? json['company']?['name']?.toString(),
       inspectionType: json['inspectionType']?.toString(),
       inspectionTime: json['inspectionTime']?.toString(),
       formattedTime: json['formattedTime']?.toString(),
-      location: json['location']?.toString(),
-      odometer: (json['odometer'] as num?)?.toDouble(),
+      location: json['location']?.toString() ?? (json['location'] is Map ? "${json['location']['latitude']}, ${json['location']['longitude']}" : null),
+      odometer: (json['odometer'] as num?)?.toDouble() ?? (vehicleObj?['odometer'] as num?)?.toDouble(),
       status: json['status']?.toString(),
-      hasDefects: json['hasDefects'] == true,
-      defectsCount: (json['defectsCount'] as num?)?.toInt() ?? 0,
+      hasDefects: json['hasDefects'] == true || vehicleDefects.isNotEmpty || trailerDefects.isNotEmpty || flatDefects.isNotEmpty,
+      defectsCount: flatDefects.length + vehicleDefects.length + trailerDefects.length,
       defectsSummary: json['defectsSummary']?.toString(),
       outOfService: json['outOfService'] == true,
-      defects: (json['defects'] as List<dynamic>?)
-              ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      photos: photos,
+      vehicleDefects: vehicleDefects,
+      trailers: trailers,
+      defects: [...flatDefects, ...vehicleDefects, ...trailerDefects],
       remarks: json['remarks']?.toString(),
       certified: json['certified'] == true,
       signatureData: json['signatureData']?.toString(),
@@ -112,6 +143,12 @@ class DvirDto {
       'defectsCount': defectsCount,
       'defectsSummary': defectsSummary,
       'outOfService': outOfService,
+      'photos': photos.map((e) => {'url': e}).toList(),
+      'vehicle': {
+        'uniqueId': uniqueId,
+        'detects': vehicleDefects.map((e) => e.toJson()).toList(),
+      },
+      'trailers': trailers.map((e) => e.toJson()).toList(),
       'defects': defects.map((e) => e.toJson()).toList(),
       'remarks': remarks,
       'certified': certified,
@@ -220,6 +257,8 @@ class DvirDefectDto {
       correctionNotes: json['correctionNotes']?.toString(),
       correctedBy: json['correctedBy']?.toString(),
       correctedAt: json['correctedAt']?.toString(),
+      severity: json['severity']?.toString(),
+      stage: json['stage']?.toString(),
     );
   }
 
@@ -235,6 +274,8 @@ class DvirDefectDto {
       'correctionNotes': correctionNotes,
       'correctedBy': correctedBy,
       'correctedAt': correctedAt,
+      'severity': severity,
+      'stage': stage,
     };
   }
 }
@@ -363,6 +404,29 @@ class ReviewDvirRequestDto {
       'signatureData': signatureData,
       'driverAgreed': driverAgreed,
       'reviewNotes': reviewNotes,
+    };
+  }
+}
+
+class DvirTrailerDto {
+  final String trailerNumber;
+  final List<DvirDefectDto> defects;
+
+  const DvirTrailerDto({required this.trailerNumber, this.defects = const []});
+
+  factory DvirTrailerDto.fromJson(Map<String, dynamic> json) {
+    return DvirTrailerDto(
+      trailerNumber: json['trailerNumber']?.toString() ?? '',
+      defects: (json['detects'] as List<dynamic>?)
+              ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
+              .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'trailerNumber': trailerNumber,
+      'detects': defects.map((e) => e.toJson()).toList(),
     };
   }
 }

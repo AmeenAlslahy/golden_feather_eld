@@ -23,6 +23,9 @@ class _Queue implements OfflineQueue {
   Future<void> updateEvent(PendingEvent event) async {}
 
   @override
+  Future<void> moveToDeadLetter(PendingEvent event) async {}
+
+  @override
   Future<void> removeEvent(String eventId) async {
     events.removeWhere((event) => event.id == eventId);
   }

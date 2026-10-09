@@ -27,6 +27,10 @@ import '../extensions/dvir_status_extensions.dart';
 import '../widgets/previous_dvir_review_modal.dart';
 import '../../../../core/widgets/app_feedback.dart';
 
+import '../../../logs/presentation/widgets/vehicle_picker_dialog.dart';
+import '../../../logs/presentation/pages/trailers_page.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+
 class DvirFormPage extends ConsumerStatefulWidget {
   final DvirReport? existingReport;
 
@@ -69,6 +73,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   /// The report shown in read-only mode: the list summary first, then the
   /// full server detail once `loadDvirDetails` returns.
   DvirReport? _report;
+  DateTime? _customTime;
 
   @override
   void initState() {
@@ -85,7 +90,9 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     _trailerDefectsController = TextEditingController(
       text: r?.trailerDefects ?? '',
     );
-    _companyController = TextEditingController(text: r?.companyName ?? '');
+    _companyController = TextEditingController(
+      text: r?.companyName ?? ref.read(accountProvider).accountData?.carrier ?? '',
+    );
     _remarksController = TextEditingController(text: r?.notes ?? '');
     if (r == null) {
       // New report: ask the server which previous DVIR (if any) this vehicle
@@ -255,6 +262,51 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         _selectedStatus = DvirConditionStatus.satisfactory;
       }
     });
+  }
+
+  Future<void> _openTimePicker() async {
+    if (_readOnly) return;
+    final trusted = ref.read(trustedTimeProvider).currentTime;
+    final initialDate = _customTime ?? (trusted is TrustedTimeAvailable ? trusted.utc.toLocal() : DateTime.now());
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initialDate),
+    );
+    if (pickedTime == null || !mounted) return;
+    setState(() {
+      _customTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
+  }
+
+  Future<void> _openVehiclePicker() async {
+    if (_readOnly) return;
+    final vehicle = await showDialog<Vehicle>(
+      context: context,
+      builder: (_) => const VehiclePickerDialog(
+        allowCompanyFleet: true,
+      ),
+    );
+    if (vehicle != null && mounted) {
+      ref.read(dashboardDataProvider.notifier).updateVehicle(vehicle);
+    }
+  }
+
+  Future<void> _openTrailersPage() async {
+    if (_readOnly) return;
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const TrailersPage()));
   }
 
   @override
@@ -471,7 +523,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final report = DvirReport(
       id: '',
       type: _selectedInspectionType,
-      date: time.utc,
+      date: _customTime?.toUtc() ?? time.utc,
       driverName: dashboard.driverName,
       vehicleId: reportVehicleId,
       deviceId: resolvedDeviceId,
@@ -496,8 +548,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
           ? VehicleCondition.needsRepair
           : VehicleCondition.safe,
       isSubmitted: false,
-      location: _automaticLocation(),
-      companyName: _companyName(),
+      location: _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : null,
+      companyName: _companyController.text.trim().isNotEmpty ? _companyController.text.trim() : '',
       vehicleDefects: _vehicleDefectsController.text,
       trailerDefects: _trailerDefectsController.text,
       hasDefects: withDefects,
@@ -577,9 +629,14 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DvirTimeLocationSection(
+            DvirTimeSection(
               currentTime: currentTime,
-              automaticLocation: automaticLocation,
+              onTap: _openTimePicker,
+              readOnly: _readOnly,
+            ),
+            DvirLocationSection(
+              controller: _locationController,
+              readOnly: _readOnly,
             ),
             DvirOdometerSection(
               controller: _odometerController,
@@ -590,14 +647,19 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
               defectsController: _vehicleDefectsController,
               readOnly: _readOnly,
               onSelectDefects: _openVehicleDefectCatalog,
+              onSelectVehicle: _openVehiclePicker,
             ),
             DvirTrailerSection(
               dashboard: dashboard,
               defectsController: _trailerDefectsController,
               readOnly: _readOnly,
               onSelectDefects: _openTrailerDefectCatalog,
+              onSelectTrailer: _openTrailersPage,
             ),
-            DvirCompanySection(companyName: companyName),
+            DvirCompanySection(
+              controller: _companyController,
+              readOnly: _readOnly,
+            ),
             DvirRemarksSection(
               controller: _remarksController,
               readOnly: _readOnly,

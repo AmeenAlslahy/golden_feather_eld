@@ -260,6 +260,20 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
   final TextEditingController _macController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final selectedVehicle = ref.read(vehicleProvider).selectedVehicle;
+      final uniqueId = selectedVehicle?.uniqueId?.trim();
+      
+      if (uniqueId != null && uniqueId.isNotEmpty) {
+        _macController.text = uniqueId;
+        _attemptConnection();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _macController.dispose();
     super.dispose();

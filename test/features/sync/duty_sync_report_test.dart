@@ -23,8 +23,13 @@ class _Queue implements OfflineQueue {
 
   @override
   Future<void> updateEvent(PendingEvent event) async {
-    final index = events.indexWhere((item) => item.id == event.id);
-    if (index >= 0) events[index] = event;
+    events.removeWhere((item) => item.id == event.id);
+    events.add(event);
+  }
+
+  @override
+  Future<void> moveToDeadLetter(PendingEvent event) async {
+    events.removeWhere((item) => item.id == event.id);
   }
 
   @override

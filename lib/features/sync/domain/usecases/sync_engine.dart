@@ -6,6 +6,7 @@ import '../entities/pending_event.dart';
 import '../repositories/offline_queue.dart';
 
 import '../../../../core/time/time_authority.dart';
+import '../../../../core/utils/logger.dart';
 
 /// واجهة الإرسال الفعلي للبيانات لضمان عزل الـ Sync عن Traccar
 abstract class RemoteEventDispatcher {
@@ -132,6 +133,10 @@ class SyncEngine {
             retryCount: event.retryCount + 1,
             nextRetryAt: nextRetry,
           ));
+        } 
+        else {
+          AppLogger.warning('SyncEngine: Event ${event.id} exhausted retries. Moving to dead-letter.');
+          await _queue.moveToDeadLetter(event);
         }
       },
       (_) async {

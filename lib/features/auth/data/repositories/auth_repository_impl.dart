@@ -148,9 +148,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, Unit>> logout() async {
-    final savedSession = await _localDataSource.getSession();
-    if (savedSession != null) {
-      if (_networkInfo.isConnected) {
+    try {
+      final savedSession = await _localDataSource.getSession();
+      if (savedSession != null && _networkInfo.isConnected) {
         final sessionDto = AuthSessionDto.fromEntity(savedSession);
         await _authBackend.logout(
           serverOrigin: sessionDto.serverOrigin,
@@ -158,8 +158,11 @@ class AuthRepositoryImpl implements AuthRepository {
           backendType: _configProvider.backendType,
         );
       }
+    } catch (e, stackTrace) {
+      AppLogger.warning('Backend logout failed, proceeding with local clear', e, stackTrace);
+    } finally {
+      await _clearLocalData();
     }
-    await _clearLocalData();
     return const Right(unit);
   }
 

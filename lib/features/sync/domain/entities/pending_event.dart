@@ -61,16 +61,12 @@ class RetryPolicy {
     int currentRetries, {
     required DateTime nowUtc,
   }) {
-    if (currentRetries >= maxRetries) {
-      // بدلاً من إيقاف الإعادة وحذف الحدث، نثبت التأخير عند الحد الأقصى للمحاولات
-      final maxDelaySeconds =
-          baseDelay.inSeconds * (backoffFactor * maxRetries);
-      return nowUtc.add(Duration(seconds: maxDelaySeconds.toInt()));
-    }
-
-    // Linear backoff: base × factor × (retries + 1) — locked by pending_event_test.
+    // FMCSA: Never drop HOS data, cap at max retries delay and keep retrying.
+    final effectiveRetries = currentRetries >= maxRetries ? maxRetries : (currentRetries + 1);
+    
+    // Linear backoff: base × factor × (effectiveRetries) — locked by pending_event_test.
     final delaySeconds =
-        baseDelay.inSeconds * (backoffFactor * (currentRetries + 1));
+        baseDelay.inSeconds * (backoffFactor * effectiveRetries);
     return nowUtc.add(Duration(seconds: delaySeconds.toInt()));
   }
 }

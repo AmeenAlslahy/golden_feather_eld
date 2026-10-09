@@ -16,7 +16,7 @@ import '../../domain/inspection_transfer.dart';
 import '../../domain/transfer_audit.dart';
 import '../mappers/inspection_mappers.dart';
 import '../services/fmcsa_eld_output_generator.dart';
-import '../../../../core/constants/fmcsa_constants.dart';
+
 
 /// كل طريق في المستودع يمر بالحارس نفسه: فحص الشبكة مع كاشينغ محلي يضمن
 /// عمل وضع التفتيش الميداني في نقاط التفتيش النائية (FMCSA § 395.24 / SRS 6.8).
@@ -204,16 +204,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
       );
     }, offline: () async {
       if (_cachedPacket != null) return Right(_cachedPacket!);
-      return const Right(
-        InformationPacketView(
-          title: 'ELD Information Packet',
-          regulation: 'FMCSA 49 CFR § 395.22',
-          statusText: 'Complete',
-          complete: true,
-          missing: [],
-          items: [],
-        ),
-      );
+      return const Left(NetworkFailure());
     });
   }
 
@@ -230,28 +221,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
       );
     }, offline: () async {
       if (_cachedScreen != null) return Right(_cachedScreen!);
-      return Right(
-        DotInspectionScreen(
-          screenTitle: 'DOT Inspection',
-          guidanceText: 'Roadside inspection mode',
-          handOverDeviceNotice: 'Hand over device to officer',
-          carrierComplianceStatement: 'ELD compliant with 49 CFR Part 395',
-          carrierName: 'Carrier',
-          usdotNumber: '0000000',
-          eldIdentifier: 'TCE516',
-          eldRegistrationId: 'TCE202',
-          driverId: driverId ?? const DriverId(0),
-          driverName: 'Driver',
-          inspectionDate: DateTime.now(),
-          cycleDaysCovered: FmcsaConstants.inspectionCycleDays,
-          canStartInspection: true,
-          canSendLogs: true,
-          canEmailLogs: true,
-          canViewInformationPacket: true,
-          inspectionActive: false,
-          readOnlyMode: false,
-        ),
-      );
+      return const Left(NetworkFailure());
     });
   }
 

@@ -52,6 +52,10 @@ class MemoryOfflineQueue implements OfflineQueue {
   }
 
   @override
+  Future<void> moveToDeadLetter(PendingEvent event) async {
+    _queue.removeWhere((e) => e.id == event.id);
+  }
+  @override
   Future<int> get count async => _queue.length;
 
   Future<void> clear() async {

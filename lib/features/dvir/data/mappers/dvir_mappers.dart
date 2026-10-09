@@ -139,20 +139,70 @@ Map<String, dynamic>? buildDvirCreateBody({
       wireStatus == DvirConditionStatus.satisfactory.wire) {
     wireStatus = DvirConditionStatus.hasDefects.wire;
   }
+
+  Map<String, dynamic>? locationMap;
+  if (location != null && location.isNotEmpty) {
+    final parts = location.split(',');
+    if (parts.length == 2) {
+      final lat = double.tryParse(parts[0].trim());
+      final lon = double.tryParse(parts[1].trim());
+      if (lat != null && lon != null) {
+        locationMap = {'latitude': lat, 'longitude': lon};
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> extractDetects(String category, String? customNote) {
+    final list = catalogDefects
+        .where((d) => d['category'] == category)
+        .map((d) => {
+              'itemName': d['itemName'],
+              if (d['severity'] != null) 'severity': d['severity'],
+              if (d['stage'] != null) 'stage': d['stage'],
+              if (d['description'] != null) 'description': d['description']
+            })
+        .toList();
+    if (customNote != null && customNote.trim().isNotEmpty) {
+      list.add({
+        'itemName': category == 'VEHICLE' ? 'Vehicle defect' : 'Trailer defect',
+        'description': customNote.trim(),
+      });
+    }
+    return list;
+  }
+
   return {
+    // Top-level fields (Legacy + New)
     'driverId': driverId,
     'deviceId': deviceId,
     'uniqueId': vehicle,
     'vehicleName': vehicle,
-    'inspectionType': inspectionType,
+    'inspectionType': inspectionType.toUpperCase().replaceAll('-', '_'),
     'inspectionTime': inspectionTime,
-    'location': location,
+    if (locationMap != null) 'location': locationMap,
     'odometer': odometer,
     'trailerNumber': trailerNumber,
     'companyName': companyName,
     'remarks': remarks,
     'status': wireStatus,
-    'defects': defects,
+    'defects': defects, // Legacy flat defects
     'signatureData': signature,
+    'syncStatus': 'SYNCED',
+
+    // New nested fields as per Swagger
+    'vehicle': {
+      'uniqueId': vehicle,
+      'deviceId': deviceId,
+      'detects': extractDetects('VEHICLE', vehicleDefects),
+    },
+    'trailers': trailerNumber != null && trailerNumber.isNotEmpty
+        ? trailerNumber.split(',').map((t) => {
+              'trailerNumber': t.trim(),
+              'detects': extractDetects('TRAILER', trailerDefects),
+            }).toList()
+        : [],
+    'trailerNumbers': trailerNumber != null && trailerNumber.isNotEmpty
+        ? trailerNumber.split(',').map((t) => t.trim()).toList()
+        : [],
   };
 }

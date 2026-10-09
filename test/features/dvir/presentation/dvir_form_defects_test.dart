@@ -112,7 +112,7 @@ void main() {
     await pump(tester);
     await openAddDefects(tester);
 
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'Horn'));
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Service brakes'));
     await tester.pump();
     await tester.tap(find.text('Cancel'));
     await tester.pump();
@@ -133,7 +133,7 @@ void main() {
     expect(find.text('Tires'), findsOneWidget);
 
     await openAddDefects(tester);
-    expect(find.widgetWithText(CheckboxListTile, 'Horn'), findsOneWidget);
+    expect(find.widgetWithText(CheckboxListTile, 'Service brakes'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pump();
   });

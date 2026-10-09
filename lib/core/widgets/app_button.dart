@@ -116,7 +116,9 @@ class _AppButtonState extends State<AppButton> {
     final base = !_enabled
         ? (_isOutlined
             ? Colors.transparent
-            : theme.colorScheme.onSurface.withValues(alpha: 0.12))
+            : (widget.type == EldButtonType.primary 
+                ? theme.colorScheme.primary.withValues(alpha: 0.4)
+                : theme.colorScheme.onSurface.withValues(alpha: 0.12)))
         : _base(theme);
 
     final overlay = _isOutlined

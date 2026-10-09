@@ -27,6 +27,8 @@ abstract class LogLocalDataSource {
   Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId);
   Future<void> cacheLogEvents(DailyLogId logId, List<Map<String, dynamic>> eventsJson);
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
+  Future<void> saveSignature(DailyLogId logId, String base64Signature);
+  Future<String?> getSignature(DailyLogId logId);
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
@@ -66,6 +68,20 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(
           DailyLogId logId) async =>
       _readCachedList('events:${logId.value}');
+
+  @override
+  Future<void> saveSignature(DailyLogId logId, String base64Signature) async {
+    try {
+      await _cacheBox.put('sig:${logId.value}', base64Signature);
+    } catch (e) {
+      AppLogger.warning('Signature write skipped: $e');
+    }
+  }
+
+  @override
+  Future<String?> getSignature(DailyLogId logId) async {
+    return _cacheBox.get('sig:${logId.value}');
+  }
 
   List<Map<String, dynamic>>? _readCachedList(String key) {
     final raw = _cacheBox.get(key);

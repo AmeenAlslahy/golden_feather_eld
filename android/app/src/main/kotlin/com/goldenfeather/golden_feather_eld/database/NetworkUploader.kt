@@ -47,7 +47,10 @@ class NetworkUploader(private val context: Context) {
         return try {
             // OsmAnd protocol formatting
             // Traccar default OsmAnd port is 5055. serverUrl should be e.g. "http://demo.traccar.org:5055"
-            val baseUrl = if (serverUrl.endsWith("/")) serverUrl.dropLast(1) else serverUrl
+            var baseUrl = if (serverUrl.endsWith("/")) serverUrl.dropLast(1) else serverUrl
+            if (baseUrl.startsWith("http://")) {
+                baseUrl = baseUrl.replaceFirst("http://", "https://")
+            }
             val urlString = "$baseUrl/?id=$deviceId&lat=${loc.latitude}&lon=${loc.longitude}&timestamp=${loc.timestamp}&speed=${loc.speed}&bearing=${loc.bearing}&altitude=${loc.altitude}&accuracy=${loc.accuracy}"
             val url = URL(urlString)
             val connection = url.openConnection() as HttpURLConnection
