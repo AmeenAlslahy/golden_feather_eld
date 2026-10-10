@@ -8,6 +8,8 @@ import '../../domain/engine/hos_rules_engine.dart';
 import '../../domain/usecases/get_status_dashboard_use_case.dart';
 import 'hos_provider.dart';
 import '../../../../core/events/app_events.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/error/failure.dart';
 
 // --- Clean Architecture Providers ---
 
@@ -52,10 +54,20 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     ref.onDispose(sub.cancel);
 
     // تحديث دوري هادئ كل دقيقة لتحديث المؤشرات والعدادات
+    // (المؤقت نفسه يبقى حياً — النبضات بلا جلسة تُرفض في refresh أدناه
+    // دون أي HTTP، فلا تُحذف المؤقتات ولا تتغير سياسة المزامنة).
     final timer = Timer.periodic(const Duration(minutes: 1), (_) {
       refresh(showLoading: false);
     });
     ref.onDispose(timer.cancel);
+
+    // P0 leak fix: بلا هوية مثبتة ومستقرة لا يبدأ أي GET (يمنع قراءات
+    // نافذة logout والتكتكة بعدها). يُرمى SessionMissing لا NetworkFailure
+    // حتى لا يُقرأ كعطل شبكة.
+    final auth = ref.read(authStateProvider);
+    if (auth.user == null || auth.transitioning) {
+      throw const SessionMissingFailure();
+    }
 
     final useCase = ref.watch(getStatusDashboardUseCaseProvider);
     final result = await useCase.execute();
@@ -71,6 +83,12 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
 
   /// Manually reloads the dashboard.
   Future<void> refresh({bool showLoading = true}) async {
+    // P0 leak fix: نبضات المؤقت بعد logout (وغيرها بلا جلسة) صامتة تماماً:
+    // لا HTTP ولا مساس بالحالة — فلا يتحول الرفض لخطأ في جلسة جديدة.
+    // NOTE: ref.read داخل AsyncNotifier مسموح (قراءة لمرة واحدة لا اشتراك).
+    final auth = ref.read(authStateProvider);
+    if (auth.user == null || auth.transitioning) return;
+
     if (showLoading && !state.hasValue) {
       state = const AsyncValue<StatusDashboard>.loading();
     }

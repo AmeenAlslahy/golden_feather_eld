@@ -56,39 +56,96 @@ class CoDriverState {
 }
 
 /// مزود السائق المساعد
+///
+/// P0 leak fix — ملكية الجلسة (نمط vehicle H-D1): المصنع يستمع لتغيرات
+/// المصادقة (بلا اعتمادات جديدة)، وأي غياب هوية/انتقال/تغير مالك يُسقط
+/// الحالة متزامناً ثم يُعاد الجلب للمالك وحده. الربط الأولي لمرة واحدة
+/// يغطي الإنشاء بعد login مكتمل؛ بلا مصادقة: صمت تام بلا أي طلب
+/// (يمنع GET الإقلاع البارد).
 final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>(
   (ref) {
-    return CoDriverNotifier(
+    final notifier = CoDriverNotifier(
       repository: ref.watch(coDriverRepositoryProvider),
-      driverId: ref.watch(currentDriverIdProvider) ?? 0,
     );
+    ref.listen<AuthState>(
+      authStateProvider,
+      (previous, next) {
+        if (next.user == null || next.transitioning) {
+          notifier.reset();
+          return;
+        }
+        final id = int.tryParse(next.user!.id);
+        if (id != notifier.ownerDriverId ||
+            next.sessionEpoch != notifier.ownerEpoch) {
+          notifier.bindOwner(id, next.sessionEpoch);
+          notifier.reload();
+        }
+      },
+    );
+    final auth = ref.read(authStateProvider);
+    if (auth.user != null && !auth.transitioning) {
+      notifier.bindOwner(
+          int.tryParse(auth.user!.id), auth.sessionEpoch);
+      notifier.reload();
+    }
+    return notifier;
   },
 );
 
 class CoDriverNotifier extends StateNotifier<CoDriverState> {
   final CoDriverRepository _repository;
 
-  /// هوية السائق الحالي — يُستبعد من قائمة المساعدين دائماً (لا يربط
-  /// السائق نفسه كمساعد ولا يبدّل الأدوار مع نفسه).
-  final int _driverId;
+  /// P0 leak fix — مالك الحالة (يُستبعد من قائمة المساعدين دائماً: لا
+  /// يربط السائق نفسه كمساعد ولا يبدّل الأدوار مع نفسه) + تسلسل الطلبات.
+  int? _ownerDriverId;
+  int? _ownerEpoch;
+  int _reqSeq = 0;
+
+  int? get ownerDriverId => _ownerDriverId;
+  int? get ownerEpoch => _ownerEpoch;
 
   CoDriverNotifier({required CoDriverRepository repository, int driverId = 0})
     : _repository = repository,
-      _driverId = driverId,
-      super(const CoDriverState()) {
-    _loadDrivers();
+      _ownerDriverId = driverId == 0 ? null : driverId,
+      super(const CoDriverState());
+
+  /// ربط بمالك جديد: إسقاط متزامن (بلا API) وإبطال الطلبات الجارية.
+  void bindOwner(int? driverId, int? epoch) {
+    if (_ownerDriverId == driverId && _ownerEpoch == epoch) return;
+    _reqSeq++;
+    _ownerDriverId = driverId;
+    _ownerEpoch = epoch;
+    state = const CoDriverState();
+  }
+
+  /// إسقاط فوري (عند بدء logout) — متزامن، بلا API.
+  void reset() => bindOwner(null, null);
+
+  bool _isCurrent(int seq, int? owner, int? epoch) {
+    return mounted &&
+        seq == _reqSeq &&
+        owner == _ownerDriverId &&
+        epoch == _ownerEpoch;
   }
 
   /// Pull-to-refresh / retry: re-reads the driver list and the current link.
   Future<void> reload() => _loadDrivers();
 
   Future<void> _loadDrivers({bool background = false}) async {
+    // P0 leak fix: تسلسل جديد لكل طلب فعلي (latest-wins)؛ بلا مالك صمت تام.
+    final seq = ++_reqSeq;
+    final owner = _ownerDriverId;
+    final epoch = _ownerEpoch;
+    if (owner == null || owner <= 0) return;
     if (!background) {
       state = state.copyWith(isLoading: true, error: null);
     }
     final driversResult = await _repository.getAvailableDrivers();
+    // P0 leak fix: إعادة التحقق بعد كل await وقبل أي طلب محمي متسلسل —
+    // logout بين الطلبين يمنع الثاني (حالة 55.313) دون تحويله لخطأ.
+    if (!_isCurrent(seq, owner, epoch)) return;
     final currentResult = await _repository.getCurrentCoDriver();
-    if (!mounted) return;
+    if (!_isCurrent(seq, owner, epoch)) return;
 
     var next = state.copyWith(isLoading: false, error: null);
     driversResult.fold(
@@ -98,7 +155,7 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
       (drivers) => next = next.copyWith(
         // استبعاد السائق نفسه من قائمة المساعدين (الرد قد يتضمنه).
         availableDrivers: drivers
-            .where((d) => int.tryParse(d.id) != _driverId)
+            .where((d) => int.tryParse(d.id) != _ownerDriverId)
             .toList(),
         error: null,
       ),

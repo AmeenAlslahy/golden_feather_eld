@@ -18,15 +18,27 @@ import 'features/hos/domain/engine/hos_rules_engine.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
+/// P0 leak fix — قرار إبطال مزودات الجلسة (pure وقابل للاختبار):
+/// - أثناء الانتقال: أبداً (يمنع إعادة الإنشاء + GET أثناء logout).
+/// - عند تأسيس هوية (id أو جيل جديدان): نعم — ويشمل ذلك إعادة login
+///   نفس السائق (id ثابت لكن epoch جديد).
+bool shouldRefreshSessionProviders(AuthState? previous, AuthState next) {
+  if (next.transitioning) return false;
+  return previous?.user?.id != next.user?.id ||
+      previous?.sessionEpoch != next.sessionEpoch;
+}
+
 /// تطبيق Golden Feather ELD الرئيسي
 class GoldenFeatherApp extends ConsumerWidget {
   const GoldenFeatherApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Invalidate driver-specific HOS providers whenever user logs in, logs out, or switches account
+    // P0 leak fix: تحديث مزودات HOS الخاصة بالسائق عند تأسيس هوية فقط —
+    // لا أثناء الانتقال (وإلا أُعيد الإنشاء وأُطلقت قراءات محكومة بالفشل
+    // أثناء logout). يشمل إعادة login نفس السائق (epoch مختلف).
     ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (previous?.user?.id != next.user?.id) {
+      if (shouldRefreshSessionProviders(previous, next)) {
         ref.invalidate(statusDashboardProvider);
         ref.invalidate(recapProvider);
         ref.invalidate(hosStatusProvider);

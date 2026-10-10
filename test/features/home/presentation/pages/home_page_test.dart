@@ -21,6 +21,20 @@ import 'package:golden_feather_eld/features/tracking/domain/entities/connection_
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
+import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
+import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart'
+    hide ConnectionStatus;
+import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart'
+    as dash
+    show ConnectionStatus;
+import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/config/hos_configuration.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/features/sync/presentation/providers/sync_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_item.dart';
@@ -45,6 +59,74 @@ class MockLocalStorageService extends Mock implements LocalStorageService {
 }
 class MockTrackingConfigStorageService extends Mock implements TrackingConfigStorageService {}
 class MockVehicleRepository extends Mock implements VehicleRepository {}
+
+/// P0 Stage 1: the real StatusDashboardNotifier starts a 1-minute periodic
+/// timer in build(), which fails widget-test invariants. The stub serves
+/// static data with no timers.
+class StaticDashboardNotifier extends StatusDashboardNotifier {
+  @override
+  Future<StatusDashboard> build() async => _stubDashboard;
+}
+
+const _stubIndicator = HosIndicator(
+  label: 'DRIVE',
+  value: Duration(hours: 8),
+  type: IndicatorType.remaining,
+);
+
+const _stubDashboard = StatusDashboard(
+  driver: DriverRef(id: DriverId(101), name: 'Test', displayText: 'Test - 101'),
+  operationalAlerts: OperationalAlerts(
+    toolIcon: false,
+    warningTriangleIcon: false,
+    connectionStatus: dash.ConnectionStatus.ok,
+  ),
+  currentDutyStatus: DutyStatusCode.offDuty,
+  remainingCircle: RemainingCircle(
+    remaining: Duration(hours: 8),
+    label: 'DRIVE',
+    progress: 0.5,
+  ),
+  hosIndicators: HosIndicators(
+    drive: _stubIndicator,
+    shift: _stubIndicator,
+    breakTime: _stubIndicator,
+    cycle: _stubIndicator,
+  ),
+  regulatoryConstraints: RegulatoryConstraints(
+    ruleSet: CycleRule.usa70_8,
+    limits: [],
+  ),
+);
+
+/// P0 Stage 1: HomePage requires an authenticated session (neutral gate).
+/// The fake establishes one synchronously-fake login before pumping.
+class FakeSessionAuthRepository implements AuthRepository {
+  @override
+  Future<Either<Failure, User>> login({
+    required dynamic identifier,
+    required dynamic password,
+  }) async =>
+      Right(User(
+        id: '101',
+        fullName: 'Test User',
+        email: 'test@example.com',
+        username: 'admin',
+        role: UserRole.fieldWorker,
+        createdAt: DateTime.now(),
+      ));
+
+  @override
+  Future<Either<Failure, Unit>> logout() async => const Right(unit);
+
+  @override
+  Future<Either<Failure, User>> checkAndRestoreSession() async =>
+      const Left(ServerFailure(message: 'No session'));
+
+  @override
+  Future<Either<Failure, User>> getCurrentSession() async =>
+      const Left(ServerFailure(message: 'No session'));
+}
 
 class MockSyncNotifier extends StateNotifier<SyncState> implements SyncNotifier {
   MockSyncNotifier() : super(const SyncState());
@@ -109,6 +191,8 @@ void main() {
     when(() => mockLocalStorage.serverUrl).thenReturn('http://mock.test');
     when(() => mockLocalStorage.backendType).thenReturn('mock');
     when(() => mockLocalStorage.deviceId).thenReturn('12345');
+    when(() => mockLocalStorage.hosConfiguration)
+        .thenReturn(HosConfiguration.usa70_8());
 
     final mockTrackingConfig = MockTrackingConfigStorageService();
     when(() => mockTrackingConfig.deviceId).thenReturn('12345');
@@ -120,10 +204,14 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeBackendProvider.overrideWithValue(MockAdapter()),
+        traccarAuthRepositoryProvider
+            .overrideWithValue(FakeSessionAuthRepository()),
         localStorageProvider.overrideWithValue(mockLocalStorage),
         trackingConfigStorageProvider.overrideWithValue(mockTrackingConfig),
         liveTrackingDataSourceProvider.overrideWithValue(EmptyLiveTrackingDataSource()),
         vehicleRepositoryProvider.overrideWithValue(mockVehicleRepo),
+        statusDashboardProvider
+            .overrideWith(() => StaticDashboardNotifier()),
         syncStateProvider.overrideWith((ref) => MockSyncNotifier()),
         hosStatusProvider.overrideWith((ref) => MockHosNotifier()),
         hardwareAlertsProvider.overrideWith(() => MockHardwareAlertsNotifier()),
@@ -131,6 +219,11 @@ void main() {
     );
 
     addTearDown(container.dispose);
+
+    // P0 Stage 1 neutral gate: establish the required authenticated session.
+    await container
+        .read(authStateProvider.notifier)
+        .login(username: 'admin@demo.com', password: 'admin123');
 
     await tester.pumpWidget(
       UncontrolledProviderScope(

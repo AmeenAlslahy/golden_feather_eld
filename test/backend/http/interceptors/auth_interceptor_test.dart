@@ -23,7 +23,7 @@ void main() {
     dio.interceptors.add(AuthInterceptor(
       localDataSource: localDataSource,
       backendType: 'traccar',
-      onUnauthenticated: () => unauthenticatedFired = true,
+      onUnauthenticated: (_) => unauthenticatedFired = true,
     ));
   });
 
@@ -96,6 +96,9 @@ AuthSession _session() {
 class _FakeAuthLocalDataSource implements AuthLocalDataSource {
   AuthSession? session;
   int readCount = 0;
+
+  @override
+  int get credentialGeneration => 0;
 
   @override
   Future<void> saveSession(AuthSession session) async =>

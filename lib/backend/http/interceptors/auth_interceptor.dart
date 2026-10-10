@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../features/auth/data/datasources/auth_local_data_source.dart'; // ignore_architecture
+import '../../../core/session/session_epoch.dart';
 import '../../../core/utils/logger.dart';
 import '../eld_endpoints.dart';
 
@@ -18,10 +19,22 @@ import '../eld_endpoints.dart';
 class AuthInterceptor extends Interceptor {
   final AuthLocalDataSource localDataSource;
   final String backendType;
-  final void Function()? onUnauthenticated;
+
+  /// P0 Stage 1: يُستدعى مع epoch الطلب الذي رُفض — المستمع يتجاهل
+  /// أي 401 أقدم من الجيل الحالي فلا يطرد جلسة جديدة.
+  final void Function(int requestEpoch)? onUnauthenticated;
 
   /// علامة على RequestOptions تفيد أن هذا الطلب حمل جلسة فعلاً.
   static const _sessionAttachedKey = 'gf_session_attached';
+
+  /// P0 Stage 1: جيل الجلسة الذي أنشأ الطلب — يُقرأ متزامناً لحظة
+  /// الإرسال قبل أي await حتى لا يتلوث بجيل أحدث.
+  static const epochKey = 'gf_session_epoch';
+
+  /// P0 leak fix: إصدار بيانات الاعتماد لحظة إنشاء الطلب — يُقرأ
+  /// متزامناً (getter خالص). عند 401 يُشترط تطابقه مع الحالي، فيُكتشف
+  /// الطلب المولود بعد bump وقبل clear (epoch جديد + Cookie قديمة).
+  static const credGenKey = 'gf_cred_gen';
 
   AuthInterceptor({
     required this.localDataSource,
@@ -32,6 +45,10 @@ class AuthInterceptor extends Interceptor {
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
+    // P0 Stage 1: وسم كل طلب (بما فيه إنشاء الجلسة) بجيل منشئه.
+    options.extra[epochKey] = SessionEpoch.current;
+    // P0 leak fix: وسم إصدار الاعتماد — قراءة متزامنة خالصة.
+    options.extra[credGenKey] = localDataSource.credentialGeneration;
     // لا نستثني إلا نقطة إنشاء الجلسة نفسها؛ contains('/session') كانت
     // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
     // (حُذف استثناء POST /users — لم يعد له مستدعٍ وكان يسمح بمرور
@@ -66,7 +83,25 @@ class AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401 &&
         err.requestOptions.extra[_sessionAttachedKey] == true) {
-      onUnauthenticated?.call();
+      final requestGen = err.requestOptions.extra[credGenKey] as int?;
+      if (requestGen != null &&
+          requestGen != localDataSource.credentialGeneration) {
+        // P0 leak fix: بيانات اعتماد أقدم من المخزن الحالي (طلب وُلد بين
+        // bump والمسح، أو جلسة سابقة) — يُتجاهل ولا مساس بالجلسة الجديدة.
+        // لا يُطبع أي secret — الأجيال أعداد فقط.
+        AppLogger.warning(
+            'Ignoring 401 with outdated credential generation');
+      } else {
+        final requestEpoch = err.requestOptions.extra[epochKey] as int?;
+        if (requestEpoch == null ||
+            requestEpoch == SessionEpoch.current) {
+          onUnauthenticated?.call(requestEpoch ?? SessionEpoch.current);
+        } else {
+          // P0 Stage 1: 401 قديم من جلسة سابقة — يُتجاهل ولا يطرد الجلسة الجديدة.
+          AppLogger.warning(
+              'Ignoring stale 401 from epoch $requestEpoch (current ${SessionEpoch.current})');
+        }
+      }
     }
     super.onError(err, handler);
   }

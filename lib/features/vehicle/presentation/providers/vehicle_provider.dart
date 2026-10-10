@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/vehicle_repository_providers.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/vehicle.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// حالة شاشة المركبات
 class VehicleState {
@@ -59,27 +60,99 @@ class VehicleState {
 }
 
 /// مزود المركبات
+///
+/// P0 Stage 1 — ملكية الجلسة: المصنع يُبقي اعتمادية المستودع فقط (كما كان
+/// تماماً حفاظاً على التوافق)، ويستمع لتغيرات المصادقة: أي غياب هوية أو
+/// انتقال أو تغير مالك/جيل يُسقط الحالة متزامناً (بلا API) ثم يُعاد الجلب
+/// للمالك الجديد وحده (طلب واحد). الردود مسيّجة فلا يكتب رد A فوق حالة B.
+///
+/// H-D1: ربط أولي لمرة واحدة — إن أُنشئ المزود وجلسة مستقرة قائمة
+/// (فتح مباشر بعد login) يُربط مالكها ويُجلب مرة واحدة موسومة.
+/// قراءة واحدة بلا اشتراك: لا حلقة إعادة بناء ولا كسر توافق.
+/// بلا مصادقة: صمت تام بلا أي طلب.
 final vehicleProvider = StateNotifierProvider<VehicleNotifier, VehicleState>((
   ref,
 ) {
-  return VehicleNotifier(ref.watch(vehicleRepositoryProvider));
+  final notifier =
+      VehicleNotifier(ref.watch(vehicleRepositoryProvider));
+  ref.listen<AuthState>(
+    authStateProvider,
+    (previous, next) {
+      if (next.user == null || next.transitioning) {
+        notifier.reset();
+        return;
+      }
+      final id = next.user!.id;
+      if (id != notifier.ownerDriverId ||
+          next.sessionEpoch != notifier.ownerEpoch) {
+        notifier.bindOwner(id, next.sessionEpoch);
+        notifier.loadVehicles(forceRefresh: true);
+      }
+    },
+  );
+  final auth = ref.read(authStateProvider);
+  if (auth.user != null && !auth.transitioning) {
+    notifier.bindOwner(auth.user!.id, auth.sessionEpoch);
+    notifier.loadVehicles();
+  }
+  return notifier;
 });
 
 class VehicleNotifier extends StateNotifier<VehicleState> {
   final VehicleRepository _repository;
 
-  VehicleNotifier(this._repository) : super(const VehicleState()) {
-    loadVehicles();
+  /// P0 Stage 1 — مالك الحالة + تسلسل الطلبات لسياج الردود المتأخرة.
+  String? _ownerDriverId;
+  int? _ownerEpoch;
+  int _loadSeq = 0;
+
+  String? get ownerDriverId => _ownerDriverId;
+  int? get ownerEpoch => _ownerEpoch;
+
+  /// Public read-only for page-driven initial-load decisions
+  /// (avoids protected `state` access from widgets).
+  bool get isInitialized => state.isInitialized;
+
+  /// H-D1: تحميل جارٍ — الصفحة تتخطى التحميل الأولي حين يكون المصنع
+  /// قد أطلقه (طلب واحد فقط، بلا Double Fetch).
+  bool get isLoading => state.isLoading;
+
+  // P0 corrections: لا تحميل تلقائي في الكونستركتر — الاستماع المجرد
+  // (مثل tracking_orchestrator) كان يُطلق GET مالك-بلا-مالك عند كل إقلاع
+  // بارد. التحميل الأولي تقوده الصفحة (SelectVehiclePage.initState) أو
+  // تغير المالك، وكلاهما محمي بالتسلسل أدناه.
+  VehicleNotifier(this._repository) : super(const VehicleState());
+
+  /// ربط بمالك جديد: إسقاط متزامن للحالة (بلا API) وإبطال أي طلب جارٍ.
+  void bindOwner(String? driverId, int? epoch) {
+    if (_ownerDriverId == driverId && _ownerEpoch == epoch) return;
+    _loadSeq++; // إبطال الطلبات الجارية للمالك السابق
+    _ownerDriverId = driverId;
+    _ownerEpoch = epoch;
+    state = const VehicleState();
   }
 
+  /// إسقاط فوري (عند بدء logout) — متزامن، بلا API.
+  void reset() => bindOwner(null, null);
+
   Future<void> loadVehicles({bool forceRefresh = false, bool background = false}) async {
+    // P0 corrections: تسلسل جديد لكل طلب فعلي — الأحدث فقط يكتب
+    // (latest-wins لكل قراءة)، والأقدم يُتجاهل بصمت دون تحويله لخطأ
+    // جلسة جديدة. الزيادة بعد فحص الـ latch حتى لا يُبطل فحصٌ لا يُرسل
+    // طلباً حقيقياً جارٍ.
     if (state.isInitialized && !forceRefresh) return;
+    final seq = ++_loadSeq;
+    final owner = _ownerDriverId;
 
     if (!background) {
       state = state.copyWith(isLoading: true, error: null, isSuccess: false);
     }
 
     final result = await _repository.getVehicles();
+
+    // P0 Stage 1 — سياج: تجاهل الرد إن تبدلت الهوية أثناء الطيران،
+    // ولا تحويله لخطأ يظهر في جلسة جديدة.
+    if (!mounted || seq != _loadSeq || owner != _ownerDriverId) return;
 
     result.match(
       (failure) {
@@ -102,8 +175,12 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   }
 
   Future<void> loadCompanyVehicles() async {
+    final seq = ++_loadSeq;
+    final owner = _ownerDriverId;
     state = state.copyWith(isLoading: true, error: null, isSuccess: false);
     final result = await _repository.getCompanyVehicles();
+    // P0 Stage 1 — سياج الردود المتأخرة.
+    if (!mounted || seq != _loadSeq || owner != _ownerDriverId) return;
     result.match(
       (failure) {
         state = state.copyWith(isLoading: false, error: failure.message);

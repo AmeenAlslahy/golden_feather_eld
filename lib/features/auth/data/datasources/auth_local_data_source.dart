@@ -24,6 +24,12 @@ abstract class AuthLocalDataSource {
 
   /// مسح بيانات المستخدم
   Future<void> clearUser();
+
+  /// P0 leak fix — إصدار بيانات الاعتماد: عداد أحادي يزيد مع كل
+  /// حفظ/مسح ناجح للجلسة. الـ interceptor يوسم به الطلبات، وعند 401
+  /// تُتجاهل الطلبات التي لا يطابق إصدارها الحالي (جلسة أقدم)، دون
+  /// مقارنة نص الـ Cookie نفسه أو طباعته أبداً.
+  int get credentialGeneration;
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
@@ -36,6 +42,13 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   /// يُحدَّث هنا حصراً (save/clear) فلا يستهلك مستهلك قيمة قديمة.
   AuthSession? _sessionCache;
 
+  /// P0 leak fix — انظر توثيق [AuthLocalDataSource.credentialGeneration].
+  /// يُزاد فقط عند نجاح العملية (الفشل لا يغير الإصدار).
+  int _credentialGeneration = 0;
+
+  @override
+  int get credentialGeneration => _credentialGeneration;
+
   AuthLocalDataSourceImpl({
     FlutterSecureStorage? secureStorage,
   }) : _secureStorage = secureStorage ?? const FlutterSecureStorage();
@@ -47,6 +60,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       final jsonString = jsonEncode(dto.toJson());
       await _secureStorage.write(key: _sessionKey, value: jsonString);
       _sessionCache = session;
+      _credentialGeneration++;
       AppLogger.info('Session securely stored for origin: ${session.serverOrigin}');
     } catch (e) {
       AppLogger.error('Failed to securely store session', e);
@@ -78,6 +92,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       await _secureStorage.delete(key: _sessionKey);
       _sessionCache = null;
+      _credentialGeneration++;
       AppLogger.info('Session cleared from secure storage');
     } catch (e) {
       AppLogger.error('Failed to clear session', e);

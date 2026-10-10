@@ -14,8 +14,10 @@ import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sd
 import '../../core/config/app_environment.dart';
 import '../../core/network/core_providers.dart';
 
-final unauthenticatedEventProvider = Provider<StreamController<void>>((ref) {
-  final controller = StreamController<void>.broadcast();
+/// P0 Stage 1: يحمل epoch الطلب المرفوض بـ 401 حتى يتجاهل المستمع
+/// الأحداث الأقدم من الجيل الحالي (late 401 من جلسة سابقة).
+final unauthenticatedEventProvider = Provider<StreamController<int>>((ref) {
+  final controller = StreamController<int>.broadcast();
   ref.onDispose(() => controller.close());
   return controller;
 });
@@ -55,9 +57,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     AuthInterceptor(
       localDataSource: localDataSource,
       backendType: backendType,
-      onUnauthenticated: () {
+      onUnauthenticated: (requestEpoch) {
         // Trigger event instead of directly depending on AuthStateProvider
-        unauthController.add(null);
+        unauthController.add(requestEpoch);
       },
     ),
   );

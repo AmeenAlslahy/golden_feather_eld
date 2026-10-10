@@ -31,6 +31,22 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   bool _browsingCompany = false;
 
   @override
+  void initState() {
+    super.initState();
+    // P0 corrections: التحميل الأولي تقوده الصفحة (لا كونستركتر المزود،
+    // حتى لا يُطلق مجرد الاستماع GET عند الإقلاع البارد). الـ latch داخل
+    // loadVehicles يجعل الاستدعاء المكرر آمناً.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifier = ref.read(vehicleProvider.notifier);
+      // H-D1: لا طلب مكرر — إن كان المصنع قد بدأ تحميل المالك (جارٍ)
+      // أو اكتمل، تُترك النتيجة؛ التحميل هنا لحالة الفراغ التام فقط.
+      if (!notifier.isInitialized && !notifier.isLoading) {
+        notifier.loadVehicles();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();

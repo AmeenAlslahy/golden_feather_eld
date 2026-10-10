@@ -37,9 +37,22 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authGate = ref.watch(authStateProvider);
     final dashboard = ref.watch(dashboardDataProvider);
     final currentNavIndex = ref.watch(homeNavIndexProvider);
     final statusDashboardState = ref.watch(statusDashboardProvider);
+
+    // P0 Stage 1 — بوابة محايدة: أثناء الانتقال بين الحسابات أو غياب
+    // المصادقة لا تُعرض أي بيانات سائق/مركبة سابقة، ولا تُبنى الصفحات
+    // الخاصة بالمستخدم. (الـ watches أعلاه تبقى غير مشروطة لاستقرار الترتيب.)
+    if (!authGate.isAuthenticated || authGate.transitioning) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
     final driverText = statusDashboardState.valueOrNull?.driver.displayText ??

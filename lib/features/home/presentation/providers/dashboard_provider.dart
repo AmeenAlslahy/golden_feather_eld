@@ -77,6 +77,29 @@ class DashboardData {
 class DashboardNotifier extends StateNotifier<DashboardData> {
   DashboardNotifier() : super(DashboardData.empty);
 
+  /// P0 Stage 1 — مالك الترويسة المعروضة. أي تحديث من مالك مختلف
+  /// يُسقط الحالة أولاً (متزامن، بلا API) فلا يظهر A في جلسة B.
+  String? _ownerDriverId;
+  int? _ownerEpoch;
+
+  String? get ownerDriverId => _ownerDriverId;
+
+  /// يربط الحالة بالمالك الحالي؛ يعيد الضبط عند تغيره.
+  /// متزامن محض — لا يطلق أي طلب شبكة.
+  void bindOwner(String? driverId, int epoch) {
+    if (_ownerDriverId == driverId && _ownerEpoch == epoch) return;
+    _ownerDriverId = driverId;
+    _ownerEpoch = epoch;
+    state = DashboardData.empty;
+  }
+
+  /// إسقاط فوري للحالة (عند بدء logout) — متزامن، بلا API.
+  void reset() {
+    _ownerDriverId = null;
+    _ownerEpoch = null;
+    state = DashboardData.empty;
+  }
+
   void updateUserData(String name, String? email) {
     state = state.copyWith(
       driverName: name,
@@ -153,12 +176,18 @@ final dashboardDataProvider =
   final notifier = DashboardNotifier();
 
   // Listen to Auth State
+  //
+  // P0 Stage 1: أي غياب هوية أو انتقال جارٍ أو تغير مالك يُسقط الترويسة
+  // فوراً (متزامن، بلا API) قبل أي تحديث — فلا تُعرض بيانات A في جلسة B.
   ref.listen(
     authStateProvider,
     (previous, next) {
-      if (next.user != null) {
-        notifier.updateUserData(next.user!.fullName, next.user!.email);
+      if (next.user == null || next.transitioning) {
+        notifier.reset();
+        return;
       }
+      notifier.bindOwner(next.user!.id, next.sessionEpoch);
+      notifier.updateUserData(next.user!.fullName, next.user!.email);
     },
     fireImmediately: true,
   );
