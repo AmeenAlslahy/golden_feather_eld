@@ -1,4 +1,5 @@
 import '../entities/pending_event.dart';
+import '../entities/quarantine_record.dart';
 
 abstract class OfflineQueue {
   /// إضافة حدث للطابور
@@ -18,4 +19,31 @@ abstract class OfflineQueue {
 
   /// نقل الحدث إلى طابور الأحداث الميتة (بعد استنفاد المحاولات)
   Future<void> moveToDeadLetter(PendingEvent event);
+
+  /// نقل ذري لصف مؤجل (مالك مخالف/بلا جلسة): يُحذف من pending ويُحفظ
+  /// مع السبب والحالة — بلا حذف وبلا تغيير مالك. يُعاد تقييمه عند تغير
+  /// الشروط فقط (لا retry دوري).
+  Future<void> moveToDeferred(
+    PendingEvent event, {
+    required StoredEventState state,
+    required String reason,
+    int? ownerDriverId,
+  });
+
+  /// نقل ذري لصف محجور (مالك مجهول): لا إفراج تلقائي أبداً.
+  Future<void> moveToQuarantine(
+    PendingEvent event, {
+    required String reason,
+    int? ownerDriverId,
+  });
+
+  /// قراءة الصفوف المؤجلة (للمراجعة المشروطة) — لا تشمل المحجورة.
+  Future<List<QuarantineRecord>> getDeferred({int limit = 50});
+
+  /// قراءة الصفوف المحجورة (للمراجعة الصريحة فقط).
+  Future<List<QuarantineRecord>> getQuarantined({int limit = 50});
+
+  /// إعادة صف (مؤجل مؤهل) إلى pending — ذرية: حذف من الحجر + إدراج.
+  /// تُستدعى من سياج Part 2 فقط بعد تحقق كامل، لا تلقائياً هنا.
+  Future<void> releaseToPending(String eventId);
 }

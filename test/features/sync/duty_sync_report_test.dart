@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/time/time_authority.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/quarantine_record.dart';
 import 'package:golden_feather_eld/features/sync/domain/repositories/offline_queue.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 
@@ -31,6 +32,31 @@ class _Queue implements OfflineQueue {
   Future<void> moveToDeadLetter(PendingEvent event) async {
     events.removeWhere((item) => item.id == event.id);
   }
+
+  // Part 1 storage states — unused by these engine tests (fence inactive).
+  @override
+  Future<void> moveToDeferred(
+    PendingEvent event, {
+    required StoredEventState state,
+    required String reason,
+    int? ownerDriverId,
+  }) async {}
+
+  @override
+  Future<void> moveToQuarantine(
+    PendingEvent event, {
+    required String reason,
+    int? ownerDriverId,
+  }) async {}
+
+  @override
+  Future<List<QuarantineRecord>> getDeferred({int limit = 50}) async => [];
+
+  @override
+  Future<List<QuarantineRecord>> getQuarantined({int limit = 50}) async => [];
+
+  @override
+  Future<void> releaseToPending(String eventId) async {}
 
   @override
   Future<void> removeEvent(String eventId) async {

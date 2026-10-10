@@ -1,8 +1,10 @@
 import '../../domain/entities/pending_event.dart';
+import '../../domain/entities/quarantine_record.dart';
 import '../../domain/repositories/offline_queue.dart';
 
 class MemoryOfflineQueue implements OfflineQueue {
   final List<PendingEvent> _queue = [];
+  final Map<String, QuarantineRecord> _parked = {};
 
   @override
   Future<void> enqueue(PendingEvent event) async {
@@ -58,7 +60,86 @@ class MemoryOfflineQueue implements OfflineQueue {
   @override
   Future<int> get count async => _queue.length;
 
+  void _park(
+    PendingEvent event, {
+    required StoredEventState state,
+    required String reason,
+    int? ownerDriverId,
+  }) {
+    _queue.removeWhere((e) => e.id == event.id);
+    _parked[event.id] = QuarantineRecord(
+      event: event,
+      state: state,
+      reason: reason,
+      quarantinedAt: DateTime.now().toUtc(),
+      ownerDriverId: ownerDriverId,
+    );
+  }
+
+  @override
+  Future<void> moveToDeferred(
+    PendingEvent event, {
+    required StoredEventState state,
+    required String reason,
+    int? ownerDriverId,
+  }) async {
+    assert(
+      state != StoredEventState.quarantinedUnknownOwner,
+      'use moveToQuarantine for unknown-owner parking',
+    );
+    _park(event, state: state, reason: reason, ownerDriverId: ownerDriverId);
+  }
+
+  @override
+  Future<void> moveToQuarantine(
+    PendingEvent event, {
+    required String reason,
+    int? ownerDriverId,
+  }) async {
+    _park(
+      event,
+      state: StoredEventState.quarantinedUnknownOwner,
+      reason: reason,
+      ownerDriverId: ownerDriverId,
+    );
+  }
+
+  List<QuarantineRecord> _parkedBy(Set<StoredEventState> states, int limit) {
+    final rows = _parked.values
+        .where((r) => states.contains(r.state))
+        .toList()
+      ..sort((a, b) => a.quarantinedAt.compareTo(b.quarantinedAt));
+    return rows.take(limit).toList();
+  }
+
+  @override
+  Future<List<QuarantineRecord>> getDeferred({int limit = 50}) async {
+    return _parkedBy(
+      const {
+        StoredEventState.deferredOwnerMismatch,
+        StoredEventState.deferredUnauthenticated,
+      },
+      limit,
+    );
+  }
+
+  @override
+  Future<List<QuarantineRecord>> getQuarantined({int limit = 50}) async {
+    return _parkedBy(
+      const {StoredEventState.quarantinedUnknownOwner},
+      limit,
+    );
+  }
+
+  @override
+  Future<void> releaseToPending(String eventId) async {
+    final record = _parked.remove(eventId);
+    if (record == null) return;
+    await enqueue(record.event);
+  }
+
   Future<void> clear() async {
     _queue.clear();
+    _parked.clear();
   }
 }

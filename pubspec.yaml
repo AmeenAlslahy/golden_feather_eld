@@ -83,6 +83,7 @@ dev_dependencies:
   very_good_analysis: ^5.1.0
   flutter_launcher_icons: ^0.14.4
   http_mock_adapter: ^0.6.1
+  sqflite_common_ffi: ^2.3.5
   freezed: ^3.0.6
   analyzer: ^7.6.0
   json_serializable: ^6.9.5
