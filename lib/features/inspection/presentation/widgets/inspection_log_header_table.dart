@@ -27,75 +27,102 @@ class InspectionLogHeaderTable extends StatelessWidget {
   final String coDriver;
   final String coDriverId;
 
+  /// السجل المجلوب لليوم المحدد هو الأحدث دائماً؛ بيانات الدورة لقطة
+  /// بداية التفتيش وقد تكون فارغة. القاعدة: أول قيمة غير فارغة بترتيب
+  /// (log → day → screen) — وإلا تبقى قيمة قديمة/فارغة معروضة رغم تغير اليوم.
+  static String _pick(String? fresh, String? snap, [String? fallback = '']) {
+    if (fresh != null && fresh.trim().isNotEmpty) return fresh;
+    if (snap != null && snap.trim().isNotEmpty) return snap;
+    return fallback ?? '';
+  }
+
   String get _driverName =>
-      day?.driverName ?? log?.driverName ?? screen?.driverName ?? '';
+      _pick(log?.driverName, day?.driverName, screen?.driverName);
   String get _driverId {
-    final id = day?.driverId.value ?? log?.driverId.value ?? screen?.driverId.value;
+    final id =
+        log?.driverId.value ?? day?.driverId.value ?? screen?.driverId.value;
     return id?.toString() ?? '';
   }
 
-  String get _vehicle => day?.vehicleNumber ?? log?.vehicleNumber ?? '';
-  String get _vin => day?.vin ?? log?.vin ?? '';
-  String get _trailers => day?.trailers ?? log?.trailers ?? '';
-  String get _shipping => day?.shippingDocuments ?? log?.shippingDocuments ?? '';
+  String get _vehicle =>
+      _pick(log?.vehicleNumber, day?.vehicleNumber);
+  String get _vin => _pick(log?.vin, day?.vin);
+  String get _trailers => _pick(log?.trailers, day?.trailers);
+  String get _shipping =>
+      _pick(log?.shippingDocuments, day?.shippingDocuments);
   String get _carrier {
-    final name = day?.carrierName ?? log?.carrierName ?? screen?.carrierName ?? '';
-    final usdot = day?.usdotNumber ?? log?.usdotNumber ?? screen?.usdotNumber ?? '';
+    final name =
+        _pick(log?.carrierName, day?.carrierName, screen?.carrierName);
+    final usdot =
+        _pick(log?.usdotNumber, day?.usdotNumber, screen?.usdotNumber);
     if (usdot.isEmpty) return name;
     return '$name (DOT # $usdot)';
   }
 
-  String get _office => day?.mainOfficeAddress ?? log?.mainOfficeAddress ?? '';
-  String get _terminal => day?.homeTerminalAddress ?? log?.homeTerminalAddress ?? '';
-  String get _reg =>
-      day?.eldRegistrationId ?? log?.eldRegistrationId ?? screen?.eldRegistrationId ?? '';
-  String get _eldId =>
-      day?.eldIdentifier ?? log?.eldIdentifier ?? screen?.eldIdentifier ?? '';
-  String get _provider => day?.eldProvider ?? log?.eldProvider ?? '';
-  String get _location => day?.displayLocation ?? log?.displayLocation ?? '';
-  String get _logDate => day?.displayDate ?? log?.displayDate ?? '';
-  bool get _certified => day?.certified ?? log?.certified ?? false;
+  String get _office =>
+      _pick(log?.mainOfficeAddress, day?.mainOfficeAddress);
+  String get _terminal =>
+      _pick(log?.homeTerminalAddress, day?.homeTerminalAddress);
+  String get _reg => _pick(log?.eldRegistrationId, day?.eldRegistrationId,
+      screen?.eldRegistrationId);
+  String get _eldId => _pick(
+      log?.eldIdentifier, day?.eldIdentifier, screen?.eldIdentifier);
+  String get _provider => _pick(log?.eldProvider, day?.eldProvider);
+  String get _location =>
+      _pick(log?.displayLocation, day?.displayLocation);
+  String get _logDate => _pick(log?.displayDate, day?.displayDate);
+  bool get _certified => log?.certified ?? day?.certified ?? false;
   bool get _exempt => day?.exemptDriver ?? false;
   bool get _unidentified =>
       day?.hasUnidentifiedDriving ?? ((day?.unidentifiedDrivingCount ?? 0) > 0);
-  bool get _diag =>
-      (day?.activeDataDiagnostics ?? log?.activeDataDiagnostics ?? const <String>[])
-          .isNotEmpty;
-  // 395.8(k)/8.3 — an indicator that is ON must say which code(s) are active.
-  String get _diagCodes =>
-      (day?.activeDataDiagnostics ?? log?.activeDataDiagnostics ?? const <String>[])
-          .join(', ');
-  String get _malfCodes =>
-      (day?.activeDeviceMalfunctions ?? log?.activeDeviceMalfunctions ?? const <String>[])
-          .join(', ');
+  // اتحاد المصدرين: مؤشر نشط في أي منهما يجب أن يظهر (395.8(k)).
+  List<String> get _diagList => {
+        ...?day?.activeDataDiagnostics,
+        ...?log?.activeDataDiagnostics,
+      }.toList();
+  List<String> get _malfList => {
+        ...?day?.activeDeviceMalfunctions,
+        ...?log?.activeDeviceMalfunctions,
+      }.toList();
 
-  bool get _malf =>
-      (day?.activeDeviceMalfunctions ?? log?.activeDeviceMalfunctions ?? const <String>[])
-          .isNotEmpty;
+  bool get _diag => _diagList.isNotEmpty;
+  // 395.8(k)/8.3 — an indicator that is ON must say which code(s) are active.
+  String get _diagCodes => _diagList.join(', ');
+  String get _malfCodes => _malfList.join(', ');
+
+  bool get _malf => _malfList.isNotEmpty;
 
   // 49 CFR 395.8 / SRS 8.3 — the roadside display is in miles.
   static const double _kmPerMile = 1.609344;
   static String _mi(double km) => (km / _kmPerMile).toStringAsFixed(0);
 
+  /// الأصفار تعني غياب القراءة غالباً ( freezeds غير nullable) —
+  /// القيمة غير الصفرية من السجل المجلوب أولاً.
+  static double _num(double? fresh, double? snap) {
+    if (fresh != null && fresh != 0) return fresh;
+    if (snap != null && snap != 0) return snap;
+    return fresh ?? snap ?? 0;
+  }
+
   String get _odometer {
-    final start = day?.startOdometerKm ?? log?.startOdometerKm;
-    final end = day?.endOdometerKm ?? log?.endOdometerKm;
-    if (start == null && end == null) return '';
-    if (start != null && end != null && start != end) {
+    final start = _num(log?.startOdometerKm, day?.startOdometerKm);
+    final end = _num(log?.endOdometerKm, day?.endOdometerKm);
+    if (start == 0 && end == 0) return '';
+    if (start != end) {
       return '${_mi(start)} - ${_mi(end)} mi';
     }
-    return '${_mi((end ?? start)!)} mi';
+    return '${_mi(end)} mi';
   }
 
   String get _distance {
-    final d = day?.totalDistanceKm ?? log?.totalDistanceKm;
-    if (d == null) return '';
+    final d = _num(log?.totalDistanceKm, day?.totalDistanceKm);
+    if (d == 0) return '';
     return '${_mi(d)} mi';
   }
 
   String get _engine {
-    final h = day?.engineHours ?? log?.engineHours;
-    if (h == null) return '';
+    final h = _num(log?.engineHours, day?.engineHours);
+    if (h == 0) return '';
     return h.toStringAsFixed(1);
   }
 

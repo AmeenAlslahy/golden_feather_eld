@@ -21,7 +21,10 @@ class MockDvirBackend implements DvirBackend {
   }
 
   @override
-  Future<Result<void>> create(RawJson report) async {
+  Future<Result<void>> create(
+    RawJson report, {
+    int? expectedOwnerDriverId,
+  }) async {
     return ok(null);
   }
 
@@ -35,6 +38,7 @@ class MockDvirBackend implements DvirBackend {
   Future<Result<void>> review({
     required DvirId dvirId,
     required RawJson review,
+    int? expectedOwnerDriverId,
   }) =>
       throw UnimplementedError('MockDvirBackend.review — Phase 2');
 

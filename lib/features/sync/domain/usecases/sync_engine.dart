@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
+import '../entities/dispatch_auth.dart';
 import '../entities/pending_event.dart';
+import '../entities/quarantine_record.dart';
 import '../repositories/offline_queue.dart';
 
 import '../../../../core/time/time_authority.dart';
@@ -20,6 +22,11 @@ class SyncEngine {
   final RetryPolicy _retryPolicy;
   final TimeAuthority _timeAuthority;
 
+  /// P0 2B-1 — مراقب الجلسة لمراجعة المؤجل (T3): يعيد المؤهل فقط عندما
+  /// تعود جلسة مالكه مستقرة. اختياري للتوافق مع الاختبارات القائمة؛
+  /// الإنتاج يحقنه دائماً (لا إفراج أعمى بدونه).
+  final Future<DispatchAuthContext> Function()? observeAuth;
+
   bool _isSyncing = false;
   bool _syncAgain = false;
   final Map<String, Completer<Either<Failure, bool>>> _reports = {};
@@ -30,6 +37,7 @@ class SyncEngine {
     required RemoteEventDispatcher dispatcher,
     required TimeAuthority timeAuthority,
     RetryPolicy? retryPolicy,
+    this.observeAuth,
   })  : _queue = queue,
         _dispatcher = dispatcher,
         _timeAuthority = timeAuthority,
@@ -75,6 +83,38 @@ class SyncEngine {
     return result;
   }
 
+  /// P0 2B-1 — مراجعة المؤجل المؤهل قبل كل دفعة (T3): يعيد لـ pending
+  /// فقط الصفوف المثبتة التي تطابق جلسة مستقرة حاضرة. المحجور-مجهول
+  /// لا يُمس أبداً هنا. محدود العدد، وفشله لا يوقف المزامنة.
+  /// @returns عدد الأحداث المعادة للتأهيل.
+  Future<int> releaseEligible({int limit = 50}) async {
+    final observe = observeAuth;
+    if (observe == null) return 0;
+    late final DispatchAuthContext ctx;
+    try {
+      ctx = await observe();
+    } catch (_) {
+      return 0;
+    }
+    if (ctx.driverId == null || ctx.transitioning) return 0;
+    var released = 0;
+    try {
+      final deferred = await _queue.getDeferred(limit: limit);
+      for (final record in deferred) {
+        if (record.ownerDriverId == ctx.driverId) {
+          await _queue.releaseToPending(record.event.id);
+          released++;
+          AppLogger.info(
+              'SyncEngine: released deferred event ${record.event.id} '
+              'to owner ${ctx.driverId}');
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('SyncEngine: deferred review failed: $e');
+    }
+    return released;
+  }
+
   /// تشغيل المزامنة للأحداث المعلقة (تُستدعى يدوياً أو تلقائياً عند عودة الاتصال)
   Future<void> triggerSync() async {
     if (_isSyncing) {
@@ -84,6 +124,8 @@ class SyncEngine {
     _isSyncing = true;
 
     try {
+      // P0 2B-1 — أولاً: إعادة تأهيل مؤجل المالك العائد (رخيص ومحلي).
+      await releaseEligible();
       while (true) {
         _syncAgain = false;
         var hasMore = true;
@@ -118,12 +160,42 @@ class SyncEngine {
     }
   }
 
+  /// P0 2B-1 — ترجمة حكم الحجر لتخزين ذري. يُستدعى حصراً من _settle.
+  StoredEventState _parkStateOf(QuarantinedFailure failure) {
+    return StoredEventState.values.firstWhere(
+      (s) => s.name == failure.parkState,
+      orElse: () => StoredEventState.quarantinedUnknownOwner,
+    );
+  }
+
   Future<void> _settle(
     PendingEvent event,
     Either<Failure, bool> result,
   ) async {
     await result.match(
       (failure) async {
+        // P0 2B-1 — حجر الملكية ليس فشل إرسال: نقل ذري لخارج الطابور،
+        // بلا retry وبلا تصعيد خطأ. الصف يغيب عن getReadyEvents نهائياً.
+        if (failure is QuarantinedFailure) {
+          final state = _parkStateOf(failure);
+          if (state == StoredEventState.quarantinedUnknownOwner) {
+            await _queue.moveToQuarantine(
+              event,
+              reason: failure.reason,
+              ownerDriverId: failure.ownerDriverId,
+            );
+          } else {
+            await _queue.moveToDeferred(
+              event,
+              state: state,
+              reason: failure.reason,
+              ownerDriverId: failure.ownerDriverId,
+            );
+          }
+          AppLogger.warning(
+              'SyncEngine: parked ${event.id} (${failure.reason})');
+          return;
+        }
         final nextRetry = _retryPolicy.calculateNextRetry(
           event.retryCount,
           nowUtc: _timeAuthority.nowUtc(),

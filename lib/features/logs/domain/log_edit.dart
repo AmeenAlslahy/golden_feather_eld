@@ -25,8 +25,9 @@ String? refuseAutomaticDrivingEdit({
 ///
 /// يدعم: `HH:mm`، `h:mm[:ss] AM/PM`. يرجع null إذا تعذر التحليل
 /// (يستخدم الداعي وقت الحدث الحالي أو الحاضر كقيمة بديلة).
-DateTime? parseEditFormTime(String raw, DateTime? logDate) {
-  final base = logDate ?? DateTime.now();
+DateTime? parseEditFormTime(String raw, DateTime? logDate, [DateTime? fallbackDate]) {
+  final base = logDate ?? fallbackDate;
+  if (base == null) return null;
   final trimmed = raw.trim();
 
   final m24 = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(trimmed);

@@ -172,6 +172,7 @@ void main() {
         TimeUnavailableError() => 'time',
         StorageError() => 'storage',
         SyncError() => 'sync',
+        OwnerMismatchError() => 'ownerMismatch',
         UnknownError() => 'unknown',
       };
 

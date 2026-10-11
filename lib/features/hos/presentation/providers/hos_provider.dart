@@ -80,10 +80,14 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     });
   }
 
-  /// تغيير حالة الخدمة. null يعني أن الخادم قبل الختم. أي نص آخر سبب رفض.
-  Future<String?> changeStatus(DutyStatus newStatus,
+  /// تغيير حالة الخدمة. يُعاد توجيه نتيجة المتتبع كما هي (رفض اختياري
+  /// مع لقطة لوحة الخادم عند القبول لتغذية اللوحة فوراً).
+  Future<ManualDutyChangeResult> changeStatus(DutyStatus newStatus,
       {String? annotation, bool isYardMoves = false}) async {
-    if (state is! HosEngineReady) return DutyStampRefusal.notReady;
+    if (state is! HosEngineReady) {
+      return const ManualDutyChangeResult(
+          refusal: DutyStampRefusal.notReady);
+    }
     final currentHosStatus = (state as HosEngineReady).update.currentStatus;
 
     final currentSpeedKmh = _ref.read(currentSpeedKmhProvider);
@@ -98,7 +102,7 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
     if (validationResult.isLeft()) {
       AppLogger.warning('⚠️ ${validationResult.fold((f) => f.message, (_) => '')}');
-      return DutyStampRefusal.moving;
+      return const ManualDutyChangeResult(refusal: DutyStampRefusal.moving);
     }
 
     String finalAnnotation = annotation ?? '';

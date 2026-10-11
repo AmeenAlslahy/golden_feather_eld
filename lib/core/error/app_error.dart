@@ -497,6 +497,41 @@ final class SyncError extends AppError {
 }
 
 // ============================================================================
+// Dispatch ownership (P0 2B-1)
+// ============================================================================
+
+/// A queued event was refused at HTTP send-time because the current
+/// session no longer belongs to the event owner.
+///
+/// Carries owner ids only (never credentials). Mapped from
+/// [OwnerMismatchSignal]; the dispatcher converts it to a parked
+/// quarantine verdict — never a retry, never a logout.
+final class OwnerMismatchError extends AppError {
+  const OwnerMismatchError({
+    super.code = 'sync.ownerMismatch',
+    super.l10nKey = 'syncError',
+    super.cause,
+    super.stackTrace,
+    super.context,
+  }) : super(severity: ErrorSeverity.warning);
+
+  @override
+  OwnerMismatchError _copyWith({
+    Object? cause,
+    StackTrace? stackTrace,
+    Map<String, dynamic>? context,
+  }) {
+    return OwnerMismatchError(
+      code: code,
+      l10nKey: l10nKey,
+      cause: cause ?? this.cause,
+      stackTrace: stackTrace ?? this.stackTrace,
+      context: context ?? this.context,
+    );
+  }
+}
+
+// ============================================================================
 // Unknown
 // ============================================================================
 

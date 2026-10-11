@@ -4135,7 +4135,7 @@ abstract class AppLocalizations {
   /// No description provided for @trailerNumberFormatError.
   ///
   /// In ar, this message translates to:
-  /// **'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).'**
+  /// **'رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).'**
   String get trailerNumberFormatError;
 
   /// No description provided for @enterDocumentNumber.
@@ -4155,6 +4155,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).'**
   String get oneDocumentAtATime;
+
+  /// No description provided for @shippingDocumentFormatError.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم مستند الشحن: حروف وأرقام ومسافات وعلامات بسيطة فقط (حتى 100).'**
+  String get shippingDocumentFormatError;
 
   /// No description provided for @selectVehicleBeforeSavingForm.
   ///
@@ -5775,6 +5781,36 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.'**
   String get annotationRequiredForPcYm;
+
+  /// No description provided for @unknownAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراء غير معروف'**
+  String get unknownAction;
+
+  /// No description provided for @maxTrailersLimitReached.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الوصول إلى الحد الأقصى (5 مقطورات).'**
+  String get maxTrailersLimitReached;
+
+  /// No description provided for @trailerAlreadyExists.
+  ///
+  /// In ar, this message translates to:
+  /// **'المقطورة مضافة بالفعل.'**
+  String get trailerAlreadyExists;
+
+  /// No description provided for @allEvents.
+  ///
+  /// In ar, this message translates to:
+  /// **'جميع الأحداث'**
+  String get allEvents;
+
+  /// No description provided for @activeEvents.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأحداث النشطة'**
+  String get activeEvents;
 }
 
 class _AppLocalizationsDelegate

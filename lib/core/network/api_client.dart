@@ -18,6 +18,7 @@ import 'package:dio/dio.dart'; // ignore_architecture
 import 'package:fpdart/fpdart.dart' as fp;
 
 import '../../core/error/app_error.dart';
+import '../../core/error/failure.dart';
 import '../../core/result/result.dart';
 import 'api_config.dart';
 import 'api_response.dart';
@@ -95,13 +96,21 @@ class ApiClient {
     ResponseType? responseType,
     CancelToken? cancelToken,
     T Function(dynamic)? parser,
+    // P0 2B-1 — expected queue-event owner, enforced at HTTP send-time
+    // by AuthInterceptor (rejects before any byte leaves on mismatch).
+    // Null = no ownership binding (all non-queue callers).
+    int? expectedOwnerDriverId,
   }) {
     return _execute<T>(
       () => _dio.post<dynamic>(
         path,
         data: data,
         queryParameters: queryParameters,
-        options: _buildOptions(headers: headers, responseType: responseType),
+        options: _buildOptions(
+          headers: headers,
+          responseType: responseType,
+          expectedOwnerDriverId: expectedOwnerDriverId,
+        ),
         cancelToken: cancelToken,
       ),
       parser: parser,
@@ -116,13 +125,18 @@ class ApiClient {
     Map<String, String>? headers,
     CancelToken? cancelToken,
     T Function(dynamic)? parser,
+    // P0 2B-1 — see [post].
+    int? expectedOwnerDriverId,
   }) {
     return _execute<T>(
       () => _dio.put<dynamic>(
         path,
         data: data,
         queryParameters: queryParameters,
-        options: _buildOptions(headers: headers),
+        options: _buildOptions(
+          headers: headers,
+          expectedOwnerDriverId: expectedOwnerDriverId,
+        ),
         cancelToken: cancelToken,
       ),
       parser: parser,
@@ -246,11 +260,16 @@ class ApiClient {
     Map<String, String>? headers,
     String? contentType,
     ResponseType? responseType,
+    int? expectedOwnerDriverId,
   }) {
     return Options(
       headers: headers,
       contentType: contentType,
       responseType: responseType,
+      // P0 2B-1 — ownership binding travels outside the legal payload.
+      extra: expectedOwnerDriverId == null
+          ? null
+          : {'gf_expected_owner': expectedOwnerDriverId},
     );
   }
 
@@ -274,8 +293,20 @@ class ApiClient {
 
         return fp.Right(apiResponse);
       } on DioException catch (e) {
+        // P0 2B-1 — send-time ownership refusal surfaces as quarantine,
+        // never as a retryable transport error and never as a logout.
+        // IDs only, no credentials.
+        final signal = e.error;
+        if (signal is OwnerMismatchSignal) {
+          return fp.Left(OwnerMismatchError(
+            context: {
+              'expectedOwnerDriverId': signal.expectedOwnerDriverId,
+              'actualOwnerDriverId': signal.actualOwnerDriverId,
+            },
+          ));
+        }
         // Retry only idempotent requests after a transient transport
-        // failure, up to [maxRetries] times, and never once the caller
+        // failure, and never once the caller
         // has cancelled the request.
         final transient = _isTransient(e);
         if (!idempotent ||

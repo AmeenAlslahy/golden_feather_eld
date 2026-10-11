@@ -37,6 +37,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
   /// تحقق بريد فعلي (شكل محلي) بدل مجرد احتواء على '@' و'.'.
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _commentController = TextEditingController();
   bool _isSending = false;
@@ -64,29 +65,29 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     super.dispose();
   }
 
-  bool get _emailValid {
-    final email = _emailController.text.trim();
-    return _emailPattern.hasMatch(email);
-  }
-
   /// القناة الفعالة: شاشة البريد بريد دائماً، وشاشة الإرسال حسب الاختيار.
   bool get _usesEmail =>
       widget.isEmailMode || _selectedMethod == TransferMethod.email;
 
-  Future<void> _handleSend() async {
-    if (_usesEmail && !_emailValid) {
-      _snack(context.loc.enterValidEmail);
-      return;
+  /// رسالة خطأ البريد تحت الحقل نفسه (لا سناكبار): تُعرض فقط عندما
+  /// تكون قناة البريد مستخدمة فعلاً — الحقل المخفي لا يُحقق أبداً.
+  String? _emailFieldError(String? value) {
+    if (!_usesEmail) return null;
+    final email = (value ?? '').trim();
+    if (email.isEmpty || !_emailPattern.hasMatch(email)) {
+      return context.loc.enterValidEmail;
     }
-    // SRS 8.4: output-file comment 4–60 on both channels (the email screen
-    // starts with a default the officer may replace).
-    final commentError = isValidInspectionComment(_commentController.text)
+    return null;
+  }
+
+  String? _commentFieldError(String? value) {
+    return isValidInspectionComment(value ?? '')
         ? null
         : context.loc.inspectionCommentErrorLength;
-    if (commentError != null) {
-      _snack(commentError);
-      return;
-    }
+  }
+
+  Future<void> _handleSend() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _isSending = true);
     final comment = _commentController.text;
@@ -163,37 +164,43 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
           ? _buildSuccessView(context, message, loc)
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Reference layout (screenshots 3 / 9): one heading line,
-                  // one or two labelled underline fields, one SEND button.
-                  Text(
-                    widget.isEmailMode ? loc.sendLogsViaEmail : loc.send8Logs,
-                    style: context.styles.subtitle.copyWith(fontSize: 18),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  if (widget.isEmailMode) ...[
-                    _FieldLabel(loc.recipientEmail),
-                    AppTextField(
-                      controller: _emailController,
-                      hint: 'some@email.com',
-                      keyboardType: TextInputType.emailAddress,
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Reference layout (screenshots 3 / 9): one heading line,
+                    // one or two labelled underline fields, one SEND button.
+                    Text(
+                      widget.isEmailMode ? loc.sendLogsViaEmail : loc.send8Logs,
+                      style: context.styles.subtitle.copyWith(fontSize: 18),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _FieldLabel(loc.comment),
-                    AppTextField(
-                      controller: _commentController,
-                      hint: '',
-                      keyboardType: TextInputType.text,
-                    ),
-                  ] else ...[
-                    _FieldLabel(loc.comment),
-                    AppTextField(
-                      controller: _commentController,
-                      hint: '',
-                      keyboardType: TextInputType.text,
-                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    if (widget.isEmailMode) ...[
+                      _FieldLabel(loc.recipientEmail),
+                      AppTextField(
+                        controller: _emailController,
+                        hint: 'some@email.com',
+                        keyboardType: TextInputType.emailAddress,
+                        validator: _emailFieldError,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _FieldLabel(loc.comment),
+                      AppTextField(
+                        controller: _commentController,
+                        hint: '',
+                        keyboardType: TextInputType.text,
+                        validator: _commentFieldError,
+                      ),
+                    ] else ...[
+                      _FieldLabel(loc.comment),
+                      AppTextField(
+                        controller: _commentController,
+                        hint: '',
+                        keyboardType: TextInputType.text,
+                        validator: _commentFieldError,
+                      ),
                     const SizedBox(height: AppSpacing.xl),
                     _FieldLabel(loc.dataTransferType),
                     DropdownButtonFormField<TransferMethod>(
@@ -232,17 +239,19 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         controller: _emailController,
                         hint: 'some@email.com',
                         keyboardType: TextInputType.emailAddress,
+                        validator: _emailFieldError,
                       ),
+                      ],
                     ],
+                    const SizedBox(height: 40),
+                    AppButton(
+                      label: loc.sendAction,
+                      type: EldButtonType.primary,
+                      isLoading: _isSending,
+                      onPressed: _handleSend,
+                    ),
                   ],
-                  const SizedBox(height: 40),
-                  AppButton(
-                    label: loc.sendAction,
-                    type: EldButtonType.primary,
-                    isLoading: _isSending,
-                    onPressed: _handleSend,
-                  ),
-                ],
+                ),
               ),
             ),
     );
@@ -271,7 +280,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
             Text(
               isOffline
                   ? loc.offlineEldGeneratedTitle
-                  : (message ?? loc.transferAccepted),
+                  : loc.transferAccepted,
               textAlign: TextAlign.center,
               style: context.styles.pageTitle.copyWith(fontSize: 18),
             ),

@@ -97,3 +97,40 @@ class ValidationFailure extends Failure {
     this.fieldErrors,
   });
 }
+
+/// P0 2B-1 — حدث محجور لعدم تطابق الملكية (لا يُعاد إرساله تلقائياً).
+/// يُنتَج حصراً من سياج الإرسال (مبكراً) أو رفض وقت-الإرسال، ويحوَّل في
+/// المحرك إلى نقل ذري لجدول الحجر — لا حذف ولا retry.
+class QuarantinedFailure extends Failure {
+  /// سبب الحجر الآلي (للسجل التشخيصي فقط).
+  final String reason;
+
+  /// المالك المثبت للحدث وقت الحجر (null للمجهول).
+  final int? ownerDriverId;
+
+  /// اسم حالة التخزين المستهدفة (StoredEventState.name): إما صف مؤجل
+  /// (يُعاد تقييمه) أو حجر مجهول (لا إفراج تلقائي). نصٌ لا نوع لتفادي
+  /// اعتماد core على طبقة الميزات.
+  final String parkState;
+
+  const QuarantinedFailure({
+    required this.reason,
+    this.ownerDriverId,
+    this.parkState = 'quarantinedUnknownOwner',
+  }) : super(message: 'sync.quarantined');
+
+  @override
+  List<Object?> get props => [message, statusCode, reason, ownerDriverId, parkState];
+}
+
+/// P0 2B-1 — إشارة رفض وقت-الإرسال تُحمَل داخل DioException.
+/// تحمل أعداداً فقط (المالك المتوقع والفعلي) — لا أسرار مصادقة أبداً.
+class OwnerMismatchSignal {
+  final int expectedOwnerDriverId;
+  final int? actualOwnerDriverId;
+
+  const OwnerMismatchSignal({
+    required this.expectedOwnerDriverId,
+    this.actualOwnerDriverId,
+  });
+}

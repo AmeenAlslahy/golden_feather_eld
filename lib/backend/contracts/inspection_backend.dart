@@ -31,6 +31,7 @@ abstract interface class InspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   });
 
   /// GET /eld/dot-inspection/information-packet
@@ -45,6 +46,7 @@ abstract interface class InspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   });
 
   /// POST /eld/dot-inspection/start

@@ -17,13 +17,11 @@ class InstructionsPage extends StatelessWidget {
   final InstructionsSection section;
 
   String _title(AppLocalizations loc) => switch (section) {
-        InstructionsSection.all => loc.instructions,
-        InstructionsSection.inspection =>
-          loc.inspectionMode,
-        InstructionsSection.sendLogs => loc.dataTransferInstructionSheet,
-        InstructionsSection.malfunction =>
-          loc.malfunctionManual39534,
-      };
+    InstructionsSection.all => loc.instructions,
+    InstructionsSection.inspection => loc.inspectionMode,
+    InstructionsSection.sendLogs => loc.dataTransferInstructionSheet,
+    InstructionsSection.malfunction => loc.malfunctionManual39534,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +33,7 @@ class InstructionsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          _title(context.loc),
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(_title(context.loc), style: context.styles.appBarTitle),
       ),
       body: ListView(
         key: Key('instructions_${section.name}'),
@@ -46,25 +41,54 @@ class InstructionsPage extends StatelessWidget {
         children: [
           // Section 1: Inspection Mode
           if (showAll || section == InstructionsSection.inspection)
-            _buildInspectionModeSection(context),
+            _wrapTappableSection(
+              context: context,
+              title: _title(context.loc),
+              sectionWidget: _buildInspectionModeSection(context),
+            ),
 
           // Section 2: Send Logs (Data Transfer Instruction Sheet)
           if (showAll || section == InstructionsSection.sendLogs)
-            _buildSendLogsSection(context),
+            _wrapTappableSection(
+              context: context,
+              title: _title(context.loc),
+              sectionWidget: _buildSendLogsSection(context),
+            ),
 
           // Section 3: Malfunction Manual
           if (showAll || section == InstructionsSection.malfunction)
-            _buildMalfunctionManualSection(context),
+            _wrapTappableSection(
+              context: context,
+              title: _title(context.loc),
+              sectionWidget: _buildMalfunctionManualSection(context),
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _wrapTappableSection({
+    required BuildContext context,
+    required String title,
+    required Widget sectionWidget,
+  }) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                ZoomableSectionPage(title: title, content: sectionWidget),
+          ),
+        );
+      },
+      child: sectionWidget,
     );
   }
 
   Widget _buildInspectionModeSection(BuildContext context) {
     final loc = context.loc;
     // شريط داكن دائم حسب التصميم المرجعي — في الوضعين.
-    final sectionColor =
-        context.inspectionBand;
+    final sectionColor = context.inspectionBand;
 
     return Container(
       decoration: AppDecorations.band(sectionColor),
@@ -82,7 +106,11 @@ class InstructionsPage extends StatelessWidget {
                 radius: AppRadius.sheet,
               ),
               child: const Center(
-                child: Icon(Icons.smartphone, size: 64, color: AppColors.placeholderGrey),
+                child: Icon(
+                  Icons.smartphone,
+                  size: 64,
+                  color: AppColors.placeholderGrey,
+                ),
               ),
             ),
           ),
@@ -102,10 +130,22 @@ class InstructionsPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                _buildChecklistItem(context: context, text: loc.tapDotInspectionInTheMenuPress),
-                _buildChecklistItem(context: context, text: loc.anInspectorMayPressArrowsToVie),
-                _buildChecklistItem(context: context, text: loc.anInspectorMayViewTheLogFormTh),
-                _buildChecklistItem(context: context, text: loc.theOfficerCannotLeaveInspectio),
+                _buildChecklistItem(
+                  context: context,
+                  text: loc.tapDotInspectionInTheMenuPress,
+                ),
+                _buildChecklistItem(
+                  context: context,
+                  text: loc.anInspectorMayPressArrowsToVie,
+                ),
+                _buildChecklistItem(
+                  context: context,
+                  text: loc.anInspectorMayViewTheLogFormTh,
+                ),
+                _buildChecklistItem(
+                  context: context,
+                  text: loc.theOfficerCannotLeaveInspectio,
+                ),
               ],
             ),
           ),
@@ -119,7 +159,9 @@ class InstructionsPage extends StatelessWidget {
     return Container(
       decoration: AppDecorations.band(context.colorScheme.surface),
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xl,
+      ),
       child: Column(
         children: [
           Row(
@@ -139,8 +181,10 @@ class InstructionsPage extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       loc.goldenFeatherEldIsCapableOfPro,
-                      style:
-                          context.styles.subtitle.copyWith(fontSize: 10, height: 1.5),
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: 10,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -157,8 +201,7 @@ class InstructionsPage extends StatelessWidget {
   Widget _buildMalfunctionManualSection(BuildContext context) {
     final loc = context.loc;
     // خلفية قسم دليل الأعطال — درجة لكل وضع.
-    final sectionColor =
-        context.manualBand;
+    final sectionColor = context.manualBand;
 
     return Container(
       decoration: AppDecorations.band(sectionColor),
@@ -180,8 +223,12 @@ class InstructionsPage extends StatelessWidget {
                         radius: AppRadius.imagePlaceholder,
                       ),
                       child: const Center(
-                          child: Icon(Icons.router,
-                              color: AppColors.white, size: 48)),
+                        child: Icon(
+                          Icons.router,
+                          color: AppColors.white,
+                          size: 48,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Row(
@@ -204,8 +251,10 @@ class InstructionsPage extends StatelessWidget {
                   children: [
                     Text(
                       loc.goldenFeatherEldMalfunctionMan,
-                      style: context.styles.bodyBold
-                          .copyWith(fontSize: 18, height: 1.2),
+                      style: context.styles.bodyBold.copyWith(
+                        fontSize: 18,
+                        height: 1.2,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
@@ -245,8 +294,10 @@ class InstructionsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildChecklistItem(
-      {required BuildContext context, required String text}) {
+  Widget _buildChecklistItem({
+    required BuildContext context,
+    required String text,
+  }) {
     // عناصر الشريط الداكن دائماً — نص أبيض على الخلفية الداكنة.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -301,8 +352,10 @@ class InstructionsPage extends StatelessWidget {
                 ),
                 Text(
                   desc,
-                  style:
-                      context.styles.subtitle.copyWith(fontSize: 10, height: 1.3),
+                  style: context.styles.subtitle.copyWith(
+                    fontSize: 10,
+                    height: 1.3,
+                  ),
                 ),
               ],
             ),
@@ -319,8 +372,10 @@ class InstructionsPage extends StatelessWidget {
       children: [
         Text(
           'www.topceld.com',
-          style:
-              context.styles.subtitle.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
+          style: context.styles.subtitle.copyWith(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         Text(
           loc.contactTheSupportTeamAtTopceld,
@@ -340,6 +395,106 @@ class InstructionsPage extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: const Icon(Icons.cable, size: 14, color: AppColors.white),
+    );
+  }
+}
+
+class ZoomableSectionPage extends StatefulWidget {
+  final String title;
+  final Widget content;
+
+  const ZoomableSectionPage({
+    super.key,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  State<ZoomableSectionPage> createState() => _ZoomableSectionPageState();
+}
+
+class _ZoomableSectionPageState extends State<ZoomableSectionPage> {
+  final TransformationController _controller = TransformationController();
+
+  void _zoomIn() {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+    if (currentScale < 3.0) {
+      final matrix = _controller.value.clone();
+      matrix.scaleByDouble(1.2, 1.2, 1.2, 1.0);
+      _controller.value = matrix;
+    }
+  }
+
+  void _zoomOut() {
+    final currentScale = _controller.value.getMaxScaleOnAxis();
+    if (currentScale > 1.0) {
+      final matrix = _controller.value.clone();
+      matrix.scaleByDouble(0.8, 0.8, 0.8, 1.0);
+      if (matrix.getMaxScaleOnAxis() < 1.0) {
+        matrix.setIdentity();
+      }
+      _controller.value = matrix;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(widget.title, style: context.styles.appBarTitle),
+      ),
+      body: Stack(
+        children: [
+          InteractiveViewer(
+            transformationController: _controller,
+            minScale: 1.0,
+            maxScale: 4.0,
+            child: Center(
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: widget.content,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            top: 16,
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'btn_zoom_in',
+                  onPressed: _zoomIn,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'btn_zoom_out',
+                  onPressed: _zoomOut,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Icon(
+                    Icons.remove,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

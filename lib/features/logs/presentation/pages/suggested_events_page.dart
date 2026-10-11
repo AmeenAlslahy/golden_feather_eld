@@ -101,18 +101,19 @@ class SuggestedEventsPage extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: context.styles.body,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(
-              label: context.loc.logsTitle,
-              type: EldButtonType.primary,
-              onPressed: () => context.go(AppRoutes.logs),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton(
-              label: context.loc.unidentifiedEvents,
-              type: EldButtonType.secondary,
-              onPressed: () => context.push(AppRoutes.unidentifiedEvents),
-            ),
+            /// TODO: لا تقم بتفعيلها
+            // const SizedBox(height: AppSpacing.xl),
+            // AppButton(
+            //   label: context.loc.logsTitle,
+            //   type: EldButtonType.primary,
+            //   onPressed: () => context.go(AppRoutes.logs),
+            // ),
+            // const SizedBox(height: AppSpacing.md),
+            // AppButton(
+            //   label: context.loc.unidentifiedEvents,
+            //   type: EldButtonType.secondary,
+            //   onPressed: () => context.push(AppRoutes.unidentifiedEvents),
+            // ),
           ],
         ),
       ),

@@ -6,13 +6,13 @@ import '../../../../core/theme/app_typography.dart';
 class TimeFieldWidget extends StatelessWidget {
   final String label;
   final String value;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const TimeFieldWidget({
     super.key,
     required this.label,
     required this.value,
-    required this.onTap,
+    this.onTap,
   });
 
   @override

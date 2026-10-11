@@ -108,18 +108,7 @@ class DailyLog extends Equatable {
   }
 
   String get dayName {
-    final now = DateTime.now();
-    if (date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day) {
-      return 'Today';
-    }
-    final yesterday = now.subtract(const Duration(days: 1));
-    if (date.year == yesterday.year &&
-        date.month == yesterday.month &&
-        date.day == yesterday.day) {
-      return 'Yesterday';
-    }
+    if (today) return 'Today';
     return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
   }
 

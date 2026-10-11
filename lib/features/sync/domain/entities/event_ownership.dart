@@ -58,6 +58,12 @@ abstract final class EventOwnershipResolver {
       return EventOwnership.unidentified;
     }
 
+    // Canonical producer-stamped slot (P0 2B-1): checked first for every
+    // type so new owner fields can never be silently dead. Legacy per-type
+    // slots below preserve already-queued events (no backfill).
+    final canonical = _asPositiveInt(event.payload['ownerDriverId']);
+    if (canonical != null) return EventOwnership.proven(canonical);
+
     final direct = _directDriverId(event);
     if (direct != null) return EventOwnership.proven(direct);
 

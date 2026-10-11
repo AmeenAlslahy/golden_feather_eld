@@ -85,8 +85,17 @@ class EldInspectionBackend implements InspectionBackend {
     return <String, dynamic>{};
   }
 
-  Future<Result<RawJson>> _postJson(String path, Map<String, dynamic> data) async {
-    final res = await _apiClient.post<RawJson>(path, data: data, parser: _asMap);
+  Future<Result<RawJson>> _postJson(
+    String path,
+    Map<String, dynamic> data, {
+    int? expectedOwnerDriverId,
+  }) async {
+    final res = await _apiClient.post<RawJson>(
+      path,
+      data: data,
+      parser: _asMap,
+      expectedOwnerDriverId: expectedOwnerDriverId,
+    );
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
@@ -98,15 +107,21 @@ class EldInspectionBackend implements InspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) {
-    return _postJson(EldEndpoints.dotInspectionEmailLogs, {
-      'driverId': driverId.value,
-      'recipientEmail': recipientEmail,
-      if (routingCode != null) 'routingCode': routingCode,
-      if (comment != null) 'comment': comment,
-      if (daysCount != null) 'daysCount': daysCount,
-      if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
-    });
+    return _postJson(
+      EldEndpoints.dotInspectionEmailLogs,
+      {
+        'driverId': driverId.value,
+        'recipientEmail': recipientEmail,
+        if (routingCode != null) 'routingCode': routingCode,
+        if (comment != null) 'comment': comment,
+        if (daysCount != null) 'daysCount': daysCount,
+        if (endDate != null)
+          'endDate': endDate.toIso8601String().split('T').first,
+      },
+      expectedOwnerDriverId: expectedOwnerDriverId,
+    );
   }
 
   @override
@@ -129,16 +144,22 @@ class EldInspectionBackend implements InspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) {
-    return _postJson(EldEndpoints.dotInspectionSendLogs, {
-      'driverId': driverId.value,
-      'transferType': transferType.wire,
-      'outputFileComment': outputFileComment,
-      if (routingCode != null) 'routingCode': routingCode,
-      if (recipientEmail != null) 'recipientEmail': recipientEmail,
-      if (daysCount != null) 'daysCount': daysCount,
-      if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
-    });
+    return _postJson(
+      EldEndpoints.dotInspectionSendLogs,
+      {
+        'driverId': driverId.value,
+        'transferType': transferType.wire,
+        'outputFileComment': outputFileComment,
+        if (routingCode != null) 'routingCode': routingCode,
+        if (recipientEmail != null) 'recipientEmail': recipientEmail,
+        if (daysCount != null) 'daysCount': daysCount,
+        if (endDate != null)
+          'endDate': endDate.toIso8601String().split('T').first,
+      },
+      expectedOwnerDriverId: expectedOwnerDriverId,
+    );
   }
 
   @override

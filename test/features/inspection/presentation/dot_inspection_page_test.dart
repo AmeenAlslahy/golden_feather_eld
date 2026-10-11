@@ -379,10 +379,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap lock icon to exit directly
-    await tester.tap(find.byIcon(Icons.lock));
+    // Tap back icon to exit directly
+    await tester.tap(find.byIcon(Icons.arrow_back));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.lock), findsNothing);
+    expect(find.byIcon(Icons.arrow_back), findsNothing);
 
     verifyNever(
       () => repository.sendLogs(

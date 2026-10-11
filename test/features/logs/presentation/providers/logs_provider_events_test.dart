@@ -120,8 +120,9 @@ void main() {
     when(() => repo.getEvents(any(), any()))
         .thenAnswer((_) async => Right([ev('7', 'OFF', 60)]));
     // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
-    when(() => repo.updateEvent(any(), reason: any(named: 'reason')))
-        .thenAnswer((_) async => Right(ev('7', 'SB', 60)));
+    when(() => repo.updateEvent(any(),
+        reason: any(named: 'reason'),
+        ownerDriverId: any(named: 'ownerDriverId'))).thenAnswer((_) async => Right(ev('7', 'SB', 60)));
 
     final notifier = container.read(logsProvider.notifier);
     await Future<void>.delayed(Duration.zero);
@@ -133,9 +134,9 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     expect(ok.isRight(), isTrue);
-    verify(() =>
-            repo.updateEvent(any(), reason: 'Wrong status selected'))
-        .called(1);
+    verify(() => repo.updateEvent(any(),
+        reason: 'Wrong status selected',
+        ownerDriverId: any(named: 'ownerDriverId'))).called(1);
     // Initial load + refresh after the edit.
     verify(() => repo.getEvents(any(), any())).called(2);
   });

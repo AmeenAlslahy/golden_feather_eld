@@ -14,6 +14,7 @@ import 'package:golden_feather_eld/features/logs/domain/repositories/log_reposit
 import 'package:golden_feather_eld/features/logs/presentation/pages/shipping_documents_page.dart';
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/trailers_page.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
@@ -59,6 +60,9 @@ void main() {
       when(
         () => loc.oneDocumentAtATime,
       ).thenReturn('Enter one document at a time (no comma).');
+      when(() => loc.shippingDocumentFormatError)
+          .thenReturn('Shipping document format error.');
+      when(() => loc.localeName).thenReturn('en');
       when(() => loc.trailers).thenReturn('Trailers');
       when(() => loc.typeHere).thenReturn('Type here');
       when(() => loc.addButton).thenReturn('ADD');
@@ -68,11 +72,22 @@ void main() {
       when(() => loc.noDocumentsAdded).thenReturn('No documents added');
 
       expect(trailerNumberError('TR-1402', loc), isNull);
-      expect(trailerNumberError('TR 1402', loc), isNotNull);
+      expect(trailerNumberError('TR 1402', loc), isNull,
+          reason: 'spaces allowed (Arabic multi-word labels)');
+      expect(trailerNumberError('مقطورة 12', loc), isNull,
+          reason: 'Arabic letters accepted');
       expect(trailerNumberError('', loc), isNotNull);
       expect(trailerNumberError('a' * 51, loc), isNotNull);
-      expect(shippingDocumentError('BOL 2026/01', loc), isNull);
+      expect(trailerNumberError('...', loc), isNotNull,
+          reason: 'punctuation-only has no substance');
+      expect(trailerNumberError(',,,', loc), isNotNull);
+      expect(trailerNumberError('TR=12', loc), isNotNull,
+          reason: 'math symbols rejected');
+      expect(shippingDocumentError('BOL 2026/01', loc), isNull,
+          reason: 'slashes allowed in document numbers');
+      expect(shippingDocumentError('بوليصة 45', loc), isNull);
       expect(shippingDocumentError('a,b', loc), isNotNull);
+      expect(shippingDocumentError('...', loc), isNotNull);
       expect(shippingDocumentError('a' * 101, loc), isNotNull);
     });
   });
@@ -134,10 +149,11 @@ void main() {
     expect(container.read(dashboardDataProvider).trailerId, 'TR-1402');
 
     // Invalid trailer number is refused with a message and not stored.
-    await tester.enterText(find.byType(TextField), 'TR 9');
+    // (51 chars passes the typing filter but fails length validation.)
+    await tester.enterText(find.byType(TextField), 'TR${'0' * 49}');
     await tester.tap(find.text('ADD'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('letters, numbers, or hyphens'), findsOneWidget);
+    expect(find.textContaining('letters, numbers, spaces'), findsOneWidget);
     expect(container.read(dashboardDataProvider).trailerId, 'TR-1402');
     await settleSnackBar(tester);
 
@@ -211,6 +227,8 @@ void main() {
     List<Override> overrides() => [
       logRepositoryProvider.overrideWithValue(repo),
       logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
+      // FormTabController binds the proven owner from the session.
+      currentDriverIdProvider.overrideWithValue(101),
     ];
 
     testWidgets('sends every trailer and shipping document from the pages', (
@@ -220,6 +238,7 @@ void main() {
         () => repo.saveForm(
           logId: any(named: 'logId'),
           form: any(named: 'form'),
+          ownerDriverId: any(named: 'ownerDriverId'),
         ),
       ).thenAnswer(
         (_) async => const Right(
@@ -260,9 +279,10 @@ void main() {
                 () => repo.saveForm(
                   logId: const DailyLogId(42),
                   form: captureAny(named: 'form'),
+                  ownerDriverId: any(named: 'ownerDriverId'),
                 ),
               ).captured.single
-              as DailyFormUpdate;
+          as DailyFormUpdate;
       expect(captured.trailers, ['TR-1402', 'AB12']);
       expect(captured.shippingDocuments, ['BOL 2026/09-1']);
       expect(find.text('server.500'), findsNothing);
@@ -278,6 +298,7 @@ void main() {
         () => repo.saveForm(
           logId: any(named: 'logId'),
           form: any(named: 'form'),
+          ownerDriverId: any(named: 'ownerDriverId'),
         ),
       ).thenAnswer(
         (_) async => const Left(ServerFailure(message: 'Exception: server.500')),

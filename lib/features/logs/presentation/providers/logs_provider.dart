@@ -189,7 +189,9 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (form) {
         if (form == null) return; // لا نموذج محفوظ على الخادم لهذا اليوم.
         state = state.copyWith(serverForm: form);
-        _ref?.read(dashboardDataProvider.notifier).applyServerForm(form);
+        if (log.today) {
+          _ref?.read(dashboardDataProvider.notifier).applyServerForm(form);
+        }
       },
     );
   }
@@ -210,7 +212,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (fresh) {
         // أحداث graph-grid تُحفظ — التفاصيل والحدثان يتكاملان لا يتنافسان.
         _replaceSelected(fresh.copyWith(events: state.selectedLog!.events));
-        if (fresh.trailers.isNotEmpty || fresh.shippingDocuments.isNotEmpty || (fresh.vehicleName != null && fresh.vehicleName!.isNotEmpty)) {
+        if (log.today && (fresh.trailers.isNotEmpty || fresh.shippingDocuments.isNotEmpty || (fresh.vehicleName != null && fresh.vehicleName!.isNotEmpty))) {
           _ref?.read(dashboardDataProvider.notifier).applyServerForm(
             DailyFormData(
               vehicleUniqueId: fresh.uniqueId.isNotEmpty ? fresh.uniqueId : null,
@@ -292,7 +294,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
   Future<Either<Failure, void>> addEvent(LogEvent event, {String? reason}) async {
     if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
 
-    final result = await _repository.addEvent(event, reason: reason);
+    final result = _driverId != null
+        ? await _repository.addEvent(
+            event,
+            reason: reason,
+            ownerDriverId: _driverId,
+          )
+        : await _repository.addEvent(
+            event,
+            reason: reason,
+          );
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
     return result.fold(
@@ -312,7 +323,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
   Future<Either<Failure, void>> updateEvent(LogEvent event, {required String reason}) async {
     if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
 
-    final confirmed = await _repository.updateEvent(event, reason: reason);
+    final confirmed = _driverId != null
+        ? await _repository.updateEvent(
+            event,
+            reason: reason,
+            ownerDriverId: _driverId,
+          )
+        : await _repository.updateEvent(
+            event,
+            reason: reason,
+          );
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
     return confirmed.fold(

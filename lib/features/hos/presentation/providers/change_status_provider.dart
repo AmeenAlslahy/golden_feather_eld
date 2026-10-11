@@ -138,6 +138,7 @@ class DutyChangeEngineRefusal extends DutyChangeResult {
 
 /// كائن الحالة النقي لنموذج تغيير حالة السائق
 class ChangeStatusState {
+  final DutyStatusOption initialOption;
   final DutyStatusOption selectedOption;
   final String location;
   final String customLocation;
@@ -150,6 +151,7 @@ class ChangeStatusState {
   final bool isSuccess;
 
   const ChangeStatusState({
+    required this.initialOption,
     required this.selectedOption,
     this.location = '',
     this.customLocation = '',
@@ -170,18 +172,31 @@ class ChangeStatusState {
       selectedOption == DutyStatusOption.personalConveyance ||
       selectedOption == DutyStatusOption.yardMoves;
 
-  bool get hasValidCustomLocation => 
+  List<DutyStatusOption> get availableOptions => [
+        DutyStatusOption.offDuty,
+        DutyStatusOption.sleeperBerth,
+        DutyStatusOption.driving,
+        DutyStatusOption.onDuty,
+        if (isPersonalConveyanceAllowed) DutyStatusOption.personalConveyance,
+        if (isYardMoveAllowed) DutyStatusOption.yardMoves,
+      ];
+
+  bool get hasValidCustomLocation =>
       customLocation.length >= 5 && customLocation.length <= 60;
 
   bool get isLocationValid {
     if (customLocation.isNotEmpty) return hasValidCustomLocation;
-    final hasGps = location.isNotEmpty && location != 'Unknown' && location != 'Location';
+    final hasGps =
+        location.isNotEmpty && location != 'Unknown' && location != 'Location';
     return hasGps;
   }
 
-  bool get isValid => isLocationValid && (!isAnnotationRequired || notes.length >= 4);
+  bool get isValid =>
+      selectedOption != initialOption &&
+      isLocationValid && (!isAnnotationRequired || notes.length >= 4);
 
   ChangeStatusState copyWith({
+    DutyStatusOption? initialOption,
     DutyStatusOption? selectedOption,
     String? location,
     String? customLocation,
@@ -195,6 +210,7 @@ class ChangeStatusState {
     bool? isSuccess,
   }) {
     return ChangeStatusState(
+      initialOption: initialOption ?? this.initialOption,
       selectedOption: selectedOption ?? this.selectedOption,
       location: location ?? this.location,
       customLocation: customLocation ?? this.customLocation,
@@ -222,16 +238,22 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     required bool isPersonalConveyanceAllowed,
     required bool isYardMoveAllowed,
     required bool isVehicleMoving,
-  }) : super(ChangeStatusState(
-          selectedOption: DutyStatusOption.fromCurrent(
-            status: initialStatus,
-            isYardMoves: isYardMoves,
-          ),
-          location: initialLocation,
-          isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
-          isYardMoveAllowed: isYardMoveAllowed,
-          isVehicleMoving: isVehicleMoving,
-        )) {
+  }) : super(
+         ChangeStatusState(
+           initialOption: DutyStatusOption.fromCurrent(
+             status: initialStatus,
+             isYardMoves: isYardMoves,
+           ),
+           selectedOption: DutyStatusOption.fromCurrent(
+             status: initialStatus,
+             isYardMoves: isYardMoves,
+           ),
+           location: initialLocation,
+           isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
+           isYardMoveAllowed: isYardMoveAllowed,
+           isVehicleMoving: isVehicleMoving,
+         ),
+       ) {
     _ref.listen<AsyncValue<DriverRules>>(driverRulesProvider, (_, next) {
       final rules = next.asData?.value;
       if (rules != null) {
@@ -248,10 +270,7 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
   }
 
   void selectOption(DutyStatusOption option) {
-    state = state.copyWith(
-      selectedOption: option,
-      clearError: true,
-    );
+    state = state.copyWith(selectedOption: option, clearError: true);
   }
 
   void updateNotes(String notes) {
@@ -281,7 +300,9 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
 
     if (state.selectedOption == DutyStatusOption.personalConveyance &&
         !state.isPersonalConveyanceAllowed) {
-      return const DutyChangeEngineRefusal('Personal Conveyance is not permitted');
+      return const DutyChangeEngineRefusal(
+        'Personal Conveyance is not permitted',
+      );
     }
 
     if (state.selectedOption == DutyStatusOption.yardMoves &&
@@ -294,10 +315,7 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       return const DutyChangeAnnotationRequired();
     }
 
-    state = state.copyWith(
-      isSaving: true,
-      clearError: true,
-    );
+    state = state.copyWith(isSaving: true, clearError: true);
 
     try {
       final parts = <String>[];
@@ -309,33 +327,50 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       }
       final combinedAnnotation = parts.isNotEmpty ? parts.join(' - ') : null;
 
-      // 1. تحديث محرك HOS الداخلي
-      final error = await _ref.read(hosStatusProvider.notifier).changeStatus(
+      // 1. تحديث محرك HOS الداخلي (عبر الخادم أولاً كما قبل)
+      final outcome = await _ref
+          .read(hosStatusProvider.notifier)
+          .changeStatus(
             state.selectedStatus,
             annotation: combinedAnnotation,
             isYardMoves: state.isYardMoves,
           );
 
-      if (error != null) {
+      final refusal = outcome.refusal;
+      if (refusal != null) {
         if (mounted) {
           state = state.copyWith(
             isSaving: false,
-            errorMessage: error,
+            errorMessage: refusal,
             isSuccess: false,
           );
         }
-        return DutyChangeEngineRefusal(error);
+        return DutyChangeEngineRefusal(refusal);
       }
 
-      // لا حاجة لاستدعاء statusDashboardProvider.notifier.changeStatus هنا
-      // لأن statusDashboardProvider يستمع بالفعل لـ hosStatusProvider 
-      // ويقوم بتحديث نفسه (refresh) تلقائياً عند تغيير الحالة في المحرك.
+      // 2. تغذية اللوحة من استجابة POST مباشرة — تتحول الدائرة فوراً
+      // دون انتظار GET لاحق. مستمع اللوحة يتخطى إعادة الجلب لأن الحالة
+      // مطابقة أصلاً؛ وإن اختلفت لأي سبب يبقى الـ refresh الاحتياطي.
+      final serverDashboard = outcome.dashboard;
+      if (serverDashboard != null) {
+        // للحفاظ على قيم العدادات وتجنب تصفيرها لأن استجابة الـ POST قد تعود فارغة من السيرفر
+        final currentDashboard = _ref.read(statusDashboardProvider).valueOrNull;
+        if (currentDashboard != null) {
+          final updatedDashboard = currentDashboard.copyWith(
+            currentDutyStatus: serverDashboard.currentDutyStatus,
+          );
+          _ref
+              .read(statusDashboardProvider.notifier)
+              .applyServerDashboard(updatedDashboard);
+        } else {
+          _ref
+              .read(statusDashboardProvider.notifier)
+              .applyServerDashboard(serverDashboard);
+        }
+      }
 
       if (mounted) {
-        state = state.copyWith(
-          isSaving: false,
-          isSuccess: true,
-        );
+        state = state.copyWith(isSaving: false, isSuccess: true);
       }
       return const DutyChangeSuccess();
     } catch (e) {
@@ -353,37 +388,37 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
 
 /// مزود حالة تغيير الخدمة (Change Status Provider)
 final changeStatusProvider =
-    StateNotifierProvider.autoDispose<ChangeStatusNotifier, ChangeStatusState>(
-  (ref) {
-    final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
-    final currentCode = dashboard?.currentDutyStatus;
-
-    final engineState = ref.read(hosStatusProvider);
-    final currentHosStatus = (engineState is HosEngineReady)
-        ? engineState.update.currentStatus
-        : DutyStatus.offDuty;
-
-    final initialOption = currentCode != null
-        ? DutyStatusOption.fromStatusCode(currentCode)
-        : DutyStatusOption.fromCurrent(
-            status: currentHosStatus,
-            isYardMoves: false,
-          );
-
-    final rules = ref.read(driverRulesProvider).asData?.value;
-    final isPersonalConveyanceAllowed =
-        rules?.isPersonalConveyanceAllowed ?? false;
-    final isYardMoveAllowed = rules?.isYardMoveAllowed ?? false;
-    final isMoving = ref.read(isVehicleMovingProvider);
-
-    return ChangeStatusNotifier(
+    StateNotifierProvider.autoDispose<ChangeStatusNotifier, ChangeStatusState>((
       ref,
-      initialStatus: initialOption.toDutyStatus(),
-      isYardMoves: initialOption.isYardMoves,
-      initialLocation: '',
-      isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
-      isYardMoveAllowed: isYardMoveAllowed,
-      isVehicleMoving: isMoving,
-    );
-  },
-);
+    ) {
+      final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
+      final currentCode = dashboard?.currentDutyStatus;
+
+      final engineState = ref.read(hosStatusProvider);
+      final currentHosStatus = (engineState is HosEngineReady)
+          ? engineState.update.currentStatus
+          : DutyStatus.offDuty;
+
+      final initialOption = currentCode != null
+          ? DutyStatusOption.fromStatusCode(currentCode)
+          : DutyStatusOption.fromCurrent(
+              status: currentHosStatus,
+              isYardMoves: false,
+            );
+
+      final rules = ref.read(driverRulesProvider).asData?.value;
+      final isPersonalConveyanceAllowed =
+          rules?.isPersonalConveyanceAllowed ?? false;
+      final isYardMoveAllowed = rules?.isYardMoveAllowed ?? false;
+      final isMoving = ref.read(isVehicleMovingProvider);
+
+      return ChangeStatusNotifier(
+        ref,
+        initialStatus: initialOption.toDutyStatus(),
+        isYardMoves: initialOption.isYardMoves,
+        initialLocation: '',
+        isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
+        isYardMoveAllowed: isYardMoveAllowed,
+        isVehicleMoving: isMoving,
+      );
+    });

@@ -17,6 +17,9 @@ class SyncRepositoryImpl implements SyncRepository {
 
   static const int _maxRetries = 3;
 
+  /// P0 2B-1 — عناصر حُجرت في هذه الدورة (تُحفظ بلا زيادة retry).
+  final Set<String> _quarantinedIds = {};
+
   SyncRepositoryImpl({
     required SyncLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
@@ -65,6 +68,9 @@ class SyncRepositoryImpl implements SyncRepository {
           final success = await _sendToServer(item);
           if (success) {
             successCount++;
+          } else if (_quarantinedIds.remove(item.id)) {
+            // P0 2B-1 — محجور الملكية: يُحفظ كما هو بلا زيادة محاولات.
+            updatedItems.add(item);
           } else {
             if (item.retryCount < _maxRetries) {
               updatedItems.add(item.copyWith(
@@ -98,6 +104,9 @@ class SyncRepositoryImpl implements SyncRepository {
   }
 
   /// إرسال حدث للخادم
+  ///
+  /// P0 2B-1 — حكم الحجر يُحترم هنا أيضاً: يُبقى العنصر كما هو بلا
+  /// زيادة محاولات (هذا الطابور عملياً بلا producers؛ لا storm ولا حذف).
   Future<bool> _sendToServer(SyncItem item) async {
     final event = PendingEvent(
       id: item.id,
@@ -108,6 +117,10 @@ class SyncRepositoryImpl implements SyncRepository {
     final result = await _dispatcher.dispatch(event);
     return result.match(
       (failure) {
+        if (failure is QuarantinedFailure) {
+          _quarantinedIds.add(item.id);
+          return false;
+        }
         AppLogger.error('Failed to send event: ${failure.message}');
         return false;
       },

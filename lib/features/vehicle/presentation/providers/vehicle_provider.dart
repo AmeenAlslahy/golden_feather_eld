@@ -109,6 +109,10 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   String? get ownerDriverId => _ownerDriverId;
   int? get ownerEpoch => _ownerEpoch;
 
+  /// للودجات التي تحتاج قراراً خارج build (تحديث عند الفتح).
+  bool get hasVehicles => state.vehicles.isNotEmpty;
+  Vehicle? get selectedVehicle => state.selectedVehicle;
+
   /// Public read-only for page-driven initial-load decisions
   /// (avoids protected `state` access from widgets).
   bool get isInitialized => state.isInitialized;

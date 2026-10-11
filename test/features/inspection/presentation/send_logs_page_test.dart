@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_inspection_backend.dart';
+import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
@@ -15,8 +16,17 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/inspection/presentation/pages/send_logs_page.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/core/network/core_providers.dart';
+import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _OnlineNetwork implements NetworkInfo {
+  @override
+  bool get isConnected => true;
+  @override
+  Stream<bool> get onConnectionChange => const Stream.empty();
+}
 
 class _Storage extends Mock implements LocalStorageService {
   @override
@@ -42,6 +52,7 @@ class _Backend extends MockInspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) async {
     calls.add(
       'send:${driverId.value}:${transferType.name}:$outputFileComment:${routingCode ?? ''}',
@@ -58,6 +69,7 @@ class _Backend extends MockInspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) async {
     calls.add(
       'email:${driverId.value}:$recipientEmail:${comment ?? ''}:${routingCode ?? ''}',
@@ -85,7 +97,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     backend = _Backend();
     adapter = _Adapter();
+    final mock = MockAdapter();
     when(() => adapter.inspection).thenReturn(backend);
+    when(() => adapter.dutyStatus).thenReturn(mock.dutyStatus);
+    when(() => adapter.dailyLogs).thenReturn(mock.dailyLogs);
+    when(() => adapter.dvir).thenReturn(mock.dvir);
     when(() => adapter.isMock).thenReturn(true);
   });
 
@@ -99,6 +115,7 @@ void main() {
       ProviderScope(
         overrides: [
           activeBackendProvider.overrideWithValue(adapter),
+          networkInfoProvider.overrideWithValue(_OnlineNetwork()),
           localStorageProvider.overrideWithValue(_Storage()),
           currentDriverIdProvider.overrideWithValue(106),
         ],

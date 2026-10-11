@@ -24,6 +24,12 @@ abstract interface class DutyStatusBackend {
 
   // --- Legacy methods for P5.5 ---
   Future<Result<void>> submitLegacyDutyStatusEvent(
-      int driverId, RawJson payload);
-  Future<Result<void>> submitLegacyGenericEvent(RawJson payload);
+    int driverId,
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  });
+  Future<Result<void>> submitLegacyGenericEvent(
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  });
 }

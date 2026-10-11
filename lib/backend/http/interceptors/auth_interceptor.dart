@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../features/auth/data/datasources/auth_local_data_source.dart'; // ignore_architecture
+import '../../../features/auth/domain/entities/auth_session.dart'; // ignore_architecture
+import '../../../core/error/failure.dart';
 import '../../../core/session/session_epoch.dart';
 import '../../../core/utils/logger.dart';
 import '../eld_endpoints.dart';
@@ -36,6 +38,12 @@ class AuthInterceptor extends Interceptor {
   /// الطلب المولود بعد bump وقبل clear (epoch جديد + Cookie قديمة).
   static const credGenKey = 'gf_cred_gen';
 
+  /// P0 2B-1 — المالك المتوقع لعملية الطابور (يضعه الـ dispatcher عبر
+  /// ApiClient حصراً لطلبات المزامنة). عند الإرسال الفعلي يُقارن بجلسة
+  /// اللحظة: أي اختلاف (تبديل جلسة أثناء الـ awaits السابقة) يرفض
+  /// الطلب قبل مغادرة أي بايت — فلا ترث عملية قديمة جلسة جديدة أبداً.
+  static const expectedOwnerKey = 'gf_expected_owner';
+
   AuthInterceptor({
     required this.localDataSource,
     required this.backendType,
@@ -57,23 +65,51 @@ class AuthInterceptor extends Interceptor {
       return super.onRequest(options, handler);
     }
 
+    // P0 2B-1 — قراءة جلسة واحدة لكل طلب: كل ما بعدها متزامن بحت
+    // داخل نفس الـ microtask (أحادي الخيط: لا تداخل ممكن)، فيكون قرار
+    // الإرفاق والتحقق من المالك ذرياً بالنسبة لتغيرات الجلسة.
+    AuthSession? session;
     try {
-      final session = await localDataSource.getSession();
-      if (session != null && session.sessionCredential.isNotEmpty) {
-        final requestHost = options.uri.host;
-        final baseHost = Uri.tryParse(options.baseUrl)?.host ?? '';
-        
-        // Prevent cross-origin cookie leak: only send session cookie to our backend
-        if (requestHost == baseHost || requestHost.isEmpty || baseHost.isEmpty) {
-          final cookie = 'JSESSIONID=${session.sessionCredential}';
-          final existingCookie = options.headers['Cookie'];
-          options.headers['Cookie'] =
-              existingCookie != null ? '$existingCookie; $cookie' : cookie;
-          options.extra[_sessionAttachedKey] = true;
-        }
-      }
+      session = await localDataSource.getSession();
     } catch (e) {
       AppLogger.error('AuthInterceptor failed to read session for $backendType: $e');
+    }
+
+    // P0 2B-1 — إنفاذ وقت-الإرسال خارج شرط وجود الجلسة عمداً: طلب مزامنة
+    // بلا جلسة حاضرة (logout أثناء الطيران) يُرفض أيضاً — لا إرسال مجهول.
+    final expectedOwner = options.extra[expectedOwnerKey];
+    if (expectedOwner is int) {
+      final actualOwner =
+          session == null ? null : int.tryParse(session.user.id);
+      if (actualOwner != expectedOwner) {
+        AppLogger.warning(
+            'Refusing queue dispatch under a different session');
+        handler.reject(
+          DioException(
+            requestOptions: options,
+            type: DioExceptionType.cancel,
+            error: OwnerMismatchSignal(
+              expectedOwnerDriverId: expectedOwner,
+              actualOwnerDriverId: actualOwner,
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
+    if (session != null && session.sessionCredential.isNotEmpty) {
+      final requestHost = options.uri.host;
+      final baseHost = Uri.tryParse(options.baseUrl)?.host ?? '';
+
+      // Prevent cross-origin cookie leak: only send session cookie to our backend
+      if (requestHost == baseHost || requestHost.isEmpty || baseHost.isEmpty) {
+        final cookie = 'JSESSIONID=${session.sessionCredential}';
+        final existingCookie = options.headers['Cookie'];
+        options.headers['Cookie'] =
+            existingCookie != null ? '$existingCookie; $cookie' : cookie;
+        options.extra[_sessionAttachedKey] = true;
+      }
     }
 
     super.onRequest(options, handler);

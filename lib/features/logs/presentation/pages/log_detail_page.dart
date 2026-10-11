@@ -45,76 +45,80 @@ class LogDetailPage extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
-        title: Directionality(
-          textDirection: TextDirection.ltr,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_left,
-                    size: 26,
-                    color: hasPrevDay
-                        ? context.styles.appBarTitle.color
-                        : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: hasPrevDay
-                      ? () {
-                          ref
-                              .read(logsProvider.notifier)
-                              .selectLog(allLogs[logIndex + 1]);
-                        }
-                      : null,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text(
-                    selectedLog.formattedDate,
-                    style: context.styles.appBarTitle,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_right,
-                    size: 26,
-                    color: hasNextDay
-                        ? context.styles.appBarTitle.color
-                        : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: hasNextDay
-                      ? () {
-                          ref
-                              .read(logsProvider.notifier)
-                              .selectLog(allLogs[logIndex - 1]);
-                        }
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
+        // title: Directionality(
+        //   textDirection: TextDirection.ltr,
+        //   child: FittedBox(
+        //     fit: BoxFit.scaleDown,
+        //     child: Row(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         IconButton(
+        //           icon: Icon(
+        //             Icons.chevron_left,
+        //             size: 26,
+        //             color: hasPrevDay
+        //                 ? context.styles.appBarTitle.color
+        //                 : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
+        //           ),
+        //           padding: EdgeInsets.zero,
+        //           constraints: const BoxConstraints(),
+        //           onPressed: hasPrevDay
+        //               ? () {
+        //                   ref
+        //                       .read(logsProvider.notifier)
+        //                       .selectLog(allLogs[logIndex + 1]);
+        //                 }
+        //               : null,
+        //         ),
+        //         Padding(
+        //           padding: const EdgeInsets.symmetric(horizontal: 6),
+        //           child: Text(
+        //             selectedLog.formattedDate,
+        //             style: context.styles.appBarTitle,
+        //           ),
+        //         ),
+        //         IconButton(
+        //           icon: Icon(
+        //             Icons.chevron_right,
+        //             size: 26,
+        //             color: hasNextDay
+        //                 ? context.styles.appBarTitle.color
+        //                 : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
+        //           ),
+        //           padding: EdgeInsets.zero,
+        //           constraints: const BoxConstraints(),
+        //           onPressed: hasNextDay
+        //               ? () {
+        //                   ref
+        //                       .read(logsProvider.notifier)
+        //                       .selectLog(allLogs[logIndex - 1]);
+        //                 }
+        //               : null,
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         centerTitle: true,
+        // أيقونتا المعاينة والإضافة خاصتان بتبويب الأحداث فقط —
+        // تُخفيان في النموذج والتوثيق.
         actions: [
-          IconButton(
-            icon: const Icon(Icons.visibility),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const InspectionPreviewPage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon:  const Icon(Icons.add, size: 28),
-            onPressed: () async {
+          if (currentIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.visibility),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const InspectionPreviewPage(),
+                  ),
+                );
+              },
+            ),
+          if (currentIndex == 0)
+            IconButton(
+              icon: const Icon(Icons.add, size: 28),
+              onPressed: () async {
               final successMsg = context.loc.eventAddedSuccess;
 
               final result = await Navigator.push(

@@ -43,10 +43,10 @@ class _HosNotifier extends StateNotifier<HosEngineResult> implements HosNotifier
   String? nextError;
 
   @override
-  Future<String?> changeStatus(DutyStatus newStatus,
+  Future<ManualDutyChangeResult> changeStatus(DutyStatus newStatus,
       {String? annotation, bool isYardMoves = false}) async {
     calls.add('${newStatus.name}|${annotation ?? ''}|ym=$isYardMoves');
-    return nextError;
+    return ManualDutyChangeResult(refusal: nextError);
   }
 
   @override

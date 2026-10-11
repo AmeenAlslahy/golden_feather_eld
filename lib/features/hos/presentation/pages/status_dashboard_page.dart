@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
@@ -46,15 +45,13 @@ class _DashboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      child: RefreshIndicator(
-        onRefresh: () => ref.read(statusDashboardProvider.notifier).refresh(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(top: AppSpacing.lg),
-          child: Column(
-            children: [
-              const SizedBox(height: AppSpacing.md),
-              MainCircularTimer(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            Expanded(
+              child: MainCircularTimer(
                 circle: dashboard.remainingCircle,
                 statusLabel: dashboard.currentDutyStatus.displayName(context),
                 dutyStatus: dashboard.currentDutyStatus,
@@ -67,14 +64,14 @@ class _DashboardView extends ConsumerWidget {
                   );
                 },
               ),
-              const SizedBox(height: AppSpacing.xl),
-              // Reference layout: full-width table, no card inset.
-              HosIndicatorsCard(
-                indicators: dashboard.hosIndicators,
-                constraints: dashboard.regulatoryConstraints,
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            // Reference layout: full-width table, no card inset.
+            HosIndicatorsCard(
+              indicators: dashboard.hosIndicators,
+              constraints: dashboard.regulatoryConstraints,
+            ),
+          ],
         ),
       ),
     );

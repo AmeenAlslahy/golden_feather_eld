@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../../../../core/utils/logger.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../../../logs/domain/repositories/log_repository.dart';
 import '../../../../../core/services/local_storage_service.dart';
 
@@ -12,6 +13,7 @@ import 'package:uuid/uuid.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import '../../../../../backend/contracts/status_dashboard_backend.dart';
 import '../../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../../domain/duty_status/status_dashboard.dart';
 
 
 
@@ -25,6 +27,18 @@ abstract final class DutyStampRefusal {
 }
 
 // Mapping replaced by DutyStatusCode.fromAny()
+
+/// نتيجة تغيير الحالة اليدوي: سبب الرفض (`null` = قبل الخادم) مع لقطة
+/// لوحة الخادم عند القبول — تستخدمها الواجهة لتغذية اللوحة مباشرة من
+/// استجابة POST بدل انتظار GET لاحق (تقليل زمن الاستجابة المرئية).
+class ManualDutyChangeResult {
+  final String? refusal;
+  final StatusDashboard? dashboard;
+
+  const ManualDutyChangeResult({this.refusal, this.dashboard});
+
+  bool get accepted => refusal == null;
+}
 
 class DutyStatusTracker {
   final LogRepository _logRepository;
@@ -332,18 +346,19 @@ class DutyStatusTracker {
   /// POST /eld/status/duty-status بحِمل {dutyStatus, notes} — هوية السائق
   /// تُستخرج من التوكن الأمني على الخادم ولا تُرسل في الحِمل. تسجيل الأحداث
   /// الآلية (المحرّك) يبقى على POST /eld/duty-status عبر SyncEngine.
-  Future<String?> submitManualChange(String newStatus,
+  Future<ManualDutyChangeResult> submitManualChange(String newStatus,
       {double? lat, double? lon, String? annotation}) async {
     final refusal = _legalRefusal();
     if (refusal != null) {
       AppLogger.warning('Refusing duty transition: $refusal');
-      return refusal;
+      return ManualDutyChangeResult(refusal: refusal);
     }
     final trusted = _getCurrentTime()!;
     final code = DutyStatusCode.fromAny(newStatus);
     if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
       AppLogger.warning('Refusing to sync unmapped duty status: $newStatus');
-      return DutyStampRefusal.unmapped;
+      return const ManualDutyChangeResult(
+          refusal: DutyStampRefusal.unmapped);
     }
 
     final result = await _dashboardBackend.updateDutyStatus(
@@ -353,11 +368,11 @@ class DutyStatusTracker {
     return result.fold((error) {
       // إذا كان الفشل بسبب انقطاع الشبكة / أوفلاين، يجب الالتزام
       // بـ FMCSA § 395.24 وتطبيق الحالة محلياً وإدراجها في طابور المزامنة:
-      final isNetwork = error.code.contains('network') ||
+      final isNetwork = error is NetworkError ||
+          error.code.contains('network') ||
           error.code.contains('connection') ||
           error.code.contains('timeout') ||
-          error.code.contains('offline') ||
-          error.context?['statusCode'] == null;
+          error.code.contains('offline');
 
       if (isNetwork) {
         AppLogger.info(
@@ -370,14 +385,15 @@ class DutyStatusTracker {
           annotation: annotation,
           enqueue: true,
         );
-        return null;
+        return const ManualDutyChangeResult();
       }
 
       // الرفض الخادمي الفعلي (مثل خطأ تحقق 400/409) يظهر للسائق
       AppLogger.warning(
           'Duty status change rejected by server: ${error.code}');
-      return DutyStampRefusal.serverRejected;
-    }, (_) {
+      return const ManualDutyChangeResult(
+          refusal: DutyStampRefusal.serverRejected);
+    }, (dashboard) {
       _applyManualLocal(
         newStatus: newStatus,
         timestamp: trusted,
@@ -386,7 +402,8 @@ class DutyStatusTracker {
         annotation: annotation,
         enqueue: false,
       );
-      return null;
+      // تمرير لقطة الخادم لتغذية اللوحة فوراً — بلا GET ثانٍ.
+      return ManualDutyChangeResult(dashboard: dashboard);
     });
   }
 

@@ -80,11 +80,15 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request) async {
+  Future<Result<CertifyResponseDto>> certify(
+    CertifyRequestDto request, {
+    int? expectedOwnerDriverId,
+  }) async {
     final res = await _apiClient.post<CertifyResponseDto>(
       EldEndpoints.certifyLog(request.dailyLogId),
       data: request.toJson(),
       parser: (data) => CertifyResponseDto.fromJson(data as Map<String, dynamic>),
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return res.mapValue((r) => r.data!);
   }
@@ -119,11 +123,13 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   Future<Result<RawJson>> saveForm({
     required DailyLogId logId,
     required RawJson form,
+    int? expectedOwnerDriverId,
   }) async {
     final res = await _apiClient.put<RawJson>(
       EldEndpoints.dailyLogForm(logId.value),
       data: form,
       parser: (data) => data is Map<String, dynamic> ? data : {},
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }

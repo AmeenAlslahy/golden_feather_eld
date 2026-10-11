@@ -20,6 +20,7 @@ import '../../domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import '../models/daily_log_dto.dart';
+import '../models/saved_form_dto.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../domain/entities/log_readiness.dart';
 import '../../domain/saved_form_status.dart';
@@ -82,9 +83,9 @@ class LogRepositoryImpl implements LogRepository {
         offset: offset,
       );
 
-      return result.match((failure) => throw Exception(failure.l10nKey), (
-        data,
-      ) {
+      return result.match(
+        (failure) => throw ServerException(message: failure.l10nKey),
+        (data) {
         final logsJson = (data['data'] as List<dynamic>? ?? const [])
             .whereType<Map<String, dynamic>>()
             .toList();
@@ -112,7 +113,7 @@ class LogRepositoryImpl implements LogRepository {
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.getById(logId);
       return result.match(
-        (failure) => throw Exception(failure.l10nKey),
+        (failure) => throw ServerException(message: failure.l10nKey),
         (data) => DailyLogDto.fromJson(data).toEntity(),
       );
     }, tag: 'LogRepositoryImpl.getLogById');
@@ -156,17 +157,39 @@ class LogRepositoryImpl implements LogRepository {
   Future<Either<Failure, bool>> addEvent(
     LogEvent event, {
     String? reason,
+    int? ownerDriverId,
   }) async {
-    if (!_networkInfo.isConnected) {
-      // SRS 6.8 — offline: keep it on the device, never lose it.
-      return executeWithHandling(
-        () => _localDataSource.addEvent(event),
-        tag: 'LogRepositoryImpl.addEvent(offline)',
-      );
-    }
     final wire =
         DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
+
+    if (!_networkInfo.isConnected) {
+      // SRS 6.8 — offline: keep it on the device, never lose it.
+      final localResult = await executeWithHandling(
+        () => _localDataSource.addEvent(event),
+        tag: 'LogRepositoryImpl.addEvent(offline)',
+      );
+      if (localResult.isLeft()) return localResult;
+
+      await _offlineQueue.enqueue(
+        PendingEvent(
+          id: _idGenerator.v4(),
+          type: 'duty_status',
+          payload: {
+            'status': wire,
+            'startTime': event.startTime.toUtc().toIso8601String(),
+            if (event.location.isNotEmpty) 'locationText': event.location,
+            if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
+            'origin': 'DRIVER',
+            'clientId': event.id,
+            if (ownerDriverId != null) 'driverId': ownerDriverId,
+            if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
+          },
+          createdAt: _timeAuthority.nowUtc(),
+        ),
+      );
+      return const Right(true);
+    }
     final result = await _dutyStatusBackend.record({
       'status': wire,
       'startTime': event.startTime.toUtc().toIso8601String(),
@@ -185,20 +208,10 @@ class LogRepositoryImpl implements LogRepository {
   Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
+    int? ownerDriverId,
   }) async {
     final statusId = int.tryParse(event.id);
     
-    // If offline, always go local.
-    if (!_networkInfo.isConnected) {
-      final localResult = await executeWithHandling(
-        () => _localDataSource.updateEvent(event),
-        tag: 'LogRepositoryImpl.updateEvent(local)',
-      );
-      return localResult.fold((failure) => Left(failure), (_) => Right(event));
-    }
-    
-    // We are online. If statusId is null (it's a UUID), we can't use PUT /status/{id}.
-    // We must use POST /status (record) and pass the clientId to let the server deduplicate or create.
     final wire =
         DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
@@ -209,6 +222,37 @@ class LogRepositoryImpl implements LogRepository {
       if (event.location.isNotEmpty) 'locationText': event.location,
     };
 
+    // If offline, always go local and enqueue for background sync.
+    if (!_networkInfo.isConnected) {
+      final localResult = await executeWithHandling(
+        () => _localDataSource.updateEvent(event),
+        tag: 'LogRepositoryImpl.updateEvent(local)',
+      );
+      if (localResult.isLeft()) {
+        return localResult.fold((failure) => Left(failure), (_) => Right(event));
+      }
+
+      await _offlineQueue.enqueue(
+        PendingEvent(
+          id: _idGenerator.v4(),
+          type: 'duty_status',
+          payload: {
+            ...base,
+            if (statusId != null) 'statusId': statusId,
+            'notes': reason.trim(),
+            'origin': 'DRIVER',
+            'clientId': event.id,
+            if (ownerDriverId != null) 'driverId': ownerDriverId,
+            if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
+          },
+          createdAt: _timeAuthority.nowUtc(),
+        ),
+      );
+      return Right(event);
+    }
+    
+    // We are online. If statusId is null (it's a UUID), we can't use PUT /status/{id}.
+    // We must use POST /status (record) and pass the clientId to let the server deduplicate or create.
     // §395.30 — the driver's reason must reach the server on BOTH paths, in
     // the field each endpoint actually reads: POST /status takes `notes`
     // (same as addEvent), PUT /status/{id} takes `editReason`.
@@ -326,6 +370,7 @@ class LogRepositoryImpl implements LogRepository {
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
     required DailyFormUpdate form,
+    int? ownerDriverId,
   }) async {
     final payload = _mapFormUpdateToJson(form);
 
@@ -334,7 +379,14 @@ class LogRepositoryImpl implements LogRepository {
         PendingEvent(
           id: _idGenerator.v4(),
           type: 'daily_log_form',
-          payload: {'logId': logId.value, 'form': payload},
+          // P0 2B-1 — canonical owner slot read by EventOwnershipResolver.
+          // Legal form semantics unchanged; identity only. Null when the
+          // caller could not prove an owner (→ UNKNOWN, never inferred).
+          payload: {
+            'logId': logId.value,
+            'form': payload,
+            'ownerDriverId': ownerDriverId,
+          },
           createdAt: _timeAuthority.nowUtc(),
         ),
       );
@@ -347,8 +399,10 @@ class LogRepositoryImpl implements LogRepository {
         form: payload,
       );
 
-      return response.fold((error) => throw Exception(error.code), (json) {
-        final read = readSavedForm(json);
+      return response.fold(
+        (error) => throw ServerException(message: error.code),
+        (json) {
+        final read = SavedFormDto.fromJson(json);
         return FormSaveResult.online(read);
       });
     }, tag: 'LogRepositoryImpl.saveForm');
@@ -361,9 +415,9 @@ class LogRepositoryImpl implements LogRepository {
     }
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.getReadiness(logId);
-      return result.match((failure) => throw Exception(failure.l10nKey), (
-        data,
-      ) {
+      return result.match(
+        (failure) => throw ServerException(message: failure.l10nKey),
+        (data) {
         return LogReadiness(
           dailyLogId: data.dailyLogId,
           driverId: data.driverId,
@@ -412,12 +466,15 @@ class LogRepositoryImpl implements LogRepository {
         PendingEvent(
           id: _idGenerator.v4(),
           type: 'certification',
+          // P0 2B-1 — canonical owner slot (driverId param already
+          // validated >0 above). Legal certify semantics unchanged.
           payload: {
             'logId': logId.value,
             'logDate': logDate,
             'signatureCertificateId': signatureCertificateId,
             'signatureConfirmation': signatureConfirmation,
             'certifiedTrue': certifiedTrue,
+            'ownerDriverId': driverId,
           },
           createdAt: _timeAuthority.nowUtc(),
         ),
@@ -436,7 +493,7 @@ class LogRepositoryImpl implements LogRepository {
         ),
       );
       return result.match(
-        (failure) => throw Exception(failure.l10nKey),
+        (failure) => throw ServerException(message: failure.l10nKey),
         (data) => data.isCertified,
       );
     }, tag: 'LogRepositoryImpl.certifyLog');
@@ -457,7 +514,7 @@ class LogRepositoryImpl implements LogRepository {
         driverNotes: driverNotes,
       );
       return result.match(
-        (failure) => throw Exception(failure.l10nKey),
+        (failure) => throw ServerException(message: failure.l10nKey),
         (_) => true,
       );
     }, tag: 'LogRepositoryImpl.respondToCarrierEdit');
@@ -478,7 +535,7 @@ class LogRepositoryImpl implements LogRepository {
         annotation: annotation,
       );
       return result.match(
-        (failure) => throw Exception(failure.l10nKey),
+        (failure) => throw ServerException(message: failure.l10nKey),
         (_) => true,
       );
     }, tag: 'LogRepositoryImpl.reassignDriving');
@@ -487,7 +544,7 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, List<DutyPeriod>>> getPeriods(DateTime date) {
     return executeWithHandling(
-      () => _localDataSource.getPeriods(date),
+      () => _localDataSource.getPeriods(date, _timeAuthority.nowUtc().toLocal()),
       tag: 'LogRepositoryImpl.getPeriods',
     );
   }

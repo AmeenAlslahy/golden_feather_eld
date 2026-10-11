@@ -18,6 +18,7 @@ class AuditTrailPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: AppColors.primaryGold,
         title: Text(context.loc.auditTrail, style: context.styles.appBarTitle),
         centerTitle: true,
       ),
@@ -27,12 +28,14 @@ class AuditTrailPage extends ConsumerWidget {
           // النص التأكيدي: كل الإجراءات محفوظة ولا يمكن تعديلها أو حذفها.
           Container(
             width: double.infinity,
-            color: AppColors.successGreen.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.primaryContainer,
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
               context.loc.auditTrailNote,
               textAlign: TextAlign.center,
-              style: context.styles.muted,
+              style: context.styles.body.copyWith(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
             ),
           ),
           Expanded(
@@ -56,6 +59,7 @@ class AuditTrailPage extends ConsumerWidget {
                       if (e.userName != null && e.userName!.isNotEmpty)
                         '${e.userName}${e.userRole != null && e.userRole!.isNotEmpty ? ' (${e.userRole})' : ''}',
                     ];
+                    
                     return ListTile(
                       dense: true,
                       leading: Icon(
@@ -64,7 +68,11 @@ class AuditTrailPage extends ConsumerWidget {
                         size: 20,
                       ),
                       title: Text(
-                        e.action.isNotEmpty ? e.action : e.newStatus,
+                        e.action.isNotEmpty
+                            ? e.action
+                            : (e.newStatus.isNotEmpty 
+                                ? e.newStatus 
+                                : context.loc.unknownAction),
                         style: context.styles.body,
                       ),
                       subtitle: subtitleParts.isEmpty

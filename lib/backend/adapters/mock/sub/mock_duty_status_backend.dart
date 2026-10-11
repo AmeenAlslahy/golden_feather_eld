@@ -28,12 +28,18 @@ class MockDutyStatusBackend implements DutyStatusBackend {
 
   @override
   Future<Result<void>> submitLegacyDutyStatusEvent(
-      int driverId, RawJson payload) async {
+    int driverId,
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  }) async {
     return ok(null);
   }
 
   @override
-  Future<Result<void>> submitLegacyGenericEvent(RawJson payload) async {
+  Future<Result<void>> submitLegacyGenericEvent(
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  }) async {
     return ok(null);
   }
 }

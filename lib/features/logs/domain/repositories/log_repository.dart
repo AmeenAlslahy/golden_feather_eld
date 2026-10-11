@@ -27,9 +27,13 @@ abstract class LogRepository {
 
   /// Saves the daily log form. If offline, the form is queued and will be
   /// dispatched later when connectivity is restored.
+  ///
+  /// [ownerDriverId] — P0 2B-1: proven owner stored in the queued payload.
+  /// Null = unproven (never inferred from the current session at dispatch).
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
     required DailyFormUpdate form,
+    int? ownerDriverId,
   });
 
   /// Duty-status events of one daily log.
@@ -43,8 +47,12 @@ abstract class LogRepository {
   );
 
   /// Records a new manual duty-status event (`POST /eld/duty-status`).
-  /// Falls back to the local store when offline so nothing is lost (SRS 6.8).
-  Future<Either<Failure, bool>> addEvent(LogEvent event, {String? reason});
+  /// Falls back to the local store and offline queue when offline so nothing is lost (SRS 6.8).
+  Future<Either<Failure, bool>> addEvent(
+    LogEvent event, {
+    String? reason,
+    int? ownerDriverId,
+  });
 
   /// Edits an existing manual event (`PUT /eld/duty-status/{statusId}`,
   /// `editReason` mandatory). Server-rejected edits (automatic driving) are
@@ -55,6 +63,7 @@ abstract class LogRepository {
   Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
+    int? ownerDriverId,
   });
   Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({

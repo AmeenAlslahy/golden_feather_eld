@@ -10,14 +10,15 @@ import '../providers/logs_provider.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../domain/entities/daily_log.dart';
-import '../../domain/log_edit.dart';
-import '../controllers/edit_log_controller.dart';
-
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../domain/daily_form_rules.dart';
+import '../providers/edit_log_provider.dart';
 import '../providers/edit_log_form_provider.dart';
 import '../../../../core/widgets/dashed_line_painter.dart';
 import '../widgets/time_picker_sheet.dart';
 import '../widgets/status_radio_group.dart';
 import '../widgets/time_field_widget.dart';
+import '../widgets/vehicle_picker_dialog.dart';
 
 /// شاشة تعديل الحدث
 class EditLogPage extends ConsumerStatefulWidget {
@@ -33,11 +34,13 @@ class EditLogPage extends ConsumerStatefulWidget {
 class _EditLogPageState extends ConsumerState<EditLogPage> {
   final _formKey = GlobalKey<FormState>();
 
-  void _showTimePicker(BuildContext context, WidgetRef ref) {
-    final formState = ref.read(editLogFormProvider(widget.event));
+  void _showTimePicker(BuildContext context) {
+    final formNotifier = ref.read(editLogFormProvider(widget.event).notifier);
     final logDate = ref.read(logsProvider).selectedLog?.date;
-    final initial = parseEditFormTime(formState.startTime, logDate) ??
-        ref.read(timeAuthorityProvider).nowUtc().toLocal();
+    final initial = formNotifier.getInitialTime(
+      logDate,
+      ref.read(timeAuthorityProvider),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -48,7 +51,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       builder: (context) => TimePickerSheet(
         initialTime: initial,
         onDone: (time) {
-          ref.read(editLogFormProvider(widget.event).notifier).setStartTime(time);
+          formNotifier.setStartTime(time);
           Navigator.pop(context);
         },
       ),
@@ -57,40 +60,19 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(
-      editLogControllerProvider,
-      (_, state) {
-        if (state.isLoading) return;
-        
-        if (state.hasError) {
-          final err = state.error;
-          if (err is EditLogError) {
-            switch (err.code) {
-              case EditLogErrorCode.invalidTime:
-                AppFeedback.error(context, context.loc.invalidValue);
-                break;
-              case EditLogErrorCode.autoDrivingRefused:
-                AppFeedback.error(context, context.loc.automaticDrivingTimeCannotBeShortened);
-                break;
-              case EditLogErrorCode.saveFailed:
-                AppFeedback.error(context, context.loc.theEventCouldNotBeSaved);
-                break;
-              case EditLogErrorCode.auditFailed:
-                AppFeedback.error(context, context.loc.theEventWasSavedButThe);
-                break;
-              case EditLogErrorCode.authMissing:
-                AppFeedback.error(context, context.loc.sessionMissing);
-                break;
-            }
-          } else {
-            AppFeedback.error(context, context.loc.theEventCouldNotBeSaved);
-          }
-        } else if (state.hasValue) {
-          AppFeedback.success(context, context.loc.eventSavedSuccessfully);
-          Navigator.pop(context, true);
-        }
-      },
-    );
+    ref.listen<AsyncValue<void>>(editLogControllerProvider, (_, state) {
+      if (state.isLoading) return;
+
+      if (state.hasError) {
+        AppFeedback.error(
+          context,
+          editLogErrorUserMessage(state.error, context.loc),
+        );
+      } else if (state.hasValue) {
+        AppFeedback.success(context, context.loc.eventSavedSuccessfully);
+        Navigator.pop(context, true);
+      }
+    });
 
     final dashboard = ref.watch(dashboardDataProvider);
     final formState = ref.watch(editLogFormProvider(widget.event));
@@ -122,161 +104,202 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
-            const SizedBox(height: AppSpacing.md),
-            LogGraph(
-              events: selectedLog?.events ?? [],
-            ), // تمرير الأحداث الحقيقية لليوم
-            // 2. حقل الوقت والمدة
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: TimeFieldWidget(
-                    label: context.loc.startTime,
-                    value: formState.startTime,
-                    onTap: () => _showTimePicker(context, ref),
+              const SizedBox(height: AppSpacing.md),
+              LogGraph(
+                events: selectedLog?.events ?? [],
+              ), // تمرير الأحداث الحقيقية لليوم
+              // 2. حقل الوقت والمدة
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: TimeFieldWidget(
+                      label: context.loc.startTime,
+                      value: formState.startTime,
+                      onTap: () => _showTimePicker(context),
+                    ),
+                  ),
+                  Expanded(
+                    child: TimeFieldWidget(
+                      label: context.loc.duration,
+                      value: formState.duration,
+                    ),
+                  ),
+                ],
+              ),
+              // خط متقطع أسفل الوقت (للمطابقة)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: CustomPaint(
+                  painter: DashedLinePainter(
+                    color: Theme.of(context).dividerColor,
                   ),
                 ),
-                Expanded(
-                  child: TimeFieldWidget(
-                    label: context.loc.duration,
-                    value: formState.duration,
-                    onTap: () {},
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // 3. قائمة الحالات
+              StatusRadioGroup(
+                groupValue: formState.selectedStatus,
+                onChanged: (value) {
+                  ref
+                      .read(editLogFormProvider(widget.event).notifier)
+                      .setStatus(value);
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // 4. المركبة — قابلة للنقر: قائمة اختيار بحوار مستقل.
+              InkWell(
+                onTap: () async {
+                  final picked = await showDialog<Vehicle>(
+                    context: context,
+                    builder: (_) => VehiclePickerDialog(
+                      currentVehicleId: dashboard.vehicleId,
+                    ),
+                  );
+                  if (picked != null && context.mounted) {
+                    if (selectedLog?.today ?? true) {
+                      ref
+                          .read(dashboardDataProvider.notifier)
+                          .updateVehicle(picked);
+                    }
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            context.loc.vehicle,
+                            style: context.styles.bodyBold.copyWith(
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: context.styles.body.color,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(dashboard.vehicleId, style: context.styles.body),
+                    const SizedBox(height: 8),
+                    Divider(
+                      color: Theme.of(
+                        context,
+                      ).dividerColor.withValues(alpha: 0.5),
+                      height: 1,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // 5. الموقع (Location) - read only label
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.loc.location,
+                    style: context.styles.bodyBold.copyWith(fontSize: 14),
                   ),
-                ),
-              ],
-            ),
-            // خط متقطع أسفل الوقت (للمطابقة)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: CustomPaint(
-                painter: DashedLinePainter(
-                  color: Theme.of(context).dividerColor,
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formState.location.isEmpty
+                        ? ' '
+                        : formState
+                              .location, // empty space to keep height if empty
+                    style: context.styles.subtitle,
+                  ),
+                  const SizedBox(height: 8),
+                  Divider(
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.5),
+                    height: 1,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
 
-            // 3. قائمة الحالات
-            StatusRadioGroup(
-              groupValue: formState.selectedStatus,
-              onChanged: (value) {
-                ref.read(editLogFormProvider(widget.event).notifier).setStatus(value);
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // 4. المركبة
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.loc.vehicle,
-                  style: context.styles.bodyBold.copyWith(fontSize: 14),
+              // 6. إدخال موقع يدوي — يقبل العربية ويرفض الترقيم الخالص
+              AppTextField(
+                hint: context.loc.manualLocation,
+                keyboardType: TextInputType.streetAddress,
+                validator: (value) {
+                  final v = (value ?? '').trim();
+                  if (v.isEmpty) return null;
+                  return isFreeTextValid(v) ? null : context.loc.invalidValue;
+                },
+                suffixIcon: Icon(
+                  Icons.my_location,
+                  color: context.styles.body.color,
                 ),
-                const SizedBox(height: 4),
-                Text(dashboard.vehicleId, style: context.styles.body),
-                const SizedBox(height: 8),
-                Divider(
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                  height: 1,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // 5. الموقع (Location) - read only label
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.loc.location,
-                  style: context.styles.bodyBold.copyWith(fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  formState.location.isEmpty
-                      ? ' '
-                      : formState
-                            .location, // empty space to keep height if empty
-                  style: context.styles.subtitle,
-                ),
-                const SizedBox(height: 8),
-                Divider(
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-                  height: 1,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // 6. إدخال موقع يدوي
-            AppTextField(
-              hint: context.loc.manualLocation,
-              keyboardType: TextInputType.streetAddress,
-              suffixIcon: Icon(
-                Icons.my_location,
-                color: context.styles.body.color,
+                onChanged: (value) {
+                  ref
+                      .read(editLogFormProvider(widget.event).notifier)
+                      .setLocation(value);
+                },
               ),
-              onChanged: (value) {
-                ref
-                    .read(editLogFormProvider(widget.event).notifier)
-                    .setLocation(value);
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.md),
 
-            // حقل سبب التعديل (إجباري)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.loc.reasonForChange,
-                  style: context.styles.sectionTitle,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppTextField(
-                  hint: context.loc.enterReasonRequired,
-                  keyboardType: TextInputType.text,
-                  validator: (value) => value == null || value.trim().isEmpty ? context.loc.aReasonForTheChangeIs : null,
-                  onChanged: (value) {
-                    ref
-                        .read(editLogFormProvider(widget.event).notifier)
-                        .setReason(value);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
+              // حقل سبب التعديل (إجباري)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.loc.reasonForChange,
+                    style: context.styles.sectionTitle,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    hint: context.loc.enterReasonRequired,
+                    keyboardType: TextInputType.text,
+                    validator: (value) {
+                      final v = (value ?? '').trim();
+                      if (v.isEmpty) return context.loc.aReasonForTheChangeIs;
+                      return isFreeTextValid(v)
+                          ? null
+                          : context.loc.invalidValue;
+                    },
+                    onChanged: (value) {
+                      ref
+                          .read(editLogFormProvider(widget.event).notifier)
+                          .setReason(value);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
 
-            // 7. زر الحفظ
-            AppButton(
-              label: widget.isNewEvent
-                  ? context.loc.addButton
-                  : context.loc.saveButton,
-              type: EldButtonType.agree,
-              isLoading: ref.watch(editLogControllerProvider).isLoading,
-              onPressed: () {
-                if (!_formKey.currentState!.validate()) {
-                  return;
-                }
-                final formState = ref.read(editLogFormProvider(widget.event));
-                final controller = ref.read(editLogControllerProvider.notifier);
-
-                controller.saveEvent(
-                  isNewEvent: widget.isNewEvent,
-                  existing: widget.event,
-                  selectedStatus: formState.selectedStatus,
-                  startTimeStr: formState.startTime,
-                  location: formState.location,
-                  reason: formState.reason,
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-          ],
+              // 7. زر الحفظ
+              AppButton(
+                label: widget.isNewEvent
+                    ? context.loc.addButton
+                    : context.loc.saveButton,
+                type: EldButtonType.agree,
+                isLoading: ref.watch(editLogControllerProvider).isLoading,
+                onPressed: () {
+                  if (!_formKey.currentState!.validate()) {
+                    return;
+                  }
+                  ref
+                      .read(editLogControllerProvider.notifier)
+                      .submit(
+                        isNewEvent: widget.isNewEvent,
+                        existing: widget.event,
+                      );
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

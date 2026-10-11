@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../core/widgets/eld_graph_grid.dart';
 
 /// 24-hour duty graph for inspection mode, drawn from DOT log events.
@@ -12,34 +13,39 @@ class InspectionDutyGraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final points = <EldGraphPoint>[];
-
-    for (int i = 0; i < events.length; i++) {
-      final event = events[i];
+    // 1) حلل كل حدث (المتعذر يُسقط)، 2) رتب زمنياً — ترتيب الخادم غير مضمون
+    // وبدون الترتيب تُرسم مقاطع عكسية/مكسورة، 3) نهاية كل مقطع = بداية التالي.
+    final parsed = <_Segment>[];
+    for (final event in events) {
       final startHour = _hourOf(event.timeEt);
       if (startHour == null) continue;
 
       final row = _rowOf(event);
-      final isPC = row == 'PC';
-      final isYM = row == 'YM';
-      final normalizedRow = isPC ? 'OFF' : (isYM ? 'ON' : row);
-      final special = isPC ? 'PC' : (isYM ? 'YM' : null);
+      final parsedCode = DutyStatusCode.fromAny(row);
+      parsed.add(_Segment(
+        startHour: startHour,
+        status: parsedCode.canonicalGridShortCode,
+        special: parsedCode.specialCategoryTag,
+      ));
+    }
+    parsed.sort((a, b) => a.startHour.compareTo(b.startHour));
 
+    final points = <EldGraphPoint>[];
+    for (int i = 0; i < parsed.length; i++) {
+      final seg = parsed[i];
       double endHour = 24.0;
-      if (i + 1 < events.length) {
-        final nextHour = _hourOf(events[i + 1].timeEt);
-        if (nextHour != null) {
-          endHour = nextHour;
-        }
+      if (i + 1 < parsed.length) {
+        endHour = parsed[i + 1].startHour;
       }
-
+      // تجاهل المقاطع الصفرية/العكسية بعد التقريب.
+      if (endHour - seg.startHour < 1 / 3600) continue;
       points.add(
         EldGraphPoint(
-          startHour: startHour,
+          startHour: seg.startHour,
           endHour: endHour,
-          status: normalizedRow,
-          tag: special,
-          isDashed: special != null,
+          status: seg.status,
+          tag: seg.special,
+          isDashed: seg.special != null,
         ),
       );
     }
@@ -67,14 +73,58 @@ class InspectionDutyGraph extends StatelessWidget {
   }
 
   static double? _hourOf(String timeEt) {
-    final parsed = DateTime.tryParse(timeEt);
-    if (parsed != null) return parsed.hour + parsed.minute / 60.0;
-    final parts = timeEt.split(':');
-    if (parts.length < 2) return null;
-    final h = int.tryParse(parts[0]);
-    final m = int.tryParse(parts[1]);
-    if (h == null || m == null) return null;
-    return h + m / 60.0;
+    final text = timeEt.trim();
+    if (text.isEmpty) return null;
+
+    // ISO / datetime (مع منطقة زمنية أو بدونها).
+    final parsed = DateTime.tryParse(text);
+    if (parsed != null) {
+      return parsed.hour + parsed.minute / 60.0 + parsed.second / 3600.0;
+    }
+
+    // Epoch بالثواني (10 أرقام) أو الميلي ثانية (13 رقماً) → توقيت محلي.
+    final epoch = int.tryParse(text);
+    if (epoch != null && (text.length == 10 || text.length == 13)) {
+      final ms = text.length == 10 ? epoch * 1000 : epoch;
+      final dt = DateTime.fromMillisecondsSinceEpoch(ms);
+      return dt.hour + dt.minute / 60.0 + dt.second / 3600.0;
+    }
+
+    // 12 ساعة مع AM/PM ("6:05 PM", "06:05:00 pm") — DateTime لا يقبلها.
+    final meridiem = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])\.?\s?[Mm]\.?$')
+        .firstMatch(text);
+    if (meridiem != null) {
+      var h = int.parse(meridiem.group(1)!);
+      final m = int.parse(meridiem.group(2)!);
+      if (h < 1 || h > 12 || m > 59) return null;
+      final isPm = meridiem.group(4)!.toUpperCase() == 'P';
+      if (isPm && h < 12) h += 12;
+      if (!isPm && h == 12) h = 0;
+      final s = meridiem.group(3) != null ? int.parse(meridiem.group(3)!) : 0;
+      if (s > 59) return null;
+      return h + m / 60.0 + s / 3600.0;
+    }
+
+    // 24 ساعة "HH:mm" أو "HH:mm:ss" (مسافات زائدة مسموحة).
+    final hms = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?$').firstMatch(text);
+    if (hms != null) {
+      final h = int.parse(hms.group(1)!);
+      final m = int.parse(hms.group(2)!);
+      if (h > 23 || m > 59) return null;
+      final s = hms.group(3) != null ? int.parse(hms.group(3)!) : 0;
+      if (s > 59) return null;
+      return h + m / 60.0 + s / 3600.0;
+    }
+
+    // "HHMM" المدمجة ("0600").
+    if (RegExp(r'^\d{4}$').hasMatch(text)) {
+      final h = int.parse(text.substring(0, 2));
+      final m = int.parse(text.substring(2, 4));
+      if (h > 23 || m > 59) return null;
+      return h + m / 60.0;
+    }
+
+    return null;
   }
 
   static String _rowOf(DotInspectionEvent event) {
@@ -110,4 +160,17 @@ class InspectionDutyGraph extends StatelessWidget {
     if (RegExp(r'\bOFF\b').hasMatch(raw)) return 'OFF';
     return 'OFF';
   }
+}
+
+/// مقطع زمني محلل قبل بناء النقاط (يُفرز حسب البداية ثم تُشتق النهايات).
+class _Segment {
+  final double startHour;
+  final String status;
+  final String? special;
+
+  const _Segment({
+    required this.startHour,
+    required this.status,
+    this.special,
+  });
 }

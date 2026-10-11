@@ -19,42 +19,81 @@ class EldBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: const Border(
-          top: BorderSide(color: AppColors.border, width: 1),
-        ),
+      height: 60,
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
       ),
-      child: BottomNavigationBar(
-        currentIndex: showingRecap ? 1 : 0,
-        onTap: (index) {
-          if (index == 0) {
-            onAvailable();
-          } else {
-            onRecap();
-          }
-        },
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        selectedItemColor: AppColors.navBarInactive,
-        unselectedItemColor: AppColors.navBarInactive,
-        selectedIconTheme: IconThemeData(
-          color: showingRecap ? AppColors.navBarInactive : context.styles.body.color,
-        ),
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: AppTypography.captionSize,
-        unselectedFontSize: AppTypography.captionSize,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.access_time),
-            activeIcon: const Icon(Icons.access_time),
-            label: context.loc.available,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _NavSegment(
+              icon: Icons.access_time,
+              label: context.loc.available,
+              isActive: !showingRecap,
+              onTap: onAvailable,
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.calculate_outlined),
-            activeIcon: const Icon(Icons.calculate_outlined),
-            label: context.loc.recap,
+          Expanded(
+            child: _NavSegment(
+              icon: Icons.calculate_outlined,
+              label: context.loc.recap,
+              isActive: showingRecap,
+              onTap: onRecap,
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NavSegment extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavSegment({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // بناءً على الهوية البصرية الموجودة:
+    // الخلفية النشطة: رمادي داكن (مائل للأسود) أو حسب الـ Theme
+    // الخلفية غير النشطة: رمادي فاتح جداً (مثل AppColors.border أو surface)
+    final bgColor = isActive
+        ? AppColors.textSecondary
+        : Theme.of(context).colorScheme.surface;
+
+    final fgColor = isActive
+        ? AppColors
+              .surface // أبيض
+        : AppColors.textSecondary;
+
+    return Material(
+      color: bgColor,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: fgColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: context.styles.body.copyWith(
+                color: fgColor,
+                fontSize: AppTypography.captionSize,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

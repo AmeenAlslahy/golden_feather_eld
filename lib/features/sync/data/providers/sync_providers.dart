@@ -4,11 +4,14 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/config/app_environment.dart';
 import '../../../../core/di/auth_local_data_source_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart'; // ignore_architecture
+import '../../../logs/data/datasources/log_local_data_source.dart'; // ignore_architecture
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../tracking/domain/entities/connection_status.dart';
+import '../../domain/entities/dispatch_auth.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/offline_queue.dart';
 import '../../domain/repositories/sync_repository.dart';
@@ -81,7 +84,21 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
     dailyLogsBackend,
     dvirBackend,
     localDataSource,
-    inspectionBackend,
+    inspectionBackend: inspectionBackend,
+    // P0 2B-1 — سياق الجلسة للسياج (قراءة لمرة واحدة لكل dispatch،
+    // بلا اشتراك). الـ dispatcher نفسه يبقى بلا Ref.
+    observeAuth: () async {
+      final auth = ref.read(authStateProvider);
+      return DispatchAuthContext(
+        driverId: auth.user == null
+            ? null
+            : int.tryParse(auth.user!.id),
+        transitioning: auth.transitioning,
+      );
+    },
+    // P0 2B-1 — إثبات RECOVERABLE عبر كاش السجلات (قراءة خالصة).
+    cachedLogOwner: (logId) =>
+        ref.read(logLocalDataSourceProvider).ownerOfCachedLog(logId),
   );
 });
 
@@ -94,6 +111,16 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
     queue: queue,
     dispatcher: dispatcher,
     timeAuthority: timeAuthority,
+    // P0 2B-1 — مراجعة المؤجل المؤهل (T3) تحتاج الجلسة الحالية.
+    observeAuth: () async {
+      final auth = ref.read(authStateProvider);
+      return DispatchAuthContext(
+        driverId: auth.user == null
+            ? null
+            : int.tryParse(auth.user!.id),
+        transitioning: auth.transitioning,
+      );
+    },
   );
 
   // استماع لحالة الاتصال من نظام التتبع عبر Provider المعماري النظيف

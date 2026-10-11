@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/di/id_generator_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/entities/audit_entry.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/log_edit.dart';
-import '../providers/logs_provider.dart';
+import 'logs_provider.dart';
+import 'edit_log_form_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
 
 enum EditLogErrorCode {
@@ -22,9 +24,44 @@ class EditLogError implements Exception {
   EditLogError(this.code);
 }
 
-class EditLogController extends AutoDisposeAsyncNotifier<void> {
+/// تحويل كود الخطأ إلى رسالة مترجمة واضحة للمستخدم
+String editLogErrorUserMessage(Object? error, AppLocalizations loc) {
+  if (error is EditLogError) {
+    switch (error.code) {
+      case EditLogErrorCode.invalidTime:
+        return loc.invalidValue;
+      case EditLogErrorCode.autoDrivingRefused:
+        return loc.automaticDrivingTimeCannotBeShortened;
+      case EditLogErrorCode.saveFailed:
+        return loc.theEventCouldNotBeSaved;
+      case EditLogErrorCode.auditFailed:
+        return loc.theEventWasSavedButThe;
+      case EditLogErrorCode.authMissing:
+        return loc.sessionMissing;
+    }
+  }
+  return loc.theEventCouldNotBeSaved;
+}
+
+class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
+
+  /// إرسال وحفظ الحدث استناداً إلى حالة النموذج الحالية
+  Future<void> submit({
+    required bool isNewEvent,
+    required LogEvent? existing,
+  }) async {
+    final formState = ref.read(editLogFormProvider(existing));
+    await saveEvent(
+      isNewEvent: isNewEvent,
+      existing: existing,
+      selectedStatus: formState.selectedStatus,
+      startTimeStr: formState.startTime,
+      location: formState.location,
+      reason: formState.reason,
+    );
+  }
 
   Future<void> saveEvent({
     required bool isNewEvent,
@@ -117,6 +154,11 @@ class EditLogController extends AutoDisposeAsyncNotifier<void> {
   }
 }
 
-final editLogControllerProvider = AutoDisposeAsyncNotifierProvider<EditLogController, void>(() {
-  return EditLogController();
+/// موفر تعديل السجل
+final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, void>(() {
+  return EditLogNotifier();
 });
+
+/// اسم بديل للتوافق البرمجي الكامل مع الكود القائم
+final editLogControllerProvider = editLogProvider;
+typedef EditLogController = EditLogNotifier;

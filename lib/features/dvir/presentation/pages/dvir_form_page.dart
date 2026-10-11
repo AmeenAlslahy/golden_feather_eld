@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../account/presentation/providers/account_provider.dart';
-import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
@@ -339,24 +338,6 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     }
   }
 
-  /// موقع الإحداثيات من التتبع أو التقرير؛ null يعني "غير متاح" — لا يُرسل
-  /// نص بديل إلى سجل رسمي (الواجهة تعرض الترجمة المحلية عند العرض فقط).
-  String? _automaticLocation() {
-    final existing = _report?.location;
-    if (existing != null && existing.isNotEmpty) return existing;
-    final point = ref.read(trackingStateProvider).currentLocation;
-    if (point != null) {
-      return '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
-    }
-    return null;
-  }
-
-  String? _companyName() {
-    final existing = _report?.companyName;
-    if (existing != null && existing.isNotEmpty) return existing;
-    return ref.read(accountProvider).accountData?.carrier;
-  }
-
   Future<bool> _reviewPreviousDvirIfNeeded({
     required DvirReport latest,
     required int driverId,
@@ -588,26 +569,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       });
     }
     final dashboard = ref.watch(dashboardDataProvider);
-    final account = ref.watch(accountProvider).accountData;
     final trusted = ref.watch(trustedTimeProvider).currentTime;
     final timeAvailable = trusted is TrustedTimeAvailable;
-    // select على النص النهائي فقط: كيان الموقع يحمل timestamp يتغير كل
-    // نبضة GPS، لذا مراقبة الكيان نفسه كانت تعيد بناء الصفحة كاملة كل ثانية.
-    final automaticLocation =
-        _report?.location ??
-        ref.watch(
-          trackingStateProvider.select((s) {
-            final l = s.currentLocation;
-            return l == null
-                ? null
-                : '${l.latitude.toStringAsFixed(5)}, ${l.longitude.toStringAsFixed(5)}';
-          }),
-        ) ??
-        context.loc.dvirLocationUnavailable;
-    final companyName =
-        _report?.companyName ??
-        account?.carrier ??
-        context.loc.dvirCompanyUnavailable;
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
         : context.loc.dvirTimeUnavailableShort;

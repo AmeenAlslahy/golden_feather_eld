@@ -2134,7 +2134,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get trailerNumberFormatError =>
-      'رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).';
+      'رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).';
 
   @override
   String get enterDocumentNumber => 'أدخل رقم المستند.';
@@ -2145,6 +2145,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get oneDocumentAtATime =>
       'أدخل مستنداً واحداً في كل مرة (بدون فاصلة).';
+
+  @override
+  String get shippingDocumentFormatError =>
+      'رقم مستند الشحن: حروف وأرقام ومسافات وعلامات بسيطة فقط (حتى 100).';
 
   @override
   String get selectVehicleBeforeSavingForm =>
@@ -3041,4 +3045,20 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get annotationRequiredForPcYm =>
       'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.';
+
+  @override
+  String get unknownAction => 'إجراء غير معروف';
+
+  @override
+  String get maxTrailersLimitReached =>
+      'تم الوصول إلى الحد الأقصى (5 مقطورات).';
+
+  @override
+  String get trailerAlreadyExists => 'المقطورة مضافة بالفعل.';
+
+  @override
+  String get allEvents => 'جميع الأحداث';
+
+  @override
+  String get activeEvents => 'الأحداث النشطة';
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/time/time_authority_provider.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/widgets/eld_graph_grid.dart';
@@ -18,7 +20,8 @@ class LogGraph extends ConsumerWidget {
     final sortedEvents = List<LogEvent>.from(events)
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
-    final referenceDate = (logDate ?? (sortedEvents.isNotEmpty ? sortedEvents.first.startTime : DateTime.now())).toLocal();
+    final fallbackNow = ref.watch(timeAuthorityProvider).nowUtc().toLocal();
+    final referenceDate = (logDate ?? (sortedEvents.isNotEmpty ? sortedEvents.first.startTime : fallbackNow)).toLocal();
     final midnight = DateTime(referenceDate.year, referenceDate.month, referenceDate.day);
 
     final points = <EldGraphPoint>[];
@@ -43,24 +46,18 @@ class LogGraph extends ConsumerWidget {
       startHour = startHour.clamp(0.0, 24.0);
       endHour = endHour.clamp(0.0, 24.0);
 
-      String normalized;
-      if (status == 'PC') {
-        normalized = 'OFF';
-      } else if (status == 'YM' || status == 'OTH' || !stats.containsKey(status)) {
-        normalized = 'ON';
-      } else {
-        normalized = status;
-      }
+      final parsedCode = DutyStatusCode.fromAny(status);
+      final normalized = parsedCode.canonicalGridShortCode;
 
-      stats[normalized] = stats[normalized]! + (endHour - startHour);
+      stats[normalized] = (stats[normalized] ?? 0.0) + (endHour - startHour);
 
-      final isPcOrYm = (status == 'PC' || status == 'YM');
+      final isPcOrYm = parsedCode.isSpecialDrivingCategory;
       points.add(
         EldGraphPoint(
           startHour: startHour,
           endHour: endHour,
           status: normalized,
-          tag: isPcOrYm ? status : null,
+          tag: isPcOrYm ? parsedCode.shortCode : null,
           isDashed: isPcOrYm,
         ),
       );

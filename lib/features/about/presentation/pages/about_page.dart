@@ -225,57 +225,57 @@ class AboutPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ========== حالة اتصال ELD + التسجيل اليدوي (SRS 3.7 / 3.8) ==========
-          EldCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        loc.eldConnectionStatus,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    // Retry for both server reads (data pages: retry + refresh).
-                    IconButton(
-                      tooltip: loc.refresh,
-                      color: context.styles.body.color,
-                      icon: Icon(
-                        Icons.refresh,
-                        color: context.styles.body.color,
-                      ),
-                      onPressed: () {
-                        ref.invalidate(hardwareStatusProvider);
-                        ref.invalidate(hardwareReadinessProvider);
-                      },
-                    ),
-                  ],
-                ),
-                const EldConnectivityPanel(),
-                const EldReadinessPanel(),
-                const SizedBox(height: AppSpacing.sm),
-                const ManualRecordingSection(),
-                const SizedBox(height: AppSpacing.sm),
-                // SRS 7.14: الشاشة المستقلة للتشخيصات والأعطال.
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.monitor_heart, size: 18),
-                    label: Text(context.loc.diagnosticsScreen),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const DiagnosticsPage(),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // // ========== حالة اتصال ELD + التسجيل اليدوي (SRS 3.7 / 3.8) ==========
+          // EldCard(
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       Row(
+          //         children: [
+          //           Expanded(
+          //             child: Text(
+          //               loc.eldConnectionStatus,
+          //               style: Theme.of(context).textTheme.titleMedium,
+          //             ),
+          //           ),
+          //           // Retry for both server reads (data pages: retry + refresh).
+          //           IconButton(
+          //             tooltip: loc.refresh,
+          //             color: context.styles.body.color,
+          //             icon: Icon(
+          //               Icons.refresh,
+          //               color: context.styles.body.color,
+          //             ),
+          //             onPressed: () {
+          //               ref.invalidate(hardwareStatusProvider);
+          //               ref.invalidate(hardwareReadinessProvider);
+          //             },
+          //           ),
+          //         ],
+          //       ),
+          //       const EldConnectivityPanel(),
+          //       const EldReadinessPanel(),
+          //       const SizedBox(height: AppSpacing.sm),
+          //       const ManualRecordingSection(),
+          //       const SizedBox(height: AppSpacing.sm),
+          //       // SRS 7.14: الشاشة المستقلة للتشخيصات والأعطال.
+          //       Align(
+          //         alignment: AlignmentDirectional.centerEnd,
+          //         child: TextButton.icon(
+          //           icon: const Icon(Icons.monitor_heart, size: 18),
+          //           label: Text(context.loc.diagnosticsScreen),
+          //           onPressed: () => Navigator.push(
+          //             context,
+          //             MaterialPageRoute(
+          //               builder: (_) =>
+          //                   const DiagnosticsPage(),
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
           const SizedBox(height: AppSpacing.md),
 
           Text(

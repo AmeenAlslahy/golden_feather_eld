@@ -58,3 +58,29 @@ class DotInspectionCycleNotifier
         .then((result) => result.fold((f) => throw f, (days) => days));
   }
 }
+
+/// دالة مساعدة نقية لمطابقة يوم الدورة مع تاريخ السجل المعطى
+DotInspectionCycleDay? findMatchingCycleDay(
+  List<DotInspectionCycleDay>? cycle,
+  DateTime? logDate,
+) {
+  if (cycle == null || logDate == null) return null;
+  final target = logDate.toUtc();
+  for (final day in cycle) {
+    final dUtc = day.logDate.toUtc();
+    if (dUtc.year == target.year &&
+        dUtc.month == target.month &&
+        dUtc.day == target.day) {
+      return day;
+    }
+  }
+  return null;
+}
+
+/// يُرجع يوم دورة التفتيش المطابق لتاريخ السجل المحدد
+final matchingInspectionCycleDayProvider =
+    Provider.family<DotInspectionCycleDay?, DateTime?>((ref, logDate) {
+  if (logDate == null) return null;
+  final cycle = ref.watch(dotInspectionCycleProvider).valueOrNull;
+  return findMatchingCycleDay(cycle, logDate);
+});

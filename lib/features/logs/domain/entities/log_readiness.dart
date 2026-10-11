@@ -17,6 +17,20 @@ class CarrierProposedEditEntity extends Equatable {
     this.newValuesSummary,
   });
 
+  /// Joined summary of the proposed edit: carrier · proposedStatus · newValuesSummary · reason
+  String get displaySummary {
+    return [
+      if (carrierName != null && carrierName!.trim().isNotEmpty)
+        carrierName!.trim(),
+      if (proposedStatus != null && proposedStatus!.trim().isNotEmpty)
+        proposedStatus!.trim(),
+      if (newValuesSummary != null && newValuesSummary!.trim().isNotEmpty)
+        newValuesSummary!.trim(),
+      if (carrierReason != null && carrierReason!.trim().isNotEmpty)
+        carrierReason!.trim(),
+    ].join(' · ');
+  }
+
   @override
   List<Object?> get props => [
         id,
@@ -52,6 +66,27 @@ class LogReadiness extends Equatable {
     this.carrierProposedEditsPending = false,
     this.pendingCarrierEdits = const [],
   });
+
+  /// Formats raw missing requirement strings by converting ISO timestamps to HH:mm.
+  List<String> get formattedMissingRequirements {
+    return missingRequirements.map(formatRequirement).toList();
+  }
+
+  /// Formats raw timestamp substrings into local 'HH:mm' for human readability.
+  static String formatRequirement(String req) {
+    return req.replaceAllMapped(
+      RegExp(
+          r'\d{4}-\d{1,2}-\d{1,2}[T ]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?'),
+      (m) {
+        final parsed = DateTime.tryParse(m.group(0)!);
+        if (parsed == null) return m.group(0)!;
+        final local = parsed.toLocal();
+        final hh = local.hour.toString().padLeft(2, '0');
+        final mm = local.minute.toString().padLeft(2, '0');
+        return '$hh:$mm';
+      },
+    );
+  }
 
   @override
   List<Object?> get props => [

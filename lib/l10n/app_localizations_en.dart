@@ -2135,7 +2135,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trailerNumberFormatError =>
-      'Trailer number must be letters, numbers, or hyphens (max 50).';
+      'Trailer number may contain letters, numbers, spaces and - _ # only (max 50).';
 
   @override
   String get enterDocumentNumber => 'Enter the document number.';
@@ -2146,6 +2146,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get oneDocumentAtATime => 'Enter one document at a time (no comma).';
+
+  @override
+  String get shippingDocumentFormatError =>
+      'Shipping document number may contain letters, numbers, spaces, and - _ # / only (max 100).';
 
   @override
   String get selectVehicleBeforeSavingForm =>
@@ -3060,4 +3064,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get annotationRequiredForPcYm =>
       'An annotation is required for personal conveyance or yard moves.';
+
+  @override
+  String get unknownAction => 'Unknown Action';
+
+  @override
+  String get maxTrailersLimitReached => 'Maximum limit of 5 trailers reached.';
+
+  @override
+  String get trailerAlreadyExists => 'Trailer already exists.';
+
+  @override
+  String get allEvents => 'All Events';
+
+  @override
+  String get activeEvents => 'Active Events';
 }

@@ -672,10 +672,11 @@
   "driving24h": "24 horas",
   "pendingDays": "Pending {days} día(s)",
   "enterTrailerNumber": "Introduzca el número de remolque.",
-  "trailerNumberFormatError": "El número de remolque debe ser letras, números o hyphens (max 50).",
+  "trailerNumberFormatError": "El número de remolque solo puede contener letras, números, espacios y - _ # (máx. 50).",
   "enterDocumentNumber": "Introduzca el número de documento.",
   "documentNumberTooLong": "El número de documento de envío es demasiado largo (max 100).",
   "oneDocumentAtATime": "Introduzca un documento a la vez (sin coma).",
+  "shippingDocumentFormatError": "El número de documento de envío solo puede contener letras, números, espacios y - _ # / (máx. 100).",
   "selectVehicleBeforeSavingForm": "Seleccione un vehículo antes de guardar el formulario.",
   "coDriverMustBeServerId": "Co-driver debe ser un servidor id antes de que pueda ser guardado.",
   "serverSavedFormIncomplete": "El servidor guardó el formulario y lo dejó incompleto.",
@@ -1084,5 +1085,10 @@
   "dvirImageNotAvailable": "Imagen no disponible",
   "offlineEldGeneratedTitle": "Archivo de salida ELD generado fuera de línea",
   "offlineEldGeneratedDesc": "El archivo se generó localmente en formato CSV según los estándares de la FMCSA (49 CFR § 395). La transmisión al servidor está en cola para cuando regrese la conexión, y puede compartir el archivo directamente con el inspector ahora.",
-  "shareOrExportCsv": "Compartir / Exportar archivo CSV"
+  "shareOrExportCsv": "Compartir / Exportar archivo CSV",
+  "unknownAction": "Acción Desconocida",
+  "maxTrailersLimitReached": "Límite máximo de 5 remolques alcanzado.",
+  "trailerAlreadyExists": "El remolque ya existe.",
+  "allEvents": "Todos los eventos",
+  "activeEvents": "Eventos activos"
 }

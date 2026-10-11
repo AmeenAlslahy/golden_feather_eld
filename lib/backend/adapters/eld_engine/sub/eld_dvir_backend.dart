@@ -49,7 +49,10 @@ class EldDvirBackend implements DvirBackend {
   }
 
   @override
-  Future<Result<void>> create(RawJson report) async {
+  Future<Result<void>> create(
+    RawJson report, {
+    int? expectedOwnerDriverId,
+  }) async {
     final query = <String, dynamic>{};
     if (report['deviceId'] != null) {
       query['deviceId'] = report['deviceId'];
@@ -59,6 +62,7 @@ class EldDvirBackend implements DvirBackend {
       queryParameters: query.isNotEmpty ? query : null,
       data: report,
       parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return _accepted(res);
   }
@@ -78,11 +82,13 @@ class EldDvirBackend implements DvirBackend {
   Future<Result<void>> review({
     required DvirId dvirId,
     required RawJson review,
+    int? expectedOwnerDriverId,
   }) async {
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.dvirNextDriverReview(dvirId.value),
       data: review,
       parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return _accepted(res);
   }

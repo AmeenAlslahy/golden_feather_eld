@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/entities/daily_log.dart';
+import '../../../../../../domain/duty_status/duty_status_code.dart';
 import '../../providers/logs_provider.dart';
 import '../../widgets/log_graph.dart';
 import 'log_event_tile.dart';
@@ -114,11 +115,7 @@ class _StatusTotalsRow extends StatelessWidget {
     final totals = <String, Duration>{for (final s in _order) s: Duration.zero};
     for (final e in events) {
       // PC counts as OFF and YM as ON for the daily totals (§395.28).
-      final key = switch (e.status) {
-        'PC' => 'OFF',
-        'YM' => 'ON',
-        _ => e.status,
-      };
+      final key = DutyStatusCode.normalizeToGridShortCode(e.status);
       if (totals.containsKey(key)) totals[key] = totals[key]! + e.duration;
     }
     return Container(

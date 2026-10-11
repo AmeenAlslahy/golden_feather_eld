@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/error/exception.dart';
 import '../../../../core/utils/app_date_utils.dart';
 import '../../../../core/constants/storage_constants.dart';
 import '../../../../domain/shared/value_objects.dart';
@@ -13,7 +14,7 @@ abstract class LogLocalDataSource {
   Future<List<LogEvent>> getEvents(DateTime date);
   Future<bool> addEvent(LogEvent event);
   Future<bool> updateEvent(LogEvent event);
-  Future<List<DutyPeriod>> getPeriods(DateTime date);
+  Future<List<DutyPeriod>> getPeriods(DateTime date, [DateTime? referenceNow]);
   Future<bool> savePeriod(DutyPeriod period);
   Future<bool> logAudit(AuditEntry entry);
   Future<List<AuditEntry>> getAuditEntries(DateTime date);
@@ -29,6 +30,11 @@ abstract class LogLocalDataSource {
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
   Future<void> saveSignature(DailyLogId logId, String base64Signature);
   Future<String?> getSignature(DailyLogId logId);
+
+  /// P0 2B-1 — مالك سجل مخزن لـ logId عبر مفاتيح `logs:{driverId}` فقط.
+  /// يُرجع المعرف عند انفراده، وإلا null (غياب/غموض/تعدد) — لا يُستنتج
+  /// أي مالك من الجلسة الحالية هنا أبداً. قراءة خالصة بلا آثار.
+  Future<int?> ownerOfCachedLog(int logId);
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
@@ -83,6 +89,31 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     return _cacheBox.get('sig:${logId.value}');
   }
 
+  @override
+  Future<int?> ownerOfCachedLog(int logId) async {
+    try {
+      final owners = <int>{};
+      for (final key in _cacheBox.keys) {
+        if (key is! String || !key.startsWith('logs:')) continue;
+        final owner = int.tryParse(key.substring('logs:'.length));
+        if (owner == null || owner <= 0) continue;
+        final entries = _readCachedList(key);
+        if (entries == null) continue;
+        for (final entry in entries) {
+          final id = entry['id'];
+          final match = id is num
+              ? id.toInt() == logId
+              : int.tryParse('$id') == logId;
+          if (match) owners.add(owner);
+        }
+      }
+      return owners.length == 1 ? owners.single : null;
+    } catch (e) {
+      AppLogger.warning('ownerOfCachedLog failed: $e');
+      return null;
+    }
+  }
+
   List<Map<String, dynamic>>? _readCachedList(String key) {
     final raw = _cacheBox.get(key);
     if (raw == null) return null;
@@ -114,7 +145,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       return true;
     } catch (e) {
       AppLogger.error('Failed to save $entityName', e);
-      throw Exception('Failed to save $entityName: $e');
+      throw CacheException('Failed to save $entityName: $e');
     }
   }
 
@@ -128,7 +159,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       return _getListFromBox(box, dateStr);
     } catch (e) {
       AppLogger.error('Failed to get $entityName', e);
-      throw Exception('Failed to get $entityName: $e');
+      throw CacheException('Failed to get $entityName: $e');
     }
   }
 
@@ -213,20 +244,29 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       return true;
     } catch (e) {
       AppLogger.error('Failed to update event', e);
-      throw Exception('Failed to update event: $e');
+      throw CacheException('Failed to update event: $e');
     }
   }
 
   @override
-  Future<List<DutyPeriod>> getPeriods(DateTime date) async {
+  Future<List<DutyPeriod>> getPeriods(DateTime date, [DateTime? referenceNow]) async {
     final data = await _getFromBox(_periodsBox, date, 'periods');
+    final now = referenceNow;
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final fallbackEnd = (now != null &&
+            now.year == date.year &&
+            now.month == date.month &&
+            now.day == date.day)
+        ? now
+        : endOfDay;
+
     return data
         .map((e) => DutyPeriod(
               status: e['status'] as String? ?? 'off_duty',
               startTime: DateTime.parse(e['startTime'] as String),
               endTime: e['endTime'] != null
                   ? DateTime.parse(e['endTime'] as String)
-                  : DateTime.now(),
+                  : fallbackEnd,
               startOdometer: (e['startOdometer'] as num?)?.toDouble(),
               endOdometer: (e['endOdometer'] as num?)?.toDouble(),
               startLat: (e['startLat'] as num?)?.toDouble(),

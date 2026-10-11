@@ -104,6 +104,9 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
   int? get ownerDriverId => _ownerDriverId;
   int? get ownerEpoch => _ownerEpoch;
 
+  /// للودجات التي تحتاج قراراً خارج build (تحديث عند الفتح).
+  bool get hasAvailableDrivers => state.availableDrivers.isNotEmpty;
+
   CoDriverNotifier({required CoDriverRepository repository, int driverId = 0})
     : _repository = repository,
       _ownerDriverId = driverId == 0 ? null : driverId,

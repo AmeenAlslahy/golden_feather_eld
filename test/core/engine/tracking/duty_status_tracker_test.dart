@@ -10,6 +10,7 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/dispatch_auth.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
@@ -40,6 +41,13 @@ class MockSyncEngine implements SyncEngine {
 
   @override
   Future<void> triggerSync() async {}
+
+  // P0 2B-1 members — unused by these tracker tests (fence inactive here).
+  @override
+  Future<DispatchAuthContext> Function()? get observeAuth => null;
+
+  @override
+  Future<int> releaseEligible({int limit = 50}) async => 0;
 }
 
 class MockDashboardBackend implements StatusDashboardBackend {
@@ -127,6 +135,7 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, FormSaveResult>> saveForm({
     required DailyLogId logId,
     required DailyFormUpdate form,
+    int? ownerDriverId,
   }) async => throw UnimplementedError();
 
   @override
@@ -139,6 +148,7 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, bool>> addEvent(
     LogEvent event, {
     String? reason,
+    int? ownerDriverId,
   }) async => throw UnimplementedError();
 
   @override
@@ -164,6 +174,7 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
+    int? ownerDriverId,
   }) async => throw UnimplementedError();
 
   @override
@@ -709,12 +720,14 @@ void main() {
         final clock = FakeTrustedTimeProvider(initialUtcTime: trusted);
         final tracker = build(time: clock, readDriverId: () => 106);
 
-        final refusal = await tracker.submitManualChange(
+        final outcome = await tracker.submitManualChange(
           'on_duty',
           annotation: 'Available',
         );
 
-        expect(refusal, isNull);
+        expect(outcome.refusal, isNull);
+        // لقطة الخادم تُمرر للواجهة لتغذية اللوحة دون GET ثانٍ.
+        expect(outcome.dashboard, isNotNull);
         expect(tracker.currentStatus, 'on_duty');
         expect(dashboard.lastStatus, DutyStatusCode.onDutyNotDriving);
         expect(dashboard.lastNotes, 'Available');
@@ -732,9 +745,10 @@ void main() {
       dashboard.updateResult = const Left(ServerError(code: 'server.rejected'));
       final tracker = build(time: clock, readDriverId: () => 106);
 
-      final refusal = await tracker.submitManualChange('sleeper');
+      final outcome = await tracker.submitManualChange('sleeper');
 
-      expect(refusal, DutyStampRefusal.serverRejected);
+      expect(outcome.refusal, DutyStampRefusal.serverRejected);
+      expect(outcome.dashboard, isNull);
       expect(tracker.currentStatus, 'off_duty');
       expect(dashboard.lastStatus, DutyStatusCode.sleeperBerth);
       expect(sync.reported, isEmpty);

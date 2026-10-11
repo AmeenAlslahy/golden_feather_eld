@@ -35,7 +35,10 @@ abstract interface class DailyLogsBackend {
   });
 
   /// POST /eld/daily-logs/{id}/certify
-  Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request);
+  Future<Result<CertifyResponseDto>> certify(
+    CertifyRequestDto request, {
+    int? expectedOwnerDriverId,
+  });
 
   /// POST /eld/daily-logs/{id}/events/{statusId}/reassign-driving
   Future<Result<void>> reassignDriving({
@@ -54,6 +57,7 @@ abstract interface class DailyLogsBackend {
   Future<Result<RawJson>> saveForm({
     required DailyLogId logId,
     required RawJson form,
+    int? expectedOwnerDriverId,
   });
 
   /// GET /eld/daily-logs/{id}/graph-grid

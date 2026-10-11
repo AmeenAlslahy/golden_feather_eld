@@ -16,7 +16,6 @@ import '../../../../core/network/core_providers.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
-import '../../../hos/presentation/pages/change_status_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
@@ -85,7 +84,7 @@ class HomePage extends ConsumerWidget {
             centerTitle: currentNavIndex == 1, // توسيط العنوان في شاشة Recap
             leading: Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu),
+                icon: const Icon(Icons.menu, color: Colors.white),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
@@ -124,7 +123,7 @@ class HomePage extends ConsumerWidget {
                                 key: const Key('home_tool_alert'),
                                 icon: const Icon(
                                   Icons.build,
-                                  color: AppColors.warningYellow,
+                                  color: Colors.white,
                                   size: 28,
                                 ),
                                 onPressed: () {
@@ -155,7 +154,7 @@ class HomePage extends ConsumerWidget {
                                 tooltip: loc.operationalAlertTooltip,
                                 icon: const Icon(
                                   Icons.warning_amber,
-                                  color: AppColors.warningYellow,
+                                  color: Colors.white,
                                   size: 28,
                                 ),
                                 onPressed: () => context.push(AppRoutes.connection),
@@ -201,15 +200,12 @@ class HomePage extends ConsumerWidget {
             onRecap: () {
               ref.read(homeNavIndexProvider.notifier).state = 1;
             },
+            // صفحة تغيير الحالة تُفتح من الدائرة فقط — زر Available
+            // يعيد تبويب اللوحة دون فتح أي صفحة.
             onAvailable: () {
               if (currentNavIndex == 1) {
                 ref.read(homeNavIndexProvider.notifier).state = 0;
               }
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const ChangeStatusPage(),
-                ),
-              );
             },
           ),
         ),

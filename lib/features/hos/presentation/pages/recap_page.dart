@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/duration_format.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
@@ -21,46 +20,52 @@ class RecapPage extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surface,
       child: recapAsync.when(
         data: (data) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(recapProvider);
-              await ref.read(recapProvider.future);
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                // 7 Days Table
+          return Column(
+            children: [
+              // 7 Days Table
+              if (data.days.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      'No Records Found',
+                      style: context.styles.muted,
+                    ),
+                  ),
+                )
+              else
                 ...data.days.map(
                   (dayData) => _buildRow(
                     context,
                     title: dayData.dayOfWeek,
-                    subtitle: DateFormat('MMM d').format(dayData.date),
+                    subtitle: DateFormat.MMMd(Localizations.localeOf(context).languageCode)
+                        .format(dayData.date),
                     value: DurationFormat.decimalHours(dayData.totalWork),
                   ),
                 ),
-                _buildRow(
-                  context,
-                  title: context.loc.total,
-                  subtitle: context.loc.last7Days,
-                  value: DurationFormat.decimalHours(data.cycleUsed),
-                ),
-                _buildRow(
-                  context,
-                  title: context.loc.hoursWorkedToday,
-                  value: DurationFormat.decimalHours(data.todayWork),
-                ),
-                _buildRow(
-                  context,
-                  title: context.loc.hoursAvailableToday,
-                  value: DurationFormat.decimalHours(data.cycleRemaining),
-                ),
-                _buildRow(
-                  context,
-                  title: context.loc.hoursAvailableTomorrow,
-                  value: DurationFormat.decimalHours(data.availableTomorrow),
-                ),
-              ],
-            ),
+              _buildRow(
+                context,
+                title: context.loc.total,
+                subtitle: context.loc.last7Days,
+                value: DurationFormat.decimalHours(data.cycleUsed),
+                isTotal: true,
+              ),
+              _buildRow(
+                context,
+                title: context.loc.hoursWorkedToday,
+                value: DurationFormat.decimalHours(data.todayWork),
+              ),
+              _buildRow(
+                context,
+                title: context.loc.hoursAvailableToday,
+                value: DurationFormat.decimalHours(data.cycleRemaining),
+              ),
+              _buildRow(
+                context,
+                title: context.loc.hoursAvailableTomorrow,
+                value: DurationFormat.decimalHours(data.availableTomorrow),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -82,31 +87,56 @@ class RecapPage extends ConsumerWidget {
     required String title,
     String? subtitle,
     required String value,
+    bool isTotal = false,
   }) {
+    final titleColor = isTotal ? context.styles.body.color : context.styles.subtitle.color;
+    final titleWeight = isTotal ? FontWeight.w600 : FontWeight.w500;
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced vertical padding
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            width: 0.5,
+          ),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
-            flex: 2,
-            child: Text(title, style: context.styles.sectionTitle),
+            flex: subtitle != null ? 3 : 5,
+            child: Text(
+              title,
+              style: context.styles.body.copyWith(
+                color: titleColor,
+                fontWeight: titleWeight,
+                fontSize: 15,
+              ),
+            ),
           ),
           if (subtitle != null)
             Expanded(
-              flex: 2,
-              child: Text(subtitle, style: context.styles.muted),
-            )
-          else
-            const Spacer(flex: 2),
+              flex: 3,
+              child: Text(
+                subtitle,
+                style: context.styles.body.copyWith(
+                  color: titleColor,
+                  fontWeight: titleWeight,
+                  fontSize: 15,
+                ),
+              ),
+            ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: context.styles.number,
+              style: context.styles.body.copyWith(
+                color: context.styles.body.color,
+                fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 15,
+              ),
             ),
           ),
         ],

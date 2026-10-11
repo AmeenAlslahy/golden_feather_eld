@@ -26,6 +26,15 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
   void initState() {
     super.initState();
     _selectedId = widget.currentCoDriverId ?? 'none';
+    // القائمة قد تكون فارغة (أُنشئ المزود مبكراً بلا شبكة أو انتهت
+    // جلسته) — أعد الجلب عند الفتح بدل عرض فراغ دائم.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final notifier = ref.read(codriverProvider.notifier);
+      if (!notifier.hasAvailableDrivers) {
+        notifier.reload();
+      }
+    });
   }
 
   @override
@@ -41,9 +50,21 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
             ? const SizedBox(
                 height: 100, child: Center(child: CircularProgressIndicator()))
             : codriverState.error != null
-                ? Text(
-                    'Error: ${codriverState.error}',
-                    style: context.styles.error,
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Error: ${codriverState.error}',
+                        style: context.styles.error,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(codriverProvider.notifier)
+                            .reload(),
+                        child: Text(context.loc.retryButton),
+                      ),
+                    ],
                   )
                 : SingleChildScrollView(
                     child: RadioGroup<String>(

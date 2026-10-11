@@ -74,7 +74,10 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<CertifyResponseDto>> certify(CertifyRequestDto request) async {
+  Future<Result<CertifyResponseDto>> certify(
+    CertifyRequestDto request, {
+    int? expectedOwnerDriverId,
+  }) async {
     return ok(CertifyResponseDto(
       dailyLogId: request.dailyLogId,
       certificationStatus: 'CERTIFIED',
@@ -100,6 +103,7 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   Future<Result<RawJson>> saveForm({
     required DailyLogId logId,
     required RawJson form,
+    int? expectedOwnerDriverId,
   }) =>
       throw UnimplementedError('MockDailyLogsBackend.saveForm — Phase 2');
 

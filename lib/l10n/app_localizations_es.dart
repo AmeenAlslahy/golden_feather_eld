@@ -2153,7 +2153,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get trailerNumberFormatError =>
-      'El número de remolque debe ser letras, números o hyphens (max 50).';
+      'El número de remolque solo puede contener letras, números, espacios y - _ # (máx. 50).';
 
   @override
   String get enterDocumentNumber => 'Introduzca el número de documento.';
@@ -2165,6 +2165,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get oneDocumentAtATime =>
       'Introduzca un documento a la vez (sin coma).';
+
+  @override
+  String get shippingDocumentFormatError =>
+      'El número de documento de envío solo puede contener letras, números, espacios y - _ # / (máx. 100).';
 
   @override
   String get selectVehicleBeforeSavingForm =>
@@ -3087,4 +3091,20 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get annotationRequiredForPcYm =>
       'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.';
+
+  @override
+  String get unknownAction => 'Acción Desconocida';
+
+  @override
+  String get maxTrailersLimitReached =>
+      'Límite máximo de 5 remolques alcanzado.';
+
+  @override
+  String get trailerAlreadyExists => 'El remolque ya existe.';
+
+  @override
+  String get allEvents => 'Todos los eventos';
+
+  @override
+  String get activeEvents => 'Eventos activos';
 }

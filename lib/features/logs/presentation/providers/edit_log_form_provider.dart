@@ -3,6 +3,7 @@ import '../../../../core/time/time_authority.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/time/time_formatter.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../domain/log_edit.dart';
 
 class EditLogFormState {
   final String selectedStatus;
@@ -44,6 +45,12 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
   void setStartTime(String time) => state = state.copyWith(startTime: time);
   void setLocation(String location) => state = state.copyWith(location: location);
   void setReason(String reason) => state = state.copyWith(reason: reason);
+
+  /// حساب الوقت الابتدائي لاختيار الوقت استناداً إلى وقت السجل أو الوقت الحالي الموثوق
+  DateTime getInitialTime(DateTime? logDate, TimeAuthority timeAuthority) {
+    return parseEditFormTime(state.startTime, logDate) ??
+        timeAuthority.nowUtc().toLocal();
+  }
 }
 
 // دالة مساعدة لتنسيق الوقت الحالي

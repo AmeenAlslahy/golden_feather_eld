@@ -15,7 +15,13 @@ abstract interface class DvirBackend {
   });
 
   /// POST /eld/dvir
-  Future<Result<void>> create(RawJson report);
+  ///
+  /// [expectedOwnerDriverId] — P0 2B-1: queue-dispatch binding enforced
+  /// at HTTP send-time. Null = no binding (all non-queue callers).
+  Future<Result<void>> create(
+    RawJson report, {
+    int? expectedOwnerDriverId,
+  });
 
   /// GET /eld/dvir/{id}
   Future<Result<RawJson>> getById(DvirId dvirId);
@@ -26,6 +32,7 @@ abstract interface class DvirBackend {
   Future<Result<void>> review({
     required DvirId dvirId,
     required RawJson review,
+    int? expectedOwnerDriverId,
   });
 
   /// GET /eld/dvir/catalog

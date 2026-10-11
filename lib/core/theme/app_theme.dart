@@ -214,5 +214,9 @@ class AppTheme {
     dividerTheme: light.dividerTheme.copyWith(
       color: const Color(0xFF48484A),
     ),
+    // بدونهما يرث الداكن قيم الفاتح (رمادي داكن على أسود) فتبدو
+    // النصوص والأدوات المعتمدة عليهما باهتة — بلاغ الوضع الغامق.
+    hintColor: AppColors.darkTextSecondary,
+    disabledColor: const Color(0xFF8E8E93),
   );
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../data/providers/status_dashboard_repository_providers.dart';
 import '../../domain/engine/hos_rules_engine.dart';
@@ -10,6 +12,23 @@ import 'hos_provider.dart';
 import '../../../../core/events/app_events.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/error/failure.dart';
+
+/// مطابقة حالة المحرك المحلية مع رمز اللوحة — تُستخدم لتخطي إعادة الجلب
+/// عندما تكون اللوحة محدثة أصلاً (مثلاً من استجابة POST تغيير الحالة).
+DutyStatusCode _engineStatusCode(DutyStatus status) {
+  switch (status) {
+    case DutyStatus.driving:
+      return DutyStatusCode.driving;
+    case DutyStatus.onDutyNotDriving:
+      return DutyStatusCode.onDutyNotDriving;
+    case DutyStatus.sleeperBerth:
+      return DutyStatusCode.sleeperBerth;
+    case DutyStatus.offDuty:
+      return DutyStatusCode.offDuty;
+    case DutyStatus.personalUse:
+      return DutyStatusCode.personalConveyance;
+  }
+}
 
 // --- Clean Architecture Providers ---
 
@@ -38,10 +57,24 @@ final statusDashboardProvider =
 class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   @override
   Future<StatusDashboard> build() async {
-    // تحديث تفاعلي تلقائي للوحة عند تغير حالة السائق في محرك HOS
+    // تحديث تفاعلي تلقائي للوحة عند تغير حالة السائق في محرك HOS.
+    // تخطي الجلب إن كانت اللوحة تحمل الحالة الجديدة أصلاً (تغذية من
+    // استجابة POST) — يوفر رحلة شبكة كاملة بعد كل تغيير.
     ref.listen<HosEngineResult>(hosStatusProvider, (prev, next) {
       if (prev is HosEngineReady && next is HosEngineReady) {
         if (prev.update.currentStatus != next.update.currentStatus) {
+          final current = state.valueOrNull;
+          if (current != null) {
+            final engineCode = _engineStatusCode(next.update.currentStatus);
+            if (current.currentDutyStatus == engineCode) {
+              return;
+            }
+            // لتجنب تحديث الشبكة المتأخر: الـ Yard Move يُعتبر OnDutyNotDriving في المحرك
+            if (engineCode == DutyStatusCode.onDutyNotDriving &&
+                current.currentDutyStatus == DutyStatusCode.yardMove) {
+              return;
+            }
+          }
           refresh();
         }
       }
@@ -80,6 +113,12 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   // Method removed. Duty status changes must route through DutyStatusTracker 
   // to ensure offline sync queueing, correct HOS engine transitions, and 
   // single source of truth for backend syncing.
+
+  /// تغذية اللوحة مباشرة من استجابة POST تغيير الحالة — بلا شبكة.
+  /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
+  void applyServerDashboard(StatusDashboard dashboard) {
+    state = AsyncValue.data(dashboard);
+  }
 
   /// Manually reloads the dashboard.
   Future<void> refresh({bool showLoading = true}) async {

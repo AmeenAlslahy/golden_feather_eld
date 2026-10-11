@@ -731,10 +731,11 @@
     }
   },
   "enterTrailerNumber": "Enter the trailer number.",
-  "trailerNumberFormatError": "Trailer number must be letters, numbers, or hyphens (max 50).",
+  "trailerNumberFormatError": "Trailer number may contain letters, numbers, spaces and - _ # only (max 50).",
   "enterDocumentNumber": "Enter the document number.",
   "documentNumberTooLong": "Shipping document number is too long (max 100).",
   "oneDocumentAtATime": "Enter one document at a time (no comma).",
+  "shippingDocumentFormatError": "Shipping document number may contain letters, numbers, spaces, and - _ # / only (max 100).",
   "selectVehicleBeforeSavingForm": "Select a vehicle before saving the form.",
   "coDriverMustBeServerId": "Co-driver must be a server id before it can be saved.",
   "serverSavedFormIncomplete": "The server saved the form and left it incomplete.",
@@ -1090,5 +1091,10 @@
   "dutyChangeUnmapped": "Duty status is not recognized.",
   "dutyChangeServerRejected": "The server did not accept the duty status change. Check your connection and try again.",
   "dutyChangeAccepted": "The server accepted the duty status change.",
-  "annotationRequiredForPcYm": "An annotation is required for personal conveyance or yard moves."
+  "annotationRequiredForPcYm": "An annotation is required for personal conveyance or yard moves.",
+  "unknownAction": "Unknown Action",
+  "maxTrailersLimitReached": "Maximum limit of 5 trailers reached.",
+  "trailerAlreadyExists": "Trailer already exists.",
+  "allEvents": "All Events",
+  "activeEvents": "Active Events"
 }

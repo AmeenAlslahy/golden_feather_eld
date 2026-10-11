@@ -52,10 +52,14 @@ class EldDutyStatusBackend implements DutyStatusBackend {
 
   @override
   Future<Result<void>> submitLegacyDutyStatusEvent(
-      int driverId, RawJson payload) async {
+    int driverId,
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  }) async {
     final response = await _apiClient.post<dynamic>(
       EldEndpoints.recordDutyStatus,
       data: payload,
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return response.map((res) {
       if (!res.isSuccess) {
@@ -66,10 +70,14 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   }
 
   @override
-  Future<Result<void>> submitLegacyGenericEvent(RawJson payload) async {
+  Future<Result<void>> submitLegacyGenericEvent(
+    RawJson payload, {
+    int? expectedOwnerDriverId,
+  }) async {
     final response = await _apiClient.post<dynamic>(
       EldEndpoints.events,
       data: payload,
+      expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return response.map((res) {
       if (!res.isSuccess) {

@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 import '../providers/hardware_status_provider.dart';
 import '../mac_address_validation.dart';
@@ -259,18 +260,36 @@ class EldConnectionPage extends ConsumerStatefulWidget {
 class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
   final TextEditingController _macController = TextEditingController();
 
+  /// آخر عربة طُبق معرفها على الحقل — اختيار عربة مختلفة لاحقاً
+  /// (عودة من صفحة الاختيار) يملأ الحقل من جديد؛ أما الكتابة اليدوية
+  /// بعد ذلك فتبقى للسائق ولا تُمس.
+  String? _appliedVehicleKey;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final selectedVehicle = ref.read(vehicleProvider).selectedVehicle;
-      final uniqueId = selectedVehicle?.uniqueId?.trim();
-      
-      if (uniqueId != null && uniqueId.isNotEmpty) {
-        _macController.text = uniqueId;
+      if (!mounted) return;
+      _fillMacFromVehicle(
+        ref.read(vehicleProvider).selectedVehicle,
+        force: true,
+      );
+      if (_macController.text.trim().isNotEmpty) {
         _attemptConnection();
       }
     });
+  }
+
+  /// يلصق ماك العربة في الحقل. [force] عند تغير الاختيار نفسه.
+  void _fillMacFromVehicle(Vehicle? vehicle, {bool force = false}) {
+    final uniqueId = vehicle?.uniqueId?.trim();
+    if (uniqueId == null || uniqueId.isEmpty) return;
+    final vehicleKey = vehicle?.id ?? uniqueId;
+    final current = _macController.text.trim();
+    if (force || current.isEmpty || current == _appliedVehicleKey) {
+      _macController.text = uniqueId;
+    }
+    _appliedVehicleKey = vehicleKey;
   }
 
   @override
@@ -300,6 +319,15 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         }
       });
     });
+    // العودة من صفحة اختيار العربة باختيار جديد → لصق ماكها فوراً.
+    ref.listen<Vehicle?>(
+      vehicleProvider.select((s) => s.selectedVehicle),
+      (previous, next) {
+        if (next != null && next != previous) {
+          _fillMacFromVehicle(next, force: true);
+        }
+      },
+    );
 
     // الانتقال للرئيسية عند النجاح
     ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
@@ -324,15 +352,13 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        // أيقونة الإجراء تفتح دائماً صفحة اختيار العربة (مع الحفاظ على
+        // الرجوع) — لا تخرج لصفحة أخرى أبداً.
         leading: IconButton(
           icon: const Icon(Icons.compare_arrows,
               color: AppColors.surface, size: 28),
           onPressed: () {
-            if (GoRouter.of(context).canPop()) {
-              GoRouter.of(context).pop();
-            } else {
-              context.go(AppRoutes.selectVehicle);
-            }
+            context.push(AppRoutes.selectVehicle);
           },
         ),
         title: Text(

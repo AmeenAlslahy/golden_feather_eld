@@ -156,6 +156,7 @@ class MockInspectionBackend implements InspectionBackend {
     String? comment,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) =>
       throw UnimplementedError('MockInspectionBackend.emailLogs — Phase 2');
 
@@ -172,6 +173,7 @@ class MockInspectionBackend implements InspectionBackend {
     String? recipientEmail,
     int? daysCount,
     DateTime? endDate,
+    int? expectedOwnerDriverId,
   }) =>
       throw UnimplementedError('MockInspectionBackend.sendLogs — Phase 2');
 

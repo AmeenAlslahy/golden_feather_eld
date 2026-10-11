@@ -11,6 +11,7 @@ import '../../../../core/events/app_events.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
+import 'logs_provider.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/log_readiness.dart';
 import '../../domain/repositories/log_repository.dart';
@@ -19,6 +20,7 @@ class CertifyLogState {
   final bool isLoading;
   final String? error;
   final LogReadiness? readinessData;
+  final CertifyOutcome? outcome;
 
   static const String _statusReady = 'READY';
 
@@ -26,6 +28,7 @@ class CertifyLogState {
     this.isLoading = false,
     this.error,
     this.readinessData,
+    this.outcome,
   });
 
   bool get isReady => readinessData?.readinessStatus == _statusReady;
@@ -36,11 +39,14 @@ class CertifyLogState {
     String? error,
     bool clearError = false,
     LogReadiness? readinessData,
+    CertifyOutcome? outcome,
+    bool clearOutcome = false,
   }) {
     return CertifyLogState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       readinessData: readinessData ?? this.readinessData,
+      outcome: clearOutcome ? null : (outcome ?? this.outcome),
     );
   }
 }
@@ -64,7 +70,8 @@ sealed class CertifyOutcome {
 }
 
 final class CertifySucceeded extends CertifyOutcome {
-  const CertifySucceeded(super.message);
+  const CertifySucceeded(super.message, {this.isLogCertified = false});
+  final bool isLogCertified;
 }
 
 final class CertifyFailed extends CertifyOutcome {
@@ -101,7 +108,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
 
   /// Re-fetch readiness (retry button, or after answering a carrier edit).
   Future<void> checkReadiness() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
     await _fetchReadiness();
   }
 
@@ -120,56 +127,73 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     required CarrierEditResponse response,
     String? driverNotes,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
     final result = await _repository.respondToCarrierEdit(
       logId: _logId,
       editId: editId,
       action: response.apiValue,
       driverNotes: driverNotes,
     );
-    if (!mounted) return CertifyFailed(_loc.responseInterrupted);
+    if (!mounted) {
+      return CertifyFailed(_loc.responseInterrupted);
+    }
 
     final failure = result.fold((f) => f, (_) => null);
     if (failure != null) {
-      state = state.copyWith(isLoading: false);
-      return CertifyFailed(_message(failure));
+      final failOutcome = CertifyFailed(_message(failure));
+      state = state.copyWith(isLoading: false, outcome: failOutcome);
+      return failOutcome;
     }
 
     await checkReadiness();
     if (state.error != null) {
-      return CertifyFailed(state.error!);
+      final failOutcome = CertifyFailed(state.error!);
+      state = state.copyWith(outcome: failOutcome);
+      return failOutcome;
     }
 
-    return CertifySucceeded(
+    final successOutcome = CertifySucceeded(
       response == CarrierEditResponse.accept
           ? _loc.carrierEditAcceptedReCertifyThe
           : _loc.carrierEditRejected,
     );
+    state = state.copyWith(outcome: successOutcome);
+    return successOutcome;
   }
 
   /// Certify [log] with the drawn signature. Returns `null` when a request is
   /// already in flight (double tap) so the UI shows nothing.
   Future<CertifyOutcome?> certify({
     required DailyLog log,
-    required Uint8List? signatureBytes,
+    Uint8List? signatureBytes,
   }) async {
     if (state.isLoading) return null;
 
-    if (!log.isFormComplete) return CertifyFailed(_loc.fillFormFirst);
+    if (!log.isFormComplete) {
+      final failOutcome = CertifyFailed(_loc.fillFormFirst);
+      state = state.copyWith(outcome: failOutcome);
+      return failOutcome;
+    }
+
+    final bytes = signatureBytes;
 
     // The live contract has no signature-upload path. The drawn signature
     // remains the driver's confirmation on this device; the legal record is
     // POST /eld/daily-logs/{id}/certify.
-    if (signatureBytes == null || signatureBytes.isEmpty) {
-      return CertifyFailed(_loc.pleaseDrawASignatureFirst);
+    if (bytes == null || bytes.isEmpty) {
+      final failOutcome = CertifyFailed(_loc.pleaseDrawASignatureFirst);
+      state = state.copyWith(outcome: failOutcome);
+      return failOutcome;
     }
 
     final driverId = _ref.read(currentDriverIdProvider);
     if (driverId == null) {
-      return CertifyFailed(_loc.sessionMissingPleaseLogInAgain);
+      final failOutcome = CertifyFailed(_loc.sessionMissingPleaseLogInAgain);
+      state = state.copyWith(outcome: failOutcome);
+      return failOutcome;
     }
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
     final result = await _repository.certifyLog(
       logId: _logId,
       driverId: driverId,
@@ -180,14 +204,16 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
       certifiedTrue: true,
     );
     if (!mounted) return null;
-    state = state.copyWith(isLoading: false);
 
-    return result.match(
+    final outcome = result.match(
       (failure) => CertifyFailed(_message(failure)),
       (_) {
+        _ref.invalidate(logsProvider);
         _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
-        return CertifySucceeded(_loc.logSuccessfullyCertified);
+        return CertifySucceeded(_loc.logSuccessfullyCertified, isLogCertified: true);
       },
     );
+    state = state.copyWith(isLoading: false, outcome: outcome);
+    return outcome;
   }
 }

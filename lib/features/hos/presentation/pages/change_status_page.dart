@@ -4,6 +4,7 @@ import 'package:golden_feather_eld/core/design_system.dart';
 
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
 import '../duty_change_message.dart';
 import '../providers/change_status_provider.dart';
 import '../widgets/status_option_tiles.dart';
@@ -63,15 +64,6 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     final state = ref.watch(changeStatusProvider);
     final notifier = ref.read(changeStatusProvider.notifier);
 
-    final availableOptions = [
-      DutyStatusOption.offDuty,
-      DutyStatusOption.sleeperBerth,
-      DutyStatusOption.driving,
-      DutyStatusOption.onDuty,
-      if (state.isPersonalConveyanceAllowed) DutyStatusOption.personalConveyance,
-      if (state.isYardMoveAllowed) DutyStatusOption.yardMoves,
-    ];
-
     final customLocationHint = context.loc.customLocation;
     final notesHint = context.loc.notes;
     final updateLabel = context.loc.updateButton.toUpperCase();
@@ -92,14 +84,14 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ========== قائمة الخيارات ==========
-            for (var i = 0; i < availableOptions.length; i++) ...[
+            for (var i = 0; i < state.availableOptions.length; i++) ...[
               Builder(
                 builder: (context) {
-                  final option = availableOptions[i];
-                  final isSelected = state.selectedOption == option;
-                  final disabled = state.isVehicleMoving &&
-                      option != DutyStatusOption.driving &&
-                      !isSelected;
+                  final option = state.availableOptions[i];
+                  final isCurrentStatus = option == state.initialOption;
+                  final isSelected = state.selectedOption == option && !isCurrentStatus;
+                  final disabled = (state.isVehicleMoving && option != DutyStatusOption.driving) ||
+                      isCurrentStatus;
 
                   return StatusOptionTile(
                     label: option.displayName(context),
@@ -136,36 +128,14 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
             // ========== حقل الموقع اليدوي (Custom location) ==========
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: TextField(
+              child: AppTextField(
                 controller: _customLocationController,
                 onChanged: notifier.updateCustomLocation,
-                style: theme.textTheme.bodyLarge,
-                decoration: InputDecoration(
-                  hintText: customLocationHint,
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.hintColor,
-                  ),
-                  errorText: !state.isLocationValid && state.customLocation.isEmpty 
-                      ? 'Letters, numbers, punctuation 5 - 60 symbols are allowed.' 
-                      : null,
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.dividerColor),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.dividerColor),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
-                  ),
-                  errorBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
-                  ),
-                  focusedErrorBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.error, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  fillColor: Colors.transparent,
-                ),
+                hint: customLocationHint,
+                isUnderlined: true,
+                errorText: state.customLocation.isNotEmpty && !state.hasValidCustomLocation 
+                    ? 'Letters, numbers, punctuation 5 - 60 symbols are allowed.' 
+                    : null,
               ),
             ),
             const Divider(),
@@ -173,27 +143,11 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
             // ========== حقل الملاحظات (Notes) ==========
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: TextField(
+              child: AppTextField(
                 controller: _notesController,
                 onChanged: notifier.updateNotes,
-                style: theme.textTheme.bodyLarge,
-                decoration: InputDecoration(
-                  hintText: notesHint,
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.hintColor,
-                  ),
-                  border: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.dividerColor),
-                  ),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.dividerColor),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  fillColor: Colors.transparent,
-                ),
+                hint: notesHint,
+                isUnderlined: true,
               ),
             ),
             const Divider(),

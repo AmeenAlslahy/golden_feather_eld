@@ -96,4 +96,30 @@ enum DutyStatusCode {
         DutyStatusCode.yardMove => true,
         DutyStatusCode.personalConveyance => false,
       };
+
+  /// The canonical 4-line grid duty status short code ('OFF', 'SB', 'D', 'ON')
+  /// per FMCSA §395.2/§395.3. PC maps to 'OFF', YM maps to 'ON'.
+  String get canonicalGridShortCode => switch (this) {
+        DutyStatusCode.offDuty || DutyStatusCode.personalConveyance => 'OFF',
+        DutyStatusCode.sleeperBerth => 'SB',
+        DutyStatusCode.driving => 'D',
+        DutyStatusCode.onDutyNotDriving || DutyStatusCode.yardMove => 'ON',
+      };
+
+  /// Whether this is a special driving category (PC or YM).
+  bool get isSpecialDrivingCategory =>
+      this == DutyStatusCode.personalConveyance || this == DutyStatusCode.yardMove;
+
+  /// Returns 'PC' or 'YM' if special driving category, otherwise null.
+  String? get specialCategoryTag => switch (this) {
+        DutyStatusCode.personalConveyance => 'PC',
+        DutyStatusCode.yardMove => 'YM',
+        _ => null,
+      };
+
+  /// Centralized normalizer: maps any status string to canonical grid short code ('OFF', 'SB', 'D', 'ON').
+  static String normalizeToGridShortCode(String? status) {
+    if (status == null || status.isEmpty) return 'OFF';
+    return fromAny(status).canonicalGridShortCode;
+  }
 }

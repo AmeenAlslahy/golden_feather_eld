@@ -724,10 +724,11 @@
   "driving24h": "قيادة 24 ساعة",
   "pendingDays": "معلّق {days} يوم",
   "enterTrailerNumber": "أدخل رقم المقطورة.",
-  "trailerNumberFormatError": "رقم المقطورة: أحرف وأرقام وشرطات فقط (حتى 50).",
+  "trailerNumberFormatError": "رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).",
   "enterDocumentNumber": "أدخل رقم المستند.",
   "documentNumberTooLong": "رقم مستند الشحن طويل جداً (حتى 100).",
   "oneDocumentAtATime": "أدخل مستنداً واحداً في كل مرة (بدون فاصلة).",
+  "shippingDocumentFormatError": "رقم مستند الشحن: حروف وأرقام ومسافات وعلامات بسيطة فقط (حتى 100).",
   "selectVehicleBeforeSavingForm": "يرجى اختيار المركبة قبل حفظ النموذج.",
   "coDriverMustBeServerId": "يجب أن يكون السائق المساعد صالحاً قبل الحفظ.",
   "serverSavedFormIncomplete": "حفظ الخادم النموذج وتركه غير مكتمل.",
@@ -1083,5 +1084,10 @@
   "dutyChangeUnmapped": "حالة الواجب غير معروفة.",
   "dutyChangeServerRejected": "لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.",
   "dutyChangeAccepted": "قبل الخادم تغيير حالة الواجب.",
-  "annotationRequiredForPcYm": "يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة."
+  "annotationRequiredForPcYm": "يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.",
+  "unknownAction": "إجراء غير معروف",
+  "maxTrailersLimitReached": "تم الوصول إلى الحد الأقصى (5 مقطورات).",
+  "trailerAlreadyExists": "المقطورة مضافة بالفعل.",
+  "allEvents": "جميع الأحداث",
+  "activeEvents": "الأحداث النشطة"
 }

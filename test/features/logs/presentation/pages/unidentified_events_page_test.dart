@@ -17,11 +17,26 @@ import 'package:golden_feather_eld/features/logs/domain/repositories/log_reposit
 import 'package:golden_feather_eld/features/logs/presentation/pages/unidentified_events_page.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Logs extends Mock implements LogRepository {}
+
+class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+  _AuthNotifier(super.state);
+  @override
+  Future<bool> login({required String username, required String password, String? serverUrl}) async => true;
+  @override
+  void forceLogout() {}
+  @override
+  Future<void> logout() async {}
+  @override
+  Future<void> checkAuthStatus() async {}
+  @override
+  void clearError() {}
+}
 
 /// Server-only backend double: the list is whatever the server returns and
 /// every claim / reject is recorded with the exact ids sent.
@@ -144,6 +159,21 @@ void main() {
         overrides: [
           unidentifiedEventsBackendProvider.overrideWithValue(backend),
           currentDriverIdProvider.overrideWithValue(106),
+          authStateProvider.overrideWith(
+            (ref) => _AuthNotifier(
+              AuthState(
+                status: AuthStatus.authenticated,
+                user: User(
+                  id: '106',
+                  username: 'driver106',
+                  email: 'driver@eld.com',
+                  fullName: 'Driver 106',
+                  role: UserRole.fieldWorker,
+                  createdAt: DateTime(2026),
+                ),
+              ),
+            ),
+          ),
           logRepositoryProvider.overrideWithValue(logs),
           vehicleRepositoryProvider.overrideWithValue(vehicles),
         ],
