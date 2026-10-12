@@ -6,10 +6,19 @@ import '../../data/providers/sync_providers.dart';
 import '../../domain/entities/sync_item.dart';
 import '../../domain/repositories/sync_repository.dart';
 
+import '../../../../core/network/core_providers.dart';
+
 /// مزود حالة المزامنة
 final syncStateProvider = StateNotifierProvider<SyncNotifier, SyncState>((ref) {
   final repository = ref.watch(syncRepositoryProvider);
-  return SyncNotifier(repository);
+  final notifier = SyncNotifier(repository);
+  ref.listen<AsyncValue<bool>>(isConnectedProvider, (previous, next) {
+    if (next.value == true && previous?.value != true) {
+      notifier.syncNow();
+      ref.read(syncEngineProvider).triggerSync();
+    }
+  });
+  return notifier;
 });
 
 class SyncNotifier extends StateNotifier<SyncState> {

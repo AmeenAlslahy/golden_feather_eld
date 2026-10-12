@@ -14,10 +14,12 @@ final vehicleBackendProviderAlias = Provider<VehicleBackend>((ref) {
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
   final vehicleBackend = ref.watch(vehicleBackendProviderAlias);
+  final hardwareBackend = ref.watch(hardwareBackendProvider);
   final networkInfo = ref.watch(networkInfoProvider);
 
   return VehicleRepositoryImpl(
     vehicleBackend: vehicleBackend,
+    hardwareBackend: hardwareBackend,
     networkInfo: networkInfo,
   );
 });

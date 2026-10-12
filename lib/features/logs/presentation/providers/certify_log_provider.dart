@@ -31,7 +31,14 @@ class CertifyLogState {
     this.outcome,
   });
 
-  bool get isReady => readinessData?.readinessStatus == _statusReady;
+  bool get isReady {
+    if (readinessData == null) return false;
+    final status = readinessData!.readinessStatus.toUpperCase();
+    if (status == _statusReady || status == 'CERTIFIED' || status == 'ALREADY_CERTIFIED') {
+      return true;
+    }
+    return readinessData!.missingRequirements.isEmpty && !readinessData!.carrierProposedEditsPending;
+  }
   List<String> get missingRequirements => readinessData?.missingRequirements ?? [];
 
   CertifyLogState copyWith({

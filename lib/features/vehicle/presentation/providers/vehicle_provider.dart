@@ -165,10 +165,27 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
         }
       },
       (vehicles) {
-        final selected = _serverSelected(vehicles);
+        final currentSelectedId = state.selectedVehicle?.id;
+        final serverSelected = _serverSelected(vehicles);
+        final selected = serverSelected ??
+            (currentSelectedId != null
+                ? vehicles.where((v) => v.id == currentSelectedId).firstOrNull
+                : null) ??
+            (vehicles.isEmpty ? state.selectedVehicle : null);
+
+        final normalizedVehicles = selected != null
+            ? vehicles.map((v) {
+                final isSelected = v.id == selected.id;
+                return v.copyWith(
+                  activeForCurrentDriver: isSelected,
+                  selectedByServer: isSelected,
+                );
+              }).toList()
+            : vehicles;
+
         state = state.copyWith(
-          vehicles: vehicles,
-          selectedVehicle: selected ?? (vehicles.isEmpty ? state.selectedVehicle : null),
+          vehicles: normalizedVehicles,
+          selectedVehicle: selected,
           clearSelected: selected == null && vehicles.isNotEmpty,
           isLoading: false,
           isInitialized: true,
@@ -244,11 +261,42 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       return;
     }
 
-    state = state.copyWith(
-      isLoading: false,
-      selectedVehicle: vehicle,
-      isSuccess: true,
-      error: null,
+    final targetId = vehicle.uniqueId?.trim().isNotEmpty == true
+        ? vehicle.uniqueId!.trim()
+        : vehicle.id.trim();
+
+    final result = await _repository.selectVehicle(targetId);
+
+    if (!mounted) return;
+
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          isLoading: false,
+          isSuccess: false,
+          error: failure.message,
+        );
+      },
+      (_) {
+        final updatedVehicles = state.vehicles.map((v) {
+          final isCurrent = v.id == vehicle.id;
+          return v.copyWith(
+            activeForCurrentDriver: isCurrent,
+            selectedByServer: isCurrent,
+          );
+        }).toList();
+
+        state = state.copyWith(
+          vehicles: updatedVehicles,
+          isLoading: false,
+          selectedVehicle: vehicle.copyWith(
+            activeForCurrentDriver: true,
+            selectedByServer: true,
+          ),
+          isSuccess: true,
+          error: null,
+        );
+      },
     );
   }
 }

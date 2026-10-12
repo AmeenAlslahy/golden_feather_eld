@@ -766,7 +766,7 @@
   "gpsTurnedOff": "El GPS está apagado.",
   "serverReportsEldAlert": "El servidor informa de una alerta operacional ELD. Abra la pantalla de Conexión para obtener detalles.",
   "operationalAlertTooltip": "Alerta operacional",
-  "noInternetBanner": "Sin internet. Puede continuar con datos guardados.",
+  "noInternetBanner": "Modo sin conexión. Compruebe su conexión a Internet.",
   "dvirSatisfactory": "Condición del vehículo Satisfactoria",
   "dvirHasDefects": "Tiene defectos",
   "dvirDefectsCorrected": "Defectos corregidos",
@@ -1090,5 +1090,11 @@
   "maxTrailersLimitReached": "Límite máximo de 5 remolques alcanzado.",
   "trailerAlreadyExists": "El remolque ya existe.",
   "allEvents": "Todos los eventos",
-  "activeEvents": "Eventos activos"
+  "activeEvents": "Eventos activos",
+  "dutyChangeTimeUnavailable": "No se registró el estado de servicio porque la hora del servidor no está disponible.",
+  "dutyChangeNotReady": "El estado de servicio no está listo.",
+  "dutyChangeUnmapped": "El estado de servicio no es reconocido.",
+  "dutyChangeServerRejected": "El servidor no aceptó el cambio de estado de servicio. Verifique su conexión e intente nuevamente.",
+  "dutyChangeAccepted": "El servidor aceptó el cambio de estado de servicio.",
+  "annotationRequiredForPcYm": "Se requiere una anotación para transporte personal o movimientos de patio."
 }

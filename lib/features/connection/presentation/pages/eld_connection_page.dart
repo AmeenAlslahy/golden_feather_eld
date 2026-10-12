@@ -161,86 +161,37 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
 
   /// `POST /eld/hardware/connect?disconnected=true`. No reason form and no duty event.
   Future<void> continueDisconnected() async {
+    final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+    final vUniqueId = selectedVehicle?.uniqueId;
+    final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
+        ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+    if (targetDeviceId != null) {
+      await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+    }
+    try {
+      final config =
+          await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+      await _ref.read(trackingRepositoryProvider).updateConfig(config);
+      await _ref.read(trackingStateProvider.notifier).startTracking();
+    } catch (_) {}
+
     final online = _ref.read(isConnectedProvider).value ?? true;
-    if (!online) {
-      final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
-      final vUniqueId = selectedVehicle?.uniqueId;
-      final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
-          ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
-      if (targetDeviceId != null) {
-        await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
-      }
+    if (online) {
       try {
-        final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
-        await _ref.read(trackingRepositoryProvider).updateConfig(config);
-        await _ref.read(trackingStateProvider.notifier).startTracking();
+        await _ref.read(hardwareBackendProvider).connectSession(
+              uniqueId: vUniqueId,
+              disconnected: true,
+            );
       } catch (_) {}
+    }
+
+    if (mounted) {
       state = state.copyWith(
         isConnecting: false,
         hasFailed: false,
         errorMessage: null,
         infoMessage: 'disconnected_accepted',
       );
-      return;
-    }
-    state = state.copyWith(
-      isConnecting: true,
-      hasFailed: false,
-      errorMessage: null,
-      infoMessage: null,
-    );
-    try {
-      final uniqueId = _ref.read(vehicleProvider).selectedVehicle?.uniqueId;
-      final result = await _ref.read(hardwareBackendProvider).connectSession(
-            uniqueId: uniqueId,
-            disconnected: true,
-          );
-      if (!mounted) return;
-      result.fold(
-        (error) {
-          if (error is NetworkError) {
-            state = state.copyWith(
-              isConnecting: false,
-              hasFailed: false,
-              infoMessage: 'disconnected_accepted',
-            );
-            return;
-          }
-          state = state.copyWith(
-            isConnecting: false,
-            hasFailed: true,
-            error: error,
-          );
-        },
-        (_) async {
-          final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
-          final vUniqueId = selectedVehicle?.uniqueId;
-          final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
-              ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
-          if (targetDeviceId != null) {
-            await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
-          }
-          try {
-            final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
-            await _ref.read(trackingRepositoryProvider).updateConfig(config);
-            await _ref.read(trackingStateProvider.notifier).startTracking();
-          } catch (_) {}
-
-          state = state.copyWith(
-            isConnecting: false,
-            hasFailed: false,
-            infoMessage: 'disconnected_accepted',
-          );
-        },
-      );
-    } catch (e) {
-      if (mounted) {
-        state = state.copyWith(
-          isConnecting: false,
-          hasFailed: false,
-          infoMessage: 'disconnected_accepted',
-        );
-      }
     }
   }
 }
@@ -331,16 +282,19 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
 
     // الانتقال للرئيسية عند النجاح
     ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
+      if (current.infoMessage == 'disconnected_accepted' &&
+          previous?.infoMessage != 'disconnected_accepted') {
+        AppFeedback.info(
+          context,
+          context.loc.serverAcceptedDisconnected,
+        );
+        context.go(AppRoutes.home);
+        return;
+      }
       if (previous != null &&
           previous.isConnecting &&
           !current.isConnecting &&
           !current.hasFailed) {
-        if (current.infoMessage == 'disconnected_accepted') {
-          AppFeedback.info(
-            context,
-            context.loc.serverAcceptedDisconnected,
-          );
-        }
         context.go(AppRoutes.home);
       } else if (previous != null &&
           previous.isConnecting &&
@@ -371,108 +325,137 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // شريط التنبيه الأحمر
-            if (connectionState.hasFailed)
-              Container(
-                color: AppColors.dangerRed,
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.md,
-                  horizontal: AppSpacing.md,
-                ),
-                child: Text(
-                  _friendlyConnectionError(
-                    context,
-                    connectionState.errorMessage,
-                    connectionState.error,
-                    _macController.text,
-                  ),
-                  style: context.styles.button,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SRS 9.3 step 5: the five-item checklist is part of the
-                  // connection screen itself, not only of the failure state.
-                  Text(
-                    context.loc.verifyFollowingItems,
-                    key: const Key('connection_checklist_title'),
-                    style: context.styles.body,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildChecklistItem(context.loc.macEnteredCorrectly),
-                  _buildChecklistItem(context.loc.hardwareProperlyInstalled),
-                  _buildChecklistItem(context.loc.vehiclePowerOn),
-                  _buildChecklistItem(context.loc.bluetoothEnabled),
-                  _buildChecklistItem(context.loc.gpsEnabled),
-                  const SizedBox(height: AppSpacing.lg),
-                  Divider(color: Theme.of(context).dividerColor, height: 1),
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // عنوان حقل MAC
-                  Text(
-                    context.loc.enterMacAddress,
-                    style: context.styles.body,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-
-                  // ✅ حقل إدخال موحد
-                  Form(
-                    key: _macFormKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: AppTextField(
-                      controller: _macController,
-                      hint: 'AA:BB:CC:DD:EE:FF',
-                      keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.done,
-                      maxLength: 17,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F:]')),
-                      ],
-                      onSubmitted: (_) => _attemptConnection(),
-                      validator: (v) => macAddressError(
-                        v,
-                        loc: context.loc,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // شريط التنبيه الأحمر
+                if (connectionState.hasFailed)
+                  Container(
+                    color: AppColors.dangerRed,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                      horizontal: AppSpacing.md,
+                    ),
+                    child: Text(
+                      _friendlyConnectionError(
+                        context,
+                        connectionState.errorMessage,
+                        connectionState.error,
+                        _macController.text,
                       ),
+                      style: context.styles.button,
+                      textAlign: TextAlign.center,
                     ),
                   ),
 
-                  const SizedBox(height: AppSpacing.xl),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // SRS 9.3 step 5: the five-item checklist is part of the
+                      // connection screen itself, not only of the failure state.
+                      Text(
+                        context.loc.verifyFollowingItems,
+                        key: const Key('connection_checklist_title'),
+                        style: context.styles.body,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildChecklistItem(context.loc.macEnteredCorrectly),
+                      _buildChecklistItem(context.loc.hardwareProperlyInstalled),
+                      _buildChecklistItem(context.loc.vehiclePowerOn),
+                      _buildChecklistItem(context.loc.bluetoothEnabled),
+                      _buildChecklistItem(context.loc.gpsEnabled),
+                      const SizedBox(height: AppSpacing.lg),
+                      Divider(color: Theme.of(context).dividerColor, height: 1),
+                      const SizedBox(height: AppSpacing.lg),
 
-                  // ✅ زر اتصال
-                  AppButton(
-                    label: context.loc.connect,
-                    type: EldButtonType.connect,
-                    isLoading: connectionState.isConnecting,
-                    onPressed: connectionState.isConnecting
-                        ? null
-                        : _attemptConnection,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+                      // عنوان حقل MAC
+                      Text(
+                        context.loc.enterMacAddress,
+                        style: context.styles.body,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-                  // ✅ زر متابعة بدون اتصال
-                  AppButton(
-                    label: context.loc.continueDisconnected,
-                    type: EldButtonType.continueDisconnected,
-                    onPressed: connectionState.isConnecting
-                        ? null
-                        : () => ref
-                            .read(eldConnectionProvider.notifier)
-                            .continueDisconnected(),
+                      // ✅ حقل إدخال موحد
+                      Form(
+                        key: _macFormKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: AppTextField(
+                          controller: _macController,
+                          hint: 'AA:BB:CC:DD:EE:FF',
+                          keyboardType: TextInputType.text,
+                          textInputAction: TextInputAction.done,
+                          maxLength: 17,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[0-9a-zA-Z:-]')),
+                          ],
+                          onSubmitted: (_) => _attemptConnection(),
+                          validator: (v) => macAddressError(
+                            v,
+                            loc: context.loc,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // ✅ زر اتصال
+                      AppButton(
+                        label: context.loc.connect,
+                        type: EldButtonType.connect,
+                        isLoading: connectionState.isConnecting,
+                        onPressed: connectionState.isConnecting
+                            ? null
+                            : _attemptConnection,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      // ✅ زر متابعة بدون اتصال
+                      AppButton(
+                        label: context.loc.continueDisconnected,
+                        type: EldButtonType.continueDisconnected,
+                        onPressed: connectionState.isConnecting
+                            ? null
+                            : () => ref
+                                .read(eldConnectionProvider.notifier)
+                                .continueDisconnected(),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (connectionState.isConnecting)
+            Container(
+              color: Colors.black38,
+              alignment: Alignment.center,
+              child: Card(
+                elevation: 8,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.lg,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(width: AppSpacing.md),
+                      Text(
+                        'Connecting to ELD...',
+                        style: context.styles.bodyBold,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

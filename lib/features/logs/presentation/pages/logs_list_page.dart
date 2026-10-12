@@ -62,7 +62,7 @@ class LogsListPage extends ConsumerWidget {
       ),
       body: (logsState.isLoading && logsState.logs.isEmpty)
           ? const Center(child: CircularProgressIndicator())
-          : (logsState.error != null && logsState.logs.isEmpty)
+          : (logsState.error != null && logsState.logs.isEmpty && logsState.error != 'noInternet')
           ? EldRetryView(
               message: anyErrorUserMessage(
                 logsState.error!,

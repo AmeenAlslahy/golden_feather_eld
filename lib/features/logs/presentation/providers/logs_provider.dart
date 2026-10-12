@@ -128,10 +128,14 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     result.match(
       (failure) {
-        state = state.copyWith(
-          isLoading: false,
-          error: failure.message,
-        );
+        if (failure is NetworkFailure || failure.message == 'noInternet') {
+          state = state.copyWith(isLoading: false);
+        } else {
+          state = state.copyWith(
+            isLoading: false,
+            error: failure.message,
+          );
+        }
       },
       (newLogs) {
         final mergedLogs = refresh ? newLogs : [...state.logs, ...newLogs];
@@ -239,10 +243,14 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     result.match(
       (failure) {
-        state = state.copyWith(
-          isLoadingEvents: false,
-          eventsError: failure.message,
-        );
+        if (failure is NetworkFailure || failure.message == 'noInternet') {
+          state = state.copyWith(isLoadingEvents: false);
+        } else {
+          state = state.copyWith(
+            isLoadingEvents: false,
+            eventsError: failure.message,
+          );
+        }
       },
       (events) {
         // نحافظ على حالة التوسيع الحالية للأحداث ذات المعرّف نفسه.

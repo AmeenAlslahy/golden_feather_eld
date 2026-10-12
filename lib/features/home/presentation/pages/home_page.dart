@@ -53,16 +53,25 @@ class HomePage extends ConsumerWidget {
       );
     }
 
-    // الأولوية: بيانات الـ API → بيانات Auth المحلية → نص افتراضي
-    final driverText = statusDashboardState.valueOrNull?.driver.displayText ??
-        // SRS 4.2 — `Name - <driver id>`; the vehicle is not part of the header.
-        (dashboard.driverName != 'Unknown'
-            ? (ref.watch(currentDriverIdProvider) != null
-                ? '${dashboard.driverName} - ${ref.watch(currentDriverIdProvider)}'
-                : dashboard.driverName)
-            : null) ??
-        ref.watch(authStateProvider).user?.fullName ??
-        '';
+    // الأولوية: اسم السائق - معرّف/رقم المركبة (Top Compliance ELD Standard)
+    final rawDriverName = (dashboard.driverName != 'Unknown' && dashboard.driverName.isNotEmpty)
+        ? dashboard.driverName
+        : (ref.watch(authStateProvider).user?.fullName ?? '');
+
+    final vehicleIdentifier = (dashboard.vehicleDisplayName.isNotEmpty &&
+            dashboard.vehicleDisplayName != 'Select a vehicle' &&
+            dashboard.vehicleDisplayName != 'No Vehicle')
+        ? dashboard.vehicleDisplayName
+        : (dashboard.vehicleId.isNotEmpty && dashboard.vehicleId != 'None'
+            ? dashboard.vehicleId
+            : null);
+
+    final driverText = vehicleIdentifier != null
+        ? '$rawDriverName - $vehicleIdentifier'
+        : (statusDashboardState.valueOrNull?.driver.displayText ??
+            (ref.watch(currentDriverIdProvider) != null
+                ? '$rawDriverName - ${ref.watch(currentDriverIdProvider)}'
+                : rawDriverName));
 
     final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
     final isMoving = ref.watch(isVehicleMovingProvider);
@@ -177,7 +186,7 @@ class HomePage extends ConsumerWidget {
               final pages = _pagesFor(ref);
               return Column(
                 children: [
-                  if (!isOnline)
+                  if (!isOnline && currentNavIndex == 0)
                     Container(
                       width: double.infinity,
                       color: Colors.black87,
@@ -188,7 +197,12 @@ class HomePage extends ConsumerWidget {
                         style: const TextStyle(color: AppColors.white, fontSize: 14),
                       ),
                     ),
-                  Expanded(child: pages[currentNavIndex]),
+                  Expanded(
+                    child: IndexedStack(
+                      index: currentNavIndex,
+                      children: pages,
+                    ),
+                  ),
                 ],
               );
             },

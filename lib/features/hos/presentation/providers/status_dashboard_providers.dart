@@ -45,7 +45,7 @@ final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((r
 /// - Loads initial dashboard on first watch.
 /// - Rebuilds when [getStatusDashboardUseCaseProvider] changes.
 /// - Mutations via [changeStatus] update state in place.
-/// - Performs a quiet periodic refresh every minute to keep HOS indicators updated.
+/// - Refreshes reactively on duty status transitions or log data events.
 ///
 /// **Error handling:**
 /// - Errors are surfaced as [AsyncError] with the underlying [Failure].
@@ -53,6 +53,10 @@ final statusDashboardProvider =
     AsyncNotifierProvider<StatusDashboardNotifier, StatusDashboard>(
   StatusDashboardNotifier.new,
 );
+
+/// الطابع الزمني لآخر لقطة لوحة معتمدة من الخادم أو المحرك لحساب الوقت الحي
+final statusDashboardSnapshotTimestampProvider =
+    StateProvider<DateTime>((ref) => DateTime.now());
 
 class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   @override
@@ -86,14 +90,6 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     });
     ref.onDispose(sub.cancel);
 
-    // تحديث دوري هادئ كل دقيقة لتحديث المؤشرات والعدادات
-    // (المؤقت نفسه يبقى حياً — النبضات بلا جلسة تُرفض في refresh أدناه
-    // دون أي HTTP، فلا تُحذف المؤقتات ولا تتغير سياسة المزامنة).
-    final timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      refresh(showLoading: false);
-    });
-    ref.onDispose(timer.cancel);
-
     // P0 leak fix: بلا هوية مثبتة ومستقرة لا يبدأ أي GET (يمنع قراءات
     // نافذة logout والتكتكة بعدها). يُرمى SessionMissing لا NetworkFailure
     // حتى لا يُقرأ كعطل شبكة.
@@ -106,7 +102,11 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     final result = await useCase.execute();
     return result.fold(
       (failure) => throw failure,
-      (dashboard) => dashboard,
+      (dashboard) {
+        ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
+            DateTime.now();
+        return dashboard;
+      },
     );
   }
 
@@ -117,6 +117,8 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   /// تغذية اللوحة مباشرة من استجابة POST تغيير الحالة — بلا شبكة.
   /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
   void applyServerDashboard(StatusDashboard dashboard) {
+    ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
+        DateTime.now();
     state = AsyncValue.data(dashboard);
   }
 
@@ -141,6 +143,8 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
         }
       },
       (dashboard) {
+        ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
+            DateTime.now();
         state = AsyncValue.data(dashboard);
       },
     );

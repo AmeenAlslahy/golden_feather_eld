@@ -42,7 +42,15 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final availableOdometerUnits =
         account?.availableOdometerUnits ?? ['mi', 'km'];
 
-    final currentLanguage = account?.language ?? 'English';
+    final currentLocale = ref.watch(localeProvider);
+    final String currentLanguage;
+    if (currentLocale.languageCode == 'ar') {
+      currentLanguage = 'Arabic';
+    } else if (currentLocale.languageCode == 'es') {
+      currentLanguage = 'Spanish';
+    } else {
+      currentLanguage = 'English';
+    }
     final currentOdometer = account?.odometer ?? 'mi';
 
     return Scaffold(
@@ -168,25 +176,25 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                             : (newValue) async {
                                 if (newValue != null &&
                                     newValue != currentLanguage) {
-                                  final success = await ref
+                                  String code = 'en';
+                                  if (newValue.toLowerCase() == 'arabic' ||
+                                      newValue == 'العربية') {
+                                    code = 'ar';
+                                  } else if (newValue.toLowerCase() ==
+                                          'spanish' ||
+                                      newValue == 'español') {
+                                    code = 'es';
+                                  }
+                                  ref
+                                      .read(localeProvider.notifier)
+                                      .setLocale(code);
+
+                                  ref
                                       .read(accountProvider.notifier)
                                       .updatePreferences(
                                         language: newValue,
                                         odometerUnit: currentOdometer,
                                       );
-                                  if (context.mounted) {
-                                    if (success) {
-                                      String code = 'en';
-                                      if (newValue.toLowerCase() == 'arabic' || newValue == 'العربية') code = 'ar';
-                                      if (newValue.toLowerCase() == 'spanish' || newValue == 'español') code = 'es';
-                                      ref.read(localeProvider.notifier).setLocale(code);
-                                      
-                                      AppFeedback.success(
-                                        context,
-                                        loc.languageUpdatedSuccessfully,
-                                      );
-                                    }
-                                  }
                                 }
                               },
                       ),

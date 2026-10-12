@@ -10,14 +10,20 @@ String anyErrorUserMessage(Object error, {required AppLocalizations loc}) {
     if (error is NetworkFailure || error.message == 'noInternet') {
       return loc.errNoInternet;
     }
-    if (error is ServerFailure && error.message.isNotEmpty && _isSafeUserFacingText(error.message)) {
-      return error.message;
+    if (error is ServerFailure && error.message.isNotEmpty) {
+      final mapped = _mapTechnicalCode(error.message, loc);
+      if (mapped != null) return mapped;
+      if (_isSafeUserFacingText(error.message)) {
+        return error.message;
+      }
     }
     return loc.errRequestFailed;
   }
   if (error is String) {
     final text = error.trim();
     if (text == 'noInternet') return loc.errNoInternet;
+    final mapped = _mapTechnicalCode(text, loc);
+    if (mapped != null) return mapped;
     // Only accept strings that look like safe, curated messages.
     if (_isSafeUserFacingText(text)) return text;
   }
@@ -28,12 +34,16 @@ String appErrorUserMessage(AppError error, {required AppLocalizations loc}) {
   // Server-provided messages are only surfaced when they pass a strict
   // allow-list check (no PII, no stack dumps, no framework names).
   final server = error.context?['serverMessage'];
-  if (server is String && _isSafeUserFacingText(server)) {
-    return server.trim();
+  if (server is String) {
+    final mapped = _mapTechnicalCode(server, loc);
+    if (mapped != null) return mapped;
+    if (_isSafeUserFacingText(server)) return server.trim();
   }
   final nested = error.context?['message'];
-  if (nested is String && _isSafeUserFacingText(nested)) {
-    return nested.trim();
+  if (nested is String) {
+    final mapped = _mapTechnicalCode(nested, loc);
+    if (mapped != null) return mapped;
+    if (_isSafeUserFacingText(nested)) return nested.trim();
   }
 
   return switch (error) {
@@ -47,10 +57,65 @@ String appErrorUserMessage(AppError error, {required AppLocalizations loc}) {
   };
 }
 
+/// Mappings for raw backend error codes or keys like 'validation.badRequest',
+/// 'resource.conflict', 'noInternet', 'server.noResponse', etc.
+String? _mapTechnicalCode(String code, AppLocalizations loc) {
+  final trimmed = code.trim();
+  if (trimmed.isEmpty) return null;
+  final lower = trimmed.toLowerCase();
+
+  if (lower == 'nointernet' ||
+      lower.contains('network') ||
+      lower.contains('no_internet')) {
+    return loc.errNoInternet;
+  }
+  if (lower.contains('badrequest') ||
+      lower.contains('validation') ||
+      lower.contains('bad_request')) {
+    return loc.errServerRejected;
+  }
+  if (lower.contains('notfound') || lower.contains('not_found')) {
+    return loc.errNotFound;
+  }
+  if (lower.contains('unauthorized') ||
+      lower.contains('forbidden') ||
+      lower.contains('permission')) {
+    return loc.errPermissionDenied;
+  }
+  if (lower.contains('session') || lower.contains('token_expired')) {
+    return loc.errSessionExpiredAction;
+  }
+  if (lower.contains('conflict')) {
+    return loc.errServerRejected;
+  }
+  if (lower.contains('server') || lower.contains('internal')) {
+    return loc.errServerError;
+  }
+  if (_looksLikeTechnicalCode(trimmed)) {
+    return loc.errRequestFailed;
+  }
+  return null;
+}
+
+bool _looksLikeTechnicalCode(String text) {
+  final trimmed = text.trim();
+  // Dot-separated codes like "validation.badRequest", "server.noResponse", etc.
+  if (trimmed.contains('.') &&
+      RegExp(r'^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_.-]+)+$').hasMatch(trimmed)) {
+    return true;
+  }
+  // Single token with no spaces like "badRequest", "validationError", "UNAUTHORIZED"
+  if (!trimmed.contains(' ') &&
+      RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmed)) {
+    return true;
+  }
+  return false;
+}
+
 /// Strict gate: only curated, short, PII-free text reaches the driver.
 ///
 /// Rejects anything that looks like a stack trace, framework dump, URL,
-/// email, phone number, long identifier, or an over-long blob.
+/// email, phone number, long identifier, or technical code/extension.
 bool _isSafeUserFacingText(String text) {
   final trimmed = text.trim();
   if (trimmed.isEmpty) return false;
@@ -58,6 +123,7 @@ bool _isSafeUserFacingText(String text) {
   if (_looksLikeServerDump(trimmed)) return false;
   if (_containsPii(trimmed)) return false;
   if (_containsUrl(trimmed)) return false;
+  if (_looksLikeTechnicalCode(trimmed)) return false;
   return true;
 }
 

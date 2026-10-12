@@ -48,6 +48,41 @@ class Vehicle extends Equatable {
 
   String get shortDisplayName => name.isEmpty ? id : '$id - $name';
 
+  Vehicle copyWith({
+    String? id,
+    String? uniqueId,
+    int? deviceId,
+    String? name,
+    String? year,
+    String? type,
+    String? vin,
+    String? trailerId,
+    bool? isAssigned,
+    String? operationalStatus,
+    String? statusReason,
+    bool? inUseByOther,
+    bool? selectedByServer,
+    bool? activeForCurrentDriver,
+  }) {
+    return Vehicle(
+      id: id ?? this.id,
+      uniqueId: uniqueId ?? this.uniqueId,
+      deviceId: deviceId ?? this.deviceId,
+      name: name ?? this.name,
+      year: year ?? this.year,
+      type: type ?? this.type,
+      vin: vin ?? this.vin,
+      trailerId: trailerId ?? this.trailerId,
+      isAssigned: isAssigned ?? this.isAssigned,
+      operationalStatus: operationalStatus ?? this.operationalStatus,
+      statusReason: statusReason ?? this.statusReason,
+      inUseByOther: inUseByOther ?? this.inUseByOther,
+      selectedByServer: selectedByServer ?? this.selectedByServer,
+      activeForCurrentDriver:
+          activeForCurrentDriver ?? this.activeForCurrentDriver,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

@@ -145,7 +145,18 @@ List<String>? _strings(dynamic value) {
   return value.map((item) => item.toString().trim()).where((item) => item.isNotEmpty).toList();
 }
 
-/// `AA:BB:CC:DD:EE:FF` (or `-` separated). Shared by prefill and the
-/// connection form so both agree on what a MAC looks like.
-bool isMacAddress(String value) =>
-    RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$').hasMatch(value.trim());
+/// Accepts standard colon/dash-separated MAC (`AA:BB:CC:DD:EE:FF`),
+/// raw 12-hex MAC, or 4-hex short MAC suffix (`CAE9`) matching real ELD devices.
+bool isMacAddress(String value) {
+  final trimmed = value.trim();
+  if (RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$').hasMatch(trimmed)) {
+    return true;
+  }
+  if (RegExp(r'^[0-9A-Fa-f]{12}$').hasMatch(trimmed)) {
+    return true;
+  }
+  if (RegExp(r'^[0-9A-Fa-f]{4}$').hasMatch(trimmed)) {
+    return true;
+  }
+  return false;
+}

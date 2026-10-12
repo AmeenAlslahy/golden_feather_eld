@@ -105,14 +105,13 @@ final dvirProvider =
     storageService: storageService,
     vehicleId: vehicleId,
   );
-  // Load lazily here (outside the constructor) so the constructor is pure.
-  notifier.refresh();
   return notifier;
 });
 
 class DvirNotifier extends StateNotifier<DvirState> {
   final DvirRepository _repository;
   final String? _vehicleId;
+  Future<void>? _inFlightLoad;
 
   DvirNotifier({
     required DvirRepository repository,
@@ -150,6 +149,17 @@ class DvirNotifier extends StateNotifier<DvirState> {
   }
 
   Future<void> _loadDvirs({bool background = false}) async {
+    if (_inFlightLoad != null) return _inFlightLoad!;
+    final future = _performLoadDvirs(background: background);
+    _inFlightLoad = future;
+    try {
+      await future;
+    } finally {
+      _inFlightLoad = null;
+    }
+  }
+
+  Future<void> _performLoadDvirs({bool background = false}) async {
     // Explicitly clear the error when starting a fresh load.
     if (!background) {
       state = state.copyWith(isLoading: true, error: null);

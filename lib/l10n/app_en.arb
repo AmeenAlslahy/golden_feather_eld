@@ -853,7 +853,7 @@
   "gpsTurnedOff": "GPS is turned off.",
   "serverReportsEldAlert": "The server reports an ELD operational alert. Open the Connection screen for details.",
   "operationalAlertTooltip": "Operational alert",
-  "noInternetBanner": "No internet. You can continue with saved data.",
+  "noInternetBanner": "Offline mode. Check your internet connection.",
   "dvirSatisfactory": "Vehicle Condition Satisfactory",
   "dvirHasDefects": "Has Defects",
   "dvirDefectsCorrected": "Defects Corrected",

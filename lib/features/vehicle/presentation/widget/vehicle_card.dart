@@ -14,12 +14,14 @@ import '../../domain/entities/vehicle.dart';
 class VehicleCard extends StatelessWidget {
   final Vehicle vehicle;
   final bool operable;
+  final bool isCurrent;
   final VoidCallback onTap;
 
   const VehicleCard({
     super.key,
     required this.vehicle,
     required this.operable,
+    this.isCurrent = false,
     required this.onTap,
   });
 
@@ -78,6 +80,12 @@ class VehicleCard extends StatelessWidget {
   }
 
   AppStatusBadge? _rowBadge(AppLocalizations loc) {
+    if (isCurrent || vehicle.activeForCurrentDriver == true) {
+      return AppStatusBadge(
+        label: loc.currentVehicle,
+        type: AppStatusBadgeType.success,
+      );
+    }
     if (vehicle.inUseByOther == true) {
       return AppStatusBadge(label: loc.inUse, type: AppStatusBadgeType.error);
     }
@@ -90,7 +98,7 @@ class VehicleCard extends StatelessWidget {
     if (vehicle.isAssigned) {
       return AppStatusBadge(
         label: loc.assignedToYou,
-        type: AppStatusBadgeType.success,
+        type: AppStatusBadgeType.info,
       );
     }
     return null;

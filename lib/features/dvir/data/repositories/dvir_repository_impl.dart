@@ -27,6 +27,12 @@ class DvirRepositoryImpl implements DvirRepository {
   final OfflineQueue offlineQueue;
   final Uuid _uuid;
 
+  final Map<String, Future<Either<Failure, List<DvirReport>>>> _inFlightReports = {};
+  final Map<String, Future<Either<Failure, DvirReport?>>> _inFlightPrevious = {};
+  final Map<String, Future<Either<Failure, List<DvirDefect>>>> _inFlightDefects = {};
+  final Map<String, List<DvirReport>> _cachedReports = {};
+  final Map<String, DvirReport?> _cachedPrevious = {};
+
   DvirRepositoryImpl({
     required this.dvirBackend,
     required this.networkInfo,
@@ -42,13 +48,35 @@ class DvirRepositoryImpl implements DvirRepository {
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
     String vehicleId,
   ) async {
+    final key = vehicleId.trim();
+    if (_inFlightReports.containsKey(key)) {
+      return _inFlightReports[key]!;
+    }
+    final future = _fetchDvirReports(vehicleId);
+    _inFlightReports[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightReports.remove(key);
+    }
+  }
+
+  Future<Either<Failure, List<DvirReport>>> _fetchDvirReports(
+    String vehicleId,
+  ) async {
+    final key = vehicleId.trim();
     return guardedNetwork(networkInfo, () async {
       // معرّف غير معيّن (فارغ أو "No Vehicle") يعني قائمة بلا تصفية مركبة.
       final result = isUnassignedVehicleId(vehicleId)
           ? await dvirBackend.list()
           : await dvirBackend.list(uniqueId: vehicleId);
 
-      return result.fold((error) => Left(_failure(error)), (
+      return result.fold((error) {
+        if (_cachedReports.containsKey(key)) {
+          return Right(_cachedReports[key]!);
+        }
+        return Left(_failure(error));
+      }, (
         rawJson,
       ) {
         final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
@@ -56,13 +84,31 @@ class DvirRepositoryImpl implements DvirRepository {
           final dto = DvirDto.fromJson(json as Map<String, dynamic>);
           return _mapDtoToEntity(dto);
         }).toList();
+        _cachedReports[key] = reports;
         return Right(reports);
       });
+    }, offline: () async {
+      return Right(_cachedReports[key] ?? const []);
     });
   }
 
   @override
   Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
+    final key = vehicleId.trim();
+    if (_inFlightPrevious.containsKey(key)) {
+      return _inFlightPrevious[key]!;
+    }
+    final future = _fetchPreviousDvir(vehicleId);
+    _inFlightPrevious[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightPrevious.remove(key);
+    }
+  }
+
+  Future<Either<Failure, DvirReport?>> _fetchPreviousDvir(String vehicleId) async {
+    final key = vehicleId.trim();
     return guardedNetwork(networkInfo, () async {
       if (isUnassignedVehicleId(vehicleId)) {
         return const Right(null);
@@ -74,7 +120,12 @@ class DvirRepositoryImpl implements DvirRepository {
         AppLogger.error('DvirRepository: pre-trip read failed', e, stackTrace);
         return const Left(ServerFailure(message: 'pre-trip read failed'));
       }
-      return result.fold((error) => Left(_failure(error)), (
+      return result.fold((error) {
+        if (_cachedPrevious.containsKey(key)) {
+          return Right(_cachedPrevious[key]);
+        }
+        return Left(_failure(error));
+      }, (
         raw,
       ) {
         final nested = raw['data'];
@@ -83,6 +134,7 @@ class DvirRepositoryImpl implements DvirRepository {
         if (body['hasPreviousDvir'] == false ||
             (raw['data'] == null && body['hasPreviousDvir'] != true) ||
             (body['message'] == 'No Records' && body['hasPreviousDvir'] != true)) {
+          _cachedPrevious[key] = null;
           return const Right(null);
         }
         final candidate = _previousDvirObject(body);
@@ -94,10 +146,13 @@ class DvirRepositoryImpl implements DvirRepository {
               ServerFailure(message: 'pre-trip body has no DVIR'),
             );
           }
+          _cachedPrevious[key] = null;
           return const Right(null);
         }
         try {
-          return Right(_mapDtoToEntity(DvirDto.fromJson(candidate)));
+          final mapped = _mapDtoToEntity(DvirDto.fromJson(candidate));
+          _cachedPrevious[key] = mapped;
+          return Right(mapped);
         } catch (e, stackTrace) {
           AppLogger.error(
             'DvirRepository: pre-trip body unreadable',
@@ -107,6 +162,8 @@ class DvirRepositoryImpl implements DvirRepository {
           return const Left(ServerFailure(message: 'pre-trip body unreadable'));
         }
       });
+    }, offline: () async {
+      return Right(_cachedPrevious[key]);
     });
   }
 
@@ -161,6 +218,8 @@ class DvirRepositoryImpl implements DvirRepository {
             ? const Left(ServerFailure(message: 'catalog body is not a list'))
             : Right(items);
       });
+    }, offline: () async {
+      return const Right([]);
     });
   }
 
@@ -182,6 +241,22 @@ class DvirRepositoryImpl implements DvirRepository {
   Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
     required String uniqueId,
   }) async {
+    final key = uniqueId.trim();
+    if (_inFlightDefects.containsKey(key)) {
+      return _inFlightDefects[key]!;
+    }
+    final future = _fetchActiveDefects(uniqueId);
+    _inFlightDefects[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightDefects.remove(key);
+    }
+  }
+
+  Future<Either<Failure, List<DvirDefect>>> _fetchActiveDefects(
+    String uniqueId,
+  ) async {
     return guardedNetwork(networkInfo, () async {
       final result = await dvirBackend.getVehicleDefects(uniqueId);
       return result.fold((error) => Left(_failure(error)), (raw) {
@@ -190,6 +265,8 @@ class DvirRepositoryImpl implements DvirRepository {
             ? const Left(ServerFailure(message: 'vehicleDefectsUnreadable'))
             : Right(defects);
       });
+    }, offline: () async {
+      return const Right([]);
     });
   }
 

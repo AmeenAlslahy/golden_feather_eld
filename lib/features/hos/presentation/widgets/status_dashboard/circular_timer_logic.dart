@@ -45,10 +45,9 @@ class CircularTimerLogic {
       HosIndicator? ind, Duration limit, Duration fallback) {
     if (ind == null) return fallback;
     if (ind.type == IndicatorType.used) {
-      final left = limit - ind.value;
-      return left.isNegative ? Duration.zero : left;
+      return limit - ind.value;
     }
-    return ind.value > Duration.zero ? ind.value : fallback;
+    return ind.value;
   }
 
   /// يطبق القواعد لاختيار أضيق حد وحساب الوقت الحي
@@ -73,7 +72,7 @@ class CircularTimerLogic {
       baseRemaining = _remainingOf(
         hosIndicators?.drive,
         totalLimit,
-        circle.remaining > Duration.zero ? circle.remaining : totalLimit,
+        circle.remaining,
       );
     } else {
       // On Duty / Yard Move: الحد الحاكم هو الوردية 14 ساعة أو الاستراحة 8 ساعات
@@ -90,14 +89,14 @@ class CircularTimerLogic {
         baseRemaining = _remainingOf(
           breakVal,
           totalLimit,
-          circle.remaining > Duration.zero ? circle.remaining : totalLimit,
+          circle.remaining,
         );
       } else {
         totalLimit = const Duration(hours: 14);
         baseRemaining = _remainingOf(
           shiftVal,
           totalLimit,
-          circle.remaining > Duration.zero ? circle.remaining : totalLimit,
+          circle.remaining,
         );
       }
     }

@@ -108,6 +108,20 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, DailyLog>> getLogById(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
+      final owner = await _localDataSource.ownerOfCachedLog(logId.value);
+      if (owner != null) {
+        final cached = await _localDataSource.getCachedDailyLogs(owner);
+        if (cached != null) {
+          final found = cached
+              .where((m) =>
+                  m['id'] == logId.value ||
+                  m['id']?.toString() == logId.value.toString())
+              .toList();
+          if (found.isNotEmpty) {
+            return Right(DailyLogDto.fromJson(found.first).toEntity());
+          }
+        }
+      }
       return const Left(NetworkFailure());
     }
     return executeWithHandling(() async {

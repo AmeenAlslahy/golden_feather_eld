@@ -52,7 +52,12 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     bool disconnected = false,
   }) async {
-    throw UnimplementedError('MockHardwareBackend.connectSession — not implemented');
+    return ok(<String, dynamic>{
+      'status': 'success',
+      'message': 'connected',
+      'uniqueId': uniqueId,
+      'disconnected': disconnected,
+    });
   }
 
   @override

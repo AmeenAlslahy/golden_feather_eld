@@ -12,6 +12,7 @@ import '../../../domain/entities/daily_log.dart';
 import '../../../domain/entities/log_readiness.dart';
 import '../../pages/edit_log_page.dart';
 import '../../providers/certify_log_provider.dart';
+import '../../providers/log_detail_tab_provider.dart';
 import 'pending_carrier_edits_section.dart';
 
 class CertifyTab extends ConsumerStatefulWidget {
@@ -90,12 +91,22 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
       );
     }
 
-    final readinessData = state.readinessData;
-    if (readinessData == null) {
-      return const SizedBox.shrink();
-    }
+    final readinessData = state.readinessData ??
+        LogReadiness(
+          dailyLogId: widget.selectedLog.id.value,
+          driverId: 0,
+          driverName: widget.selectedLog.driverName ?? '',
+          logDate: widget.selectedLog.date.toIso8601String().split('T').first,
+          readinessStatus:
+              widget.selectedLog.isFormComplete ? 'READY' : 'NOT_READY',
+          missingRequirements: widget.selectedLog.isFormComplete
+              ? const []
+              : [context.loc.fillFormFirst],
+          legalStatement: context.loc.certifyLegalStatement,
+          availableActions: const ['CERTIFY'],
+        );
 
-    if (!state.isReady) {
+    if (!state.isReady && state.readinessData != null) {
       return _buildNotReadyView(context, notifier, readinessData, state.isLoading);
     }
 
@@ -179,7 +190,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           AppButton(
             label: context.loc.notReady,
             type: EldButtonType.secondary,
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () {
+              ref.read(logDetailTabProvider.notifier).state = 0;
+            },
           ),
         ],
       ),
@@ -241,7 +254,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             AppButton(
               label: context.loc.notReady,
               type: EldButtonType.secondary,
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () {
+                _signatureController.clear();
+              },
             ),
             const SizedBox(height: AppSpacing.md),
             AppButton(

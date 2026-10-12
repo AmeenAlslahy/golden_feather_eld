@@ -205,6 +205,7 @@ class CoDriverNotifier extends StateNotifier<CoDriverState> {
   void selectCoDriver(CoDriver driver) {
     state = state.copyWith(
       selectedCoDriver: driver.id == 'none' ? null : driver,
+      error: null,
     );
   }
 

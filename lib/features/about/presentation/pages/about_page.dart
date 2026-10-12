@@ -13,10 +13,8 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
-import '../../../connection/presentation/pages/diagnostics_page.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
-import '../../../connection/presentation/widgets/eld_diagnostics_section.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// مزود معلومات حزمة التطبيق

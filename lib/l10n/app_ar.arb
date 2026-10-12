@@ -846,7 +846,7 @@
   "gpsTurnedOff": "نظام تحديد المواقع مغلق.",
   "serverReportsEldAlert": "الخادم يبلّغ عن تنبيه تشغيلي في جهاز ELD. افتح شاشة الاتصال للتفاصيل.",
   "operationalAlertTooltip": "تنبيه تشغيلي",
-  "noInternetBanner": "لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.",
+  "noInternetBanner": "وضع عدم الاتصال. تحقق من اتصالك بالإنترنت.",
   "dvirSatisfactory": "حالة المركبة مرضية",
   "dvirHasDefects": "توجد عيوب",
   "dvirDefectsCorrected": "تم إصلاح العيوب",

@@ -30,10 +30,10 @@ class LogDetailPage extends ConsumerWidget {
       );
     }
 
-    final allLogs = logsState.logs;
-    final logIndex = allLogs.indexWhere((l) => l.id == selectedLog.id);
-    final hasNextDay = logIndex > 0;
-    final hasPrevDay = logIndex >= 0 && logIndex < allLogs.length - 1;
+    // final allLogs = logsState.logs;
+    // final logIndex = allLogs.indexWhere((l) => l.id == selectedLog.id);
+    // final hasNextDay = logIndex > 0;
+    // final hasPrevDay = logIndex >= 0 && logIndex < allLogs.length - 1;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

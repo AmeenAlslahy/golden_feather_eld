@@ -20,52 +20,54 @@ class RecapPage extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surface,
       child: recapAsync.when(
         data: (data) {
-          return Column(
-            children: [
-              // 7 Days Table
-              if (data.days.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(
-                    child: Text(
-                      'No Records Found',
-                      style: context.styles.muted,
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // 7 Days Table
+                if (data.days.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        'No Records Found',
+                        style: context.styles.muted,
+                      ),
+                    ),
+                  )
+                else
+                  ...data.days.map(
+                    (dayData) => _buildRow(
+                      context,
+                      title: dayData.dayOfWeek,
+                      subtitle: DateFormat.MMMd(Localizations.localeOf(context).languageCode)
+                          .format(dayData.date),
+                      value: DurationFormat.decimalHours(dayData.totalWork),
                     ),
                   ),
-                )
-              else
-                ...data.days.map(
-                  (dayData) => _buildRow(
-                    context,
-                    title: dayData.dayOfWeek,
-                    subtitle: DateFormat.MMMd(Localizations.localeOf(context).languageCode)
-                        .format(dayData.date),
-                    value: DurationFormat.decimalHours(dayData.totalWork),
-                  ),
+                _buildRow(
+                  context,
+                  title: context.loc.total,
+                  subtitle: context.loc.last7Days,
+                  value: DurationFormat.decimalHours(data.cycleUsed),
+                  isTotal: true,
                 ),
-              _buildRow(
-                context,
-                title: context.loc.total,
-                subtitle: context.loc.last7Days,
-                value: DurationFormat.decimalHours(data.cycleUsed),
-                isTotal: true,
-              ),
-              _buildRow(
-                context,
-                title: context.loc.hoursWorkedToday,
-                value: DurationFormat.decimalHours(data.todayWork),
-              ),
-              _buildRow(
-                context,
-                title: context.loc.hoursAvailableToday,
-                value: DurationFormat.decimalHours(data.cycleRemaining),
-              ),
-              _buildRow(
-                context,
-                title: context.loc.hoursAvailableTomorrow,
-                value: DurationFormat.decimalHours(data.availableTomorrow),
-              ),
-            ],
+                _buildRow(
+                  context,
+                  title: context.loc.hoursWorkedToday,
+                  value: DurationFormat.decimalHours(data.todayWork),
+                ),
+                _buildRow(
+                  context,
+                  title: context.loc.hoursAvailableToday,
+                  value: DurationFormat.decimalHours(data.cycleRemaining),
+                ),
+                _buildRow(
+                  context,
+                  title: context.loc.hoursAvailableTomorrow,
+                  value: DurationFormat.decimalHours(data.availableTomorrow),
+                ),
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

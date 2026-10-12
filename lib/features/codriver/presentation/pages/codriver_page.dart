@@ -164,7 +164,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           if (codriverState.error != null) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              codriverState.error!,
+                              anyErrorUserMessage(codriverState.error!, loc: loc),
                               textAlign: TextAlign.center,
                               style: context.styles.error,
                             ),
@@ -448,14 +448,16 @@ class _LinkedCoDriver extends StatelessWidget {
   Widget build(BuildContext context) {
     final linked = state.currentCoDriver;
     final String value;
-    if (state.currentError != null) {
-      value = state.currentError!;
-    } else if (linked == null) {
-      value = loc.coDriverLinkNotRead;
-    } else if (!linked.isLinked) {
-      value = loc.coDriverLinkNone;
-    } else {
+    final bool isError;
+    if (linked != null && linked.isLinked) {
       value = linked.name ?? linked.coDriverId.toString();
+      isError = false;
+    } else if (state.currentError != null && state.currentError != 'noInternet') {
+      value = anyErrorUserMessage(state.currentError!, loc: loc);
+      isError = true;
+    } else {
+      value = loc.coDriverLinkNone;
+      isError = false;
     }
     // SRS 10.3: the team state is read from the server link
     // (`teamDrivingActive`); the app does not infer who is driving.
@@ -477,9 +479,9 @@ class _LinkedCoDriver extends StatelessWidget {
         Text(
           value,
           textAlign: TextAlign.center,
-          style: state.currentError == null
-              ? context.styles.subtitle
-              : context.styles.error,
+          style: isError
+              ? context.styles.error
+              : context.styles.subtitle,
         ),
         if (teamBadge != null) ...[
           const SizedBox(height: AppSpacing.xs),

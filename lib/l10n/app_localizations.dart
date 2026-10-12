@@ -4699,7 +4699,7 @@ abstract class AppLocalizations {
   /// No description provided for @noInternetBanner.
   ///
   /// In ar, this message translates to:
-  /// **'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.'**
+  /// **'وضع عدم الاتصال. تحقق من اتصالك بالإنترنت.'**
   String get noInternetBanner;
 
   /// No description provided for @dvirSatisfactory.

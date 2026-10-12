@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../routes.dart';
 import '../../domain/entities/daily_log.dart';
 import '../providers/logs_provider.dart';
@@ -96,11 +95,11 @@ class SuggestedEventsPage extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
             ],
-            Text(
-              context.loc.unidentifiedDrivingIsReviewedInUnidentified,
-              textAlign: TextAlign.center,
-              style: context.styles.body,
-            ),
+            // Text(
+            //   context.loc.unidentifiedDrivingIsReviewedInUnidentified,
+            //   textAlign: TextAlign.center,
+            //   style: context.styles.body,
+            // ),
             /// TODO: لا تقم بتفعيلها
             // const SizedBox(height: AppSpacing.xl),
             // AppButton(

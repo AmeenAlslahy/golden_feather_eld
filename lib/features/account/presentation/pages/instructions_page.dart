@@ -11,12 +11,19 @@ import '../../../../l10n/app_localizations.dart';
 /// three separate items). `all` keeps the combined Instructions view.
 enum InstructionsSection { all, inspection, sendLogs, malfunction }
 
-class InstructionsPage extends StatelessWidget {
+class InstructionsPage extends StatefulWidget {
   const InstructionsPage({super.key, this.section = InstructionsSection.all});
 
   final InstructionsSection section;
 
-  String _title(AppLocalizations loc) => switch (section) {
+  @override
+  State<InstructionsPage> createState() => _InstructionsPageState();
+}
+
+class _InstructionsPageState extends State<InstructionsPage> {
+  int? _zoomedSectionIndex;
+
+  String _title(AppLocalizations loc) => switch (widget.section) {
     InstructionsSection.all => loc.instructions,
     InstructionsSection.inspection => loc.inspectionMode,
     InstructionsSection.sendLogs => loc.dataTransferInstructionSheet,
@@ -25,64 +32,87 @@ class InstructionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showAll = section == InstructionsSection.all;
+    final showAll = widget.section == InstructionsSection.all;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_zoomedSectionIndex != null) {
+              setState(() => _zoomedSectionIndex = null);
+            } else {
+              Navigator.pop(context);
+            }
+          },
         ),
         title: Text(_title(context.loc), style: context.styles.appBarTitle),
       ),
-      body: ListView(
-        key: Key('instructions_${section.name}'),
-        padding: EdgeInsets.zero,
+      body: Stack(
         children: [
-          // Section 1: Inspection Mode
-          if (showAll || section == InstructionsSection.inspection)
-            _wrapTappableSection(
-              context: context,
-              title: _title(context.loc),
-              sectionWidget: _buildInspectionModeSection(context),
-            ),
+          ListView(
+            key: Key('instructions_${widget.section.name}'),
+            padding: EdgeInsets.zero,
+            children: [
+              // Section 1: Inspection Mode
+              if (showAll || widget.section == InstructionsSection.inspection)
+                InkWell(
+                  onTap: () => setState(() => _zoomedSectionIndex = 1),
+                  child: _buildInspectionModeSection(context),
+                ),
 
-          // Section 2: Send Logs (Data Transfer Instruction Sheet)
-          if (showAll || section == InstructionsSection.sendLogs)
-            _wrapTappableSection(
-              context: context,
-              title: _title(context.loc),
-              sectionWidget: _buildSendLogsSection(context),
-            ),
+              // Section 2: Send Logs (Data Transfer Instruction Sheet)
+              if (showAll || widget.section == InstructionsSection.sendLogs)
+                InkWell(
+                  onTap: () => setState(() => _zoomedSectionIndex = 2),
+                  child: _buildSendLogsSection(context),
+                ),
 
-          // Section 3: Malfunction Manual
-          if (showAll || section == InstructionsSection.malfunction)
-            _wrapTappableSection(
-              context: context,
-              title: _title(context.loc),
-              sectionWidget: _buildMalfunctionManualSection(context),
+              // Section 3: Malfunction Manual
+              if (showAll || widget.section == InstructionsSection.malfunction)
+                InkWell(
+                  onTap: () => setState(() => _zoomedSectionIndex = 3),
+                  child: _buildMalfunctionManualSection(context),
+                ),
+            ],
+          ),
+          if (_zoomedSectionIndex != null)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _zoomedSectionIndex = null),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.85),
+                  alignment: Alignment.center,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 3.5,
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: _getSectionWidget(_zoomedSectionIndex!, context),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _wrapTappableSection({
-    required BuildContext context,
-    required String title,
-    required Widget sectionWidget,
-  }) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                ZoomableSectionPage(title: title, content: sectionWidget),
-          ),
-        );
-      },
-      child: sectionWidget,
-    );
+  Widget _getSectionWidget(int index, BuildContext context) {
+    switch (index) {
+      case 1:
+        return _buildInspectionModeSection(context);
+      case 2:
+        return _buildSendLogsSection(context);
+      case 3:
+        return _buildMalfunctionManualSection(context);
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildInspectionModeSection(BuildContext context) {
@@ -395,106 +425,6 @@ class InstructionsPage extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: const Icon(Icons.cable, size: 14, color: AppColors.white),
-    );
-  }
-}
-
-class ZoomableSectionPage extends StatefulWidget {
-  final String title;
-  final Widget content;
-
-  const ZoomableSectionPage({
-    super.key,
-    required this.title,
-    required this.content,
-  });
-
-  @override
-  State<ZoomableSectionPage> createState() => _ZoomableSectionPageState();
-}
-
-class _ZoomableSectionPageState extends State<ZoomableSectionPage> {
-  final TransformationController _controller = TransformationController();
-
-  void _zoomIn() {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-    if (currentScale < 3.0) {
-      final matrix = _controller.value.clone();
-      matrix.scaleByDouble(1.2, 1.2, 1.2, 1.0);
-      _controller.value = matrix;
-    }
-  }
-
-  void _zoomOut() {
-    final currentScale = _controller.value.getMaxScaleOnAxis();
-    if (currentScale > 1.0) {
-      final matrix = _controller.value.clone();
-      matrix.scaleByDouble(0.8, 0.8, 0.8, 1.0);
-      if (matrix.getMaxScaleOnAxis() < 1.0) {
-        matrix.setIdentity();
-      }
-      _controller.value = matrix;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(widget.title, style: context.styles.appBarTitle),
-      ),
-      body: Stack(
-        children: [
-          InteractiveViewer(
-            transformationController: _controller,
-            minScale: 1.0,
-            maxScale: 4.0,
-            child: Center(
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: widget.content,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 16,
-            top: 16,
-            child: Column(
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'btn_zoom_in',
-                  onPressed: _zoomIn,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Icon(
-                    Icons.add,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton.small(
-                  heroTag: 'btn_zoom_out',
-                  onPressed: _zoomOut,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Icon(
-                    Icons.remove,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

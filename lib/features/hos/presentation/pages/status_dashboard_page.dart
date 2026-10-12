@@ -43,6 +43,8 @@ class _DashboardView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final snapshotTimestamp =
+        ref.watch(statusDashboardSnapshotTimestampProvider);
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
@@ -56,6 +58,7 @@ class _DashboardView extends ConsumerWidget {
                 statusLabel: dashboard.currentDutyStatus.displayName(context),
                 dutyStatus: dashboard.currentDutyStatus,
                 hosIndicators: dashboard.hosIndicators,
+                snapshotTimestamp: snapshotTimestamp,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(

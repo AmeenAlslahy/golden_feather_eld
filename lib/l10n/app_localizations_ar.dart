@@ -2460,8 +2460,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get operationalAlertTooltip => 'تنبيه تشغيلي';
 
   @override
-  String get noInternetBanner =>
-      'لا يوجد إنترنت. يمكنك المتابعة وعرض البيانات المحفوظة.';
+  String get noInternetBanner => 'وضع عدم الاتصال. تحقق من اتصالك بالإنترنت.';
 
   @override
   String get dvirSatisfactory => 'حالة المركبة مرضية';

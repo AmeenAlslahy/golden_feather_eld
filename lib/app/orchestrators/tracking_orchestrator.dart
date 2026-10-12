@@ -11,6 +11,7 @@ import '../../domain/hardware/telemetry_reading.dart';
 import '../../domain/shared/value_objects.dart';
 import '../../backend/providers/backend_providers.dart';
 import '../../core/constants/fmcsa_constants.dart';
+import '../../core/events/app_events.dart';
 
 final trackingOrchestratorProvider = Provider<void>((ref) {
   final notifier = ref.read(trackingStateProvider.notifier);
@@ -59,8 +60,17 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
       ref.read(hardwareBackendProvider).sendTelemetry(reading).then((result) {
         result.fold(
           (err) => AppLogger.warning('Telemetry send failed: ${err.code}'),
-          (_) => AppLogger.info(
-              '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s'),
+          (data) {
+            AppLogger.info(
+                '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s');
+            final dynamic json = data;
+            final inner =
+                json is Map && json['data'] is Map ? json['data'] : json;
+            if (inner is Map && inner['transitionedToDriving'] == true) {
+              AppLogger.info('🚗 Server reported transitionedToDriving=true');
+              ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
+            }
+          },
         );
       });
     }

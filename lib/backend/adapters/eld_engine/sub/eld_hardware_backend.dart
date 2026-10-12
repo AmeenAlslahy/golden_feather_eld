@@ -13,8 +13,9 @@ import '../mappers/hardware_mapper.dart';
 /// **Status:** Skeleton — implemented in Phase 2.
 class EldHardwareBackend implements HardwareBackend {
   final ApiClient _apiClient;
+  final Map<String, Future<Result<RawJson>>> _inFlightStatus = {};
 
-  const EldHardwareBackend(this._apiClient);
+  EldHardwareBackend(this._apiClient);
 
   @override
   Future<Result<RawJson>> getAlerts({DriverId? driverId}) async {
@@ -83,6 +84,23 @@ class EldHardwareBackend implements HardwareBackend {
 
   @override
   Future<Result<RawJson>> getStatus({
+    String? uniqueId,
+    DriverId? driverId,
+  }) async {
+    final key = '${uniqueId ?? ''}:${driverId?.value ?? ''}';
+    if (_inFlightStatus.containsKey(key)) {
+      return _inFlightStatus[key]!;
+    }
+    final future = _fetchStatus(uniqueId: uniqueId, driverId: driverId);
+    _inFlightStatus[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlightStatus.remove(key);
+    }
+  }
+
+  Future<Result<RawJson>> _fetchStatus({
     String? uniqueId,
     DriverId? driverId,
   }) async {

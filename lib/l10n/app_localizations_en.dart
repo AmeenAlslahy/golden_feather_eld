@@ -2471,7 +2471,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetBanner =>
-      'No internet. You can continue with saved data.';
+      'Offline mode. Check your internet connection.';
 
   @override
   String get dvirSatisfactory => 'Vehicle Condition Satisfactory';

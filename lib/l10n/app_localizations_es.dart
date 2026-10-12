@@ -2493,7 +2493,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noInternetBanner =>
-      'Sin internet. Puede continuar con datos guardados.';
+      'Modo sin conexión. Compruebe su conexión a Internet.';
 
   @override
   String get dvirSatisfactory => 'Condición del vehículo Satisfactoria';
@@ -3073,24 +3073,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dutyChangeTimeUnavailable =>
-      'لم يُسجل الواجب لأن وقت الخادم غير متاح.';
+      'No se registró el estado de servicio porque la hora del servidor no está disponible.';
 
   @override
-  String get dutyChangeNotReady => 'حالة الواجب غير جاهزة.';
+  String get dutyChangeNotReady => 'El estado de servicio no está listo.';
 
   @override
-  String get dutyChangeUnmapped => 'حالة الواجب غير معروفة.';
+  String get dutyChangeUnmapped => 'El estado de servicio no es reconocido.';
 
   @override
   String get dutyChangeServerRejected =>
-      'لم يقبل الخادم تغيير الحالة. تحقق من الاتصال وحاول مجدداً.';
+      'El servidor no aceptó el cambio de estado de servicio. Verifique su conexión e intente nuevamente.';
 
   @override
-  String get dutyChangeAccepted => 'قبل الخادم تغيير حالة الواجب.';
+  String get dutyChangeAccepted =>
+      'El servidor aceptó el cambio de estado de servicio.';
 
   @override
   String get annotationRequiredForPcYm =>
-      'يجب كتابة ملاحظة للقيادة الشخصية أو حركة الساحة.';
+      'Se requiere una anotación para transporte personal o movimientos de patio.';
 
   @override
   String get unknownAction => 'Acción Desconocida';

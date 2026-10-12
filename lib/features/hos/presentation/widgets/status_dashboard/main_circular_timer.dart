@@ -17,6 +17,7 @@ class MainCircularTimer extends StatefulWidget {
   final DutyStatusCode? dutyStatus;
   final HosIndicators? hosIndicators;
   final VoidCallback? onTap;
+  final DateTime? snapshotTimestamp;
 
   const MainCircularTimer({
     super.key,
@@ -25,32 +26,52 @@ class MainCircularTimer extends StatefulWidget {
     this.dutyStatus,
     this.hosIndicators,
     this.onTap,
+    this.snapshotTimestamp,
   });
 
   @override
   State<MainCircularTimer> createState() => _MainCircularTimerState();
 }
 
-class _MainCircularTimerState extends State<MainCircularTimer> {
+class _MainCircularTimerState extends State<MainCircularTimer>
+    with AutomaticKeepAliveClientMixin {
   Timer? _ticker;
   late final Stopwatch _stopwatch;
   late final ValueNotifier<Duration> _elapsedNotifier;
 
   @override
+  bool get wantKeepAlive => true;
+
+  Duration _computeElapsed() {
+    if (widget.snapshotTimestamp != null) {
+      final diff = DateTime.now().difference(widget.snapshotTimestamp!);
+      return diff.isNegative ? Duration.zero : diff;
+    }
+    return _stopwatch.elapsed;
+  }
+
+  @override
   void initState() {
     super.initState();
     _stopwatch = Stopwatch()..start();
-    _elapsedNotifier = ValueNotifier(Duration.zero);
+    _elapsedNotifier = ValueNotifier(_computeElapsed());
     _startTickerIfNeeded();
   }
 
   @override
   void didUpdateWidget(MainCircularTimer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.circle.remaining != widget.circle.remaining ||
-        oldWidget.dutyStatus != widget.dutyStatus ||
-        oldWidget.hosIndicators != widget.hosIndicators) {
+    if (oldWidget.snapshotTimestamp != widget.snapshotTimestamp ||
+        oldWidget.dutyStatus != widget.dutyStatus) {
       _stopwatch.reset();
+      _stopwatch.start();
+      _elapsedNotifier.value = _computeElapsed();
+      _startTickerIfNeeded();
+    } else if (widget.snapshotTimestamp == null &&
+        (oldWidget.circle.remaining != widget.circle.remaining ||
+            oldWidget.hosIndicators != widget.hosIndicators)) {
+      _stopwatch.reset();
+      _stopwatch.start();
       _elapsedNotifier.value = Duration.zero;
       _startTickerIfNeeded();
     }
@@ -71,7 +92,7 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
     _ticker = null;
     if (_isActiveDuty) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) _elapsedNotifier.value = _stopwatch.elapsed;
+        if (mounted) _elapsedNotifier.value = _computeElapsed();
       });
     }
   }
@@ -86,6 +107,7 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     return LayoutBuilder(
@@ -137,9 +159,7 @@ class _MainCircularTimerState extends State<MainCircularTimer> {
 
                   final timeString = isRest
                       ? '00:00'
-                      : DurationFormat.hhMm(
-                          liveRemaining.isNegative ? Duration.zero : liveRemaining,
-                        );
+                      : DurationFormat.hhMm(liveRemaining, signed: true);
 
                   return Semantics(
                     button: widget.onTap != null,

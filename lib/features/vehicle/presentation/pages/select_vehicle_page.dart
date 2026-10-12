@@ -6,7 +6,6 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
-import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/vehicle_selection.dart';
@@ -190,22 +189,40 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
+        ),
         title: Text(
           context.loc.selectVehicle,
           style: context.styles.appBarTitle,
         ),
         centerTitle: true,
-
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
+          IconButton(
+            icon: Icon(_browsingCompany ? Icons.directions_car : Icons.filter_list),
+            tooltip: _browsingCompany
+                ? context.loc.viewMyVehicles
+                : context.loc.viewAllVehicles,
+            onPressed: () {
+              setState(() => _browsingCompany = !_browsingCompany);
+              if (_browsingCompany) {
+                ref.read(vehicleProvider.notifier).loadCompanyVehicles();
+              } else {
+                ref
+                    .read(vehicleProvider.notifier)
+                    .loadVehicles(forceRefresh: true);
+              }
+            },
           ),
         ],
       ),
-      drawer: const EldDrawer(),
       body: Column(
         children: [
           Padding(
@@ -282,6 +299,9 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                               return VehicleCard(
                                 key: ValueKey(vehicle.id),
                                 vehicle: vehicle,
+                                isCurrent: vehicle.id ==
+                                        vehicleState.selectedVehicle?.id ||
+                                    vehicle.activeForCurrentDriver == true,
                                 operable: listedVehicleIsOperable(
                                   browsingCompanyFleet: _browsingCompany,
                                   vehicle: vehicle,
