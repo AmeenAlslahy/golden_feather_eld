@@ -10,6 +10,12 @@ class SQLiteOfflineQueue implements OfflineQueue {
   static const String _tableName = 'pending_events';
   static const String _quarantineTable = 'quarantine';
 
+  /// أقصى عدد صفوف في `dead_letters` (الرفض النهائي).
+  ///
+  /// الطلبات المرفوضة نهائياً لا تُعاد المحاولة أبداً، فيجدّ جدول
+  /// الحروف الميتة بلا سقف. نحتفظ بالأحدث ونحذف الأقدم.
+  static const int maxDeadLetters = 200;
+
   /// مسار ملف اختياري (للاختبارات بملف مؤقت). الافتراضي سلوك الإنتاج.
   final String? dbPathOverride;
 
@@ -189,6 +195,23 @@ class SQLiteOfflineQueue implements OfflineQueue {
           'failedAt': DateTime.now().millisecondsSinceEpoch,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // 🧹 حصر سجلات الرفض النهائي.
+      //
+      // الطلبات المرفوضة نهائياً (409 على سجل معتمد مثلاً) كانت تتراكم
+      // بلا حدّ: كل رفض يدخل الجدول ولا أحد يخرجه. ومع كل «رفض نهائي»
+      // جديد يُمحى **الأقدم** — لا الحِدّ الأدنى للأحدث أبداً.
+      //
+      // ⚠️ هذا **بديل** عن أطول احتفاظ (retain-for-age) لا عن مراجعة
+      // السجلّ: الصف المحذوف كان مرفوضاً نهائياً، والخادم لن يقبله
+      // أبداً، ولا أثر تشغيلياً لفقده. أمّا الأحداث المعلّقة (الطابور
+      // نفسه) فلا تمسّها هذه العملية إطلاقاً — لا تُفقد بيانات HOS.
+      await txn.rawDelete(
+        'DELETE FROM dead_letters WHERE id NOT IN ('
+        '  SELECT id FROM dead_letters ORDER BY failedAt DESC LIMIT ?'
+        ')',
+        [maxDeadLetters],
       );
     });
   }

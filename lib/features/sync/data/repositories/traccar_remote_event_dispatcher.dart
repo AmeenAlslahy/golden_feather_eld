@@ -118,11 +118,33 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
             parkState: 'deferredOwnerMismatch',
           ));
         }
+        // 🔴 رفض نهائي: الخادم لن يقبل هذه البيانات أبداً.
+        //
+        // المثال المُبلَّغ: حفظ نموذج يوم معتمد ⇒ 409
+        // "السجل اليومي معتمد مسبقاً، لا يمكن تعديل بيانات النموذج
+        // قبل إلغاء الاعتماد". كان أي خطأ يصبح ServerFailure قابلاً
+        // لإعادة المحاولة، وبما أن RetryPolicy تعيد المحاولة إلى ما لا
+        // نهاية (FMCSA: لا تُفقد بيانات HOS) كان هذا الحدث يُعاد إرساله
+        // كل ~50 ثانية إلى الأبد، ويغرق السجلات بلا فائدة.
+        //
+        // 409 / 400 / 422 / 404 / 403 رفض نهائي ⇒ dead-letter فوراً.
+        // العابرة (شبكة، 5xx، 408، 429) تبقى على مسار إعادة المحاولة.
+        if (isTerminalDispatchRejection(error)) {
+          AppLogger.warning(
+              'Dispatch rejected permanently for owner $owner: '
+              '${error.code} — dead-lettering without retry');
+          return Left(RejectedFailure(
+            code: error.code,
+            l10nKey: error.l10nKey,
+          ));
+        }
         return Left(ServerFailure(message: error.code));
       },
       (_) => const Right(true),
     );
   }
+
+  /// هل هذا الخطأ نهائي بنيوياً (لا يصلحه الانتظار ولا إعادة الإرسال)؟
 
   @override
   Future<Either<Failure, bool>> dispatch(PendingEvent event) async {
@@ -333,4 +355,26 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     );
     return _mapResult(result, owner);
   }
+}
+
+/// هل هذا الخطأ نهائي بنيوياً؟ (لا يصلحه الانتظار ولا إعادة الإرسال)
+///
+/// **الفصل:** العابر مقابل النهائي. هذا هو الحدّ الذي يمنع
+/// إعادة إرسال حدث مرفوض إلى الأبد.
+///
+/// | الخطأ | HTTP | النهائي؟ |
+/// |---|---|---|
+/// | [ConflictError] | 409 | ✅ نعم |
+/// | [ValidationError] | 400 / 422 | ✅ نعم |
+/// | [NotFoundError] | 404 | ✅ نعم |
+/// | [PermissionError] | 403 | ✅ نعم |
+/// | [NetworkError] | — | ❌ عابر |
+/// | [ServerError] | 5xx | ❌ عابر |
+/// | [SessionExpiredError] | 401 | ❌ عابر (تسجيل دخول جديد يحلّه) |
+/// | [SyncError] | طابور | ❌ عابر |
+bool isTerminalDispatchRejection(AppError error) {
+  return error is ConflictError || // 409 — سجل معتمد، رقم مقكرر
+      error is ValidationError || // 400 / 422 — بيانات غير صالحة
+      error is NotFoundError || // 404 — المورد حُذف أو لا يُوجد
+      error is PermissionError; // 403 — لا صلاحية، لا تتغير بإعادة المحاولة
 }

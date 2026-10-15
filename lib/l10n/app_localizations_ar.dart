@@ -2212,6 +2212,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errGeneric => 'تعذر إكمال الطلب.';
 
   @override
+  String get errBusinessRuleViolation =>
+      'لا يمكن إتمام العملية لأن سجل اليوم معتمد مسبقاً. ألغِ الاعتماد أولاً ثم أعد المحاولة.';
+
+  @override
+  String get errConflictingChange =>
+      'تغيّر هذا السجل من جهاز آخر أو نُعدّل قبل قليل. حدّث الصفحة ثم أعد المحاولة.';
+
+  @override
+  String get errCheckYourInput => 'تحقّق من البيانات المُدخلة ثم أعد المحاولة.';
+
+  @override
+  String get errNotFoundAction =>
+      'البيانات المطلوبة لم تعد موجودة. حدّث الصفحة.';
+
+  @override
   String get enterAReasonForManualRecording => 'اكتب سبب التسجيل اليدوي.';
 
   @override
@@ -3060,4 +3075,108 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get activeEvents => 'الأحداث النشطة';
+
+  @override
+  String get permissionsTitle => 'صلاحيات التطبيق';
+
+  @override
+  String get permissionsSubtitle =>
+      'يحتاج تطبيق ELD للصلاحيات التالية للعمل بشكل قانوني:';
+
+  @override
+  String get permLocationTitle => 'الموقع الجغرافي';
+
+  @override
+  String get permLocationSubtitle =>
+      'لتسجيل مسار المركبة وساعات القيادة تلقائياً';
+
+  @override
+  String get permLocationRequiredDialog =>
+      'صلاحية الموقع مطلوبة. يحتاج تطبيق ELD إلى الوصول للموقع الجغرافي بشكل دائم لتسجيل مسار المركبة وساعات القيادة تلقائياً. هذا متطلب قانوني من FMCSA ولا يمكن عمل التطبيق بدونه.';
+
+  @override
+  String get permBluetoothTitle => 'البلوتوث';
+
+  @override
+  String get permBluetoothSubtitle => 'للاتصال بجهاز ELD في المركبة';
+
+  @override
+  String get permBluetoothDialog =>
+      'يحتاج التطبيق للاتصال بجهاز ELD في المركبة. يمكنك المتابعة بدون بلوتوث ولكن سيتم تسجيل ساعات القيادة يدوياً.';
+
+  @override
+  String get permNotificationTitle => 'الإشعارات';
+
+  @override
+  String get permNotificationSubtitle =>
+      'للحصول على تنبيهات ساعات القيادة والاستراحة';
+
+  @override
+  String get permBatteryTitle => 'توفير البطارية';
+
+  @override
+  String get permBatterySubtitle => 'يجب تعطيله لضمان عمل التتبع في الخلفية';
+
+  @override
+  String get permCameraTitle => 'الكاميرا';
+
+  @override
+  String get permCameraSubtitle => 'لالتقاط صور فحص المركبة (DVIR)';
+
+  @override
+  String get permGrantPermissions => 'منح الصلاحيات';
+
+  @override
+  String get permGrantSingle => 'منح الصلاحية';
+
+  @override
+  String get permRequiredTag => 'مطلوب';
+
+  @override
+  String get permRequiredDialogTitle => 'صلاحية الموقع مطلوبة';
+
+  @override
+  String get permBluetoothDialogTitle => 'صلاحية البلوتوث';
+
+  @override
+  String get forgotPasswordEnterEmail =>
+      'أدخل بريد الحساب. إن لم يصلك شيء فتواصل مع مدير الأسطول.';
+
+  @override
+  String get forgotPasswordEnterValidEmail => 'أدخل بريداً صالحاً.';
+
+  @override
+  String get forgotPasswordNotAvailableOnServer =>
+      'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.';
+
+  @override
+  String get forgotPasswordInstructionsSent =>
+      'إن كان البريد مسجّلاً فستصلك تعليمات إعادة التعيين.';
+
+  @override
+  String get sendButtonLabel => 'إرسال';
+
+  @override
+  String get dvirPhotosAttached => 'الصور المرفقة';
+
+  @override
+  String get mechanicCertification => 'شهادة الميكانيكي';
+
+  @override
+  String get mechanicLabel => 'الميكانيكي';
+
+  @override
+  String get repairNotesLabel => 'ملاحظات الإصلاح';
+
+  @override
+  String get noDefectsReported => 'لم يتم الإبلاغ عن أي عيوب';
+
+  @override
+  String get statusDetected => 'تم الاكتشاف';
+
+  @override
+  String get invalidOdometerReading => 'قيمة العداد غير صالحة';
+
+  @override
+  String get statusUnknown => 'غير معروف';
 }

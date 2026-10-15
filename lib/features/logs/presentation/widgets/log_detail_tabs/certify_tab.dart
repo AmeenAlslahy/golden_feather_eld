@@ -13,6 +13,7 @@ import '../../../domain/entities/log_readiness.dart';
 import '../../pages/edit_log_page.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/log_detail_tab_provider.dart';
+import '../../providers/log_draft_signature_provider.dart';
 import 'pending_carrier_edits_section.dart';
 
 class CertifyTab extends ConsumerStatefulWidget {
@@ -31,21 +32,47 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   @override
   void initState() {
     super.initState();
+    final initialDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
     _signatureController = SignatureController(
+      points: initialDraft.isNotEmpty ? initialDraft : null,
       penStrokeWidth: 3,
       penColor: Colors.black,
       exportBackgroundColor: Colors.white,
     );
+    _signatureController.addListener(_onSignatureChanged);
+  }
+
+  void _onSignatureChanged() {
+    if (!mounted) return;
+    ref
+        .read(logDraftSignatureProvider(widget.selectedLog.id).notifier)
+        .updateDraft(_signatureController.points);
+  }
+
+  @override
+  void didUpdateWidget(covariant CertifyTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedLog.id != widget.selectedLog.id) {
+      final newDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
+      _signatureController.value = newDraft;
+    }
   }
 
   @override
   void dispose() {
+    _signatureController.removeListener(_onSignatureChanged);
     _signatureController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<List<Point>>(logDraftSignatureProvider(widget.selectedLog.id), (previous, current) {
+      if (_signatureController.isEmpty && current.isNotEmpty) {
+        _signatureController.value = current;
+      }
+    });
+
     ref.listen<CertifyLogState>(certifyLogProvider(widget.selectedLog.id), (previous, current) {
       final outcome = current.outcome;
       if (outcome != null && outcome != previous?.outcome) {
@@ -106,7 +133,10 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           availableActions: const ['CERTIFY'],
         );
 
-    if (!state.isReady && state.readinessData != null) {
+    final isReady = state.isReady ||
+        (state.readinessData == null && widget.selectedLog.isFormComplete);
+
+    if (!isReady) {
       return _buildNotReadyView(context, notifier, readinessData, state.isLoading);
     }
 
@@ -255,7 +285,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
               label: context.loc.notReady,
               type: EldButtonType.secondary,
               onPressed: () {
-                _signatureController.clear();
+                ref.read(logDetailTabProvider.notifier).state = 0;
               },
             ),
             const SizedBox(height: AppSpacing.md),

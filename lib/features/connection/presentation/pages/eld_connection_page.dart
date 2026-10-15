@@ -309,6 +309,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         // أيقونة الإجراء تفتح دائماً صفحة اختيار العربة (مع الحفاظ على
         // الرجوع) — لا تخرج لصفحة أخرى أبداً.
         leading: IconButton(
+          tooltip: context.loc.selectVehicle,
           icon: const Icon(Icons.compare_arrows,
               color: AppColors.surface, size: 28),
           onPressed: () {
@@ -447,7 +448,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       const CircularProgressIndicator(),
                       const SizedBox(width: AppSpacing.md),
                       Text(
-                        'Connecting to ELD...',
+                        context.loc.connecting,
                         style: context.styles.bodyBold,
                       ),
                     ],

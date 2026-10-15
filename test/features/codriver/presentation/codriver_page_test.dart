@@ -22,8 +22,15 @@ import 'package:golden_feather_eld/features/codriver/presentation/providers/team
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+
+class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+  _AuthNotifier(super.state);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _MockTrackingRepository extends Mock implements TrackingRepository {}
 
@@ -107,6 +114,21 @@ void main() {
           vehicleRepositoryProvider.overrideWithValue(vehicleRepo),
           localStorageProvider.overrideWithValue(storage),
           currentDriverIdProvider.overrideWithValue(106),
+          authStateProvider.overrideWith(
+            (ref) => _AuthNotifier(
+              AuthState(
+                status: AuthStatus.authenticated,
+                user: User(
+                  id: '106',
+                  username: 'driver106',
+                  email: 'driver106@test.com',
+                  fullName: 'Driver 106',
+                  role: UserRole.fieldWorker,
+                  createdAt: DateTime(2026),
+                ),
+              ),
+            ),
+          ),
           hosStatusProvider.overrideWith((ref) => _HosNotifier()),
           currentVehicleSpeedProvider.overrideWith((ref) => speedMps),
           trackingStateProvider.overrideWith((ref) {

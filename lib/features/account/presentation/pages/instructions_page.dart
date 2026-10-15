@@ -397,22 +397,16 @@ class _InstructionsPageState extends State<InstructionsPage> {
 
   Widget _buildContactInfo(BuildContext context) {
     final loc = context.loc;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          'www.topceld.com',
-          style: context.styles.subtitle.copyWith(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      child: Text(
+        loc.contactTheSupportTeamAtTopceld,
+        style: context.styles.subtitle.copyWith(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
         ),
-        Text(
-          loc.contactTheSupportTeamAtTopceld,
-          style: context.styles.subtitle.copyWith(fontSize: 9),
-          textAlign: TextAlign.center,
-        ),
-      ],
+        textAlign: TextAlign.center,
+      ),
     );
   }
 

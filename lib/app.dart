@@ -11,6 +11,13 @@ import 'routes.dart';
 import 'core/widgets/app_feedback.dart';
 import 'features/hos/presentation/providers/hos_provider.dart';
 import 'features/hos/presentation/providers/status_dashboard_providers.dart';
+import 'features/hos/presentation/providers/dashboard_reconciler.dart';
+import 'features/hos/presentation/providers/hos_engine_provider.dart';
+import 'features/hos/data/providers/status_dashboard_repository_providers.dart';
+import 'features/vehicle/data/providers/vehicle_repository_providers.dart';
+import 'features/account/data/providers/rules_screen_providers.dart';
+import 'features/codriver/data/providers/codriver_repository_providers.dart';
+import 'features/inspection/data/providers/inspection_repository_providers.dart';
 import 'features/hos/presentation/providers/recap_provider.dart';
 import 'features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
@@ -37,11 +44,45 @@ class GoldenFeatherApp extends ConsumerWidget {
     // P0 leak fix: تحديث مزودات HOS الخاصة بالسائق عند تأسيس هوية فقط —
     // لا أثناء الانتقال (وإلا أُعيد الإنشاء وأُطلقت قراءات محكومة بالفشل
     // أثناء logout). يشمل إعادة login نفس السائق (epoch مختلف).
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
+ref.listen<AuthState>(authStateProvider, (previous, next) {
       if (shouldRefreshSessionProviders(previous, next)) {
         ref.invalidate(statusDashboardProvider);
         ref.invalidate(recapProvider);
         ref.invalidate(hosStatusProvider);
+
+        // 🔒 عزل المحرك بين السائقين.
+        //
+        // `hosEngineProvider` غير `autoDispose`، فالمحرك — ومعه آلة
+        // الحالة المرطَّبة من فترات **السائق السابق** — كان يبقى حيّاً
+        // بعد تبديل السائق. وأي لوحة أوفلاين تُبنى منه
+        // (`_buildOfflineDashboardFromEngine`) كانت تعرض رصيد السائق
+        // الأول للحساب الثاني.
+        //
+        // إبطال المحرك يُنشئ آلة حالة فارغة جديدة، ويعيد الترطيب من
+        // فترات السائق الجديد عبر `hosStoredPeriodsProvider`
+        // (وهو مرتبط بالجلسة فيتمسّح معه).
+        ref.invalidate(hosEngineProvider);
+        ref.invalidate(hosStoredPeriodsProvider);
+
+        // 🧹 مسح الكاش المحلي عند تبديل هوية السائق.
+        //
+        // السبب: `hos_dashboard_snapshot` و `vehicle_list_cache` مخزَّنان على
+        // القرص بلا ربط بمعرّف السائق. كان تسجيل الخروج يمسح الجلسة فقط،
+        // فيبقى سجل السائق السابق على القرص. ولو دخل سائق آخر **أونلاين**،
+        // كانت شاشته تُعرض من ذلك الكاش قبل وصول رد الخادم — تسريب عبر
+        // الجلسات.
+        //
+        // ملاحظة: تسجيل الدخول نفسه يتطلب اتصالاً، لذا السائق الجديد
+        // لا يستطيع الدخول بلا شبكة أصلاً. المسح هنا يغطي نافذة الالتقاط
+        // بين تسجيل الخروج وتسجيل الدخول التالي.
+        final nextDriverId = next.user?.id;
+        if (previous?.user?.id != nextDriverId) {
+          ref.read(dashboardLocalCacheProvider).clear();
+          ref.read(vehicleLocalCacheProvider).clear();
+          ref.read(coDriverLocalCacheProvider).clear();
+          ref.read(inspectionLocalCacheProvider).clear();
+          ref.read(rulesScreenLocalCacheProvider).clear();
+        }
       }
     });
 
@@ -62,6 +103,14 @@ class GoldenFeatherApp extends ConsumerWidget {
         }
       }
     });
+
+    // ♻️ معدّل لوحة الحالة: جلب من الخادم كل 5 دقائق + جلب فوري عند
+    // العودة من الخلفية.
+    //
+    // `watch` عمداً (لا `read`): نريد إنشاءه مرة واحدة يبقى طوال عمر
+    // التطبيق، لا عند أول شاشة فقط. لو استُدعي مرة واحدة لالتحقق من
+    // الوجود فقط لأُهمل لاحقاً وتوقفت النبضات.
+    ref.watch(dashboardReconcilerProvider);
 
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);

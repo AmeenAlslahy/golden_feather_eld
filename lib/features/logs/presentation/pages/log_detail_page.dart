@@ -30,14 +30,20 @@ class LogDetailPage extends ConsumerWidget {
       );
     }
 
-    // final allLogs = logsState.logs;
-    // final logIndex = allLogs.indexWhere((l) => l.id == selectedLog.id);
-    // final hasNextDay = logIndex > 0;
-    // final hasPrevDay = logIndex >= 0 && logIndex < allLogs.length - 1;
+    final allLogs = logsState.logs;
+    final logIndex = allLogs.indexWhere((l) => l.id == selectedLog.id);
+    final hasNextDay = logIndex > 0;
+    final hasPrevDay = logIndex >= 0 && logIndex < allLogs.length - 1;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          ref.read(logDetailTabProvider.notifier).state = 0;
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -45,60 +51,54 @@ class LogDetailPage extends ConsumerWidget {
             Navigator.pop(context);
           },
         ),
-        // title: Directionality(
-        //   textDirection: TextDirection.ltr,
-        //   child: FittedBox(
-        //     fit: BoxFit.scaleDown,
-        //     child: Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         IconButton(
-        //           icon: Icon(
-        //             Icons.chevron_left,
-        //             size: 26,
-        //             color: hasPrevDay
-        //                 ? context.styles.appBarTitle.color
-        //                 : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
-        //           ),
-        //           padding: EdgeInsets.zero,
-        //           constraints: const BoxConstraints(),
-        //           onPressed: hasPrevDay
-        //               ? () {
-        //                   ref
-        //                       .read(logsProvider.notifier)
-        //                       .selectLog(allLogs[logIndex + 1]);
-        //                 }
-        //               : null,
-        //         ),
-        //         Padding(
-        //           padding: const EdgeInsets.symmetric(horizontal: 6),
-        //           child: Text(
-        //             selectedLog.formattedDate,
-        //             style: context.styles.appBarTitle,
-        //           ),
-        //         ),
-        //         IconButton(
-        //           icon: Icon(
-        //             Icons.chevron_right,
-        //             size: 26,
-        //             color: hasNextDay
-        //                 ? context.styles.appBarTitle.color
-        //                 : context.styles.appBarTitle.color?.withValues(alpha: 0.2),
-        //           ),
-        //           padding: EdgeInsets.zero,
-        //           constraints: const BoxConstraints(),
-        //           onPressed: hasNextDay
-        //               ? () {
-        //                   ref
-        //                       .read(logsProvider.notifier)
-        //                       .selectLog(allLogs[logIndex - 1]);
-        //                 }
-        //               : null,
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
+        title: Directionality(
+          textDirection: TextDirection.ltr,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (hasPrevDay)
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_left,
+                      size: 26,
+                      color: context.styles.appBarTitle.color,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      ref
+                          .read(logsProvider.notifier)
+                          .selectLog(allLogs[logIndex + 1]);
+                    },
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    selectedLog.formattedDate,
+                    style: context.styles.appBarTitle,
+                  ),
+                ),
+                if (hasNextDay)
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_right,
+                      size: 26,
+                      color: context.styles.appBarTitle.color,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      ref
+                          .read(logsProvider.notifier)
+                          .selectLog(allLogs[logIndex - 1]);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
         centerTitle: true,
         // أيقونتا المعاينة والإضافة خاصتان بتبويب الأحداث فقط —
         // تُخفيان في النموذج والتوثيق.
@@ -147,16 +147,16 @@ class LogDetailPage extends ConsumerWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              color: AppColors.warningYellow.withValues(alpha: 0.1),
+              color: AppColors.warningBg,
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.warningYellow),
+                  const Icon(Icons.warning_amber_rounded, color: AppColors.warningText),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       context.loc.reCertificationRequiredMsg,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.warningYellow,
+                            color: AppColors.warningText,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -202,19 +202,26 @@ class LogDetailPage extends ConsumerWidget {
           },
         ),
       ),
+      ), // ← إغلاق PopScope
     );
   }
 
   Widget _buildBodyContent(int currentIndex, DailyLog selectedLog) {
-    switch (currentIndex) {
-      case 0:
-        return EventsTab(selectedLog: selectedLog);
-      case 1:
-        return const FormTab();
-      case 2:
-        return CertifyTab(selectedLog: selectedLog);
-      default:
-        return const SizedBox.shrink();
-    }
+    return IndexedStack(
+      index: currentIndex.clamp(0, 2),
+      children: [
+        EventsTab(
+          key: ValueKey('events_${selectedLog.id.value}'),
+          selectedLog: selectedLog,
+        ),
+        FormTab(
+          key: ValueKey('form_${selectedLog.id.value}'),
+        ),
+        CertifyTab(
+          key: ValueKey('certify_${selectedLog.id.value}'),
+          selectedLog: selectedLog,
+        ),
+      ],
+    );
   }
 }

@@ -27,6 +27,10 @@ enum DutyStatusCode {
   final String engineCode;
 
   /// Parses from any string format (wire, short, or engine code).
+  ///
+  /// ⚠️ **قيمة غير معروفة ⇒ `offDuty`** (مع تحذير). لا تستخدمه حين تكون
+  /// القيمة مشكوكاً فيها وتريد التمييز بين «راحة» و«لا أعرف» — استخدم
+  /// [tryFromAny].
   static DutyStatusCode fromAny(String? value) {
     if (value == null || value.isEmpty) return DutyStatusCode.offDuty;
     final upper = value.toUpperCase();
@@ -44,6 +48,27 @@ enum DutyStatusCode {
 
     AppLogger.warning('DutyStatusCode.fromAny: unknown value "$value" — falling back to offDuty');
     return DutyStatusCode.offDuty;
+  }
+
+/// تحليل **صارم**: يعيد `null` عند قيمة غير معروفة أو فارغة.
+  ///
+  /// [fromAny] يرجع `offDuty` لكل ما لا يعرفه — وهو سلوك صحيح لعرض
+  /// متسق، لكنه **خطير** حين تُستخدم القيمة لفرض حالة على آلة حالة:
+  /// فقيمة تالفة كانت ستجبر السائق على راحة لم يطلبها.
+  static DutyStatusCode? tryFromAny(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final upper = trimmed.toUpperCase();
+    final lower = trimmed.toLowerCase();
+    for (final c in values) {
+      if (c.wire == upper || c.shortCode == upper || c.engineCode == lower) {
+        return c;
+      }
+    }
+    if (upper == 'SLEEPER') return DutyStatusCode.sleeperBerth;
+    if (lower == 'personal_conveyance') return DutyStatusCode.personalConveyance;
+    return null;
   }
 
   /// Parses from the backend wire value.

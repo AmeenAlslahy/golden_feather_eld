@@ -72,6 +72,9 @@ void main() {
     when(() => repo.getCompanyVehicles()).thenAnswer(
       (_) async => const Right([companyUnassigned, companyBusy, spare]),
     );
+    when(() => repo.selectVehicle(any())).thenAnswer(
+      (_) async => const Right(true),
+    );
   });
 
   Future<void> pump(

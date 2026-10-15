@@ -47,4 +47,27 @@ void main() {
     await storage.prefs.setString('trusted_time_anchor', '{"anchor":"test"}');
     expect(storage.prefs.getString('trusted_time_anchor'), '{"anchor":"test"}');
   });
+
+  test('phase 2 offline cache keys are permitted in allowList', () async {
+    final storage = LocalStorageService();
+    await storage.init();
+
+    final keys = [
+      'codriver_list_cache',
+      'codriver_current_cache',
+      'inspection_screen_cache',
+      'inspection_cycle_cache',
+      'inspection_logs_cache',
+      'inspection_packet_cache',
+      'inspection_transfers_cache',
+      'rules_screen_cache',
+    ];
+
+    for (final key in keys) {
+      await storage.prefs.setString(key, '{"test":1}');
+      expect(storage.prefs.getString(key), '{"test":1}');
+      await storage.prefs.remove(key);
+      expect(storage.prefs.getString(key), isNull);
+    }
+  });
 }

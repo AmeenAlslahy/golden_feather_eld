@@ -120,6 +120,10 @@ class GatedVehicleRepository implements VehicleRepository {
   @override
   Future<Either<Failure, Vehicle?>> getSelectedVehicle() async =>
       const Right(null);
+
+  @override
+  Future<Either<Failure, bool>> selectVehicle(String uniqueId) async =>
+      const Right(true);
 }
 
 class FakeCoDriverRepository implements CoDriverRepository {

@@ -25,9 +25,8 @@ class LogsListPage extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: const EldDrawer(),
       appBar: AppBar(
-        title: Center(
-          child: Text(context.loc.logsTitle, style: context.styles.appBarTitle),
-        ),
+        title: Text(context.loc.logsTitle, style: context.styles.appBarTitle),
+        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -62,7 +61,7 @@ class LogsListPage extends ConsumerWidget {
       ),
       body: (logsState.isLoading && logsState.logs.isEmpty)
           ? const Center(child: CircularProgressIndicator())
-          : (logsState.error != null && logsState.logs.isEmpty && logsState.error != 'noInternet')
+          : (logsState.error != null && logsState.logs.isEmpty)
           ? EldRetryView(
               message: anyErrorUserMessage(
                 logsState.error!,

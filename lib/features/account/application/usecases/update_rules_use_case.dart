@@ -23,7 +23,8 @@ class UpdateRulesUseCase {
       update: request.toJson(),
     );
 
-    return result.mapValue((model) {
+    final model = result.valueOrNull;
+    if (model != null) {
       // 2. Pessimistic update: only update local storage if the server succeeds.
       final currentConfig = _storage.hosConfiguration;
       final newLimits = model.limits;
@@ -34,28 +35,23 @@ class UpdateRulesUseCase {
         shiftLimitMinutes: newLimits.shiftLimitMinutes,
         cycleLimitHours: newLimits.cycleLimitHours,
         maxConsecutiveDays: newLimits.maxConsecutiveDays,
-        // The following fields are NOT provided by the backend limits, so we PRESERVE CURRENT:
-        // breakDurationMinutes: currentConfig.breakDurationMinutes,
-        // movingSpeedThresholdKmh: currentConfig.movingSpeedThresholdKmh,
-        // driveBeforeBreakMinutes: currentConfig.driveBeforeBreakMinutes,
-        // weeklyRestartHours: currentConfig.weeklyRestartHours,
       );
 
-      // 4. Save to local storage
-      _storage.setHosConfiguration(mergedConfig);
+      // 4. Save to local storage asynchronously and awaited
+      await _storage.setHosConfiguration(mergedConfig);
+    }
 
-      return model;
-    });
+    return result;
   }
 }
 
-final updateRulesUseCaseProvider = Provider<UpdateRulesUseCase>((ref) {
+final updateRulesUseCaseProvider = Provider<UpdateRulesUseCase?>((ref) {
   final backend = ref.watch(rulesScreenBackendProvider);
   final storage = ref.watch(localStorageProvider);
   final user = ref.watch(authStateProvider).user;
   
   if (user == null) {
-    throw Exception('User not authenticated');
+    return null;
   }
 
   return UpdateRulesUseCase(backend, storage, user.id);

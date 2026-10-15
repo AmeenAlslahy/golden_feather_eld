@@ -30,11 +30,11 @@ class EventsTab extends ConsumerWidget {
       if (logsState.isLoadingEvents) {
         return const Center(child: CircularProgressIndicator());
       }
-      if (logsState.eventsError != null && logsState.eventsError != 'noInternet') {
+      if (logsState.eventsError != null) {
         return EldRetryView(
           message: anyErrorUserMessage(
             logsState.eventsError!,
-                loc: AppLocalizations.of(context)!,
+            loc: AppLocalizations.of(context)!,
           ),
           onRetry: () =>
               ref.read(logsProvider.notifier).loadSelectedLogEvents(),

@@ -30,6 +30,18 @@ abstract class LogLocalDataSource {
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
   Future<void> saveSignature(DailyLogId logId, String base64Signature);
   Future<String?> getSignature(DailyLogId logId);
+  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson);
+  Future<String?> getDraftSignature(DailyLogId logId);
+  Future<void> deleteDraftSignature(DailyLogId logId);
+
+  /// Cache and retrieve daily forms offline (SRS 6.8).
+  Future<void> cacheDailyForm(DailyLogId logId, Map<String, dynamic> formJson);
+  Future<Map<String, dynamic>?> getCachedDailyForm(DailyLogId logId);
+  Future<void> markCachedDailyLogFormComplete({
+    required int driverId,
+    required DailyLogId logId,
+    required bool isComplete,
+  });
 
   /// P0 2B-1 — مالك سجل مخزن لـ logId عبر مفاتيح `logs:{driverId}` فقط.
   /// يُرجع المعرف عند انفراده، وإلا null (غياب/غموض/تعدد) — لا يُستنتج
@@ -87,6 +99,84 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<String?> getSignature(DailyLogId logId) async {
     return _cacheBox.get('sig:${logId.value}');
+  }
+
+  @override
+  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson) async {
+    try {
+      await _cacheBox.put('sig_draft:${logId.value}', pointsJson);
+    } catch (e) {
+      AppLogger.warning('Signature draft write skipped: $e');
+    }
+  }
+
+  @override
+  Future<String?> getDraftSignature(DailyLogId logId) async {
+    return _cacheBox.get('sig_draft:${logId.value}');
+  }
+
+  @override
+  Future<void> deleteDraftSignature(DailyLogId logId) async {
+    try {
+      await _cacheBox.delete('sig_draft:${logId.value}');
+    } catch (e) {
+      AppLogger.warning('Signature draft delete skipped: $e');
+    }
+  }
+
+  @override
+  Future<void> cacheDailyForm(
+      DailyLogId logId, Map<String, dynamic> formJson) async {
+    try {
+      await _cacheBox.put('form:${logId.value}', jsonEncode(formJson));
+    } catch (e) {
+      AppLogger.warning('Form cache write skipped: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getCachedDailyForm(DailyLogId logId) async {
+    final raw = _cacheBox.get('form:${logId.value}');
+    if (raw == null) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    } catch (_) {}
+    return null;
+  }
+
+  @override
+  Future<void> markCachedDailyLogFormComplete({
+    required int driverId,
+    required DailyLogId logId,
+    required bool isComplete,
+  }) async {
+    try {
+      final key = 'logs:$driverId';
+      final logs = _readCachedList(key);
+      if (logs == null) return;
+      var changed = false;
+      final updated = logs.map((log) {
+        final id = log['id'];
+        final matches = id is num
+            ? id.toInt() == logId.value
+            : int.tryParse('$id') == logId.value;
+        if (matches) {
+          changed = true;
+          final copy = Map<String, dynamic>.from(log);
+          copy['formStatus'] = isComplete ? 'COMPLETED' : 'INCOMPLETE';
+          copy['isFormComplete'] = isComplete;
+          return copy;
+        }
+        return log;
+      }).toList();
+
+      if (changed) {
+        await _cacheBox.put(key, jsonEncode(updated));
+      }
+    } catch (e) {
+      AppLogger.warning('markCachedDailyLogFormComplete skipped: $e');
+    }
   }
 
   @override

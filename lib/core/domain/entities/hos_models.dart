@@ -296,6 +296,7 @@ class HosLimits extends Equatable {
   final double remainingCycleHours;
   final bool breakRequired;
   final int breakRemainingMinutes;
+  final int timeUntilBreakMinutes;
 
   const HosLimits({
     required this.remainingDriveMinutes,
@@ -303,6 +304,7 @@ class HosLimits extends Equatable {
     required this.remainingCycleHours,
     required this.breakRequired,
     required this.breakRemainingMinutes,
+    this.timeUntilBreakMinutes = 480,
   });
 
   @override
@@ -312,5 +314,7 @@ class HosLimits extends Equatable {
         remainingCycleHours,
         breakRequired,
         breakRemainingMinutes,
+        timeUntilBreakMinutes,
       ];
 }
+

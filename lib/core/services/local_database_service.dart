@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/logger.dart';
 import '../constants/storage_constants.dart';
+import 'hos_audit_migration.dart';
 
 class LocalDatabaseService {
   Future<void> init() async {
@@ -10,8 +11,13 @@ class LocalDatabaseService {
 
       await Hive.openBox<String>(StorageConstants.eventsBox);
       await Hive.openBox<String>(StorageConstants.periodsBox);
+      // audit_box يخصّ سجلات السجلات اليومية (قيمه قوائم JSON).
       await Hive.openBox<String>(StorageConstants.auditBox);
       await Hive.openBox<String>(StorageConstants.dailyLogsCacheBox);
+
+      // ⚠️ يجب أن يأتي بعد فتح audit_box القديم: الترحيل ينقل مخالفات HOS
+      // من الصندوق القديم إلى الصندوق المنفصل. ل�� يعطّل الإقلاع.
+      await openHosAuditBoxAndMigrate();
 
       AppLogger.info('✅ LocalDatabaseService initialized successfully');
     } catch (e, stack) {

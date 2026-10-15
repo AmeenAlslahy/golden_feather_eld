@@ -9,9 +9,15 @@ import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../../../domain/shared/value_objects.dart';
 
+import '../../../sync/domain/entities/pending_event.dart';
+import '../../../sync/domain/repositories/offline_queue.dart';
+import '../datasources/codriver_local_cache.dart';
+
 class CoDriverRepositoryImpl implements CoDriverRepository {
   final DriverSessionBackend driverSessionBackend;
   final NetworkInfo networkInfo;
+  final CoDriverLocalCache? localCache;
+  final OfflineQueue? offlineQueue;
 
   /// Cache for available drivers and current link to survive offline periods
   static List<CoDriver> _cachedDrivers = [];
@@ -20,7 +26,20 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
   CoDriverRepositoryImpl({
     required this.driverSessionBackend,
     required this.networkInfo,
-  });
+    this.localCache,
+    this.offlineQueue,
+  }) {
+    if (localCache != null) {
+      final cached = localCache!.loadAvailableDrivers();
+      if (cached != null && cached.isNotEmpty) {
+        _cachedDrivers = cached;
+      }
+      final current = localCache!.loadCurrentCoDriver();
+      if (current != null) {
+        _cachedCurrentCoDriver = current;
+      }
+    }
+  }
 
   @override
   Future<Either<Failure, List<CoDriver>>> getAvailableDrivers() async {
@@ -44,6 +63,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
                 .toList();
 
             _cachedDrivers = drivers;
+            localCache?.saveAvailableDrivers(drivers);
             return Right(drivers);
           },
         );
@@ -55,7 +75,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       if (_cachedDrivers.isNotEmpty) {
         return Right(_cachedDrivers);
       }
-      return const Left(NetworkFailure());
+      return const Right([]);
     }
   }
 
@@ -82,6 +102,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
               );
             }
             _cachedCurrentCoDriver = read;
+            localCache?.saveCurrentCoDriver(read);
             return Right(read);
           },
         );
@@ -95,7 +116,10 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       if (_cachedCurrentCoDriver != null) {
         return Right(_cachedCurrentCoDriver!);
       }
-      return const Left(NetworkFailure());
+      return const Right(CurrentCoDriverRead(
+        coDriverId: null,
+        teamDrivingActive: false,
+      ));
     });
   }
 
@@ -116,10 +140,12 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
         coDriverId: DriverId(coDriverId),
       );
       if (legacyResult.isRight()) {
-        _cachedCurrentCoDriver = CurrentCoDriverRead(
+        final current = CurrentCoDriverRead(
           coDriverId: coDriverId,
           teamDrivingActive: true,
         );
+        _cachedCurrentCoDriver = current;
+        await localCache?.saveCurrentCoDriver(current);
         return const Right(true);
       }
 
@@ -132,13 +158,39 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       return primaryResult.fold(
         (error) => Left(ServerFailure(message: error.code)),
         (_) {
-          _cachedCurrentCoDriver = CurrentCoDriverRead(
+          final current = CurrentCoDriverRead(
             coDriverId: coDriverId,
             teamDrivingActive: true,
           );
+          _cachedCurrentCoDriver = current;
+          localCache?.saveCurrentCoDriver(current);
           return const Right(true);
         },
       );
+    }, offline: () async {
+      if (coDriverId <= 0) {
+        return const Left(
+          ServerFailure(message: 'Select a co-driver before switching.'),
+        );
+      }
+      final current = CurrentCoDriverRead(
+        coDriverId: coDriverId,
+        teamDrivingActive: true,
+      );
+      _cachedCurrentCoDriver = current;
+      await localCache?.saveCurrentCoDriver(current);
+      if (offlineQueue != null) {
+        await offlineQueue!.enqueue(PendingEvent(
+          id: 'switch_${DateTime.now().millisecondsSinceEpoch}',
+          type: 'switch_primary_driver',
+          payload: {
+            'coDriverId': coDriverId,
+            'reason': reason ?? 'Co-driver shift change',
+          },
+          createdAt: DateTime.now().toUtc(),
+        ));
+      }
+      return const Right(true);
     });
   }
 }

@@ -2236,6 +2236,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get errGeneric => 'La solicitud no puede completarse.';
 
   @override
+  String get errBusinessRuleViolation =>
+      'No se puede completar porque el registro de hoy ya está certificado. Cancela la certificación primero e inténtalo de nuevo.';
+
+  @override
+  String get errConflictingChange =>
+      'Este registro se modificó desde otro dispositivo o hace un momento. Actualiza la pantalla e inténtalo de nuevo.';
+
+  @override
+  String get errCheckYourInput =>
+      'Revisa los datos introducidos e inténtalo de nuevo.';
+
+  @override
+  String get errNotFoundAction =>
+      'Los datos solicitados ya no están disponibles. Actualiza la pantalla.';
+
+  @override
   String get enterAReasonForManualRecording =>
       'Introduzca una razón para la grabación manual.';
 
@@ -3108,4 +3124,112 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get activeEvents => 'Eventos activos';
+
+  @override
+  String get permissionsTitle => 'Permisos de la aplicación';
+
+  @override
+  String get permissionsSubtitle =>
+      'Golden Feather ELD requiere los siguientes permisos para operar legalmente:';
+
+  @override
+  String get permLocationTitle => 'Ubicación geográfica';
+
+  @override
+  String get permLocationSubtitle =>
+      'Para registrar automáticamente la ruta del vehículo y las horas de conducción';
+
+  @override
+  String get permLocationRequiredDialog =>
+      'Se requiere permiso de ubicación. La aplicación ELD requiere acceso a la ubicación en segundo plano para registrar automáticamente la ruta del vehículo y las horas de conducción. Esta es una regulación obligatoria de la FMCSA.';
+
+  @override
+  String get permBluetoothTitle => 'Bluetooth';
+
+  @override
+  String get permBluetoothSubtitle =>
+      'Para conectarse al dispositivo de hardware ELD del vehículo';
+
+  @override
+  String get permBluetoothDialog =>
+      'La aplicación necesita conectarse al dispositivo ELD en el vehículo. Puede continuar sin Bluetooth, pero las horas de conducción se registrarán manualmente.';
+
+  @override
+  String get permNotificationTitle => 'Notificaciones';
+
+  @override
+  String get permNotificationSubtitle =>
+      'Para recibir alertas de horas de servicio y descansos';
+
+  @override
+  String get permBatteryTitle => 'Optimización de batería';
+
+  @override
+  String get permBatterySubtitle =>
+      'Debe desactivarse para garantizar que el seguimiento en segundo plano funcione de manera confiable';
+
+  @override
+  String get permCameraTitle => 'Cámara';
+
+  @override
+  String get permCameraSubtitle =>
+      'Para capturar fotos de defectos de inspección del vehículo (DVIR)';
+
+  @override
+  String get permGrantPermissions => 'Otorgar permisos';
+
+  @override
+  String get permGrantSingle => 'Otorgar permiso';
+
+  @override
+  String get permRequiredTag => 'Requerido';
+
+  @override
+  String get permRequiredDialogTitle => 'Permiso de ubicación requerido';
+
+  @override
+  String get permBluetoothDialogTitle => 'Permiso de Bluetooth';
+
+  @override
+  String get forgotPasswordEnterEmail =>
+      'Ingrese el correo electrónico de la cuenta. Si no recibe nada, comuníquese con su administrador de flota.';
+
+  @override
+  String get forgotPasswordEnterValidEmail =>
+      'Ingrese una dirección de correo electrónico válida.';
+
+  @override
+  String get forgotPasswordNotAvailableOnServer =>
+      'El restablecimiento no está disponible en este servidor. Comuníquese con su administrador de flota.';
+
+  @override
+  String get forgotPasswordInstructionsSent =>
+      'Si el correo electrónico está registrado, se han enviado las instrucciones de restablecimiento.';
+
+  @override
+  String get sendButtonLabel => 'Enviar';
+
+  @override
+  String get dvirPhotosAttached => 'Fotos adjuntas';
+
+  @override
+  String get mechanicCertification => 'Certificación del mecánico';
+
+  @override
+  String get mechanicLabel => 'Mecánico';
+
+  @override
+  String get repairNotesLabel => 'Notas de reparación';
+
+  @override
+  String get noDefectsReported => 'No se reportaron defectos';
+
+  @override
+  String get statusDetected => 'DETECTADO';
+
+  @override
+  String get invalidOdometerReading => 'Lectura de odómetro no válida';
+
+  @override
+  String get statusUnknown => 'Desconocido';
 }

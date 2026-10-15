@@ -5,7 +5,10 @@ import '../../domain/repositories/hos_audit_repository.dart';
 import '../repositories/hos_audit_repository_impl.dart';
 
 final hosAuditBoxProvider = Provider<Box<String>>((ref) {
-  return Hive.box<String>(StorageConstants.auditBox);
+  // ⚠️ صندوق منفصل عن audit_box (سجلات السجلات اليومية).
+  // كان الاثنان يتشاركان الصندوق فتفشل قراءة المخالفات كل مرة.
+  // الترحيل: HosAuditBoxMigration — lib/core/services/hos_audit_migration.dart
+  return Hive.box<String>(StorageConstants.hosAuditBox);
 });
 
 final hosAuditRepositoryProvider = Provider<HosAuditRepository>((ref) {

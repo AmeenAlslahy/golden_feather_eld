@@ -60,13 +60,30 @@ class DailyLogDto {
     List<String> stringList(Object? raw) =>
         (raw as List?)?.map((e) => e.toString()).toList() ?? const [];
 
+    final formIndicator = json['formIndicator'] is Map
+        ? Map<String, dynamic>.from(json['formIndicator'] as Map)
+        : null;
+    final formIndicatorPositive = formIndicator?['positive'] as bool?;
+    final formIndicatorColor = formIndicator?['color']?.toString().toUpperCase();
+
+    var formStatusStr = (json['formStatus'] as String?)?.trim();
+    if (formStatusStr == null || formStatusStr.isEmpty || formStatusStr.toUpperCase() == 'UNKNOWN') {
+      if (formIndicator?['status'] is String) {
+        formStatusStr = formIndicator!['status'].toString();
+      } else if (formIndicatorPositive == true || formIndicatorColor == 'GREEN') {
+        formStatusStr = 'COMPLETE';
+      } else if (formIndicatorPositive == false || formIndicatorColor == 'RED') {
+        formStatusStr = 'DRAFT';
+      }
+    }
+
     return DailyLogDto(
       id: json['id'] as int? ?? 0,
       uniqueId: json['uniqueId'] as String? ?? '',
       logDate: logDateStr,
       formattedTotalWorkTime: json['formattedTotalWorkTime'] as String? ?? '',
       totalDurationMinutes: json['totalDurationMinutes'] as int? ?? 0,
-      formStatus: json['formStatus'] as String? ?? 'UNKNOWN',
+      formStatus: formStatusStr ?? 'UNKNOWN',
       certificationStatus: json['certificationStatus'] as String? ?? 'UNKNOWN',
       today: json['today'] as bool? ?? false,
       events: (json['events'] as List<dynamic>?)
@@ -89,10 +106,12 @@ class DailyLogDto {
 
   DailyLog toEntity() {
     FormStatus mappedFormStatus;
-    switch (formStatus.toUpperCase()) {
+    switch (formStatus.trim().toUpperCase()) {
+      case 'COMPLETE':
       case 'COMPLETED':
         mappedFormStatus = FormStatus.completed;
         break;
+      case 'DRAFT':
       case 'INCOMPLETE':
         mappedFormStatus = FormStatus.incomplete;
         break;
@@ -101,11 +120,12 @@ class DailyLogDto {
     }
 
     CertificationStatus mappedCertStatus;
-    switch (certificationStatus.toUpperCase()) {
+    switch (certificationStatus.trim().toUpperCase()) {
       case 'CERTIFIED':
         mappedCertStatus = CertificationStatus.certified;
         break;
       case 'UNCERTIFIED':
+      case 'NOT_READY':
         mappedCertStatus = CertificationStatus.uncertified;
         break;
       case 'RE_CERTIFICATION_REQUIRED':

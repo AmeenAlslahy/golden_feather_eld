@@ -33,20 +33,17 @@ extension LocalizationHelper on BuildContext {
         return loc.permissionDenied;
       default:
         // Not an l10n key: a backend error code such as
-        // `network.connectionFailed`, `server.unavailable`, `server_error`.
-        // The driver never sees the code itself.
-        final loc = AppLocalizations.of(this)!;
-        final lower = key.toLowerCase();
-        if (lower.startsWith('network.') || lower.contains('connection')) {
-          return anyErrorUserMessage('noInternet', loc: loc);
-        }
-        if (lower.startsWith('server') ||
-            lower.endsWith('_error') ||
-            lower.contains('.') ||
-            lower.contains('_')) {
-          return anyErrorUserMessage(Object(), loc: loc);
-        }
-        return anyErrorUserMessage(key, loc: loc);
+        // `network.connectionFailed`, `server.unavailable`,
+        // `BUSINESS_RULE_VIOLATION`.
+        //
+        // 🔴 **نمرّر المفتاح نفسه** إلى المحوِّل ليصنّفه.
+        //
+        // ❌ كان `anyErrorUserMessage(Object(), …)` — أي كائن فارغ بلا
+        // أي معلومة! فأي رمز فيه `.` أو `_` كان ينتهي إلى
+        // «تعذر إكمال الطلب. تحقق من الشبكة» — فيُقال للسائق إن شبكته
+        // هي المشكلة بينما السبب قد يكون تعارضاً (409) أو صلاحية (403).
+        // هنا: إرشادٌ خاطئ يكلّف السائق وقتاً بلا نتيجة.
+        return anyErrorUserMessage(key, loc: AppLocalizations.of(this)!);
     }
   }
 }

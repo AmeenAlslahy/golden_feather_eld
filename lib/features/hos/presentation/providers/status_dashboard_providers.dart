@@ -3,12 +3,18 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
+import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../data/providers/status_dashboard_repository_providers.dart';
 import '../../domain/engine/hos_rules_engine.dart';
+import '../../domain/engine/hos_offline_dashboard.dart';
 import '../../domain/usecases/get_status_dashboard_use_case.dart';
+import '../widgets/status_dashboard/circular_timer_logic.dart';
 import 'hos_provider.dart';
+import 'hos_engine_provider.dart';
 import '../../../../core/events/app_events.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/error/failure.dart';
@@ -54,11 +60,40 @@ final statusDashboardProvider =
   StatusDashboardNotifier.new,
 );
 
-/// الطابع الزمني لآخر لقطة لوحة معتمدة من الخادم أو المحرك لحساب الوقت الحي
+/// الطابع الزمني لآخر لقطة لوحة — على **الساعة الموثوقة** (خادم مُثبَّت).
+///
+/// ⚠️ كان `DateTime.now()` (ساعة الجهاز). لأن `MainCircularTimer` يحسب
+/// `liveRemaining = serverRemaining − (trustedNow − snapshotStamp)`، فإن
+/// ختم اللقطة بساعة الجهاز يجعل الطرح بين ساعتين غير مرتبطتين ويسمح
+/// للسائق بتجميد أو تعجيل العدّاد القانوني بتعديل ساعة جهازه.
+///
+/// نستعمل الساعة الموثوقة إن توفّرت، وإلا ساعة الجهاز كبديل متحفّظ.
 final statusDashboardSnapshotTimestampProvider =
-    StateProvider<DateTime>((ref) => DateTime.now());
+    StateProvider<DateTime>((ref) => _trustedStampOrFallback(ref));
+
+DateTime _trustedStampOrFallback(Ref ref) {
+  final trusted = ref.read(trustedTimeProvider).currentTime;
+  if (trusted is TrustedTimeAvailable) return trusted.utc;
+  return DateTime.now();
+}
+
+/// ختم اللوحة بلحظة قياسها الحقيقية.
+///
+/// [repositorySnapshotAt] هي لحظة القياس التي سجّلها المستودع:
+/// - لقطة محفوظة من القرص ⇒ لحظةَ قياسها الأصلية، **لا** "الآن".
+///   هذا هو الفرق بين عدّاد صادق وآخر يسامح السائق بمدة إغلاق التطبيق.
+/// - استجابة حيّة ⇒ `null` يُختم بلحظة الاستلام (وهو الصحيح).
+DateTime _stampFor(Ref ref, DateTime? repositorySnapshotAt) =>
+    repositorySnapshotAt ?? _trustedStampOrFallback(ref);
 
 class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
+  /// تذكرة تكرار الطلبات.
+  ///
+  /// بدونها كان استجابة GET قديمة تكتب فوق نتيجة POST أحدث (F-03):
+  /// التطبيق يحدّث الدائرة من استجابة تغيير الحالة ثم تصل نتيجة بحث
+  /// متأخرة فتمسحها وتُرجِع رقماً أقدم — فيومض الوقت للسائق.
+  int _requestSeq = 0;
+
   @override
   Future<StatusDashboard> build() async {
     // تحديث تفاعلي تلقائي للوحة عند تغير حالة السائق في محرك HOS.
@@ -99,26 +134,95 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     }
 
     final useCase = ref.watch(getStatusDashboardUseCaseProvider);
+    final mySeq = ++_requestSeq;
     final result = await useCase.execute();
-    return result.fold(
-      (failure) => throw failure,
-      (dashboard) {
+
+    // ⚠️ فرع الفشل خارج `fold`: بناء اللوحة المحلية `async` (ينتظر
+    // الترطيب)، و`fold` لا يقبل closures غير متزامنة.
+    final failure = result.getLeft().toNullable();
+    if (failure != null) {
+      // بلا خادم وبلا لقطة محفوظة: نبني لوحة **حقيقية** من المحرك
+      // المحلي المستعاد من سجل الخدمة، بدل عرض أرقام مُختلَقة.
+      final local = await _buildOfflineDashboardFromEngine();
+      if (local != null) {
         ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
-            DateTime.now();
-        return dashboard;
-      },
-    );
+            _stampFor(ref, null);
+        return local;
+      }
+      throw failure;
+    }
+
+    final dashboard = result.getRight().toNullable()!;
+    if (mySeq != _requestSeq) {
+      // وصل رد أقدم بعد أحدث — نُهمله ونعيد ما هو معروض حالياً.
+      return state.valueOrNull ?? dashboard;
+    }
+    // 🔴 لحظة القياس من المستودع، لا "الآن".
+    // لقطة نستُرجعها من القرص تحمل لحظة قياسها الأصلية؛ ختمها بالآن
+    // يُلغي مدة إغلاق التطبيق كاملة من العدّاد — رصيد قانوني بلا سند.
+    ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
+        _stampFor(ref, ref.read(statusDashboardRepositoryProvider).snapshotAt);
+    return dashboard;
   }
 
-  // Method removed. Duty status changes must route through DutyStatusTracker 
-  // to ensure offline sync queueing, correct HOS engine transitions, and 
-  // single source of truth for backend syncing.
+/// نبني لوحة من المحرك المحلي عند غياب بيانات الخادم.
+///
+/// يعيد null عند أي تعذّر (وقت غير موثوق، أو فشل تهيئة أحد
+/// الاعتماديات) — عندها نُبقي الفشل الأصلي ليعرض المستخدم رسالة
+/// "غير متاح" بدل أرقام ملفّقة.
+///
+/// 🔴 **ينتظر اكتمال الترطيب** ([hosHydrationReadyProvider]).
+///
+/// الترطيب يقرأ الفترات من القرص بشكل غير متزامن. وقبل هذا الانتظار
+/// كان البناء يقرأ المحرك فوراً، فيبني اللوحة من محرك **لم يُرطَّب بعد**
+/// — أي 11:00 / 14:00 / 8:00 كاملة، ثم يهبط العدّاد إلى ما ي真相 بعد
+/// ثوانٍ بلا إعادة بناء. السائق يرى ارتداداً في رقمه القانوني.
+///
+/// ملاحظة: القراءة محاطة بـ try/catch عمداً. المسار يُنفَّذ أثناء
+/// بناء المزوّد نفسه؛ أي استثناء هنا كان سيُسقط اللوحة كاملة
+/// بدلاً من الرجوع للخطأ الأصلي.
+Future<StatusDashboard?> _buildOfflineDashboardFromEngine() async {
+  try {
+    // مهلة قصيرة: الانتظار لا يجوز أن يعلّق الشاشة على قرص بطيء.
+    await ref.read(hosHydrationReadyProvider.future).timeout(
+          const Duration(seconds: 3),
+          onTimeout: () {},
+        );
+  } catch (_) {
+    // تعذّر الترطيب ⇒ نكمل؛ البناء التالي يجرّب من جديد.
+  }
+
+  try {
+    final engine = ref.read(hosEngineProvider);
+    final result = engine.currentStatus;
+    if (result is! HosEngineReady) return null;
+
+    final driverId = ref.read(currentDriverIdProvider);
+    return const HosOfflineDashboardBuilder().build(
+      engineResult: result,
+      driverId: DriverId(driverId ?? 0),
+      driverName: ref.read(authStateProvider).user?.fullName ?? '',
+      driverDisplayText: ref.read(authStateProvider).user?.fullName ?? '',
+    );
+  } catch (e) {
+    // ignore: avoid_print
+    print('offline dashboard build skipped: $e');
+    return null;
+  }
+}
 
   /// تغذية اللوحة مباشرة من استجابة POST تغيير الحالة — بلا شبكة.
   /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
   void applyServerDashboard(StatusDashboard dashboard) {
-    ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
-        DateTime.now();
+    // POST هو الأحدث دائماً: أي GET جارٍ يجب أن يُتجاهل عند وصوله.
+    ++_requestSeq;
+    final stamp = _stampFor(ref, null);
+    ref.read(statusDashboardSnapshotTimestampProvider.notifier).state = stamp;
+    try {
+      ref
+          .read(statusDashboardRepositoryProvider)
+          .cacheDashboard(dashboard, takenAt: stamp);
+    } catch (_) {}
     state = AsyncValue.data(dashboard);
   }
 
@@ -134,22 +238,174 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
       state = const AsyncValue<StatusDashboard>.loading();
     }
 
+    final mySeq = ++_requestSeq;
     final useCase = ref.read(getStatusDashboardUseCaseProvider);
     final result = await useCase.execute();
-    result.fold(
-      (failure) {
-        if (!state.hasValue) {
-          state = AsyncValue.error(failure, StackTrace.current);
+
+    // كما في `build`: فرع الفشل خارج `fold` لأن بناء اللوحة `async`.
+    final failure = result.getLeft().toNullable();
+    if (failure != null) {
+      // ⚠️ لا نمسح اللوحة الحالية عند فشل التحديث.
+      if (!state.hasValue) {
+        final local = await _buildOfflineDashboardFromEngine();
+        if (local != null) {
+          // لوحة مبنية من المحرك المحلي الآن ⇒ تُقاس الآن.
+          ref.read(statusDashboardSnapshotTimestampProvider.notifier)
+              .state = _stampFor(ref, null);
+          state = AsyncValue.data(local);
+          return;
         }
-      },
-      (dashboard) {
-        ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
-            DateTime.now();
-        state = AsyncValue.data(dashboard);
-      },
+        state = AsyncValue.error(failure, StackTrace.current);
+      }
+      return;
+    }
+
+    final dashboard = result.getRight().toNullable()!;
+    if (mySeq != _requestSeq) return;
+    // 🔴 الدمج الأحادي الاتجاه: الخادم يحسب `SHIFT` من الفترات المغلقة
+    // فقط، فقد يقول 00:00 وسائقٌ يعمل 12 ساعة. قبوله عند كل نبضة 5
+    // دقائق يقتل العدّاد ويرتدّ كل خمس دقائق.
+    final merged = _applyMonotonicGuard(dashboard);
+    final stamp = (merged != dashboard)
+        ? _stampFor(ref, null)
+        : _stampFor(ref, ref.read(statusDashboardRepositoryProvider).snapshotAt);
+    ref.read(statusDashboardSnapshotTimestampProvider.notifier).state = stamp;
+    state = AsyncValue.data(merged);
+  }
+
+  /// يمنع الخادم من **زيادة** الوقت المتبقي أثناء نفس نافذة الخدمة.
+  ///
+  /// - نفس حالة الخدمة ⇒ `المتبقي = min(الخادم، المحلي الحيّ)`.
+  /// - تغيّرت الحالة ⇒ نافذة جديدة ⇒ يُقبل الخادم كما هو.
+  ///
+  /// الأمان: لا يمكن لهذه القاعدة أن تمنح السائق وقتاً إضافياً، فأسوأ
+  /// أثر لها حذف سعة زائدة — وتُصحَّح تلقائياً عند إغلاق الفترة.
+  StatusDashboard _applyMonotonicGuard(StatusDashboard incoming) {
+    final current = state.valueOrNull;
+    if (current == null) return incoming;
+    if (current.currentDutyStatus == incoming.currentDutyStatus) {
+      final now = _trustedStampOrFallback(ref);
+      final elapsed = now.toUtc().difference(_lastStampOrEpoch(ref).toUtc());
+      if (elapsed < const Duration(seconds: 1)) return incoming;
+
+      final local = CircularTimerLogic.liveIndicators(
+        indicators: current.hosIndicators,
+        dutyStatus: current.currentDutyStatus,
+        statusLabel: '',
+        elapsedSinceSnapshot: elapsed,
+      );
+      final localCircle = RemainingCircle(
+        remaining: _governingRemaining(
+          incoming.currentDutyStatus,
+          local,
+        ),
+        label: incoming.remainingCircle.label,
+        progress: incoming.remainingCircle.progress,
+      );
+      final merged = CircularTimerLogic.reconcileRemaining(
+        server: incoming.remainingCircle,
+        local: localCircle,
+        sameDutyEpisode: true,
+      );
+      if (merged != incoming.remainingCircle) {
+        AppLogger.info(
+            'Dashboard reconciliation clamped: server '
+            '${incoming.remainingCircle.remaining.inMinutes}min > local '
+            '${merged.remaining.inMinutes}min — server lags on closed periods');
+        final reconciledIndicators = _reconcileIndicators(
+          incoming: incoming.hosIndicators,
+          local: local,
+        );
+        return incoming.copyWith(
+          remainingCircle: merged,
+          hosIndicators: reconciledIndicators,
+        );
+      }
+    }
+    return incoming;
+  }
+
+  HosIndicators _reconcileIndicators({
+    required HosIndicators incoming,
+    required HosIndicators local,
+  }) {
+    HosIndicator reconcileOne(HosIndicator inc, HosIndicator loc) {
+      if (inc.type == IndicatorType.remaining && loc.type == IndicatorType.remaining) {
+        final minVal = inc.value < loc.value ? inc.value : loc.value;
+        return inc.copyWith(value: minVal);
+      }
+      if (inc.type == IndicatorType.used && loc.type == IndicatorType.used) {
+        final maxVal = inc.value > loc.value ? inc.value : loc.value;
+        return inc.copyWith(value: maxVal);
+      }
+      return loc;
+    }
+
+    return incoming.copyWith(
+      drive: reconcileOne(incoming.drive, local.drive),
+      shift: reconcileOne(incoming.shift, local.shift),
+      breakTime: reconcileOne(incoming.breakTime, local.breakTime),
+      cycle: reconcileOne(incoming.cycle, local.cycle),
     );
   }
 
+  Duration _governingRemaining(
+    DutyStatusCode status,
+    HosIndicators indicators,
+  ) {
+    switch (status) {
+      case DutyStatusCode.driving:
+        return _remainingOfIndicator(indicators.drive, const Duration(hours: 11));
+      case DutyStatusCode.onDutyNotDriving:
+      case DutyStatusCode.yardMove:
+        final shiftRemaining =
+            _remainingOfIndicator(indicators.shift, const Duration(hours: 14));
+        final breakRemaining =
+            _remainingOfIndicator(indicators.breakTime, const Duration(hours: 8));
+        return breakRemaining < shiftRemaining ? breakRemaining : shiftRemaining;
+      case DutyStatusCode.offDuty:
+      case DutyStatusCode.sleeperBerth:
+      case DutyStatusCode.personalConveyance:
+        return Duration.zero;
+    }
+  }
+
+  Duration _remainingOfIndicator(HosIndicator indicator, Duration limit) {
+    if (indicator.type == IndicatorType.used) {
+      final rem = limit - indicator.value;
+      return rem.isNegative ? Duration.zero : rem;
+    }
+    return indicator.value;
+  }
+
+  DateTime _lastStampOrEpoch(Ref ref) =>
+      ref.read(statusDashboardSnapshotTimestampProvider);
+
   /// Clears any error state and reloads.
   Future<void> clearErrorAndReload() => refresh();
+
+  /// تصحيح دوري من الخادم (كل 5 دقائق، وعند العودة من الخلفية).
+  ///
+  /// يختلف عن [refresh] في نقطتين مقصودتين:
+  ///
+  /// 1. **لا يضع شاشة تحميل** ولا يمسح اللوحة المعروضة. نبضة كل 5 دقائق
+  ///    تُظهر مؤشر تحميل متقطّعاً أمام السائق بلا سبب.
+  /// 2. **لا يلمس الحالة عند الفشل إطلاقاً.** صمتٌ أفضل من وميض خطأ
+  ///    على شاشة يعمل عليها السائق.
+  ///
+  /// كما يحرس ضدّ التراكب: نبضة قد تتأخر (Doze، شبكة بطيئة) فتتراكم
+  /// طلبات وتتخمّر الإجابات على الشاشة بلا فائدة.
+  Future<void> reconcileWithServer() async {
+    final auth = ref.read(authStateProvider);
+    if (auth.user == null || auth.transitioning) return;
+    if (_reconciling) return;
+    _reconciling = true;
+    try {
+      await refresh(showLoading: false);
+    } finally {
+      _reconciling = false;
+    }
+  }
+
+  bool _reconciling = false;
 }

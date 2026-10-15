@@ -12,7 +12,9 @@ import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/dvir/domain/entities/dvir_defect.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/pages/dvir_list_page.dart';
+import 'package:golden_feather_eld/features/dvir/presentation/providers/dvir_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -160,6 +162,9 @@ void main() {
           dvirBackendProvider.overrideWithValue(backend),
           networkInfoProvider.overrideWithValue(_OnlineNetwork()),
           trackingConfigStorageProvider.overrideWithValue(_FakeTrackingStorage()),
+          activeVehicleDefectsProvider.overrideWith(
+            (ref) async => [const DvirDefect(id: 1, stage: 'OPEN')],
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light,

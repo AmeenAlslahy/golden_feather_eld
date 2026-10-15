@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/providers/driver_rules_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
+import '../../domain/engine/hos_offline_dashboard.dart';
 import 'hos_engine_provider.dart';
 import 'hos_provider.dart';
 import 'status_dashboard_providers.dart';
@@ -193,7 +197,9 @@ class ChangeStatusState {
 
   bool get isValid =>
       selectedOption != initialOption &&
-      isLocationValid && (!isAnnotationRequired || notes.length >= 4);
+      isLocationValid &&
+      (!isAnnotationRequired || notes.length >= 4) &&
+      !(isVehicleMoving && selectedStatus != DutyStatus.driving);
 
   ChangeStatusState copyWith({
     DutyStatusOption? initialOption,
@@ -353,19 +359,29 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       // مطابقة أصلاً؛ وإن اختلفت لأي سبب يبقى الـ refresh الاحتياطي.
       final serverDashboard = outcome.dashboard;
       if (serverDashboard != null) {
-        // للحفاظ على قيم العدادات وتجنب تصفيرها لأن استجابة الـ POST قد تعود فارغة من السيرفر
         final currentDashboard = _ref.read(statusDashboardProvider).valueOrNull;
-        if (currentDashboard != null) {
-          final updatedDashboard = currentDashboard.copyWith(
-            currentDutyStatus: serverDashboard.currentDutyStatus,
-          );
-          _ref
-              .read(statusDashboardProvider.notifier)
-              .applyServerDashboard(updatedDashboard);
-        } else {
-          _ref
-              .read(statusDashboardProvider.notifier)
-              .applyServerDashboard(serverDashboard);
+        final updatedDashboard = currentDashboard != null
+            ? serverDashboard.copyWith(
+                driver: serverDashboard.driver.name.isNotEmpty
+                    ? serverDashboard.driver
+                    : currentDashboard.driver,
+                regulatoryConstraints:
+                    serverDashboard.regulatoryConstraints.limits.isNotEmpty
+                        ? serverDashboard.regulatoryConstraints
+                        : currentDashboard.regulatoryConstraints,
+              )
+            : serverDashboard;
+        _ref
+            .read(statusDashboardProvider.notifier)
+            .applyServerDashboard(updatedDashboard);
+      } else {
+        // ⚠️ لا خادم: النتيجة بلا لقطة. قبل هذا كانت الصفحة تبقى على
+        // حالتها القديمة بينما يُعرض "نجاح" — السائق يرى تغييراً لم
+        // يحدث أمامه. نبني الآن لوحة حقيقية من المحرك المحلي
+        // (المستعاد من سجل الخدمة) فيتحدّث فوراً كالوضع المتصل.
+        final local = _buildLocalDashboard();
+        if (local != null) {
+          _ref.read(statusDashboardProvider.notifier).applyServerDashboard(local);
         }
       }
 
@@ -383,6 +399,28 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       }
       return DutyChangeEngineRefusal(e.toString());
     }
+  }
+
+  /// لوحة مبنية من المحرك المحلي — تُستخدم عندغياب الخادم.
+  StatusDashboard? _buildLocalDashboard() {
+    final engine = _ref.read(hosEngineProvider);
+    final result = engine.currentStatus;
+    if (result is! HosEngineReady) return null;
+    final current = _ref.read(statusDashboardProvider).valueOrNull;
+    final driverId = _ref.read(currentDriverIdProvider);
+    return const HosOfflineDashboardBuilder().build(
+      engineResult: result,
+      driverId: const DriverId(0),
+      driverName: '',
+      driverDisplayText: '',
+    ).copyWith(
+      driver: current?.driver ??
+          DriverRef(
+            id: DriverId(driverId ?? 0),
+            name: '',
+            displayText: '',
+          ),
+    );
   }
 }
 

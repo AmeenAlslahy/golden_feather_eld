@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:fpdart/fpdart.dart';
+import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../../../sync/domain/entities/pending_event.dart';
 import '../../../sync/domain/repositories/offline_queue.dart';
+import '../../../../core/constants/storage_constants.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
@@ -44,6 +47,110 @@ class DvirRepositoryImpl implements DvirRepository {
     return ServerFailure(message: error.code);
   }
 
+  void _saveReportsToDisk(String key, List<dynamic> rawReports) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        box.put('dvir_reports:$key', jsonEncode(rawReports));
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to save DVIR reports to disk: $e');
+    }
+  }
+
+  List<DvirReport>? _loadReportsFromDisk(String key) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        final rawStr = box.get('dvir_reports:$key');
+        if (rawStr != null && rawStr.isNotEmpty) {
+          final list = jsonDecode(rawStr) as List<dynamic>;
+          return list.map((json) {
+            final dto = DvirDto.fromJson(json as Map<String, dynamic>);
+            return _mapDtoToEntity(dto);
+          }).toList();
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to load DVIR reports from disk: $e');
+    }
+    return null;
+  }
+
+  void _savePreviousToDisk(String key, Map<String, dynamic> candidate) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        box.put('dvir_prev:$key', jsonEncode(candidate));
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to save previous DVIR to disk: $e');
+    }
+  }
+
+  DvirReport? _loadPreviousFromDisk(String key) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        final rawStr = box.get('dvir_prev:$key');
+        if (rawStr != null && rawStr.isNotEmpty) {
+          final map = jsonDecode(rawStr) as Map<String, dynamic>;
+          return _mapDtoToEntity(DvirDto.fromJson(map));
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to load previous DVIR from disk: $e');
+    }
+    return null;
+  }
+
+  void _addToLocalCache(DvirReport report, [Map<String, dynamic>? rawBody]) {
+    final key = report.vehicleId.trim();
+    final current = _cachedReports[key] ?? _loadReportsFromDisk(key) ?? [];
+    final updated = [
+      report,
+      ...current.where((r) => r.id != report.id),
+    ];
+    _cachedReports[key] = updated;
+    _cachedPrevious[key] = report;
+    if (rawBody != null) {
+      try {
+        if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+          final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+          final existing = box.get('dvir_reports:$key');
+          final list = existing != null ? (jsonDecode(existing) as List<dynamic>) : [];
+          list.insert(0, rawBody);
+          box.put('dvir_reports:$key', jsonEncode(list));
+          box.put('dvir_prev:$key', jsonEncode(rawBody));
+        }
+      } catch (e) {
+        AppLogger.warning('Failed to persist submitted DVIR to disk: $e');
+      }
+    }
+  }
+
+  void _updateReviewInCache(String dvirId, String reviewerName) {
+    for (final list in _cachedReports.values) {
+      for (int i = 0; i < list.length; i++) {
+        if (list[i].id == dvirId) {
+          list[i] = list[i].copyWith(
+            nextDriverReviewed: true,
+            reviewingDriverName: reviewerName,
+          );
+        }
+      }
+    }
+    for (final key in _cachedPrevious.keys) {
+      final prev = _cachedPrevious[key];
+      if (prev != null && prev.id == dvirId) {
+        _cachedPrevious[key] = prev.copyWith(
+          nextDriverReviewed: true,
+          reviewingDriverName: reviewerName,
+        );
+      }
+    }
+  }
+
   @override
   Future<Either<Failure, List<DvirReport>>> getDvirReports(
     String vehicleId,
@@ -75,6 +182,11 @@ class DvirRepositoryImpl implements DvirRepository {
         if (_cachedReports.containsKey(key)) {
           return Right(_cachedReports[key]!);
         }
+        final diskReports = _loadReportsFromDisk(key);
+        if (diskReports != null && diskReports.isNotEmpty) {
+          _cachedReports[key] = diskReports;
+          return Right(diskReports);
+        }
         return Left(_failure(error));
       }, (
         rawJson,
@@ -85,10 +197,19 @@ class DvirRepositoryImpl implements DvirRepository {
           return _mapDtoToEntity(dto);
         }).toList();
         _cachedReports[key] = reports;
+        _saveReportsToDisk(key, rawReports);
         return Right(reports);
       });
     }, offline: () async {
-      return Right(_cachedReports[key] ?? const []);
+      if (_cachedReports.containsKey(key)) {
+        return Right(_cachedReports[key]!);
+      }
+      final diskReports = _loadReportsFromDisk(key);
+      if (diskReports != null && diskReports.isNotEmpty) {
+        _cachedReports[key] = diskReports;
+        return Right(diskReports);
+      }
+      return const Left(NetworkFailure());
     });
   }
 
@@ -152,6 +273,7 @@ class DvirRepositoryImpl implements DvirRepository {
         try {
           final mapped = _mapDtoToEntity(DvirDto.fromJson(candidate));
           _cachedPrevious[key] = mapped;
+          _savePreviousToDisk(key, candidate);
           return Right(mapped);
         } catch (e, stackTrace) {
           AppLogger.error(
@@ -163,6 +285,14 @@ class DvirRepositoryImpl implements DvirRepository {
         }
       });
     }, offline: () async {
+      if (_cachedPrevious.containsKey(key)) {
+        return Right(_cachedPrevious[key]);
+      }
+      final diskPrev = _loadPreviousFromDisk(key);
+      if (diskPrev != null) {
+        _cachedPrevious[key] = diskPrev;
+        return Right(diskPrev);
+      }
       return Right(_cachedPrevious[key]);
     });
   }
@@ -292,14 +422,47 @@ class DvirRepositoryImpl implements DvirRepository {
           createdAt: DateTime.now().toUtc(),
         ),
       );
+      _addToLocalCache(report, body);
       return const Right(true);
     }
     return guardedNetwork(networkInfo, () async {
       final result = await dvirBackend.create(body);
-      return result.fold(
-        (error) => Left(_failure(error)),
-        (_) => const Right(true),
+      return await result.fold(
+        (error) async {
+          if (error is NetworkError ||
+              error.code.startsWith('network') ||
+              error.code.contains('timeout') ||
+              error.code.contains('offline') ||
+              error.code.contains('connection')) {
+            await offlineQueue.enqueue(
+              PendingEvent(
+                id: _uuid.v4(),
+                type: 'dvir_create',
+                payload: body,
+                createdAt: DateTime.now().toUtc(),
+              ),
+            );
+            _addToLocalCache(report, body);
+            return const Right(true);
+          }
+          return Left(_failure(error));
+        },
+        (_) async {
+          _addToLocalCache(report, body);
+          return const Right(true);
+        },
       );
+    }, offline: () async {
+      await offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'dvir_create',
+          payload: body,
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+      _addToLocalCache(report, body);
+      return const Right(true);
     });
   }
 
@@ -373,6 +536,7 @@ class DvirRepositoryImpl implements DvirRepository {
           createdAt: DateTime.now().toUtc(),
         ),
       );
+      _updateReviewInCache(dvirId, reviewingDriverName);
       return const Right(true);
     }
     return guardedNetwork(networkInfo, () async {
@@ -380,10 +544,48 @@ class DvirRepositoryImpl implements DvirRepository {
         dvirId: DvirId(parsedId),
         review: dto.toJson(),
       );
-      return result.fold(
-        (error) => Left(_failure(error)),
-        (_) => const Right(true),
+      return await result.fold(
+        (error) async {
+          if (error is NetworkError ||
+              error.code.startsWith('network') ||
+              error.code.contains('timeout') ||
+              error.code.contains('offline') ||
+              error.code.contains('connection')) {
+            await offlineQueue.enqueue(
+              PendingEvent(
+                id: _uuid.v4(),
+                type: 'dvir_review',
+                payload: {
+                  'dvirId': parsedId,
+                  'review': dto.toJson(),
+                },
+                createdAt: DateTime.now().toUtc(),
+              ),
+            );
+            _updateReviewInCache(dvirId, reviewingDriverName);
+            return const Right(true);
+          }
+          return Left(_failure(error));
+        },
+        (_) async {
+          _updateReviewInCache(dvirId, reviewingDriverName);
+          return const Right(true);
+        },
       );
+    }, offline: () async {
+      await offlineQueue.enqueue(
+        PendingEvent(
+          id: _uuid.v4(),
+          type: 'dvir_review',
+          payload: {
+            'dvirId': parsedId,
+            'review': dto.toJson(),
+          },
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+      _updateReviewInCache(dvirId, reviewingDriverName);
+      return const Right(true);
     });
   }
 

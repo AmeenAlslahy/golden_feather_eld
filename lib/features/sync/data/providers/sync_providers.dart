@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
+import 'dart:async';
 
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/config/app_environment.dart';
@@ -137,12 +138,24 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
       .watch(networkInfoProvider)
       .onConnectionChange
       .listen((online) {
-        if (online) engine.triggerSync();
-      });
-
-  ref.onDispose(() {
-    networkSubscription.cancel();
+    if (online) engine.triggerSync();
   });
+  ref.onDispose(() => networkSubscription.cancel());
+
+  // نبضة دورية.
+  //
+  // السبب: RetryPolicy.puts الأحداث الفاشلة في backoff حتى ٥٠ ثانية
+  // كحد أقصى. لو عاد الاتصال بينما كان حدث في نافذة backoff، فإن
+  // triggerSync من 이벤��ة ال��ص��لية يخرج فوراً (القائمة الجاهزة فارغة)
+  // ولا يوجد ما يوقظه بعد انقضاء النافذة → يبدو التزامن "ميتاً" ريثما
+  // يمرّ الوقت، وقد لا يعود الاتصال إطلاقاً.
+  //
+  // ℹ️ لا يوجد مؤقّت دوري آخر يلتقط هذه الأحداث.
+  final heartbeat = Timer.periodic(
+    const Duration(seconds: 30),
+    (_) => engine.triggerSync(),
+  );
+  ref.onDispose(() => heartbeat.cancel());
 
   return engine;
 });

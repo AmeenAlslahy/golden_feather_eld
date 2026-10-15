@@ -4,11 +4,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/account_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/localization/locale_provider.dart';
+import '../../../../core/utils/localization_helper.dart';
 
 /// شاشة معلومات الحساب
 class AccountPage extends ConsumerStatefulWidget {
@@ -29,13 +30,16 @@ class _AccountPageState extends ConsumerState<AccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dashboard = ref.watch(dashboardDataProvider);
     final accountState = ref.watch(accountProvider);
     final account = accountState.accountData;
+    final user = ref.watch(authStateProvider).user;
 
     final loc = context.loc;
 
     final notAvailable = loc.na;
+    final driverName = (user?.fullName.isNotEmpty == true)
+        ? user!.fullName
+        : notAvailable;
 
     final availableLanguages =
         account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
@@ -107,7 +111,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         Padding(
                           padding: const EdgeInsets.all(AppSpacing.md),
                           child: Text(
-                            accountState.error!,
+                            context.translateErrorKey(accountState.error!),
                             style: context.styles.error,
                             textAlign: TextAlign.center,
                           ),
@@ -122,8 +126,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       const Divider(height: 1, thickness: 1),
                       _buildInfoRow(
                         context,
-                        loc.sortByName,
-                        dashboard.driverName,
+                        loc.driverName,
+                        driverName,
                       ),
                       const Divider(height: 1, thickness: 1),
                       _buildInfoRow(
@@ -185,16 +189,32 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                       newValue == 'español') {
                                     code = 'es';
                                   }
-                                  ref
-                                      .read(localeProvider.notifier)
-                                      .setLocale(code);
-
-                                  ref
+                                  final success = await ref
                                       .read(accountProvider.notifier)
                                       .updatePreferences(
                                         language: newValue,
                                         odometerUnit: currentOdometer,
                                       );
+                                  if (context.mounted) {
+                                    if (success) {
+                                      ref
+                                          .read(localeProvider.notifier)
+                                          .setLocale(code);
+                                      AppFeedback.success(
+                                        context,
+                                        loc.languageUpdatedSuccessfully,
+                                      );
+                                    } else {
+                                      final err =
+                                          ref.read(accountProvider).error;
+                                      AppFeedback.error(
+                                        context,
+                                        err != null
+                                            ? context.translateErrorKey(err)
+                                            : loc.errRequestFailed,
+                                      );
+                                    }
+                                  }
                                 }
                               },
                       ),
@@ -220,6 +240,15 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                       AppFeedback.success(
                                         context,
                                         loc.odometerUnitUpdatedSuccessfull,
+                                      );
+                                    } else {
+                                      final err =
+                                          ref.read(accountProvider).error;
+                                      AppFeedback.error(
+                                        context,
+                                        err != null
+                                            ? context.translateErrorKey(err)
+                                            : loc.errRequestFailed,
                                       );
                                     }
                                   }

@@ -3,9 +3,16 @@ class ServerException implements Exception {
   final String? message;
   final int? statusCode;
 
+  /// نص الخادم القابل للعرض (من `error.context['serverMessage']`).
+  ///
+  /// ⚠️ **يجب أن يُمرَّر عند الرمي.** فكان يُرفع `ServerException(message:
+  /// error.code)` فقط، فيضيع السبب الدقيق ويصل السائق «الخادم رفض الطلب».
+  final String? serverMessage;
+
   const ServerException({
     this.message,
     this.statusCode,
+    this.serverMessage,
   });
 
   @override

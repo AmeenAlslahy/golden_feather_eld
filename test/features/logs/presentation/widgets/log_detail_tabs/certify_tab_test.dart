@@ -73,6 +73,9 @@ void main() {
           pendingCarrierEdits: [],
         )),
       );
+      when(() => logRepository.getDraftSignature(any())).thenAnswer((_) async => null);
+      when(() => logRepository.saveDraftSignature(any(), any())).thenAnswer((_) async {});
+      when(() => logRepository.deleteDraftSignature(any())).thenAnswer((_) async {});
     });
 
     Future<void> pumpTab(

@@ -11,9 +11,30 @@ import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
 import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 
+class _FakeAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+  _FakeAuthNotifier()
+      : super(
+          AuthState(
+            status: AuthStatus.authenticated,
+            user: User(
+              id: '646',
+              username: 'naseem646',
+              email: 'naseem@test.com',
+              fullName: 'Naseem Hassan Ali Adam',
+              role: UserRole.fieldWorker,
+              createdAt: DateTime(2026),
+            ),
+          ),
+        );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +43,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeBackendProvider.overrideWithValue(MockAdapter()),
+        authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
       ],
     );
     addTearDown(container.dispose);
@@ -45,7 +67,7 @@ void main() {
       final dashboard = await container.read(statusDashboardProvider.future);
 
       expect(dashboard.currentDutyStatus, DutyStatusCode.onDutyNotDriving);
-      expect(dashboard.driver.id.value, 101);
+      expect(dashboard.driver.id.value, 646);
       expect(dashboard.hosIndicators.drive.label, 'DRIVE');
     });
 
@@ -106,6 +128,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           activeBackendProvider.overrideWithValue(_FailingAdapter()),
+          authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
         ],
       );
       addTearDown(container.dispose);

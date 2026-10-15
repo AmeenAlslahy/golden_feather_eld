@@ -1,16 +1,24 @@
 /// Trusted time abstraction.
 ///
 /// **Why this exists:**
-/// - FMCSA §4.3.2.2 requires ELD to use a time source that cannot be
-///   manipulated by the driver.
-/// - The device clock is trivially manipulable.
-/// - A server-synced or NTP-synced authority is required in production.
+/// - ELD Technical Specifications, Appendix A to Subpart B of Part 395,
+///   §4.3.1.5 "Date and Time" requires that the ELD obtain and record
+///   date/time "automatically without allowing any external input or
+///   interference from a motor carrier, driver, or any other person",
+///   and be synchronised to UTC with a deviation not exceeding 10 minutes.
+/// - The device clock is trivially manipulable by the driver.
+/// - A server-anchored authority is therefore required for legal stamps.
 ///
 /// **Design:**
 /// - The interface is pure — no I/O, no platform channels.
 /// - Implementations decide the sync mechanism.
 /// - Callers use `nowUtc()` for timestamps and `monotonicElapsed` for
 ///   measuring durations between calls.
+///
+/// NOTE: this interface (`TimeAuthority`) is the device-clock-anchored
+/// authority used for RETRY SCHEDULING and LOCAL METADATA only. Legal duty
+/// stamps use `TrustedTimeProvider` (core/time/trusted_time_provider.dart),
+/// which is server-anchored. Do not use this one for legal records.
 library;
 
 /// Level of trust for the current time source.

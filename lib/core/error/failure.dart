@@ -5,13 +5,27 @@ abstract class Failure extends Equatable {
   final String message;
   final int? statusCode;
 
+  /// رسالة الخادم **القابلة للعرض** (إن أرسلها).
+  ///
+  /// تختلف عن [message] تماماً: [message] رمز آلي (`BUSINESS_RULE_VIOLATION`)
+  /// مُخصَّص للسجلات، وهذا نصّ بشري مثل «السجل اليومي معتمد مسبقاً، لا يمكن
+  /// تعديل بيانات النموذج قبل إلغاء الاعتماد».
+  ///
+  /// ⚠️ **لماذا هذا الحقل:** كان يُرمى في كل مسار. فكان السائق يرى
+  /// «الخادم رفض الطلب» بينما الخادم كان قد كتب له سبباً دقيقاً ووقائياً.
+  ///
+  /// الأمان: لا يُعرض مباشرة — يمرّ على بوابة
+  /// [_isSafeUserFacingText] في [anyErrorUserMessage] قبل الوصول للسائق.
+  final String? serverMessage;
+
   const Failure({
     required this.message,
     this.statusCode,
+    this.serverMessage,
   });
 
   @override
-  List<Object?> get props => [message, statusCode];
+  List<Object?> get props => [message, statusCode, serverMessage];
 }
 
 /// فشل الخادم
@@ -19,6 +33,7 @@ class ServerFailure extends Failure {
   const ServerFailure({
     required super.message,
     super.statusCode,
+    super.serverMessage,
   });
 }
 
@@ -60,6 +75,25 @@ class SessionMissingFailure extends Failure {
   });
 }
 
+/// لا توجد لقطة لوحة محفوظة يمكن عرضها (جهاز بلا شبكة + لا كاش).
+///
+/// ⚠️ هذا الفشل مقصود: البديل القديم كان يُولّد ق��يم مُختلَقة
+/// (offDuty + 11:00/14:00/70:00) فتُعرض كأنها رصيد قانوني حقيقي.
+/// الآن يبني上层 اللوحة من المحرك المحلي، وإن تعذّر ذلك تُعرض
+/// حالة "غير متاح" بدل أرقام ملفّقة.
+class NoDashboardSnapshotFailure extends Failure {
+  const NoDashboardSnapshotFailure({
+    super.message = 'noDashboardSnapshot',
+  });
+}
+
+/// لا يوجد ملخص أسبوعي محفوظ يمكن عرضه (جهاز بلا شبكة + لا كاش).
+class NoRecapSnapshotFailure extends Failure {
+  const NoRecapSnapshotFailure({
+    super.message = 'noRecapSnapshot',
+  });
+}
+
 /// فشل التخزين المؤقت
 class CacheFailure extends Failure {
   const CacheFailure({
@@ -86,6 +120,46 @@ class SyncFailure extends Failure {
   const SyncFailure({
     required super.message,
   });
+}
+
+/// رفض نهائي من الخادم — إعادة الإرسال لن تنجح أبداً.
+///
+/// **لماذا هذا النوع موجود:** محرك المزامنة كان يطوي كل خطأ في
+/// `ServerFailure` قابل لإعادة المحاولة، وبما أن `RetryPolicy`
+/// مصمّمة عمداً لتعيد المحاولة إلى ما لا نهاية (قاعدة FMCSA:
+/// لا تُفقد بيانات HOS)، فإن حدثاً مرفوضاً نهائياً — مثل
+/// `409 BUSINESS_RULE_VIOLATION` على نموذج يوم **معتمد مسبقاً** —
+/// كان يُعاد إرساله كل 50 ثانية إلى الأبد، بلا أي احتمال للنجاح.
+///
+/// **القاعدة:**
+/// - أخطاء عابرة (شبكة، 5xx، 408، 429) ⇒ إعادة محاولة كما كانت.
+/// - أخطاء نهائية (409، 400/422، 404، 403) ⇒ [RejectedFailure] ⇒
+///   dead-letter فوراً مع سبب مقروء، ويُبلَّغ السائق.
+///
+/// **لا يعني الفقد:** التعارض من فعل السائق (اعتماد السجل)،
+/// فإعادة إرسال طلب مرفوض ليست حماية للبيانات بل إغراق للسجلات
+/// واستنزاف للشبكة وإخفاء فقد حقيقي عن عين السائق.
+class RejectedFailure extends Failure {
+  /// رمز الخطأ الآلي من الخادم (للتسجيل والتشخيص).
+  final String code;
+
+  /// رمز مترجم لعرضه للسائق.
+  final String l10nKey;
+
+  /// هل هذا الرفض نهائي (409/4xx) لا قابل للمحاولة مجدداً؟
+  ///
+  /// `true` لكل نسخ [RejectedFailure] الحالية — الحقل موجود ليعبّر عن
+  /// النية صراحةً في السجل التشخيصي.
+  final bool isPermanent;
+
+  const RejectedFailure({
+    required this.code,
+    this.l10nKey = 'syncRejected',
+    this.isPermanent = true,
+  }) : super(message: 'sync.rejected');
+
+  @override
+  List<Object?> get props => [message, statusCode, code, l10nKey, isPermanent];
 }
 
 /// فشل التحقق من البيانات

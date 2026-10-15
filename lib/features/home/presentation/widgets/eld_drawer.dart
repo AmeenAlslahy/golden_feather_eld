@@ -34,6 +34,7 @@ class EldDrawer extends ConsumerWidget {
               child: Text(
                 loc.menuTitle,
                 style: context.styles.appBarTitle.copyWith(
+                  color: AppColors.onGold,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                 ),

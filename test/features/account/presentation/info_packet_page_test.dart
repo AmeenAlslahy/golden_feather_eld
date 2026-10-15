@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_inspection_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
@@ -14,7 +15,16 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/account/presentation/pages/info_packet_page.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
+import 'package:golden_feather_eld/core/network/core_providers.dart';
+import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:mocktail/mocktail.dart';
+
+class _OnlineNetwork implements NetworkInfo {
+  @override
+  bool get isConnected => true;
+  @override
+  Stream<bool> get onConnectionChange => const Stream.empty();
+}
 
 class _Storage extends Mock implements LocalStorageService {
   @override
@@ -46,13 +56,18 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final adapter = _Adapter();
+    final mock = MockAdapter();
     when(() => adapter.inspection).thenReturn(backend);
+    when(() => adapter.dutyStatus).thenReturn(mock.dutyStatus);
+    when(() => adapter.dailyLogs).thenReturn(mock.dailyLogs);
+    when(() => adapter.dvir).thenReturn(mock.dvir);
     when(() => adapter.isMock).thenReturn(true);
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           activeBackendProvider.overrideWithValue(adapter),
+          networkInfoProvider.overrideWithValue(_OnlineNetwork()),
           localStorageProvider.overrideWithValue(_Storage()),
           currentDriverIdProvider.overrideWithValue(106),
         ],

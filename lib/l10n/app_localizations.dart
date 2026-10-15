@@ -4270,6 +4270,30 @@ abstract class AppLocalizations {
   /// **'تعذر إكمال الطلب.'**
   String get errGeneric;
 
+  /// No description provided for @errBusinessRuleViolation.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن إتمام العملية لأن سجل اليوم معتمد مسبقاً. ألغِ الاعتماد أولاً ثم أعد المحاولة.'**
+  String get errBusinessRuleViolation;
+
+  /// No description provided for @errConflictingChange.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيّر هذا السجل من جهاز آخر أو نُعدّل قبل قليل. حدّث الصفحة ثم أعد المحاولة.'**
+  String get errConflictingChange;
+
+  /// No description provided for @errCheckYourInput.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحقّق من البيانات المُدخلة ثم أعد المحاولة.'**
+  String get errCheckYourInput;
+
+  /// No description provided for @errNotFoundAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'البيانات المطلوبة لم تعد موجودة. حدّث الصفحة.'**
+  String get errNotFoundAction;
+
   /// No description provided for @enterAReasonForManualRecording.
   ///
   /// In ar, this message translates to:
@@ -5811,6 +5835,198 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الأحداث النشطة'**
   String get activeEvents;
+
+  /// No description provided for @permissionsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صلاحيات التطبيق'**
+  String get permissionsTitle;
+
+  /// No description provided for @permissionsSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج تطبيق ELD للصلاحيات التالية للعمل بشكل قانوني:'**
+  String get permissionsSubtitle;
+
+  /// No description provided for @permLocationTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع الجغرافي'**
+  String get permLocationTitle;
+
+  /// No description provided for @permLocationSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لتسجيل مسار المركبة وساعات القيادة تلقائياً'**
+  String get permLocationSubtitle;
+
+  /// No description provided for @permLocationRequiredDialog.
+  ///
+  /// In ar, this message translates to:
+  /// **'صلاحية الموقع مطلوبة. يحتاج تطبيق ELD إلى الوصول للموقع الجغرافي بشكل دائم لتسجيل مسار المركبة وساعات القيادة تلقائياً. هذا متطلب قانوني من FMCSA ولا يمكن عمل التطبيق بدونه.'**
+  String get permLocationRequiredDialog;
+
+  /// No description provided for @permBluetoothTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'البلوتوث'**
+  String get permBluetoothTitle;
+
+  /// No description provided for @permBluetoothSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'للاتصال بجهاز ELD في المركبة'**
+  String get permBluetoothSubtitle;
+
+  /// No description provided for @permBluetoothDialog.
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج التطبيق للاتصال بجهاز ELD في المركبة. يمكنك المتابعة بدون بلوتوث ولكن سيتم تسجيل ساعات القيادة يدوياً.'**
+  String get permBluetoothDialog;
+
+  /// No description provided for @permNotificationTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإشعارات'**
+  String get permNotificationTitle;
+
+  /// No description provided for @permNotificationSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'للحصول على تنبيهات ساعات القيادة والاستراحة'**
+  String get permNotificationSubtitle;
+
+  /// No description provided for @permBatteryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'توفير البطارية'**
+  String get permBatteryTitle;
+
+  /// No description provided for @permBatterySubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'يجب تعطيله لضمان عمل التتبع في الخلفية'**
+  String get permBatterySubtitle;
+
+  /// No description provided for @permCameraTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكاميرا'**
+  String get permCameraTitle;
+
+  /// No description provided for @permCameraSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لالتقاط صور فحص المركبة (DVIR)'**
+  String get permCameraSubtitle;
+
+  /// No description provided for @permGrantPermissions.
+  ///
+  /// In ar, this message translates to:
+  /// **'منح الصلاحيات'**
+  String get permGrantPermissions;
+
+  /// No description provided for @permGrantSingle.
+  ///
+  /// In ar, this message translates to:
+  /// **'منح الصلاحية'**
+  String get permGrantSingle;
+
+  /// No description provided for @permRequiredTag.
+  ///
+  /// In ar, this message translates to:
+  /// **'مطلوب'**
+  String get permRequiredTag;
+
+  /// No description provided for @permRequiredDialogTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صلاحية الموقع مطلوبة'**
+  String get permRequiredDialogTitle;
+
+  /// No description provided for @permBluetoothDialogTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'صلاحية البلوتوث'**
+  String get permBluetoothDialogTitle;
+
+  /// No description provided for @forgotPasswordEnterEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل بريد الحساب. إن لم يصلك شيء فتواصل مع مدير الأسطول.'**
+  String get forgotPasswordEnterEmail;
+
+  /// No description provided for @forgotPasswordEnterValidEmail.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل بريداً صالحاً.'**
+  String get forgotPasswordEnterValidEmail;
+
+  /// No description provided for @forgotPasswordNotAvailableOnServer.
+  ///
+  /// In ar, this message translates to:
+  /// **'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.'**
+  String get forgotPasswordNotAvailableOnServer;
+
+  /// No description provided for @forgotPasswordInstructionsSent.
+  ///
+  /// In ar, this message translates to:
+  /// **'إن كان البريد مسجّلاً فستصلك تعليمات إعادة التعيين.'**
+  String get forgotPasswordInstructionsSent;
+
+  /// No description provided for @sendButtonLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get sendButtonLabel;
+
+  /// No description provided for @dvirPhotosAttached.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصور المرفقة'**
+  String get dvirPhotosAttached;
+
+  /// No description provided for @mechanicCertification.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهادة الميكانيكي'**
+  String get mechanicCertification;
+
+  /// No description provided for @mechanicLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الميكانيكي'**
+  String get mechanicLabel;
+
+  /// No description provided for @repairNotesLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملاحظات الإصلاح'**
+  String get repairNotesLabel;
+
+  /// No description provided for @noDefectsReported.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم الإبلاغ عن أي عيوب'**
+  String get noDefectsReported;
+
+  /// No description provided for @statusDetected.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم الاكتشاف'**
+  String get statusDetected;
+
+  /// No description provided for @invalidOdometerReading.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيمة العداد غير صالحة'**
+  String get invalidOdometerReading;
+
+  /// No description provided for @statusUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'غير معروف'**
+  String get statusUnknown;
 }
 
 class _AppLocalizationsDelegate

@@ -70,7 +70,36 @@ class InspectionLogHeaderTable extends StatelessWidget {
   String get _provider => _pick(log?.eldProvider, day?.eldProvider);
   String get _location =>
       _pick(log?.displayLocation, day?.displayLocation);
-  String get _logDate => _pick(log?.displayDate, day?.displayDate);
+  String get _logDate {
+    final dt = log?.logDate ?? day?.logDate;
+    if (dt != null) {
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '${dt.year}-$m-$d';
+    }
+    return '';
+  }
+
+  String get _displayDate {
+    final direct = _pick(log?.displayDate, day?.displayDate);
+    if (direct.isNotEmpty) return direct;
+    final dt = log?.logDate ?? day?.logDate ?? screen?.inspectionDate;
+    if (dt != null) {
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      return '${dt.year}-$m-$d';
+    }
+    return '';
+  }
+
+  String get _periodStartTime {
+    final raw = log?.period24HourStartTime;
+    if (raw != null && raw.trim().isNotEmpty && raw != '—') {
+      return raw.trim();
+    }
+    return '00:00:00';
+  }
+
   bool get _certified => log?.certified ?? day?.certified ?? false;
   bool get _exempt => day?.exemptDriver ?? false;
   bool get _unidentified =>
@@ -162,7 +191,7 @@ class InspectionLogHeaderTable extends StatelessWidget {
         ]),
         _valueRow(context, [
           _logDate,
-          _logDate,
+          _displayDate,
           _location,
           _certified ? 'Yes' : 'No',
         ]),
@@ -178,7 +207,7 @@ class InspectionLogHeaderTable extends StatelessWidget {
           'Device Malfn. Indicators',
         ]),
         _valueRow(context, [
-          log?.period24HourStartTime ?? '—',
+          _periodStartTime,
           _diag ? _diagCodes : 'No',
           _malf ? _malfCodes : 'No',
         ]),

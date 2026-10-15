@@ -134,7 +134,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 hint: customLocationHint,
                 isUnderlined: true,
                 errorText: state.customLocation.isNotEmpty && !state.hasValidCustomLocation 
-                    ? 'Letters, numbers, punctuation 5 - 60 symbols are allowed.' 
+                    ? context.loc.invalidValue 
                     : null,
               ),
             ),

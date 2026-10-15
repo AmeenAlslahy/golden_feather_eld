@@ -174,6 +174,23 @@ class SyncEngine {
   ) async {
     await result.match(
       (failure) async {
+        // 🔴 رفض نهائي من الخادم (409/4xx) — لا إعادة محاولة.
+        //
+        // `RetryPolicy` تعيد المحاولة إلى ما لا نهاية عمداً (FMCSA: لا
+        // تُفقد بيانات HOS)، وهو صحيح لحدث ضائع بسبب الشبكة. لكنه كارثي
+        // لحدث مرفوض نهائياً: مثال مُبلَّغ — حفظ نموذج يوم معتمد يُرجع
+        // 409 BUSINESS_RULE_VIOLATION، فيُعاد كل ~50 ثانية للأبد بلا
+        // أي احتمال للنجاح، مع إغراق السجلات واستنزاف الشبكة.
+        //
+        // الرفض النهائي وحده ينتقل إلى dead-letter فوراً؛ ما عداه
+        // يحتفظ بحماية FMCSA كاملة.
+        if (failure is RejectedFailure) {
+          await _queue.moveToDeadLetter(event);
+          AppLogger.warning(
+              'SyncEngine: event ${event.id} permanently rejected by server '
+              '(${failure.code}) — dead-lettered without retry');
+          return;
+        }
         // P0 2B-1 — حجر الملكية ليس فشل إرسال: نقل ذري لخارج الطابور،
         // بلا retry وبلا تصعيد خطأ. الصف يغيب عن getReadyEvents نهائياً.
         if (failure is QuarantinedFailure) {

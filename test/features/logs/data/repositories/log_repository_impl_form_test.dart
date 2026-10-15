@@ -60,6 +60,16 @@ void main() {
       timeAuthority: FakeTimeAuthority(),
       idGenerator: FakeIdGenerator(),
     );
+
+    when(() => mockLocalDataSource.cacheDailyForm(any(), any()))
+        .thenAnswer((_) async {});
+    when(() => mockLocalDataSource.getCachedDailyForm(any()))
+        .thenAnswer((_) async => null);
+    when(() => mockLocalDataSource.markCachedDailyLogFormComplete(
+          driverId: any(named: 'driverId'),
+          logId: any(named: 'logId'),
+          isComplete: any(named: 'isComplete'),
+        )).thenAnswer((_) async {});
   });
 
   const tLogId = DailyLogId(123);

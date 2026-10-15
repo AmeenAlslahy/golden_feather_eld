@@ -7,11 +7,13 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
+import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
 import '../widgets/inspection_duty_graph.dart';
 import '../widgets/inspection_log_header_table.dart';
 import '../../../../core/widgets/eld_date_paginator.dart';
 import '../../../../core/widgets/eld_events_table.dart';
+
 /// عرض التفتيش النشط (مقفل بـ PIN).
 ///
 /// الـ ref يُقرأ في قمة الـ build فقط؛ كل ما تحته ودجات عميقة تستقبل
@@ -36,6 +38,7 @@ class InspectionActiveView extends ConsumerWidget {
     final state = ref.watch(inspectionProvider);
     final log = state.log;
     final day = state.selectedDay;
+    final screen = ref.watch(dotInspectionScreenProvider).asData?.value;
     final license = ref.watch(
       accountProvider.select((s) => s.accountData?.license),
     );
@@ -43,7 +46,7 @@ class InspectionActiveView extends ConsumerWidget {
     // المرافق الحي احتياطاً — التنسيق الوحيد المسموح في الواجهة.
     final co = ref.watch(codriverProvider.select((s) => s.currentCoDriver));
     final coDriverName = co?.name ?? '';
-    final coDriverId = co?.isLinked == true ? '\${co.coDriverId}' : '';
+    final coDriverId = co?.isLinked == true ? '${co?.coDriverId}' : '';
 
     return Column(
       children: [
@@ -67,7 +70,7 @@ class InspectionActiveView extends ConsumerWidget {
         ),
         const Divider(height: 1),
         Expanded(
-          child: log == null
+          child: (log == null && day == null)
               ? Center(
                   child: Text(
                     state.error ?? context.loc.noData,
@@ -81,6 +84,7 @@ class InspectionActiveView extends ConsumerWidget {
                   child: Column(
                     children: [
                       InspectionLogHeaderTable(
+                        screen: screen,
                         log: log,
                         day: day,
                         driverLicense: license?.number ?? '-',
@@ -88,20 +92,25 @@ class InspectionActiveView extends ConsumerWidget {
                         coDriver: coDriverName,
                         coDriverId: coDriverId,
                       ),
-                      const Divider(height: 1),
-                      InspectionDutyGraph(events: log.events),
-                      const Divider(height: 1),
-                      EldEventsTable(
-                        rows: log.events.map((e) => EldTableRow(
-                          time: e.timeEt,
-                          status: e.eventCode,
-                          location: e.location,
-                          odom: e.odometer.toStringAsFixed(0),
-                          eng: e.engineHours.toStringAsFixed(1),
-                          src: e.origin,
-                          statusColor: null,
-                        )).toList(),
-                      ),
+                      if (log != null) ...[
+                        const Divider(height: 1),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: InspectionDutyGraph(events: log.events),
+                        ),
+                        const Divider(height: 1),
+                        EldEventsTable(
+                          rows: log.events.map((e) => EldTableRow(
+                            time: e.timeEt,
+                            status: e.eventCode,
+                            location: e.location,
+                            odom: e.odometer.toStringAsFixed(0),
+                            eng: e.engineHours.toStringAsFixed(1),
+                            src: e.origin,
+                            statusColor: null,
+                          )).toList(),
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.lg),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),

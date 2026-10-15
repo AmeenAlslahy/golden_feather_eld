@@ -22,6 +22,7 @@ class LocalStorageService implements ServerConfigProvider {
   late final UserPreferencesStorageService _preferencesStorage;
 
   SharedPreferencesWithCache get prefs => _prefs;
+  bool get isInitialized => _initialized;
 
   // ========== التهيئة ==========
 
@@ -65,6 +66,22 @@ class LocalStorageService implements ServerConfigProvider {
           'hos_configuration',
           'onboarding_seen',
           'trusted_time_anchor',
+
+          // ── كاش العمل أوفلاين ──────────────────────────────────
+          // لولا هذه المدخلات لـPreferencesFilter لكان SharedPreferences
+          // يرفض المفاتيح الجديدة بـArgumentError، فيت���ل الكاش بصمت
+          // وتعمل الشاشة بأوفلاين على قيم فارغة/مُختلَقة.
+          'hos_dashboard_snapshot', // آخر لوحة ناجحة (StatusDashboardRepository)
+          'hos_recap_snapshot', // آخر ملخص أسبوعي ناجح
+          'vehicle_list_cache', // آخر قائمة مركبات ناجحة
+          'codriver_list_cache', // قائمة السائقين المساعدين (CoDriverRepository)
+          'codriver_current_cache', // السائق المساعد الحالي
+          'inspection_screen_cache', // شاشة التفتيش (InspectionRepository)
+          'inspection_cycle_cache', // دورة التفتيش
+          'inspection_logs_cache', // سجلات التفتيش
+          'inspection_packet_cache', // حزمة معلومات التفتيش
+          'inspection_transfers_cache', // سجل نقل البيانات للمفتش
+          'rules_screen_cache', // شاشة القواعد HOS (RulesScreenProvider)
         },
       ),
     );

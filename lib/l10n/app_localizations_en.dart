@@ -2215,6 +2215,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errGeneric => 'The request could not be completed.';
 
   @override
+  String get errBusinessRuleViolation =>
+      'This cannot be done because today\'s log is already certified. Uncertify it first, then try again.';
+
+  @override
+  String get errConflictingChange =>
+      'This record was changed from another device or edited moments ago. Refresh, then try again.';
+
+  @override
+  String get errCheckYourInput =>
+      'Check the details you entered, then try again.';
+
+  @override
+  String get errNotFoundAction =>
+      'The requested data is no longer available. Refresh the screen.';
+
+  @override
   String get enterAReasonForManualRecording =>
       'Enter a reason for manual recording.';
 
@@ -3079,4 +3095,111 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get activeEvents => 'Active Events';
+
+  @override
+  String get permissionsTitle => 'App Permissions';
+
+  @override
+  String get permissionsSubtitle =>
+      'Golden Feather ELD requires the following permissions to operate legally:';
+
+  @override
+  String get permLocationTitle => 'Geographic Location';
+
+  @override
+  String get permLocationSubtitle =>
+      'To automatically record vehicle path and driving hours';
+
+  @override
+  String get permLocationRequiredDialog =>
+      'Location permission is required. The ELD app requires access to background location to automatically record vehicle route and driving hours. This is a mandatory FMCSA regulation.';
+
+  @override
+  String get permBluetoothTitle => 'Bluetooth';
+
+  @override
+  String get permBluetoothSubtitle =>
+      'To connect to the vehicle\'s ELD hardware device';
+
+  @override
+  String get permBluetoothDialog =>
+      'The app needs to connect to the ELD device in the vehicle. You can continue without Bluetooth, but driving hours must be recorded manually.';
+
+  @override
+  String get permNotificationTitle => 'Notifications';
+
+  @override
+  String get permNotificationSubtitle =>
+      'To receive hours-of-service and rest break alerts';
+
+  @override
+  String get permBatteryTitle => 'Battery Optimization';
+
+  @override
+  String get permBatterySubtitle =>
+      'Must be disabled to ensure background tracking works reliably';
+
+  @override
+  String get permCameraTitle => 'Camera';
+
+  @override
+  String get permCameraSubtitle =>
+      'To capture vehicle inspection (DVIR) defect photos';
+
+  @override
+  String get permGrantPermissions => 'Grant Permissions';
+
+  @override
+  String get permGrantSingle => 'Grant Permission';
+
+  @override
+  String get permRequiredTag => 'Required';
+
+  @override
+  String get permRequiredDialogTitle => 'Location Permission Required';
+
+  @override
+  String get permBluetoothDialogTitle => 'Bluetooth Permission';
+
+  @override
+  String get forgotPasswordEnterEmail =>
+      'Enter account email. If you receive nothing, contact your fleet manager.';
+
+  @override
+  String get forgotPasswordEnterValidEmail => 'Enter a valid email address.';
+
+  @override
+  String get forgotPasswordNotAvailableOnServer =>
+      'Reset is not available on this server. Contact your fleet manager.';
+
+  @override
+  String get forgotPasswordInstructionsSent =>
+      'If the email is registered, reset instructions have been sent.';
+
+  @override
+  String get sendButtonLabel => 'Send';
+
+  @override
+  String get dvirPhotosAttached => 'Photos attached';
+
+  @override
+  String get mechanicCertification => 'Mechanic Certification';
+
+  @override
+  String get mechanicLabel => 'Mechanic';
+
+  @override
+  String get repairNotesLabel => 'Repair Notes';
+
+  @override
+  String get noDefectsReported => 'No defects reported';
+
+  @override
+  String get statusDetected => 'DETECTED';
+
+  @override
+  String get invalidOdometerReading => 'Invalid odometer reading';
+
+  @override
+  String get statusUnknown => 'Unknown';
 }

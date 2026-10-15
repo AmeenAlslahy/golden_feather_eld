@@ -95,4 +95,9 @@ abstract class LogRepository {
   Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({
     int limit = 100,
   });
+
+  /// مسودات التوقيع المؤقتة للحفاظ على توقيع السائق أثناء مراجعة التبويبات أو إغلاق الشاشة
+  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson);
+  Future<String?> getDraftSignature(DailyLogId logId);
+  Future<void> deleteDraftSignature(DailyLogId logId);
 }

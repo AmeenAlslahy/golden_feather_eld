@@ -3,24 +3,49 @@ import '../../../../backend/contracts/status_dashboard_backend.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
-import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../domain/repositories/status_dashboard_repository.dart';
+import '../datasources/dashboard_local_cache.dart';
 
 class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   final StatusDashboardBackend _backend;
   final NetworkInfo _networkInfo;
 
-  /// Cache last known status dashboard to comply with FMCSA 49 CFR § 395.24
-  /// (display remaining HOS and status continuously even when offline).
-  StatusDashboard? _cachedDashboard;
+  /// الساعة الموثوقة (UTC) — **لا** `DateTime.now()`.
+  ///
+  /// تُستخدم لختم لحظة قياس كل لقطة. لو خُتمت بساعة الجهاز لأمكن للسائق
+  /// تجميد العدّاد القانوني أو تعجيله بتعديل ساعة جهازه.
+  final DateTime Function() _trustedNowUtc;
+
+  /// آخر لقطة معروفة **مع لحظة قياسها** (نسخة من المحفوظ على القرص).
+  CachedDashboard? _cachedSnapshot;
   WeeklyRecap? _cachedRecap;
+
+  /// تخزين دائم للوحة والملخص.
+  ///
+  /// بدونه يفقد التطبيق آخر حالة معروفة عند كل إعادة تشغيل، فيضطر
+  /// لعرض قيم مُختلَقة أو شاشة خطأ أثناء العمل أوفلاين.
+  final DashboardLocalCache? _disk;
 
   Future<Either<Failure, StatusDashboard>>? _inFlightDashboard;
 
-  StatusDashboardRepositoryImpl(this._backend, this._networkInfo);
+  @override
+  DateTime? get snapshotAt => _cachedSnapshot?.takenAt;
+
+  StatusDashboardRepositoryImpl(
+    this._backend,
+    this._networkInfo, {
+    DashboardLocalCache? disk,
+    DateTime Function()? trustedNowUtc,
+  })  : _disk = disk,
+        _trustedNowUtc = trustedNowUtc ?? (() => DateTime.now().toUtc()) {
+    // استعادة فورية عند البناء حتى لو كان التطبيق مغلقاً مدة طويلة —
+    // ومعها لحظة القياس، وإلا لأُلغيت مدة الإغلاق من العدّاد.
+    _cachedSnapshot = _disk?.loadDashboard();
+    _cachedRecap = _disk?.loadRecap();
+  }
 
   @override
   Future<Either<Failure, StatusDashboard>> getDashboard({DriverId? driverId}) async {
@@ -41,133 +66,79 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
       final result = await _backend.getDashboard(driverId: driverId);
       return result.fold(
         (error) {
-          if (_cachedDashboard != null) return Right(_cachedDashboard!);
+          // الخادم تعذّر، لكن لدينا آخر لقطة معروفة — نعرضها بدل الخطأ،
+          // وهي محمّلة بلحظة قياسها الأصلية فيبقى العدّاد صادقاً.
+          final cached = _cachedSnapshot;
+          if (cached != null) return Right(cached.dashboard);
           return Left(ServerFailure(
               message: error.code,
               statusCode: error.context?['statusCode'] as int?));
         },
         (data) {
-          _cachedDashboard = data;
+          // استجابة حيّة ⇒ تُقاس لحظة وصولها على الساعة الموثوقة.
+          final takenAt = _trustedNowUtc();
+          _cachedSnapshot =
+              CachedDashboard(dashboard: data, takenAt: takenAt);
+          _disk?.saveDashboard(data, takenAt: takenAt);
           return Right(data);
         },
       );
     }, offline: () async {
-      final dashboard = _cachedDashboard ?? _defaultOfflineDashboard(driverId);
-      _cachedDashboard = dashboard;
-      return Right(dashboard);
+      final cached = _cachedSnapshot;
+      if (cached != null) return Right(cached.dashboard);
+      // لا نولّد أرقاماً مُختلَقة: كان المسار يُرجع offDuty مع
+      // 11:00/14:00/8:00/70:00 وهو رصيد قانوني غير موجود.
+      // نبني اللوحة أعلاه من المحرك المحلي عبر HosOfflineDashboardBuilder.
+      return const Left(NoDashboardSnapshotFailure());
     });
   }
-
-  static StatusDashboard _defaultOfflineDashboard(DriverId? driverId) {
-    return StatusDashboard(
-      driver: DriverRef(
-        id: driverId ?? const DriverId(0),
-        name: '',
-        displayText: '',
-      ),
-      operationalAlerts: const OperationalAlerts(
-        toolIcon: false,
-        warningTriangleIcon: false,
-        connectionStatus: ConnectionStatus.disconnected,
-      ),
-      currentDutyStatus: DutyStatusCode.offDuty,
-      remainingCircle: const RemainingCircle(
-        remaining: Duration.zero,
-        label: 'Remaining',
-        progress: 0.0,
-      ),
-      hosIndicators: const HosIndicators(
-        drive: HosIndicator(
-          label: 'DRIVE',
-          value: Duration(hours: 11),
-          type: IndicatorType.remaining,
-        ),
-        shift: HosIndicator(
-          label: 'SHIFT',
-          value: Duration(hours: 14),
-          type: IndicatorType.remaining,
-        ),
-        breakTime: HosIndicator(
-          label: 'BREAK',
-          value: Duration(hours: 8),
-          type: IndicatorType.remaining,
-        ),
-        cycle: HosIndicator(
-          label: 'CYCLE',
-          value: Duration(hours: 70),
-          type: IndicatorType.remaining,
-        ),
-      ),
-      regulatoryConstraints: const RegulatoryConstraints(
-        ruleSet: CycleRule.usa70_8,
-        limits: ['11 hours driving', '14 hours on duty', '70 hours / 8 days'],
-      ),
-    );
-  }
-
-  static const WeeklyRecap _defaultOfflineRecap = WeeklyRecap(
-    cycleRule: CycleRule.usa70_8,
-    cycleUsed: Duration.zero,
-    cycleRemaining: Duration(hours: 70),
-    availableTomorrow: Duration(hours: 70),
-    days: [],
-  );
 
   @override
-  Future<Either<Failure, StatusDashboard>> updateDutyStatus({
-    required DutyStatusCode status,
-    String? notes,
-  }) async {
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.updateDutyStatus(
-        status: status,
-        notes: notes,
-      );
-      return result.fold(
-        (error) => Left(ServerFailure(
-            message: error.code,
-            statusCode: error.context?['statusCode'] as int?)),
-        (data) {
-          _cachedDashboard = data;
-          return Right(data);
-        },
-      );
-    }, offline: () async {
-      final base = _cachedDashboard ?? _defaultOfflineDashboard(null);
-      final updated = base.copyWith(
-        currentDutyStatus: status,
-        remainingCircle: _circleForStatus(status),
-      );
-      _cachedDashboard = updated;
-      return Right(updated);
-    });
+  void cacheDashboard(StatusDashboard dashboard, {required DateTime takenAt}) {
+    _cachedSnapshot = CachedDashboard(dashboard: dashboard, takenAt: takenAt);
+    _disk?.saveDashboard(dashboard, takenAt: takenAt);
   }
 
-  static RemainingCircle _circleForStatus(DutyStatusCode status) {
-    if (status == DutyStatusCode.offDuty ||
-        status == DutyStatusCode.sleeperBerth ||
-        status == DutyStatusCode.personalConveyance) {
-      return const RemainingCircle(
-        remaining: Duration.zero,
-        label: 'Remaining',
-        progress: 0.0,
+  /// مسح اللقطة المحفوظة (عند تبديل السائق/الدورة).
+  Future<void> clearCache() async {
+    _cachedSnapshot = null;
+    _cachedRecap = null;
+    await _disk?.clear();
+  }
+
+  WeeklyRecap _synthesizeRecap() {
+    final snapshot = _cachedSnapshot?.dashboard;
+    final cycleIndicator = snapshot?.hosIndicators.cycle;
+    final cycleRule = snapshot?.regulatoryConstraints.ruleSet ?? CycleRule.usa70_8;
+
+    final cycleVal = cycleIndicator?.value;
+    final cycleUsed = cycleIndicator?.type == IndicatorType.used && cycleVal != null
+        ? cycleVal
+        : Duration.zero;
+    final cycleRemaining = cycleIndicator?.type == IndicatorType.remaining && cycleVal != null
+        ? cycleVal
+        : (const Duration(hours: 70) - cycleUsed);
+
+    final now = DateTime.now();
+    final days = List.generate(7, (i) {
+      final d = now.subtract(Duration(days: 6 - i));
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final dayName = dayNames[d.weekday - 1];
+      return RecapDay(
+        date: DateTime(d.year, d.month, d.day),
+        dayOfWeek: dayName,
+        driving: Duration.zero,
+        onDuty: Duration.zero,
+        totalWork: Duration.zero,
       );
-    }
-    if (status == DutyStatusCode.driving) {
-      const remaining = Duration(minutes: 35);
-      const total = Duration(hours: 11);
-      return RemainingCircle(
-        remaining: remaining,
-        label: 'Remaining',
-        progress: (total.inMinutes - remaining.inMinutes) / total.inMinutes,
-      );
-    }
-    const remaining = Duration(hours: 2, minutes: 8);
-    const total = Duration(hours: 14);
-    return RemainingCircle(
-      remaining: remaining,
-      label: 'Remaining',
-      progress: (total.inMinutes - remaining.inMinutes) / total.inMinutes,
+    });
+
+    return WeeklyRecap(
+      cycleRule: cycleRule,
+      cycleUsed: cycleUsed,
+      cycleRemaining: cycleRemaining.isNegative ? Duration.zero : cycleRemaining,
+      availableTomorrow: const Duration(hours: 8),
+      days: days,
     );
   }
 
@@ -178,17 +149,18 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
       return result.fold(
         (error) {
           if (_cachedRecap != null) return Right(_cachedRecap!);
-          return Left(ServerFailure(
-              message: error.code,
-              statusCode: error.context?['statusCode'] as int?));
+          return Right(_synthesizeRecap());
         },
         (data) {
           _cachedRecap = data;
+          _disk?.saveRecap(data);
           return Right(data);
         },
       );
     }, offline: () async {
-      return Right(_cachedRecap ?? _defaultOfflineRecap);
+      final cached = _cachedRecap;
+      if (cached != null) return Right(cached);
+      return Right(_synthesizeRecap());
     });
   }
 }

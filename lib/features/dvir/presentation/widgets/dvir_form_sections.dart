@@ -397,12 +397,6 @@ class DvirSignatureSection extends StatelessWidget {
     }
     return AppSignatureFormField(
       controller: controller,
-      placeholder: 'Image not\navailable.',
-      placeholderStyle: const TextStyle(
-        fontSize: 34,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFFBDBDBD),
-      ),
       centerClear: true,
       height: 230,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),

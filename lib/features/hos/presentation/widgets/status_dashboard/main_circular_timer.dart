@@ -2,21 +2,66 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/time/trusted_time_provider.dart';
 import '../../../../../core/utils/duration_format.dart';
 import '../../../../../core/widgets/app_theme_toggle_button.dart';
 import '../../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../../l10n/app_localizations.dart';
 import 'circular_timer_logic.dart';
+
+/// الزمن المنقضي منذ اللقطة — على الساعة الموثوقة واحدة.
+///
+/// طرفي الطرح (الآن واللقطة) يأتيان من `TrustedTimeProvider`، وهو مثبَّت
+/// على ساعة الخادم عبر ترويسة `Date:`. لذلك النتيجة غير قابلة للتأثير
+/// بتعديل ساعة الجهاز. لو استُخدم `DateTime.now()` لأحد الطرفين لأصبح
+/// الطرح بين ساعتين غير مرتبطتين.
+///
+/// **مشتركة عمداً** مع بطاقات المؤشرات: أي نسختين من هذه الدالة هي
+/// وعود بأن رقمين مختلفين سيظهران لنفس الحدّ القانوني.
+Duration computeElapsedSinceSnapshot({
+  required TrustedTimeResult trustedTime,
+  required DateTime? snapshotTimestamp,
+  Duration stopwatchElapsed = Duration.zero,
+}) {
+  final stamp = snapshotTimestamp;
+  if (stamp != null) {
+    if (trustedTime is TrustedTimeAvailable) {
+      final diff = trustedTime.utc.difference(stamp.toUtc());
+      return diff.isNegative
+          ? Duration.zero
+          : Duration(seconds: diff.inSeconds);
+    }
+    // ⚠️ لا مرساة موثوقة بعد (أول تشغيل بلا أي رد خادم). نستعمل ساعة
+    // الجهاز كأدنى بديل — أأمن من تجميد العدّاد على صفر.
+    final wall = DateTime.now().toUtc().difference(stamp.toUtc());
+    return wall.isNegative
+        ? Duration.zero
+        : Duration(seconds: wall.inSeconds);
+  }
+  return Duration(seconds: stopwatchElapsed.inSeconds);
+}
 
 /// الدائرة المركزية الكبيرة لعرض الوقت القانوني المتبقي وحركة المؤشر
 /// مطابقة بنسبة 100% للتطبيق الأصلي مع العد التنازلي المباشر وتحول اللون للأحمر عند الاقتراب من النهاية
-class MainCircularTimer extends StatefulWidget {
+class MainCircularTimer extends ConsumerStatefulWidget {
   final RemainingCircle circle;
   final String statusLabel;
   final DutyStatusCode? dutyStatus;
   final HosIndicators? hosIndicators;
   final VoidCallback? onTap;
+
+  /// لحظةZY-βاللقطة على **ساعة موثوقة** (خادم مُثبَّت عبر ترويسة `Date:`).
+  ///
+  /// ⚠️ يجب أن تأتي من `TrustedTimeProvider` لا من `DateTime.now()`.
+  /// العدّاد التنازلي يحسب:
+  ///     liveRemaining = serverRemaining − (trustedNow − snapshotStamp)
+  /// كلا طرفي الطرح على الساعة نفسها → النتيجة صحيحة ولو عبث السائق
+  /// بساعة الجهاز. استخدام `DateTime.now()` هنا يجعل الطرح بين ساعتين
+  /// غير مرتبطتين ويجعل العدّاد قابلاً للتلاعب.
   final DateTime? snapshotTimestamp;
 
   const MainCircularTimer({
@@ -30,10 +75,10 @@ class MainCircularTimer extends StatefulWidget {
   });
 
   @override
-  State<MainCircularTimer> createState() => _MainCircularTimerState();
+  ConsumerState<MainCircularTimer> createState() => _MainCircularTimerState();
 }
 
-class _MainCircularTimerState extends State<MainCircularTimer>
+class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
     with AutomaticKeepAliveClientMixin {
   Timer? _ticker;
   late final Stopwatch _stopwatch;
@@ -42,37 +87,42 @@ class _MainCircularTimerState extends State<MainCircularTimer>
   @override
   bool get wantKeepAlive => true;
 
-  Duration _computeElapsed() {
-    if (widget.snapshotTimestamp != null) {
-      final diff = DateTime.now().difference(widget.snapshotTimestamp!);
-      return diff.isNegative ? Duration.zero : diff;
-    }
-    return _stopwatch.elapsed;
-  }
+  /// الزمن المنقضي منذ اللقطة — على الساعة الموثوقة واحدة.
+  ///
+  /// [computeElapsedSinceSnapshot] هي المرجع الوحيد؛ هذه مجرد مغلّف يقرأ
+  /// المزوّدات. البطاقات تستخدم نفس الدالة.
+  Duration _computeElapsed() => computeElapsedSinceSnapshot(
+        trustedTime: ref.read(trustedTimeProvider).currentTime,
+        snapshotTimestamp: widget.snapshotTimestamp,
+        stopwatchElapsed: _stopwatch.elapsed,
+      );
 
   @override
   void initState() {
     super.initState();
     _stopwatch = Stopwatch()..start();
-    _elapsedNotifier = ValueNotifier(_computeElapsed());
+    _elapsedNotifier = ValueNotifier(
+      widget.snapshotTimestamp != null
+          ? _computeElapsed()
+          : Duration.zero,
+    );
     _startTickerIfNeeded();
   }
 
   @override
   void didUpdateWidget(MainCircularTimer oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // كان يوجد فرع ثانٍ يُعيد ضبط المؤقت ويصفّر Elapsed عندما يتغيّر
+    // circle.remaining أو hosIndicators — لكنه كان مشروطاً بـ
+    // snapshotTimestamp == null، وهو شرط لا يتحقق أبداً في مسار الإنتاج
+    // (StatusDashboardPage يمرّر دائماً الطابع الزمني غير القابل لل空).
+    // وبقاءه شيفرة حيّة-but-ميتة خطورة: لو مرّر مستدعٍ مستقبلي قيمة null
+    // لأ Rubioالوقت الذي استُهلك. حُذف عمداً.
     if (oldWidget.snapshotTimestamp != widget.snapshotTimestamp ||
         oldWidget.dutyStatus != widget.dutyStatus) {
       _stopwatch.reset();
       _stopwatch.start();
       _elapsedNotifier.value = _computeElapsed();
-      _startTickerIfNeeded();
-    } else if (widget.snapshotTimestamp == null &&
-        (oldWidget.circle.remaining != widget.circle.remaining ||
-            oldWidget.hosIndicators != widget.hosIndicators)) {
-      _stopwatch.reset();
-      _stopwatch.start();
-      _elapsedNotifier.value = Duration.zero;
       _startTickerIfNeeded();
     }
   }
@@ -153,17 +203,19 @@ class _MainCircularTimerState extends State<MainCircularTimer>
                     timeTextColor = theme.colorScheme.error;
                   } else {
                     // أخضر ناصع (Safe color)
-                    arcColor = const Color(0xFF34A853);
-                    timeTextColor = const Color(0xFF34A853);
+                    arcColor = AppColors.successGreen;
+                    timeTextColor = AppColors.successGreen;
                   }
 
                   final timeString = isRest
                       ? '00:00'
                       : DurationFormat.hhMm(liveRemaining, signed: true);
+                  final remainingText =
+                      AppLocalizations.of(context)?.remainingLabel ?? 'Remaining';
 
                   return Semantics(
                     button: widget.onTap != null,
-                    label: 'Remaining time: $timeString. Status: ${widget.statusLabel}',
+                    label: '$remainingText: $timeString. ${widget.statusLabel}',
                     child: GestureDetector(
                       onTap: widget.onTap,
                       behavior: HitTestBehavior.opaque,
@@ -183,7 +235,7 @@ class _MainCircularTimerState extends State<MainCircularTimer>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Remaining',
+                                remainingText,
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                                   fontSize: circleSize * 0.05,

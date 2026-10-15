@@ -70,9 +70,16 @@ class _DashboardView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             // Reference layout: full-width table, no card inset.
+            //
+            // نفس `snapshotTimestamp` ونفس حالة الخدمة الممرّرة للدائرة:
+            // البطاقة لا بد أن تقصّ الثانية نفسها التي تقصّها الدائرة، وإلا
+            // عرض التطبيق رقمين مختلفين لنفس الحدّ على الشاشة نفسها.
             HosIndicatorsCard(
               indicators: dashboard.hosIndicators,
               constraints: dashboard.regulatoryConstraints,
+              snapshotTimestamp: snapshotTimestamp,
+              dutyStatus: dashboard.currentDutyStatus,
+              statusLabel: dashboard.currentDutyStatus.displayName(context),
             ),
           ],
         ),

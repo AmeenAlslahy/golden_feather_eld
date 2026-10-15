@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/contracts/account_backend.dart';
 import 'package:golden_feather_eld/backend/core/backend_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -45,9 +46,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final adapter = _Adapter();
+    final mock = MockAdapter();
     final account = _Account();
     when(() => account.getMyAccount()).thenAnswer((_) async => const Left(UnknownError(code: 'test')));
     when(() => adapter.account).thenReturn(account);
+    when(() => adapter.auth).thenReturn(mock.auth);
     when(() => adapter.isMock).thenReturn(true);
 
 

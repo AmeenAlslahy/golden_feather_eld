@@ -7,18 +7,36 @@ class SavedFormDto {
     final body = json['data'] is Map
         ? Map<String, dynamic>.from(json['data'] as Map)
         : json;
-    final raw = body['formStatus']?.toString().trim();
+    var raw = body['formStatus']?.toString().trim();
+    final indicator = body['formIndicator'] is Map
+        ? Map<String, dynamic>.from(body['formIndicator'] as Map)
+        : null;
+    if (raw == null || raw.isEmpty) {
+      raw = indicator?['status']?.toString().trim();
+    }
     final message = body['message']?.toString().trim();
     final text = message == null || message.isEmpty ? null : message;
-    if (raw == null || raw.isEmpty) {
-      return SavedFormRead(message: text);
+
+    final indicatorPositive = indicator?['positive'] as bool?;
+    final indicatorColor = indicator?['color']?.toString().toUpperCase();
+
+    bool? complete;
+    if (raw != null && raw.isNotEmpty) {
+      final upper = raw.toUpperCase();
+      complete = switch (upper) {
+        'COMPLETED' || 'COMPLETE' => true,
+        'INCOMPLETE' || 'IN_PROGRESS' || 'DRAFT' => false,
+        _ => null,
+      };
     }
-    final upper = raw.toUpperCase();
-    final bool? complete = switch (upper) {
-      'COMPLETED' || 'COMPLETE' => true,
-      'INCOMPLETE' || 'IN_PROGRESS' => false,
-      _ => null,
-    };
+    if (complete == null) {
+      if (indicatorPositive == true || indicatorColor == 'GREEN') {
+        complete = true;
+      } else if (indicatorPositive == false || indicatorColor == 'RED') {
+        complete = false;
+      }
+    }
+
     return SavedFormRead(formStatus: raw, complete: complete, message: text);
   }
 }

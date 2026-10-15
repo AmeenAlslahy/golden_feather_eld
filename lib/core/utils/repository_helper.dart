@@ -33,8 +33,11 @@ Future<Either<Failure, T>> executeWithHandling<T>(
       return const Left(AuthFailure());
     }
     return Left(ServerFailure(
-      message: e.message ?? 'فشل الاتصال بالخادم',
+      message: e.message ?? 'حدث خطأ في الخادم',
       statusCode: e.statusCode,
+      // 🔴 رسالة الخادم القابلة للعرض تُنقل كما هي. بلاها يظهر للسائق
+      // «الخادم رفض الطلب» بينما الخادم كتب له سبباً دقيقاً.
+      serverMessage: e.serverMessage,
     ));
   } on OfflineException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} OfflineException: ${e.message}');

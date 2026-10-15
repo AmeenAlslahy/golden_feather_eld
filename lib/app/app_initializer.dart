@@ -114,6 +114,19 @@ class AppInitializer {
       container.read(syncStateProvider.notifier);
       container.read(syncEngineProvider);
       container.read(trackingOrchestratorProvider);
+
+      // 🔄 مزامنة عند الفتح: المتطلب "إن توفّر النت يعمل أونلاين، وإلا
+      // أوفلاين".
+      //
+      // لماذا الاستدعاء الصريح: مشغّلNetworkInfo يستمع *لانتقالات* الشبكة.
+      // عند فتح التطبيق والخ��د متصل أصلاً لا تقع انتقال�� (true) ← لا تُشغَّل
+      // المزامنة إطلاقاً، فتبقى الأحداث المؤجلة حتى أول انقطاع/عودة.
+      // هنا نطلب صراحةً مرة واحدة عند الإقلاع؛ `SyncEngine.triggerSync`
+      // محمي بـ _isSyncing فالنكرار آمن.
+      //
+      // بلا اتصال: triggerSync يجرّب الإرسال، تفشل المحاولات، وتُعاد
+      // جدولتها بـ backoff — بلا فقدان بيانات (لا dead-letter أبداً).
+      container.read(syncEngineProvider).triggerSync();
     });
   }
 }

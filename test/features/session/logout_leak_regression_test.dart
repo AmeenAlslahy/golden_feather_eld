@@ -118,12 +118,12 @@ class _CountingDashboardRepository implements StatusDashboardRepository {
     return Right(_dashboard());
   }
 
+
   @override
-  Future<Either<Failure, StatusDashboard>> updateDutyStatus({
-    required DutyStatusCode status,
-    String? notes,
-  }) =>
-      throw UnimplementedError();
+  DateTime? get snapshotAt => null;
+
+  @override
+  void cacheDashboard(StatusDashboard dashboard, {required DateTime takenAt}) {}
 
   @override
   Future<Either<Failure, WeeklyRecap>> getWeeklyRecap(

@@ -8,12 +8,34 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/eld_retry_view.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
+import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/repositories/status_dashboard_repository.dart';
 import 'package:golden_feather_eld/features/hos/presentation/pages/recap_page.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Repo extends Mock implements StatusDashboardRepository {}
+
+class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+  _AuthNotifier()
+      : super(
+          AuthState(
+            status: AuthStatus.authenticated,
+            user: User(
+              id: '106',
+              username: 'driver106',
+              email: 'driver106@test.com',
+              fullName: 'Driver 106',
+              role: UserRole.fieldWorker,
+              createdAt: DateTime(2026),
+            ),
+          ),
+        );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 /// SRS 2.3 Recap — 7-day table + totals from the server recap, decimal
 /// hours, retry on failure, fully localized rows.
@@ -48,7 +70,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [statusDashboardRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          statusDashboardRepositoryProvider.overrideWithValue(repo),
+          authStateProvider.overrideWith((ref) => _AuthNotifier()),
+        ],
         child: MaterialApp(
           theme: AppTheme.light,
           locale: locale,

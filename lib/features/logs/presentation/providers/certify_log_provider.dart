@@ -15,6 +15,7 @@ import 'logs_provider.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/log_readiness.dart';
 import '../../domain/repositories/log_repository.dart';
+import 'log_draft_signature_provider.dart';
 
 class CertifyLogState {
   final bool isLoading;
@@ -215,6 +216,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     final outcome = result.match(
       (failure) => CertifyFailed(_message(failure)),
       (_) {
+        _ref.read(logDraftSignatureProvider(_logId).notifier).clearDraft();
         _ref.invalidate(logsProvider);
         _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
         return CertifySucceeded(_loc.logSuccessfullyCertified, isLogCertified: true);

@@ -234,6 +234,15 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({
     int limit = 100,
   }) async => const Right([]);
+
+  @override
+  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson) async {}
+
+  @override
+  Future<String?> getDraftSignature(DailyLogId logId) async => null;
+
+  @override
+  Future<void> deleteDraftSignature(DailyLogId logId) async {}
 }
 
 // Replaced FakeClock with FakeTrustedTimeProvider inline in setUp

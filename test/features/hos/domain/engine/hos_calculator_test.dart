@@ -35,4 +35,34 @@ void main() {
     final end = start.add(const Duration(hours: 48));
     expect(calculator.hasWeeklyRestart([(start: start, end: end)]), isTrue);
   });
+
+  test('calculateAllLimits computes timeUntilBreakMinutes and remainingDriveMinutes', () {
+    final fakeTime = FakeTrustedTimeProvider(
+      initialUtcTime: DateTime.utc(2026, 10, 14, 12, 0),
+    );
+    final calc = HosCalculator(HosConfiguration.usa70_8(), fakeTime);
+    final result = calc.calculateAllLimits(
+      drivingHours: 2.0,
+      shiftStartTime: DateTime.utc(2026, 10, 14, 8, 0),
+      cycleHours: 10.0,
+    );
+
+    expect(result, isA<CalculationSuccess>());
+    final limits = (result as CalculationSuccess).limits;
+    expect(limits.remainingDriveMinutes, 11 * 60 - 120);
+    expect(limits.timeUntilBreakMinutes, 8 * 60 - 120);
+    expect(limits.breakRequired, isFalse);
+  });
+
+  test('calculateAllLimits returns CalculationTimeUnavailable when trusted time unavailable', () {
+    final uninitializedTime = FakeTrustedTimeProvider();
+    final calc = HosCalculator(HosConfiguration.usa70_8(), uninitializedTime);
+    final result = calc.calculateAllLimits(
+      drivingHours: 1.0,
+      shiftStartTime: DateTime.utc(2026, 10, 14, 8, 0),
+      cycleHours: 5.0,
+    );
+
+    expect(result, isA<CalculationTimeUnavailable>());
+  });
 }

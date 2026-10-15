@@ -48,13 +48,19 @@ class HosRulesEngine {
     final periods = <({DateTime start, DateTime end})>[];
     DateTime? offDutyStart;
 
-    if (_stateMachine.currentStatus == DutyStatus.offDuty || _stateMachine.currentStatus == DutyStatus.sleeperBerth) {
-        if (_stateMachine.transitions.isEmpty) {
-            offDutyStart = _stateMachine.shiftStartTime;
-        }
+    final lastRestart = _stateMachine.lastWeeklyRestartAt;
+
+    if (_stateMachine.currentStatus == DutyStatus.offDuty ||
+        _stateMachine.currentStatus == DutyStatus.sleeperBerth) {
+      if (_stateMachine.transitions.isEmpty) {
+        offDutyStart = _stateMachine.shiftStartTime;
+      }
     }
 
     for (final t in _stateMachine.transitions) {
+      if (lastRestart != null && !t.timestamp.isAfter(lastRestart)) {
+        continue;
+      }
       if ((t.to == DutyStatus.offDuty || t.to == DutyStatus.sleeperBerth) && offDutyStart == null) {
         offDutyStart = t.timestamp;
       } else if (t.to != DutyStatus.offDuty && t.to != DutyStatus.sleeperBerth && offDutyStart != null) {
@@ -206,6 +212,7 @@ class HosRulesEngine {
       drivingHours: _stateMachine.totalDrivingHours,
       shiftStartTime: _stateMachine.shiftStartTime,
       cycleHours: _stateMachine.cycleHours,
+      drivingHoursSinceBreak: _stateMachine.drivingHoursSinceBreak(),
     );
 
     if (limitsResult is CalculationTimeUnavailable) {

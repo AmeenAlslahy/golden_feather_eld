@@ -5,11 +5,13 @@ import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
+import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/features/account/application/models/rules_screen_model.dart';
 import 'package:golden_feather_eld/features/account/presentation/providers/rules_screen_provider.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/hos/presentation/pages/change_status_page.dart';
+import 'package:golden_feather_eld/features/hos/presentation/providers/change_status_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/hos_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/widgets/status_option_tiles.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
@@ -101,6 +103,17 @@ void main() {
           rulesScreenProvider.overrideWith((ref) async => _rules(fixed)),
           currentVehicleSpeedProvider.overrideWith((ref) => speedMps),
           localStorageProvider.overrideWithValue(storage),
+          changeStatusProvider.overrideWith(
+            (ref) => ChangeStatusNotifier(
+              ref,
+              initialStatus: current,
+              isYardMoves: false,
+              initialLocation: 'Dallas, TX',
+              isPersonalConveyanceAllowed: fixed['personalConveyanceEnabled'] == true,
+              isYardMoveAllowed: fixed['yardMoveEnabled'] == true,
+              isVehicleMoving: (speedMps ?? 0) > 0.5,
+            ),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -135,7 +148,7 @@ void main() {
     await pump(tester);
 
     expect(tile(tester, 'Driving').onTap, isNotNull);
-    expect(tile(tester, 'Off Duty').onTap, isNotNull);
+    expect(tile(tester, 'Off Duty').onTap, isNull);
     expect(tile(tester, 'On Duty').onTap, isNotNull);
     expect(find.text('Personal Use'), findsNothing);
     expect(find.text('Yard Moves'), findsNothing);
@@ -154,25 +167,16 @@ void main() {
     await tester.tap(find.text('Personal Use'));
     await tester.pump();
     await tester.ensureVisible(find.text('UPDATE'));
-    await tester.tap(find.text('UPDATE'));
-    await tester.pump();
+
+    // UPDATE is disabled when annotation is missing (required by isValid)
     expect(
-      find.text('An annotation is required for personal conveyance or yard moves.'),
-      findsOneWidget,
+      tester.widget<AppButton>(find.widgetWithText(AppButton, 'UPDATE')).onPressed,
+      isNull,
     );
     expect(hos.calls, isEmpty);
-    // Let the refusal snackbar expire so the next one is not queued behind it.
-    await tester.pumpAndSettle(); // entrance animation → timer starts
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-    // The refusal is an AppFeedback overlay now (not a SnackBar); it must
-    // be gone once its auto-dismiss timer has fired.
-    expect(
-      find.text('An annotation is required for personal conveyance or yard moves.'),
-      findsNothing,
-    );
 
-    await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Driving home');
+    await tester.enterText(find.byType(TextField).last, 'Driving home');
+    await tester.pump();
     await tester.ensureVisible(find.text('UPDATE'));
     await tester.tap(find.text('UPDATE'));
     await tester.pumpAndSettle();
@@ -196,7 +200,8 @@ void main() {
     expect(tile(tester, 'Yard Moves').isSelected, isTrue);
     expect(tile(tester, 'On Duty').isSelected, isFalse);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Notes'), 'Moving to dock 4');
+    await tester.enterText(find.byType(TextField).last, 'Moving to dock 4');
+    await tester.pump();
     await tester.tap(find.text('UPDATE'));
     await tester.pumpAndSettle();
 

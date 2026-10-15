@@ -200,13 +200,26 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     _ref.read(dashboardDataProvider.notifier).updateCoDriver(coDriver);
   }
 
-  /// إرسال النموذج بعد تجميعه تلقائياً من المزود
+  /// إرسال النموذج بعد تجميعه والتحقق من صحة كافة الحقول
   Future<String?> submitForm({
     required AppLocalizations loc,
     required void Function(String) onSuccess,
     required void Function(String) onOffline,
   }) async {
     final formData = _ref.read(formTabDataProvider);
+
+    final vehicleErr = formData.validateVehicle(loc, logUniqueId: _log.uniqueId);
+    if (vehicleErr != null) return vehicleErr;
+
+    final trailerErr = formData.validateTrailers(loc);
+    if (trailerErr != null) return trailerErr;
+
+    final docErr = formData.validateShippingDocuments(loc);
+    if (docErr != null) return docErr;
+
+    final coDriverErr = formData.validateCoDriver(loc);
+    if (coDriverErr != null) return coDriverErr;
+
     final update = formData.toDailyFormUpdate(
       fallbackLogUniqueId: _log.uniqueId,
     );
@@ -239,27 +252,39 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     return result.fold(
       (error) => anyErrorUserMessage(error, loc: loc),
       (saveResult) {
+        final hasVehicle = update.vehicleUniqueId.isNotEmpty;
+        final hasDocs = update.shippingDocuments.isNotEmpty;
+        final isLocallyComplete = hasVehicle && hasDocs;
+
         if (saveResult.isOffline) {
+          _ref.read(logsProvider.notifier).updateLog(
+            _log.copyWith(
+              uniqueId: update.vehicleUniqueId,
+              trailers: update.trailers,
+              shippingDocuments: update.shippingDocuments,
+              isFormComplete: isLocallyComplete,
+              formStatus: isLocallyComplete ? FormStatus.completed : FormStatus.incomplete,
+            ),
+          );
           onOffline(loc.formSavedOffline);
           return null;
         }
 
         final read = saveResult.syncedData!;
-        if (read.complete != null) {
-          _ref.read(logsProvider.notifier).updateLog(
-            _log.copyWith(
-              isFormComplete: read.complete,
-              formStatus: read.complete! ? FormStatus.completed : FormStatus.incomplete,
-            ),
-          );
-        }
+        final complete = read.complete ?? isLocallyComplete;
+        _ref.read(logsProvider.notifier).updateLog(
+          _log.copyWith(
+            uniqueId: update.vehicleUniqueId,
+            trailers: update.trailers,
+            shippingDocuments: update.shippingDocuments,
+            isFormComplete: complete,
+            formStatus: complete ? FormStatus.completed : FormStatus.incomplete,
+          ),
+        );
         
-        // رسائل النجاح تأتي من ملف الترجمة المحلي الموحد دوماً لضمان لغة التطبيق الصحيحة
-        final msg = read.complete == true
+        final msg = complete
             ? loc.successMessage
-            : (read.complete == false
-                ? loc.serverSavedFormIncomplete
-                : loc.serverSavedFormNoStatus);
+            : loc.serverSavedFormIncomplete;
         onSuccess(msg);
         return null;
       }

@@ -31,23 +31,35 @@ class InspectionDutyGraph extends StatelessWidget {
     parsed.sort((a, b) => a.startHour.compareTo(b.startHour));
 
     final points = <EldGraphPoint>[];
-    for (int i = 0; i < parsed.length; i++) {
-      final seg = parsed[i];
-      double endHour = 24.0;
-      if (i + 1 < parsed.length) {
-        endHour = parsed[i + 1].startHour;
-      }
-      // تجاهل المقاطع الصفرية/العكسية بعد التقريب.
-      if (endHour - seg.startHour < 1 / 3600) continue;
+    if (parsed.isEmpty) {
+      // FMCSA requirement: A day with no duty status changes is recorded as
+      // continuous OFF duty across the entire 24-hour period.
       points.add(
-        EldGraphPoint(
-          startHour: seg.startHour,
-          endHour: endHour,
-          status: seg.status,
-          tag: seg.special,
-          isDashed: seg.special != null,
+        const EldGraphPoint(
+          startHour: 0.0,
+          endHour: 24.0,
+          status: 'OFF',
         ),
       );
+    } else {
+      for (int i = 0; i < parsed.length; i++) {
+        final seg = parsed[i];
+        double endHour = 24.0;
+        if (i + 1 < parsed.length) {
+          endHour = parsed[i + 1].startHour;
+        }
+        // تجاهل المقاطع الصفرية/العكسية بعد التقريب.
+        if (endHour - seg.startHour < 1 / 3600) continue;
+        points.add(
+          EldGraphPoint(
+            startHour: seg.startHour,
+            endHour: endHour,
+            status: seg.status,
+            tag: seg.special,
+            isDashed: seg.special != null,
+          ),
+        );
+      }
     }
 
     return Container(
@@ -90,38 +102,47 @@ class InspectionDutyGraph extends StatelessWidget {
       return dt.hour + dt.minute / 60.0 + dt.second / 3600.0;
     }
 
-    // 12 ساعة مع AM/PM ("6:05 PM", "06:05:00 pm") — DateTime لا يقبلها.
-    final meridiem = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])\.?\s?[Mm]\.?$')
-        .firstMatch(text);
+    // 12 ساعة مع AM/PM — يدعم ملحقات المنطقة الزمنية والملاحظات مثل:
+    // "12:00 AM ET (السابق)" أو "01:01 AM ET" أو "6:05 PM"
+    final meridiem = RegExp(
+      r'(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])\.?\s?[Mm]\.?',
+    ).firstMatch(text);
     if (meridiem != null) {
       var h = int.parse(meridiem.group(1)!);
       final m = int.parse(meridiem.group(2)!);
-      if (h < 1 || h > 12 || m > 59) return null;
-      final isPm = meridiem.group(4)!.toUpperCase() == 'P';
-      if (isPm && h < 12) h += 12;
-      if (!isPm && h == 12) h = 0;
-      final s = meridiem.group(3) != null ? int.parse(meridiem.group(3)!) : 0;
-      if (s > 59) return null;
-      return h + m / 60.0 + s / 3600.0;
+      if (h >= 1 && h <= 12 && m <= 59) {
+        final isPm = meridiem.group(4)!.toUpperCase() == 'P';
+        if (isPm && h < 12) h += 12;
+        if (!isPm && h == 12) h = 0;
+        final s = meridiem.group(3) != null ? int.parse(meridiem.group(3)!) : 0;
+        if (s <= 59) {
+          return h + m / 60.0 + s / 3600.0;
+        }
+      }
     }
 
-    // 24 ساعة "HH:mm" أو "HH:mm:ss" (مسافات زائدة مسموحة).
-    final hms = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?$').firstMatch(text);
+    // 24 ساعة "HH:mm" أو "HH:mm:ss" أو "HH:mm:ss.SSS" (يدعم مسافات أو نصوص ملحقة).
+    final hms = RegExp(
+      r'(?:^|[^\d])(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?',
+    ).firstMatch(text);
     if (hms != null) {
       final h = int.parse(hms.group(1)!);
       final m = int.parse(hms.group(2)!);
-      if (h > 23 || m > 59) return null;
-      final s = hms.group(3) != null ? int.parse(hms.group(3)!) : 0;
-      if (s > 59) return null;
-      return h + m / 60.0 + s / 3600.0;
+      if (h <= 23 && m <= 59) {
+        final s = hms.group(3) != null ? int.parse(hms.group(3)!) : 0;
+        if (s <= 59) {
+          return h + m / 60.0 + s / 3600.0;
+        }
+      }
     }
 
     // "HHMM" المدمجة ("0600").
     if (RegExp(r'^\d{4}$').hasMatch(text)) {
       final h = int.parse(text.substring(0, 2));
       final m = int.parse(text.substring(2, 4));
-      if (h > 23 || m > 59) return null;
-      return h + m / 60.0;
+      if (h <= 23 && m <= 59) {
+        return h + m / 60.0;
+      }
     }
 
     return null;

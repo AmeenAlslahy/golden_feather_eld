@@ -35,10 +35,15 @@ class HosCalculator {
 
   /// حساب جميع الحدود
   /// Needs: trusted UTC (to compare against shiftStartTime)
+  ///
+  /// [drivingHoursSinceBreak] منفصل عن [drivingHours]: الحد الثامن
+  /// يُقاس من آخر استراحة مؤهلة (49 CFR 395.3(a)(3)(ii))، بينما Driving
+  /// الحد الإجمالي يُقاس من إعادة التصفير الأسبوعية.
   CalculationResult calculateAllLimits({
     required double drivingHours,
     required DateTime shiftStartTime,
     required double cycleHours,
+    double? drivingHoursSinceBreak,
   }) {
     final timeResult = timeProvider.currentTime;
     if (timeResult is TrustedTimeUnavailable) {
@@ -61,10 +66,18 @@ class HosCalculator {
     final remainingCycleHours = (config.cycleLimitHours - cycleHours)
         .clamp(0.0, config.cycleLimitHours.toDouble());
 
-    // 4. الاستراحة الإلزامية (30 دقيقة بعد 8 ساعات) - Needs nothing
-    final breakRequired = drivenMinutes >= config.driveBeforeBreakMinutes;
+    // 4. الاستراحة الإلزامية (30 دقيقة بعد 8 ساعات)
+    //
+    // تُقاس من آخر استراحة مؤهلة، لا من بداية الوردية.
+    final breakDrivingHours = drivingHoursSinceBreak ?? drivingHours;
+    final breakDrivenMinutes = (breakDrivingHours * 60).toInt();
+    final breakRequired =
+        breakDrivenMinutes >= config.driveBeforeBreakMinutes;
     final breakRemainingMinutes =
         breakRequired ? config.breakDurationMinutes : 0;
+    final timeUntilBreakMinutes =
+        (config.driveBeforeBreakMinutes - breakDrivenMinutes)
+            .clamp(0, config.driveBeforeBreakMinutes);
 
     return CalculationSuccess(HosLimits(
       remainingDriveMinutes: remainingDriveMinutes,
@@ -72,6 +85,7 @@ class HosCalculator {
       remainingCycleHours: remainingCycleHours,
       breakRequired: breakRequired,
       breakRemainingMinutes: breakRemainingMinutes,
+      timeUntilBreakMinutes: timeUntilBreakMinutes,
     ));
   }
 

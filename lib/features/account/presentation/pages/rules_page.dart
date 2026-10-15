@@ -55,6 +55,12 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     setState(() => _isSaving = true);
     try {
       final useCase = ref.read(updateRulesUseCaseProvider);
+      if (useCase == null) {
+        if (mounted) {
+          AppFeedback.error(context, context.loc.sessionExpired);
+        }
+        return;
+      }
       final sixteenEligible = model.editableFields.contains(
         'sixteenHourException',
       );
@@ -63,12 +69,12 @@ class _RulesPageState extends ConsumerState<RulesPage> {
         return;
       }
       final request = RulesScreenUpdateRequest(
-        cycleRule: _cycleRule!,
-        cargoType: _cargoType!,
-        restart: _restart!,
-        restBreak: _restBreak!,
+        cycleRule: _cycleRule ?? model.cycleRule,
+        cargoType: _cargoType ?? model.cargoType,
+        restart: _restart ?? model.restart,
+        restBreak: _restBreak ?? model.restBreak,
         sixteenHourException: sixteenEligible
-            ? _sixteenHourException!
+            ? (_sixteenHourException ?? model.sixteenHourException)
             : model.sixteenHourException,
       );
 
@@ -85,6 +91,13 @@ class _RulesPageState extends ConsumerState<RulesPage> {
             AppFeedback.success(context, context.loc.rulesUpdated);
             ref.invalidate(rulesScreenProvider);
           },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppFeedback.error(
+          context,
+          anyErrorUserMessage(e, loc: AppLocalizations.of(context)!),
         );
       }
     } finally {

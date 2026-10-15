@@ -225,7 +225,8 @@ class DutyStatusTracker {
         if (longitude != null) 'longitude': longitude,
         if (latitude != null && longitude != null)
           'locationText': '$latitude, $longitude',
-        if (odometer != null) 'odometerKm': odometer * 1.609344,
+        if (odometer != null && odometer >= 0)
+          'odometerKm': odometer * 1.609344,
         if (engineHours != null) 'engineHours': engineHours,
         if (origin != null) 'origin': origin,
       },
@@ -268,10 +269,13 @@ class DutyStatusTracker {
     _events.add(event);
 
     if (_lastEvent != null) {
+      final effectiveEndTime = event.timestamp.isBefore(_lastEvent!.timestamp)
+          ? _lastEvent!.timestamp
+          : event.timestamp;
       final period = DutyPeriod(
         status: _lastEvent!.status,
         startTime: _lastEvent!.timestamp,
-        endTime: event.timestamp,
+        endTime: effectiveEndTime,
         startOdometer: _lastEvent!.odometer,
         endOdometer: event.odometer,
         startLat: _lastEvent!.latitude,
@@ -481,6 +485,27 @@ class DutyStatusTracker {
       }
     }
 
+    if (_lastEvent != null && now.isAfter(_lastEvent!.timestamp)) {
+      final effectiveStart = _lastEvent!.timestamp.isBefore(todayStart)
+          ? todayStart
+          : _lastEvent!.timestamp;
+      final currentHours = now.difference(effectiveStart).inMinutes / 60.0;
+      switch (_currentStatus) {
+        case 'driving':
+          driving += currentHours;
+          break;
+        case 'on_duty':
+          onDuty += currentHours;
+          break;
+        case 'off_duty':
+          offDuty += currentHours;
+          break;
+        case 'sleeper_berth':
+          sleeper += currentHours;
+          break;
+      }
+    }
+
     return {
       'driving': driving,
       'on_duty': onDuty,
@@ -524,6 +549,26 @@ class DutyStatusTracker {
         if (period.distanceKm != null) {
           totalDistance += period.distanceKm!;
         }
+      }
+    }
+
+    if (_lastEvent != null && now.isAfter(_lastEvent!.timestamp)) {
+      final effectiveStart = _lastEvent!.timestamp.isBefore(weekStart)
+          ? weekStart
+          : _lastEvent!.timestamp;
+      final currentHours = now.difference(effectiveStart).inMinutes / 60.0;
+      switch (_currentStatus) {
+        case 'driving':
+          driving += currentHours;
+          work += currentHours;
+          break;
+        case 'on_duty':
+          work += currentHours;
+          break;
+        case 'off_duty':
+        case 'sleeper_berth':
+          rest += currentHours;
+          break;
       }
     }
 

@@ -1,0 +1,7 @@
+lib/features/connection/presentation/widgets/eld_readiness_panel.dart:85 -> "• $reason" | Line: child: Text('• $reason', style: context.styles.subtitle),
+lib/features/connection/presentation/widgets/manual_recording_section.dart:62 -> "• $step" | Line: child: Text('• $step', style: context.styles.subtitle),
+lib/features/connection/presentation/widgets/diagnostics/event_card.dart:55 -> "DETECTED" | Line: Text('DETECTED',
+lib/features/dvir/presentation/pages/dvir_detail_page.dart:441 -> "No defects reported" | Line: Text('No defects reported', style: context.styles.subtitle),
+lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart:37 -> "$dateLabel \u2014 $condition" | Line: Text('$dateLabel \u2014 $condition'),
+lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart:46 -> "\u2022 $line" | Line: for (final line in previousDefects) Text('\u2022 $line'),
+lib/features/logs/presentation/widgets/unidentified_events_list.dart:101 -> "ELD: ${item.uniqueId}" | Line: if (item.uniqueId.isNotEmpty) Text('ELD: ${item.uniqueId}'),

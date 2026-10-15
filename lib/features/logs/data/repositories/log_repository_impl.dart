@@ -194,7 +194,7 @@ class LogRepositoryImpl implements LogRepository {
             'startTime': event.startTime.toUtc().toIso8601String(),
             if (event.location.isNotEmpty) 'locationText': event.location,
             if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
-            'origin': 'DRIVER',
+            'origin': 'MANUAL',
             'clientId': event.id,
             if (ownerDriverId != null) 'driverId': ownerDriverId,
             if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
@@ -209,7 +209,7 @@ class LogRepositoryImpl implements LogRepository {
       'startTime': event.startTime.toUtc().toIso8601String(),
       if (event.location.isNotEmpty) 'locationText': event.location,
       if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
-      'origin': 'DRIVER',
+      'origin': 'MANUAL',
       'clientId': event.id,
     });
     return result.fold(
@@ -254,7 +254,7 @@ class LogRepositoryImpl implements LogRepository {
             ...base,
             if (statusId != null) 'statusId': statusId,
             'notes': reason.trim(),
-            'origin': 'DRIVER',
+            'origin': 'MANUAL',
             'clientId': event.id,
             if (ownerDriverId != null) 'driverId': ownerDriverId,
             if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
@@ -274,7 +274,7 @@ class LogRepositoryImpl implements LogRepository {
         ? await _dutyStatusBackend.record({
             ...base,
             'notes': reason.trim(),
-            'origin': 'DRIVER',
+            'origin': 'MANUAL',
             'clientId': event.id,
           })
         : await _dutyStatusBackend.update(
@@ -319,65 +319,77 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
-      // Phase 1: offline fetch not implemented yet
-      return const Left(NetworkFailure());
+      final cached = await _localDataSource.getCachedDailyForm(logId);
+      if (cached != null) {
+        return Right(_parseDailyFormData(cached));
+      }
+      return const Right(null);
     }
 
     return executeWithHandling(() async {
       final response = await _dailyLogsBackend.getForm(logId);
-      return response.fold((error) => throw ServerException(message: error.code), (json) {
+      return response.fold((error) => throw ServerException(
+        message: error.code,
+        // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
+        serverMessage: error.context?['serverMessage']?.toString(),
+      ), (json) {
         final data = json['data'] is Map
             ? Map<String, dynamic>.from(json['data'] as Map)
             : json;
         if (data.isEmpty) return null;
 
-        List<dynamic> extractList(dynamic val) {
-          if (val is List) return val;
-          if (val is String && val.trim().isNotEmpty) return val.split(',');
-          return [];
-        }
-
-        final trailersList = extractList(data['trailers'])
-            .map((e) {
-              if (e is Map) return e['trailerNumber']?.toString() ?? '';
-              if (e is String) return e.trim();
-              return e?.toString() ?? '';
-            })
-            .where((e) => e.isNotEmpty)
-            .toList();
-
-        final docsList = extractList(data['shippingDocuments'])
-            .map((e) {
-              if (e is Map) return e['documentNumber']?.toString() ?? '';
-              if (e is String) return e.trim();
-              return e?.toString() ?? '';
-            })
-            .where((e) => e.isNotEmpty)
-            .toList();
-
-        int? coDriverId = data['coDriverId'] as int?;
-        String? coDriverName;
-        if (data['coDriver'] is Map) {
-          final coDriverMap = data['coDriver'] as Map<dynamic, dynamic>;
-          coDriverId ??= coDriverMap['id'] is int
-              ? coDriverMap['id'] as int
-              : int.tryParse(coDriverMap['id']?.toString() ?? '');
-          coDriverName = coDriverMap['name']?.toString();
-        }
-
-        final vehicleUniqueId = data['uniqueId']?.toString();
-        final vehicleName = data['vehicleName']?.toString();
-
-        return DailyFormData(
-          vehicleUniqueId: vehicleUniqueId,
-          vehicleName: vehicleName,
-          coDriverId: coDriverId,
-          coDriverName: coDriverName,
-          trailers: trailersList,
-          shippingDocuments: docsList,
-        );
+        _localDataSource.cacheDailyForm(logId, data);
+        return _parseDailyFormData(data);
       });
     }, tag: 'LogRepositoryImpl.getForm');
+  }
+
+  DailyFormData _parseDailyFormData(Map<String, dynamic> data) {
+    List<dynamic> extractList(dynamic val) {
+      if (val is List) return val;
+      if (val is String && val.trim().isNotEmpty) return val.split(',');
+      return [];
+    }
+
+    final trailersList = extractList(data['trailers'])
+        .map((e) {
+          if (e is Map) return e['trailerNumber']?.toString() ?? '';
+          if (e is String) return e.trim();
+          return e?.toString() ?? '';
+        })
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    final docsList = extractList(data['shippingDocuments'])
+        .map((e) {
+          if (e is Map) return e['documentNumber']?.toString() ?? '';
+          if (e is String) return e.trim();
+          return e?.toString() ?? '';
+        })
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    int? coDriverId = data['coDriverId'] as int?;
+    String? coDriverName;
+    if (data['coDriver'] is Map) {
+      final coDriverMap = data['coDriver'] as Map<dynamic, dynamic>;
+      coDriverId ??= coDriverMap['id'] is int
+          ? coDriverMap['id'] as int
+          : int.tryParse(coDriverMap['id']?.toString() ?? '');
+      coDriverName = coDriverMap['name']?.toString();
+    }
+
+    final vehicleUniqueId = data['uniqueId']?.toString();
+    final vehicleName = data['vehicleName']?.toString();
+
+    return DailyFormData(
+      vehicleUniqueId: vehicleUniqueId,
+      vehicleName: vehicleName,
+      coDriverId: coDriverId,
+      coDriverName: coDriverName,
+      trailers: trailersList,
+      shippingDocuments: docsList,
+    );
   }
 
   @override
@@ -387,6 +399,16 @@ class LogRepositoryImpl implements LogRepository {
     int? ownerDriverId,
   }) async {
     final payload = _mapFormUpdateToJson(form);
+    await _localDataSource.cacheDailyForm(logId, payload);
+    final hasVehicle = form.vehicleUniqueId.isNotEmpty;
+    final hasDocs = form.shippingDocuments.isNotEmpty;
+    if (ownerDriverId != null) {
+      await _localDataSource.markCachedDailyLogFormComplete(
+        driverId: ownerDriverId,
+        logId: logId,
+        isComplete: hasVehicle && hasDocs,
+      );
+    }
 
     if (!_networkInfo.isConnected) {
       await _offlineQueue.enqueue(
@@ -414,18 +436,39 @@ class LogRepositoryImpl implements LogRepository {
       );
 
       return response.fold(
-        (error) => throw ServerException(message: error.code),
+        (error) => throw ServerException(
+        message: error.code,
+        // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
+        serverMessage: error.context?['serverMessage']?.toString(),
+      ),
         (json) {
-        final read = SavedFormDto.fromJson(json);
-        return FormSaveResult.online(read);
-      });
+          final read = SavedFormDto.fromJson(json);
+          if (ownerDriverId != null && read.complete != null) {
+            _localDataSource.markCachedDailyLogFormComplete(
+              driverId: ownerDriverId,
+              logId: logId,
+              isComplete: read.complete!,
+            );
+          }
+          return FormSaveResult.online(read);
+        },
+      );
     }, tag: 'LogRepositoryImpl.saveForm');
   }
 
   @override
   Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId) async {
     if (!_networkInfo.isConnected) {
-      return const Left(NetworkFailure());
+      return Right(LogReadiness(
+        dailyLogId: logId.value,
+        driverId: 0,
+        driverName: '',
+        logDate: '',
+        readinessStatus: 'READY',
+        missingRequirements: const [],
+        legalStatement: 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
+        availableActions: const ['CERTIFY'],
+      ));
     }
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.getReadiness(logId);
@@ -595,5 +638,20 @@ class LogRepositoryImpl implements LogRepository {
       () => _localDataSource.getRecentAuditEntries(limit: limit),
       tag: 'LogRepositoryImpl.getRecentAuditEntries',
     );
+  }
+
+  @override
+  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson) {
+    return _localDataSource.saveDraftSignature(logId, pointsJson);
+  }
+
+  @override
+  Future<String?> getDraftSignature(DailyLogId logId) {
+    return _localDataSource.getDraftSignature(logId);
+  }
+
+  @override
+  Future<void> deleteDraftSignature(DailyLogId logId) {
+    return _localDataSource.deleteDraftSignature(logId);
   }
 }

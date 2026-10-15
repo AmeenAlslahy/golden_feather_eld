@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../routes.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/network/core_providers.dart';
 import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
 import 'send_logs_page.dart';
@@ -20,7 +21,56 @@ String inspectionDisplayText({
   return (isArabic || value.isEmpty) ? localFallback : value;
 }
 
-/// عرض البداية: الإرشاد + الصلاحيات الأربع من الخادم (fail-closed).
+/// هل تفتح البوابة، وبأي شرط؟
+///
+/// قُصِدت لتكون **نقية وقابلة للاختبار بلا widget** — لأن كل قرار تمكين
+/// في شاشة الأمان يُستحق أن يكون قابلاً للتدقيق بسطر واحد.
+///
+/// | الخادم | الشبكة | القرار |
+/// |---|---|---|
+/// | أجاب | — | **fail-closed**: تُطاع إlagsه حرفياً |
+/// | لم يجب بعد | متصل | **fail-closed**: لسنا نسأل بعد، لا نخمّن |
+/// | لم يجب | **غير متصل** | **fail-open**: لا انتظار لِما لا يأتي |
+///
+/// ❌ الحالة الثالثة كانت تُجمّد الأزرار الأربعة على **إقلاع بارد بلا
+/// إنترنت**: `getScreen` قراءة شبكة، و`_screenFallback` يُرجع `Left` لأن
+/// كاشه في الذاكرة فقط فيُفقد عند إعادة التشغيل. فلمبتش المفتّش يدرك أن
+/// جهازه معطّل، مع أن كل ما خلف البوابة يعمل بلا شبكة — بدء التفتيش
+/// محلي والتسجيل `unawaited`، وإرسال السجلات يولّد ملف 395 محلياً
+/// ويصفّه في الطابور.
+///
+/// الأمان لم يُضعَف: الخادم يبقى المرجع النهائي عند المزامنة، ورفضه
+/// أصبح `RejectedFailure` نهائياً (dead-letter) لا إعادة محاولة لا نهائية.
+class InspectionCapabilityGate {
+  const InspectionCapabilityGate({
+    required this.serverAnswered,
+    required this.isOnline,
+  });
+
+  /// هل ردّ الخادم ببياناتScreen فعلاً (وليس خطأ ولا null)؟
+  final bool serverAnswered;
+
+  final bool isOnline;
+
+  /// بلا خادم وبلا شبكة ⇒ لا فائدة من الانتظار.
+  bool get offlineWithoutServerAnswer => !serverAnswered && !isOnline;
+
+  /// تُفتح البوابة إما بجواب الخادم أو لغيابه.Network مع انقطاع.
+  bool get isOpen => serverAnswered || offlineWithoutServerAnswer;
+
+  bool isEnabled({required bool serverFlag}) =>
+      isOpen && (offlineWithoutServerAnswer || serverFlag);
+
+  /// رسالة الرفض تُعرض فقط حين **رفض الخادم فعلاً** — لا حين تعذّر
+  /// الوصول إليه، حتى لا نُتهم الخادم برفض لم يُصدر.
+  String? denial({required bool serverFlag, required String message}) {
+    if (offlineWithoutServerAnswer) return null;
+    if (!serverAnswered) return null;
+    return serverFlag ? null : message;
+  }
+}
+
+/// عرض البداية: الإرشاد + الصلاحيات الأربع من الخادم.
 ///
 /// كل القرارات (الصلاحيات، سياسة النصوص، الإيقاف) محسوبة مرة واحدة هنا؛
 /// الأقسام نفسها بيانات تُرسم بـ [InspectionActionSection] الأعمى.
@@ -34,12 +84,16 @@ class InspectionStartView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenAsync = ref.watch(dotInspectionScreenProvider);
     final screen = screenAsync.asData?.value;
-    // fail-closed مع تمييز الحالات: قبل وصول الرد الأزرار مقفلة بلا رسالة
-    // رفض (الخادم لم يُسأل بعد) — الرفض يُعرض فقط عند وجود جواب فعلي.
-    final capabilitiesReady = screen != null;
-    bool enabled(bool serverFlag) => capabilitiesReady && serverFlag;
+    final isOnline = ref.watch(networkInfoProvider.select((n) => n.isConnected));
+
+    final gate = InspectionCapabilityGate(
+      serverAnswered: screen != null,
+      isOnline: isOnline,
+    );
+
+    bool enabled(bool serverFlag) => gate.isEnabled(serverFlag: serverFlag);
     String? denial(bool serverFlag, String message) =>
-        capabilitiesReady && !serverFlag ? message : null;
+        gate.denial(serverFlag: serverFlag, message: message);
     final error = ref.watch(inspectionProvider.select((s) => s.error));
     final loc = context.loc;
     final isArabic = context.isArabic;
@@ -114,7 +168,32 @@ class InspectionStartView extends ConsumerWidget {
               style: context.styles.error,
             ),
           ),
-        if (screenAsync.hasError)
+        // ⚠️ بلا خادم وبلا شبكة: نُعلم السائق بأن الصلاحيات لم تُتحقّق منها،
+        // بدل إظهار «فشل الطلب» + إعادة محاولة لن تنجح.
+        //
+        // ❌ «فشل الطلب» كانت تُعرض أيضاً عند انقطاع الشبكة، فيُفهم أن
+        // الخادم معطّل — بينما هو سليم والإقرار هو ما تعذّر.
+        if (gate.offlineWithoutServerAnswer)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Column(
+              children: [
+                Text(
+                  loc.offlineMode,
+                  textAlign: TextAlign.center,
+                  style: context.styles.subtitle,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loc.weakConnectionDelayedData,
+                  textAlign: TextAlign.center,
+                  style: context.styles.subtitle,
+                ),
+              ],
+            ),
+          )
+        // الخادم متصل ولم يجب بعد ⇒ جلبٌ جارٍ، لا خطأ.
+        else if (screenAsync.hasError)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Column(

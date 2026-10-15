@@ -44,6 +44,64 @@ class RulesScreenModel {
     required this.limits,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'ruleSource': ruleSource,
+      'cycleRule': cycleRule,
+      'cargoType': cargoType,
+      'restart': restart,
+      'restBreak': restBreak,
+      'sixteenHourException': sixteenHourException,
+      'options': options,
+      'editableFields': editableFields.toList(),
+      'readOnlyFields': readOnlyFields.toList(),
+      'fixedSettings': fixedSettings,
+      'notice': notice,
+      'limits': limits.toJson(),
+    };
+  }
+
+  factory RulesScreenModel.fromJson(Map<String, dynamic> json) {
+    final rawOptions = json['options'];
+    final options = <String, List<String>>{};
+    if (rawOptions is Map) {
+      for (final entry in rawOptions.entries) {
+        if (entry.value is List) {
+          options[entry.key.toString()] =
+              (entry.value as List).map((e) => e.toString()).toList();
+        }
+      }
+    }
+
+    final rawLimits = json['limits'];
+    final limits = rawLimits is Map
+        ? HosConfiguration.fromJson(Map<String, dynamic>.from(rawLimits))
+        : HosConfiguration.usa70_8();
+
+    return RulesScreenModel(
+      ruleSource: json['ruleSource']?.toString() ?? '',
+      cycleRule: json['cycleRule']?.toString() ?? '',
+      cargoType: json['cargoType']?.toString() ?? '',
+      restart: json['restart']?.toString() ?? '',
+      restBreak: json['restBreak']?.toString() ?? '',
+      sixteenHourException: json['sixteenHourException'] == true,
+      options: options,
+      editableFields: (json['editableFields'] as List?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      readOnlyFields: (json['readOnlyFields'] as List?)
+              ?.map((e) => e.toString())
+              .toSet() ??
+          const {},
+      fixedSettings: json['fixedSettings'] is Map
+          ? Map<String, dynamic>.from(json['fixedSettings'] as Map)
+          : const {},
+      notice: json['notice']?.toString() ?? '',
+      limits: limits,
+    );
+  }
+
   /// الخادم قد يرسل مفاتيح نصية (personalConveyance: "Allowed")
   /// أو الصيغة المنطقية (*Enabled: true) — هذا الفاحص الموحد يقبل الصيغتين.
   bool get isPersonalConveyanceAllowed => _isSettingAllowed(const [
@@ -56,14 +114,32 @@ class RulesScreenModel {
         'yardMoveEnabled',
       ]);
 
+  static const _allowedValues = {
+    'allowed',
+    'true',
+    'yes',
+    '1',
+    'enabled',
+    'on',
+    'permitted',
+  };
+  static const _forbiddenValues = {
+    'forbidden',
+    'false',
+    'no',
+    '0',
+    'disabled',
+    'off',
+  };
+
   bool _isSettingAllowed(List<String> keys) {
     for (final key in keys) {
       final v = fixedSettings[key];
       if (v == null) continue;
       if (v is bool) return v;
       final t = v.toString().trim().toLowerCase();
-      if (t == 'allowed' || t == 'true') return true;
-      if (t == 'forbidden' || t == 'false' || t.isNotEmpty) return false;
+      if (_allowedValues.contains(t)) return true;
+      if (_forbiddenValues.contains(t)) return false;
     }
     return false;
   }

@@ -295,7 +295,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final vehicle = await showDialog<Vehicle>(
       context: context,
       builder: (_) => const VehiclePickerDialog(
-        allowCompanyFleet: true,
+        // 🔴 مركبات السائق فقط.
+        //
+        // ⚠️ كان `true` ⇒ يعرض الحوار **أسطول الشركة كاملاً**، ويمرّ
+        // تلقائياً إلى قائمة الشركة إذا كانت مركبات السائق فارغة.
+        //
+        // والسماح برسم تقرير فحص لمركبة لا يقودها السائق مخالفة امتثال
+        // مباشرة: التقرير يُنشئ سجل DVIR على مركبة ليست له.
+        // نفس القاعدة مطبَّقة في النموذج اليومي
+        // (`form_tab.dart: allowCompanyFleet: false`) «كي لا يُلحق أي مركبة
+        // من أسطول الشركة بالسجل».
+        allowCompanyFleet: false,
       ),
     );
     if (vehicle != null && mounted) {

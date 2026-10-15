@@ -3,6 +3,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 
 import '../../domain/dvir_catalog.dart';
 import '../extensions/dvir_catalog_extensions.dart';
@@ -120,11 +121,24 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
         error: (e, _) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(loc.dvirLoadDefectsFail),
-            TextButton(
-              onPressed: () => ref.invalidate(dvirCatalogProvider),
-              child: Text(loc.retryAction),
-            ),
+            // ⚠️ بلا شبكة: «إعادة المحاولة» وعدٌ كاذب — لا طلب سيصل.
+            // والرسالة لا توحي بأن القوائم سليمة، حتى لا يسجّل المفتّش
+            // تفتيشاً بغياب قائمة العيوب كاملة.
+            if (e is NetworkFailure) ...[
+              Text(loc.offlineMode, style: context.styles.subtitle),
+              const SizedBox(height: 4),
+              Text(
+                loc.weakConnectionDelayedData,
+                style: context.styles.subtitle,
+                textAlign: TextAlign.center,
+              ),
+            ] else ...[
+              Text(loc.dvirLoadDefectsFail),
+              TextButton(
+                onPressed: () => ref.invalidate(dvirCatalogProvider),
+                child: Text(loc.retryAction),
+              ),
+            ],
           ],
         ),
         data: (items) => _buildList(items, context),

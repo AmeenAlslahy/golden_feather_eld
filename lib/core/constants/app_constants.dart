@@ -19,6 +19,17 @@ class AppConstants {
   static const Duration retryDelay = Duration(seconds: 30);
   static const Duration syncInterval = Duration(minutes: 15);
 
+  /// معدّل تصحيح لوحة الحالة من الخادم.
+  ///
+  /// **قاعدة التصميم:** الخادم هو المرجع القانوني، والتطبيق يحسب محلياً
+  ///imarى أن يغرق الخادم بطلبات كل ثانية. فالتطبيق ينقص العدّاد بنفسه
+  /// بين النقطتين، ويعود كل [dashboardRefreshInterval] ليتحقّق من الخادم
+  /// ويصحّح الأرقام.
+  ///
+  /// ⚠️ كان `syncInterval` (15 دقيقة) ثابتاً **ميتاً بلا أي مستدعٍ**،
+  /// فلا جلب دوري للوحة كان موجوداً إطلاقاً: الأرقام تبقى من آخر فتح.
+  static const Duration dashboardRefreshInterval = Duration(minutes: 5);
+
   // إعدادات التخزين
   static const int maxOfflineInspections = 100;
   static const int maxLocalImages = 500;

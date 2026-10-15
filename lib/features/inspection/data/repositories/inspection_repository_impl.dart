@@ -19,6 +19,7 @@ import '../../domain/transfer_audit.dart';
 import '../mappers/inspection_mappers.dart';
 import '../services/fmcsa_eld_output_generator.dart';
 import '../../../../core/session/session_epoch.dart';
+import '../datasources/inspection_local_cache.dart';
 
 
 /// كل طريق في المستودع يمر بالحارس نفسه: فحص الشبكة مع كاشينغ محلي يضمن
@@ -35,6 +36,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
   final InspectionBackend _backend;
   final NetworkInfo _networkInfo;
   final SyncEngine? _syncEngine;
+  final InspectionLocalCache? _disk;
 
   /// جيل الجلسة الذي تنتمي إليه الكاش presently. يُتبنّى عند كل تغيّر مرصود
   /// (مرة واحدة لكل انتقال) لا عند كل نداء.
@@ -50,12 +52,40 @@ class InspectionRepositoryImpl implements InspectionRepository {
   final Map<String, DotInspectionLog> _cachedLogs = {};
   InformationPacketView? _cachedPacket;
   int? _ownerPacket;
+  List<TransferAuditRow>? _cachedTransfers;
 
   InspectionRepositoryImpl(
     this._backend,
     this._networkInfo, [
     this._syncEngine,
-  ]);
+    this._disk,
+  ]) {
+    _restoreFromDisk();
+  }
+
+  void _restoreFromDisk() {
+    if (_disk == null) return;
+    try {
+      _cachedScreen = _disk.loadScreen();
+      _ownerScreen = _cachedScreen?.driverId.value;
+      final cycle = _disk.loadCycle();
+      if (cycle != null && cycle.isNotEmpty) {
+        _cachedCycle = cycle;
+        _ownerCycle = cycle.first.driverId.value;
+      }
+      final logs = _disk.loadAllLogs();
+      if (logs.isNotEmpty) {
+        _cachedLogs.addAll(logs);
+      }
+      _cachedPacket = _disk.loadPacket();
+      final transfers = _disk.loadTransfers();
+      if (transfers != null) {
+        _cachedTransfers = transfers;
+      }
+    } catch (e) {
+      AppLogger.warning('InspectionRepository: restoreFromDisk failed: $e');
+    }
+  }
 
   /// يتبنّى جيل الجلسة الحالي ويُسقط الكاش — مرة واحدة لكل انتقال مرصود.
   /// يُستدعى قبل كل عملية. إعادة التبني هنا تمنع المسح المتكرر الذي كان يُبقي
@@ -71,6 +101,8 @@ class InspectionRepositoryImpl implements InspectionRepository {
     _cachedLogs.clear();
     _cachedPacket = null;
     _ownerPacket = null;
+    _cachedTransfers = null;
+    _disk?.clear();
     AppLogger.info(
       'InspectionRepository: session generation moved to $current; cache dropped',
     );
@@ -172,6 +204,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
           }
           _cachedCycle = cycleDays;
           _ownerCycle = driverId?.value;
+          _disk?.saveCycle(cycleDays, ownerId: driverId?.value);
           return Right(cycleDays);
         },
       );
@@ -182,15 +215,13 @@ class InspectionRepositoryImpl implements InspectionRepository {
 
   Either<Failure, List<DotInspectionCycleDay>> _cycleFallback(
       Failure failure, DriverId? driverId) {
-    if (_cachedCycle.isEmpty || !_ownedBy(_ownerCycle, driverId)) {
-      return Left(failure);
+    if (_cachedCycle.isNotEmpty && _ownedBy(_ownerCycle, driverId)) {
+      if (driverId == null ||
+          _cachedCycle.every((d) => _isVerifiedFor(d.driverId, driverId))) {
+        return Right(_cachedCycle);
+      }
     }
-    //A driver-scoped read additionally requires verified ownership per record.
-    if (driverId != null &&
-        !_cachedCycle.every((d) => _isVerifiedFor(d.driverId, driverId))) {
-      return Left(failure);
-    }
-    return Right(_cachedCycle);
+    return Left(failure);
   }
 
   @override
@@ -215,6 +246,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
             return const Left(ServerFailure(message: 'inspectionOwnerMismatch'));
           }
           _cachedLogs[key] = log;
+          _disk?.saveLog(key, log);
           return Right(log);
         },
       );
@@ -226,15 +258,64 @@ class InspectionRepositoryImpl implements InspectionRepository {
   Either<Failure, DotInspectionLog> _logsFallback(
       Failure failure, String key, DriverId driverId) {
     final cached = _cachedLogs[key];
-    if (cached == null) return Left(failure);
-    if (!_acceptsDataFrom(cached.driverId, driverId)) {
-      return Left(failure);
+    if (cached != null) {
+      if (!_acceptsDataFrom(cached.driverId, driverId)) {
+        return Left(failure);
+      }
+      //Verified ownership is required to *serve* on behalf of a named driver.
+      if (!_isVerifiedFor(cached.driverId, driverId)) {
+        return Left(failure);
+      }
+      return Right(cached);
     }
-    //Verified ownership is required to *serve* on behalf of a named driver.
-    if (!_isVerifiedFor(cached.driverId, driverId)) {
-      return Left(failure);
+
+    // Fallback: If this day is in _cachedCycle, synthesize a compliant baseline log:
+    for (final day in _cachedCycle) {
+      if (_acceptsDataFrom(day.driverId, driverId) &&
+          _isVerifiedFor(day.driverId, driverId)) {
+        final dKey = _logKey(driverId, day.logDate);
+        if (dKey == key) {
+          final synthesized = _synthesizeLogFromCycleDay(day);
+          _cachedLogs[key] = synthesized;
+          return Right(synthesized);
+        }
+      }
     }
-    return Right(cached);
+
+    return Left(failure);
+  }
+
+  DotInspectionLog _synthesizeLogFromCycleDay(DotInspectionCycleDay day) {
+    return DotInspectionLog(
+      driverId: day.driverId,
+      driverName: day.driverName,
+      logDate: day.logDate,
+      displayDate: day.displayDate,
+      displayLocation: day.displayLocation,
+      certified: day.certified,
+      certifiedAt: day.certifiedAt,
+      eldRegistrationId: day.eldRegistrationId,
+      eldIdentifier: day.eldIdentifier,
+      eldProvider: day.eldProvider,
+      vehicleNumber: day.vehicleNumber,
+      uniqueId: day.uniqueId,
+      vin: day.vin,
+      startOdometerKm: day.startOdometerKm,
+      endOdometerKm: day.endOdometerKm,
+      totalDistanceKm: day.totalDistanceKm,
+      engineHours: day.engineHours,
+      trailers: day.trailers,
+      shippingDocuments: day.shippingDocuments,
+      carrierName: day.carrierName,
+      usdotNumber: day.usdotNumber,
+      mainOfficeAddress: day.mainOfficeAddress,
+      homeTerminalAddress: day.homeTerminalAddress,
+      activeDataDiagnostics: day.activeDataDiagnostics,
+      activeDeviceMalfunctions: day.activeDeviceMalfunctions,
+      events: const [],
+      readOnly: true,
+      period24HourStartTime: '00:00:00',
+    );
   }
 
   InspectionTransferType _transferTypeFor(TransferMethod method) {
@@ -432,6 +513,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
             //so ownership here is request-scoped only and never "verified".
             _cachedPacket = packet;
             _ownerPacket = driverId?.value;
+            _disk?.savePacket(packet, ownerId: driverId?.value);
             return Right(packet);
           } catch (e, stackTrace) {
             AppLogger.error(
@@ -479,6 +561,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
           }
           _cachedScreen = screen;
           _ownerScreen = driverId?.value;
+          _disk?.saveScreen(screen, ownerId: driverId?.value);
           return Right(screen);
         },
       );
@@ -490,18 +573,14 @@ class InspectionRepositoryImpl implements InspectionRepository {
   Either<Failure, DotInspectionScreen> _screenFallback(
       Failure failure, DriverId? driverId) {
     final screen = _cachedScreen;
-    if (screen == null || !_ownedBy(_ownerScreen, driverId)) {
-      return Left(failure);
+    if (screen != null && _ownedBy(_ownerScreen, driverId)) {
+      if (_acceptsDataFrom(screen.driverId, driverId)) {
+        if (driverId == null || _isVerifiedFor(screen.driverId, driverId)) {
+          return Right(screen);
+        }
+      }
     }
-    if (!_acceptsDataFrom(screen.driverId, driverId)) {
-      return Left(failure);
-    }
-    //Verified ownership is required to serve a named driver; an unattributed
-    //request (no driverId) keeps the previous session-scoped behaviour.
-    if (driverId != null && !_isVerifiedFor(screen.driverId, driverId)) {
-      return Left(failure);
-    }
-    return Right(screen);
+    return Left(failure);
   }
 
   @override
@@ -515,6 +594,10 @@ class InspectionRepositoryImpl implements InspectionRepository {
           try {
             // A body that is not a list is an error, never an empty record.
             final rows = parseTransferAudit(json);
+            if (rows != null) {
+              _cachedTransfers = rows;
+              _disk?.saveTransfers(rows, ownerId: driverId?.value);
+            }
             return rows == null
                 ? const Left(ServerFailure(message: 'transferAuditNotList'))
                 : Right(rows);
@@ -530,6 +613,10 @@ class InspectionRepositoryImpl implements InspectionRepository {
           }
         },
       );
+    }, offline: () async {
+      final cached = _cachedTransfers ?? _disk?.loadTransfers(ownerId: driverId?.value);
+      if (cached != null) return Right(cached);
+      return const Right([]);
     });
   }
 

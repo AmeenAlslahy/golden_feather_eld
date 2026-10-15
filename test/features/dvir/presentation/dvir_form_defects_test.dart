@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/pages/dvir_form_page.dart';
+import 'package:golden_feather_eld/features/dvir/presentation/widgets/dvir_form_sections.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,7 +70,10 @@ void main() {
   }
 
   Future<void> openAddDefects(WidgetTester tester) async {
-    final defectsCell = find.widgetWithText(InkWell, 'Defects').first;
+    final defectsCell = find.descendant(
+      of: find.byType(DvirVehicleSection),
+      matching: find.byType(InkWell),
+    );
     await tester.tap(defectsCell);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

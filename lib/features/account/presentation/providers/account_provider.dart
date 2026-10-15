@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../backend/contracts/account_backend.dart';
+import '../../../../core/constants/storage_constants.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../domain/account/driver_account.dart';
@@ -20,11 +25,12 @@ class AccountState {
     DriverAccount? accountData,
     bool? isLoading,
     String? error,
+    bool clearError = false,
   }) {
     return AccountState(
       accountData: accountData ?? this.accountData,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -41,6 +47,48 @@ class AccountNotifier extends StateNotifier<AccountState> {
   String? get ownerDriverId => _ownerDriverId;
 
   AccountNotifier(this._backend, this._ref) : super(const AccountState());
+
+  DriverAccount _synthesizeFromAuth(dynamic user) {
+    return DriverAccount(
+      driverId: int.tryParse(user.id.toString()) ?? 0,
+      email: user.email.toString(),
+      phone: user.phone?.toString() ?? '',
+      license: const LicenseInfo(state: '', number: '', formatted: 'N/A'),
+      carrier: '',
+      mainOfficeAddress: '',
+      homeTerminalAddress: '',
+      timeZone: 'UTC',
+      language: 'English',
+      odometer: 'mi',
+    );
+  }
+
+  void _saveCachedAccount(String owner, DriverAccount account) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        box.put('account:$owner', jsonEncode(account.toJson()));
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to save account to disk: $e');
+    }
+  }
+
+  DriverAccount? _loadCachedAccount(String owner) {
+    try {
+      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+        final rawStr = box.get('account:$owner');
+        if (rawStr != null && rawStr.isNotEmpty) {
+          final json = jsonDecode(rawStr) as Map<String, dynamic>;
+          return DriverAccount.fromJson(json);
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to load account from disk: $e');
+    }
+    return null;
+  }
 
   /// ربط بمالك جديد: إسقاط متزامن (بلا API) وإبطال الطلبات الجارية.
   /// الجلب اللاحق مسؤولية صفحة الحساب عند فتحها (تجنب عاصفة طلبات).
@@ -72,7 +120,16 @@ class AccountNotifier extends StateNotifier<AccountState> {
     bindOwner(owner, epoch);
     // P0 corrections: تسلسل جديد لكل طلب فعلي (latest-wins للقراءة).
     final seq = ++_requestSeq;
-    state = state.copyWith(isLoading: true, error: null);
+
+    final isOnline = _ref.read(networkInfoProvider).isConnected;
+    if (!isOnline) {
+      final cached = _loadCachedAccount(owner);
+      final account = cached ?? _synthesizeFromAuth(authState.user!);
+      state = state.copyWith(isLoading: false, accountData: account, clearError: true);
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
 
     final userIdStr = authState.user?.id;
 
@@ -87,12 +144,32 @@ class AccountNotifier extends StateNotifier<AccountState> {
       // P0 Stage 1 — سياج: تجاهل الرد المتأخر دون تحويله لخطأ في جلسة جديدة.
       if (!_isCurrent(seq, owner, epoch)) return;
       result.fold(
-        (failure) => state = state.copyWith(isLoading: false, error: failure.l10nKey),
-        (driverAccount) => state = state.copyWith(isLoading: false, accountData: driverAccount, error: null),
+        (failure) {
+          final cached = _loadCachedAccount(owner);
+          if (cached != null) {
+            state = state.copyWith(isLoading: false, accountData: cached, clearError: true);
+          } else if (failure.code.startsWith('network') ||
+              failure.code.contains('timeout') ||
+              failure.code.contains('offline')) {
+            final fallback = _synthesizeFromAuth(authState.user!);
+            state = state.copyWith(isLoading: false, accountData: fallback, clearError: true);
+          } else {
+            state = state.copyWith(isLoading: false, error: failure.l10nKey);
+          }
+        },
+        (driverAccount) {
+          _saveCachedAccount(owner, driverAccount);
+          state = state.copyWith(isLoading: false, accountData: driverAccount, clearError: true);
+        },
       );
     } catch (e) {
       if (!_isCurrent(seq, owner, epoch)) return;
-      state = state.copyWith(isLoading: false, error: e.toString());
+      final cached = _loadCachedAccount(owner);
+      if (cached != null) {
+        state = state.copyWith(isLoading: false, accountData: cached, clearError: true);
+      } else {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
     }
   }
 
@@ -104,7 +181,21 @@ class AccountNotifier extends StateNotifier<AccountState> {
     final seq = ++_requestSeq;
     final owner = _ownerDriverId;
     final epoch = _ownerEpoch;
-    state = state.copyWith(isLoading: true, error: null);
+
+    final isOnline = _ref.read(networkInfoProvider).isConnected;
+    if (!isOnline) {
+      if (state.accountData != null && owner != null) {
+        final updated = state.accountData!.copyWith(
+          language: language,
+          odometer: odometerUnit,
+        );
+        _saveCachedAccount(owner, updated);
+        state = state.copyWith(isLoading: false, accountData: updated, clearError: true);
+      }
+      return true;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
 
     try {
       final result = await _backend.updatePreferences(
@@ -116,12 +207,24 @@ class AccountNotifier extends StateNotifier<AccountState> {
       if (!_isCurrent(seq, owner, epoch)) return false;
       return await result.fold(
         (failure) {
+          if (failure.code.startsWith('network') &&
+              state.accountData != null &&
+              owner != null) {
+            final updated = state.accountData!.copyWith(
+              language: language,
+              odometer: odometerUnit,
+            );
+            _saveCachedAccount(owner, updated);
+            state = state.copyWith(isLoading: false, accountData: updated, clearError: true);
+            return true;
+          }
           state = state.copyWith(isLoading: false, error: failure.l10nKey);
           return false;
         },
         (driverAccount) {
+          if (owner != null) _saveCachedAccount(owner, driverAccount);
           // تحديث البيانات المرجعة في الشاشة
-          state = state.copyWith(isLoading: false, accountData: driverAccount, error: null);
+          state = state.copyWith(isLoading: false, accountData: driverAccount, clearError: true);
           return true;
         },
       );

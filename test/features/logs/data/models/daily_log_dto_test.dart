@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/logs/data/models/daily_log_dto.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 
 void main() {
   group('DailyLogDto BUG A Regression Tests', () {
@@ -90,6 +91,58 @@ void main() {
 
       final dto = DailyLogDto.fromJson(json);
       expect(() => dto.toEntity(), throwsA(isA<FormatException>()));
+    });
+
+    test('COMPLETE and DRAFT formStatus are parsed correctly into entities', () {
+      final completeEntity = DailyLogDto.fromJson({
+        'id': 10,
+        'logDate': '2026-10-14',
+        'formStatus': 'COMPLETE',
+        'certificationStatus': 'CERTIFIED',
+      }).toEntity();
+      expect(completeEntity.formStatus, FormStatus.completed);
+      expect(completeEntity.isFormComplete, isTrue);
+      expect(completeEntity.certificationStatus, CertificationStatus.certified);
+      expect(completeEntity.isCertified, isTrue);
+
+      final draftEntity = DailyLogDto.fromJson({
+        'id': 11,
+        'logDate': '2026-10-14',
+        'formStatus': 'DRAFT',
+        'certificationStatus': 'NOT_READY',
+      }).toEntity();
+      expect(draftEntity.formStatus, FormStatus.incomplete);
+      expect(draftEntity.isFormComplete, isFalse);
+      expect(draftEntity.certificationStatus, CertificationStatus.uncertified);
+      expect(draftEntity.isCertified, isFalse);
+    });
+
+    test('formIndicator object with color GREEN resolves to completed', () {
+      final entity = DailyLogDto.fromJson({
+        'id': 12,
+        'logDate': '2026-10-14',
+        'formIndicator': {
+          'status': 'COMPLETE',
+          'color': 'GREEN',
+          'positive': true,
+        },
+      }).toEntity();
+      expect(entity.formStatus, FormStatus.completed);
+      expect(entity.isFormComplete, isTrue);
+    });
+
+    test('formIndicator object with color RED resolves to incomplete', () {
+      final entity = DailyLogDto.fromJson({
+        'id': 13,
+        'logDate': '2026-10-14',
+        'formIndicator': {
+          'status': 'DRAFT',
+          'color': 'RED',
+          'positive': false,
+        },
+      }).toEntity();
+      expect(entity.formStatus, FormStatus.incomplete);
+      expect(entity.isFormComplete, isFalse);
     });
   });
 }

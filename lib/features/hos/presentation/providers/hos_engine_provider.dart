@@ -1,10 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/hos_configuration.dart';
+import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../logs/data/datasources/log_local_data_source.dart';
 import '../../../logs/data/providers/log_repository_providers.dart';
 import '../../../sync/data/providers/sync_providers.dart';
 import '../../../../backend/providers/backend_providers.dart';
@@ -20,12 +23,66 @@ final hosConfigurationProvider = Provider<HosConfiguration>((ref) {
   return storage.hosConfiguration;
 });
 
+/// فترات الخدمة المحفوظة محلياً (Hive periodsBox).
+///
+/// نافذة عشرة أيام أطول من أن تُغطّى بإعادة تشغيل واحدة، فال periods
+/// تكتبها `DutyStatusTracker` عند كل تغيّر حالة. جهاز جديد ⇒ قائمة فارغة.
+///
+/// ⚠️ قبل هذا لم تكن تُقرأ **أبداً** في هذا المسار: كان المحرك يبدأ من
+/// الصفر عند كل إقلاع فلا يعرف أن السائق قضى ساعات قيادة — وهو ما يمنع
+/// «العمل أوفلاين كالأونلاين» بعد إعادة التشغيل.
+final hosStoredPeriodsProvider = FutureProvider<List<DutyPeriod>>((ref) async {
+  final trusted = ref.read(trustedTimeProvider).currentTime;
+  final now = trusted is TrustedTimeAvailable
+      ? trusted.utc
+      : DateTime.now().toUtc();
+  final dataSource = ref.read(logLocalDataSourceProvider);
+  try {
+    final periods = <DutyPeriod>[];
+    for (var back = 0; back < 10; back++) {
+      final day = now.subtract(Duration(days: back));
+      periods.addAll(await dataSource.getPeriods(day, day));
+    }
+    return periods;
+  } catch (e) {
+    // الفشل هنا لا يمنع التشغيل: نكمل بمحرك فارغ كما كان سابقاً.
+    AppLogger.warning('HOS hydration read skipped: $e');
+    return const <DutyPeriod>[];
+  }
+});
+
 /// State Machine & Engine Provider
 final hosEngineProvider = Provider<HosRulesEngine>((ref) {
   final config = ref.watch(hosConfigurationProvider);
   final timeProvider = ref.watch(trustedTimeProvider);
   final calculator = HosCalculator(config, timeProvider);
-  final stateMachine = HosStateMachine(timeProvider);
+  final stateMachine = HosStateMachine(
+    timeProvider,
+    breakDuration: Duration(minutes: config.breakDurationMinutes),
+  );
+
+  // ♻️ استعادة حالة HOS من فترات الخدمة المحفوظة محلياً.
+  //
+  // الترطيب غير متزامن فنستمع لا نستدعي. ولا نحتاج إبطال أي مزوّد بعد
+  // وصول الفترات: `HosRulesEngine.currentStatus` يعيد الحساب من آلة
+  // الحالة في **كل** قراءة (`_buildStatusUpdate`)، فكل قارئ تالٍ يرى
+  // الحالة المستعادة بلا إعادة بناء.
+  ref.listen(hosStoredPeriodsProvider, (_, next) {
+    final periods = next.valueOrNull;
+    if (periods == null || periods.isEmpty) return;
+    final trusted = timeProvider.currentTime;
+    final now = trusted is TrustedTimeAvailable
+        ? trusted.utc
+        : DateTime.now().toUtc();
+    stateMachine.hydrateFromPeriods(
+      periods: periods,
+      now: now,
+      shiftWindow: Duration(minutes: config.shiftLimitMinutes),
+      cycleWindow: const Duration(days: 8),
+      // الحالة المعلنة، لا حالة آخر فترة مغلقة (متأخرة بمرحلة).
+      currentStatusWire: _declaredStatus(ref),
+    );
+  });
 
   ref.onDispose(() {
     stateMachine.dispose();
@@ -36,6 +93,33 @@ final hosEngineProvider = Provider<HosRulesEngine>((ref) {
     stateMachine: stateMachine,
     timeProvider: timeProvider,
   );
+});
+
+/// الحالة المعلنة مخزَّنة في التفضيلات.
+///
+/// 🔒 القراءة محاطة بـ try/catch عمداً: [LocalStorageService] قد لا
+/// تكون مهيَّأة بعد (إقلاع مبكر، خطأ تهيئة). وفشل قراءتها يجب ألا
+/// يُسقط محرك HOS كله — نكمل بسلوك آخر فترة مغلقة.
+String? _declaredStatus(Ref ref) {
+  try {
+    return ref.read(localStorageProvider).currentDutyStatus;
+  } catch (e) {
+    AppLogger.warning('HOS hydration: declared status unavailable: $e');
+    return null;
+  }
+}
+
+/// جهوزية ترطيب المحرك.
+/// 🔴 كان هذا **غير معلن**، فكان بناء اللوحة أوفلاين يقرأ المحرك قبل
+/// اكتمال القراءة من القرص — سباقٌ صامت يعرض رصيداً كاملاً (11:00) ثم
+/// يهبط إلى ما ي真相 بعد ثوانٍ، بلا أي إعادة بناء ولا إشعار.
+///
+/// يجب **انتظاره** قبل بناء أي لوحة من المحرك.
+final hosHydrationReadyProvider = FutureProvider<void>((ref) async {
+  // ضمّان إنشاء المحرك (وبالتالي المستمع) أولاً.
+  ref.watch(hosEngineProvider);
+  // نفس الكاش المخزَّن مؤقتاً ⇒ لا قراءة ثانية من القرص.
+  await ref.watch(hosStoredPeriodsProvider.future);
 });
 
 /// Duty Status Tracker Provider
