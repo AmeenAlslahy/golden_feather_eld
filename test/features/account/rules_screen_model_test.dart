@@ -49,4 +49,31 @@ void main() {
       expect(model.isYardMoveAllowed, isFalse);
     });
   });
+
+  group('RulesScreenModel.tryIsSettingAllowed', () {
+    test('returns true/false for recognized values and null for unknown', () {
+      final model = makeModel({
+        'personalConveyance': 'permitted',
+        'yardMoves': false,
+      });
+      expect(model.tryIsSettingAllowed(const ['personalConveyance']), isTrue);
+      expect(model.tryIsSettingAllowed(const ['yardMoves']), isFalse);
+      expect(model.tryIsSettingAllowed(const ['unlimitedTrailers']), isNull);
+      expect(model.tryIsSettingAllowed(const ['personalConveyance', 'personalConveyanceEnabled']), isTrue);
+    });
+
+    test('unrecognized token stays unknown instead of false', () {
+      final model = makeModel({'personalConveyance': 'custom_value'});
+      expect(model.tryIsSettingAllowed(const ['personalConveyance']), isNull);
+      expect(model.isPersonalConveyanceAllowed, isFalse);
+    });
+  });
+
+  group('RulesScreenModel.firstSettingDisplayText', () {
+    test('returns the first raw server text, including unrecognized tokens', () {
+      final model = makeModel({'personalConveyance': 'custom_value'});
+      expect(model.firstSettingDisplayText(const ['personalConveyance']), 'custom_value');
+      expect(model.firstSettingDisplayText(const ['missing']), isNull);
+    });
+  });
 }

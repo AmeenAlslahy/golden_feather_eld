@@ -22,6 +22,13 @@ abstract class DriverAccount with _$DriverAccount {
   }) = _DriverAccount;
 
   factory DriverAccount.fromJson(Map<String, dynamic> json) => _$DriverAccountFromJson(json);
+
+  static const List<String> defaultAvailableLanguages = [
+    'English',
+    'Spanish',
+    'Arabic',
+  ];
+  static const List<String> defaultAvailableOdometerUnits = ['mi', 'km'];
 }
 
 @freezed

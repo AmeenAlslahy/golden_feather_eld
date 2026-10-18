@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_decorations.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../widgets/instructions/instructions_zoom_overlay.dart';
+import '../widgets/instructions/inspection_mode_section.dart';
+import '../widgets/instructions/malfunction_manual_section.dart';
+import '../widgets/instructions/send_logs_section.dart';
 
 /// Which packet item this screen shows (SRS 8.2: the Information Packet has
 /// three separate items). `all` keeps the combined Instructions view.
@@ -21,7 +21,7 @@ class InstructionsPage extends StatefulWidget {
 }
 
 class _InstructionsPageState extends State<InstructionsPage> {
-  int? _zoomedSectionIndex;
+  InstructionsSection? _zoomedSection;
 
   String _title(AppLocalizations loc) => switch (widget.section) {
     InstructionsSection.all => loc.instructions,
@@ -30,395 +30,68 @@ class _InstructionsPageState extends State<InstructionsPage> {
     InstructionsSection.malfunction => loc.malfunctionManual39534,
   };
 
-  @override
-  Widget build(BuildContext context) {
+  /// المقاطع الظاهرة — مصدر واحد يغذي القائمة وطبقة التكبير معاً.
+  Map<InstructionsSection, Widget> _visibleSections() {
     final showAll = widget.section == InstructionsSection.all;
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (_zoomedSectionIndex != null) {
-              setState(() => _zoomedSectionIndex = null);
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        ),
-        title: Text(_title(context.loc), style: context.styles.appBarTitle),
-      ),
-      body: Stack(
-        children: [
-          ListView(
-            key: Key('instructions_${widget.section.name}'),
-            padding: EdgeInsets.zero,
-            children: [
-              // Section 1: Inspection Mode
-              if (showAll || widget.section == InstructionsSection.inspection)
-                InkWell(
-                  onTap: () => setState(() => _zoomedSectionIndex = 1),
-                  child: _buildInspectionModeSection(context),
-                ),
-
-              // Section 2: Send Logs (Data Transfer Instruction Sheet)
-              if (showAll || widget.section == InstructionsSection.sendLogs)
-                InkWell(
-                  onTap: () => setState(() => _zoomedSectionIndex = 2),
-                  child: _buildSendLogsSection(context),
-                ),
-
-              // Section 3: Malfunction Manual
-              if (showAll || widget.section == InstructionsSection.malfunction)
-                InkWell(
-                  onTap: () => setState(() => _zoomedSectionIndex = 3),
-                  child: _buildMalfunctionManualSection(context),
-                ),
-            ],
-          ),
-          if (_zoomedSectionIndex != null)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _zoomedSectionIndex = null),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.85),
-                  alignment: Alignment.center,
-                  child: InteractiveViewer(
-                    minScale: 1.0,
-                    maxScale: 3.5,
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: _getSectionWidget(_zoomedSectionIndex!, context),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+    return {
+      if (showAll || widget.section == InstructionsSection.inspection)
+        InstructionsSection.inspection: const InspectionModeSection(),
+      if (showAll || widget.section == InstructionsSection.sendLogs)
+        InstructionsSection.sendLogs: const SendLogsSection(),
+      if (showAll || widget.section == InstructionsSection.malfunction)
+        InstructionsSection.malfunction: const MalfunctionManualSection(),
+    };
   }
 
-  Widget _getSectionWidget(int index, BuildContext context) {
-    switch (index) {
-      case 1:
-        return _buildInspectionModeSection(context);
-      case 2:
-        return _buildSendLogsSection(context);
-      case 3:
-        return _buildMalfunctionManualSection(context);
-      default:
-        return const SizedBox.shrink();
+  @override
+  void didUpdateWidget(covariant InstructionsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.section != widget.section) {
+      _zoomedSection = null;
     }
   }
 
-  Widget _buildInspectionModeSection(BuildContext context) {
-    final loc = context.loc;
-    // شريط داكن دائم حسب التصميم المرجعي — في الوضعين.
-    final sectionColor = context.inspectionBand;
+  @override
+  Widget build(BuildContext context) {
+    final sections = _visibleSections();
+    final zoomedContent =
+        _zoomedSection == null ? null : sections[_zoomedSection];
 
-    return Container(
-      decoration: AppDecorations.band(sectionColor),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Placeholder for the Phone Image
-          Expanded(
-            flex: 4,
-            child: Container(
-              height: 220,
-              decoration: AppDecorations.solid(
-                AppColors.white,
-                radius: AppRadius.sheet,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.smartphone,
-                  size: 64,
-                  color: AppColors.placeholderGrey,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          // Text Content
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.goldenFeatherEldInspectionMode,
-                  style: context.styles.bodyBold.copyWith(
-                    fontSize: 18,
-                    height: 1.2,
-                    color: AppColors.white, // نص على شريط داكن دائم
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildChecklistItem(
-                  context: context,
-                  text: loc.tapDotInspectionInTheMenuPress,
-                ),
-                _buildChecklistItem(
-                  context: context,
-                  text: loc.anInspectorMayPressArrowsToVie,
-                ),
-                _buildChecklistItem(
-                  context: context,
-                  text: loc.anInspectorMayViewTheLogFormTh,
-                ),
-                _buildChecklistItem(
-                  context: context,
-                  text: loc.theOfficerCannotLeaveInspectio,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSendLogsSection(BuildContext context) {
-    final loc = context.loc;
-    return Container(
-      decoration: AppDecorations.band(context.colorScheme.surface),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xl,
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // Empty space to align with the text above
-              const Expanded(flex: 4, child: SizedBox()),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc.sendLogs,
-                      style: context.styles.bodyBold.copyWith(fontSize: 18),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      loc.goldenFeatherEldIsCapableOfPro,
-                      style: context.styles.subtitle.copyWith(
-                        fontSize: 10,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(context)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMalfunctionManualSection(BuildContext context) {
-    final loc = context.loc;
-    // خلفية قسم دليل الأعطال — درجة لكل وضع.
-    final sectionColor = context.manualBand;
-
-    return Container(
-      decoration: AppDecorations.band(sectionColor),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Placeholder for Hardware Image
-              Expanded(
-                flex: 4,
-                child: Column(
-                  children: [
-                    Container(
-                      height: 120,
-                      decoration: AppDecorations.solid(
-                        AppColors.placeholderDark,
-                        radius: AppRadius.imagePlaceholder,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.router,
-                          color: AppColors.white,
-                          size: 48,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildSmallHardwarePlaceholder(),
-                        _buildSmallHardwarePlaceholder(),
-                        _buildSmallHardwarePlaceholder(),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              // Text Content
-              Expanded(
-                flex: 6,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc.goldenFeatherEldMalfunctionMan,
-                      style: context.styles.bodyBold.copyWith(
-                        fontSize: 18,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      loc.inAccordanceWithTheGuidelinesS,
-                      style: context.styles.caption.copyWith(fontSize: 11),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildSquareChecklistItem(
-                      context: context,
-                      title: loc.malfunctionIndication,
-                      desc: loc.immediatelyContactTheSupportIf,
-                    ),
-                    _buildSquareChecklistItem(
-                      context: context,
-                      title: loc.noteTheMalfunction,
-                      desc: loc.noteTheMalfunctionAndProvideAW,
-                    ),
-                    _buildSquareChecklistItem(
-                      context: context,
-                      title: loc.switchToPaperLogs,
-                      desc: loc.keepAPaperLogForThatDayAndUnti,
-                    ),
-                    _buildSquareChecklistItem(
-                      context: context,
-                      title: loc.k8DaysRule,
-                      desc: loc.inTheEventOfAnEldMalfunctionTh,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Center(child: _buildContactInfo(context)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChecklistItem({
-    required BuildContext context,
-    required String text,
-  }) {
-    // عناصر الشريط الداكن دائماً — نص أبيض على الخلفية الداكنة.
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.check_circle, size: 14, color: AppColors.white),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              text,
-              style: context.styles.subtitle.copyWith(
-                fontSize: 10,
-                height: 1.4,
-                color: AppColors.white, // نص على شريط داكن دائم
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSquareChecklistItem({
-    required BuildContext context,
-    required String title,
-    required String desc,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 2),
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              color: AppColors.checkSquare,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: const Icon(Icons.check, size: 12, color: AppColors.white),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.styles.bodyBold.copyWith(fontSize: 12),
-                ),
-                Text(
-                  desc,
-                  style: context.styles.subtitle.copyWith(
-                    fontSize: 10,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactInfo(BuildContext context) {
-    final loc = context.loc;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Text(
-        loc.contactTheSupportTeamAtTopceld,
-        style: context.styles.subtitle.copyWith(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+    return PopScope(
+      canPop: _zoomedSection == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          setState(() => _zoomedSection = null);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const BackButton(),
+          title: Text(_title(context.loc), style: context.styles.appBarTitle),
         ),
-        textAlign: TextAlign.center,
+        body: Stack(
+          children: [
+            ListView(
+              key: Key('instructions_${widget.section.name}'),
+              padding: EdgeInsets.zero,
+              children: [
+                for (final entry in sections.entries)
+                  InkWell(
+                    key: Key('instructions_open_${entry.key.name}'),
+                    onTap: () => setState(() => _zoomedSection = entry.key),
+                    child: entry.value,
+                  ),
+              ],
+            ),
+            if (zoomedContent != null)
+              InstructionsZoomOverlay(
+                key: const Key('instructions_zoom_overlay'),
+                onDismiss: () => setState(() => _zoomedSection = null),
+                child: zoomedContent,
+              ),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildSmallHardwarePlaceholder() {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: const BoxDecoration(
-        color: AppColors.placeholderGrey,
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(Icons.cable, size: 14, color: AppColors.white),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
@@ -98,6 +99,54 @@ void main() {
       await container.read(statusDashboardProvider.notifier).refresh();
 
       expect(container.read(statusDashboardProvider), isA<AsyncData<StatusDashboard>>());
+    });
+  });
+
+  // ==========================================================================
+  // server authority (owner decision): every poll REPLACES local values
+  // ==========================================================================
+
+  group('statusDashboardProvider — الخادم يستبدل المحلي كل نبضة', () {
+    test('refresh replaces values verbatim even when the server is more generous',
+        () async {
+      final fakeTime = FakeTrustedTimeProvider(
+        initialUtcTime: DateTime.utc(2026, 10, 14, 2),
+      );
+      final backend = _ScriptedStatusDashboard(
+        _dashboard(
+          circle: const Duration(hours: 8),
+          shiftUsed: const Duration(hours: 6, minutes: 30),
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          activeBackendProvider.overrideWithValue(_ScriptedAdapter(backend)),
+          authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
+          trustedTimeProvider.overrideWithValue(fakeTime),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final first = await container.read(statusDashboardProvider.future);
+      expect(first.remainingCircle.remaining, const Duration(hours: 8));
+
+      // النبضة التالية: الخادم "متأخر" (يعرض أكثر). تحت الحارس الأحادي
+      // القديم كان يُقصّ إلى الاشتقاق المحلي (≈7:30)؛ الآن يُعرض كما ورد.
+      backend.dashboard = _dashboard(
+        circle: const Duration(hours: 9),
+        shiftUsed: const Duration(hours: 5),
+      );
+      fakeTime.advance(const Duration(seconds: 30));
+
+      await container
+          .read(statusDashboardProvider.notifier)
+          .reconcileWithServer();
+
+      final state = container.read(statusDashboardProvider).value!;
+      expect(state.remainingCircle.remaining, const Duration(hours: 9),
+          reason: 'الاستبدال لا التقليص — الخادم هو المرجع');
+      expect(state.hosIndicators.shift.value, const Duration(hours: 5),
+          reason: 'مؤشرات الخادم تُعرض حرفياً بلا دمج محلي');
     });
   });
 
@@ -195,4 +244,93 @@ class _FailingStatusDashboard implements StatusDashboardBackend {
       l10nKey: 'testFailure',
     ));
   }
+}
+
+/// Adapter whose status dashboard can be swapped between polls.
+class _ScriptedAdapter implements BackendAdapter {
+  _ScriptedAdapter(this._backend);
+
+  final StatusDashboardBackend _backend;
+
+  @override
+  BackendIdentity get identity => BackendIdentity.mock();
+
+  @override
+  bool get isMock => true;
+
+  @override
+  StatusDashboardBackend get statusDashboard => _backend;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('Not used in this test');
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _ScriptedStatusDashboard implements StatusDashboardBackend {
+  _ScriptedStatusDashboard(this.dashboard);
+
+  StatusDashboard dashboard;
+
+  @override
+  Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) async =>
+      ok(dashboard);
+
+  @override
+  Future<Result<StatusDashboard>> updateDutyStatus({
+    required DutyStatusCode status,
+    String? notes,
+  }) async =>
+      ok(dashboard);
+
+  @override
+  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async =>
+      err(const NetworkError(
+        code: 'test.unimplemented',
+        l10nKey: 'testUnimplemented',
+      ));
+}
+
+StatusDashboard _dashboard({
+  required Duration circle,
+  required Duration shiftUsed,
+}) {
+  return StatusDashboard(
+    driver: const DriverRef(
+      id: DriverId(646),
+      name: 'Naseem Hassan Ali Adam',
+      displayText: 'Naseem - 646',
+    ),
+    operationalAlerts: const OperationalAlerts(
+      toolIcon: false,
+      warningTriangleIcon: false,
+      connectionStatus: ConnectionStatus.ok,
+    ),
+    currentDutyStatus: DutyStatusCode.onDutyNotDriving,
+    remainingCircle: RemainingCircle(
+      remaining: circle,
+      label: 'Remaining',
+      progress: 0.5,
+    ),
+    hosIndicators: HosIndicators(
+      drive: const HosIndicator(
+          label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+      shift: HosIndicator(
+          label: 'SHIFT', value: shiftUsed, type: IndicatorType.used),
+      breakTime: const HosIndicator(
+          label: 'BREAK',
+          value: Duration(hours: 8),
+          type: IndicatorType.remaining),
+      cycle: const HosIndicator(
+          label: 'CYCLE',
+          value: Duration(hours: 69),
+          type: IndicatorType.used),
+    ),
+    regulatoryConstraints: const RegulatoryConstraints(
+      ruleSet: CycleRule.usa70_8,
+      limits: ['70-Hour / 8-Day Cycle Limit'],
+    ),
+  );
 }

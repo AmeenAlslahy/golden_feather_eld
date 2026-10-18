@@ -21,7 +21,7 @@ final teamStatusProvider = FutureProvider.autoDispose<TeamStatus?>((ref) async {
     driverId: DriverId(driverId),
     startDate: today,
     endDate: today,
-    limit: 1,
+    size: 1,
   );
   final logId = listed.fold<int?>((failure) => throw failure, (json) {
     final items = json['data'];

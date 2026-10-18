@@ -54,6 +54,11 @@ class MainCircularTimer extends ConsumerStatefulWidget {
   final HosIndicators? hosIndicators;
   final VoidCallback? onTap;
 
+  /// حدّ الدورة لمجموعة القواعد — يُستخدم لمطابقة مؤشر `CYCLE` عند رسم
+  /// القوس المتقدم. الافتراضي 70h (USA 70/8)؛ الصفحة تمرّر القيمة من
+  /// `regulatoryConstraints.ruleSet`.
+  final Duration cycleLimit;
+
   /// لحظةZY-βاللقطة على **ساعة موثوقة** (خادم مُثبَّت عبر ترويسة `Date:`).
   ///
   /// ⚠️ يجب أن تأتي من `TrustedTimeProvider` لا من `DateTime.now()`.
@@ -72,6 +77,7 @@ class MainCircularTimer extends ConsumerStatefulWidget {
     this.hosIndicators,
     this.onTap,
     this.snapshotTimestamp,
+    this.cycleLimit = const Duration(hours: 70),
   });
 
   @override
@@ -185,20 +191,22 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                     hosIndicators: widget.hosIndicators,
                     statusLabel: widget.statusLabel,
                     elapsedSinceSnapshot: elapsedSinceSnapshot,
+                    cycleLimit: widget.cycleLimit,
                   );
 
                   final liveRemaining = uiState.liveRemaining;
                   final progress = uiState.progress;
                   final isRest = uiState.isRest;
 
-                  // تحديد اللون: رمادي عند الراحة فقط. المنتهي وهو يعمل يبقى أحمر
+                  // تحديد اللون: رمادي عند الراحة. وعند انتهاء الوقت أو بلوغ النطاق الحرج
+                  // (ساعة أو أقل، أو تقدم >= 90%) يتحول إلى الأحمر/التحذيري، والأخضر للوقت الآمن فقط.
                   final Color arcColor;
                   final Color timeTextColor;
+                  final isCritical = liveRemaining <= const Duration(hours: 1) || progress >= 0.90;
                   if (isRest) {
                     arcColor = theme.disabledColor;
                     timeTextColor = theme.hintColor;
-                  } else if (liveRemaining <= Duration.zero ||
-                      liveRemaining <= const Duration(minutes: 15)) {
+                  } else if (isCritical) {
                     arcColor = theme.colorScheme.error;
                     timeTextColor = theme.colorScheme.error;
                   } else {

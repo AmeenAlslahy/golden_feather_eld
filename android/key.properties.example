@@ -1,0 +1,8 @@
+# Release signing — copy to key.properties (git-ignored) and fill with the
+# real keystore values before building a distribution release.
+# Without key.properties the release build falls back to debug signing,
+# which is for local `flutter run --release` only.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=../upload-keystore.jks

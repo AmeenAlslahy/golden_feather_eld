@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_inspection_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
@@ -13,7 +14,10 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/account/presentation/pages/info_packet_page.dart';
+import 'package:golden_feather_eld/features/account/presentation/pages/instructions_page.dart';
+import 'package:golden_feather_eld/features/account/presentation/pages/user_manual_page.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:golden_feather_eld/routes.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/core/network/core_providers.dart';
 import 'package:golden_feather_eld/core/network/network_info.dart';
@@ -50,7 +54,7 @@ class _Backend extends MockInspectionBackend {
 /// manual / instructions are reachable from this screen.
 void main() {
   Future<void> pump(WidgetTester tester, _Backend backend) async {
-    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.physicalSize = const Size(1080, 3600);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -63,6 +67,24 @@ void main() {
     when(() => adapter.dvir).thenReturn(mock.dvir);
     when(() => adapter.isMock).thenReturn(true);
 
+    final router = GoRouter(
+      initialLocation: AppRoutes.infoPacket,
+      routes: [
+        GoRoute(
+          path: AppRoutes.infoPacket,
+          builder: (context, state) => const InfoPacketPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.userManual,
+          builder: (context, state) => const UserManualPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.instructions,
+          builder: (context, state) => const InstructionsPage(),
+        ),
+      ],
+    );
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -71,12 +93,12 @@ void main() {
           localStorageProvider.overrideWithValue(_Storage()),
           currentDriverIdProvider.overrideWithValue(106),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.light,
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: const InfoPacketPage(),
+          routerConfig: router,
         ),
       ),
     );
@@ -157,6 +179,8 @@ void main() {
     await tester.ensureVisible(instructions);
     await tester.tap(instructions);
     await tester.pumpAndSettle();
+    // The instructions route replaces the packet screen entirely.
+    expect(find.text('Info Packet'), findsNothing);
     expect(find.text('Instructions'), findsOneWidget);
   });
 }

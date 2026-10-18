@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/features/logs/data/datasources/log_local_data
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import '../../../helpers/fake_time_authority.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
 import 'package:golden_feather_eld/core/utils/id_generator.dart';
@@ -84,18 +85,30 @@ void main() {
   });
 
   group('getDailyLogs', () {
-    test('online: returns server list and caches the first page', () async {
+    test('online: returns server page and caches the first page', () async {
       when(() => net.isConnected).thenReturn(true);
       when(() => dailyLogs.list(
             driverId: any(named: 'driverId'),
-            limit: any(named: 'limit'),
-            offset: any(named: 'offset'),
-          )).thenAnswer((_) async => Right({'data': serverLogs}));
+            page: any(named: 'page'),
+            size: any(named: 'size'),
+          )).thenAnswer((_) async => Right({
+            'data': serverLogs,
+            'pagination': {
+              'page': 0,
+              'size': 20,
+              'totalElements': 1,
+              'totalPages': 1,
+              'hasNext': false,
+              'hasPrevious': false,
+            },
+          }));
 
       final result = await repo.getDailyLogs(driverId: 106);
 
       expect(result.isRight(), isTrue);
-      expect(result.getOrElse((_) => []).single.id, logId);
+      final page = result.getOrElse((_) => DailyLogPage.empty);
+      expect(page.logs.single.id, logId);
+      expect(page.hasNext, isFalse);
       verify(() => local.cacheDailyLogs(106, serverLogs)).called(1);
     });
 
@@ -105,8 +118,8 @@ void main() {
           .thenAnswer((_) async => throw Exception('disk full'));
       when(() => dailyLogs.list(
             driverId: any(named: 'driverId'),
-            limit: any(named: 'limit'),
-            offset: any(named: 'offset'),
+            page: any(named: 'page'),
+            size: any(named: 'size'),
           )).thenAnswer((_) async => Right({'data': serverLogs}));
 
       final result = await repo.getDailyLogs(driverId: 106);
@@ -120,11 +133,11 @@ void main() {
 
       final result = await repo.getDailyLogs(driverId: 106);
 
-      expect(result.getOrElse((_) => []).single.id, logId);
+      expect(result.getOrElse((_) => DailyLogPage.empty).logs.single.id, logId);
       verifyNever(() => dailyLogs.list(
             driverId: any(named: 'driverId'),
-            limit: any(named: 'limit'),
-            offset: any(named: 'offset'),
+            page: any(named: 'page'),
+            size: any(named: 'size'),
           ));
     });
 
@@ -141,10 +154,9 @@ void main() {
   });
 
   group('getEvents', () {
-    test('online: graph-grid events are returned and cached by log id',
-        () async {
+    test('online: events are returned and cached by log id', () async {
       when(() => net.isConnected).thenReturn(true);
-      when(() => dailyLogs.getGraphGrid(logId))
+      when(() => dailyLogs.getEvents(logId))
           .thenAnswer((_) async => Right({'events': serverEvents}));
 
       final result = await repo.getEvents(logId, day);
@@ -180,7 +192,7 @@ void main() {
 
       final events = result.getOrElse((_) => []);
       expect(events.map((e) => e.id), ['9001', 'local-1']);
-      verifyNever(() => dailyLogs.getGraphGrid(any()));
+      verifyNever(() => dailyLogs.getEvents(any()));
     });
 
     test('offline without a snapshot: only locally recorded events', () async {
@@ -191,6 +203,69 @@ void main() {
 
       expect(result.isRight(), isTrue);
       expect(result.getOrElse((_) => []), isEmpty);
+    });
+  });
+
+  group('getReadiness — honesty (P3)', () {
+    test('offline: READY is derived from the real cached log and its owner',
+        () async {
+      when(() => net.isConnected).thenReturn(false);
+      when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
+      when(() => local.getCachedDailyLogs(106))
+          .thenAnswer((_) async => [
+                {
+                  'id': 42,
+                  'uniqueId': 'u-42',
+                  'logDate': '2026-09-24',
+                  'formStatus': 'COMPLETED',
+                  'driver': {'id': 106, 'name': 'Ali Kareem'},
+                },
+              ]);
+
+      final result = await repo.getReadiness(logId);
+
+      final readiness = result.getOrElse((_) => throw StateError('expected Right'));
+      expect(readiness.driverId, 106, reason: 'the real owner, not 0');
+      expect(readiness.driverName, 'Ali Kareem');
+      expect(readiness.logDate, '2026-09-24');
+      expect(readiness.readinessStatus, 'READY');
+      expect(readiness.missingRequirements, isEmpty);
+      expect(readiness.legalStatement, isEmpty,
+          reason: 'the UI falls back to the localized approved statement');
+    });
+
+    test('offline incomplete form: NOT_READY with a real requirement',
+        () async {
+      when(() => net.isConnected).thenReturn(false);
+      when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
+      when(() => local.getCachedDailyLogs(106))
+          .thenAnswer((_) async => [
+                {
+                  'id': 42,
+                  'uniqueId': 'u-42',
+                  'logDate': '2026-09-24',
+                  'formStatus': 'DRAFT',
+                  'driver': {'id': 106, 'name': 'Ali Kareem'},
+                },
+              ]);
+
+      final result = await repo.getReadiness(logId);
+
+      final readiness = result.getOrElse((_) => throw StateError('expected Right'));
+      expect(readiness.readinessStatus, 'NOT_READY',
+          reason: 'a half-saved form must never claim READY offline');
+      expect(readiness.missingRequirements, isNotEmpty);
+    });
+
+    test('offline without any cached snapshot: failure, never a fabricated READY',
+        () async {
+      when(() => net.isConnected).thenReturn(false);
+      when(() => local.ownerOfCachedLog(any())).thenAnswer((_) async => null);
+
+      final result = await repo.getReadiness(logId);
+
+      expect(result.isLeft(), isTrue);
+      expect(result.getLeft().toNullable(), isA<NetworkFailure>());
     });
   });
 }

@@ -7,11 +7,15 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../providers/rules_form_provider.dart';
 import '../providers/rules_screen_provider.dart';
-import '../../application/usecases/update_rules_use_case.dart';
-import '../../../../backend/adapters/eld_engine/models/rules_screen_dto.dart';
+import '../utils/account_display.dart';
 import '../../application/models/rules_screen_model.dart';
+import '../../application/models/rules_screen_update_request.dart';
+import '../../data/providers/rules_screen_providers.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -24,69 +28,60 @@ class RulesPage extends ConsumerStatefulWidget {
 }
 
 class _RulesPageState extends ConsumerState<RulesPage> {
-  // Form State
-  String? _cycleRule;
-  String? _cargoType;
-  String? _restart;
-  String? _restBreak;
-  bool? _sixteenHourException;
-  bool _isSaving = false;
+  RulesScreenModel? _scheduledSync;
 
-  /// النموذج الذي مُلئت منه الحقول. `FutureProvider` يعيد نفس الكائن حتى
-  /// يُبطل (بعد الحفظ) — عند وصول نموذج جديد يجب إعادة الملء وإلا بقيت
-  /// القيم القديمة ظاهرة رغم تحديث الخادم.
-  RulesScreenModel? _initializedModel;
-
-
-  void _initForm(RulesScreenModel model) {
-    if (identical(_initializedModel, model)) return;
-    _initializedModel = model;
-    _cycleRule = model.cycleRule;
-    _cargoType = model.cargoType;
-    _restart = model.restart;
-    _restBreak = model.restBreak;
-    _sixteenHourException = model.sixteenHourException;
+  void _syncFormWhenModelChanges(RulesScreenModel model) {
+    if (identical(_scheduledSync, model)) return;
+    _scheduledSync = model;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(rulesFormProvider.notifier).syncFromModel(model);
+      }
+    });
   }
 
   Future<void> _saveRules(RulesScreenModel model) async {
     // لا يوجد Form ولا validators حالياً (القوائم قيم من الخادم) —
     // بوابة _formKey كانت ترمي NPE مبتلعة داخل try/catch فتقتل الحفظ.
     // عندما تُضاف validators حقيقية تُعاد البوابة إلى هنا.
-    setState(() => _isSaving = true);
+    final user = ref.read(authStateProvider).user;
+    final parsedDriverId = user == null ? null : int.tryParse(user.id);
+    if (parsedDriverId == null) {
+      AppFeedback.error(context, context.loc.sessionExpired);
+      return;
+    }
+
+    final form = ref.read(rulesFormProvider);
+    ref.read(rulesFormProvider.notifier).setSaving(true);
     try {
-      final useCase = ref.read(updateRulesUseCaseProvider);
-      if (useCase == null) {
-        if (mounted) {
-          AppFeedback.error(context, context.loc.sessionExpired);
-        }
-        return;
-      }
       final sixteenEligible = model.editableFields.contains(
         'sixteenHourException',
       );
-      if ((_sixteenHourException ?? false) && !sixteenEligible) {
+      final sixteenValue =
+          form.sixteenHourException ?? model.sixteenHourException;
+      if (sixteenValue && !sixteenEligible) {
         AppFeedback.error(context, context.loc.sixteenHourCondition);
         return;
       }
       final request = RulesScreenUpdateRequest(
-        cycleRule: _cycleRule ?? model.cycleRule,
-        cargoType: _cargoType ?? model.cargoType,
-        restart: _restart ?? model.restart,
-        restBreak: _restBreak ?? model.restBreak,
+        cycleRule: form.cycleRule ?? model.cycleRule,
+        cargoType: form.cargoType ?? model.cargoType,
+        restart: form.restart ?? model.restart,
+        restBreak: form.restBreak ?? model.restBreak,
         sixteenHourException: sixteenEligible
-            ? (_sixteenHourException ?? model.sixteenHourException)
+            ? sixteenValue
             : model.sixteenHourException,
       );
 
-      final result = await useCase.execute(request);
+      final result = await ref
+          .read(updateRulesUseCaseProvider)
+          .execute(driverId: DriverId(parsedDriverId), request: request);
       if (mounted) {
         result.fold(
-          (failure) {
-            AppFeedback.error(
-              context,
-              appErrorUserMessage(failure, loc: AppLocalizations.of(context)!),
-            );
-          },
+          (failure) => AppFeedback.error(
+            context,
+            appErrorUserMessage(failure, loc: AppLocalizations.of(context)!),
+          ),
           (_) {
             AppFeedback.success(context, context.loc.rulesUpdated);
             ref.invalidate(rulesScreenProvider);
@@ -102,54 +97,40 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isSaving = false);
+        ref.read(rulesFormProvider.notifier).setSaving(false);
       }
     }
-  }
-
-  String _serverSetting(
-    BuildContext context,
-    Map<String, dynamic> settings,
-    List<String> keys,
-  ) {
-    for (final key in keys) {
-      final value = settings[key];
-      if (value == null) continue;
-      if (value is bool) {
-        return value ? context.loc.allowed : context.loc.forbidden;
-      }
-      final text = value.toString().trim();
-      if (text.isNotEmpty) return text;
-    }
-    return context.loc.notProvidedByServer;
   }
 
   Widget _buildDropdownOrInfo(
     String fieldName,
     String label,
-    String value,
+    String serverValue,
     List<String> options,
     Set<String> editable,
+    RulesFormState form,
   ) {
     if (editable.contains(fieldName) && options.isNotEmpty) {
-      String currentValue = value;
+      String currentValue;
       switch (fieldName) {
         case 'cycleRule':
-          currentValue = _cycleRule!;
+          currentValue = form.cycleRule ?? serverValue;
           break;
         case 'cargoType':
-          currentValue = _cargoType!;
+          currentValue = form.cargoType ?? serverValue;
           break;
         case 'restart':
-          currentValue = _restart!;
+          currentValue = form.restart ?? serverValue;
           break;
         case 'restBreak':
-          currentValue = _restBreak!;
+          currentValue = form.restBreak ?? serverValue;
           break;
+        default:
+          currentValue = serverValue;
       }
 
       // Ensure current value is in options to prevent DropdownMenuItem errors
-      if (!options.contains(currentValue) && options.isNotEmpty) {
+      if (!options.contains(currentValue)) {
         currentValue = options.first;
       }
 
@@ -181,22 +162,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                   ),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      setState(() {
-                        switch (fieldName) {
-                          case 'cycleRule':
-                            _cycleRule = newValue;
-                            break;
-                          case 'cargoType':
-                            _cargoType = newValue;
-                            break;
-                          case 'restart':
-                            _restart = newValue;
-                            break;
-                          case 'restBreak':
-                            _restBreak = newValue;
-                            break;
-                        }
-                      });
+                      ref
+                          .read(rulesFormProvider.notifier)
+                          .updateRuleField(fieldName, newValue);
                     }
                   },
                   style: context.styles.body.copyWith(
@@ -215,13 +183,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
         ),
       );
     } else {
-      return EldInfoRow(label: label, value: value);
+      return EldInfoRow(label: label, value: serverValue);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final rulesScreenAsync = ref.watch(rulesScreenProvider);
+    final form = ref.watch(rulesFormProvider);
     final loc = context.loc;
 
     return Scaffold(
@@ -244,20 +213,15 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           onRetry: () => ref.invalidate(rulesScreenProvider),
         ),
         data: (model) {
-          _initForm(model);
+          _syncFormWhenModelChanges(model);
           final config = model.limits;
           List<String> optionsFor(String field) {
             return List<String>.from(model.options[field] ?? const <String>[]);
           }
 
           final editable = model.editableFields;
-
-          String hours(int minutes) {
-            final h = minutes ~/ 60;
-            final m = minutes % 60;
-            if (m == 0) return '$h ${loc.hourAbbr}';
-            return '$h ${loc.hourAbbr} $m ${loc.minAbbr}';
-          }
+          final sixteenValue =
+              form.sixteenHourException ?? model.sixteenHourException;
 
           return Container(
             color: Theme.of(context).colorScheme.surface,
@@ -303,6 +267,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                           model.ruleSource,
                           const [],
                           editable,
+                          form,
                         ),
                         const Divider(height: 1, thickness: 1),
                       ],
@@ -312,6 +277,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                         model.cycleRule,
                         optionsFor('cycleRule'),
                         editable,
+                        form,
                       ),
                       const Divider(height: 1, thickness: 1),
                       _buildDropdownOrInfo(
@@ -320,6 +286,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                         model.cargoType,
                         optionsFor('cargoType'),
                         editable,
+                        form,
                       ),
                       const Divider(height: 1, thickness: 1),
                       _buildDropdownOrInfo(
@@ -328,6 +295,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                         model.restart,
                         optionsFor('restart'),
                         editable,
+                        form,
                       ),
                       const Divider(height: 1, thickness: 1),
                       _buildDropdownOrInfo(
@@ -336,6 +304,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                         model.restBreak,
                         optionsFor('restBreak'),
                         editable,
+                        form,
                       ),
                       const Divider(height: 1, thickness: 1),
 
@@ -364,11 +333,11 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                                       ? Alignment.centerRight
                                       : Alignment.centerLeft,
                                   child: Switch(
-                                    value: _sixteenHourException ?? false,
+                                    value: sixteenValue,
                                     onChanged: (val) {
-                                      setState(
-                                        () => _sixteenHourException = val,
-                                      );
+                                      ref
+                                          .read(rulesFormProvider.notifier)
+                                          .setSixteenHourException(val);
                                     },
                                   ),
                                 ),
@@ -385,9 +354,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
                       EldInfoRow(
                         label: loc.personalConveyance,
-                        value: _serverSetting(
-                          context,
-                          model.fixedSettings,
+                        value: serverSettingText(
+                          loc,
+                          model,
                           const [
                             'personalConveyance',
                             'personalConveyanceEnabled',
@@ -398,9 +367,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
                       EldInfoRow(
                         label: loc.yardMoves,
-                        value: _serverSetting(
-                          context,
-                          model.fixedSettings,
+                        value: serverSettingText(
+                          loc,
+                          model,
                           const ['yardMoves', 'yardMoveEnabled'],
                         ),
                       ),
@@ -408,9 +377,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
                       EldInfoRow(
                         label: loc.unlimitedTrailers,
-                        value: _serverSetting(
-                          context,
-                          model.fixedSettings,
+                        value: serverSettingText(
+                          loc,
+                          model,
                           const [
                             'unlimitedTrailers',
                             'unlimitedTrailerEnabled',
@@ -421,11 +390,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
                       EldInfoRow(
                         label: loc.unlimitedShippingDocs,
-                        value:
-                            _serverSetting(context, model.fixedSettings, const [
-                              'unlimitedShippingDocuments',
-                              'unlimitedShippingEnabled',
-                            ]),
+                        value: serverSettingText(
+                          loc,
+                          model,
+                          const [
+                            'unlimitedShippingDocuments',
+                            'unlimitedShippingEnabled',
+                          ],
+                        ),
                       ),
                       const Divider(height: 1, thickness: 1),
                     ],
@@ -439,8 +411,8 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     child: AppButton(
                       label: loc.saveButton,
                       type: EldButtonType.primary,
-                      isLoading: _isSaving,
-                      onPressed: _isSaving ? null : () => _saveRules(model),
+                      isLoading: form.isSaving,
+                      onPressed: form.isSaving ? null : () => _saveRules(model),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -488,12 +460,15 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                       ),
                       EldInfoRow(
                         label: loc.drivingLimit,
-                        value: hours(config.drivingLimitMinutes),
+                        value: formatHoursMinutes(
+                          loc,
+                          config.drivingLimitMinutes,
+                        ),
                       ),
                       const Divider(height: 1, thickness: 1),
                       EldInfoRow(
                         label: loc.shiftWindowLimit,
-                        value: hours(config.shiftLimitMinutes),
+                        value: formatHoursMinutes(loc, config.shiftLimitMinutes),
                       ),
                       const Divider(height: 1, thickness: 1),
                       EldInfoRow(

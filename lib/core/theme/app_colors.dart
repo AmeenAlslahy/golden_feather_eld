@@ -105,6 +105,11 @@ class AppColors {
   static const Color placeholderDark = Color(0xFF424242);
   static const Color checkSquare = Color(0x8A000000); // black54 — مربع الصح
 
+  // ========== طبقات التعتيم ==========
+
+  /// تعتيم خلفية طبقة تكبير المقاطع — أسود 85%.
+  static const Color scrim = Color(0xD9000000);
+
   // ========== جدول رأس السجل اليومي RODS (شكل الورقة الرسمية) ==========
   static const Color rodsHeaderBg = Color(0xFFF2F2F2);
   static const Color rodsHeaderText = Color(0xFF222222);

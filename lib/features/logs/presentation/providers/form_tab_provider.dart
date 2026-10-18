@@ -28,6 +28,10 @@ class FormTabData {
   final String coDriverName;
   final String coDriverId;
 
+  /// معرّف المركبة الرقمي (`vehicleId` في الوثيقة) — من اختيار السائق
+  /// لمركبة الشركة أو من `vehicle.id` القادم مع نموذج الخادم.
+  final int? vehicleId;
+
   const FormTabData({
     required this.driverName,
     required this.vehicleName,
@@ -36,6 +40,7 @@ class FormTabData {
     required this.shippingDocuments,
     required this.coDriverName,
     required this.coDriverId,
+    this.vehicleId,
   });
 
   /// التحقق من صحة المركبة قبل الحفظ
@@ -98,6 +103,7 @@ class FormTabData {
     }
 
     return DailyFormUpdate(
+      vehicleId: vehicleId,
       vehicleUniqueId: uniqueId,
       coDriverId: parsedCoDriverId,
       trailers: parsedTrailers,
@@ -136,6 +142,13 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
           : (selectedLog?.uniqueId.isNotEmpty == true
               ? selectedLog!.uniqueId
               : dashboard.vehicleId));
+
+  // 2ب. المعرّف الرقمي: اختيار السائق الحي (vehicle.id) أولاً، ثم ما
+  // ورد مع نموذج الخادم (`vehicle.id`) — الاحتياط النصي يبقى vId.
+  final vehicleIdInt = (dashboard.vehicleId != 'No Vehicle' &&
+          dashboard.vehicleId.isNotEmpty)
+      ? int.tryParse(dashboard.vehicleId)
+      : serverForm?.vehicleId;
 
   // 3. المقطورات: الأولوية للقيمة المعدلة الحية، ثم نموذج الخادم، ثم السجل
   final trailers = (dashboard.trailerId != null &&
@@ -181,6 +194,7 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
     shippingDocuments: docs,
     coDriverName: coDriverName,
     coDriverId: coDriverId,
+    vehicleId: vehicleIdInt,
   );
 });
 

@@ -18,6 +18,11 @@
 ///      {
 ///        "success": true,
 ///        "data": { ... },
+///        "pagination": {
+///          "page": 0, "size": 20, "totalElements": 45,
+///          "totalPages": 3, "hasNext": true, "hasPrevious": false
+///        },
+///        "errors": [],
 ///        "requestId": "..."
 ///      }
 ///      ```
@@ -29,6 +34,76 @@
 ///
 /// [ApiResponse] normalizes all three into a single representation.
 library;
+
+/// Single field error from the unified envelope (`GET /daily-logs` spec).
+class ApiFieldError {
+  final String field;
+  final String message;
+  final String? code;
+
+  const ApiFieldError({
+    required this.field,
+    required this.message,
+    this.code,
+  });
+
+  static ApiFieldError? tryParse(Object? raw) {
+    if (raw is! Map) return null;
+    final field = raw['field'];
+    final message = raw['message'];
+    if (field is! String || message is! String) return null;
+    final code = raw['code'];
+    return ApiFieldError(
+      field: field,
+      message: message,
+      code: code is String ? code : null,
+    );
+  }
+
+  @override
+  String toString() => code == null ? '$field: $message' : '$field ($code): $message';
+}
+
+/// Pagination metadata from the unified envelope.
+class PaginationInfo {
+  final int page;
+  final int size;
+  final int totalElements;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrevious;
+
+  const PaginationInfo({
+    required this.page,
+    required this.size,
+    required this.totalElements,
+    required this.totalPages,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  static PaginationInfo? tryParse(Object? raw) {
+    if (raw is! Map) return null;
+    final page = raw['page'];
+    if (page is! int) return null;
+    final size = raw['size'];
+    final totalElements = raw['totalElements'];
+    final totalPages = raw['totalPages'];
+    return PaginationInfo(
+      page: page,
+      size: size is int ? size : 0,
+      totalElements: totalElements is int ? totalElements : 0,
+      totalPages: totalPages is int ? totalPages : 0,
+      hasNext: raw['hasNext'] == true,
+      hasPrevious: raw['hasPrevious'] == true,
+    );
+  }
+
+  @override
+  String toString() =>
+      'PaginationInfo(page: $page, size: $size, totalElements: $totalElements, '
+      'totalPages: $totalPages, hasNext: $hasNext, hasPrevious: $hasPrevious)';
+}
 
 class ApiResponse<T> {
   /// HTTP status code (always present).
@@ -56,6 +131,16 @@ class ApiResponse<T> {
   /// Raw response body (for debugging / custom parsing).
   final Object? rawBody;
 
+  /// Field-level validation errors from the unified envelope (`errors[]`).
+  final List<ApiFieldError> errors;
+
+  /// Correlation id from the unified envelope (`requestId`). Include it in
+  /// support reports / logs when contacting the backend team.
+  final String? requestId;
+
+  /// Pagination metadata from the unified envelope (`pagination`).
+  final PaginationInfo? pagination;
+
   const ApiResponse({
     required this.statusCode,
     required this.isSuccess,
@@ -63,6 +148,9 @@ class ApiResponse<T> {
     this.message,
     this.errorCode,
     this.rawBody,
+    this.errors = const [],
+    this.requestId,
+    this.pagination,
   });
 
   /// Returns a copy with [data] replaced.
@@ -74,6 +162,9 @@ class ApiResponse<T> {
       message: message,
       errorCode: errorCode,
       rawBody: rawBody,
+      errors: errors,
+      requestId: requestId,
+      pagination: pagination,
     );
   }
 
@@ -107,6 +198,11 @@ class ApiResponse<T> {
         message: envelopeMessage is String ? envelopeMessage : null,
         errorCode: envelopeError is String ? envelopeError : null,
         rawBody: rawBody,
+        errors: _parseErrors(map['errors']),
+        requestId: map['requestId'] is String
+            ? map['requestId'] as String
+            : null,
+        pagination: PaginationInfo.tryParse(map['pagination']),
       );
     }
 
@@ -120,7 +216,9 @@ class ApiResponse<T> {
   }
 
   /// An envelope must have BOTH `code` and `status` (legacy format),
-  /// OR `success` and `data` (newer format).
+  /// OR `success` combined with any envelope marker (new unified format:
+  /// `data`, `message`, `errors` or `requestId` — the newer error envelope
+  /// carries no `data`).
   ///
   /// This conservative check prevents false positives when a
   /// domain object legitimately has a `code` field (e.g. `DtcCode`).
@@ -128,9 +226,25 @@ class ApiResponse<T> {
     if (raw is! Map<String, dynamic>) return false;
     // Legacy format: { code, status, data, ... }
     if (raw.containsKey('code') && raw.containsKey('status')) return true;
-    // New format: { success, data, requestId, ... }
-    if (raw.containsKey('success') && raw.containsKey('data')) return true;
+    // New format: { success, data|message|errors|requestId, ... }
+    if (raw.containsKey('success') &&
+        (raw.containsKey('data') ||
+            raw.containsKey('message') ||
+            raw.containsKey('errors') ||
+            raw.containsKey('requestId'))) {
+      return true;
+    }
     return false;
+  }
+
+  static List<ApiFieldError> _parseErrors(Object? raw) {
+    if (raw is! List) return const [];
+    final result = <ApiFieldError>[];
+    for (final entry in raw) {
+      final parsed = ApiFieldError.tryParse(entry);
+      if (parsed != null) result.add(parsed);
+    }
+    return result;
   }
 
   static T? _parsePayload<T>(

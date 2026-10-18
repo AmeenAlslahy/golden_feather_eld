@@ -14,13 +14,16 @@ class LogEventModel extends LogEvent {
     super.isExpanded,
     super.automatedDriving,
     super.editable,
+    super.startedOnPreviousDay,
   });
 
-  /// Parses either the official `GraphGridEvent` wire shape
-  /// (`GET /eld/daily-logs/{id}/graph-grid`: `status` = `DRIVING`/`ON_DUTY`/…,
-  /// `durationMinutes`, `odometerKm`, `origin`, `editable`) or the compact
-  /// local shape written by [toJson] (`status` = `D`/`ON`/…, `duration` in
-  /// seconds, `odometer` in miles).
+  /// Parses the unified event wire shape (`GET /eld/daily-logs/{id}/events`:
+  /// `{ id, status: DRIVING/…, startedOnPreviousDay,
+  ///    timeRange: { startTime, endTime, durationSeconds, … }, editable }`),
+  /// the legacy `GraphGridEvent` shape (`status` = `DRIVING`/`ON_DUTY`/…,
+  /// `startTime`, `durationMinutes`, `odometerKm`, `origin`, `editable`) or
+  /// the compact local shape written by [toJson] (`status` = `D`/`ON`/…,
+  /// `duration` in seconds, `odometer` in miles).
   ///
   /// Throws [FormatException] when `id` or `startTime` is missing: an ELD
   /// record is never given an invented identity or an invented time.
@@ -29,8 +32,12 @@ class LogEventModel extends LogEvent {
     if (id == null || id.isEmpty) {
       throw const FormatException('LogEvent without id');
     }
-    final startTimeStr =
-        json['startTime']?.toString() ?? json['time']?.toString();
+    final timeRange = json['timeRange'] is Map
+        ? Map<String, dynamic>.from(json['timeRange'] as Map)
+        : null;
+    final startTimeStr = timeRange?['startTime']?.toString() ??
+        json['startTime']?.toString() ??
+        json['time']?.toString();
     if (startTimeStr == null || startTimeStr.isEmpty) {
       throw FormatException('LogEvent $id without startTime');
     }
@@ -40,7 +47,11 @@ class LogEventModel extends LogEvent {
         DutyStatusCode.fromWire(rawStatus);
 
     final Duration duration;
-    if (json['durationMinutes'] != null) {
+    if (timeRange?['durationSeconds'] != null) {
+      duration = Duration(
+          seconds:
+              int.tryParse(timeRange!['durationSeconds'].toString()) ?? 0);
+    } else if (json['durationMinutes'] != null) {
       duration = Duration(
           minutes: int.tryParse(json['durationMinutes'].toString()) ?? 0);
     } else if (json['durationSeconds'] != null) {
@@ -66,22 +77,30 @@ class LogEventModel extends LogEvent {
         ? json['automatedDriving'] as bool
         : origin?.startsWith('AUTO');
 
-    final location = json['location']?.toString() ??
-        json['locationText']?.toString() ??
-        'Unknown Location';
+    // `location` قد يكون كائناً (`{description, latitude, …}`) في عقد
+    // تفاصيل/تعديل الحدث، أو نصاً في العقد المضغوط.
+    final rawLocation = json['location'];
+    String? location;
+    if (rawLocation is Map) {
+      location = rawLocation['description']?.toString();
+    } else if (rawLocation != null) {
+      location = rawLocation.toString();
+    }
+    location ??= json['locationText']?.toString();
 
     return LogEventModel(
       id: id,
       status: code.shortCode,
       startTime: DateTime.parse(startTimeStr).toLocal(),
       duration: duration,
-      location: location,
+      location: location ?? 'Unknown Location',
       odometer: odometer,
       engineHours: json['engineHours'] != null
           ? double.tryParse(json['engineHours'].toString())
           : null,
       automatedDriving: automatedDriving,
       editable: json['editable'] is bool ? json['editable'] as bool : null,
+      startedOnPreviousDay: json['startedOnPreviousDay'] == true,
     );
   }
 
@@ -128,6 +147,7 @@ class LogEventModel extends LogEvent {
       isExpanded: entity.isExpanded,
       automatedDriving: entity.automatedDriving,
       editable: entity.editable,
+      startedOnPreviousDay: entity.startedOnPreviousDay,
     );
   }
 }

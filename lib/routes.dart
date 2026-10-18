@@ -35,6 +35,7 @@ class AppRoutes {
   static const String hos = '/hos';
   static const String selectVehicle = '/select-vehicle';
   static const String userManual = '/user-manual';
+  static const String instructions = '/instructions';
   static const String about = '/about';
   static const String settings = '/settings';
   static const String suggestedEvents = '/logs/suggested-events';

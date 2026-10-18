@@ -11,6 +11,9 @@ class AppRadius {
   /// مربع الصورة في DVIR - 8px
   static const double imagePlaceholder = 8.0;
 
+  /// المؤشرات الصغيرة المربعة (مربع الصح) - 2px
+  static const double indicator = 2.0;
+
   /// حقول الإدخال
   static const double input = 8.0;
 

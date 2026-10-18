@@ -18,7 +18,9 @@ class LogsState {
   final DailyLog? selectedLog;
   final bool isLoading;
   final String? error;
-  final int offset;
+
+  /// آخر صفحة جُلبت من الخادم (`page` في الترقيم الموحّد).
+  final int page;
   final bool hasReachedMax;
 
   /// True while the events of [selectedLog] are being fetched.
@@ -33,7 +35,7 @@ class LogsState {
     this.selectedLog,
     this.isLoading = false,
     this.error,
-    this.offset = 0,
+    this.page = 0,
     this.hasReachedMax = false,
     this.isLoadingEvents = false,
     this.eventsError,
@@ -48,7 +50,7 @@ class LogsState {
     bool? isLoading,
     String? error,
     bool clearError = false,
-    int? offset,
+    int? page,
     bool? hasReachedMax,
     bool? isLoadingEvents,
     String? eventsError,
@@ -61,7 +63,7 @@ class LogsState {
       selectedLog: selectedLog ?? this.selectedLog,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
-      offset: offset ?? this.offset,
+      page: page ?? this.page,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
       eventsError:
@@ -115,13 +117,13 @@ class LogsNotifier extends StateNotifier<LogsState> {
       state = state.copyWith(isLoading: true);
     }
 
-    final currentOffset = refresh ? 0 : state.offset;
-    const limit = 20;
+    final currentPage = refresh ? 0 : state.page;
+    const pageSize = 20;
 
     final result = await _repository.getDailyLogs(
       driverId: _driverId,
-      limit: limit,
-      offset: currentOffset,
+      page: currentPage,
+      size: pageSize,
     );
 
     if (!mounted) return;
@@ -137,7 +139,8 @@ class LogsNotifier extends StateNotifier<LogsState> {
           );
         }
       },
-      (newLogs) {
+      (page) {
+        final newLogs = page.logs;
         final mergedLogs = refresh ? newLogs : [...state.logs, ...newLogs];
         // Deduplicate by ID just in case
         final uniqueLogs = <DailyLogId, DailyLog>{};
@@ -148,8 +151,9 @@ class LogsNotifier extends StateNotifier<LogsState> {
         state = state.copyWith(
           isLoading: false,
           logs: uniqueLogs.values.toList(),
-          offset: currentOffset + newLogs.length,
-          hasReachedMax: newLogs.length < limit,
+          page: currentPage + 1,
+          // الترقيم الموحّد: `hasNext` من الخادم هو الفيصل.
+          hasReachedMax: !page.hasNext,
           clearError: true,
         );
       },
@@ -327,7 +331,8 @@ class LogsNotifier extends StateNotifier<LogsState> {
     );
   }
 
-  /// تعديل حدث (PUT /eld/duty-status/{id} مع سبب إلزامي).
+  /// تعديل حدث (العقد الموحّد: PUT /eld/daily-logs/{logId}/events/{eventId}
+  /// مع سبب إلزامي؛ الرواسب القديمة تعود لمسار /eld/duty-status).
   Future<Either<Failure, void>> updateEvent(LogEvent event, {required String reason}) async {
     if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
 
@@ -335,11 +340,13 @@ class LogsNotifier extends StateNotifier<LogsState> {
         ? await _repository.updateEvent(
             event,
             reason: reason,
+            logId: state.selectedLog!.id,
             ownerDriverId: _driverId,
           )
         : await _repository.updateEvent(
             event,
             reason: reason,
+            logId: state.selectedLog!.id,
           );
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 

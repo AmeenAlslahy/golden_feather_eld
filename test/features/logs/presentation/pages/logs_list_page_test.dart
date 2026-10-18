@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/logs_list_page.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
@@ -73,9 +74,9 @@ void main() {
       (tester) async {
     when(() => repo.getDailyLogs(
           driverId: any(named: 'driverId'),
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => Right([
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        )).thenAnswer((_) async => Right(DailyLogPage(logs: [
           log(
             id: 2,
             date: DateTime(2026, 9, 24),
@@ -89,7 +90,7 @@ void main() {
             form: true,
             certified: true,
           ),
-        ]));
+        ])));
 
     await pump(tester);
 
@@ -103,7 +104,7 @@ void main() {
     expect(find.text('Certify'), findsNWidgets(2));
     expect(find.byIcon(Icons.chevron_right), findsNWidgets(2));
     // Only the first page is requested, with the signed-in driver.
-    verify(() => repo.getDailyLogs(driverId: 106, limit: 20, offset: 0))
+    verify(() => repo.getDailyLogs(driverId: 106, page: 0, size: 20))
         .called(1);
   });
 
@@ -111,9 +112,9 @@ void main() {
       (tester) async {
     when(() => repo.getDailyLogs(
           driverId: any(named: 'driverId'),
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => const Right([]));
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        )).thenAnswer((_) async => const Right(DailyLogPage.empty));
 
     await pump(tester);
 
@@ -126,8 +127,8 @@ void main() {
     var calls = 0;
     when(() => repo.getDailyLogs(
           driverId: any(named: 'driverId'),
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
+          page: any(named: 'page'),
+          size: any(named: 'size'),
         )).thenAnswer((_) async {
       calls++;
       if (calls == 1) {
@@ -137,7 +138,9 @@ void main() {
           statusCode: 500,
         ));
       }
-      return Right([log(id: 1, date: DateTime(2026, 9, 23))]);
+      return Right(DailyLogPage(
+        logs: [log(id: 1, date: DateTime(2026, 9, 23))],
+      ));
     });
 
     await pump(tester);

@@ -1,19 +1,23 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../entities/daily_log.dart';
+import '../entities/daily_log_page.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../entities/audit_entry.dart';
 import '../saved_form_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../entities/log_readiness.dart';
+import '../entities/log_certify_state.dart';
 import '../entities/daily_form_data.dart';
 import '../entities/daily_form_update.dart';
 
 abstract class LogRepository {
-  Future<Either<Failure, List<DailyLog>>> getDailyLogs({
+  /// قائمة السجلات اليومية (`GET /eld/daily-logs` الموحّد): ترقيم
+  /// `page`/`size` + `pagination` من الخادم (لا offset يدوي بعد الآن).
+  Future<Either<Failure, DailyLogPage>> getDailyLogs({
     required int driverId,
-    int limit = 50,
-    int offset = 0,
+    int page = 0,
+    int size = 20,
   });
 
   /// تفاصيل سجل واحد من الخادم (`GET /eld/daily-logs/{id}`) — مصدر الحقيقة
@@ -38,7 +42,7 @@ abstract class LogRepository {
 
   /// Duty-status events of one daily log.
   ///
-  /// Online: the official `GET /eld/daily-logs/{id}/graph-grid` (server is the
+  /// Online: the official `GET /eld/daily-logs/{id}/events` (server is the
   /// source of truth). Offline / on failure: the locally recorded events of
   /// [date] so the driver still sees what was captured on the device.
   Future<Either<Failure, List<LogEvent>>> getEvents(
@@ -54,18 +58,26 @@ abstract class LogRepository {
     int? ownerDriverId,
   });
 
-  /// Edits an existing manual event (`PUT /eld/duty-status/{statusId}`,
-  /// `editReason` mandatory). Server-rejected edits (automatic driving) are
-  /// surfaced as a failure, never silently kept locally.
-  /// تعديل حدث: يعيد الحدث **كما أكده الخادم** (DutyEventDto من عقد
-  /// PUT /eld/duty-status/{id})، أو null إذا لم يُعِد الخادم جسماً
-  /// (أحداث محلية/أوفلاين — حُفظت محلياً).
+  /// Edits an existing manual event.
+  ///
+  /// Online, with a numeric event id and its parent [logId]: the unified
+  /// `PUT /eld/daily-logs/{logId}/events/{eventId}` (`notes` carries the
+  /// mandatory reason). Legacy/offline records without a parent log keep the
+  /// old `POST /eld/duty-status` (UUID) or `PUT /eld/duty-status/{statusId}`
+  /// paths. Server-rejected edits (automatic driving) are surfaced as a
+  /// failure, never silently kept locally.
+  /// تعديل حدث: يعيد الحدث **كما أكده الخادم** DTO، أو null إذا لم يُعِد
+  /// الخادم جسماً (أحداث محلية/أوفلاين — حُفظت محلياً).
   Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
+    DailyLogId? logId,
     int? ownerDriverId,
   });
   Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId);
+
+  /// حالة شاشة الاعتماد (`GET /eld/daily-logs/{id}/certify`).
+  Future<Either<Failure, LogCertifyState>> getCertifyState(DailyLogId logId);
   Future<Either<Failure, bool>> respondToCarrierEdit({
     required DailyLogId logId,
     required String editId,
@@ -78,13 +90,15 @@ abstract class LogRepository {
     required int targetCoDriverId,
     required String annotation,
   });
+
+  /// يعتمد السجل قانونياً (`POST /eld/daily-logs/{id}/certify`).
+  /// [signatureImageBase64] = صورة التوقيع المرسوم (PNG base64) — تُرسل في
+  /// جسم الوثيقة (`signatureImage`)، والمسار يحمل هوية السجل.
   Future<Either<Failure, bool>> certifyLog({
     required DailyLogId logId,
     required int driverId,
-    required String logDate,
-    required String signatureCertificateId,
-    required bool signatureConfirmation,
-    required bool certifiedTrue,
+    bool certified = true,
+    String? signatureImageBase64,
   });
   Future<Either<Failure, List<DutyPeriod>>> getPeriods(DateTime date);
   Future<Either<Failure, bool>> savePeriod(DutyPeriod period);

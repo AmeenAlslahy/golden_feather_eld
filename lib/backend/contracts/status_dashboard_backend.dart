@@ -10,7 +10,11 @@ abstract interface class StatusDashboardBackend {
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId});
 
   /// POST /eld/status/duty-status
-  Future<Result<StatusDashboard>> updateDutyStatus({
+  ///
+  /// `null` = قبِل الخادم التغيير لكن استجابة POST لم تحمل لقطة لوحة
+  /// (عقد مسموح: بعض الخوادم تُرجع سجل الحالة فقط). على المستدعي ألا
+  /// يختلق أرقاماً عندها — اللوحة تُصحَّح من GET أو من مصدر أوفلاين.
+  Future<Result<StatusDashboard?>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
   });

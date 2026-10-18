@@ -86,6 +86,10 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
     dvirBackend,
     localDataSource,
     inspectionBackend: inspectionBackend,
+    // P0 — مسار تبديل السائق المشارك الأوفلاين (كان يسقط على default).
+    // قراءة كسولة (نمط observeAuth/cachedLogOwner): بعض المحولات لا تدعم
+    // الجلسات فترمي عند الاشتراك — لا يجوز إسقاط الموزّع كله لأجلها.
+    readDriverSessionBackend: () => ref.read(driverSessionBackendProvider),
     // P0 2B-1 — سياق الجلسة للسياج (قراءة لمرة واحدة لكل dispatch،
     // بلا اشتراك). الـ dispatcher نفسه يبقى بلا Ref.
     observeAuth: () async {

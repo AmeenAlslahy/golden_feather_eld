@@ -43,7 +43,14 @@ void main() {
       expect(EldEndpoints.reassignDriving(42, 7),
           '/eld/daily-logs/42/events/7/reassign-driving');
       expect(EldEndpoints.dailyLogForm(42), '/eld/daily-logs/42/form');
-      expect(EldEndpoints.dailyLogGraphGrid(42), '/eld/daily-logs/42/graph-grid');
+      expect(EldEndpoints.dailyLogFormOptions(42),
+          '/eld/daily-logs/42/form/options');
+      expect(EldEndpoints.dailyLogEvents(42), '/eld/daily-logs/42/events');
+      expect(EldEndpoints.dailyLogEvent(42, 1004),
+          '/eld/daily-logs/42/events/1004');
+      expect(EldEndpoints.dailyLogEventsOptions(42),
+          '/eld/daily-logs/42/events/options');
+      expect(EldEndpoints.dailyLogSummary, '/eld/daily-logs/summary');
       expect(EldEndpoints.lockLog(42), '/eld/daily-logs/42/lock');
       expect(EldEndpoints.checkReadiness(42), '/eld/daily-logs/42/readiness');
       expect(EldEndpoints.teamStatus(42), '/eld/daily-logs/42/team');

@@ -47,6 +47,14 @@ abstract class LogLocalDataSource {
   /// يُرجع المعرف عند انفراده، وإلا null (غياب/غموض/تعدد) — لا يُستنتج
   /// أي مالك من الجلسة الحالية هنا أبداً. قراءة خالصة بلا آثار.
   Future<int?> ownerOfCachedLog(int logId);
+
+  /// P0 عزل السائقين — مسح فترات الخدمة المخزنة محلياً.
+  ///
+  /// الـ periods مخزَّنة بمفاتيح أيام فقط (بلا مالك)، فلا يمكن نسبتها
+  /// لسائق بعينه. عند تبديل هوية السائق تُمسح بدل تمريرها للسائق الجديد:
+  /// هي كاش مشتق من الأحداث (والأحداث نفسها في طابور المزامنة محفوظة
+  /// الملكية)، واللوحة الأونلاين تُرتَّب من الخادم بعد تسجيل الدخول.
+  Future<void> clearPeriods();
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
@@ -381,6 +389,15 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'endLon': period.endLon,
     };
     return _saveToBox(_periodsBox, map, 'startTime', 'period');
+  }
+
+  @override
+  Future<void> clearPeriods() async {
+    try {
+      await _periodsBox.clear();
+    } catch (e) {
+      AppLogger.warning('Failed to clear periods box: $e');
+    }
   }
 
   @override

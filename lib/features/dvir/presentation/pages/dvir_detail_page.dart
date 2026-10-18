@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
@@ -282,25 +283,55 @@ class _Section extends StatelessWidget {
   }
 }
 
-class _SignatureImage extends StatelessWidget {
+class _SignatureImage extends StatefulWidget {
   final String dataUrl;
 
   const _SignatureImage({required this.dataUrl});
 
   @override
-  Widget build(BuildContext context) {
+  State<_SignatureImage> createState() => _SignatureImageState();
+}
+
+class _SignatureImageState extends State<_SignatureImage> {
+  /// P2 — تُفكّ مرة واحدة عند التغيير فقط؛ كان `base64Decode` يُعاد في كل
+  /// `build` (وكل إعادة بناء للأب) على صورة قد تكبر مع كل توقيع.
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = _decode(widget.dataUrl);
+  }
+
+  @override
+  void didUpdateWidget(covariant _SignatureImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dataUrl != widget.dataUrl) {
+      _bytes = _decode(widget.dataUrl);
+    }
+  }
+
+  static Uint8List? _decode(String dataUrl) {
     try {
       final base64Part =
           dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
-      final bytes = base64Decode(base64Part);
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.input),
-        child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
-      );
+      return base64Decode(base64Part);
     } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _bytes;
+    if (bytes == null) {
       return Text(context.loc.dvirImageNotAvailable,
           style: context.styles.muted);
     }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.input),
+      child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
+    );
   }
 }
 
@@ -446,29 +477,57 @@ class _TrailerCard extends StatelessWidget {
   }
 }
 
-class _PhotoThumbnail extends StatelessWidget {
+class _PhotoThumbnail extends StatefulWidget {
   final String dataUrl;
 
   const _PhotoThumbnail({required this.dataUrl});
 
   @override
-  Widget build(BuildContext context) {
-    try {
-      final base64Part = dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
-      final bytes = base64Decode(base64Part);
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.input),
-        child: Image.memory(
-          bytes, 
-          width: 80, 
-          height: 80, 
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _errorPlaceholder(),
-        ),
-      );
-    } catch (_) {
-      return _errorPlaceholder();
+  State<_PhotoThumbnail> createState() => _PhotoThumbnailState();
+}
+
+class _PhotoThumbnailState extends State<_PhotoThumbnail> {
+  /// P2 — فكّ مرة واحدة عند التغيير فقط (كما في `_SignatureImage`).
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = _decode(widget.dataUrl);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PhotoThumbnail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dataUrl != widget.dataUrl) {
+      _bytes = _decode(widget.dataUrl);
     }
+  }
+
+  static Uint8List? _decode(String dataUrl) {
+    try {
+      final base64Part =
+          dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
+      return base64Decode(base64Part);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _bytes;
+    if (bytes == null) return _errorPlaceholder();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.input),
+      child: Image.memory(
+        bytes,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _errorPlaceholder(),
+      ),
+    );
   }
 
   Widget _errorPlaceholder() {

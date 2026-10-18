@@ -33,8 +33,10 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   void initState() {
     super.initState();
     final initialDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
+    // نسخة قابلة للتعديل: SignatureController يضيف النقاط إلى نفس القائمة
+    // التي نسلّمها، وقائمة المسودة `List.unmodifiable` → كانت تكسر الرسم.
     _signatureController = SignatureController(
-      points: initialDraft.isNotEmpty ? initialDraft : null,
+      points: initialDraft.isNotEmpty ? List<Point>.of(initialDraft) : null,
       penStrokeWidth: 3,
       penColor: Colors.black,
       exportBackgroundColor: Colors.white,
@@ -54,7 +56,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedLog.id != widget.selectedLog.id) {
       final newDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
-      _signatureController.value = newDraft;
+      _signatureController.value = List<Point>.of(newDraft);
     }
   }
 
@@ -69,7 +71,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   Widget build(BuildContext context) {
     ref.listen<List<Point>>(logDraftSignatureProvider(widget.selectedLog.id), (previous, current) {
       if (_signatureController.isEmpty && current.isNotEmpty) {
-        _signatureController.value = current;
+        _signatureController.value = List<Point>.of(current);
       }
     });
 

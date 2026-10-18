@@ -12,6 +12,7 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/session/session_epoch.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/domain/inspection/dot_inspection.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
@@ -245,7 +246,13 @@ void main() {
             call.method == 'getApplicationDocumentsDirectory' ? docsDir.path : null);
     backend = _ScriptedBackend();
     network = _ToggleNetworkInfo();
-    repo = InspectionRepositoryImpl(backend, network);
+    repo = InspectionRepositoryImpl(
+      backend,
+      network,
+      null,
+      null,
+      FakeTrustedTimeProvider(initialUtcTime: DateTime.utc(2026, 9, 24, 15)),
+    );
   });
 
   tearDown(() {
@@ -468,6 +475,31 @@ expect(csv.contains('loc-$_a'), isFalse);
         final header = csv.split('\n').firstWhere((l) => l.startsWith('1,'));
         expect(header.split(',')[9], '$_b');
 });
+
+    // P3: no legal artifact may be stamped with an untrusted clock.
+    test(
+        'V3-e: offline generation without trusted time fails closed and '
+        'leaves no artifact', () async {
+      // A repository without a trusted-time provider — the real situation
+      // before the first server anchor ever lands.
+      final untrusted = InspectionRepositoryImpl(backend, network);
+      await untrusted.getLogs(driverId: const DriverId(_b)); // online warm
+      final before = docsDir.listSync().length;
+
+      backend.failAll = true;
+      network.connected = false;
+      final outcome = await untrusted.sendLogs(
+        driverId: const DriverId(_b),
+        method: TransferMethod.usb,
+        comment: 'review',
+      );
+
+      expect(outcome.isLeft(), isTrue,
+          reason: 'trusted time is a legal requirement for the FMCSA file');
+      expect(leftOf(outcome).message, 'inspectionTrustedTimeRequired');
+      expect(docsDir.listSync().length, before,
+          reason: 'no CSV artifact may be written without trusted time');
+    });
   });
 
   // ==========================================================================

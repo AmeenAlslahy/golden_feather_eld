@@ -17,6 +17,12 @@ class AppTypography {
   static const double smallSize = 12.0;
   static const double timerSize = 40.0;
 
+  /// مقاسات أوراق التعليمات (SRS 8.2).
+  static const double sheetTitleSize = 18.0;
+  static const double sheetItemTitleSize = 12.0;
+  static const double sheetCaptionSize = 11.0;
+  static const double sheetItemSize = 10.0;
+
   static const FontWeight bold = FontWeight.w700;
   static const FontWeight semiBold = FontWeight.w600;
   static const FontWeight regular = FontWeight.w400;

@@ -83,7 +83,10 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   /// تغيير حالة الخدمة. يُعاد توجيه نتيجة المتتبع كما هي (رفض اختياري
   /// مع لقطة لوحة الخادم عند القبول لتغذية اللوحة فوراً).
   Future<ManualDutyChangeResult> changeStatus(DutyStatus newStatus,
-      {String? annotation, bool isYardMoves = false}) async {
+      {String? annotation,
+      bool isYardMoves = false,
+      double? latitude,
+      double? longitude}) async {
     if (state is! HosEngineReady) {
       return const ManualDutyChangeResult(
           refusal: DutyStampRefusal.notReady);
@@ -130,7 +133,9 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
     }
 
     return _tracker.submitManualChange(statusCode.engineCode,
-        annotation: finalAnnotation.isEmpty ? null : finalAnnotation);
+        annotation: finalAnnotation.isEmpty ? null : finalAnnotation,
+        lat: latitude,
+        lon: longitude);
   }
 
   /// تحديث الحالة

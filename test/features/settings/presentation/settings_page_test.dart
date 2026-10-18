@@ -140,6 +140,17 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
 
+    // P1: plaintext http is refused too — the saved origin feeds every
+    // request, so cleartext HTTP is not acceptable.
+    await tester.enterText(find.byType(TextField).first, 'http://snsoft.cloud');
+    await tester.tap(save);
+    await tester.pump();
+    expect(find.textContaining('Invalid URL'), findsOneWidget);
+    verifyNever(() => storage.setServerUrl(any()));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
     await tester.enterText(
         find.byType(TextField).first, ' https://eld.example.com ');
     await tester.tap(save);

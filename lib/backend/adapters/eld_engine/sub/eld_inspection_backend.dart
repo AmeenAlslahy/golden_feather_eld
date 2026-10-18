@@ -38,7 +38,7 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<List<dynamic>>(
-          '${EldEndpoints.inspections}/cycle',
+          EldEndpoints.dotInspectionCycle,
           queryParameters: {
             if (driverId != null) 'driverId': driverId.value,
             'days': days,
@@ -62,7 +62,7 @@ class EldInspectionBackend implements InspectionBackend {
   }) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          '${EldEndpoints.inspections}/logs',
+          EldEndpoints.dotInspectionLogs,
           queryParameters: {
             if (driverId != null) 'driverId': driverId.value,
             if (date != null)

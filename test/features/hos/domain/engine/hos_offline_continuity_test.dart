@@ -91,26 +91,38 @@ void main() {
       expect(live.cycle.value, const Duration(hours: 59, minutes: 15));
     });
 
-    test('reconcileRemaining clamps server lag during the same duty episode', () {
+    test('server circle value is authoritative — no one-directional clamp', () {
       const serverCircle = RemainingCircle(
         remaining: Duration(hours: 8),
         label: 'Remaining',
         progress: 0.0,
       );
-      const localCircle = RemainingCircle(
-        remaining: Duration(hours: 7, minutes: 30),
-        label: 'Remaining',
-        progress: 0.1,
+      // مؤشرات تشير محلياً إلى أضيق (وردية 6:30 مستهلكة ⇒ 7:30 متبقية).
+      const indicators = HosIndicators(
+        drive: HosIndicator(
+            label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        shift: HosIndicator(
+            label: 'SHIFT',
+            value: Duration(hours: 6, minutes: 30),
+            type: IndicatorType.used),
+        breakTime: HosIndicator(
+            label: 'BREAK',
+            value: Duration(hours: 8),
+            type: IndicatorType.remaining),
+        cycle: HosIndicator(
+            label: 'CYCLE', value: Duration.zero, type: IndicatorType.used),
       );
 
-      final reconciled = CircularTimerLogic.reconcileRemaining(
-        server: serverCircle,
-        local: localCircle,
-        sameDutyEpisode: true,
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: serverCircle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: indicators,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: Duration.zero,
       );
 
-      // Must clamp to the smaller (local) value and NOT reset to 8 hours
-      expect(reconciled.remaining, const Duration(hours: 7, minutes: 30));
+      // Must display the server value verbatim — not the local derivation
+      expect(ui.liveRemaining, const Duration(hours: 8));
     });
   });
 }

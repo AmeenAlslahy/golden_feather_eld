@@ -37,4 +37,15 @@ class UserPreferencesStorageService {
   Future<void> saveSelectedVehicleId(String id) =>
       _prefs.setString(_selectedVehicleKey, id);
   Future<void> clearSelectedVehicle() => _prefs.remove(_selectedVehicleKey);
+
+  /// P0 عزل السائقين — مسح الحالة القانونية الحية (الحالة المعلنة + بداية
+  /// الثبات) عند تبديل هوية السائق.
+  ///
+  /// هذه القيم بلا مالك مخزَّن، وكانت تُقرأ عند بناء الـ tracker لأي سائق:
+  /// سائق (B) يدخل بعد (A) كان يبدأ من حالة (A) المعلنة — مثلاً «driving»
+  /// لم يقُدها — فيتوقف الاحتساب التلقائي وتُبنى فترة مختلطة.
+  Future<void> clearDutyTrackingState() async {
+    await _prefs.remove(_currentDutyStatusKey);
+    await _prefs.remove(_stationarySinceKey);
+  }
 }

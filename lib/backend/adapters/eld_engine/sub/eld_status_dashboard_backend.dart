@@ -1,5 +1,3 @@
-import 'dart:convert' as dart_convert;
-import 'package:dio/dio.dart';
 import '../../../../core/result/result.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
@@ -34,7 +32,7 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
   }
 
   @override
-  Future<Result<StatusDashboard>> updateDutyStatus({
+  Future<Result<StatusDashboard?>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
   }) {
@@ -49,46 +47,34 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
             'dutyStatus': status.wire,
             'notes': effectiveNote,
           },
-          responseType: ResponseType.plain,
-          parser: (data) {
-            if (data is String) {
-              if (data.trim().isEmpty) return <String, dynamic>{};
-              try {
-                final parsed = dart_convert.jsonDecode(data);
-                if (parsed is Map<String, dynamic>) {
-                  // If the backend wraps the data in a "data" object, unwrap it if needed,
-                  // but StatusDashboardMapper handles that or expects the raw data.
-                  // Wait, ApiResponse.fromBody already unwraps `data` or `body`?
-                  // No, ApiResponse just takes the parsed body.
-                  return parsed;
-                }
-                AppLogger.warning(
-                  'updateDutyStatus: 200 body is JSON but not an object '
-                  '(${parsed.runtimeType})',
-                );
-              } catch (e) {
-                // جسم 200 غير فارغ وغير JSON = انحراف عقد يجب أن يبقى مرئياً.
-                AppLogger.warning(
-                  'updateDutyStatus: 200 body (${data.length} chars) is not '
-                  'JSON — mapper will treat it as empty',
-                  e,
-                );
-              }
-            }
-            if (data is Map<String, dynamic>) return data;
-            return <String, dynamic>{};
-          },
+          // بلا ResponseType.plain: نفس مسار GET — يفكّ ApiResponse غلاف
+          // `{success, data}` تلقائياً، فلا يصل للمحوّل غلافٌ كامل يُقرأ
+          // ككائن بلا مفاتيح لوحة (السبب الجذري لعرض أصفار بعد التغيير).
+          parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .then((result) => result.mapValue(
-          (response) {
-            final json = response.data ?? const <String, dynamic>{};
-            final map = Map<String, dynamic>.from(json);
-            if (!map.containsKey('currentDutyStatus') || map['currentDutyStatus'] == null) {
-              map['currentDutyStatus'] = status.wire;
-            }
-            return StatusDashboardMapper.fromDashboardJson(map);
-          },
-        ));
+        .then((result) => result.mapValue((response) {
+              final json = response.data ?? const <String, dynamic>{};
+              final map = Map<String, dynamic>.from(json);
+              // لقطة اللوحة فقط إن حملها الجسم فعلاً. سجل حالة بلا حقول
+              // اللوحة ≠ لوحة بقيم صفرية — نُعيد null ونتصالح مع الخادم
+              // عبر GET بدل اختلاق أصفار تغذّي العدّادات القانونية.
+              if (!_hasDashboardSnapshot(map)) {
+                AppLogger.info(
+                  'updateDutyStatus: accepted without dashboard snapshot '
+                  '(response carries no dashboard fields)',
+                );
+                return null;
+              }
+              if (map['currentDutyStatus'] == null) {
+                map['currentDutyStatus'] = status.wire;
+              }
+              return StatusDashboardMapper.fromDashboardJson(map);
+            }));
+  }
+
+  /// هل يحمل الجسم حقول اللوحة الرقمية؟ (يكفي مؤشر واحد منها كدليل)
+  static bool _hasDashboardSnapshot(Map<String, dynamic> json) {
+    return json['remainingCircle'] != null || json['hosIndicators'] != null;
   }
 
   @override

@@ -6,6 +6,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:mocktail/mocktail.dart';
@@ -47,9 +48,9 @@ void main() {
     repo = _MockLogRepository();
     when(() => repo.getDailyLogs(
           driverId: any(named: 'driverId'),
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => Right([day]));
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        )).thenAnswer((_) async => Right(DailyLogPage(logs: [day])));
     // تفاصيل الخادم تُجلب الآن عند selectLog — هذه الاختبارات تخص الأحداث.
     when(() => repo.getLogById(any())).thenAnswer(
       (_) async => const Left(NetworkFailure()),
@@ -122,6 +123,7 @@ void main() {
     // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
     when(() => repo.updateEvent(any(),
         reason: any(named: 'reason'),
+        logId: any(named: 'logId'),
         ownerDriverId: any(named: 'ownerDriverId'))).thenAnswer((_) async => Right(ev('7', 'SB', 60)));
 
     final notifier = container.read(logsProvider.notifier);
@@ -136,6 +138,7 @@ void main() {
     expect(ok.isRight(), isTrue);
     verify(() => repo.updateEvent(any(),
         reason: 'Wrong status selected',
+        logId: const DailyLogId(42),
         ownerDriverId: any(named: 'ownerDriverId'))).called(1);
     // Initial load + refresh after the edit.
     verify(() => repo.getEvents(any(), any())).called(2);

@@ -1,17 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/network/core_providers.dart';
+import '../../../../domain/account/driver_rules.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../../core/providers/driver_rules_provider.dart';
+import '../../../account/presentation/providers/driver_rules_provider.dart';
+import '../../../tracking/domain/entities/location_entity.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/engine/hos_rules_engine.dart';
 import '../../domain/engine/hos_offline_dashboard.dart';
 import 'hos_engine_provider.dart';
 import 'hos_provider.dart';
 import 'status_dashboard_providers.dart';
+
+/// نص موقع GPS الحقيقي لنموذج تغيير الحالة — '' تعني «لا موقع موثوق»
+/// (لا قراءة، أو إحداثيات صفرية افتراضية بلا قفل فعلي).
+String gpsLocationText(LocationEntity? location) {
+  if (location == null) return '';
+  if (location.latitude == 0 && location.longitude == 0) return '';
+  return location.coordinates;
+}
 
 /// خيارات حالة الخدمة المتاحة في الواجهة كاختيارات راديو حصرية
 enum DutyStatusOption {
@@ -273,6 +287,14 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     _ref.listen<bool>(isVehicleMovingProvider, (_, isMoving) {
       state = state.copyWith(isVehicleMoving: isMoving);
     });
+
+    // الموقع الحي (P3): تعبئة تلقائية للعرض، والإحداثيات الحقيقية تُرسل
+    // أيضاً مع الحدث نفسه في [submit] — لا موقع فارغ بلا سبب.
+    _ref.listen<TrackingState>(trackingStateProvider, (_, next) {
+      final text = gpsLocationText(next.currentLocation);
+      if (text.isEmpty || text == state.location) return;
+      state = state.copyWith(location: text);
+    });
   }
 
   void selectOption(DutyStatusOption option) {
@@ -333,13 +355,19 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       }
       final combinedAnnotation = parts.isNotEmpty ? parts.join(' - ') : null;
 
-      // 1. تحديث محرك HOS الداخلي (عبر الخادم أولاً كما قبل)
+      // 1. تحديث محرك HOS الداخلي (عبر الخادم أولاً كما قبل) — مع
+      // إحداثيات GPS الحقيقية إن وُجدت لتُختم في الحدث المرسل للخادم.
+      final gps = _ref.read(trackingStateProvider).currentLocation;
+      final hasGps =
+          gps != null && (gps.latitude != 0 || gps.longitude != 0);
       final outcome = await _ref
           .read(hosStatusProvider.notifier)
           .changeStatus(
             state.selectedStatus,
             annotation: combinedAnnotation,
             isYardMoves: state.isYardMoves,
+            latitude: hasGps ? gps.latitude : null,
+            longitude: hasGps ? gps.longitude : null,
           );
 
       final refusal = outcome.refusal;
@@ -354,9 +382,10 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
         return DutyChangeEngineRefusal(refusal);
       }
 
-      // 2. تغذية اللوحة من استجابة POST مباشرة — تتحول الدائرة فوراً
-      // دون انتظار GET لاحق. مستمع اللوحة يتخطى إعادة الجلب لأن الحالة
-      // مطابقة أصلاً؛ وإن اختلفت لأي سبب يبقى الـ refresh الاحتياطي.
+      // 2. تغذية اللوحة من استجابة POST مباشرة عند حملها لقطة — تتحول
+      // الدائرة فوراً دون انتظار GET لاحق. مستمع اللوحة يتخطى إعادة
+      // الجلب لأن الحالة مطابقة أصلاً؛ وإن اختلفت لأي سبب يبقى الـ
+      // refresh الاحتياطي.
       final serverDashboard = outcome.dashboard;
       if (serverDashboard != null) {
         final currentDashboard = _ref.read(statusDashboardProvider).valueOrNull;
@@ -375,13 +404,23 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
             .read(statusDashboardProvider.notifier)
             .applyServerDashboard(updatedDashboard);
       } else {
-        // ⚠️ لا خادم: النتيجة بلا لقطة. قبل هذا كانت الصفحة تبقى على
-        // حالتها القديمة بينما يُعرض "نجاح" — السائق يرى تغييراً لم
-        // يحدث أمامه. نبني الآن لوحة حقيقية من المحرك المحلي
-        // (المستعاد من سجل الخدمة) فيتحدّث فوراً كالوضع المتصل.
-        final local = _buildLocalDashboard();
-        if (local != null) {
-          _ref.read(statusDashboardProvider.notifier).applyServerDashboard(local);
+        // بلا لقطة في استجابة POST (جسم بلا حقول لوحة أو فشل شبكي —
+        // العقد يسمح بـnull). لا نخترع أرقاماً إطلاقاً:
+        // - متصل: الخادم هو المرجع — تصحيح صامت فوري من GET، بلا
+        //   تعليق نجاح المستخدم على الشبكة.
+        // - أوفلاين: نبني لوحة حقيقية من المحرك المحلي (المستعاد من
+        //   سجل الخدمة) فيتحدّث فوراً كالوضع المتصل.
+        final isConnected = _ref.read(networkInfoProvider).isConnected;
+        if (isConnected) {
+          unawaited(
+            _ref.read(statusDashboardProvider.notifier).reconcileWithServer(),
+          );
+        } else {
+          final local = _buildLocalDashboard();
+          if (local != null) {
+            _ref.read(statusDashboardProvider.notifier)
+                .applyServerDashboard(local);
+          }
         }
       }
 
@@ -401,7 +440,8 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     }
   }
 
-  /// لوحة مبنية من المحرك المحلي — تُستخدم عندغياب الخادم.
+  /// لوحة مبنية من المحرك المحلي — تُستخدم عند غياب الخادم (أوفلاين فقط؛
+  /// مع الاتصال يبقى الخادم هو المرجع).
   StatusDashboard? _buildLocalDashboard() {
     final engine = _ref.read(hosEngineProvider);
     final result = engine.currentStatus;
@@ -454,7 +494,10 @@ final changeStatusProvider =
         ref,
         initialStatus: initialOption.toDutyStatus(),
         isYardMoves: initialOption.isYardMoves,
-        initialLocation: '',
+        // P3: تعبئة الموقع من GPS الحقيقي بدل '' — كان زر UPDATE يبقى
+        // معطلاً حتى مع قفل موقع حي على الجهاز.
+        initialLocation:
+            gpsLocationText(ref.read(trackingStateProvider).currentLocation),
         isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
         isYardMoveAllowed: isYardMoveAllowed,
         isVehicleMoving: isMoving,

@@ -165,12 +165,20 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
     }
   }
 
+  Map<String, dynamic>? _logsCache;
+
   Map<String, dynamic> _loadRawLogsMap() {
+    // P2 — فكّ الأرشيف مرة واحدة وذاكرته في المثيل: قبل ذلك كان كل
+    // save/load يعيد jsonDecode للأرشيف كاملاً (كل السجلات لكل الأيام).
+    // الكتابة تبقى encode واحداً (key واحد في التخزين) لكن الفكّ صار
+    // مرة واحدة، و`clear()` تُبطل الذاكرة.
+    final cached = _logsCache;
+    if (cached != null) return cached;
     final raw = _storage.prefs.getString(_logsKey);
-    if (raw == null || raw.isEmpty) return {};
+    if (raw == null || raw.isEmpty) return _logsCache = {};
     final decoded = jsonDecode(raw);
-    if (decoded is Map<String, dynamic>) return decoded;
-    return {};
+    if (decoded is Map<String, dynamic>) return _logsCache = decoded;
+    return _logsCache = {};
   }
 
   @override
@@ -260,6 +268,7 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
   @override
   Future<void> clear() async {
     try {
+      _logsCache = null;
       await _storage.prefs.remove(_screenKey);
       await _storage.prefs.remove(_cycleKey);
       await _storage.prefs.remove(_logsKey);

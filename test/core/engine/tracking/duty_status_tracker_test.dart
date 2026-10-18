@@ -4,6 +4,8 @@ import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_certify_state.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
@@ -174,14 +176,15 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
+    DailyLogId? logId,
     int? ownerDriverId,
   }) async => throw UnimplementedError();
 
   @override
-  Future<Either<Failure, List<DailyLog>>> getDailyLogs({
+  Future<Either<Failure, DailyLogPage>> getDailyLogs({
     required int driverId,
-    int limit = 50,
-    int offset = 0,
+    int page = 0,
+    int size = 20,
   }) async => throw UnimplementedError();
 
   @override
@@ -206,13 +209,17 @@ class MockLogRepository implements LogRepository {
   Future<Either<Failure, bool>> certifyLog({
     required DailyLogId logId,
     required int driverId,
-    required String logDate,
-    required String signatureCertificateId,
-    required bool signatureConfirmation,
-    required bool certifiedTrue,
+    bool certified = true,
+    String? signatureImageBase64,
   }) async {
     return const Right(true);
   }
+
+  @override
+  Future<Either<Failure, LogCertifyState>> getCertifyState(
+    DailyLogId logId,
+  ) async =>
+      throw UnimplementedError();
 
   @override
   Future<Either<Failure, bool>> respondToCarrierEdit({
@@ -764,4 +771,128 @@ void main() {
       tracker.dispose();
     });
   });
+
+  group('P0 — transition durability & idempotency key', () {
+    late MockLogRepository mockRepo;
+    late FakeLocalStorage db;
+    late FakeTrustedTimeProvider clock;
+
+    setUp(() {
+      mockRepo = MockLogRepository();
+      db = FakeLocalStorage();
+      clock = FakeTrustedTimeProvider(
+        initialUtcTime: DateTime.utc(2026, 3, 1, 8),
+      );
+    });
+
+    DutyStatusTracker build({
+      required MockSyncEngine sync,
+      LocalStorageService? storage,
+      LogRepository? repository,
+    }) =>
+        DutyStatusTracker(
+          logRepository: repository ?? mockRepo,
+          localStorage: storage ?? db,
+          syncEngine: sync,
+          dashboardBackend: MockDashboardBackend(),
+          timeProvider: clock,
+        );
+
+    test('clientId is stamped and equals the queued event id', () async {
+      final sync = MockSyncEngine();
+      final tracker = build(sync: sync);
+
+      tracker.manualTransition('on_duty');
+      await pumpEventQueue();
+
+      expect(sync.submitted, hasLength(1));
+      final event = sync.submitted.single;
+      expect(event.payload['clientId'], event.id,
+          reason: 'مفتاح idempotency لغلق ازدواج السجل عند فقد ردّ الخادم');
+      expect(event.id, isNotEmpty);
+      tracker.dispose();
+    });
+
+    test('declared status is persisted before the event is enqueued',
+        () async {
+      final order = <String>[];
+      final tracker = build(
+        sync: _OrderedSyncEngine(order),
+        storage: _OrderedStorage(order),
+      );
+
+      tracker.manualTransition('on_duty');
+      await pumpEventQueue();
+
+      expect(order, ['status:on_duty', 'enqueue'],
+          reason: 'قبل الإصلاح كان الطابور يُطلق دون انتظار كتابة الحالة');
+      tracker.dispose();
+    });
+
+    test('throwing submitEvent is contained and status stays persisted',
+        () async {
+      final tracker = build(sync: _ThrowingSyncEngine());
+
+      tracker.manualTransition('on_duty');
+      await pumpEventQueue();
+
+      expect(db.data['current_duty_status'], 'on_duty',
+          reason: 'الفشل يُحتوى ولا يُسقط الكتابة المحلية');
+      tracker.dispose();
+    });
+
+    test('throwing savePeriod does not drop the queued event', () async {
+      final sync = MockSyncEngine();
+      final tracker = build(sync: sync, repository: _ThrowingPeriodRepo());
+
+      tracker.manualTransition('on_duty');
+      await pumpEventQueue();
+      expect(sync.submitted, hasLength(1));
+
+      tracker.manualTransition('off_duty'); // يغلق فترة ⇒ savePeriod يرمي
+      await pumpEventQueue();
+
+      expect(sync.submitted, hasLength(2),
+          reason: 'فشل حفظ الفترة يجب ألا يُسقط حدث المزامنة');
+      tracker.dispose();
+    });
+  });
+}
+
+class _OrderedStorage extends FakeLocalStorage {
+  _OrderedStorage(this.order);
+
+  final List<String> order;
+
+  @override
+  Future<void> setCurrentDutyStatus(String value) async {
+    order.add('status:$value');
+    await super.setCurrentDutyStatus(value);
+  }
+}
+
+class _OrderedSyncEngine extends MockSyncEngine {
+  _OrderedSyncEngine(this.order);
+
+  final List<String> order;
+
+  @override
+  Future<void> submitEvent(PendingEvent event) async {
+    order.add('enqueue');
+    await super.submitEvent(event);
+  }
+}
+
+class _ThrowingSyncEngine extends MockSyncEngine {
+  @override
+  Future<void> submitEvent(PendingEvent event) async {
+    throw StateError('queue unavailable');
+  }
+}
+
+class _ThrowingPeriodRepo extends MockLogRepository {
+  @override
+  Future<Either<Failure, bool>> savePeriod(DutyPeriod period) async {
+    throw StateError('disk full');
+  }
 }

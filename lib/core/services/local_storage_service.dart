@@ -222,6 +222,11 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> clearSelectedVehicle() =>
       _preferencesStorage.clearSelectedVehicle();
 
+  /// P0 عزل السائقين — مسح الحالة القانونية الحية عند تبديل السائق.
+  /// التفصيل في [UserPreferencesStorageService.clearDutyTrackingState].
+  Future<void> clearDutyTrackingState() =>
+      _preferencesStorage.clearDutyTrackingState();
+
   /// مسح جميع البيانات (مع الاحتفاظ بإعدادات الخادم)
   Future<void> clearAll() async {
     final currentUrl = _prefs.getString('url');

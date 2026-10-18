@@ -72,6 +72,38 @@ class DashboardData {
     coDriverId: null,
     documentsInfo: null,
   );
+
+  // P2 — المساواة القيمية تمنع `StateNotifier` من بثّ تحديث (وإعادة بناء
+  // كل المستمعين) عندما تكون القيم الجديدة مطابقة للحالية فعلاً.
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DashboardData &&
+        other.driverName == driverName &&
+        other.driverLicense == driverLicense &&
+        other.vehicleId == vehicleId &&
+        other.deviceId == deviceId &&
+        other.vehicleDisplayName == vehicleDisplayName &&
+        other.trailerId == trailerId &&
+        other.shippingDocuments == shippingDocuments &&
+        other.coDriverName == coDriverName &&
+        other.coDriverId == coDriverId &&
+        other.documentsInfo == documentsInfo;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        driverName,
+        driverLicense,
+        vehicleId,
+        deviceId,
+        vehicleDisplayName,
+        trailerId,
+        shippingDocuments,
+        coDriverName,
+        coDriverId,
+        documentsInfo,
+      );
 }
 
 class DashboardNotifier extends StateNotifier<DashboardData> {

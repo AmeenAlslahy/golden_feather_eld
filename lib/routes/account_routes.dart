@@ -3,6 +3,7 @@ import '../routes.dart';
 import '../features/account/presentation/pages/account_page.dart';
 import '../features/account/presentation/pages/rules_page.dart';
 import '../features/account/presentation/pages/info_packet_page.dart';
+import '../features/account/presentation/pages/instructions_page.dart';
 import '../features/account/presentation/pages/user_manual_page.dart';
 import '../features/about/presentation/pages/about_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
@@ -29,8 +30,13 @@ class AccountRoutes {
         ),
         GoRoute(
           path: AppRoutes.userManual,
-          name: 'userManual',
+          name: 'user-manual',
           builder: (context, state) => const UserManualPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.instructions,
+          name: 'instructions',
+          builder: (context, state) => const InstructionsPage(),
         ),
         GoRoute(
           path: AppRoutes.about,

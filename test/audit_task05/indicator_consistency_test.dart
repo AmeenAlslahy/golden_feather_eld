@@ -70,12 +70,11 @@ void main() {
           reason: 'التطبيق كان يعرض أكثر من القانون بـ 4 ساعات و8 دقائق');
     });
 
-    test('عندما تكون الاستراحة هي الأضيق تُختار هي', () {
-      // shift used 1:00 ⇒ متبقٍّ 13:00. break remaining 2:00 ⇒ هي الأضيق.
+    test('الدائرة تعرض قيمة الخادم كما وردت — لا اشتقاق محلي من المؤشرات', () {
+      // مؤشرات توحي بأضيق (استراحة 2:00) لكن دائرة الخادم 3:48:
+      // الخادم هو المرجع (قرار المالك) فلا نعيد الاشتقاق محلياً.
       final d = _server().copyWith(
         hosIndicators: _server().hosIndicators.copyWith(
-          shift: const HosIndicator(
-              label: 'SHIFT', value: Duration(hours: 1), type: IndicatorType.used),
           breakTime: const HosIndicator(
               label: 'BREAK', value: Duration(hours: 2), type: IndicatorType.remaining),
         ),
@@ -87,8 +86,7 @@ void main() {
         statusLabel: 'ON_DUTY',
         elapsedSinceSnapshot: Duration.zero,
       );
-      expect(ui.liveRemaining, const Duration(hours: 2));
-      expect(ui.progress, closeTo(0.75, 0.01)); // (8−2)/8
+      expect(ui.liveRemaining, const Duration(hours: 3, minutes: 48));
     });
 
     test('مؤشر SHIFT بنمط USED: المتبقّي = 14h ناقص المستخدم', () {
@@ -98,11 +96,12 @@ void main() {
           d.remainingCircle.remaining);
     });
 
-    test('مؤشر DRIVING: المتبقّي = 11h ناقص القيادة', () {
+    test('مؤشر DRIVING: الدائرة = قيمة الخادم المرساة', () {
       final d = _server().copyWith(
-        hosIndicators: _server().hosIndicators.copyWith(
-          drive: const HosIndicator(
-              label: 'DRIVE', value: Duration(hours: 10), type: IndicatorType.used),
+        remainingCircle: const RemainingCircle(
+          remaining: Duration(hours: 1),
+          label: 'Remaining',
+          progress: 0.91,
         ),
       );
       final ui = CircularTimerLogic.calculateUiState(
@@ -229,66 +228,184 @@ void main() {
     });
   });
 
-  group('الدمج الأحادي الاتجاه: الخادم لا يسترجع وقتاً', () {
-    const server = RemainingCircle(
-      remaining: Duration(hours: 14),
-      label: 'Remaining',
-      progress: 0,
-    );
-    const localTight = RemainingCircle(
-      remaining: Duration(hours: 8),
-      label: 'Remaining',
-      progress: 0.5,
-    );
-
-    test('خادم متأخر (يعرض أكثر) ⇒ نبقي الرقم المحلي', () {
-      // ⚠️ الحالة المقيسة على الخادم الحيّ: SHIFT=00:00 بينما السائق
-      // ON_DUTY منذ 12 ساعة. قبول 14:00 كان لقتل العدّاد كل 5 دقائق.
-      final merged = CircularTimerLogic.reconcileRemaining(
-        server: server,
-        local: localTight,
-        sameDutyEpisode: true,
+  group('الخادم هو المرجع: استبدال كامل بلا تقليص أحادي', () {
+    test('قيمة الخادم تُعرض كاملة حتى لو كانت أكبر من الاشتقاق المحلي', () {
+      const serverCircle = RemainingCircle(
+        remaining: Duration(hours: 8),
+        label: 'Remaining',
+        progress: 0,
       );
-      expect(merged.remaining, const Duration(hours: 8));
+      // الاشتقاق المحلي القديم كان سيعطي 7:30 (وردية 6:30 مستهلكة).
+      const indicators = HosIndicators(
+        drive: HosIndicator(
+            label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        shift: HosIndicator(
+            label: 'SHIFT',
+            value: Duration(hours: 6, minutes: 30),
+            type: IndicatorType.used),
+        breakTime: HosIndicator(
+            label: 'BREAK',
+            value: Duration(hours: 8),
+            type: IndicatorType.remaining),
+        cycle: HosIndicator(
+            label: 'CYCLE', value: Duration.zero, type: IndicatorType.used),
+      );
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: serverCircle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: indicators,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: Duration.zero,
+      );
+      expect(ui.liveRemaining, const Duration(hours: 8),
+          reason: 'الاستبدال عند كل نبضة جلب (5 دقائق) — لا حارس أحادي');
     });
 
-    test('خادم متقدّم (يعرض أقل) ⇒ نقبله فنضيق الوقت', () {
-      const stricter = RemainingCircle(
+    test('قيمة أصغر من الخادم تُعرض كما هي (يتقدم الزمن)', () {
+      const serverCircle = RemainingCircle(
         remaining: Duration(hours: 3),
         label: 'Remaining',
         progress: 0.8,
       );
-      final merged = CircularTimerLogic.reconcileRemaining(
-        server: stricter,
-        local: localTight,
-        sameDutyEpisode: true,
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: serverCircle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: null,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: Duration.zero,
       );
-      expect(merged.remaining, const Duration(hours: 3));
+      expect(ui.liveRemaining, const Duration(hours: 3));
     });
 
-    test('تغيّرت حالة الخدمة ⇒ الخادم بلا تحفّظ (نافذة جديدة)', () {
-      final merged = CircularTimerLogic.reconcileRemaining(
-        server: server,
-        local: localTight,
-        sameDutyEpisode: false,
+    test('القوس يتقدم مع الوقت — مطابقة الدورة من مؤشرات الخادم', () {
+      // الحالة المقيسة حياً: 58 دقيقة متبقية من الدورة (70:00 − 69:02).
+      // المطابقة تجد CYCLE فالقوس يزحف من 1 − 58/4200 نحو 1 − 53/4200
+      // خلال 5 دقائق — تقدم مرئي بلا أي اشتقاق من النسبة المُدوَّرة.
+      const circle = RemainingCircle(
+        remaining: Duration(minutes: 58),
+        label: 'Remaining',
+        progress: 0.99,
       );
-      expect(merged.remaining, const Duration(hours: 14));
+      const indicators = HosIndicators(
+        drive: HosIndicator(
+            label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        shift: HosIndicator(
+            label: 'SHIFT',
+            value: Duration(minutes: 13),
+            type: IndicatorType.used),
+        breakTime: HosIndicator(
+            label: 'BREAK',
+            value: Duration(hours: 8),
+            type: IndicatorType.remaining),
+        cycle: HosIndicator(
+            label: 'CYCLE',
+            value: Duration(hours: 69, minutes: 2),
+            type: IndicatorType.used),
+      );
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: circle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: indicators,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: const Duration(minutes: 5),
+      );
+      expect(ui.progress, closeTo(1 - 53 / 4200, 0.0005),
+          reason: 'نسبة المستهلك من الدورة 70h بعد 5 دقائق');
+      expect(ui.progress, greaterThan(1 - 58 / 4200),
+          reason: 'القوس يجب أن يتقدم مع الوقت');
     });
 
-    test('⚠️ لا يمكن للقاعدة أن تمنح وقتاً إضافياً أبداً', () {
-      // فحص شامل: مهما كانت القيم، النتيجة ≤ كل من الطرفين.
-      for (final s in [Duration.zero, const Duration(hours: 1), const Duration(hours: 14)]) {
-        for (final l in [Duration.zero, const Duration(hours: 3), const Duration(hours: 11)]) {
-          final merged = CircularTimerLogic.reconcileRemaining(
-            server: RemainingCircle(remaining: s, label: '', progress: 0),
-            local: RemainingCircle(remaining: l, label: '', progress: 0),
-            sameDutyEpisode: true,
+    test('عند p=1.00 لا يُصفَّر القوس (آخر 21 دقيقة من الدورة)', () {
+      // العطل المقيس: عند تقريب النسبة إلى 1.00 كان الفرع البديل يحسب
+      // إجمالاً = المتبقي، فيقفز القوس من ~99% إلى 0% عند كل نبضة.
+      // الآن: مطابقة CYCLE تعطي الحدّ الحقيقي 70h وقوساً ≈ 99.5%.
+      const circle = RemainingCircle(
+        remaining: Duration(minutes: 21),
+        label: 'Remaining',
+        progress: 1.0,
+      );
+      const indicators = HosIndicators(
+        drive: HosIndicator(
+            label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        shift: HosIndicator(
+            label: 'SHIFT', value: Duration.zero, type: IndicatorType.used),
+        breakTime: HosIndicator(
+            label: 'BREAK',
+            value: Duration(hours: 8),
+            type: IndicatorType.remaining),
+        cycle: HosIndicator(
+            label: 'CYCLE',
+            value: Duration(hours: 69, minutes: 39),
+            type: IndicatorType.used),
+      );
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: circle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: indicators,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: Duration.zero,
+      );
+      expect(ui.progress, closeTo(1 - 21 / 4200, 0.0005),
+          reason: '21 دقيقة من 70 ساعة — يبقى ممتلئاً لا صفراً');
+      expect(ui.progress, greaterThan(0.99));
+    });
+
+    test('بين النبضات: القوس والرقم يتقدمان معاً كل دقيقة', () {
+      const circle = RemainingCircle(
+        remaining: Duration(minutes: 58),
+        label: 'Remaining',
+        progress: 0.99,
+      );
+      const indicators = HosIndicators(
+        drive: HosIndicator(
+            label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        shift: HosIndicator(
+            label: 'SHIFT',
+            value: Duration(minutes: 13),
+            type: IndicatorType.used),
+        breakTime: HosIndicator(
+            label: 'BREAK',
+            value: Duration(hours: 8),
+            type: IndicatorType.remaining),
+        cycle: HosIndicator(
+            label: 'CYCLE',
+            value: Duration(hours: 69, minutes: 2),
+            type: IndicatorType.used),
+      );
+      TimerUiState at(int minutes) => CircularTimerLogic.calculateUiState(
+            circle: circle,
+            dutyStatus: DutyStatusCode.onDutyNotDriving,
+            hosIndicators: indicators,
+            statusLabel: 'ON_DUTY',
+            elapsedSinceSnapshot: Duration(minutes: minutes),
           );
-          expect(merged.remaining, s <= l ? s : l);
-          expect(merged.remaining <= s, isTrue, reason: 'لا زيادة على الخادم');
-          expect(merged.remaining <= l, isTrue, reason: 'لا زيادة على المحلي');
-        }
-      }
+
+      final start = at(0);
+      final afterOneMinute = at(1);
+      final afterFive = at(5);
+      expect(start.liveRemaining, const Duration(minutes: 58));
+      expect(afterOneMinute.liveRemaining, const Duration(minutes: 57));
+      expect(afterFive.liveRemaining, const Duration(minutes: 53));
+      expect(afterOneMinute.progress, greaterThan(start.progress),
+          reason: 'تقدم كل دقيقة كما في التطبيق المرجعي');
+      expect(afterFive.progress, greaterThan(afterOneMinute.progress));
+    });
+
+    test('بلا مؤشرات ⇒ قيمة الخادم حرفياً بلا اختراع إجمال', () {
+      const circle = RemainingCircle(
+        remaining: Duration(minutes: 58),
+        label: 'Remaining',
+        progress: 0.99,
+      );
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: circle,
+        dutyStatus: DutyStatusCode.onDutyNotDriving,
+        hosIndicators: null,
+        statusLabel: 'ON_DUTY',
+        elapsedSinceSnapshot: const Duration(minutes: 5),
+      );
+      expect(ui.progress, 0.99,
+          reason: 'لا مطابقة ممكنة — نعرض نسبة الخادم كما وردت');
     });
   });
 }

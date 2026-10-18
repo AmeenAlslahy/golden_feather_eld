@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
@@ -14,6 +14,7 @@ import '../../data/providers/log_repository_providers.dart';
 import 'logs_provider.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/log_readiness.dart';
+import '../../domain/entities/log_certify_state.dart';
 import '../../domain/repositories/log_repository.dart';
 import 'log_draft_signature_provider.dart';
 
@@ -21,6 +22,12 @@ class CertifyLogState {
   final bool isLoading;
   final String? error;
   final LogReadiness? readinessData;
+
+  /// حالة شاشة الاعتماد من `GET /eld/daily-logs/{id}/certify` — المصدر
+  /// الأول لقرار الجاهزية وموانع الاعتماد؛ null يعني غير متاحة
+  /// (عقد أقدم/تعذر الجلب) فنعود للجاهزية وحدها.
+  final LogCertifyState? certifyState;
+
   final CertifyOutcome? outcome;
 
   static const String _statusReady = 'READY';
@@ -29,10 +36,24 @@ class CertifyLogState {
     this.isLoading = false,
     this.error,
     this.readinessData,
+    this.certifyState,
     this.outcome,
   });
 
   bool get isReady {
+    final cs = certifyState;
+    if (cs != null) {
+      if (cs.certified) return true;
+      // SIGNATURE_REQUIRED لا يمنع الزر: التوقيع يُرسم ويُرسل مع نفس
+      // طلب الاعتماد (الشاشة تتحقق من وجود التوقيع قبل الإرسال).
+      final blocking = cs.validationCodes
+          .where((code) => code.toUpperCase() != 'SIGNATURE_REQUIRED')
+          .toList();
+      if (blocking.isNotEmpty) return false;
+      if (cs.canCertify) {
+        return !(readinessData?.carrierProposedEditsPending ?? false);
+      }
+    }
     if (readinessData == null) return false;
     final status = readinessData!.readinessStatus.toUpperCase();
     if (status == _statusReady || status == 'CERTIFIED' || status == 'ALREADY_CERTIFIED') {
@@ -40,13 +61,31 @@ class CertifyLogState {
     }
     return readinessData!.missingRequirements.isEmpty && !readinessData!.carrierProposedEditsPending;
   }
-  List<String> get missingRequirements => readinessData?.missingRequirements ?? [];
+
+  /// نصوص الموانع للعرض: رموز `validationCodes` أولاً (مترجمة أينما
+  /// عُرفت)، وإلا قائمة الجاهزية القديمة.
+  List<String> get missingRequirements {
+    final cs = certifyState;
+    if (cs != null && cs.validationCodes.isNotEmpty) {
+      return cs.validationCodes.map(_validationCodeText).toList();
+    }
+    return readinessData?.missingRequirements ?? [];
+  }
+
+  static const Map<String, String> _validationCodeTexts = {
+    'FORM_NOT_FINAL': 'The daily form is not complete for this day.',
+    'SIGNATURE_REQUIRED': 'A digital signature is required before certification.',
+  };
+
+  static String _validationCodeText(String code) =>
+      _validationCodeTexts[code.toUpperCase()] ?? code;
 
   CertifyLogState copyWith({
     bool? isLoading,
     String? error,
     bool clearError = false,
     LogReadiness? readinessData,
+    LogCertifyState? certifyState,
     CertifyOutcome? outcome,
     bool clearOutcome = false,
   }) {
@@ -54,6 +93,7 @@ class CertifyLogState {
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       readinessData: readinessData ?? this.readinessData,
+      certifyState: certifyState ?? this.certifyState,
       outcome: clearOutcome ? null : (outcome ?? this.outcome),
     );
   }
@@ -121,11 +161,30 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   }
 
   Future<void> _fetchReadiness() async {
-    final result = await _repository.getReadiness(_logId);
+    final readinessResult = await _repository.getReadiness(_logId);
+
+    // حالة شاشة الاعتماد (الوثيقة) — تُجلب إلى جانب الجاهزية؛ أي فشل
+    // أو غياب (خادم بلا GET /certify) يبقى صامتاً ونتسامح معه.
+    LogCertifyState? certifyState;
+    try {
+      final certifyResult = await _repository.getCertifyState(_logId);
+      certifyState = certifyResult.fold((_) => null, (value) => value);
+    } catch (_) {
+      certifyState = null;
+    }
+
     if (!mounted) return;
-    state = result.match(
-      (failure) => state.copyWith(isLoading: false, error: _message(failure)),
-      (data) => state.copyWith(isLoading: false, readinessData: data),
+    state = readinessResult.match(
+      (failure) => state.copyWith(
+        isLoading: false,
+        error: _message(failure),
+        certifyState: certifyState,
+      ),
+      (data) => state.copyWith(
+        isLoading: false,
+        readinessData: data,
+        certifyState: certifyState,
+      ),
     );
   }
 
@@ -185,9 +244,8 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
 
     final bytes = signatureBytes;
 
-    // The live contract has no signature-upload path. The drawn signature
-    // remains the driver's confirmation on this device; the legal record is
-    // POST /eld/daily-logs/{id}/certify.
+    // الوثيقة تشترط وجود توقيع رقمي؛ التوقيع المرسوم يُرسل مع نفس طلب
+    // الاعتماد في `signatureImage` (PNG base64).
     if (bytes == null || bytes.isEmpty) {
       final failOutcome = CertifyFailed(_loc.pleaseDrawASignatureFirst);
       state = state.copyWith(outcome: failOutcome);
@@ -202,14 +260,13 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     }
 
     state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
+    // الوثيقة: جسم POST /certify = `{ certified: true, signatureImage }`
+    // حيث signatureImage هي صورة التوقيع المرسوم (PNG base64).
     final result = await _repository.certifyLog(
       logId: _logId,
       driverId: driverId,
-      // DateFormat is used for the API payload contract, not for UI display.
-      logDate: DateFormat('yyyy-MM-dd').format(log.date),
-      signatureCertificateId: 'local_drawn',
-      signatureConfirmation: true,
-      certifiedTrue: true,
+      certified: true,
+      signatureImageBase64: base64Encode(bytes),
     );
     if (!mounted) return null;
 

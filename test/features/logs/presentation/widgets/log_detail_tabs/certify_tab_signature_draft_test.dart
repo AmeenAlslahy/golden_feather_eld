@@ -155,6 +155,54 @@ void main() {
       expect(reloadedController.isNotEmpty, isTrue);
     });
 
+    testWidgets('drawing remains possible after a restored draft (regression: unmodifiable list crash)', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          activeBackendProvider.overrideWithValue(adapter),
+          logRepositoryProvider.overrideWithValue(repo),
+          authStateProvider.overrideWith(
+            (ref) => _MockAuthNotifier(
+              AuthState(
+                status: AuthStatus.authenticated,
+                user: User(
+                  id: '1',
+                  fullName: 'Driver 1',
+                  email: 'd1@test.com',
+                  username: 'd1',
+                  role: UserRole.fieldWorker,
+                  createdAt: DateTime.now(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // المسودة تعيش في حالة `List.unmodifiable`؛ يجب أن يستلم المتحكم نسخة
+      // قابلة للتعديل، وإلا انهار الرسم بأول لمسة:
+      // "Unsupported operation: Cannot add to an unmodifiable list".
+      container
+          .read(logDraftSignatureProvider(log.id).notifier)
+          .updateDraft([Point(const Offset(20, 30), PointType.tap, 1.0)]);
+
+      await tester.pumpWidget(createTestApp(container, child: CertifyTab(selectedLog: log)));
+      await tester.pumpAndSettle();
+
+      final controller =
+          tester.widgetList<Signature>(find.byType(Signature)).first.controller;
+      final before = controller.points.length;
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.byType(Signature)));
+      await gesture.moveBy(const Offset(24, 16));
+      await gesture.up();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(controller.points.length, greaterThan(before));
+    });
+
     testWidgets('NOT READY button navigates to Events without wiping signature', (tester) async {
       final container = ProviderContainer(
         overrides: [

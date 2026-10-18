@@ -1,3 +1,4 @@
+import '../../../../core/error/app_error.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
@@ -16,32 +17,85 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   @override
   Future<Result<RawJson>> list({
     DriverId? driverId,
+    int? deviceId,
+    String? status,
+    String? formStatus,
+    String? certificationStatus,
     DateTime? startDate,
     DateTime? endDate,
-    String? status,
-    String? certificationStatus,
-    int? ruleId,
-    bool? requiresAction,
-    int limit = 50,
-    int offset = 0,
+    DateTime? logDate,
+    int page = 0,
+    int size = 20,
   }) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogs,
       queryParameters: {
+        'page': page,
+        'size': size,
         if (driverId != null) 'driverId': driverId.value,
-        if (startDate != null) 'startDate': startDate.toIso8601String().split('T').first,
-        if (endDate != null) 'endDate': endDate.toIso8601String().split('T').first,
+        if (deviceId != null) 'deviceId': deviceId,
         if (status != null) 'status': status,
-        if (certificationStatus != null) 'certificationStatus': certificationStatus,
-        if (ruleId != null) 'ruleId': ruleId,
-        if (requiresAction != null) 'requiresAction': requiresAction,
-        'limit': limit,
-        'offset': offset,
+        if (formStatus != null) 'formStatus': formStatus,
+        if (certificationStatus != null)
+          'certificationStatus': certificationStatus,
+        if (startDate != null) 'startDate': _dateOnly(startDate),
+        if (endDate != null) 'endDate': _dateOnly(endDate),
+        if (logDate != null) 'logDate': _dateOnly(logDate),
       },
-      parser: (data) => data is List ? {'data': data} : (data is Map<String, dynamic> ? data : {}),
+      parser: (data) => data is List
+          ? <String, dynamic>{'data': data}
+          : (data is Map<String, dynamic> ? data : <String, dynamic>{}),
+    );
+    // يحمل المغلف `pagination` فوق `data`؛ نمررها للمستودع كما هي.
+    return res.mapValue((r) {
+      final data = r.data ?? <String, dynamic>{};
+      final pagination = r.pagination;
+      if (pagination == null) return data;
+      return <String, dynamic>{
+        ...data,
+        'pagination': {
+          'page': pagination.page,
+          'size': pagination.size,
+          'totalElements': pagination.totalElements,
+          'totalPages': pagination.totalPages,
+          'hasNext': pagination.hasNext,
+          'hasPrevious': pagination.hasPrevious,
+        },
+      };
+    });
+  }
+
+  @override
+  Future<Result<RawJson>> getSummary({
+    DriverId? driverId,
+    int? deviceId,
+    String? status,
+    String? formStatus,
+    String? certificationStatus,
+    DateTime? startDate,
+    DateTime? endDate,
+    DateTime? logDate,
+  }) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dailyLogSummary,
+      queryParameters: {
+        if (driverId != null) 'driverId': driverId.value,
+        if (deviceId != null) 'deviceId': deviceId,
+        if (status != null) 'status': status,
+        if (formStatus != null) 'formStatus': formStatus,
+        if (certificationStatus != null)
+          'certificationStatus': certificationStatus,
+        if (startDate != null) 'startDate': _dateOnly(startDate),
+        if (endDate != null) 'endDate': _dateOnly(endDate),
+        if (logDate != null) 'logDate': _dateOnly(logDate),
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
+
+  static String _dateOnly(DateTime date) =>
+      date.toIso8601String().split('T').first;
 
   @override
   Future<Result<RawJson>> getById(DailyLogId logId) async {
@@ -135,10 +189,66 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> getGraphGrid(DailyLogId logId) async {
+  Future<Result<RawJson>> getEvents(DailyLogId logId) async {
     final res = await _apiClient.get<RawJson>(
-      EldEndpoints.dailyLogGraphGrid(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
+      EldEndpoints.dailyLogEvents(logId.value),
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+    );
+    // خادم لم يُحدَّث بعد إلى العقد الجديد → fallback للمسار القديم
+    // `graph-grid` (نفس شكل الحمولة: data.events).
+    if (res.isLeft() && res.errorOrNull is NotFoundError) {
+      final legacy = await _apiClient.get<RawJson>(
+        EldEndpoints.dailyLogGraphGrid(logId.value),
+        parser: (data) =>
+            data is Map<String, dynamic> ? data : <String, dynamic>{},
+      );
+      return legacy.mapValue((r) => r.data ?? <String, dynamic>{});
+    }
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> getEventDetails(
+    DailyLogId logId,
+    DutyStatusId eventId,
+  ) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dailyLogEvent(logId.value, eventId.value),
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> updateEvent({
+    required DailyLogId logId,
+    required DutyStatusId eventId,
+    required RawJson event,
+    int? expectedOwnerDriverId,
+  }) async {
+    final res = await _apiClient.put<RawJson>(
+      EldEndpoints.dailyLogEvent(logId.value, eventId.value),
+      data: event,
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      expectedOwnerDriverId: expectedOwnerDriverId,
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> getEventsOptions(DailyLogId logId) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dailyLogEventsOptions(logId.value),
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> getFormOptions(DailyLogId logId) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dailyLogFormOptions(logId.value),
+      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
@@ -156,6 +266,15 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final res = await _apiClient.get<ReadinessDto>(
       EldEndpoints.checkReadiness(logId.value),
       parser: (data) => ReadinessDto.fromJson(data as Map<String, dynamic>),
+    );
+    return res.mapValue((r) => r.data!);
+  }
+
+  @override
+  Future<Result<CertifyStateDto>> getCertifyState(DailyLogId logId) async {
+    final res = await _apiClient.get<CertifyStateDto>(
+      EldEndpoints.certifyLog(logId.value),
+      parser: (data) => CertifyStateDto.fromJson(data as Map<String, dynamic>),
     );
     return res.mapValue((r) => r.data!);
   }

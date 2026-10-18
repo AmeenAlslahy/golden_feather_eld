@@ -40,107 +40,81 @@ class CircularTimerLogic {
     return true;
   }
 
-  /// حساب القيمة المحكومة بناءً على نوع المؤشر (مستهلك أو متبقي)
-  static Duration _remainingOf(
-      HosIndicator? ind, Duration limit, Duration fallback) {
-    if (ind == null) return fallback;
-    if (ind.type == IndicatorType.used) {
-      return limit - ind.value;
-    }
-    return ind.value;
-  }
-
-  /// يطبق القواعد لاختيار أضيق حد وحساب الوقت الحي
+  /// يحسب ما يُعرض على الدائرة: **قيمة الخادم** مرساةً + استيفاء زمني.
+  ///
+  /// ### الرقم (قرار المالك — الخادم هو المرجع)
+  ///
+  /// عبر الإنترنت لا يوجد اشتقاق محلي: الدائرة تعرض `متبقي الخادم` من
+  /// اللقطة، وينقص بالمنقضي منذ لحظة القياس، ثم **يُستبدل كاملاً**
+  /// ببيانات الخادم عند كل نبضة جلب (كل 5 دقائق). الاشتقاق المحلي القديم
+  /// (أضيق حد بين الوردية والاستراحة) كان يخالف الخادم — مقيس حياً:
+  /// الخادم 00:58 (حاكم بالدورة) والتطبيق 07:57.
+  ///
+  /// ### القوس (كما في التطبيق المرجعي)
+  ///
+  /// يتقدم **ثانية بثانية** مع الوقت من الحدّ القانوني الحاكم، والحدّ
+  /// يُستنتج من **مؤشرات الخادم نفسها** — المؤشر الذي «متبقيه» يطابق
+  /// `circle.remaining` (المصدر الذي أنتج الدائرة). قيست المطابقة حياً:
+  /// `00:58 = 70:00 − 69:02` (الدورة) و`03:48 = 14:00 − 10:12` (الوردية).
+  ///
+  /// - الراحة: صفر ودائرة فارغة.
+  /// - السالب القادم **من الخادم** يُعرض كما ورد (تجاوز حدّ)، أما النزول
+  ///   تحت الصفر **بسبب مرور الوقت** فيُقيَّد عند الصفر.
+  ///
+  /// [hosIndicators] تُستخدم لمطابقة الحدّ الحاكم (طول القوس) فقط — ولا
+  /// تُغيّر الرقم المعروض إطلاقاً.
   static TimerUiState calculateUiState({
     required RemainingCircle circle,
     required DutyStatusCode? dutyStatus,
     required HosIndicators? hosIndicators,
     required String statusLabel,
     required Duration elapsedSinceSnapshot,
+    Duration cycleLimit = const Duration(hours: 70),
   }) {
     final isRest = isRestDuty(dutyStatus, statusLabel);
-    final isDriving = dutyStatus == DutyStatusCode.driving;
 
-    final Duration totalLimit;
-    final Duration baseRemaining;
-
-    if (isRest) {
-      totalLimit = const Duration(hours: 11);
-      baseRemaining = Duration.zero;
-    } else if (isDriving) {
-      totalLimit = const Duration(hours: 11);
-      baseRemaining = _remainingOf(
-        hosIndicators?.drive,
-        totalLimit,
-        circle.remaining,
-      );
-    } else {
-      // On Duty / Yard Move: الحد الحاكم هو **الأضيق** بين نافذة الوردية
-      // (14h) ونافذة الاستراحة (8h).
-      //
-      // 🔴 **المقارنة على المتبقّي لا على القيم الخام.**
-      //
-      // كان الكود يقارن `breakRemaining(7:56)` بـ `shiftUsed(10:12)` مباشرة.
-      // وكميّتان مختلطتان: أحدهما **متبقٍّ** والآخر **مستهلَك** من
-      // حدّين مختلفين (8h و14h) — فالمقارنة بلا معنى. والنتيجة أن الحد
-      // الحاكم صار الاستراحة (7:56) بينما الخادم يعرض **3:48**
-      // (= 14:00 − 10:12، أي الوردية). فرق قدره **4 ساعات و8 دقائق** يمنح السائق
-      // رصيداً قانونياً غير موجود.
-      //
-      // القاعدة: حوّل كلا المؤشرين إلى "متبقٍّ" ثم خذ الأدنى.
-      const shiftLimit = Duration(hours: 14);
-      const breakLimit = Duration(hours: 8);
-
-      final shiftRemaining = _remainingOf(
-        hosIndicators?.shift,
-        shiftLimit,
-        circle.remaining,
-      );
-      final breakRemaining = _remainingOf(
-        hosIndicators?.breakTime,
-        breakLimit,
-        circle.remaining,
-      );
-
-      if (breakRemaining < shiftRemaining) {
-        totalLimit = breakLimit;
-        baseRemaining = breakRemaining;
-      } else {
-        totalLimit = shiftLimit;
-        baseRemaining = shiftRemaining;
-      }
-    }
-
-    // حساب الوقت المتبقي الحي ثانية بثانية
     final Duration liveRemaining;
     if (isRest) {
       liveRemaining = Duration.zero;
     } else {
-      final raw = baseRemaining - elapsedSinceSnapshot;
-
       // 🔴 العدّاد التنازلي **لا ينزل تحت الصفر بسبب مرور الوقت**.
-      // `baseRemaining − elapsed` كان يمرّ سالباً بلا حدّ، فلا يتوقف
-      // العدّاد عند بلوغ الصفر بل يكمل العدّ بالسالب.
-      //
-      // أما السالب القادم **من الخادم** فحالة أخرى: السائق تجاوز الحدّ
+      // أما السالب القادم من الخادم فحالة أخرى: السائق تجاوز الحدّ
       // أصلاً — وضع ثابت يُعرض كما ورد (مثبَّت في
       // main_circular_timer_test) ولا يصحّحه مصفّر الطرح.
-      
+      final raw = circle.remaining - elapsedSinceSnapshot;
       final drivenBelowZeroByElapsed =
           elapsedSinceSnapshot > Duration.zero && raw.isNegative;
       liveRemaining = drivenBelowZeroByElapsed ? Duration.zero : raw;
     }
 
-    // حساب نسبة الاستهلاك (تقدم الدائرة باتجاه عقارب الساعة كما في التطبيق الأصلي)
+    // القوس يتقدم مع الوقت (كما في التطبيق المرجعي): نسبة المستهلك من
+    // الحدّ القانوني **الحاكم**، ثانية بثانية مع العدّاد.
+    //
+    // ⚠️ لا يُشتق الإجمالي من نسبة الخادم: الصيغة القديمة
+    // `total = متبقي ÷ (1−نسبة)` منفجرة — النسبة تصل بدقتين عشريتين،
+    // وعند 0.99 يتراوح «الإجمالي» بين ~64 و193 ساعة والدورة 70، وكانت
+    // تصفّر القوس عند تقريب الخادم إلى 1.00 (آخر ~21 دقيقة من الدورة)
+    // عند كل نبضة (سنّ منشار). الحدّ يأتي من مطابقة مؤشرات الخادم.
+    //
+    // بلا مؤشرات (أو بلا مطابقة معقولة): قيمة الخادم حرفياً — لا نخترع
+    // إجمالاً؛ وإذا بلغ العدّاد الصفر قبل النبضة التالية فالقوس يكتمل.
     final double progress;
     if (isRest) {
       progress = 0.0;
     } else {
-      final consumedSeconds = totalLimit.inSeconds - liveRemaining.inSeconds;
-      progress = (consumedSeconds / math.max(1, totalLimit.inSeconds)).clamp(
-        0.0,
-        1.0,
+      final governing = _matchingLimit(
+        circleRemaining: circle.remaining,
+        indicators: hosIndicators,
+        cycleLimit: cycleLimit,
       );
+      if (governing != null) {
+        final liveSeconds = math.max(0, liveRemaining.inSeconds);
+        progress = (1 - liveSeconds / governing.inSeconds).clamp(0.0, 1.0);
+      } else if (liveRemaining <= Duration.zero) {
+        progress = 1.0;
+      } else {
+        progress = circle.progress.clamp(0.0, 1.0);
+      }
     }
 
     return TimerUiState(
@@ -202,37 +176,39 @@ class CircularTimerLogic {
     );
   }
 
-  /// دمج **أحادي الاتجاه**: التطبيق لا يُرجِع وقتاً مستهلكاً إلى الوراء.
+  /// الحدّ القانوني الحاكم لدائرة الخادم — من **بيانات الخادم وحدها**.
   ///
-  /// ### لماذا
-  ///
-  /// قيست الخادم الحيّ مباشرة ووجدت تبايناً بنيوياً:
-  ///
-  /// | المؤشر | هل يحتسب الفترة المفتوحة؟ |
-  /// |---|---|
-  /// | `CYCLE` | ✅ نعم (25:41 ← 36:43 خلال 11 ساعة) |
-  /// | `SHIFT` | ❌ لا — يحسبه من الفترات **المغلقة** فقط |
-  /// | `BREAK` / `circle` | ❌ لا — بقي `08:00` خلال 201 ثانية |
-  ///
-  /// فالسائق `ON_DUTY` منذ 12 ساعة، والخادم ما زال يقول
-  /// `SHIFT 00:00`. ولو قبل التطبيق هذه القيمة عند كل نبضة 5 دقائق
-  /// لقتل العدّاد وارتدّ إلى الصفر كل خمس دقائق — **وهو أسوأ من العطل
-  /// الأصلي**: رقم يقفز بلا سبب ويخسر السائق الثقة بكل الأرقام.
-  ///
-  /// ### القاعدة
-  ///
-  /// - نفس حالة الخدمة ⇒ لا نقبل زيادة الوقت المتبقي عند الخادم.
-  ///   المتبقي = `min(خادم، محلي)`.
-  /// - تغيّرت حالة الخدمة ⇒ نافذة جديدة، والخادم مرجعها بلا تحفّظ.
-  ///
-  /// الأمان: **لا يمكن لهذه القاعدة أن تمنح السائق وقتاً أضيق**. أسوأ
-  /// ما تفعله أنها تحذف سعة زائدة — وتُصحَّح عند إغلاق الفترة.
-  static RemainingCircle reconcileRemaining({
-    required RemainingCircle server,
-    required RemainingCircle local,
-    required bool sameDutyEpisode,
+  /// يُختار المؤشر الذي «متبقيه» (المشتق من حدّه الثابت لقيم `USED`، أو
+  /// قيمته لقيم `REMAINING`) هو الأقرب إلى `circleRemaining`. الخادم
+  /// يحسب الدائرة من أحد مؤشراته الأربعة في اللقطة نفسها، فالمطابقة
+  /// دقيقة (± دقيقة تقريب). إن بعدت كل المطابقات أكثر من ساعة (بيانات
+  /// غير متسقة) يُعاد `null` — فيعرض القوس قيمة الخادم حرفياً.
+  static Duration? _matchingLimit({
+    required Duration circleRemaining,
+    required HosIndicators? indicators,
+    required Duration cycleLimit,
   }) {
-    if (!sameDutyEpisode) return server;
-    return server.remaining <= local.remaining ? server : local;
+    if (indicators == null) return null;
+
+    Duration? best;
+    var bestGap = const Duration(hours: 1);
+
+    void consider(HosIndicator indicator, Duration limit) {
+      if (limit.inSeconds <= 0) return;
+      final remaining = indicator.type == IndicatorType.used
+          ? limit - indicator.value
+          : indicator.value;
+      final gap = (remaining - circleRemaining).abs();
+      if (gap < bestGap) {
+        bestGap = gap;
+        best = limit;
+      }
+    }
+
+    consider(indicators.drive, const Duration(hours: 11));
+    consider(indicators.shift, const Duration(hours: 14));
+    consider(indicators.breakTime, const Duration(hours: 8));
+    consider(indicators.cycle, cycleLimit);
+    return best;
   }
 }

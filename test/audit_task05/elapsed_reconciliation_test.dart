@@ -323,7 +323,8 @@ void main() {
       );
 
       expect(ui.liveRemaining, const Duration(hours: 3, minutes: 48));
-      expect(ui.progress, closeTo(0.724, 0.01));
+      expect(ui.progress, closeTo(1 - 228 / 840, 0.001),
+          reason: 'القوس يتقدم من الحدّ المطابق: 14h − 10:12 = 3:48');
       expect(ui.isRest, isFalse);
     });
 
@@ -356,8 +357,11 @@ void main() {
       expect(ui.progress, 1.0);
     });
 
-    test('DRIVING: الحد 11 ساعة على مؤشر القيادة', () {
-      final d = _serverDashboard(driveUsed: const Duration(hours: 10));
+    test('DRIVING: الدائرة تعرض قيمة الخادم المرساة (1:00)', () {
+      final d = _serverDashboard(
+        circleRemaining: const Duration(hours: 1),
+        driveUsed: const Duration(hours: 10),
+      );
       final ui = CircularTimerLogic.calculateUiState(
         circle: d.remainingCircle,
         dutyStatus: DutyStatusCode.driving,
@@ -365,7 +369,8 @@ void main() {
         statusLabel: 'DRIVING',
         elapsedSinceSnapshot: Duration.zero,
       );
-      expect(ui.liveRemaining, const Duration(hours: 1));
+      expect(ui.liveRemaining, const Duration(hours: 1),
+          reason: 'الخادم هو المرجع — لا اشتقاق محلي من مؤشر القيادة');
     });
 
     test('OFF_DUTY: المتبقي صفر ودائرة فارغة', () {

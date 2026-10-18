@@ -95,5 +95,39 @@ void main() {
       expect(grid.points[1].startHour, closeTo(14.75, 0.01));
       expect(grid.points[1].status, 'D');
     });
+
+    testWidgets('ignores certification events so signatures do not plot as duty lines', (tester) async {
+      final events = [
+        makeEvent(seq: 1, timeEt: '12:00 AM ET', code: 'ON'),
+        const DotInspectionEvent(
+          sequenceNumber: 2,
+          timeEt: '03:51 AM ET',
+          eventCode: 'CERT',
+          eventType: 'CERTIFICATION',
+          description: 'Certification of Records (اعتماد السجل وتوقيع السائق)',
+          location: 'Admin User',
+          odometer: 100450.0,
+          engineHours: 8.5,
+          origin: 'DRIVER',
+          notes: 'Driver certified 24-hour log as true and correct',
+          certificationEvent: true,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InspectionDutyGraph(events: events),
+          ),
+        ),
+      );
+
+      final grid = tester.widget<EldGraphGrid>(find.byType(EldGraphGrid));
+      // Only 1 segment (ON extending until end of day), CERT is completely excluded from graph
+      expect(grid.points.length, 1);
+      expect(grid.points.first.status, 'ON');
+      expect(grid.points.first.startHour, 0.0);
+      expect(grid.points.first.endHour, 24.0);
+    });
   });
 }

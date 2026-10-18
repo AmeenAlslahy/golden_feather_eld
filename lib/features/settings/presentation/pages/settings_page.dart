@@ -12,6 +12,7 @@ import '../../../../core/widgets/eld_card.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../account/presentation/providers/account_provider.dart';
+import '../server_url_validation.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -180,17 +181,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       controller: _url,
                       hint: 'https://snsoft.cloud',
                       keyboardType: TextInputType.url,
-                      validator: (value) {
-                        final raw = value?.trim() ?? '';
-                        if (raw.isEmpty) return context.loc.enterServerUrl;
-                        final uri = Uri.tryParse(raw);
-                        final validHttp = uri != null &&
-                            uri.hasAuthority &&
-                            uri.host.isNotEmpty &&
-                            (uri.scheme == 'http' || uri.scheme == 'https');
-                        if (!validHttp) return context.loc.invalidServerUrl;
-                        return null;
-                      },
+                      validator: (value) =>
+                          serverUrlError(value, loc: context.loc),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     AppButton(

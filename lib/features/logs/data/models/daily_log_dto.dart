@@ -60,6 +60,17 @@ class DailyLogDto {
     List<String> stringList(Object? raw) =>
         (raw as List?)?.map((e) => e.toString()).toList() ?? const [];
 
+    // شكل الوثيقة: `totals.total.{seconds,formatted}`؛ الحقول المسطّحة
+    // القديمة (formattedTotalWorkTime/totalDurationMinutes) تبقى احتياطاً.
+    final totals = json['totals'] is Map
+        ? Map<String, dynamic>.from(json['totals'] as Map)
+        : null;
+    final total = totals?['total'] is Map
+        ? Map<String, dynamic>.from(totals!['total'] as Map)
+        : null;
+    final totalSeconds = (total?['seconds'] as num?)?.toInt();
+    final formattedFromTotals = total?['formatted']?.toString();
+
     final formIndicator = json['formIndicator'] is Map
         ? Map<String, dynamic>.from(json['formIndicator'] as Map)
         : null;
@@ -77,14 +88,39 @@ class DailyLogDto {
       }
     }
 
+    // الاعتماد: `certificationStatus` نصاً؛ وعند غيابه نستنتج من
+    // `certified: true` أو من `logStatus` عندما تكون قيمته قيمة اعتماد معروفة.
+    var certificationStatusStr = (json['certificationStatus'] as String?)?.trim();
+    if (certificationStatusStr == null ||
+        certificationStatusStr.isEmpty ||
+        certificationStatusStr.toUpperCase() == 'UNKNOWN') {
+      final certifiedWire = json['certified'] as bool?;
+      final logStatus = (json['logStatus'] as String?)?.trim().toUpperCase();
+      if (certifiedWire == true || logStatus == 'CERTIFIED') {
+        certificationStatusStr = 'CERTIFIED';
+      } else if (logStatus == 'RE_CERTIFICATION_REQUIRED' ||
+          logStatus == 'REVOKED' ||
+          logStatus == 'NOT_READY' ||
+          logStatus == 'READY') {
+        certificationStatusStr = logStatus;
+      }
+    }
+
+    final formattedWorkTime =
+        (json['formattedTotalWorkTime'] as String?)?.trim();
+
     return DailyLogDto(
       id: json['id'] as int? ?? 0,
       uniqueId: json['uniqueId'] as String? ?? '',
       logDate: logDateStr,
-      formattedTotalWorkTime: json['formattedTotalWorkTime'] as String? ?? '',
-      totalDurationMinutes: json['totalDurationMinutes'] as int? ?? 0,
+      formattedTotalWorkTime:
+          formattedWorkTime != null && formattedWorkTime.isNotEmpty
+              ? formattedWorkTime
+              : (formattedFromTotals ?? ''),
+      totalDurationMinutes: json['totalDurationMinutes'] as int? ??
+          (totalSeconds != null ? (totalSeconds / 60).round() : 0),
       formStatus: formStatusStr ?? 'UNKNOWN',
-      certificationStatus: json['certificationStatus'] as String? ?? 'UNKNOWN',
+      certificationStatus: certificationStatusStr ?? 'UNKNOWN',
       today: json['today'] as bool? ?? false,
       events: (json['events'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)

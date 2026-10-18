@@ -1,18 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/account/presentation/providers/rules_screen_provider.dart';
 
-/// A pure domain representation of the driver's active rules and permissions.
-class DriverRules {
-  final bool isPersonalConveyanceAllowed;
-  final bool isYardMoveAllowed;
+import '../../../../domain/account/driver_rules.dart';
+import 'rules_screen_provider.dart';
 
-  const DriverRules({
-    required this.isPersonalConveyanceAllowed,
-    required this.isYardMoveAllowed,
-  });
-}
-
-/// A core provider exposing the driver's active rules.
+/// Exposes the driver's active rules, derived from the rules screen projection.
 /// Must be autoDispose because it watches rulesScreenProvider (which is autoDispose).
 final driverRulesProvider = Provider.autoDispose<AsyncValue<DriverRules>>((ref) {
   return ref.watch(rulesScreenProvider).whenData((model) {

@@ -96,7 +96,7 @@ void main() {
     expect(state.accountData?.email, 'driver@example.com');
   });
 
-  test('updatePreferences offline updates local accountData and returns true', () async {
+  test('updatePreferences offline is rejected without mutating local account', () async {
     final container = createContainer(isOnline: false);
     addTearDown(container.dispose);
 
@@ -107,12 +107,12 @@ void main() {
       odometerUnit: 'km',
     );
 
-    expect(result, isTrue);
+    expect(result, isFalse);
 
     final state = container.read(accountProvider);
-    expect(state.accountData?.language, 'Spanish');
-    expect(state.accountData?.odometer, 'km');
-    expect(state.error, isNull);
+    expect(state.accountData?.language, 'English');
+    expect(state.accountData?.odometer, 'mi');
+    expect(state.error, 'noInternet');
   });
 
   test('fetchMyAccount online falling back gracefully on network error', () async {

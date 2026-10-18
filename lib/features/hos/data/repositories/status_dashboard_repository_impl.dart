@@ -34,6 +34,9 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   @override
   DateTime? get snapshotAt => _cachedSnapshot?.takenAt;
 
+  @override
+  StatusDashboard? get cachedDashboard => _cachedSnapshot?.dashboard;
+
   StatusDashboardRepositoryImpl(
     this._backend,
     this._networkInfo, {

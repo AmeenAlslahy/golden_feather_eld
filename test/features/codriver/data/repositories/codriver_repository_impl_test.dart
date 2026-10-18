@@ -10,6 +10,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/codriver/data/datasources/codriver_local_cache.dart';
 import 'package:golden_feather_eld/features/codriver/data/repositories/codriver_repository_impl.dart';
 import 'package:golden_feather_eld/features/codriver/domain/current_codriver.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/event_ownership.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/features/sync/domain/repositories/offline_queue.dart';
 
@@ -151,6 +152,60 @@ void main() {
       verify(() => mockLocalCache.saveCurrentCoDriver(any())).called(1);
       verify(() => mockOfflineQueue.enqueue(any())).called(1);
       verifyZeroInteractions(mockBackend);
+    });
+  });
+
+  group('P0 — ownership stamping on the queued switch event', () {
+    CoDriverRepositoryImpl withDriver(int? Function() readDriverId) =>
+        CoDriverRepositoryImpl(
+          driverSessionBackend: mockBackend,
+          networkInfo: mockNetworkInfo,
+          localCache: mockLocalCache,
+          offlineQueue: mockOfflineQueue,
+          readDriverId: readDriverId,
+        );
+
+    test('offline switch carries ownerDriverId from the live session', () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+      final result = await withDriver(() => 777).switchPrimary(coDriverId: 55);
+
+      expect(result.isRight(), isTrue);
+      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
+          .captured
+          .single as PendingEvent;
+      expect(event.type, 'switch_primary_driver');
+      expect(event.payload['coDriverId'], 55);
+      expect(event.payload['ownerDriverId'], 777,
+          reason: 'بدون الختم كان الحجر الدائم في الطابور يبتلع التبديل');
+      expect(event.id, startsWith('switch_'));
+    });
+
+    test('no session → no owner key, but the switch is still queued', () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+      final result = await withDriver(() => null).switchPrimary(coDriverId: 55);
+
+      expect(result.isRight(), isTrue);
+      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
+          .captured
+          .single as PendingEvent;
+      expect(event.payload.containsKey('ownerDriverId'), isFalse);
+    });
+
+    test('queued switch resolves to a proven owner (no quarantine path)',
+        () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+      await withDriver(() => 777).switchPrimary(coDriverId: 57);
+
+      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
+          .captured
+          .single as PendingEvent;
+      final ownership = EventOwnershipResolver.resolve(event);
+      expect(ownership.driverId, 777,
+          reason: 'قبل الإصلاح كان الحل UNKNOWN ⇒ حجر دائم في الطابور');
+      expect(ownership.evidence, isNot(OwnerEvidence.unknown));
     });
   });
 }

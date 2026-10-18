@@ -132,7 +132,10 @@ class RulesScreenModel {
     'off',
   };
 
-  bool _isSettingAllowed(List<String> keys) {
+  bool _isSettingAllowed(List<String> keys) => tryIsSettingAllowed(keys) ?? false;
+
+  /// نتيجة ثلاثية: true مباح، false ممنوع، null غير معروف/غير موجود.
+  bool? tryIsSettingAllowed(List<String> keys) {
     for (final key in keys) {
       final v = fixedSettings[key];
       if (v == null) continue;
@@ -141,6 +144,18 @@ class RulesScreenModel {
       if (_allowedValues.contains(t)) return true;
       if (_forbiddenValues.contains(t)) return false;
     }
-    return false;
+    return null;
+  }
+
+  /// أول قيمة نصية معروفة لهذه المفاتيح — تُعرض كما وردت من الخادم
+  /// عندما تكون الصيغة غير مصنّفة (لا in allowed ولا forbidden).
+  String? firstSettingDisplayText(List<String> keys) {
+    for (final key in keys) {
+      final v = fixedSettings[key];
+      if (v == null) continue;
+      final text = v.toString().trim();
+      if (text.isNotEmpty) return text;
+    }
+    return null;
   }
 }

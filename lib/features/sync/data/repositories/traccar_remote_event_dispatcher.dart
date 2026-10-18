@@ -9,6 +9,7 @@ import '../../domain/usecases/sync_engine.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
 import '../../../../backend/contracts/daily_logs_backend.dart';
+import '../../../../backend/contracts/driver_session_backend.dart';
 import '../../../../backend/contracts/dvir_backend.dart';
 import '../../../../backend/contracts/inspection_backend.dart';
 import '../../../../backend/contracts/contract_enums.dart';
@@ -32,6 +33,11 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final AuthLocalDataSource _localDataSource;
   final InspectionBackend? _inspectionBackend;
 
+  /// P0 — تبديل السائق المشارك كان يسقط على `default` (endpoint خاطئ)
+  /// ثم يُحجَر؛ صار يُوجَّه عبر نفس backend المسار الأونلاين.
+  /// قراءة كسولة: بعض المحولات لا تدعم الجلسات فترمي عند البناء.
+  final DriverSessionBackend? Function()? _readDriverSessionBackend;
+
   /// P0 2B-1 — سياق الجلسة للسياج: driverId الحالي + هل انتقال جارٍ.
   /// تُحقن من طبقة providers (المتصل الوحيد) — الـ dispatcher نفسه بلا Ref.
   /// إلزامية: لا سياج بلا سياق (no fail-open).
@@ -47,9 +53,11 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     this._dvirBackend,
     this._localDataSource, {
     InspectionBackend? inspectionBackend,
+    DriverSessionBackend? Function()? readDriverSessionBackend,
     required this.observeAuth,
     this.cachedLogOwner,
-  }) : _inspectionBackend = inspectionBackend;
+  })  : _inspectionBackend = inspectionBackend,
+        _readDriverSessionBackend = readDriverSessionBackend;
 
   Future<int> _driverId() async {
     final session = await _localDataSource.getSession();
@@ -167,6 +175,8 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
           return await _dispatchDvirReview(event, owner);
         case 'inspection_transfer':
           return await _dispatchInspectionTransfer(event, owner);
+        case 'switch_primary_driver':
+          return await _dispatchSwitchPrimary(event, owner);
         default:
           final result = await _dutyStatusBackend.submitLegacyGenericEvent(
             event.payload,
@@ -248,6 +258,46 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     }
   }
 
+  Future<Either<Failure, bool>> _dispatchSwitchPrimary(
+    PendingEvent event,
+    int owner,
+  ) async {
+    final backend = _readDriverSessionBackend?.call();
+    final rawId = event.payload['coDriverId'];
+    final coDriverId =
+        rawId is int ? rawId : int.tryParse('${rawId ?? ''}');
+    if (backend == null || coDriverId == null || coDriverId <= 0) {
+      // لا مسار آمن ⇒ رفض نهائي صريح. السقوط على `default` كان يرسل
+      // الحمولة إلى endpoint عام لا يفهمها، فيضيع التبديل بلا أثر.
+      AppLogger.warning(
+          'switch_primary_driver unroutable '
+          '(backend=${backend != null}, coDriverId=$rawId)');
+      return const Left(RejectedFailure(
+        code: 'switch_co_driver_unroutable',
+        l10nKey: 'conflict',
+      ));
+    }
+
+    final reasonRaw = event.payload['reason'];
+    final reason = reasonRaw is String && reasonRaw.trim().isNotEmpty
+        ? reasonRaw.trim()
+        : null;
+
+    // نفس تسلسل المسار الأونلاين حرفياً (OAS: legacy يقبل coDriverId فقط).
+    final legacy = await backend.switchPrimaryDriver(
+      action: DutyStatusAction.legacySwitch,
+      coDriverId: DriverId(coDriverId),
+    );
+    if (legacy.isRight()) return const Right(true);
+
+    final primary = await backend.switchPrimaryDriver(
+      action: DutyStatusAction.switchPrimary,
+      coDriverId: DriverId(coDriverId),
+      reason: reason ?? 'Co-driver shift change',
+    );
+    return _mapResult(primary, owner);
+  }
+
   Future<Either<Failure, bool>> _dispatchDutyStatus(
     PendingEvent event,
     int owner,
@@ -261,6 +311,26 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     }
 
     final statusId = payload['statusId'] as int?;
+    final logId = payload['logId'] as int?;
+
+    // العقد الموحّد لتعديل حدث: PUT /eld/daily-logs/{logId}/events/{eventId}
+    // (status/startTime/notes + location{description}).
+    if (statusId != null && statusId > 0 && logId != null && logId > 0) {
+      final result = await _dailyLogsBackend.updateEvent(
+        logId: DailyLogId(logId),
+        eventId: DutyStatusId(statusId),
+        event: {
+          'status': payload['status'],
+          'startTime': payload['startTime'],
+          if (payload['notes'] != null) 'notes': payload['notes'],
+          if (payload['locationText'] != null)
+            'location': {'description': payload['locationText']},
+        },
+        expectedOwnerDriverId: owner,
+      );
+      return _mapResult(result, owner);
+    }
+
     if (statusId != null && statusId > 0) {
       final result = await _dutyStatusBackend.update(
         statusId: DutyStatusId(statusId),
@@ -311,16 +381,18 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     }
     // P0 2B-1 — هوية التصديق = مالك الحدث المثبت حصراً. انتهى حقن
     // جلسة الإرسال الحالية (كانت ترسل certify-A باسم B).
+    // الوثيقة: جسم POST /certify = `{ certified, signatureImage }`؛
+    // نقرأ المخطط الجديد ونتسامح مع حدث قديم ما زال في الطابور
+    // (certifiedTrue بلا صورة توقيع).
+    final certified = event.payload['certified'] as bool? ??
+        event.payload['certifiedTrue'] as bool? ??
+        true;
+    final signatureImage = event.payload['signatureImage'] as String?;
     final result = await _dailyLogsBackend.certify(
       CertifyRequestDto(
         dailyLogId: logId,
-        driverId: owner,
-        logDate: event.payload['logDate'] as String? ?? '',
-        signatureCertificateId:
-            event.payload['signatureCertificateId'] as String? ?? '',
-        signatureConfirmation:
-            event.payload['signatureConfirmation'] as bool? ?? true,
-        certifiedTrue: event.payload['certifiedTrue'] as bool? ?? true,
+        certified: certified,
+        signatureImage: signatureImage,
       ),
       expectedOwnerDriverId: owner,
     );

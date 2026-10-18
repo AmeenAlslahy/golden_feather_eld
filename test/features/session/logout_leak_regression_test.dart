@@ -123,6 +123,9 @@ class _CountingDashboardRepository implements StatusDashboardRepository {
   DateTime? get snapshotAt => null;
 
   @override
+  StatusDashboard? get cachedDashboard => null;
+
+  @override
   void cacheDashboard(StatusDashboard dashboard, {required DateTime takenAt}) {}
 
   @override

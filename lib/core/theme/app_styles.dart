@@ -23,6 +23,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
     required this.arabicBody,
     required this.subtitle,
     required this.caption,
+    required this.onBandTitle,
+    required this.onBandItem,
+    required this.sheetTitle,
+    required this.sheetItemTitle,
+    required this.sheetItem,
+    required this.sheetItemStrong,
+    required this.sheetCaption,
     required this.button,
     required this.error,
     required this.success,
@@ -41,6 +48,17 @@ class AppStyles extends ThemeExtension<AppStyles> {
   final TextStyle arabicBody;
   final TextStyle subtitle;
   final TextStyle caption;
+
+  /// أنماط أوراق التعليمات (SRS 8.2): `onBand*` للنص على الأشرطة الداكنة
+  /// الدائمة، و`sheet*` للعناوين والبنود فوق الأسطح العادية.
+  final TextStyle onBandTitle;
+  final TextStyle onBandItem;
+  final TextStyle sheetTitle;
+  final TextStyle sheetItemTitle;
+  final TextStyle sheetItem;
+  final TextStyle sheetItemStrong;
+  final TextStyle sheetCaption;
+
   final TextStyle button;
   final TextStyle error;
   final TextStyle success;
@@ -65,7 +83,7 @@ class AppStyles extends ThemeExtension<AppStyles> {
     final warning =
         isLight ? AppColors.warningText : AppColors.warningOnDark;
     final gold = isLight ? AppColors.goldDeep : AppColors.primaryGold;
-    return AppStyles(
+    return  AppStyles(
       appBarTitle: const TextStyle(
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.bold,
@@ -111,6 +129,49 @@ class AppStyles extends ThemeExtension<AppStyles> {
       ),
       caption: TextStyle(
         fontSize: AppTypography.smallSize,
+        fontWeight: AppTypography.regular,
+        color: secondary,
+        letterSpacing: 0.2,
+        height: 1.3,
+      ),
+      onBandTitle: const TextStyle(
+        fontSize: AppTypography.sheetTitleSize,
+        fontWeight: AppTypography.bold,
+        color: AppColors.surface,
+        height: 1.2,
+      ),
+      onBandItem: const TextStyle(
+        fontSize: AppTypography.sheetItemSize,
+        fontWeight: AppTypography.regular,
+        color: AppColors.surface,
+        height: 1.4,
+      ),
+      sheetTitle: TextStyle(
+        fontSize: AppTypography.sheetTitleSize,
+        fontWeight: AppTypography.bold,
+        color: primary,
+        height: 1.2,
+      ),
+      sheetItemTitle: TextStyle(
+        fontSize: AppTypography.sheetItemTitleSize,
+        fontWeight: AppTypography.bold,
+        color: primary,
+        height: 1.3,
+      ),
+      sheetItem: TextStyle(
+        fontSize: AppTypography.sheetItemSize,
+        fontWeight: AppTypography.regular,
+        color: secondary,
+        height: 1.4,
+      ),
+      sheetItemStrong: TextStyle(
+        fontSize: AppTypography.sheetItemSize,
+        fontWeight: AppTypography.bold,
+        color: secondary,
+        height: 1.4,
+      ),
+      sheetCaption: TextStyle(
+        fontSize: AppTypography.sheetCaptionSize,
         fontWeight: AppTypography.regular,
         color: secondary,
         letterSpacing: 0.2,
@@ -187,6 +248,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
     TextStyle? arabicBody,
     TextStyle? subtitle,
     TextStyle? caption,
+    TextStyle? onBandTitle,
+    TextStyle? onBandItem,
+    TextStyle? sheetTitle,
+    TextStyle? sheetItemTitle,
+    TextStyle? sheetItem,
+    TextStyle? sheetItemStrong,
+    TextStyle? sheetCaption,
     TextStyle? button,
     TextStyle? error,
     TextStyle? success,
@@ -205,6 +273,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
       arabicBody: arabicBody ?? this.arabicBody,
       subtitle: subtitle ?? this.subtitle,
       caption: caption ?? this.caption,
+      onBandTitle: onBandTitle ?? this.onBandTitle,
+      onBandItem: onBandItem ?? this.onBandItem,
+      sheetTitle: sheetTitle ?? this.sheetTitle,
+      sheetItemTitle: sheetItemTitle ?? this.sheetItemTitle,
+      sheetItem: sheetItem ?? this.sheetItem,
+      sheetItemStrong: sheetItemStrong ?? this.sheetItemStrong,
+      sheetCaption: sheetCaption ?? this.sheetCaption,
       button: button ?? this.button,
       error: error ?? this.error,
       success: success ?? this.success,
@@ -229,6 +304,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
       arabicBody: mix(arabicBody, other.arabicBody),
       subtitle: mix(subtitle, other.subtitle),
       caption: mix(caption, other.caption),
+      onBandTitle: mix(onBandTitle, other.onBandTitle),
+      onBandItem: mix(onBandItem, other.onBandItem),
+      sheetTitle: mix(sheetTitle, other.sheetTitle),
+      sheetItemTitle: mix(sheetItemTitle, other.sheetItemTitle),
+      sheetItem: mix(sheetItem, other.sheetItem),
+      sheetItemStrong: mix(sheetItemStrong, other.sheetItemStrong),
+      sheetCaption: mix(sheetCaption, other.sheetCaption),
       button: mix(button, other.button),
       error: mix(error, other.error),
       success: mix(success, other.success),

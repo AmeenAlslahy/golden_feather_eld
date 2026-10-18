@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/backend/adapters/eld_engine/models/rules_screen_dto.dart';
 import 'package:golden_feather_eld/backend/contracts/rules_screen_backend.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/account/application/models/rules_screen_model.dart';
+import 'package:golden_feather_eld/features/account/application/models/rules_screen_update_request.dart';
 import 'package:golden_feather_eld/features/account/application/usecases/update_rules_use_case.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:fpdart/fpdart.dart' as fp;
@@ -36,7 +36,7 @@ void main() {
   setUp(() {
     mockBackend = MockRulesScreenBackend();
     mockStorage = MockLocalStorageService();
-    useCase = UpdateRulesUseCase(mockBackend, mockStorage, '100');
+    useCase = UpdateRulesUseCase(mockBackend, mockStorage);
   });
 
   test('execute saves rules and merges local configuration on success', () async {
@@ -83,7 +83,10 @@ void main() {
     when(() => mockStorage.hosConfiguration).thenReturn(currentConfig);
     when(() => mockStorage.setHosConfiguration(any())).thenAnswer((_) async {});
 
-    final result = await useCase.execute(request);
+    final result = await useCase.execute(
+      driverId: const DriverId(100),
+      request: request,
+    );
 
     expect(result.isRight(), true);
     verify(() => mockBackend.saveRulesScreen(
@@ -121,7 +124,10 @@ void main() {
       update: any(named: 'update'),
     )).thenAnswer((_) async => const fp.Left(ServerError(code: 'error')));
 
-    final result = await useCase.execute(request);
+    final result = await useCase.execute(
+      driverId: const DriverId(100),
+      request: request,
+    );
 
     expect(result.isLeft(), true);
     verifyNever(() => mockStorage.setHosConfiguration(any()));

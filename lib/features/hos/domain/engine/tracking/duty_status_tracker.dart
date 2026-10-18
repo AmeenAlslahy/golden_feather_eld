@@ -28,9 +28,13 @@ abstract final class DutyStampRefusal {
 
 // Mapping replaced by DutyStatusCode.fromAny()
 
-/// نتيجة تغيير الحالة اليدوي: سبب الرفض (`null` = قبل الخادم) مع لقطة
-/// لوحة الخادم عند القبول — تستخدمها الواجهة لتغذية اللوحة مباشرة من
+/// نتيجة تغيير الحالة اليدوي: سبب الرفض (`null` = قَبِل الخادم) مع لقطة
+/// لوحة الخادم عند حملها — تستخدمها الواجهة لتغذية اللوحة مباشرة من
 /// استجابة POST بدل انتظار GET لاحق (تقليل زمن الاستجابة المرئية).
+///
+/// `dashboard == null` مع `accepted` تعني: قُبل التغيير لكن الاستجابة لم
+/// تحمل لقطة (جسم بلا حقول لوحة) أو كان الفشل شبكياً — على الواجهة ألا
+/// تختلق أرقاماً، بل تُصحّح من GET (متصل) أو من المحرك المحلي (أوفلاين).
 class ManualDutyChangeResult {
   final String? refusal;
   final StatusDashboard? dashboard;
@@ -213,10 +217,15 @@ class DutyStatusTracker {
     String? origin,
   }) {
     final stamp = trustedUtc.toUtc();
+    final id = const Uuid().v4();
     return PendingEvent(
-      id: const Uuid().v4(),
+      id: id,
       type: 'duty_status',
       payload: {
+        // P0 — مفتاح idempotency: نجاح الخادم مع فَقْد الرد (انقطاع بعد
+        // commit) كان يُعيد الإرسال ⇒ سجل مزدوج. الخادم يتجاهل الحقل
+        // إن لم يدعمه، ووجوده يمكّن إزالة التكرار لاحقاً بلا تغيير عقد.
+        'clientId': id,
         'status': wireStatus,
         'startTime': stamp.toIso8601String(),
         if (_readDriverId?.call() != null) 'driverId': _readDriverId!.call(),
@@ -232,6 +241,54 @@ class DutyStatusTracker {
       },
       createdAt: stamp,
     );
+  }
+
+  /// P0 — تثبيت آثار انتقال الحالة مع احتواء كامل للأخطاء.
+  ///
+  /// قبل P0: `setCurrentDutyStatus` و`submitEvent` كانا يُطلقان بلا انتظار
+  /// و`savePeriod(...).then` لا يلتقط الاستثناء — فأي فشل كتابة كان يضيع
+  /// الحدث صامتاً (unhandled rejection) بينما الواجهة تعرض الحالة الجديدة.
+  ///
+  /// الآن: الثلاثة تبدأ فورياً (فيبقى الإدراج مرئياً للمسارات المتزامنة
+  /// كما كان) لكن كل نتيجة محتواة ومسجلة — لا فشل صامت.
+  Future<void> _persistTransition({
+    required String status,
+    DutyPeriod? period,
+    PendingEvent? event,
+  }) async {
+    final statusDone = _contain(
+      () => _localStorage.setCurrentDutyStatus(status),
+      'Failed to persist declared duty status',
+    );
+    final eventDone = event == null
+        ? Future<void>.value()
+        : _contain(
+            () => _syncEngine.submitEvent(event),
+            'Failed to queue duty event ${event.id}',
+          );
+
+    if (period != null) {
+      try {
+        final result = await _logRepository.savePeriod(period);
+        result.match(
+          (failure) => AppLogger.error('Failed to save period', failure.message),
+          (_) => AppLogger.info('Period saved successfully'),
+        );
+      } catch (e) {
+        AppLogger.error('Failed to save period', e);
+      }
+    }
+
+    await statusDone;
+    await eventDone;
+  }
+
+  Future<void> _contain(Future<void> Function() action, String message) async {
+    try {
+      await action();
+    } catch (e) {
+      AppLogger.error(message, e);
+    }
   }
 
   void _transitionTo({
@@ -268,6 +325,7 @@ class DutyStatusTracker {
 
     _events.add(event);
 
+    DutyPeriod? closedPeriod;
     if (_lastEvent != null) {
       final effectiveEndTime = event.timestamp.isBefore(_lastEvent!.timestamp)
           ? _lastEvent!.timestamp
@@ -285,30 +343,23 @@ class DutyStatusTracker {
       );
 
       _periods.add(period);
-
-      _logRepository.savePeriod(period).then((result) {
-        result.match(
-          (failure) =>
-              AppLogger.error('Failed to save period', failure.message),
-          (success) => AppLogger.info('Period saved successfully'),
-        );
-      });
+      closedPeriod = period;
     }
 
     _currentStatus = newStatus;
-    _localStorage.setCurrentDutyStatus(newStatus);
     _lastEvent = event;
     AppLogger.info('📊 Duty Status: $currentStatus');
 
     // The legal stamp is the anchored clock, never the movement timestamp
     // and never DateTime.now(). Missing odometer stays absent.
     final code = DutyStatusCode.fromAny(newStatus);
+    PendingEvent? pendingEvent;
     if (!enqueue) {
       // The caller already sent this stamp and got a server result.
     } else if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
       AppLogger.warning('Refusing to sync unmapped duty status: $newStatus');
     } else {
-      _syncEngine.submitEvent(_stampedDutyEvent(
+      pendingEvent = _stampedDutyEvent(
         wireStatus: code.wire,
         trustedUtc: trusted,
         latitude: latitude,
@@ -317,8 +368,18 @@ class DutyStatusTracker {
         engineHours: engineHours,
         annotation: annotation,
         origin: origin,
-      ));
+      );
     }
+
+    // P0 — كانت الكتابة والإدراج يُطلقان بلا انتظار (`setCurrentDutyStatus`
+    // و`submitEvent`) و`savePeriod(...).then` لا يلتقط استثناء الكتابة:
+    // فشل واحد كان يعني «الحالة تغيّرت في الواجهة والحدث غير موجود إطلاقاً».
+    // الآن الترتيب مضمون ومحتوى داخل [_persistTransition].
+    unawaited(_persistTransition(
+      status: newStatus,
+      period: closedPeriod,
+      event: pendingEvent,
+    ));
 
     _transitionController.add(DutyTransition(
       newStatus: newStatus,
@@ -406,7 +467,8 @@ class DutyStatusTracker {
         annotation: annotation,
         enqueue: false,
       );
-      // تمرير لقطة الخادم لتغذية اللوحة فوراً — بلا GET ثانٍ.
+      // تمرير لقطة الخادم عند حملها لتغذية اللوحة فوراً — بلا GET ثانٍ.
+      // قد تكون null (قبول بلا لقطة): الواجهة تتصالح مع الخادم بنفسها.
       return ManualDutyChangeResult(dashboard: dashboard);
     });
   }

@@ -45,6 +45,7 @@ class _DashboardView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshotTimestamp =
         ref.watch(statusDashboardSnapshotTimestampProvider);
+    final cycleHours = dashboard.regulatoryConstraints.ruleSet.cycleHours;
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
@@ -59,6 +60,7 @@ class _DashboardView extends ConsumerWidget {
                 dutyStatus: dashboard.currentDutyStatus,
                 hosIndicators: dashboard.hosIndicators,
                 snapshotTimestamp: snapshotTimestamp,
+                cycleLimit: Duration(hours: cycleHours > 0 ? cycleHours : 70),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(

@@ -4,6 +4,9 @@ import 'package:equatable/equatable.dart';
 ///
 /// لا يحتوي على بيانات الجلسة الحية (Live Session).
 class DailyFormData extends Equatable {
+  /// معرّف المركبة الرقمي من `vehicle.id` في عقد النموذج — يُستخدم كـ
+  /// `vehicleId` عند الحفظ (احتياط: [vehicleUniqueId] النصي).
+  final int? vehicleId;
   final String? vehicleUniqueId;
   final String? vehicleName;
   final int? coDriverId;
@@ -12,6 +15,7 @@ class DailyFormData extends Equatable {
   final List<String> shippingDocuments;
 
   const DailyFormData({
+    this.vehicleId,
     this.vehicleUniqueId,
     this.vehicleName,
     this.coDriverId,
@@ -22,6 +26,7 @@ class DailyFormData extends Equatable {
 
   @override
   List<Object?> get props => [
+    vehicleId,
     vehicleUniqueId,
     vehicleName,
     coDriverId,

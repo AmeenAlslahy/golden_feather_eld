@@ -13,6 +13,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/unidentified_events_page.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
@@ -130,9 +131,9 @@ void main() {
     logs = _Logs();
     when(() => logs.getDailyLogs(
           driverId: any(named: 'driverId'),
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => const Right([]));
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        )).thenAnswer((_) async => const Right(DailyLogPage.empty));
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -261,8 +262,8 @@ void main() {
     // and the driver is pointed at the log for possible re-certification.
     verify(() => logs.getDailyLogs(
           driverId: 106,
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
+          page: any(named: 'page'),
+          size: any(named: 'size'),
         )).called(greaterThanOrEqualTo(1));
     // Expire any remaining feedback timers so nothing is left pending.
     await tester.pump(const Duration(seconds: 3));

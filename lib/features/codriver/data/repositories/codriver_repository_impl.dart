@@ -1,4 +1,5 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
 import '../../../../core/network/network_info.dart';
@@ -19,6 +20,13 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
   final CoDriverLocalCache? localCache;
   final OfflineQueue? offlineQueue;
 
+  /// P0 — المعرف الحالي للسائق (تُحقن من providers).
+  ///
+  /// بدونه كان حدث `switch_primary_driver` يخرج بلا مالك، فيُحجَر في
+  /// الطابور للأبد (`quarantinedUnknownOwner`) ولا يصل خادم قط — رغم أن
+  /// الواجهة تُبلغ السائق بالنجاح. ختم المالك هنا يجعله مقبولاً عند الإرسال.
+  final int? Function()? readDriverId;
+
   /// Cache for available drivers and current link to survive offline periods
   static List<CoDriver> _cachedDrivers = [];
   static CurrentCoDriverRead? _cachedCurrentCoDriver;
@@ -28,6 +36,7 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
     required this.networkInfo,
     this.localCache,
     this.offlineQueue,
+    this.readDriverId,
   }) {
     if (localCache != null) {
       final cached = localCache!.loadAvailableDrivers();
@@ -180,12 +189,17 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
       _cachedCurrentCoDriver = current;
       await localCache?.saveCurrentCoDriver(current);
       if (offlineQueue != null) {
+        final owner = readDriverId?.call();
         await offlineQueue!.enqueue(PendingEvent(
-          id: 'switch_${DateTime.now().millisecondsSinceEpoch}',
+          // UUID بدل الطابع الزمني بالمللي: `switch_${ms}` كان يصطدم
+          // عند تبديلين في نفس المللي ثانية، والطابور يستبدل بالمعرف.
+          id: 'switch_${const Uuid().v4()}',
           type: 'switch_primary_driver',
           payload: {
             'coDriverId': coDriverId,
             'reason': reason ?? 'Co-driver shift change',
+            // 🔴 ختم المالك — بدونه يُحجَر الحدث نهائياً عند الإرسال.
+            if (owner != null && owner > 0) 'ownerDriverId': owner,
           },
           createdAt: DateTime.now().toUtc(),
         ));

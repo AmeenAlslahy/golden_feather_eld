@@ -19,6 +19,7 @@ import '../../domain/transfer_audit.dart';
 import '../mappers/inspection_mappers.dart';
 import '../services/fmcsa_eld_output_generator.dart';
 import '../../../../core/session/session_epoch.dart';
+import '../../../../core/time/trusted_time_provider.dart';
 import '../datasources/inspection_local_cache.dart';
 
 
@@ -37,6 +38,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
   final NetworkInfo _networkInfo;
   final SyncEngine? _syncEngine;
   final InspectionLocalCache? _disk;
+
+  /// مصدر الوقت الموثوق (P3) — شرط إصدار ملف FMCSA في الوضع غير المتصل.
+  final TrustedTimeProvider? _trustedTime;
 
   /// جيل الجلسة الذي تنتمي إليه الكاش presently. يُتبنّى عند كل تغيّر مرصود
   /// (مرة واحدة لكل انتقال) لا عند كل نداء.
@@ -59,6 +63,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
     this._networkInfo, [
     this._syncEngine,
     this._disk,
+    this._trustedTime,
   ]) {
     _restoreFromDisk();
   }
@@ -401,12 +406,25 @@ class InspectionRepositoryImpl implements InspectionRepository {
         return const Left(ServerFailure(message: 'inspectionNoVerifiedData'));
       }
 
+      // P3 (49 CFR 395 Appendix A): الملف وثيقة نظامية بطابع زمني موثوق.
+      // بلا وقت موثوق لا نُصدر ملفاً بوقت مزيف — فشل صريح قابل لإعادة المحاولة.
+      final trusted = _trustedTime?.currentTime;
+      if (trusted is! TrustedTimeAvailable) {
+        AppLogger.error(
+          'InspectionRepository: refusing offline ELD generation for driver '
+          '${driverId.value} — trusted time unavailable',
+        );
+        return const Left(ServerFailure(message: 'inspectionTrustedTimeRequired'));
+      }
+      final generatedAtUtc = trusted.utc;
+
       try {
         final filePath = await FmcsaEldOutputGenerator.generateAndSave(
           screen: ownedScreen,
           cycleDays: ownedCycle ?? const [],
           logs: ownedLogs,
           outputFileComment: comment,
+          fileCreationUtc: generatedAtUtc,
           fallbackDriverId: driverId.value.toString(),
         );
 
@@ -422,8 +440,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
         }
 
         if (_syncEngine != null) {
+          // P3: طابع الحدث الموثوق نفسه المستخدم في الملف — لا ساعة جهاز.
           await _syncEngine.submitEvent(PendingEvent(
-            id: 'transfer_${DateTime.now().millisecondsSinceEpoch}',
+            id: 'transfer_${generatedAtUtc.millisecondsSinceEpoch}',
             type: 'inspection_transfer',
             payload: {
               'driverId': driverId.value,
@@ -433,7 +452,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
               'comment': comment,
               'localFilePath': filePath,
             },
-            createdAt: DateTime.now().toUtc(),
+            createdAt: generatedAtUtc,
           ));
         }
 

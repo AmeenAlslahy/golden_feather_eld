@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/features/logs/presentation/pages/edit_log_pag
 import 'package:golden_feather_eld/features/logs/presentation/providers/edit_log_form_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/core/time/time_authority_provider.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
@@ -53,9 +54,9 @@ Widget createTestApp(Widget child) {
   // We only mock what LogsNotifier might call during initialization or simple rendering
   when(() => mockRepo.getDailyLogs(
     driverId: any(named: 'driverId'),
-    limit: any(named: 'limit'),
-    offset: any(named: 'offset'),
-  )).thenAnswer((_) async => const Right([]));
+    page: any(named: 'page'),
+    size: any(named: 'size'),
+  )).thenAnswer((_) async => const Right(DailyLogPage.empty));
 
   final mockAuthState = AuthState(
     status: AuthStatus.authenticated,

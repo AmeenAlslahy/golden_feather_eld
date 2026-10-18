@@ -225,50 +225,13 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     final driver = DriverId(_driverId);
     final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
     if (!mounted) return;
-    var cycle = cycleResult.fold(
+    // P3: لا تصنيع في طبقة العرض — الدورة والسجل يأتيان من المستودع
+    // وحده (مع كاشه الموثّق الملكية)؛ فشل الشبكة يعني فشلاً صريحاً هنا
+    // وتتكفل بوابة شاشة البداية بعرضه بأمانة (fail-open أوفلاين فقط).
+    final cycle = cycleResult.fold(
       (_) => const <DotInspectionCycleDay>[],
       (days) => days,
     );
-    final isOfflineCycle =
-        cycleResult.fold((f) => f is NetworkFailure, (_) => false);
-    if (cycle.isEmpty && isOfflineCycle) {
-      final now = DateTime.now();
-      cycle = List.generate(8, (i) {
-        final d = now.subtract(Duration(days: 7 - i));
-        final dateStr =
-            '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-        return DotInspectionCycleDay(
-          driverId: driver,
-          driverName: 'Driver',
-          logDate: DateTime(d.year, d.month, d.day),
-          displayDate: dateStr,
-          displayLocation: 'Local Station',
-          certified: false,
-          certifiedAt: null,
-          eldRegistrationId: 'GF-REG-01',
-          eldIdentifier: 'GF-ELD-01',
-          eldProvider: 'Golden Feather ELD',
-          vehicleNumber: 'TRK-101',
-          uniqueId: 'VH-101',
-          vin: '1M8GDM9A_KE064101',
-          startOdometerKm: 10000.0 + (i * 150),
-          endOdometerKm: 10150.0 + (i * 150),
-          totalDistanceKm: 150.0,
-          engineHours: 400.0 + (i * 4),
-          trailers: 'None',
-          shippingDocuments: 'None',
-          carrierName: 'Golden Feather Logistics',
-          usdotNumber: 'USDOT 3829102',
-          mainOfficeAddress: 'USA',
-          homeTerminalAddress: 'USA',
-          activeDataDiagnostics: const [],
-          activeDeviceMalfunctions: const [],
-          exemptDriver: false,
-          hasUnidentifiedDriving: false,
-          unidentifiedDrivingCount: 0,
-        );
-      });
-    }
 
     final logResult = cycle.isEmpty
         ? await _repository.getLogs(driverId: driver)
@@ -278,42 +241,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
           );
     if (!mounted) return;
 
-    var log = logResult.fold((_) => null, (log) => log);
-    final isOfflineLog =
-        logResult.fold((f) => f is NetworkFailure, (_) => false);
-    if (log == null && isOfflineLog && cycle.isNotEmpty) {
-      final day = cycle.first;
-      log = DotInspectionLog(
-        driverId: day.driverId,
-        driverName: day.driverName,
-        logDate: day.logDate,
-        displayDate: day.displayDate,
-        displayLocation: day.displayLocation,
-        certified: day.certified,
-        certifiedAt: day.certifiedAt,
-        eldRegistrationId: day.eldRegistrationId,
-        eldIdentifier: day.eldIdentifier,
-        eldProvider: day.eldProvider,
-        vehicleNumber: day.vehicleNumber,
-        uniqueId: day.uniqueId,
-        vin: day.vin,
-        startOdometerKm: day.startOdometerKm,
-        endOdometerKm: day.endOdometerKm,
-        totalDistanceKm: day.totalDistanceKm,
-        engineHours: day.engineHours,
-        trailers: day.trailers,
-        shippingDocuments: day.shippingDocuments,
-        carrierName: day.carrierName,
-        usdotNumber: day.usdotNumber,
-        mainOfficeAddress: day.mainOfficeAddress,
-        homeTerminalAddress: day.homeTerminalAddress,
-        activeDataDiagnostics: day.activeDataDiagnostics,
-        activeDeviceMalfunctions: day.activeDeviceMalfunctions,
-        events: const [],
-        readOnly: true,
-        period24HourStartTime: '00:00:00',
-      );
-    }
+    final log = logResult.fold((_) => null, (log) => log);
     // Invariant E (قرار المالك): لا وضع مقفل بلا بيانات قابلة للعرض —
     // دورة صالحة + سجل أول قابل للعرض. فشل السجل الابتدائي يبقي السائق
     // في شاشة البداية مع الخطأ وإعادة المحاولة، لا في قفل أعمى.
@@ -375,42 +303,10 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     if (!mounted) return;
 
     result.fold((error) {
-      if (error is NetworkFailure) {
-        final day = state.cycle[index];
-        final offlineLog = DotInspectionLog(
-          driverId: day.driverId,
-          driverName: day.driverName,
-          logDate: requestedDate,
-          displayDate: day.displayDate,
-          displayLocation: day.displayLocation,
-          certified: day.certified,
-          certifiedAt: day.certifiedAt,
-          eldRegistrationId: day.eldRegistrationId,
-          eldIdentifier: day.eldIdentifier,
-          eldProvider: day.eldProvider,
-          vehicleNumber: day.vehicleNumber,
-          uniqueId: day.uniqueId,
-          vin: day.vin,
-          startOdometerKm: day.startOdometerKm,
-          endOdometerKm: day.endOdometerKm,
-          totalDistanceKm: day.totalDistanceKm,
-          engineHours: day.engineHours,
-          trailers: day.trailers,
-          shippingDocuments: day.shippingDocuments,
-          carrierName: day.carrierName,
-          usdotNumber: day.usdotNumber,
-          mainOfficeAddress: day.mainOfficeAddress,
-          homeTerminalAddress: day.homeTerminalAddress,
-          activeDataDiagnostics: day.activeDataDiagnostics,
-          activeDeviceMalfunctions: day.activeDeviceMalfunctions,
-          events: const [],
-          readOnly: true,
-          period24HourStartTime: '00:00:00',
-        );
-        state = _dayCommitted(index, offlineLog);
-      } else {
-        state = _dayFailed(_message(error));
-      }
+      // P3: لا سجل مُصنَّع في طبقة العرض — يوم بلا بيانات مُتحقَّق منها
+      // يعني لافتة صريحة مع بقاء آخر زوج صالح معروضاً (عقد Option A)؛
+      // وتوفير كاش الدورة الموثّق مسؤولية المستودع وحده.
+      state = _dayFailed(_message(error));
     }, (log) {
       // ⑤ Backstop ضد الرد القديم/غير المتطابق: لا commit ولا
       // fallback تاريخ — السبب في السجلات فقط، والمستخدم يرى رسالة

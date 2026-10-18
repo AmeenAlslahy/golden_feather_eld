@@ -183,6 +183,9 @@ class LogEvent extends Equatable {
   final bool? automatedDriving;
   final bool? editable;
 
+  /// عقد `/events`: بدأ الحدث في اليوم السابق ويمتد إلى هذا اليوم.
+  final bool startedOnPreviousDay;
+
   const LogEvent({
     required this.id,
     required this.status,
@@ -194,6 +197,7 @@ class LogEvent extends Equatable {
     this.isExpanded = false,
     this.automatedDriving,
     this.editable,
+    this.startedOnPreviousDay = false,
   });
 
   String get formattedStartTime {
@@ -219,6 +223,7 @@ class LogEvent extends Equatable {
     bool? isExpanded,
     bool? automatedDriving,
     bool? editable,
+    bool? startedOnPreviousDay,
   }) {
     return LogEvent(
       id: id ?? this.id,
@@ -231,6 +236,7 @@ class LogEvent extends Equatable {
       isExpanded: isExpanded ?? this.isExpanded,
       automatedDriving: automatedDriving ?? this.automatedDriving,
       editable: editable ?? this.editable,
+      startedOnPreviousDay: startedOnPreviousDay ?? this.startedOnPreviousDay,
     );
   }
 

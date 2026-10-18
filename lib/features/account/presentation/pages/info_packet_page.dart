@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../inspection/domain/inspection_transfer.dart';
 import '../../../inspection/presentation/providers/inspection_provider.dart';
-import 'instructions_page.dart';
-import 'user_manual_page.dart';
 
 /// Original information-packet landing: User Manual + Instructions.
 class InfoPacketPage extends ConsumerWidget {
@@ -41,24 +41,14 @@ class InfoPacketPage extends ConsumerWidget {
             title: loc.userManual,
             body: loc.infoPacketManualBlurb,
             buttonLabel: loc.viewUserManual.toUpperCase(),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UserManualPage()),
-              );
-            },
+            onPressed: () => context.push(AppRoutes.userManual),
           ),
           const Divider(height: 1),
           _PacketBlock(
             title: loc.instructions,
             body: loc.infoPacketInstructionsBlurb,
             buttonLabel: loc.viewInstructions.toUpperCase(),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InstructionsPage()),
-              );
-            },
+            onPressed: () => context.push(AppRoutes.instructions),
           ),
           const Divider(height: 1),
         ],

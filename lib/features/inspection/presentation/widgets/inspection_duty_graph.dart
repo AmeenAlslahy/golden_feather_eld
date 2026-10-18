@@ -17,6 +17,14 @@ class InspectionDutyGraph extends StatelessWidget {
     // وبدون الترتيب تُرسم مقاطع عكسية/مكسورة، 3) نهاية كل مقطع = بداية التالي.
     final parsed = <_Segment>[];
     for (final event in events) {
+      // استبعاد أحداث التوقيع/الاعتماد والأحداث غير المتعلقة بتغيير حالة الخدمة
+      // وفقاً لمعايير FMCSA: الرسم البياني لـ 24 ساعة يمثل خطوط حالات الخدمة فقط.
+      if (event.certificationEvent ||
+          event.eventType.toUpperCase() == 'CERTIFICATION' ||
+          event.eventCode.trim().toUpperCase() == 'CERT') {
+        continue;
+      }
+
       final startHour = _hourOf(event.timeEt);
       if (startHour == null) continue;
 

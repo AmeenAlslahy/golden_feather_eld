@@ -12,6 +12,7 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/session/session_epoch.dart';
+import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/domain/inspection/dot_inspection.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/inspection/domain/inspection_transfer.dart';
@@ -258,7 +259,13 @@ void main() {
 
     backend = _ScriptedBackend();
     network = _ToggleNetworkInfo();
-    repo = InspectionRepositoryImpl(backend, network);
+    repo = InspectionRepositoryImpl(
+      backend,
+      network,
+      null,
+      null,
+      FakeTrustedTimeProvider(initialUtcTime: DateTime.utc(2026, 9, 24, 15)),
+    );
   });
 
   tearDown(() async {

@@ -4,9 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/models/certify_dto.dart';
 import 'package:golden_feather_eld/backend/contracts/daily_logs_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/dvir_backend.dart';
+import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
+import 'package:golden_feather_eld/backend/contracts/driver_session_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/duty_status_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/error/app_error.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/time/time_authority.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
@@ -111,7 +115,9 @@ class _LogsBackend implements DailyLogsBackend {
     int? expectedOwnerDriverId,
   }) async {
     certifyCalls++;
-    lastCertifyDriverId = request.driverId;
+    // الوثيقة: هوية المالك تُثبت عبر expectedOwnerDriverId (جسم الطلب لا
+    // يحمل driverId بعد الآن).
+    lastCertifyDriverId = expectedOwnerDriverId ?? -1;
     final gate = certifyGate;
     if (gate != null) await gate.future;
     return ok(CertifyResponseDto(
@@ -180,10 +186,8 @@ PendingEvent _event(String id, String type, Map<String, dynamic> payload) =>
 
 Map<String, dynamic> _certPayload({int? owner, int logId = 9}) => {
       'logId': logId,
-      'logDate': '2026-03-01',
-      'signatureCertificateId': 'sig',
-      'signatureConfirmation': true,
-      'certifiedTrue': true,
+      'certified': true,
+      'signatureImage': 'c2ln', // base64 bytes (opaque to the dispatcher)
       if (owner != null) 'ownerDriverId': owner,
     };
 
@@ -383,4 +387,122 @@ void main() {
       );
     });
   });
+
+  group('P0 — offline co-driver switch routing', () {
+    late _DriverSessionBackend session;
+    late _DutyBackend duty;
+    late _LogsBackend logs;
+    late _DvirBackend dvir;
+    late _SessionDS sessionDS;
+
+    setUp(() {
+      session = _DriverSessionBackend();
+      duty = _DutyBackend();
+      logs = _LogsBackend();
+      dvir = _DvirBackend();
+      sessionDS = _SessionDS();
+    });
+
+    TraccarRemoteEventDispatcher build({_DriverSessionBackend? backend}) =>
+        TraccarRemoteEventDispatcher(
+          duty,
+          logs,
+          dvir,
+          sessionDS,
+          readDriverSessionBackend: backend == null ? null : () => backend,
+          observeAuth: () async =>
+              const DispatchAuthContext(driverId: 101, transitioning: false),
+        );
+
+    PendingEvent switchEvent({int? owner}) => _event(
+          'sw1',
+          'switch_primary_driver',
+          {
+            'coDriverId': 55,
+            'reason': 'offline shift change',
+            if (owner != null) 'ownerDriverId': owner,
+          },
+        );
+
+    test('legacy action first without reason (OAS-exact) under proven owner',
+        () async {
+      final result =
+          await build(backend: session).dispatch(switchEvent(owner: 101));
+
+      expect(result.isRight(), isTrue);
+      expect(session.calls, 1);
+      expect(session.lastAction, DutyStatusAction.legacySwitch);
+      expect(session.lastCoDriverId, 55);
+      expect(session.lastReason, isNull,
+          reason: 'legacy لا يقبل reason في OAS');
+    });
+
+    test('legacy failure falls back to switchPrimary with the reason',
+        () async {
+      session.legacyResult = err(const ServerError(code: '400'));
+
+      final result =
+          await build(backend: session).dispatch(switchEvent(owner: 101));
+
+      expect(result.isRight(), isTrue);
+      expect(session.calls, 2);
+      expect(session.lastAction, DutyStatusAction.switchPrimary);
+      expect(session.lastReason, 'offline shift change');
+    });
+
+    test('missing backend → deterministic rejection, never the generic route',
+        () async {
+      final result = await build().dispatch(switchEvent(owner: 101));
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (failure) {
+          expect(failure, isA<RejectedFailure>());
+          expect(
+            (failure as RejectedFailure).code,
+            'switch_co_driver_unroutable',
+            reason: 'كان يسقط على default فيضيع التبديل بلا أثر',
+          );
+        },
+        (_) => fail('expected a rejection'),
+      );
+      expect(session.calls, 0);
+    });
+
+    test('unproven owner is fenced before any switch call happens', () async {
+      final result =
+          await build(backend: session).dispatch(switchEvent(owner: null));
+
+      expect(session.calls, 0, reason: 'الحجر يسبق التوجيه');
+      expect(result.isLeft(), isTrue);
+    });
+  });
+}
+
+class _DriverSessionBackend implements DriverSessionBackend {
+  int calls = 0;
+  DutyStatusAction? lastAction;
+  int? lastCoDriverId;
+  String? lastReason;
+  Result<void> legacyResult = ok(null);
+  Result<void> switchResult = ok(null);
+
+  @override
+  Future<Result<void>> switchPrimaryDriver({
+    required DutyStatusAction action,
+    required DriverId coDriverId,
+    String? reason,
+  }) async {
+    calls++;
+    lastAction = action;
+    lastCoDriverId = coDriverId.value;
+    lastReason = reason;
+    return action == DutyStatusAction.legacySwitch
+        ? legacyResult
+        : switchResult;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
 }

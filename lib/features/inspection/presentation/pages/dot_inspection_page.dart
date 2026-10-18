@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
+import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
 import 'inspection_active_view.dart';
 import 'inspection_start_view.dart';
@@ -20,6 +22,21 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionProvider);
+
+    // تزامن وضع التفتيش مع الخادم: إذا كان التفتيش نشطاً على الخادم
+    // ولم يكن وضع التفتيش مفعل محلياً، يتم الانتقال إلى التفتيش النشط تلقائياً
+    ref.listen<AsyncValue<DotInspectionScreen>>(
+      dotInspectionScreenProvider,
+      (previous, next) {
+        final screen = next.asData?.value;
+        if (screen != null &&
+            screen.inspectionActive &&
+            !state.isInspectionMode &&
+            !state.isLoading) {
+          _startDirectly();
+        }
+      },
+    );
 
     return PopScope(
       canPop: !state.locked,

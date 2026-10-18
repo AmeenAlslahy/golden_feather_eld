@@ -162,13 +162,13 @@ class AccountNotifier extends StateNotifier<AccountState> {
           state = state.copyWith(isLoading: false, accountData: driverAccount, clearError: true);
         },
       );
-    } catch (e) {
+    } catch (_) {
       if (!_isCurrent(seq, owner, epoch)) return;
       final cached = _loadCachedAccount(owner);
       if (cached != null) {
         state = state.copyWith(isLoading: false, accountData: cached, clearError: true);
       } else {
-        state = state.copyWith(isLoading: false, error: e.toString());
+        state = state.copyWith(isLoading: false, error: 'unexpected');
       }
     }
   }
@@ -182,17 +182,12 @@ class AccountNotifier extends StateNotifier<AccountState> {
     final owner = _ownerDriverId;
     final epoch = _ownerEpoch;
 
+    // الخادم هو المرجع: لا "نجاح" محلي بلا وصول الطلب — الرفض صريح
+    // حتى لا يُفقد التغيير صامتاً عند الجلب التالي.
     final isOnline = _ref.read(networkInfoProvider).isConnected;
     if (!isOnline) {
-      if (state.accountData != null && owner != null) {
-        final updated = state.accountData!.copyWith(
-          language: language,
-          odometer: odometerUnit,
-        );
-        _saveCachedAccount(owner, updated);
-        state = state.copyWith(isLoading: false, accountData: updated, clearError: true);
-      }
-      return true;
+      state = state.copyWith(isLoading: false, error: 'noInternet');
+      return false;
     }
 
     state = state.copyWith(isLoading: true, clearError: true);
@@ -207,17 +202,6 @@ class AccountNotifier extends StateNotifier<AccountState> {
       if (!_isCurrent(seq, owner, epoch)) return false;
       return await result.fold(
         (failure) {
-          if (failure.code.startsWith('network') &&
-              state.accountData != null &&
-              owner != null) {
-            final updated = state.accountData!.copyWith(
-              language: language,
-              odometer: odometerUnit,
-            );
-            _saveCachedAccount(owner, updated);
-            state = state.copyWith(isLoading: false, accountData: updated, clearError: true);
-            return true;
-          }
           state = state.copyWith(isLoading: false, error: failure.l10nKey);
           return false;
         },
@@ -228,9 +212,9 @@ class AccountNotifier extends StateNotifier<AccountState> {
           return true;
         },
       );
-    } catch (e) {
+    } catch (_) {
       if (!_isCurrent(seq, owner, epoch)) return false;
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: 'unexpected');
       return false;
     }
   }

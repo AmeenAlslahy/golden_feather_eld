@@ -16,13 +16,14 @@ class FmcsaEldOutputGenerator {
     List<DotInspectionCycleDay> cycleDays = const [],
     Map<String, DotInspectionLog> logs = const {},
     required String outputFileComment,
+    required DateTime fileCreationUtc,
     String? fallbackDriverId,
     String? fallbackDriverName,
     String? fallbackVehicleId,
     String? fallbackCarrier,
     String? fallbackUsdot,
   }) async {
-    final now = DateTime.now().toUtc();
+    final now = fileCreationUtc.toUtc();
     final dateFmt = DateFormat('MMddyy');
     final timeFmt = DateFormat('HHmmss');
 
@@ -130,14 +131,11 @@ class FmcsaEldOutputGenerator {
 
     // ─── 5. ELD Event Records (Line Type 5) ─────────────────────────────────
     // 5,SequenceNumber,RecordStatus,RecordType,EventCode,EventDate,EventTime,AccumVehicleMiles,AccumEngineHours,Lat,Lon,DistanceSinceLastCoord,MalfunctionStatus,DiagnosticStatus,DataCheckValue,LineDataCheckValue
-    final allEvents = <DotInspectionEvent>[];
-    for (final l in logs.values) {
-      allEvents.addAll(l.events);
-    }
-
-    if (allEvents.isNotEmpty) {
-      for (final event in allEvents) {
-        final evDate = fileDate;
+    // P3: تاريخ كل حدث هو تاريخ سجله الحقيقي (logDate) لا تاريخ إنشاء
+    // الملف — الوثيقة النظامية تُطابق الأيام التي تحتويها فعلاً.
+    for (final log in logs.values) {
+      final evDate = dateFmt.format(log.logDate);
+      for (final event in log.events) {
         // Parse time string (e.g. "04:19 PM" or ISO) to HHmmss
         final evTime = _parseTimeToHHmmss(event.timeEt, fallback: fileTime);
         final evCode = _mapEventCode(event.eventCode);

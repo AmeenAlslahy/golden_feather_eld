@@ -7,9 +7,11 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/account_provider.dart';
+import '../utils/account_display.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/utils/localization_helper.dart';
+import '../../../../domain/account/driver_account.dart';
 
 /// شاشة معلومات الحساب
 class AccountPage extends ConsumerStatefulWidget {
@@ -42,20 +44,14 @@ class _AccountPageState extends ConsumerState<AccountPage> {
         : notAvailable;
 
     final availableLanguages =
-        account?.availableLanguages ?? ['English', 'Spanish', 'Arabic'];
-    final availableOdometerUnits =
-        account?.availableOdometerUnits ?? ['mi', 'km'];
+        account?.availableLanguages ?? DriverAccount.defaultAvailableLanguages;
+    final availableOdometerUnits = account?.availableOdometerUnits ??
+        DriverAccount.defaultAvailableOdometerUnits;
 
     final currentLocale = ref.watch(localeProvider);
-    final String currentLanguage;
-    if (currentLocale.languageCode == 'ar') {
-      currentLanguage = 'Arabic';
-    } else if (currentLocale.languageCode == 'es') {
-      currentLanguage = 'Spanish';
-    } else {
-      currentLanguage = 'English';
-    }
-    final currentOdometer = account?.odometer ?? 'mi';
+    final currentLanguage =
+        languageDisplayNameForCode(currentLocale.languageCode);
+    final currentOdometer = account?.odometer ?? availableOdometerUnits.first;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -141,9 +137,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                         loc.license,
                         account == null
                             ? notAvailable
-                            : (account.license.formatted.contains(',')
-                                  ? account.license.formatted
-                                  : '${account.license.state}, ${account.license.number}'),
+                            : licenseDisplayText(account.license),
                       ),
                       const Divider(height: 1, thickness: 1),
                       _buildInfoRow(
@@ -180,15 +174,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                             : (newValue) async {
                                 if (newValue != null &&
                                     newValue != currentLanguage) {
-                                  String code = 'en';
-                                  if (newValue.toLowerCase() == 'arabic' ||
-                                      newValue == 'العربية') {
-                                    code = 'ar';
-                                  } else if (newValue.toLowerCase() ==
-                                          'spanish' ||
-                                      newValue == 'español') {
-                                    code = 'es';
-                                  }
+                                  final code =
+                                      languageCodeForDisplayName(newValue);
                                   final success = await ref
                                       .read(accountProvider.notifier)
                                       .updatePreferences(
@@ -197,9 +184,11 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                                       );
                                   if (context.mounted) {
                                     if (success) {
-                                      ref
-                                          .read(localeProvider.notifier)
-                                          .setLocale(code);
+                                      if (code != null) {
+                                        ref
+                                            .read(localeProvider.notifier)
+                                            .setLocale(code);
+                                      }
                                       AppFeedback.success(
                                         context,
                                         loc.languageUpdatedSuccessfully,

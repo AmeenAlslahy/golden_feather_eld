@@ -52,6 +52,19 @@ class SQLiteOfflineQueue implements OfflineQueue {
     ''');
   }
 
+  /// P2 — فهارس تغطي استعلامات القراءة الفعلية:
+  /// الطابور (`priority, createdAt`)، الحجر (`state, quarantinedAt`)،
+  /// وقصّ الحروف الميتة (`failedAt`). إضافية بالكامل: `IF NOT EXISTS`
+  /// تجعل الترقية قابلة للاستئناف ولا تمس أي صف.
+  static Future<void> _createIndexes(DatabaseExecutor db) async {
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_pending_ready '
+        'ON $_tableName(priority ASC, createdAt ASC)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_quarantine_state '
+        'ON $_quarantineTable(state, quarantinedAt ASC)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_dead_letters_failedAt '
+        'ON dead_letters(failedAt DESC)');
+  }
+
   Future<Database> _initDB() async {
     final String path;
     if (dbPathOverride != null) {
@@ -63,7 +76,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
@@ -86,6 +99,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
           )
         ''');
         await _createQuarantineTable(db);
+        await _createIndexes(db);
       },
       // ترقية إضافية فقط: لا ALTER على الجداول القديمة، لا backfill،
       // لا مساس بالصفوف. IF NOT EXISTS يجعلها قابلة للاستئناف بعد crash.
@@ -103,6 +117,9 @@ class SQLiteOfflineQueue implements OfflineQueue {
         }
         if (oldVersion < 3) {
           await _createQuarantineTable(db);
+        }
+        if (oldVersion < 4) {
+          await _createIndexes(db);
         }
       },
     );

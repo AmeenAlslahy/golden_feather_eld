@@ -23,6 +23,12 @@ abstract class StatusDashboardRepository {
   /// — أي رصيد قانوني مُقدَّم بلا سند.
   DateTime? get snapshotAt;
 
+  /// آخر لقطة محفوظة (المثيل يملكها في الذاكرة والقرص) **بلا شبكة**.
+  ///
+  /// الاستهلاك: عرض فوري عند فتح الشاشة (كاش-أولاً) بختم لحظة قياسها
+  /// الأصلية، ثم يُجدَّد من الخادم في الخلفية. `null` = لا لقطة بعد.
+  StatusDashboard? get cachedDashboard;
+
   /// Cache a dashboard snapshot in memory and disk with its measurement timestamp.
   void cacheDashboard(StatusDashboard dashboard, {required DateTime takenAt});
 }

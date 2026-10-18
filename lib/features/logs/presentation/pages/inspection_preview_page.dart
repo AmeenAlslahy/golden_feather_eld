@@ -10,6 +10,7 @@ import '../providers/logs_provider.dart';
 import '../widgets/log_graph.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
 import '../../../../core/widgets/eld_date_paginator.dart';
 import '../../../../core/widgets/eld_events_table.dart';
@@ -71,17 +72,19 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
       error: (e, _) {
         final selectedLog =
             logsState.selectedLog ?? (logs.isNotEmpty ? logs.first : null);
+        // P3: بلا جواب خادم لا تُختلق هوية — القيم الحقيقية من السجل
+        // المحلي أو فراغ، ودعوى الامتثال تُترك للنص المحلي المعتمد.
         final fallbackScreen = DotInspectionScreen(
           screenTitle: 'DOT Inspection Mode',
           guidanceText: 'Present this screen to the safety official upon request.',
           handOverDeviceNotice: 'Hand over device to safety official',
-          carrierComplianceStatement: 'FMCSA 49 CFR Part 395 Subpart B Compliant',
-          carrierName: selectedLog?.carrierName ?? 'Golden Feather Logistics',
-          usdotNumber: 'USDOT 3829102',
-          eldIdentifier: 'GF-ELD-01',
-          eldRegistrationId: 'GF-REG-01',
-          driverId: DriverId(int.tryParse(selectedLog?.uniqueId ?? '0') ?? 0),
-          driverName: selectedLog?.driverName ?? 'Driver',
+          carrierComplianceStatement: loc.eldCertifies,
+          carrierName: selectedLog?.carrierName ?? '',
+          usdotNumber: selectedLog?.usdotNumber ?? '',
+          eldIdentifier: '',
+          eldRegistrationId: '',
+          driverId: DriverId(ref.read(currentDriverIdProvider) ?? 0),
+          driverName: selectedLog?.driverName ?? '',
           inspectionDate: selectedLog?.date ?? DateTime.now(),
           cycleDaysCovered: 8,
           canStartInspection: true,

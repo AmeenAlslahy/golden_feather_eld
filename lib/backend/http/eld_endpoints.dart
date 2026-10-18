@@ -3,8 +3,12 @@ library;
 /// Paths relative to `ApiClient.baseUrl` (the live contract server is `/api`).
 ///
 /// Values match the live OAS 3.0.1 document in `openapi.yaml`
-/// (`https://snsoft.cloud/api/eld/openapi.yaml`, fetched 2026-09-23).
-/// Do not add a path that is absent from that file.
+/// (`https://snsoft.cloud/api/eld/openapi.yaml`, fetched 2026-09-23) plus
+/// the daily-log API specification (`daily_log_api_specification`, 2026-10):
+///   - `GET /eld/daily-logs` (page/size + filters), `GET /eld/daily-logs/summary`
+///   - `GET/PUT /eld/daily-logs/{id}/events/{eventId}`, `.../events/options`
+///   - `GET /eld/daily-logs/{id}/form/options`, `GET /eld/daily-logs/{id}/certify`
+/// Do not add a path that is absent from those documents.
 class EldEndpoints {
   const EldEndpoints._();
 
@@ -49,6 +53,8 @@ class EldEndpoints {
   // 4. Daily Logs
   /// السجلات اليومية
   static const String dailyLogs = '/eld/daily-logs';
+  /// ملخص السجلات اليومية (إحصاءات مع نفس مرشحات القائمة)
+  static const String dailyLogSummary = '/eld/daily-logs/summary';
   /// تفاصيل السجلات اليومية
   static String dailyLogDetails(int logId) => '/eld/daily-logs/$logId';
   /// الرد على تعديلات الناقل
@@ -59,8 +65,17 @@ class EldEndpoints {
   static String reassignDriving(int logId, int statusId) => '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
   /// نموذج السجلات اليومية
   static String dailyLogForm(int logId) => '/eld/daily-logs/$logId/form';
-  /// مخطط زمني للسجلات اليومية
+  /// خيارات النموذج (مركبات مسموحة + سائقون مساعدون — للقوائم المنسدلة)
+  static String dailyLogFormOptions(int logId) => '/eld/daily-logs/$logId/form/options';
+  /// أحداث السجل اليومي (GraphGrid + الأحداث القابلة للتعديل)
+  static String dailyLogEvents(int logId) => '/eld/daily-logs/$logId/events';
+  /// مسار قديم (غير موجود في المواصفة الجديدة) — احتياط فقط عندما يعيد
+  /// `GET /events` خطأ 404 لأن الخادم لم يُحدَّث بعد. نفس الحمولة: `data.events`.
   static String dailyLogGraphGrid(int logId) => '/eld/daily-logs/$logId/graph-grid';
+  /// حدث واحد داخل سجل يومي (تفاصيل/تعديل)
+  static String dailyLogEvent(int logId, int eventId) => '/eld/daily-logs/$logId/events/$eventId';
+  /// الخيارات المسموحة لتعديل الأحداث (حالات + تصنيفات خاصة)
+  static String dailyLogEventsOptions(int logId) => '/eld/daily-logs/$logId/events/options';
   /// قفل السجلات اليومية
   static String lockLog(int logId) => '/eld/daily-logs/$logId/lock';
   /// التحقق من جاهزية السجلات اليومية
@@ -113,6 +128,10 @@ class EldEndpoints {
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
   /// تفتيش الطرق
   static const String inspections = '/eld/dot-inspection';
+  /// سجلات الدورة (8 أيام أو نطاق التدقيق)
+  static const String dotInspectionCycle = '/eld/dot-inspection/cycle';
+  /// عرض سجل التفتيش ليوم محدد
+  static const String dotInspectionLogs = '/eld/dot-inspection/logs';
 
   // 17. Hardware
   /// تنبيةات الجهاز
