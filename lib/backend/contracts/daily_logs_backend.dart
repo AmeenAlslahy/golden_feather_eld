@@ -21,7 +21,8 @@ abstract interface class DailyLogsBackend {
     int size = 20,
   });
 
-  /// GET /eld/daily-logs/summary — same filters as [list], aggregate counts.
+  /// GET /eld/daily-logs/summary — same filters as [list] + `page`/`size`;
+  /// the unified envelope carries `pagination` (spec rule #2).
   // TODO(P2): replace with typed summary
   Future<Result<RawJson>> getSummary({
     DriverId? driverId,
@@ -32,6 +33,8 @@ abstract interface class DailyLogsBackend {
     DateTime? startDate,
     DateTime? endDate,
     DateTime? logDate,
+    int page = 0,
+    int size = 20,
   });
 
   /// GET /eld/daily-logs/{id}

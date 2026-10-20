@@ -14,11 +14,14 @@ import '../../../../core/events/eld_events_provider.dart';
 import '../../../tracking/domain/entities/connection_status.dart';
 import '../../domain/entities/dispatch_auth.dart';
 import '../../domain/entities/pending_event.dart';
+import '../../domain/repositories/duty_event_journal.dart';
 import '../../domain/repositories/offline_queue.dart';
 import '../../domain/repositories/sync_repository.dart';
 import '../../domain/usecases/sync_engine.dart';
 import '../datasources/sync_local_data_source.dart';
+import '../repositories/memory_duty_event_journal.dart';
 import '../repositories/memory_offline_queue.dart';
+import '../repositories/sqlite_duty_event_journal.dart';
 import '../repositories/sqlite_offline_queue.dart';
 import '../repositories/sync_repository_impl.dart';
 import '../repositories/traccar_remote_event_dispatcher.dart';
@@ -66,6 +69,16 @@ final offlineQueueProvider = Provider<OfflineQueue>((ref) {
     return MemoryOfflineQueue();
   }
   return SQLiteOfflineQueue();
+});
+
+/// P1.1 — durable duty-event evidence. Sharing the queue's `Database` is what
+/// makes the journal row + queue row a single transaction.
+final dutyEventJournalProvider = Provider<DutyEventJournal>((ref) {
+  final queue = ref.watch(offlineQueueProvider);
+  if (queue is SQLiteOfflineQueue) {
+    return SqliteDutyEventJournal(() => queue.database);
+  }
+  return MemoryDutyEventJournal(queue: queue);
 });
 
 final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {

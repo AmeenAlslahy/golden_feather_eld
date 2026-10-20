@@ -10,6 +10,12 @@ String anyErrorUserMessage(Object error, {required AppLocalizations loc}) {
     if (error is NetworkFailure || error.message == 'noInternet') {
       return loc.errNoInternet;
     }
+    // لا لقطة محلية ولا خادم ⇒ "لا توجد بيانات" بدل "تعذّر الطلب":
+    // الفشل هنا ليس عابراً ولا يعني أن الخادم رفض، بل لا يوجد ما نعرضه.
+    if (error is NoDashboardSnapshotFailure ||
+        error is NoRecapSnapshotFailure) {
+      return loc.noData;
+    }
     // 🔴 رسالة الخادم أولاً — فهي تشرح **ما حدث للسائق** بدل أن تصف
     // سلوك الخادم. «السجل اليومي معتمد مسبقاً، ألغِ الاعتماد أولاً» أنفع
     // من «الخادم رفض الطلب».

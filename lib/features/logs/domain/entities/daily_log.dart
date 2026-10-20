@@ -241,6 +241,17 @@ class LogEvent extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, status, startTime, duration, location, isExpanded];
+  List<Object?> get props => [
+        id,
+        status,
+        startTime,
+        duration,
+        location,
+        odometer,
+        engineHours,
+        isExpanded,
+        automatedDriving,
+        editable,
+        startedOnPreviousDay,
+      ];
 }

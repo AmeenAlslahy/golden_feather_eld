@@ -129,6 +129,19 @@ void main() {
     expect(find.text('الساعات المتاحة غداً'), findsOneWidget);
   });
 
+  testWidgets('no cache + no server → explicit unavailable, no fake numbers',
+      (tester) async {
+    when(() => repo.getWeeklyRecap(driverId: any(named: 'driverId')))
+        .thenAnswer((_) async => const Left(NoRecapSnapshotFailure()));
+    await pump(tester);
+
+    expect(find.text('No data'), findsOneWidget);
+    expect(find.byType(EldRetryView), findsNothing);
+    // The old synthesized recap always showed 8.00 available tomorrow.
+    expect(find.text('Hours Available Tomorrow'), findsNothing);
+    expect(find.text('8.00'), findsNothing);
+  });
+
   testWidgets('failure → sanitized retry view, retry re-queries the server',
       (tester) async {
     var calls = 0;

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/utils/duration_format.dart';
 import '../../../../domain/duty_status/weekly_recap.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../providers/recap_provider.dart';
@@ -72,6 +73,23 @@ class RecapPage extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
+          // لا كاش ولا خادم ⇒ لا نعرض أرقاماً. نقول "لا توجد بيانات"
+          // بدل إيهام السائق برصيد أسبوعي فارغ.
+          if (err is NoRecapSnapshotFailure) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(context.loc.noData, style: context.styles.muted),
+                  TextButton.icon(
+                    onPressed: () => ref.invalidate(recapProvider),
+                    icon: const Icon(Icons.refresh),
+                    label: Text(context.loc.retryButton),
+                  ),
+                ],
+              ),
+            );
+          }
           return EldRetryView(
             message: anyErrorUserMessage(
               err,

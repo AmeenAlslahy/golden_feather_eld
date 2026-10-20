@@ -166,19 +166,36 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
   void selectLog(DailyLog log) {
     state = state.copyWith(selectedLog: log, clearEventsError: true, clearServerForm: true);
-    if (log.trailers.isNotEmpty || log.shippingDocuments.isNotEmpty || (log.vehicleName != null && log.vehicleName!.isNotEmpty)) {
-      _ref?.read(dashboardDataProvider.notifier).applyServerForm(
-        DailyFormData(
-          vehicleUniqueId: log.uniqueId.isNotEmpty ? log.uniqueId : null,
-          vehicleName: log.vehicleName,
-          trailers: log.trailers,
-          shippingDocuments: log.shippingDocuments,
-        ),
-      );
-    }
-    loadSelectedLogDetail();
+    _applyRowToLiveDashboard(log);
+    // التفاصيل ثم النموذج بالترتيب: النموذج (`/form`) أعلى سلطة من صف
+    // القائمة، فيُطبَّق أخيراً مهما تأخرت أو سبقت استجابات الشبكة.
+    unawaited(_loadSelectedSources(log));
     loadSelectedLogEvents();
-    loadSelectedForm();
+  }
+
+  Future<void> _loadSelectedSources(DailyLog log) async {
+    await loadSelectedLogDetail();
+    if (!mounted) return;
+    if (state.selectedLog?.id != log.id) return;
+    await loadSelectedForm();
+  }
+
+  /// تطبيق صف السجل على الحالة الحية — لسجل اليوم حصراً، وبلا اختلاق.
+  void _applyRowToLiveDashboard(DailyLog log) {
+    if (!log.today) return;
+    if (log.trailers.isEmpty &&
+        log.shippingDocuments.isEmpty &&
+        (log.vehicleName == null || log.vehicleName!.isEmpty)) {
+      return;
+    }
+    _ref?.read(dashboardDataProvider.notifier).applyServerForm(
+      DailyFormData(
+        vehicleUniqueId: log.uniqueId.isNotEmpty ? log.uniqueId : null,
+        vehicleName: log.vehicleName,
+        trailers: log.trailers,
+        shippingDocuments: log.shippingDocuments,
+      ),
+    );
   }
 
   /// نموذج اليوم المحفوظ في الخادم (`GET /eld/daily-logs/{id}/form`) —
@@ -204,6 +221,86 @@ class LogsNotifier extends StateNotifier<LogsState> {
     );
   }
 
+  /// نموذج السجل المحدد المعروض، وإلا صف السجل نفسه — أساس أي تعديل
+  /// محلي لسجل سابق، بلا اختلاق قيم.
+  DailyFormData _selectedFormBase(DailyLog current) {
+    return state.serverForm ??
+        DailyFormData(
+          vehicleUniqueId: current.uniqueId.isNotEmpty ? current.uniqueId : null,
+          vehicleName: current.vehicleName,
+          trailers: current.trailers,
+          shippingDocuments: current.shippingDocuments,
+        );
+  }
+
+  /// تعديل قوائم النموذج (المقطورات/وثائق الشحن) للسجل المحدد عندما لا
+  /// يكون سجل اليوم: يُحدَّث نموذج الخادم المعروض بذلك فيبقى التعديل
+  /// خاصاً بهذا السجل ولا يتسرب إلى الحالة الحية ولا إلى سجل آخر.
+  void updateSelectedFormLists({
+    List<String>? trailers,
+    List<String>? shippingDocuments,
+  }) {
+    final current = state.selectedLog;
+    if (current == null || current.today) return;
+    final base = _selectedFormBase(current);
+    state = state.copyWith(
+      serverForm: DailyFormData(
+        vehicleId: base.vehicleId,
+        vehicleUniqueId: base.vehicleUniqueId,
+        vehicleName: base.vehicleName,
+        coDriverId: base.coDriverId,
+        coDriverName: base.coDriverName,
+        trailers: trailers ?? base.trailers,
+        shippingDocuments: shippingDocuments ?? base.shippingDocuments,
+      ),
+    );
+  }
+
+  /// اختيار المركبة لسجل سابق يبقى على نموذج ذلك السجل ولا يمس الحالة
+  /// الحية (لوحة القيادة تخص سجل اليوم حصراً).
+  void updateSelectedFormVehicle({
+    required int? vehicleId,
+    required String vehicleUniqueId,
+    required String vehicleName,
+  }) {
+    final current = state.selectedLog;
+    if (current == null || current.today) return;
+    final base = _selectedFormBase(current);
+    state = state.copyWith(
+      serverForm: DailyFormData(
+        vehicleId: vehicleId,
+        vehicleUniqueId:
+            vehicleUniqueId.isEmpty ? null : vehicleUniqueId,
+        vehicleName: vehicleName.isEmpty ? null : vehicleName,
+        coDriverId: base.coDriverId,
+        coDriverName: base.coDriverName,
+        trailers: base.trailers,
+        shippingDocuments: base.shippingDocuments,
+      ),
+    );
+  }
+
+  /// اختيار السائق المساعد لسجل سابق يبقى على نموذج ذلك السجل وحده.
+  void updateSelectedFormCoDriver({
+    required int? coDriverId,
+    required String coDriverName,
+  }) {
+    final current = state.selectedLog;
+    if (current == null || current.today) return;
+    final base = _selectedFormBase(current);
+    state = state.copyWith(
+      serverForm: DailyFormData(
+        vehicleId: base.vehicleId,
+        vehicleUniqueId: base.vehicleUniqueId,
+        vehicleName: base.vehicleName,
+        coDriverId: coDriverId,
+        coDriverName: coDriverName.isEmpty ? null : coDriverName,
+        trailers: base.trailers,
+        shippingDocuments: base.shippingDocuments,
+      ),
+    );
+  }
+
   /// تفاصيل السجل من الخادم (`GET /eld/daily-logs/{id}`) — مصدر الحقيقة
   /// لبيانات الترويسة (السائق/المركبة/الناقل/العناوين/الشاحنات). صف
   /// القائمة يبقى معروضاً حتى يصل الرد، والفشل هنا صامت: الأحداث لها
@@ -220,16 +317,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (fresh) {
         // أحداث graph-grid تُحفظ — التفاصيل والحدثان يتكاملان لا يتنافسان.
         _replaceSelected(fresh.copyWith(events: state.selectedLog!.events));
-        if (log.today && (fresh.trailers.isNotEmpty || fresh.shippingDocuments.isNotEmpty || (fresh.vehicleName != null && fresh.vehicleName!.isNotEmpty))) {
-          _ref?.read(dashboardDataProvider.notifier).applyServerForm(
-            DailyFormData(
-              vehicleUniqueId: fresh.uniqueId.isNotEmpty ? fresh.uniqueId : null,
-              vehicleName: fresh.vehicleName,
-              trailers: fresh.trailers,
-              shippingDocuments: fresh.shippingDocuments,
-            ),
-          );
-        }
+        _applyRowToLiveDashboard(fresh);
       },
     );
   }

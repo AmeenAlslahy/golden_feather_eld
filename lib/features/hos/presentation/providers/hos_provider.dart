@@ -12,8 +12,9 @@ import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// مزود حالة HOS
-final hosStatusProvider =
-    StateNotifierProvider<HosNotifier, HosEngineResult>((ref) {
+final hosStatusProvider = StateNotifierProvider<HosNotifier, HosEngineResult>((
+  ref,
+) {
   final engine = ref.watch(hosEngineProvider);
   final tracker = ref.watch(dutyStatusTrackerProvider);
   return HosNotifier(engine, tracker, ref);
@@ -27,7 +28,7 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   StreamSubscription? _trackerSub;
 
   HosNotifier(this._engine, this._tracker, this._ref)
-      : super(_engine.currentStatus) {
+    : super(_engine.currentStatus) {
     _startRefreshTimer();
     _trackerSub = _tracker.onTransition.listen((transition) {
       final status = _mapStatus(transition.newStatus);
@@ -37,7 +38,8 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
       if (currentStatus != status) {
         AppLogger.info(
-            '🔄 Syncing HOS UI with DutyStatusTracker: ${transition.newStatus}');
+          '🔄 Syncing HOS UI with DutyStatusTracker: ${transition.newStatus}',
+        );
         _engine.manualTransition(status, annotation: transition.annotation);
         refresh();
       }
@@ -82,14 +84,15 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
   /// تغيير حالة الخدمة. يُعاد توجيه نتيجة المتتبع كما هي (رفض اختياري
   /// مع لقطة لوحة الخادم عند القبول لتغذية اللوحة فوراً).
-  Future<ManualDutyChangeResult> changeStatus(DutyStatus newStatus,
-      {String? annotation,
-      bool isYardMoves = false,
-      double? latitude,
-      double? longitude}) async {
-    if (state is! HosEngineReady) {
-      return const ManualDutyChangeResult(
-          refusal: DutyStampRefusal.notReady);
+  Future<ManualDutyChangeResult> changeStatus(
+    DutyStatus newStatus, {
+    String? annotation,
+    bool isYardMoves = false,
+    double? latitude,
+    double? longitude,
+  }) async {
+    if (state is! HosEngineReady || !_tracker.isHydrated) {
+      return const ManualDutyChangeResult(refusal: DutyStampRefusal.notReady);
     }
     final currentHosStatus = (state as HosEngineReady).update.currentStatus;
 
@@ -99,12 +102,15 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
       currentStatus: currentHosStatus,
       newStatus: newStatus,
       currentSpeedKmh: currentSpeedKmh,
-      speedThresholdKmh:
-          _ref.read(hosConfigurationProvider).movingSpeedThresholdKmh,
+      speedThresholdKmh: _ref
+          .read(hosConfigurationProvider)
+          .movingSpeedThresholdKmh,
     );
 
     if (validationResult.isLeft()) {
-      AppLogger.warning('⚠️ ${validationResult.fold((f) => f.message, (_) => '')}');
+      AppLogger.warning(
+        '⚠️ ${validationResult.fold((f) => f.message, (_) => '')}',
+      );
       return const ManualDutyChangeResult(refusal: DutyStampRefusal.moving);
     }
 
@@ -119,7 +125,9 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         statusCode = DutyStatusCode.driving;
         break;
       case DutyStatus.onDutyNotDriving:
-        statusCode = isYardMoves ? DutyStatusCode.yardMove : DutyStatusCode.onDutyNotDriving;
+        statusCode = isYardMoves
+            ? DutyStatusCode.yardMove
+            : DutyStatusCode.onDutyNotDriving;
         break;
       case DutyStatus.sleeperBerth:
         statusCode = DutyStatusCode.sleeperBerth;
@@ -132,10 +140,12 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
         break;
     }
 
-    return _tracker.submitManualChange(statusCode.engineCode,
-        annotation: finalAnnotation.isEmpty ? null : finalAnnotation,
-        lat: latitude,
-        lon: longitude);
+    return _tracker.submitManualChange(
+      statusCode.engineCode,
+      annotation: finalAnnotation.isEmpty ? null : finalAnnotation,
+      lat: latitude,
+      lon: longitude,
+    );
   }
 
   /// تحديث الحالة

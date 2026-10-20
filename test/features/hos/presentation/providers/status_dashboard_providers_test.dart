@@ -6,6 +6,8 @@ import 'package:golden_feather_eld/backend/core/backend_identity.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
+import 'package:golden_feather_eld/core/network/core_providers.dart';
+import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
@@ -14,24 +16,26 @@ import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:golden_feather_eld/features/hos/presentation/providers/hos_engine_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
 import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
 
-class _FakeAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+class _FakeAuthNotifier extends StateNotifier<AuthState>
+    implements AuthNotifier {
   _FakeAuthNotifier()
-      : super(
-          AuthState(
-            status: AuthStatus.authenticated,
-            user: User(
-              id: '646',
-              username: 'naseem646',
-              email: 'naseem@test.com',
-              fullName: 'Naseem Hassan Ali Adam',
-              role: UserRole.fieldWorker,
-              createdAt: DateTime(2026),
-            ),
+    : super(
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: User(
+            id: '646',
+            username: 'naseem646',
+            email: 'naseem@test.com',
+            fullName: 'Naseem Hassan Ali Adam',
+            role: UserRole.fieldWorker,
+            createdAt: DateTime(2026),
           ),
-        );
+        ),
+      );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -39,7 +43,7 @@ class _FakeAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   ProviderContainer createContainer() {
     final container = ProviderContainer(
       overrides: [
@@ -98,7 +102,10 @@ void main() {
 
       await container.read(statusDashboardProvider.notifier).refresh();
 
-      expect(container.read(statusDashboardProvider), isA<AsyncData<StatusDashboard>>());
+      expect(
+        container.read(statusDashboardProvider),
+        isA<AsyncData<StatusDashboard>>(),
+      );
     });
   });
 
@@ -107,47 +114,55 @@ void main() {
   // ==========================================================================
 
   group('statusDashboardProvider — الخادم يستبدل المحلي كل نبضة', () {
-    test('refresh replaces values verbatim even when the server is more generous',
-        () async {
-      final fakeTime = FakeTrustedTimeProvider(
-        initialUtcTime: DateTime.utc(2026, 10, 14, 2),
-      );
-      final backend = _ScriptedStatusDashboard(
-        _dashboard(
-          circle: const Duration(hours: 8),
-          shiftUsed: const Duration(hours: 6, minutes: 30),
-        ),
-      );
-      final container = ProviderContainer(
-        overrides: [
-          activeBackendProvider.overrideWithValue(_ScriptedAdapter(backend)),
-          authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
-          trustedTimeProvider.overrideWithValue(fakeTime),
-        ],
-      );
-      addTearDown(container.dispose);
+    test(
+      'refresh replaces values verbatim even when the server is more generous',
+      () async {
+        final fakeTime = FakeTrustedTimeProvider(
+          initialUtcTime: DateTime.utc(2026, 10, 14, 2),
+        );
+        final backend = _ScriptedStatusDashboard(
+          _dashboard(
+            circle: const Duration(hours: 8),
+            shiftUsed: const Duration(hours: 6, minutes: 30),
+          ),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            activeBackendProvider.overrideWithValue(_ScriptedAdapter(backend)),
+            authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
+            trustedTimeProvider.overrideWithValue(fakeTime),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      final first = await container.read(statusDashboardProvider.future);
-      expect(first.remainingCircle.remaining, const Duration(hours: 8));
+        final first = await container.read(statusDashboardProvider.future);
+        expect(first.remainingCircle.remaining, const Duration(hours: 8));
 
-      // النبضة التالية: الخادم "متأخر" (يعرض أكثر). تحت الحارس الأحادي
-      // القديم كان يُقصّ إلى الاشتقاق المحلي (≈7:30)؛ الآن يُعرض كما ورد.
-      backend.dashboard = _dashboard(
-        circle: const Duration(hours: 9),
-        shiftUsed: const Duration(hours: 5),
-      );
-      fakeTime.advance(const Duration(seconds: 30));
+        // النبضة التالية: الخادم "متأخر" (يعرض أكثر). تحت الحارس الأحادي
+        // القديم كان يُقصّ إلى الاشتقاق المحلي (≈7:30)؛ الآن يُعرض كما ورد.
+        backend.dashboard = _dashboard(
+          circle: const Duration(hours: 9),
+          shiftUsed: const Duration(hours: 5),
+        );
+        fakeTime.advance(const Duration(seconds: 30));
 
-      await container
-          .read(statusDashboardProvider.notifier)
-          .reconcileWithServer();
+        await container
+            .read(statusDashboardProvider.notifier)
+            .reconcileWithServer();
 
-      final state = container.read(statusDashboardProvider).value!;
-      expect(state.remainingCircle.remaining, const Duration(hours: 9),
-          reason: 'الاستبدال لا التقليص — الخادم هو المرجع');
-      expect(state.hosIndicators.shift.value, const Duration(hours: 5),
-          reason: 'مؤشرات الخادم تُعرض حرفياً بلا دمج محلي');
-    });
+        final state = container.read(statusDashboardProvider).value!;
+        expect(
+          state.remainingCircle.remaining,
+          const Duration(hours: 9),
+          reason: 'الاستبدال لا التقليص — الخادم هو المرجع',
+        );
+        expect(
+          state.hosIndicators.shift.value,
+          const Duration(hours: 5),
+          reason: 'مؤشرات الخادم تُعرض حرفياً بلا دمج محلي',
+        );
+      },
+    );
   });
 
   // ==========================================================================
@@ -190,7 +205,52 @@ void main() {
       final state = container.read(statusDashboardProvider);
       expect(state, isA<AsyncError<StatusDashboard>>());
     });
+
+    test('clearErrorAndReload retries a failed hydration', () async {
+      var hydrationAttempts = 0;
+      final container = ProviderContainer(
+        overrides: [
+          activeBackendProvider.overrideWithValue(_FailingAdapter()),
+          authStateProvider.overrideWith((ref) => _FakeAuthNotifier()),
+          networkInfoProvider.overrideWithValue(_OfflineNetwork()),
+          hosEngineProvider.overrideWith(
+            (ref) => throw StateError('engine unavailable in this test'),
+          ),
+          hosHydrationReadyProvider.overrideWith((ref) async {
+            hydrationAttempts++;
+            if (hydrationAttempts == 1) {
+              throw StateError('journal hydration failed');
+            }
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container.read(statusDashboardProvider.future),
+        throwsA(isA<Failure>()),
+      );
+      expect(hydrationAttempts, 1);
+
+      await container
+          .read(statusDashboardProvider.notifier)
+          .clearErrorAndReload();
+
+      expect(
+        hydrationAttempts,
+        2,
+        reason: 'P1.3: a cached hydration failure must be retryable',
+      );
+    });
   });
+}
+
+class _OfflineNetwork implements NetworkInfo {
+  @override
+  bool get isConnected => false;
+
+  @override
+  Stream<bool> get onConnectionChange => const Stream<bool>.empty();
 }
 
 // =============================================================================
@@ -220,10 +280,9 @@ class _FailingAdapter implements BackendAdapter {
 class _FailingStatusDashboard implements StatusDashboardBackend {
   @override
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) async {
-    return err(const NetworkError(
-      code: 'test.failure',
-      l10nKey: 'testFailure',
-    ));
+    return err(
+      const NetworkError(code: 'test.failure', l10nKey: 'testFailure'),
+    );
   }
 
   @override
@@ -231,18 +290,16 @@ class _FailingStatusDashboard implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
   }) async {
-    return err(const NetworkError(
-      code: 'test.failure',
-      l10nKey: 'testFailure',
-    ));
+    return err(
+      const NetworkError(code: 'test.failure', l10nKey: 'testFailure'),
+    );
   }
 
   @override
   Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async {
-    return err(const NetworkError(
-      code: 'test.failure',
-      l10nKey: 'testFailure',
-    ));
+    return err(
+      const NetworkError(code: 'test.failure', l10nKey: 'testFailure'),
+    );
   }
 }
 
@@ -282,15 +339,15 @@ class _ScriptedStatusDashboard implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
-  }) async =>
-      ok(dashboard);
+  }) async => ok(dashboard);
 
   @override
-  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async =>
-      err(const NetworkError(
-        code: 'test.unimplemented',
-        l10nKey: 'testUnimplemented',
-      ));
+  Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async => err(
+    const NetworkError(
+      code: 'test.unimplemented',
+      l10nKey: 'testUnimplemented',
+    ),
+  );
 }
 
 StatusDashboard _dashboard({
@@ -316,17 +373,25 @@ StatusDashboard _dashboard({
     ),
     hosIndicators: HosIndicators(
       drive: const HosIndicator(
-          label: 'DRIVE', value: Duration.zero, type: IndicatorType.used),
+        label: 'DRIVE',
+        value: Duration.zero,
+        type: IndicatorType.used,
+      ),
       shift: HosIndicator(
-          label: 'SHIFT', value: shiftUsed, type: IndicatorType.used),
+        label: 'SHIFT',
+        value: shiftUsed,
+        type: IndicatorType.used,
+      ),
       breakTime: const HosIndicator(
-          label: 'BREAK',
-          value: Duration(hours: 8),
-          type: IndicatorType.remaining),
+        label: 'BREAK',
+        value: Duration(hours: 8),
+        type: IndicatorType.remaining,
+      ),
       cycle: const HosIndicator(
-          label: 'CYCLE',
-          value: Duration(hours: 69),
-          type: IndicatorType.used),
+        label: 'CYCLE',
+        value: Duration(hours: 69),
+        type: IndicatorType.used,
+      ),
     ),
     regulatoryConstraints: const RegulatoryConstraints(
       ruleSet: CycleRule.usa70_8,

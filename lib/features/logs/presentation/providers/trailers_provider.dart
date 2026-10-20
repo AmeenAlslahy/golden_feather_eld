@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/daily_form_rules.dart';
+import 'logs_provider.dart';
 
 /// أسباب فشل عمليات المقطورات وفق قواعد النموذج اليومي (SRS 5.5–5.13).
 enum TrailerActionFailure {
@@ -47,8 +48,30 @@ class TrailersState {
 class TrailersNotifier extends AutoDisposeNotifier<TrailersState> {
   @override
   TrailersState build() {
+    final logsState = ref.watch(logsProvider);
+    final selected = logsState.selectedLog;
+    if (selected != null && !selected.today) {
+      // سجل سابق: المصدر قيمه المحفوظة الخاصة به، لا حالة اللوحة الحية.
+      final form = logsState.serverForm;
+      return TrailersState(
+        trailers: List.of(form?.trailers ?? selected.trailers),
+      );
+    }
     final raw = ref.watch(dashboardDataProvider.select((d) => d.trailerId));
     return TrailersState(trailers: splitFormList(raw));
+  }
+
+  /// يحفظ القائمة الجديدة في المصدر الصحيح: الحالة الحية لسجل اليوم،
+  /// أو نموذج السجل نفسه لأي سجل سابق.
+  void _persist(List<String> next) {
+    final selected = ref.read(logsProvider).selectedLog;
+    if (selected != null && !selected.today) {
+      ref
+          .read(logsProvider.notifier)
+          .updateSelectedFormLists(trailers: next);
+      return;
+    }
+    ref.read(dashboardDataProvider.notifier).updateTrailers(next);
   }
 
   /// يضيف مقطورة جديدة بعد التحقق من صحتها وحدودها وتحديث الحالة.
@@ -86,9 +109,7 @@ class TrailersNotifier extends AutoDisposeNotifier<TrailersState> {
       return;
     }
 
-    ref
-        .read(dashboardDataProvider.notifier)
-        .updateTrailers([...state.trailers, text]);
+    _persist([...state.trailers, text]);
 
     state = state.copyWith(
       clearFailure: true,
@@ -98,9 +119,7 @@ class TrailersNotifier extends AutoDisposeNotifier<TrailersState> {
 
   /// يحذف المقطورة المحددة ويحدث الحالة المشتركة.
   void removeTrailer(String trailer) {
-    ref
-        .read(dashboardDataProvider.notifier)
-        .updateTrailers(state.trailers.where((t) => t != trailer).toList());
+    _persist(state.trailers.where((t) => t != trailer).toList());
   }
 }
 

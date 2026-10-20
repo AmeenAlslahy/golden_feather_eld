@@ -251,4 +251,75 @@ void main() {
       expect(error.context, containsPair('statusCode', 500));
     });
   });
+
+  group('mapDioException — unified envelope (errors[]/requestId)', () {
+    Response<dynamic> response(int status, [Object? body]) => Response(
+          requestOptions: requestOptions(),
+          statusCode: status,
+          data: body,
+        );
+
+    test('400: field error message is surfaced when message is absent', () {
+      final e = DioException(
+        requestOptions: requestOptions(),
+        type: DioExceptionType.badResponse,
+        response: response(400, {
+          'success': false,
+          'errors': [
+            {
+              'field': 'startTime',
+              'message': 'startTime must be inside the edit window',
+              'code': 'OUT_OF_WINDOW',
+            },
+          ],
+          'requestId': 'req-1',
+        }),
+      );
+
+      final error = mapDioException(e);
+      expect(error, isA<ValidationError>());
+      expect(
+        error.context?['serverMessage'],
+        'startTime must be inside the edit window',
+      );
+      expect(error.context?['requestId'], 'req-1');
+      expect(error.context?['fieldErrors'], [
+        'startTime (OUT_OF_WINDOW): startTime must be inside the edit window',
+      ]);
+    });
+
+    test('message keeps priority over field error messages', () {
+      final e = DioException(
+        requestOptions: requestOptions(),
+        type: DioExceptionType.badResponse,
+        response: response(400, {
+          'message': 'Request rejected',
+          'errors': [
+            {'field': 'status', 'message': 'status is required'},
+          ],
+          'requestId': 'req-2',
+        }),
+      );
+
+      final error = mapDioException(e);
+      expect(error.context?['serverMessage'], 'Request rejected');
+      expect(error.context?['requestId'], 'req-2');
+    });
+
+    test('409 keeps requestId for support tracking', () {
+      final e = DioException(
+        requestOptions: requestOptions(),
+        type: DioExceptionType.badResponse,
+        response: response(409, {
+          'success': false,
+          'message': 'Already certified',
+          'requestId': 'req-3',
+        }),
+      );
+
+      final error = mapDioException(e);
+      expect(error, isA<ConflictError>());
+      expect(error.context?['requestId'], 'req-3');
+    });
+  });
 }

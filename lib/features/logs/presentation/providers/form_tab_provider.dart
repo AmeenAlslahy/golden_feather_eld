@@ -28,10 +28,6 @@ class FormTabData {
   final String coDriverName;
   final String coDriverId;
 
-  /// معرّف المركبة الرقمي (`vehicleId` في الوثيقة) — من اختيار السائق
-  /// لمركبة الشركة أو من `vehicle.id` القادم مع نموذج الخادم.
-  final int? vehicleId;
-
   const FormTabData({
     required this.driverName,
     required this.vehicleName,
@@ -40,7 +36,6 @@ class FormTabData {
     required this.shippingDocuments,
     required this.coDriverName,
     required this.coDriverId,
-    this.vehicleId,
   });
 
   /// التحقق من صحة المركبة قبل الحفظ
@@ -103,7 +98,6 @@ class FormTabData {
     }
 
     return DailyFormUpdate(
-      vehicleId: vehicleId,
       vehicleUniqueId: uniqueId,
       coDriverId: parsedCoDriverId,
       trailers: parsedTrailers,
@@ -119,39 +113,54 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
   final serverForm = logsState.serverForm;
   final dashboard = ref.watch(dashboardDataProvider);
 
+  // حالة اللوحة الحية تخص سجل اليوم الحالي حصراً؛ أي سجل سابق يقرأ قيمه
+  // المحفوظة الخاصة به (نموذج الخادم ثم صف السجل) كي لا تتسرب قيم يوم
+  // إلى يوم آخر.
+  final liveDashboard = selectedLog == null || selectedLog.today;
+
   // 1. اسم السائق
   final driverName = (selectedLog?.driverName?.isNotEmpty == true)
       ? selectedLog!.driverName!
       : dashboard.driverName;
 
-  // 2. اسم المركبة والمعرف الفريد: الأولوية للحالة الحية في Dashboard إذا تم تعديلها
-  final vName = (dashboard.vehicleDisplayName != 'Select a vehicle' &&
-          dashboard.vehicleDisplayName.isNotEmpty)
-      ? dashboard.vehicleDisplayName
+  // 2. اسم المركبة والمعرف الفريد: الأولوية للحالة الحية في Dashboard إذا
+  // تم تعديلها — لسجل اليوم فقط.
+  final vName = liveDashboard
+      ? ((dashboard.vehicleDisplayName != 'Select a vehicle' &&
+              dashboard.vehicleDisplayName.isNotEmpty)
+          ? dashboard.vehicleDisplayName
+          : (serverForm?.vehicleName?.isNotEmpty == true
+              ? serverForm!.vehicleName!
+              : (selectedLog?.vehicleName?.isNotEmpty == true
+                  ? selectedLog!.vehicleName!
+                  : dashboard.vehicleDisplayName)))
       : (serverForm?.vehicleName?.isNotEmpty == true
           ? serverForm!.vehicleName!
-          : (selectedLog?.vehicleName?.isNotEmpty == true
-              ? selectedLog!.vehicleName!
-              : dashboard.vehicleDisplayName));
+          : (selectedLog.vehicleName?.isNotEmpty == true
+              ? selectedLog.vehicleName!
+              : (selectedLog.uniqueId.isNotEmpty == true
+                  ? selectedLog.uniqueId
+                  : '-')));
 
-  final vId = (dashboard.vehicleId != 'No Vehicle' &&
-          dashboard.vehicleId.isNotEmpty)
-      ? dashboard.vehicleId
+  final vId = liveDashboard
+      ? ((dashboard.vehicleId != 'No Vehicle' &&
+              dashboard.vehicleId.isNotEmpty)
+          ? dashboard.vehicleId
+          : (serverForm?.vehicleUniqueId?.isNotEmpty == true
+              ? serverForm!.vehicleUniqueId!
+              : (selectedLog?.uniqueId.isNotEmpty == true
+                  ? selectedLog!.uniqueId
+                  : dashboard.vehicleId)))
       : (serverForm?.vehicleUniqueId?.isNotEmpty == true
           ? serverForm!.vehicleUniqueId!
-          : (selectedLog?.uniqueId.isNotEmpty == true
-              ? selectedLog!.uniqueId
-              : dashboard.vehicleId));
+          : (selectedLog.uniqueId.isNotEmpty == true
+              ? selectedLog.uniqueId
+              : ''));
 
-  // 2ب. المعرّف الرقمي: اختيار السائق الحي (vehicle.id) أولاً، ثم ما
-  // ورد مع نموذج الخادم (`vehicle.id`) — الاحتياط النصي يبقى vId.
-  final vehicleIdInt = (dashboard.vehicleId != 'No Vehicle' &&
-          dashboard.vehicleId.isNotEmpty)
-      ? int.tryParse(dashboard.vehicleId)
-      : serverForm?.vehicleId;
-
-  // 3. المقطورات: الأولوية للقيمة المعدلة الحية، ثم نموذج الخادم، ثم السجل
-  final trailers = (dashboard.trailerId != null &&
+  // 3. المقطورات: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
+  // الخادم، ثم صف السجل
+  final trailers = (liveDashboard &&
+          dashboard.trailerId != null &&
           dashboard.trailerId != 'None' &&
           dashboard.trailerId!.isNotEmpty)
       ? dashboard.trailerId!
@@ -161,8 +170,10 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
               ? joinFormList(selectedLog!.trailers)
               : '-'));
 
-  // 4. وثائق الشحن: الأولوية للقيمة المعدلة الحية، ثم نموذج الخادم، ثم السجل
-  final docs = (dashboard.shippingDocuments != null &&
+  // 4. وثائق الشحن: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
+  // الخادم، ثم صف السجل
+  final docs = (liveDashboard &&
+          dashboard.shippingDocuments != null &&
           dashboard.shippingDocuments != 'None' &&
           dashboard.shippingDocuments!.isNotEmpty)
       ? dashboard.shippingDocuments!
@@ -173,13 +184,15 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
               : '-'));
 
   // 5. السائق المساعد
-  final coDriverName = (dashboard.coDriverName?.isNotEmpty == true)
+  final coDriverName = (liveDashboard &&
+          dashboard.coDriverName?.isNotEmpty == true)
       ? dashboard.coDriverName!
       : (serverForm?.coDriverName?.isNotEmpty == true
           ? serverForm!.coDriverName!
           : '-');
 
-  final coDriverId = (dashboard.coDriverId?.isNotEmpty == true &&
+  final coDriverId = (liveDashboard &&
+          dashboard.coDriverId?.isNotEmpty == true &&
           dashboard.coDriverId != 'none')
       ? dashboard.coDriverId!
       : ((serverForm?.coDriverId != null && serverForm!.coDriverId! > 0)
@@ -194,7 +207,6 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
     shippingDocuments: docs,
     coDriverName: coDriverName,
     coDriverId: coDriverId,
-    vehicleId: vehicleIdInt,
   );
 });
 
@@ -204,13 +216,35 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
 
   FormTabNotifier(this._ref, this._log) : super(const FormTabState());
 
-  /// تحديث المركبة المختارة في حالة لوحة القيادة
+  /// الحالة الحية (لوحة القيادة) تخص سجل اليوم حصراً؛ أي سجل سابق يكتب
+  /// اختياره على نموذج السجل نفسه كي لا تتسرب قيم يوم إلى يوم آخر.
+  bool get _isLiveDashboard {
+    final selected = _ref.read(logsProvider).selectedLog;
+    return selected == null || selected.today;
+  }
+
+  /// تحديث المركبة المختارة: الحالة الحية لسجل اليوم، أو نموذج السجل.
   void updateVehicle(Vehicle vehicle) {
+    if (!_isLiveDashboard) {
+      _ref.read(logsProvider.notifier).updateSelectedFormVehicle(
+            vehicleId: int.tryParse(vehicle.id),
+            vehicleUniqueId: vehicle.uniqueId ?? vehicle.id,
+            vehicleName: vehicle.displayName,
+          );
+      return;
+    }
     _ref.read(dashboardDataProvider.notifier).updateVehicle(vehicle);
   }
 
-  /// تحديث السائق المساعد المختار في حالة لوحة القيادة
+  /// تحديث السائق المساعد: الحالة الحية لسجل اليوم، أو نموذج السجل.
   void updateCoDriver(CoDriver coDriver) {
+    if (!_isLiveDashboard) {
+      _ref.read(logsProvider.notifier).updateSelectedFormCoDriver(
+            coDriverId: int.tryParse(coDriver.id),
+            coDriverName: coDriver.name,
+          );
+      return;
+    }
     _ref.read(dashboardDataProvider.notifier).updateCoDriver(coDriver);
   }
 

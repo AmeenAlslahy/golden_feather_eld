@@ -8,14 +8,14 @@ import '../../../../../core/services/local_storage_service.dart';
 /// متتبع حالة السائق (Domain Pure)
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../sync/domain/usecases/sync_engine.dart';
+import '../../../../sync/domain/entities/duty_event_record.dart';
 import '../../../../sync/domain/entities/pending_event.dart';
+import '../../../../sync/domain/repositories/duty_event_journal.dart';
 import 'package:uuid/uuid.dart';
 import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import '../../../../../backend/contracts/status_dashboard_backend.dart';
 import '../../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
-
-
 
 abstract final class DutyStampRefusal {
   static const timeUnavailable = 'trusted_time_unavailable';
@@ -24,6 +24,7 @@ abstract final class DutyStampRefusal {
   static const moving = 'moving';
   static const notReady = 'duty_status_not_ready';
   static const serverRejected = 'server_rejected';
+  static const storageUnavailable = 'duty_storage_unavailable';
 }
 
 // Mapping replaced by DutyStatusCode.fromAny()
@@ -52,13 +53,33 @@ class DutyStatusTracker {
   final TrustedTimeProvider _timeProvider;
   final int? Function()? _readDriverId;
 
+  /// P1.1 — append-only evidence. `null` keeps the legacy (pre-journal)
+  /// behaviour for existing tests and call sites; production always injects it.
+  final DutyEventJournal? _journal;
+
   final _transitionController = StreamController<DutyTransition>.broadcast();
   Stream<DutyTransition> get onTransition => _transitionController.stream;
 
   final List<DutyStatusEvent> _events = [];
   final List<DutyPeriod> _periods = [];
+  final Set<String> _appliedEventIds = {};
   String _currentStatus = 'off_duty';
   DutyStatusEvent? _lastEvent;
+
+  bool _hydrated = false;
+  bool _hydrationFailed = false;
+  bool _disposed = false;
+  bool _journalCorrupted = false;
+  int? _hydratedOwnerId;
+  Future<void>? _hydration;
+  Future<void> _persistChain = Future<void>.value();
+
+  bool get isHydrated => _hydrated;
+  bool get hydrationFailed => _hydrationFailed;
+  bool get journalHasCorruption => _journalCorrupted;
+
+  /// Completes after every scheduled journal commit has settled.
+  Future<void> get persistenceIdle => _persistChain;
 
   DateTime? _stationarySince;
   Timer? _wakeupTimer;
@@ -73,13 +94,23 @@ class DutyStatusTracker {
     required StatusDashboardBackend dashboardBackend,
     required TrustedTimeProvider timeProvider,
     int? Function()? readDriverId,
-  })  : _logRepository = logRepository,
-        _localStorage = localStorage,
-        _syncEngine = syncEngine,
-        _dashboardBackend = dashboardBackend,
-        _timeProvider = timeProvider,
-        _readDriverId = readDriverId {
+    DutyEventJournal? journal,
+  }) : _logRepository = logRepository,
+       _localStorage = localStorage,
+       _syncEngine = syncEngine,
+       _dashboardBackend = dashboardBackend,
+       _timeProvider = timeProvider,
+       _readDriverId = readDriverId,
+       _journal = journal {
     _initStationaryState();
+    if (_journal == null) {
+      _hydrated = true;
+    } else {
+      final owner = _readDriverId?.call();
+      if (owner != null && owner > 0) {
+        unawaited(hydrateForDriver(owner));
+      }
+    }
   }
 
   List<DutyStatusEvent> get events => List.unmodifiable(_events);
@@ -97,12 +128,173 @@ class DutyStatusTracker {
       final parsed = DateTime.tryParse(savedTime);
       if (parsed != null) {
         _stationarySince = parsed;
-        _evaluateStationaryState();
+        unawaited(_evaluateStationaryState());
       }
     }
   }
 
-  void processEldEvent(EldEvent eldEvent) {
+  /// P1.1 — rebuild derived state from the append-only journal.
+  ///
+  /// Replay selects by the journal row's own `ownerDriverId`; the current
+  /// session only decides which owner to ask for. A row is never re-owned.
+  Future<void> hydrateForDriver(int ownerDriverId) async {
+    if (_hydrated && _hydratedOwnerId == ownerDriverId) return;
+    _hydrationFailed = false;
+
+    // The constructor (or a driver switch) may already be hydrating; never
+    // run two replays concurrently. If another caller started a new hydration
+    // while we waited, wait for that one and re-check.
+    while (true) {
+      final inFlight = _hydration;
+      if (inFlight == null) break;
+      try {
+        await inFlight;
+      } catch (_) {
+        // Retry below.
+      }
+      if (_hydrated && _hydratedOwnerId == ownerDriverId) return;
+      if (identical(_hydration, inFlight)) break;
+    }
+
+    if (_hydratedOwnerId != null && _hydratedOwnerId != ownerDriverId) {
+      _resetDerivedState();
+    }
+    // P1.3: stay in `initializing` for the whole replay, including the drain
+    // passes that pick up rows committed while a read was in flight.
+    _hydrated = false;
+    final future = _hydrate(ownerDriverId);
+    _hydration = future;
+    await future;
+  }
+
+  Future<void> _hydrate(int ownerDriverId) async {
+    final journal = _journal;
+    if (journal == null) {
+      _hydrated = true;
+      _hydratedOwnerId = ownerDriverId;
+      return;
+    }
+
+    // P1.1 #7 / P1.3 #4: replay stays in `initializing` until the journal is
+    // quiescent. Every pass replays the complete, ordered journal; a row
+    // committed while a read was in flight changes `_persistChain`, so the
+    // pass repeats and the late row is replayed in legal-time order instead
+    // of being applied on top of newer derived state.
+    var corruptedRows = 0;
+    while (true) {
+      try {
+        await _persistChain;
+      } catch (_) {
+        // A failed earlier commit must not block recovery.
+      }
+      final chainBeforeLoad = _persistChain;
+
+      DutyEventJournalLoad load;
+      try {
+        load = await journal.load(ownerDriverId: ownerDriverId);
+      } catch (e) {
+        AppLogger.error('DutyEventJournal: hydration read failed', e);
+        _hydrated = false;
+        _hydrationFailed = true;
+        _hydration = null;
+        return;
+      }
+      if (_disposed) return;
+
+      corruptedRows = load.corruptedRows;
+      _journalCorrupted = load.hasCorruption;
+      _resetDerivedState();
+
+      if (load.records.isEmpty) {
+        // Migration window: existing installs have prefs but no journal yet.
+        final saved = _localStorage.currentDutyStatus;
+        if (saved.isNotEmpty) _currentStatus = saved;
+      } else {
+        _replayRecords(load.records, ownerDriverId);
+        unawaited(
+          _contain(
+            () => _localStorage.setCurrentDutyStatus(_currentStatus),
+            'Failed to persist replayed duty status',
+          ),
+        );
+      }
+
+      if (identical(_persistChain, chainBeforeLoad)) break;
+    }
+
+    if (_disposed) return;
+    _hydrated = true;
+    _hydratedOwnerId = ownerDriverId;
+
+    AppLogger.info(
+      'DutyStatusTracker: journal hydrated ${_events.length} events '
+      '($corruptedRows corrupt rows retained)',
+    );
+  }
+
+  void _resetDerivedState() {
+    _events.clear();
+    _periods.clear();
+    _appliedEventIds.clear();
+    _lastEvent = null;
+    _currentStatus = 'off_duty';
+  }
+
+  void _replayRecords(List<DutyEventRecord> records, int ownerDriverId) {
+    for (final record in records) {
+      if (record.ownerDriverId != ownerDriverId) continue;
+      if (record.syncState == DutyEventSyncState.pendingReview) continue;
+      final time = record.eventTimeUtc;
+      if (time == null) continue;
+      if (!_appliedEventIds.add(record.eventId)) continue;
+      _appendDerived(
+        DutyStatusEvent(
+          status: record.status,
+          timestamp: time,
+          latitude: _asDouble(record.payload['latitude']),
+          longitude: _asDouble(record.payload['longitude']),
+          odometer: _asDouble(record.payload['odometerMiles']),
+          engineHours: _asDouble(record.payload['engineHours']),
+        ),
+      );
+    }
+  }
+
+  static double? _asDouble(Object? value) {
+    if (value is num) return value.toDouble();
+    return null;
+  }
+
+  DutyPeriod? _closedPeriodFor(DutyStatusEvent event) {
+    final previous = _lastEvent;
+    if (previous == null) return null;
+    final effectiveEndTime = event.timestamp.isBefore(previous.timestamp)
+        ? previous.timestamp
+        : event.timestamp;
+    return DutyPeriod(
+      status: previous.status,
+      startTime: previous.timestamp,
+      endTime: effectiveEndTime,
+      startOdometer: previous.odometer,
+      endOdometer: event.odometer,
+      startLat: previous.latitude,
+      startLon: previous.longitude,
+      endLat: event.latitude,
+      endLon: event.longitude,
+    );
+  }
+
+  /// Adds an event to the derived state and returns the segment it closes.
+  DutyPeriod? _appendDerived(DutyStatusEvent event) {
+    final closedPeriod = _closedPeriodFor(event);
+    _events.add(event);
+    if (closedPeriod != null) _periods.add(closedPeriod);
+    _currentStatus = event.status;
+    _lastEvent = event;
+    return closedPeriod;
+  }
+
+  Future<void> processEldEvent(EldEvent eldEvent) async {
     // Phone GPS and simulated speed are not ECM. They must not create a
     // legal driving record. The server applies automatic driving from
     // POST /eld/hardware/telemetry.
@@ -125,7 +317,7 @@ class DutyStatusTracker {
         }
 
         if (_currentStatus != 'driving') {
-          _transitionTo(
+          await _transitionTo(
             newStatus: 'driving',
             timestamp:
                 _movingSince!, // Use the timestamp when movement first started
@@ -146,10 +338,11 @@ class DutyStatusTracker {
           _stationarySince = eldEvent.timestamp;
           _localStorage.setStationarySince(_stationarySince!.toIso8601String());
         }
-        _evaluateStationaryState(
-            eventTimestamp: eldEvent.timestamp,
-            odometer: eldEvent.odometerMiles,
-            engineHours: eldEvent.engineHours);
+        await _evaluateStationaryState(
+          eventTimestamp: eldEvent.timestamp,
+          odometer: eldEvent.odometerMiles,
+          engineHours: eldEvent.engineHours,
+        );
       }
     }
   }
@@ -162,8 +355,11 @@ class DutyStatusTracker {
     return null;
   }
 
-  void _evaluateStationaryState(
-      {DateTime? eventTimestamp, double? odometer, double? engineHours}) {
+  Future<void> _evaluateStationaryState({
+    DateTime? eventTimestamp,
+    double? odometer,
+    double? engineHours,
+  }) async {
     if (_stationarySince == null || _currentStatus != 'driving') return;
 
     final currentTime = _getCurrentTime();
@@ -174,10 +370,15 @@ class DutyStatusTracker {
       // Met the 5-minute stationary rule
       final effectiveTimestamp = eventTimestamp ?? currentTime;
       _stationarySince = null;
-      _localStorage.setStationarySince('');
+      unawaited(
+        _contain(
+          () => _localStorage.setStationarySince(''),
+          'Failed to clear stationary marker',
+        ),
+      );
       _wakeupTimer?.cancel();
 
-      _transitionTo(
+      await _transitionTo(
         newStatus: 'on_duty',
         timestamp: effectiveTimestamp,
         odometer: odometer,
@@ -189,7 +390,7 @@ class DutyStatusTracker {
       _wakeupTimer?.cancel();
       final remaining = const Duration(minutes: 5) - elapsed;
       _wakeupTimer = Timer(remaining, () {
-        _evaluateStationaryState();
+        unawaited(_evaluateStationaryState());
       });
     }
   }
@@ -271,7 +472,8 @@ class DutyStatusTracker {
       try {
         final result = await _logRepository.savePeriod(period);
         result.match(
-          (failure) => AppLogger.error('Failed to save period', failure.message),
+          (failure) =>
+              AppLogger.error('Failed to save period', failure.message),
           (_) => AppLogger.info('Period saved successfully'),
         );
       } catch (e) {
@@ -291,7 +493,13 @@ class DutyStatusTracker {
     }
   }
 
-  void _transitionTo({
+  /// P1.1 — durable transition path.
+  ///
+  /// With a journal: journal row + queue row commit atomically **before** the
+  /// tracker's public state changes or `DutyTransition` is emitted. Without a
+  /// journal (legacy tests/call sites) the previous synchronous behaviour is
+  /// kept unchanged.
+  Future<void> _transitionTo({
     required String newStatus,
     required DateTime timestamp,
     double? latitude,
@@ -301,19 +509,78 @@ class DutyStatusTracker {
     String? annotation,
     String? origin,
     bool enqueue = true,
-  }) {
+  }) async {
     if (_currentStatus == newStatus) return;
 
     final trusted = _getCurrentTime();
     if (trusted == null) {
-      AppLogger.warning('Refusing duty transition: trusted time unavailable');
+      if (_journal != null) {
+        // Evidence is retained even when no legal timestamp can be produced.
+        // It is not applied to HOS and not enqueued (pendingReview).
+        await _journalUntrustedIntent(
+          newStatus: newStatus,
+          latitude: latitude,
+          longitude: longitude,
+          odometer: odometer,
+          engineHours: engineHours,
+          annotation: annotation,
+          origin: origin,
+        );
+      } else {
+        AppLogger.warning('Refusing duty transition: trusted time unavailable');
+      }
       return;
     }
+
     if (_legalRefusal() == DutyStampRefusal.sessionMissing) {
       AppLogger.warning('Refusing duty transition: driver session is missing');
       return;
     }
 
+    if (_journal == null) {
+      _commitLegacyTransition(
+        newStatus: newStatus,
+        trusted: trusted,
+        timestamp: timestamp,
+        latitude: latitude,
+        longitude: longitude,
+        odometer: odometer,
+        engineHours: engineHours,
+        annotation: annotation,
+        origin: origin,
+        enqueue: enqueue,
+      );
+      return;
+    }
+
+    // P1.3 gate: during hydration the intent is journaled and queued but not
+    // applied; `_hydrate` replays it exactly once.
+    await _journalTransition(
+      newStatus: newStatus,
+      trusted: trusted,
+      timestamp: timestamp,
+      latitude: latitude,
+      longitude: longitude,
+      odometer: odometer,
+      engineHours: engineHours,
+      annotation: annotation,
+      origin: origin,
+      enqueue: enqueue,
+    );
+  }
+
+  void _commitLegacyTransition({
+    required String newStatus,
+    required DateTime trusted,
+    required DateTime timestamp,
+    double? latitude,
+    double? longitude,
+    double? odometer,
+    double? engineHours,
+    String? annotation,
+    String? origin,
+    required bool enqueue,
+  }) {
     final event = DutyStatusEvent(
       status: newStatus,
       timestamp: timestamp,
@@ -322,32 +589,7 @@ class DutyStatusTracker {
       odometer: odometer,
       engineHours: engineHours,
     );
-
-    _events.add(event);
-
-    DutyPeriod? closedPeriod;
-    if (_lastEvent != null) {
-      final effectiveEndTime = event.timestamp.isBefore(_lastEvent!.timestamp)
-          ? _lastEvent!.timestamp
-          : event.timestamp;
-      final period = DutyPeriod(
-        status: _lastEvent!.status,
-        startTime: _lastEvent!.timestamp,
-        endTime: effectiveEndTime,
-        startOdometer: _lastEvent!.odometer,
-        endOdometer: event.odometer,
-        startLat: _lastEvent!.latitude,
-        startLon: _lastEvent!.longitude,
-        endLat: event.latitude,
-        endLon: event.longitude,
-      );
-
-      _periods.add(period);
-      closedPeriod = period;
-    }
-
-    _currentStatus = newStatus;
-    _lastEvent = event;
+    final closedPeriod = _appendDerived(event);
     AppLogger.info('📊 Duty Status: $currentStatus');
 
     // The legal stamp is the anchored clock, never the movement timestamp
@@ -371,36 +613,241 @@ class DutyStatusTracker {
       );
     }
 
-    // P0 — كانت الكتابة والإدراج يُطلقان بلا انتظار (`setCurrentDutyStatus`
-    // و`submitEvent`) و`savePeriod(...).then` لا يلتقط استثناء الكتابة:
-    // فشل واحد كان يعني «الحالة تغيّرت في الواجهة والحدث غير موجود إطلاقاً».
-    // الآن الترتيب مضمون ومحتوى داخل [_persistTransition].
-    unawaited(_persistTransition(
-      status: newStatus,
-      period: closedPeriod,
-      event: pendingEvent,
-    ));
+    unawaited(
+      _persistTransition(
+        status: newStatus,
+        period: closedPeriod,
+        event: pendingEvent,
+      ),
+    );
 
-    _transitionController.add(DutyTransition(
-      newStatus: newStatus,
-      annotation: annotation ?? 'Manual/System Transition',
-    ));
+    if (!_transitionController.isClosed) {
+      _transitionController.add(
+        DutyTransition(
+          newStatus: newStatus,
+          annotation: annotation ?? 'Manual/System Transition',
+        ),
+      );
+    }
   }
 
-  String? manualTransition(String newStatus,
-      {double? lat, double? lon, String? annotation}) {
+  Future<void> _journalTransition({
+    required String newStatus,
+    required DateTime trusted,
+    required DateTime timestamp,
+    required bool enqueue,
+    double? latitude,
+    double? longitude,
+    double? odometer,
+    double? engineHours,
+    String? annotation,
+    String? origin,
+  }) async {
+    final previous = _persistChain;
+    final completion = Completer<void>();
+    _persistChain = () async {
+      try {
+        await previous;
+      } catch (_) {
+        // Keep the chain alive after a failed predecessor.
+      }
+      try {
+        if (_disposed) return;
+        if (_currentStatus == newStatus) return;
+
+        // P1.3 gate: when hydration is still in flight the evidence is
+        // committed but not applied; hydration replays it exactly once.
+        final apply = _hydrated;
+        final code = DutyStatusCode.fromAny(newStatus);
+        PendingEvent? pendingEvent;
+        if (enqueue) {
+          if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
+            AppLogger.warning(
+              'Refusing to sync unmapped duty status: $newStatus',
+            );
+          } else {
+            pendingEvent = _stampedDutyEvent(
+              wireStatus: code.wire,
+              trustedUtc: trusted,
+              latitude: latitude,
+              longitude: longitude,
+              odometer: odometer,
+              engineHours: engineHours,
+              annotation: annotation,
+              origin: origin,
+            );
+          }
+        }
+
+        // Same id in the journal, the queue row, and `clientId`.
+        final eventId = pendingEvent?.id ?? const Uuid().v4();
+        final record = DutyEventRecord(
+          eventId: eventId,
+          ownerDriverId: _readDriverId?.call(),
+          source: origin == 'ECM'
+              ? DutyEventSource.ecm
+              : DutyEventSource.manual,
+          status: newStatus,
+          eventTimeUtc: trusted,
+          receivedAtUtc: trusted,
+          timeSource: DutyTimeSource.trusted,
+          timeConfidence: DutyTimeConfidence.trusted,
+          monotonicMs: _timeProvider.monotonicElapsed.inMilliseconds,
+          payload: {
+            'status': newStatus,
+            'clientId': eventId,
+            if (latitude != null) 'latitude': latitude,
+            if (longitude != null) 'longitude': longitude,
+            if (odometer != null) 'odometerMiles': odometer,
+            if (engineHours != null) 'engineHours': engineHours,
+            if (annotation != null && annotation.isNotEmpty)
+              'notes': annotation,
+            if (origin != null) 'origin': origin,
+          },
+          syncState: pendingEvent != null
+              ? DutyEventSyncState.queued
+              : (enqueue
+                    ? DutyEventSyncState.localOnly
+                    : DutyEventSyncState.acked),
+          createdAt: trusted,
+        );
+
+        await _journal!.append(record, syncEvent: pendingEvent);
+        if (_disposed) return;
+
+        if (apply && _appliedEventIds.add(eventId)) {
+          final event = DutyStatusEvent(
+            status: newStatus,
+            timestamp: timestamp,
+            latitude: latitude,
+            longitude: longitude,
+            odometer: odometer,
+            engineHours: engineHours,
+          );
+          final closedPeriod = _appendDerived(event);
+          await _persistDerived(newStatus, closedPeriod);
+          AppLogger.info('📊 Duty Status: $currentStatus');
+          if (!_transitionController.isClosed) {
+            _transitionController.add(
+              DutyTransition(
+                newStatus: newStatus,
+                annotation: annotation ?? 'Manual/System Transition',
+              ),
+            );
+          }
+        }
+
+        if (pendingEvent != null) {
+          // A sync attempt, not persistence. The durable commit already
+          // happened above.
+          unawaited(_syncEngine.triggerSync());
+        }
+      } catch (e) {
+        // Transaction failed: no state change, no transition emitted.
+        AppLogger.error(
+          'Duty transition not committed; tracker state unchanged',
+          e,
+        );
+      } finally {
+        if (!completion.isCompleted) completion.complete();
+      }
+    }();
+    await completion.future;
+  }
+
+  Future<void> _journalUntrustedIntent({
+    required String newStatus,
+    double? latitude,
+    double? longitude,
+    double? odometer,
+    double? engineHours,
+    String? annotation,
+    String? origin,
+  }) async {
+    final journal = _journal;
+    if (journal == null || _disposed) return;
+    final receivedAt = DateTime.now().toUtc();
+    final eventId = const Uuid().v4();
+    try {
+      await journal.append(
+        DutyEventRecord(
+          eventId: eventId,
+          ownerDriverId: _readDriverId?.call(),
+          source: origin == 'ECM'
+              ? DutyEventSource.ecm
+              : DutyEventSource.manual,
+          status: newStatus,
+          eventTimeUtc: null,
+          receivedAtUtc: receivedAt,
+          timeSource: DutyTimeSource.device,
+          timeConfidence: DutyTimeConfidence.untrusted,
+          monotonicMs: _timeProvider.monotonicElapsed.inMilliseconds,
+          payload: {
+            'status': newStatus,
+            'clientId': eventId,
+            if (latitude != null) 'latitude': latitude,
+            if (longitude != null) 'longitude': longitude,
+            if (odometer != null) 'odometerMiles': odometer,
+            if (engineHours != null) 'engineHours': engineHours,
+            if (annotation != null && annotation.isNotEmpty)
+              'notes': annotation,
+            if (origin != null) 'origin': origin,
+          },
+          syncState: DutyEventSyncState.pendingReview,
+          createdAt: receivedAt,
+        ),
+      );
+      AppLogger.warning(
+        'Duty transition recorded as pendingReview: trusted time unavailable',
+      );
+    } catch (e) {
+      AppLogger.error('Failed to journal untrusted duty intent', e);
+    }
+  }
+
+  Future<void> _persistDerived(String status, DutyPeriod? period) async {
+    await _contain(
+      () => _localStorage.setCurrentDutyStatus(status),
+      'Failed to persist declared duty status',
+    );
+    if (period == null) return;
+    try {
+      final result = await _logRepository.savePeriod(period);
+      result.match(
+        (failure) => AppLogger.error('Failed to save period', failure.message),
+        (_) => AppLogger.info('Period saved successfully'),
+      );
+    } catch (e) {
+      AppLogger.error('Failed to save period', e);
+    }
+  }
+
+  String? manualTransition(
+    String newStatus, {
+    double? lat,
+    double? lon,
+    String? annotation,
+  }) {
+    if (_journal != null && !_hydrated) {
+      AppLogger.warning(
+        'Refusing duty transition: ${DutyStampRefusal.notReady}',
+      );
+      return DutyStampRefusal.notReady;
+    }
     final refusal = _legalRefusal();
     if (refusal != null) {
       AppLogger.warning('Refusing duty transition: $refusal');
       return refusal;
     }
-    _applyManualLocal(
-      newStatus: newStatus,
-      timestamp: _getCurrentTime()!,
-      lat: lat,
-      lon: lon,
-      annotation: annotation,
-      enqueue: true,
+    unawaited(
+      _applyManualLocal(
+        newStatus: newStatus,
+        timestamp: _getCurrentTime()!,
+        lat: lat,
+        lon: lon,
+        annotation: annotation,
+        enqueue: true,
+      ),
     );
     return null;
   }
@@ -411,8 +858,18 @@ class DutyStatusTracker {
   /// POST /eld/status/duty-status بحِمل {dutyStatus, notes} — هوية السائق
   /// تُستخرج من التوكن الأمني على الخادم ولا تُرسل في الحِمل. تسجيل الأحداث
   /// الآلية (المحرّك) يبقى على POST /eld/duty-status عبر SyncEngine.
-  Future<ManualDutyChangeResult> submitManualChange(String newStatus,
-      {double? lat, double? lon, String? annotation}) async {
+  Future<ManualDutyChangeResult> submitManualChange(
+    String newStatus, {
+    double? lat,
+    double? lon,
+    String? annotation,
+  }) async {
+    if (_journal != null && !_hydrated) {
+      AppLogger.warning(
+        'Refusing duty transition: ${DutyStampRefusal.notReady}',
+      );
+      return const ManualDutyChangeResult(refusal: DutyStampRefusal.notReady);
+    }
     final refusal = _legalRefusal();
     if (refusal != null) {
       AppLogger.warning('Refusing duty transition: $refusal');
@@ -422,77 +879,100 @@ class DutyStatusTracker {
     final code = DutyStatusCode.fromAny(newStatus);
     if (code == DutyStatusCode.offDuty && newStatus != 'off_duty') {
       AppLogger.warning('Refusing to sync unmapped duty status: $newStatus');
-      return const ManualDutyChangeResult(
-          refusal: DutyStampRefusal.unmapped);
+      return const ManualDutyChangeResult(refusal: DutyStampRefusal.unmapped);
     }
 
     final result = await _dashboardBackend.updateDutyStatus(
       status: code,
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
     );
-    return result.fold((error) {
-      // إذا كان الفشل بسبب انقطاع الشبكة / أوفلاين، يجب الالتزام
-      // بـ FMCSA § 395.24 وتطبيق الحالة محلياً وإدراجها في طابور المزامنة:
-      final isNetwork = error is NetworkError ||
-          error.code.contains('network') ||
-          error.code.contains('connection') ||
-          error.code.contains('timeout') ||
-          error.code.contains('offline');
+    return result.fold(
+      (error) async {
+        // إذا كان الفشل بسبب انقطاع الشبكة / أوفلاين، يجب الالتزام
+        // بـ FMCSA § 395.24 وتطبيق الحالة محلياً وإدراجها في طابور المزامنة:
+        final isNetwork =
+            error is NetworkError ||
+            error.code.contains('network') ||
+            error.code.contains('connection') ||
+            error.code.contains('timeout') ||
+            error.code.contains('offline');
 
-      if (isNetwork) {
-        AppLogger.info(
-            'Offline network state detected on duty change. Enqueuing event locally...');
-        _applyManualLocal(
+        if (isNetwork) {
+          AppLogger.info(
+            'Offline network state detected on duty change. Enqueuing event locally...',
+          );
+          final applied = await _applyManualLocal(
+            newStatus: newStatus,
+            timestamp: trusted,
+            lat: lat,
+            lon: lon,
+            annotation: annotation,
+            enqueue: true,
+          );
+          if (!applied) {
+            return const ManualDutyChangeResult(
+              refusal: DutyStampRefusal.storageUnavailable,
+            );
+          }
+          return const ManualDutyChangeResult();
+        }
+
+        // الرفض الخادمي الفعلي (مثل خطأ تحقق 400/409) يظهر للسائق
+        AppLogger.warning(
+          'Duty status change rejected by server: ${error.code}',
+        );
+        return const ManualDutyChangeResult(
+          refusal: DutyStampRefusal.serverRejected,
+        );
+      },
+      (dashboard) async {
+        final applied = await _applyManualLocal(
           newStatus: newStatus,
           timestamp: trusted,
           lat: lat,
           lon: lon,
           annotation: annotation,
-          enqueue: true,
+          enqueue: false,
         );
-        return const ManualDutyChangeResult();
-      }
-
-      // الرفض الخادمي الفعلي (مثل خطأ تحقق 400/409) يظهر للسائق
-      AppLogger.warning(
-          'Duty status change rejected by server: ${error.code}');
-      return const ManualDutyChangeResult(
-          refusal: DutyStampRefusal.serverRejected);
-    }, (dashboard) {
-      _applyManualLocal(
-        newStatus: newStatus,
-        timestamp: trusted,
-        lat: lat,
-        lon: lon,
-        annotation: annotation,
-        enqueue: false,
-      );
-      // تمرير لقطة الخادم عند حملها لتغذية اللوحة فوراً — بلا GET ثانٍ.
-      // قد تكون null (قبول بلا لقطة): الواجهة تتصالح مع الخادم بنفسها.
-      return ManualDutyChangeResult(dashboard: dashboard);
-    });
+        if (!applied) {
+          return const ManualDutyChangeResult(
+            refusal: DutyStampRefusal.storageUnavailable,
+          );
+        }
+        // تمرير لقطة الخادم عند حملها لتغذية اللوحة فوراً — بلا GET ثانٍ.
+        // قد تكون null (قبول بلا لقطة): الواجهة تتصالح مع الخادم بنفسها.
+        return ManualDutyChangeResult(dashboard: dashboard);
+      },
+    );
   }
 
-  void _applyManualLocal({
+  Future<bool> _applyManualLocal({
     required String newStatus,
     required DateTime timestamp,
     double? lat,
     double? lon,
     String? annotation,
     required bool enqueue,
-  }) {
+  }) async {
+    if (_disposed) return false;
     if (_currentStatus == 'driving' && newStatus != 'driving') {
       AppLogger.warning(
-          'Cannot manually transition from driving while moving.');
+        'Cannot manually transition from driving while moving.',
+      );
     }
 
     _stationarySince = null;
-    _localStorage.setStationarySince('');
+    unawaited(
+      _contain(
+        () => _localStorage.setStationarySince(''),
+        'Failed to clear stationary marker',
+      ),
+    );
     _wakeupTimer?.cancel();
     _movingSince = null;
     _consecutiveMovingEvents = 0;
 
-    _transitionTo(
+    await _transitionTo(
       newStatus: newStatus,
       timestamp: timestamp,
       latitude: lat,
@@ -501,11 +981,17 @@ class DutyStatusTracker {
       enqueue: enqueue,
     );
 
-    if (newStatus == 'driving') {
+    if (_disposed) return false;
+    final applied = _currentStatus == newStatus;
+    if (applied && newStatus == 'driving') {
       _stationarySince = timestamp;
-      _localStorage.setStationarySince(_stationarySince!.toIso8601String());
-      _evaluateStationaryState();
+      await _localStorage.setStationarySince(
+        _stationarySince!.toIso8601String(),
+      );
+      if (_disposed) return applied;
+      await _evaluateStationaryState();
     }
+    return applied;
   }
 
   Map<String, double> getTodayStats() {
@@ -580,12 +1066,7 @@ class DutyStatusTracker {
   Map<String, double> getWeekStats() {
     final now = _getCurrentTime();
     if (now == null) {
-      return {
-        'driving': 0,
-        'work': 0,
-        'rest': 0,
-        'distance': 0,
-      };
+      return {'driving': 0, 'work': 0, 'rest': 0, 'distance': 0};
     }
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
 
@@ -643,10 +1124,9 @@ class DutyStatusTracker {
   }
 
   void clear() {
-    _events.clear();
-    _periods.clear();
-    _lastEvent = null;
-    _currentStatus = 'off_duty';
+    // Derived state only. The append-only journal is evidence and is never
+    // cleared here.
+    _resetDerivedState();
     _localStorage.setCurrentDutyStatus('off_duty');
     _stationarySince = null;
     _localStorage.setStationarySince('');
@@ -654,9 +1134,15 @@ class DutyStatusTracker {
 
     _movingSince = null;
     _consecutiveMovingEvents = 0;
+    _hydrated = _journal == null;
+    _hydrationFailed = false;
+    _hydratedOwnerId = null;
+    _hydration = null;
+    _journalCorrupted = false;
   }
 
   void dispose() {
+    _disposed = true;
     _wakeupTimer?.cancel();
     _transitionController.close();
   }

@@ -10,6 +10,10 @@ class SQLiteOfflineQueue implements OfflineQueue {
   static const String _tableName = 'pending_events';
   static const String _quarantineTable = 'quarantine';
 
+  /// P1.1 — append-only duty-event evidence. Lives in the same database as
+  /// the queue so a journal row and its sync-queue row commit atomically.
+  static const String journalTable = 'duty_event_journal';
+
   /// أقصى عدد صفوف في `dead_letters` (الرفض النهائي).
   ///
   /// الطلبات المرفوضة نهائياً لا تُعاد المحاولة أبداً، فيجدّ جدول
@@ -65,6 +69,35 @@ class SQLiteOfflineQueue implements OfflineQueue {
         'ON dead_letters(failedAt DESC)');
   }
 
+  /// P1.1 — durable duty-event journal (evidence layer).
+  ///
+  /// `event_id` is the logical transition identity (also the queue `id` /
+  /// `clientId`). `seq` is insertion order for deterministic replay when two
+  /// events carry the same legal time. Rows are never deleted: sync outcome
+  /// changes `sync_state` only.
+  static Future<void> _createJournalTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $journalTable (
+        seq INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL UNIQUE,
+        owner_driver_id INTEGER,
+        source TEXT NOT NULL,
+        status TEXT NOT NULL,
+        event_time_utc INTEGER,
+        received_at_utc INTEGER NOT NULL,
+        time_source TEXT NOT NULL,
+        time_confidence TEXT NOT NULL,
+        monotonic_ms INTEGER,
+        payload TEXT NOT NULL,
+        sync_state TEXT NOT NULL,
+        server_event_id TEXT,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_journal_owner_time '
+        'ON $journalTable(owner_driver_id, event_time_utc ASC, seq ASC)');
+  }
+
   Future<Database> _initDB() async {
     final String path;
     if (dbPathOverride != null) {
@@ -76,7 +109,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
@@ -99,6 +132,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
           )
         ''');
         await _createQuarantineTable(db);
+        await _createJournalTable(db);
         await _createIndexes(db);
       },
       // ترقية إضافية فقط: لا ALTER على الجداول القديمة، لا backfill،
@@ -121,30 +155,44 @@ class SQLiteOfflineQueue implements OfflineQueue {
         if (oldVersion < 4) {
           await _createIndexes(db);
         }
+        if (oldVersion < 5) {
+          await _createJournalTable(db);
+        }
       },
+    );
+  }
+
+  /// Row shape shared by the standalone enqueue path and the atomic
+  /// journal+queue transaction in [SqliteDutyEventJournal].
+  static Map<String, Object?> pendingRow(PendingEvent event) => {
+        'id': event.id,
+        'type': event.type,
+        'payload': jsonEncode(event.payload),
+        'createdAt': event.createdAt.millisecondsSinceEpoch,
+        'priority': event.priority.index,
+        'retryCount': event.retryCount,
+        'nextRetryAt': event.nextRetryAt?.millisecondsSinceEpoch,
+      };
+
+  /// Insert/REPLACE a queue row inside an existing transaction or database.
+  ///
+  /// CONFLICT_REPLACE preserves the existing deduplication/idempotency
+  /// behaviour (same `id` cannot create a second queue row).
+  static Future<void> insertPendingEvent(
+    DatabaseExecutor db,
+    PendingEvent event,
+  ) {
+    return db.insert(
+      _tableName,
+      pendingRow(event),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
   Future<void> enqueue(PendingEvent event) async {
     final db = await database;
-
-    final data = {
-      'id': event.id,
-      'type': event.type,
-      'payload': jsonEncode(event.payload),
-      'createdAt': event.createdAt.millisecondsSinceEpoch,
-      'priority': event.priority.index,
-      'retryCount': event.retryCount,
-      'nextRetryAt': event.nextRetryAt?.millisecondsSinceEpoch,
-    };
-
-    // CONFLICT_REPLACE يضمن الـ Deduplication و Idempotency
-    await db.insert(
-      _tableName,
-      data,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await insertPendingEvent(db, event);
   }
 
   @override

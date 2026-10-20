@@ -343,8 +343,11 @@ class LogRepositoryImpl implements LogRepository {
     });
   }
 
-  /// جسم تعديل الحدث وفق الوثيقة: `status` + `startTime` + `notes` (السبب
-  /// الإلزامي) + `location{description}`.
+  /// جسم تعديل الحدث وفق الوثيقة: `status` + `specialCategory` + `notes`
+  /// (السبب الإلزامي) + `location`. نضيف `startTime` لأن التطبيق يتيح
+  /// تعديل وقت البدء (`editRestrictions` في الوثيقة تحدّد نافذته)،
+  /// و`location.description` هو الشكل المتاح محلياً (المحرر لا يجمع
+  /// إحداثيات). `vehicleId` غير متاح في مسار التعديل الحالي.
   Map<String, dynamic> _mapEventUpdateToJson(
     String wire,
     LogEvent event,
@@ -352,6 +355,7 @@ class LogRepositoryImpl implements LogRepository {
   ) {
     return {
       'status': wire,
+      'specialCategory': null,
       'startTime': event.startTime.toUtc().toIso8601String(),
       'notes': reason.trim(),
       if (event.location.isNotEmpty)
@@ -359,18 +363,14 @@ class LogRepositoryImpl implements LogRepository {
     };
   }
 
-  /// جسم PUT /eld/daily-logs/{id}/form وفق الوثيقة:
-  /// `vehicleId` (رقمي) + `coDriverId` + `trailers` + `shippingDocuments`
-  /// + `notes`. عندما لا يتوفر معرّف رقمي (بيانات قديمة من الخادم)
-  /// نُبقي `uniqueId` كاحتياط متوافق.
+  /// جسم PUT /eld/daily-logs/{id}/form وفق مواصفة الخادم الحالية:
+  /// `uniqueId` (نصي) + `coDriverId` + `trailers` + `shippingDocuments`
+  /// + `notes`. لا يُشتق معرّف رقمي من نص `uniqueId` (كان يُنتج معرّفاً
+  /// غير موجود)، و`vehicleId` الرقمي مرفوض دائماً من الخادم فلا يُرسل
+  /// إطلاقاً — [saveForm] يمنع أي حفظ بلا `uniqueId` قبل الوصول إلى هنا.
   Map<String, dynamic> _mapFormUpdateToJson(DailyFormUpdate form) {
-    final numericVehicleId =
-        form.vehicleId ?? int.tryParse(form.vehicleUniqueId);
     return {
-      if (numericVehicleId != null)
-        'vehicleId': numericVehicleId
-      else if (form.vehicleUniqueId.isNotEmpty)
-        'uniqueId': form.vehicleUniqueId,
+      'uniqueId': form.vehicleUniqueId.trim(),
       'coDriverId': form.coDriverId,
       'trailers': form.trailers.map((t) => {'trailerNumber': t}).toList(),
       'shippingDocuments': form.shippingDocuments
@@ -474,9 +474,17 @@ class LogRepositoryImpl implements LogRepository {
     required DailyFormUpdate form,
     int? ownerDriverId,
   }) async {
+    // بوابة سبق الحفظ: بلا `uniqueId` العقد يرفض الطلب (400)، فلا نلوّث
+    // الكاش ولا طابور الأوفلاين بجسم غير قابل للحفظ أصلاً.
+    if (form.vehicleUniqueId.trim().isEmpty) {
+      return const Left(
+        ValidationFailure(message: 'validation.vehicleRequired'),
+      );
+    }
+
     final payload = _mapFormUpdateToJson(form);
     await _localDataSource.cacheDailyForm(logId, payload);
-    final hasVehicle = form.vehicleUniqueId.isNotEmpty;
+    final hasVehicle = form.vehicleUniqueId.trim().isNotEmpty;
     final hasDocs = form.shippingDocuments.isNotEmpty;
     if (ownerDriverId != null) {
       await _localDataSource.markCachedDailyLogFormComplete(

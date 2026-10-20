@@ -9,11 +9,13 @@ import 'package:golden_feather_eld/features/home/presentation/providers/dashboar
 import 'package:golden_feather_eld/features/logs/domain/daily_form_rules.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
 import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/shipping_documents_page.dart';
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/trailers_page.dart';
+import 'package:golden_feather_eld/features/logs/presentation/providers/trailers_provider.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart';
@@ -135,7 +137,13 @@ void main() {
   testWidgets('Trailers page starts empty and writes to the form state', (
     tester,
   ) async {
-    final container = await pump(tester, const TrailersPage());
+    final container = await pump(
+      tester,
+      const TrailersPage(),
+      overrides: [
+        logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null)),
+      ],
+    );
 
     expect(find.text('Trailers'), findsOneWidget);
     expect(find.text('No trailers added'), findsOneWidget);
@@ -176,7 +184,13 @@ void main() {
   testWidgets('Shipping Documents page writes to the form state', (
     tester,
   ) async {
-    final container = await pump(tester, const ShippingDocumentsPage());
+    final container = await pump(
+      tester,
+      const ShippingDocumentsPage(),
+      overrides: [
+        logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null)),
+      ],
+    );
 
     expect(find.text('Shipping Documents'), findsOneWidget);
     expect(find.text('No documents added'), findsOneWidget);
@@ -205,6 +219,7 @@ void main() {
       totalDrivingHours: 0,
       isFormComplete: false,
       isCertified: false,
+      today: true,
     );
 
     setUp(() {
@@ -324,6 +339,88 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
       expect(find.textContaining('server.'), findsNothing);
       await settleSnackBar(tester);
+    });
+
+    testWidgets('non-today log shows and saves its own form, no dashboard leak', (
+      tester,
+    ) async {
+      final oldLog = DailyLog(
+        id: const DailyLogId(77),
+        uniqueId: 'TRK-OLD',
+        date: DateTime(2026, 9, 20),
+        totalDrivingHours: 0,
+        isFormComplete: false,
+        isCertified: false,
+      );
+
+      when(() => repo.getForm(any())).thenAnswer(
+        (_) async => const Right(
+          DailyFormData(
+            vehicleUniqueId: 'TRK-OLD',
+            vehicleName: 'Old Truck',
+            trailers: ['SRV-1'],
+            shippingDocuments: ['SRV-DOC'],
+          ),
+        ),
+      );
+      when(
+        () => repo.saveForm(
+          logId: any(named: 'logId'),
+          form: any(named: 'form'),
+          ownerDriverId: any(named: 'ownerDriverId'),
+        ),
+      ).thenAnswer(
+        (_) async => const Right(
+          FormSaveResult.online(
+            SavedFormRead(formStatus: 'COMPLETED', complete: true),
+          ),
+        ),
+      );
+
+      final container = await pump(
+        tester,
+        const Scaffold(body: FormTab()),
+        overrides: overrides(),
+      );
+      final sub = container.listen(logsProvider, (_, __) {});
+      addTearDown(sub.close);
+
+      // الحالة الحية تحمل قيماً أخرى — يجب ألا تظهر في سجل سابق.
+      container.read(dashboardDataProvider.notifier).updateTrailers(['DASH-9']);
+      container
+          .read(dashboardDataProvider.notifier)
+          .updateShippingDocuments(['DASH-DOC']);
+      container.read(logsProvider.notifier).selectLog(oldLog);
+      await tester.pumpAndSettle();
+
+      expect(find.text('SRV-1'), findsOneWidget);
+      expect(find.text('SRV-DOC'), findsOneWidget);
+      expect(find.text('DASH-9'), findsNothing);
+      expect(find.text('DASH-DOC'), findsNothing);
+
+      // تعديل المقطورات من صفحتها يبقى على هذا السجل وحده.
+      container.read(trailersProvider.notifier).addTrailer('NEW-T');
+      await tester.pumpAndSettle();
+      expect(find.text('SRV-1, NEW-T'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('SAVE'));
+      await tester.tap(find.text('SAVE'));
+      await tester.pumpAndSettle();
+
+      final captured =
+          verify(
+                () => repo.saveForm(
+                  logId: const DailyLogId(77),
+                  form: captureAny(named: 'form'),
+                  ownerDriverId: any(named: 'ownerDriverId'),
+                ),
+              ).captured.single
+          as DailyFormUpdate;
+      expect(captured.vehicleUniqueId, 'TRK-OLD');
+      expect(captured.trailers, ['SRV-1', 'NEW-T']);
+      expect(captured.shippingDocuments, ['SRV-DOC']);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
     });
   });
 }

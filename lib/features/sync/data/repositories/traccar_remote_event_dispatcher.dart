@@ -314,13 +314,15 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     final logId = payload['logId'] as int?;
 
     // العقد الموحّد لتعديل حدث: PUT /eld/daily-logs/{logId}/events/{eventId}
-    // (status/startTime/notes + location{description}).
+    // (status/specialCategory/startTime/notes + location{description}) —
+    // نفس جسم المسار الأونلاين في LogRepositoryImpl حرفياً.
     if (statusId != null && statusId > 0 && logId != null && logId > 0) {
       final result = await _dailyLogsBackend.updateEvent(
         logId: DailyLogId(logId),
         eventId: DutyStatusId(statusId),
         event: {
           'status': payload['status'],
+          'specialCategory': null,
           'startTime': payload['startTime'],
           if (payload['notes'] != null) 'notes': payload['notes'],
           if (payload['locationText'] != null)

@@ -97,12 +97,22 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     DateTime? startDate,
     DateTime? endDate,
     DateTime? logDate,
+    int page = 0,
+    int size = 20,
   }) async {
     return ok(<String, dynamic>{
       'totalLogs': _logs.length,
       'certified': _logs.where((l) => l['certified'] == true).length,
       'uncertified': _logs.where((l) => l['certified'] != true).length,
       'withViolations': 0,
+      'pagination': {
+        'page': page,
+        'size': size,
+        'totalElements': _logs.length,
+        'totalPages': size <= 0 ? 0 : (_logs.length + size - 1) ~/ size,
+        'hasNext': (page + 1) * size < _logs.length,
+        'hasPrevious': page > 0,
+      },
     });
   }
 

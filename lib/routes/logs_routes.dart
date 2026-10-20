@@ -29,7 +29,9 @@ class LogsRoutes {
         GoRoute(
           path: AppRoutes.logDetail,
           name: 'logDetail',
-          builder: (context, state) => const LogDetailPage(),
+          builder: (context, state) => LogDetailPage(
+            logId: state.pathParameters['id'],
+          ),
         ),
         GoRoute(
           path: AppRoutes.editLog,

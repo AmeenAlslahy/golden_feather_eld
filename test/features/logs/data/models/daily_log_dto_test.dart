@@ -144,5 +144,30 @@ void main() {
       expect(entity.formStatus, FormStatus.incomplete);
       expect(entity.isFormComplete, isFalse);
     });
+
+    test('documented READY/REVOKED certificationStatus and INVALID formStatus map correctly', () {
+      final ready = DailyLogDto.fromJson({
+        'id': 20,
+        'logDate': '2026-10-16',
+        'formStatus': 'COMPLETE',
+        'certificationStatus': 'READY',
+      }).toEntity();
+      expect(ready.certificationStatus, CertificationStatus.uncertified);
+      expect(ready.isCertified, isFalse);
+
+      final revoked = DailyLogDto.fromJson({
+        'id': 21,
+        'logDate': '2026-10-16',
+        'formStatus': 'INVALID',
+        'certificationStatus': 'REVOKED',
+      }).toEntity();
+      expect(revoked.formStatus, FormStatus.incomplete);
+      expect(revoked.isFormComplete, isFalse);
+      expect(
+        revoked.certificationStatus,
+        CertificationStatus.reCertificationRequired,
+      );
+      expect(revoked.isCertified, isFalse);
+    });
   });
 }

@@ -10,6 +10,7 @@ library;
 import 'package:dio/dio.dart'; // ignore_architecture
 
 import '../error/app_error.dart';
+import '../utils/logger.dart';
 
 /// Maps a [DioException] to the appropriate [AppError] subclass.
 AppError mapDioException(DioException e) {
@@ -89,11 +90,24 @@ AppError _mapBadResponse(DioException e) {
   final statusCode = response.statusCode ?? 0;
   final serverMessage = _extractServerMessage(response.data);
   final serverErrorCode = _extractServerErrorCode(response.data);
+  // الوثيقة (قاعدتا 3 و4): `errors[]` رسائل حقول موجهة للمستخدم، و
+  // `requestId` يُحفظ في سجلات الأخطاء لتعقّب المعاملة لدى الدعم.
+  final requestId = _extractRequestId(response.data);
+  final fieldErrors = _extractFieldErrors(response.data);
+  if (requestId != null) {
+    AppLogger.warning(
+      'HTTP $statusCode uri=${response.requestOptions.uri} '
+      'requestId=$requestId'
+      '${fieldErrors.isEmpty ? '' : ' fieldErrors=$fieldErrors'}',
+    );
+  }
 
   final context = <String, dynamic>{
     'statusCode': statusCode,
     'uri': response.requestOptions.uri.toString(),
     if (serverMessage != null) 'serverMessage': serverMessage,
+    if (requestId != null) 'requestId': requestId,
+    if (fieldErrors.isNotEmpty) 'fieldErrors': fieldErrors,
   };
 
   switch (statusCode) {
@@ -197,6 +211,11 @@ String? _extractServerMessage(Object? data) {
   if (data is Map) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) raw = message.trim();
+    if (raw == null) {
+      // الوثيقة (قاعدة 3): رسالة أول خطأ حقلي موجهة للمستخدم مباشرة.
+      final fieldError = _firstFieldErrorMessage(data['errors']);
+      if (fieldError != null) raw = fieldError;
+    }
     final error = data['error'];
     if (raw == null && error is String && error.trim().isNotEmpty) {
       raw = error.trim();
@@ -207,6 +226,45 @@ String? _extractServerMessage(Object? data) {
   if (raw == null) return null;
   if (_looksLikeServerDump(raw)) return null;
   return raw;
+}
+
+String? _firstFieldErrorMessage(Object? errors) {
+  if (errors is! List) return null;
+  for (final entry in errors) {
+    if (entry is! Map) continue;
+    final message = entry['message'];
+    if (message is String && message.trim().isNotEmpty) {
+      return message.trim();
+    }
+  }
+  return null;
+}
+
+/// `errors[{field, message, code}]` — نُبقيها كنصوص (field: message) في
+/// سياق الخطأ لتظهر في السجلات ورسائل الدعم.
+List<String> _extractFieldErrors(Object? data) {
+  if (data is! Map) return const [];
+  final errors = data['errors'];
+  if (errors is! List) return const [];
+  final result = <String>[];
+  for (final entry in errors) {
+    if (entry is! Map) continue;
+    final field = entry['field']?.toString();
+    final message = entry['message']?.toString();
+    if (field == null || message == null || message.trim().isEmpty) continue;
+    final code = entry['code']?.toString();
+    result.add(code == null ? '$field: $message' : '$field ($code): $message');
+  }
+  return result;
+}
+
+String? _extractRequestId(Object? data) {
+  if (data is! Map) return null;
+  final requestId = data['requestId'];
+  if (requestId is String && requestId.trim().isNotEmpty) {
+    return requestId.trim();
+  }
+  return null;
 }
 
 bool _looksLikeServerDump(String text) {

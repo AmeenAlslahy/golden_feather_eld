@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/daily_form_rules.dart';
+import 'logs_provider.dart';
 
 /// أسباب فشل عمليات وثائق الشحن وفق قواعد النموذج اليومي (SRS 5.5–5.13).
 enum ShippingDocumentActionFailure {
@@ -49,9 +50,31 @@ class ShippingDocumentsNotifier
     extends AutoDisposeNotifier<ShippingDocumentsState> {
   @override
   ShippingDocumentsState build() {
+    final logsState = ref.watch(logsProvider);
+    final selected = logsState.selectedLog;
+    if (selected != null && !selected.today) {
+      // سجل سابق: المصدر قيمه المحفوظة الخاصة به، لا حالة اللوحة الحية.
+      final form = logsState.serverForm;
+      return ShippingDocumentsState(
+        documents: List.of(form?.shippingDocuments ?? selected.shippingDocuments),
+      );
+    }
     final raw =
         ref.watch(dashboardDataProvider.select((d) => d.shippingDocuments));
     return ShippingDocumentsState(documents: splitFormList(raw));
+  }
+
+  /// يحفظ القائمة الجديدة في المصدر الصحيح: الحالة الحية لسجل اليوم،
+  /// أو نموذج السجل نفسه لأي سجل سابق.
+  void _persist(List<String> next) {
+    final selected = ref.read(logsProvider).selectedLog;
+    if (selected != null && !selected.today) {
+      ref
+          .read(logsProvider.notifier)
+          .updateSelectedFormLists(shippingDocuments: next);
+      return;
+    }
+    ref.read(dashboardDataProvider.notifier).updateShippingDocuments(next);
   }
 
   /// يضيف وثيقة شحن جديدة بعد التحقق من صحتها وقواعدها وتحديث الحالة.
@@ -93,9 +116,7 @@ class ShippingDocumentsNotifier
       return;
     }
 
-    ref
-        .read(dashboardDataProvider.notifier)
-        .updateShippingDocuments([...state.documents, text]);
+    _persist([...state.documents, text]);
 
     state = state.copyWith(
       clearFailure: true,
@@ -105,10 +126,7 @@ class ShippingDocumentsNotifier
 
   /// يحذف وثيقة الشحن المحددة ويحدث الحالة المشتركة.
   void removeDocument(String doc) {
-    ref
-        .read(dashboardDataProvider.notifier)
-        .updateShippingDocuments(
-            state.documents.where((d) => d != doc).toList());
+    _persist(state.documents.where((d) => d != doc).toList());
   }
 }
 

@@ -25,7 +25,7 @@ class SavedFormDto {
       final upper = raw.toUpperCase();
       complete = switch (upper) {
         'COMPLETED' || 'COMPLETE' => true,
-        'INCOMPLETE' || 'IN_PROGRESS' || 'DRAFT' => false,
+        'INCOMPLETE' || 'IN_PROGRESS' || 'DRAFT' || 'INVALID' => false,
         _ => null,
       };
     }

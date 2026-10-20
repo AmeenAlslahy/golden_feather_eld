@@ -37,8 +37,12 @@ DutyStatusCode _engineStatusCode(DutyStatus status) {
 
 // --- Clean Architecture Providers ---
 
-final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((ref) {
-  return GetStatusDashboardUseCase(ref.watch(statusDashboardRepositoryProvider));
+final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((
+  ref,
+) {
+  return GetStatusDashboardUseCase(
+    ref.watch(statusDashboardRepositoryProvider),
+  );
 });
 // Use cases mapped to providers
 
@@ -56,8 +60,8 @@ final getStatusDashboardUseCaseProvider = Provider<GetStatusDashboardUseCase>((r
 /// - Errors are surfaced as [AsyncError] with the underlying [Failure].
 final statusDashboardProvider =
     AsyncNotifierProvider<StatusDashboardNotifier, StatusDashboard>(
-  StatusDashboardNotifier.new,
-);
+      StatusDashboardNotifier.new,
+    );
 
 /// الطابع الزمني لآخر لقطة لوحة — على **الساعة الموثوقة** (خادم مُثبَّت).
 ///
@@ -67,8 +71,9 @@ final statusDashboardProvider =
 /// للسائق بتجميد أو تعجيل العدّاد القانوني بتعديل ساعة جهازه.
 ///
 /// نستعمل الساعة الموثوقة إن توفّرت، وإلا ساعة الجهاز كبديل متحفّظ.
-final statusDashboardSnapshotTimestampProvider =
-    StateProvider<DateTime>((ref) => _trustedStampOrFallback(ref));
+final statusDashboardSnapshotTimestampProvider = StateProvider<DateTime>(
+  (ref) => _trustedStampOrFallback(ref),
+);
 
 DateTime _trustedStampOrFallback(Ref ref) {
   final trusted = ref.read(trustedTimeProvider).currentTime;
@@ -117,7 +122,7 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
         }
       }
     });
-    
+
     final bus = ref.watch(appEventBusProvider);
     final sub = bus.stream.listen((event) {
       if (event == AppEvent.logDataChanged) refresh();
@@ -182,51 +187,50 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     return dashboard;
   }
 
-/// نبني لوحة من المحرك المحلي عند غياب بيانات الخادم.
-///
-/// يعيد null عند أي تعذّر (وقت غير موثوق، أو فشل تهيئة أحد
-/// الاعتماديات) — عندها نُبقي الفشل الأصلي ليعرض المستخدم رسالة
-/// "غير متاح" بدل أرقام ملفّقة.
-///
-/// 🔴 **ينتظر اكتمال الترطيب** ([hosHydrationReadyProvider]).
-///
-/// الترطيب يقرأ الفترات من القرص بشكل غير متزامن. وقبل هذا الانتظار
-/// كان البناء يقرأ المحرك فوراً، فيبني اللوحة من محرك **لم يُرطَّب بعد**
-/// — أي 11:00 / 14:00 / 8:00 كاملة، ثم يهبط العدّاد إلى ما ي真相 بعد
-/// ثوانٍ بلا إعادة بناء. السائق يرى ارتداداً في رقمه القانوني.
-///
-/// ملاحظة: القراءة محاطة بـ try/catch عمداً. المسار يُنفَّذ أثناء
-/// بناء المزوّد نفسه؛ أي استثناء هنا كان سيُسقط اللوحة كاملة
-/// بدلاً من الرجوع للخطأ الأصلي.
-Future<StatusDashboard?> _buildOfflineDashboardFromEngine() async {
-  try {
-    // مهلة قصيرة: الانتظار لا يجوز أن يعلّق الشاشة على قرص بطيء.
-    await ref.read(hosHydrationReadyProvider.future).timeout(
-          const Duration(seconds: 3),
-          onTimeout: () {},
-        );
-  } catch (_) {
-    // تعذّر الترطيب ⇒ نكمل؛ البناء التالي يجرّب من جديد.
-  }
+  /// نبني لوحة من المحرك المحلي عند غياب بيانات الخادم.
+  ///
+  /// يعيد null عند أي تعذّر (وقت غير موثوق، أو فشل تهيئة أحد
+  /// الاعتماديات) — عندها نُبقي الفشل الأصلي ليعرض المستخدم رسالة
+  /// "غير متاح" بدل أرقام ملفّقة.
+  ///
+  /// 🔴 **ينتظر اكتمال الترطيب** ([hosHydrationReadyProvider]).
+  ///
+  /// الترطيب يقرأ الفترات من القرص بشكل غير متزامن. وقبل هذا الانتظار
+  /// كان البناء يقرأ المحرك فوراً، فيبني اللوحة من محرك **لم يُرطَّب بعد**
+  /// — أي 11:00 / 14:00 / 8:00 كاملة، ثم يهبط العدّاد إلى ما ي真相 بعد
+  /// ثوانٍ بلا إعادة بناء. السائق يرى ارتداداً في رقمه القانوني.
+  ///
+  /// ملاحظة: القراءة محاطة بـ try/catch عمداً. المسار يُنفَّذ أثناء
+  /// بناء المزوّد نفسه؛ أي استثناء هنا كان سيُسقط اللوحة كاملة
+  /// بدلاً من الرجوع للخطأ الأصلي.
+  Future<StatusDashboard?> _buildOfflineDashboardFromEngine() async {
+    try {
+      // مهلة قصيرة: الانتظار لا يجوز أن يعلّق الشاشة على قرص بطيء.
+      await ref
+          .read(hosHydrationReadyProvider.future)
+          .timeout(const Duration(seconds: 3), onTimeout: () {});
+    } catch (_) {
+      // تعذّر الترطيب ⇒ نكمل؛ البناء التالي يجرّب من جديد.
+    }
 
-  try {
-    final engine = ref.read(hosEngineProvider);
-    final result = engine.currentStatus;
-    if (result is! HosEngineReady) return null;
+    try {
+      final engine = ref.read(hosEngineProvider);
+      final result = engine.currentStatus;
+      if (result is! HosEngineReady) return null;
 
-    final driverId = ref.read(currentDriverIdProvider);
-    return const HosOfflineDashboardBuilder().build(
-      engineResult: result,
-      driverId: DriverId(driverId ?? 0),
-      driverName: ref.read(authStateProvider).user?.fullName ?? '',
-      driverDisplayText: ref.read(authStateProvider).user?.fullName ?? '',
-    );
-  } catch (e) {
-    // ignore: avoid_print
-    print('offline dashboard build skipped: $e');
-    return null;
+      final driverId = ref.read(currentDriverIdProvider);
+      return const HosOfflineDashboardBuilder().build(
+        engineResult: result,
+        driverId: DriverId(driverId ?? 0),
+        driverName: ref.read(authStateProvider).user?.fullName ?? '',
+        driverDisplayText: ref.read(authStateProvider).user?.fullName ?? '',
+      );
+    } catch (e) {
+      // ignore: avoid_print
+      print('offline dashboard build skipped: $e');
+      return null;
+    }
   }
-}
 
   /// تغذية اللوحة مباشرة من استجابة POST تغيير الحالة — بلا شبكة.
   /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
@@ -264,13 +268,19 @@ Future<StatusDashboard?> _buildOfflineDashboardFromEngine() async {
     if (failure != null) {
       // ⚠️ لا نمسح اللوحة الحالية عند فشل التحديث.
       if (!state.hasValue) {
-        final local = ref.read(networkInfoProvider).isConnected
+        final connected = ref.read(networkInfoProvider).isConnected;
+        if (!connected && ref.read(hosHydrationReadyProvider).hasError) {
+          // P1.3: a failed journal hydration is cached as a provider error;
+          // drop it so this user-initiated retry replays before the build.
+          ref.invalidate(hosHydrationReadyProvider);
+        }
+        final local = connected
             ? null
             : await _buildOfflineDashboardFromEngine();
         if (local != null) {
           // لوحة مبنية من المحرك المحلي الآن ⇒ تُقاس الآن.
-          ref.read(statusDashboardSnapshotTimestampProvider.notifier)
-              .state = _stampFor(ref, null);
+          ref.read(statusDashboardSnapshotTimestampProvider.notifier).state =
+              _stampFor(ref, null);
           state = AsyncValue.data(local);
           return;
         }
@@ -285,7 +295,9 @@ Future<StatusDashboard?> _buildOfflineDashboardFromEngine() async {
     // (قرار المالك). بين النبضات يستوفي العرض زمنياً من هذه القيمة
     // المرساة (CircularTimerLogic)، فلا حارس أحادي ولا دمج مؤشرات محلي.
     final stamp = _stampFor(
-        ref, ref.read(statusDashboardRepositoryProvider).snapshotAt);
+      ref,
+      ref.read(statusDashboardRepositoryProvider).snapshotAt,
+    );
     ref.read(statusDashboardSnapshotTimestampProvider.notifier).state = stamp;
     state = AsyncValue.data(dashboard);
   }

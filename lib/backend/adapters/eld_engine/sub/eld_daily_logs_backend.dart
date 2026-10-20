@@ -75,10 +75,14 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     DateTime? startDate,
     DateTime? endDate,
     DateTime? logDate,
+    int page = 0,
+    int size = 20,
   }) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogSummary,
       queryParameters: {
+        'page': page,
+        'size': size,
         if (driverId != null) 'driverId': driverId.value,
         if (deviceId != null) 'deviceId': deviceId,
         if (status != null) 'status': status,
@@ -89,9 +93,27 @@ class EldDailyLogsBackend implements DailyLogsBackend {
         if (endDate != null) 'endDate': _dateOnly(endDate),
         if (logDate != null) 'logDate': _dateOnly(logDate),
       },
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) => data is List
+          ? <String, dynamic>{'data': data}
+          : (data is Map<String, dynamic> ? data : <String, dynamic>{}),
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    // الوثيقة (قاعدة 2): الترقيم قائم في القوائم — نمرر `pagination` كما هي.
+    return res.mapValue((r) {
+      final data = r.data ?? <String, dynamic>{};
+      final pagination = r.pagination;
+      if (pagination == null) return data;
+      return <String, dynamic>{
+        ...data,
+        'pagination': {
+          'page': pagination.page,
+          'size': pagination.size,
+          'totalElements': pagination.totalElements,
+          'totalPages': pagination.totalPages,
+          'hasNext': pagination.hasNext,
+          'hasPrevious': pagination.hasPrevious,
+        },
+      };
+    });
   }
 
   static String _dateOnly(DateTime date) =>

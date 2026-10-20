@@ -149,6 +149,7 @@ class DailyLogDto {
         break;
       case 'DRAFT':
       case 'INCOMPLETE':
+      case 'INVALID':
         mappedFormStatus = FormStatus.incomplete;
         break;
       default:
@@ -162,9 +163,11 @@ class DailyLogDto {
         break;
       case 'UNCERTIFIED':
       case 'NOT_READY':
+      case 'READY':
         mappedCertStatus = CertificationStatus.uncertified;
         break;
       case 'RE_CERTIFICATION_REQUIRED':
+      case 'REVOKED':
         mappedCertStatus = CertificationStatus.reCertificationRequired;
         break;
       default:

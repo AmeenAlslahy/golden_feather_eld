@@ -209,6 +209,29 @@ void main() {
       )).called(1);
     });
 
+    test('save without a vehicle uniqueId is refused before any side effect',
+        () async {
+      const emptyVehicleForm = DailyFormUpdate(
+        vehicleUniqueId: '   ',
+        trailers: ['T1'],
+        shippingDocuments: ['D1'],
+      );
+
+      final result =
+          await repository.saveForm(logId: tLogId, form: emptyVehicleForm);
+
+      expect(
+        result.fold((failure) => failure, (_) => null),
+        isA<ValidationFailure>(),
+      );
+      verifyNever(() => mockLocalDataSource.cacheDailyForm(any(), any()));
+      verifyNever(() => mockDailyLogsBackend.saveForm(
+            logId: any(named: 'logId'),
+            form: any(named: 'form'),
+          ));
+      verifyNever(() => mockOfflineQueue.enqueue(any()));
+    });
+
     test('offline save enqueues identical payload to PendingEvent', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(false);
       when(() => mockOfflineQueue.enqueue(any())).thenAnswer((_) async {});

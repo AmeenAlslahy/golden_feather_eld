@@ -19,8 +19,10 @@ class CertifyRequestDto {
   Map<String, dynamic> toJson() {
     return {
       'certified': certified,
-      if (signatureImage != null && signatureImage!.isNotEmpty)
-        'signatureImage': signatureImage,
+      'signatureImage':
+          (signatureImage != null && signatureImage!.isNotEmpty)
+              ? signatureImage
+              : null,
     };
   }
 }

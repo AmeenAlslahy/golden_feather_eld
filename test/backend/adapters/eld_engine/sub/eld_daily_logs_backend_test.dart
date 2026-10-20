@@ -100,4 +100,86 @@ void main() {
           ));
     });
   });
+
+  group('EldDailyLogsBackend.getSummary', () {
+    late MockApiClient api;
+    late EldDailyLogsBackend backend;
+
+    setUpAll(() {
+      registerFallbackValue((dynamic _) => <String, dynamic>{});
+      registerFallbackValue(<String, dynamic>{});
+    });
+
+    setUp(() {
+      api = MockApiClient();
+      backend = EldDailyLogsBackend(api);
+    });
+
+    test('sends page/size and surfaces pagination from the envelope', () async {
+      when(() => api.get<RawJson>(
+            EldEndpoints.dailyLogSummary,
+            queryParameters: any(named: 'queryParameters'),
+            parser: any(named: 'parser'),
+          )).thenAnswer(
+        (_) async => ok(const ApiResponse<RawJson>(
+          statusCode: 200,
+          isSuccess: true,
+          data: {'totalLogs': 3},
+          pagination: PaginationInfo(
+            page: 0,
+            size: 20,
+            totalElements: 3,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false,
+          ),
+        )),
+      );
+
+      final result = await backend.getSummary();
+
+      expect(result.isSuccess, isTrue);
+      final pagination =
+          result.valueOrNull?['pagination'] as Map<String, dynamic>?;
+      expect(pagination?['totalElements'], 3);
+      expect(pagination?['hasNext'], isFalse);
+
+      final captured = verify(() => api.get<RawJson>(
+            EldEndpoints.dailyLogSummary,
+            queryParameters: captureAny(named: 'queryParameters'),
+            parser: any(named: 'parser'),
+          )).captured;
+      final query = captured.single as Map<String, dynamic>;
+      expect(query['page'], 0);
+      expect(query['size'], 20);
+    });
+
+    test('parser accepts a list payload (summary list)', () async {
+      RawJson Function(dynamic)? capturedParser;
+      when(() => api.get<RawJson>(
+            EldEndpoints.dailyLogSummary,
+            queryParameters: any(named: 'queryParameters'),
+            parser: any(named: 'parser'),
+          )).thenAnswer((invocation) async {
+        capturedParser =
+            invocation.namedArguments[#parser] as RawJson Function(dynamic);
+        return ok(const ApiResponse<RawJson>(
+          statusCode: 200,
+          isSuccess: true,
+          data: {'totalLogs': 0},
+        ));
+      });
+
+      await backend.getSummary();
+
+      expect(capturedParser, isNotNull);
+      expect(capturedParser!([
+        {'id': 1, 'logDate': '2026-10-16'},
+      ]), {
+        'data': [
+          {'id': 1, 'logDate': '2026-10-16'},
+        ],
+      });
+    });
+  });
 }

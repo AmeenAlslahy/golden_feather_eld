@@ -109,50 +109,17 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
     await _disk?.clear();
   }
 
-  WeeklyRecap _synthesizeRecap() {
-    final snapshot = _cachedSnapshot?.dashboard;
-    final cycleIndicator = snapshot?.hosIndicators.cycle;
-    final cycleRule = snapshot?.regulatoryConstraints.ruleSet ?? CycleRule.usa70_8;
-
-    final cycleVal = cycleIndicator?.value;
-    final cycleUsed = cycleIndicator?.type == IndicatorType.used && cycleVal != null
-        ? cycleVal
-        : Duration.zero;
-    final cycleRemaining = cycleIndicator?.type == IndicatorType.remaining && cycleVal != null
-        ? cycleVal
-        : (const Duration(hours: 70) - cycleUsed);
-
-    final now = DateTime.now();
-    final days = List.generate(7, (i) {
-      final d = now.subtract(Duration(days: 6 - i));
-      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      final dayName = dayNames[d.weekday - 1];
-      return RecapDay(
-        date: DateTime(d.year, d.month, d.day),
-        dayOfWeek: dayName,
-        driving: Duration.zero,
-        onDuty: Duration.zero,
-        totalWork: Duration.zero,
-      );
-    });
-
-    return WeeklyRecap(
-      cycleRule: cycleRule,
-      cycleUsed: cycleUsed,
-      cycleRemaining: cycleRemaining.isNegative ? Duration.zero : cycleRemaining,
-      availableTomorrow: const Duration(hours: 8),
-      days: days,
-    );
-  }
-
   @override
   Future<Either<Failure, WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async {
     return guardedNetwork(_networkInfo, () async {
       final result = await _backend.getWeeklyRecap(driverId: driverId);
       return result.fold(
         (error) {
-          if (_cachedRecap != null) return Right(_cachedRecap!);
-          return Right(_synthesizeRecap());
+          // لا كاش ⇒ "غير متاح" صراحةً. البديل القديم كان يبني أسبوعاً
+          // فارغاً مع 8 ساعات متاحة غداً — رصيد قانوني غير موجود.
+          final cached = _cachedRecap;
+          if (cached != null) return Right(cached);
+          return const Left(NoRecapSnapshotFailure());
         },
         (data) {
           _cachedRecap = data;
@@ -163,7 +130,7 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
     }, offline: () async {
       final cached = _cachedRecap;
       if (cached != null) return Right(cached);
-      return Right(_synthesizeRecap());
+      return const Left(NoRecapSnapshotFailure());
     });
   }
 }

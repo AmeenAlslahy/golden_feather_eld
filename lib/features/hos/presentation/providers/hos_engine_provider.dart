@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/hos_configuration.dart';
@@ -116,10 +118,21 @@ String? _declaredStatus(Ref ref) {
 ///
 /// يجب **انتظاره** قبل بناء أي لوحة من المحرك.
 final hosHydrationReadyProvider = FutureProvider<void>((ref) async {
-  // ضمّان إنشاء المحرك (وبالتالي المستمع) أولاً.
+  // ضمان إنشاء المحرك (وبالتالي المستمع) أولاً.
   ref.watch(hosEngineProvider);
   // نفس الكاش المخزَّن مؤقتاً ⇒ لا قراءة ثانية من القرص.
   await ref.watch(hosStoredPeriodsProvider.future);
+
+  // P1.3 — لا تُعرض لوحة مبنية على حالة جزئية بينما سجل الأحداث الدائم
+  // ما زال يُستعاد. السائق قد يكون تغيّر أثناء الإقلاع، فنعيد المحاولة
+  // كلما عرفت الجلسة هويته.
+  final driverId = ref.watch(currentDriverIdProvider);
+  if (driverId == null || driverId <= 0) return;
+  final tracker = ref.read(dutyStatusTrackerProvider);
+  await tracker.hydrateForDriver(driverId);
+  if (!tracker.isHydrated) {
+    throw StateError('Duty journal hydration failed');
+  }
 });
 
 /// Duty Status Tracker Provider
@@ -137,7 +150,19 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
     dashboardBackend: dashboardBackend,
     timeProvider: timeProvider,
     readDriverId: () => ref.read(currentDriverIdProvider),
+    journal: ref.watch(dutyEventJournalProvider),
   );
+
+  // P1.1 — rebuild the open segment from journal evidence as soon as the
+  // driver identity is known. The stored owner is used for replay, not the
+  // current session.
+  void hydrate(int? driverId) {
+    if (driverId == null || driverId <= 0) return;
+    unawaited(tracker.hydrateForDriver(driverId));
+  }
+
+  hydrate(ref.read(currentDriverIdProvider));
+  ref.listen<int?>(currentDriverIdProvider, (_, next) => hydrate(next));
 
   ref.listen<AsyncValue>(eldEventsStreamProvider, (_, next) {
     if (next.hasValue && next.value != null) {

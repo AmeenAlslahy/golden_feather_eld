@@ -17,6 +17,8 @@ String dutyChangeMessage(BuildContext context, String code) {
       return context.loc.dutyChangeUnmapped;
     case DutyStampRefusal.serverRejected:
       return context.loc.dutyChangeServerRejected;
+    case DutyStampRefusal.storageUnavailable:
+      return context.loc.errRequestFailed;
     default:
       return code;
   }
@@ -29,4 +31,3 @@ String dutyChangeAcceptedMessage(BuildContext context) {
 String annotationRequiredMessage(BuildContext context) {
   return context.loc.annotationRequiredForPcYm;
 }
-
