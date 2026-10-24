@@ -6,11 +6,7 @@ class AnnotationDialog extends StatefulWidget {
   final String title;
   final String hint;
 
-  const AnnotationDialog({
-    super.key,
-    required this.title,
-    required this.hint,
-  });
+  const AnnotationDialog({super.key, required this.title, required this.hint});
 
   @override
   State<AnnotationDialog> createState() => _AnnotationDialogState();

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/directional_chevron.dart';
 import '../../../../routes.dart';
 import '../../domain/entities/daily_log.dart';
 import '../providers/logs_provider.dart';
@@ -33,14 +33,10 @@ class SuggestedEventsPage extends ConsumerWidget {
           context.loc.suggestedEvents,
           style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -55,7 +51,7 @@ class SuggestedEventsPage extends ConsumerWidget {
               Text(
                 context.loc.reCertificationRequiredMsg,
                 style: context.styles.sectionTitle.copyWith(
-                  color: AppColors.warningYellow,
+                  color: context.warning,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -64,9 +60,9 @@ class SuggestedEventsPage extends ConsumerWidget {
                   margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                   color: Theme.of(context).colorScheme.surface,
                   child: ListTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.warning_amber_rounded,
-                      color: AppColors.warningYellow,
+                      color: context.warning,
                     ),
                     title: Text(
                       log.formattedDate,
@@ -79,10 +75,11 @@ class SuggestedEventsPage extends ConsumerWidget {
                           : context.loc.carrierProposedEdit,
                       style: context.styles.subtitle,
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: const DirectionalChevron(),
                     onTap: () {
                       ref.read(logsProvider.notifier).selectLog(log);
-                      ref.read(logDetailTabProvider.notifier).state = 2; // Certify tab
+                      ref.read(logDetailTabProvider.notifier).state =
+                          2; // Certify tab
                       context.push(
                         AppRoutes.logDetail.replaceAll(
                           ':id',

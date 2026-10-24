@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../providers/logs_provider.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../../domain/entities/daily_log.dart';
@@ -69,6 +69,10 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
   /// يشير إلى يوم أقدم من الصفحة الأولى). لا يبقي الصفحة رهينة اختيار قديم.
   void _ensureSelection([LogsState? snapshot]) {
     if (!mounted) return;
+    // This route remains mounted beneath InspectionPreviewPage. Do not force
+    // its old route id back into the shared provider while the preview is
+    // deliberately browsing a different day.
+    if (ModalRoute.of(context)?.isCurrent == false) return;
     final desiredId = _activeLogId;
     if (desiredId == null || desiredId.isEmpty) return;
 
@@ -106,6 +110,18 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
     ref.read(logsProvider.notifier).selectLog(log);
   }
 
+  Future<void> _openInspectionPreview() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const InspectionPreviewPage()),
+    );
+    if (!mounted) return;
+    final selectedLog = ref.read(logsProvider).selectedLog;
+    if (selectedLog != null) {
+      setState(() => _activeLogId = selectedLog.id.value.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final logsState = ref.watch(logsProvider);
@@ -115,8 +131,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
     DailyLog? selectedLog;
     if (_activeLogId != null && _activeLogId!.isNotEmpty) {
       selectedLog = _findLog(logsState, _activeLogId!);
-      if (selectedLog != null &&
-          logsState.selectedLog?.id != selectedLog.id) {
+      if (selectedLog != null && logsState.selectedLog?.id != selectedLog.id) {
         // السجل من القائمة ولم يُحدَّد بعد — لا نعرض بيانات يوم آخر.
         _scheduleEnsureSelection();
         selectedLog = null;
@@ -144,9 +159,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
                   isError: logsState.error != null,
                   onRetry: () {
                     _requestedPage = null;
-                    ref
-                        .read(logsProvider.notifier)
-                        .loadLogs(refresh: true);
+                    ref.read(logsProvider.notifier).loadLogs(refresh: true);
                   },
                 ),
         ),
@@ -168,156 +181,150 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            ref.read(logDetailTabProvider.notifier).state = 0; // Reset state
-            Navigator.pop(context);
-          },
-        ),
-        title: Directionality(
-          textDirection: TextDirection.ltr,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (hasPrevDay)
-                  IconButton(
-                    icon: Icon(
-                      Icons.chevron_left,
-                      size: 26,
-                      color: context.styles.appBarTitle.color,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _selectDay(allLogs[logIndex + 1]),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    selectedLog.formattedDate,
-                    style: context.styles.appBarTitle,
-                  ),
-                ),
-                if (hasNextDay)
-                  IconButton(
-                    icon: Icon(
-                      Icons.chevron_right,
-                      size: 26,
-                      color: context.styles.appBarTitle.color,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () => _selectDay(allLogs[logIndex - 1]),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        centerTitle: true,
-        // أيقونتا المعاينة والإضافة خاصتان بتبويب الأحداث فقط —
-        // تُخفيان في النموذج والتوثيق.
-        actions: [
-          if (currentIndex == 0)
-            IconButton(
-              icon: const Icon(Icons.visibility),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const InspectionPreviewPage(),
-                  ),
-                );
-              },
-            ),
-          if (currentIndex == 0)
-            IconButton(
-              icon: const Icon(Icons.add, size: 28),
-              onPressed: () async {
-              final successMsg = context.loc.eventAddedSuccess;
-
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const EditLogPage(
-                    event: null,
-                    isNewEvent: true,
-                  ),
-                ),
-              );
-
-              if (result == true && context.mounted) {
-                // الحفظ يتم من داخل EditLogPage (حدث المستخدم المعدّل وليس الافتراضي)
-                if (context.mounted) {
-                  AppFeedback.success(context, successMsg);
-                }
-              }
+          leading: BackButton(
+            onPressed: () {
+              ref.read(logDetailTabProvider.notifier).state = 0; // Reset state
+              Navigator.pop(context);
             },
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (selectedLog.certificationStatus == CertificationStatus.reCertificationRequired)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              color: AppColors.warningBg,
+          title: Directionality(
+            textDirection: TextDirection.ltr,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: AppColors.warningText),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  if (hasPrevDay)
+                    IconButton(
+                      icon: Icon(
+                        Icons.chevron_left,
+                        color: context.styles.appBarTitle.color,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _selectDay(allLogs[logIndex + 1]),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
                     child: Text(
-                      context.loc.reCertificationRequiredMsg,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.warningText,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      selectedLog.formattedDate,
+                      style: context.styles.appBarTitle,
                     ),
                   ),
+                  if (hasNextDay)
+                    IconButton(
+                      icon: Icon(
+                        Icons.chevron_right,
+                        color: context.styles.appBarTitle.color,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => _selectDay(allLogs[logIndex - 1]),
+                    ),
                 ],
               ),
             ),
-          Expanded(child: _buildBodyContent(currentIndex, selectedLog)),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-              top: BorderSide(color: Theme.of(context).dividerColor, width: 1)),
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-          currentIndex: currentIndex,
-          type: BottomNavigationBarType.fixed,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.access_time),
-              label: context.loc.events,
-            ),
-            BottomNavigationBarItem(
-              icon: Badge(
-                isLabelVisible: !selectedLog.isFormComplete,
-                backgroundColor: AppColors.dangerRed,
-                child: const Icon(Icons.assignment),
+          ),
+          centerTitle: true,
+          // أيقونتا المعاينة والإضافة خاصتان بتبويب الأحداث فقط —
+          // تُخفيان في النموذج والتوثيق.
+          actions: [
+            if (currentIndex == 0)
+              IconButton(
+                icon: const Icon(Icons.visibility),
+                onPressed: _openInspectionPreview,
               ),
-              label: context.loc.form,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.check_circle_outline),
-              label: context.loc.certify,
-            ),
+            if (currentIndex == 0)
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () async {
+                  final successMsg = context.loc.eventAddedSuccess;
+
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const EditLogPage(event: null, isNewEvent: true),
+                    ),
+                  );
+
+                  if (result == true && context.mounted) {
+                    // الحفظ يتم من داخل EditLogPage (حدث المستخدم المعدّل وليس الافتراضي)
+                    if (context.mounted) {
+                      AppFeedback.success(context, successMsg);
+                    }
+                  }
+                },
+              ),
           ],
-          onTap: (index) {
-            ref.read(logDetailTabProvider.notifier).state = index;
-          },
         ),
-      ),
+        body: Column(
+          children: [
+            if (selectedLog.certificationStatus ==
+                CertificationStatus.reCertificationRequired)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.compact,
+                  horizontal: AppSpacing.md,
+                ),
+                color: context.warningContainer,
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: context.warning),
+                    const SizedBox(width: AppSpacing.compact),
+                    Expanded(
+                      child: Text(
+                        context.loc.reCertificationRequiredMsg,
+                        style: context.styles.body.copyWith(
+                          color: context.warning,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(child: _buildBodyContent(currentIndex, selectedLog)),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).dividerColor,
+                width: AppSpacing.dividerHeight,
+              ),
+            ),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: currentIndex,
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.access_time),
+                label: context.loc.events,
+              ),
+              BottomNavigationBarItem(
+                icon: Badge(
+                  isLabelVisible: !selectedLog.isFormComplete,
+                  backgroundColor: context.colors.error,
+                  child: const Icon(Icons.assignment),
+                ),
+                label: context.loc.form,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.check_circle_outline),
+                label: context.loc.certify,
+              ),
+            ],
+            onTap: (index) {
+              ref.read(logDetailTabProvider.notifier).state = index;
+            },
+          ),
+        ),
       ), // ← إغلاق PopScope
     );
   }
@@ -330,9 +337,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
           key: ValueKey('events_${selectedLog.id.value}'),
           selectedLog: selectedLog,
         ),
-        FormTab(
-          key: ValueKey('form_${selectedLog.id.value}'),
-        ),
+        FormTab(key: ValueKey('form_${selectedLog.id.value}')),
         CertifyTab(
           key: ValueKey('certify_${selectedLog.id.value}'),
           selectedLog: selectedLog,

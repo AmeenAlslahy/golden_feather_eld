@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/press_feedback.dart';
 import '../../../../routes.dart';
@@ -26,42 +25,36 @@ class EldDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              color: AppColors.primaryGold,
+              color: context.colors.primary,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
                 vertical: AppSpacing.lg,
               ),
               child: Text(
                 loc.menuTitle,
-                style: context.styles.appBarTitle.copyWith(
-                  color: AppColors.onGold,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: context.styles.pageTitle.copyWith(color: context.onGold),
               ),
             ),
             Expanded(
               child: ListView.separated(
                 padding: EdgeInsets.zero,
                 itemCount: menuItems.length,
-                separatorBuilder: (_, __) => const Divider(
-                  color: AppColors.border,
-                  height: 1,
+                separatorBuilder: (_, __) => Divider(
+                  color: context.border,
+                  height: AppSpacing.dividerHeight,
                 ),
                 itemBuilder: (context, index) {
                   final item = menuItems[index];
                   final title = item.titleBuilder(loc);
                   return ListTile(
                     splashColor: PressFeedback.ink,
-                    leading: Icon(item.icon, size: 24),
-                    title: Text(
-                      title,
-                      style: context.styles.body,
-                    ),
+                    leading: Icon(item.icon, size: AppSpacing.iconSize),
+                    title: Text(title, style: context.styles.body),
                     onTap: () {
                       Navigator.pop(context);
-                      final currentRoute =
-                          GoRouterState.of(context).matchedLocation;
+                      final currentRoute = GoRouterState.of(
+                        context,
+                      ).matchedLocation;
                       if (item.route == currentRoute) return;
                       if (item.route == AppRoutes.home) {
                         context.go(item.route);
@@ -73,14 +66,14 @@ class EldDrawer extends ConsumerWidget {
                 },
               ),
             ),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: context.border, height: AppSpacing.dividerHeight),
             ListTile(
               splashColor: PressFeedback.ink,
-              leading: const Icon(Icons.settings_outlined, size: 24),
-              title: Text(
-                loc.settingsTitle,
-                style: context.styles.body,
+              leading: const Icon(
+                Icons.settings_outlined,
+                size: AppSpacing.iconSize,
               ),
+              title: Text(loc.settingsTitle, style: context.styles.body),
               onTap: () {
                 Navigator.pop(context);
                 final currentRoute = GoRouterState.of(context).matchedLocation;
@@ -90,15 +83,21 @@ class EldDrawer extends ConsumerWidget {
             ),
             ListTile(
               splashColor: PressFeedback.ink,
-              leading: const Icon(Icons.logout, size: 24, color: AppColors.dangerRed),
-              title: Text(
-                context.loc.logout,
-                style: context.styles.error,
+              leading: Icon(
+                Icons.logout,
+                size: AppSpacing.iconSize,
+                color: context.danger,
               ),
+              title: Text(context.loc.logout, style: context.styles.error),
               onTap: () => _showLogoutDialog(context, ref),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
               child: FutureBuilder<PackageInfo>(
                 future: PackageInfo.fromPlatform(),
                 builder: (context, snapshot) {
@@ -138,10 +137,7 @@ class EldDrawer extends ConsumerWidget {
               await ref.read(authStateProvider.notifier).logout();
               router.go(AppRoutes.login);
             },
-            child: Text(
-              context.loc.logout,
-              style: context.styles.error,
-            ),
+            child: Text(context.loc.logout, style: context.styles.error),
           ),
         ],
       ),

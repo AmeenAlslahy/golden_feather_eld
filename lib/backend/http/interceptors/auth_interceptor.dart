@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import '../../../features/auth/data/datasources/auth_local_data_source.dart'; // ignore_architecture
-import '../../../features/auth/domain/entities/auth_session.dart'; // ignore_architecture
 import '../../../core/error/failure.dart';
+import '../../../core/session/auth_session.dart';
+import '../../../core/session/auth_session_reader.dart';
 import '../../../core/session/session_epoch.dart';
 import '../../../core/utils/logger.dart';
 import '../eld_endpoints.dart';
@@ -19,7 +19,7 @@ import '../eld_endpoints.dart';
 /// بشكل طبيعي — اعتبارها انتهاء جلسة كان يمسح التوكن المخزن عند كل
 /// إقلاع ويجبر السائق على تسجيل الدخول في كل مرة.
 class AuthInterceptor extends Interceptor {
-  final AuthLocalDataSource localDataSource;
+  final AuthSessionReader localDataSource;
   final String backendType;
 
   /// P0 Stage 1: يُستدعى مع epoch الطلب الذي رُفض — المستمع يتجاهل
@@ -52,7 +52,9 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     // P0 Stage 1: وسم كل طلب (بما فيه إنشاء الجلسة) بجيل منشئه.
     options.extra[epochKey] = SessionEpoch.current;
     // P0 leak fix: وسم إصدار الاعتماد — قراءة متزامنة خالصة.
@@ -72,18 +74,20 @@ class AuthInterceptor extends Interceptor {
     try {
       session = await localDataSource.getSession();
     } catch (e) {
-      AppLogger.error('AuthInterceptor failed to read session for $backendType: $e');
+      AppLogger.error(
+        'AuthInterceptor failed to read session for $backendType: $e',
+      );
     }
 
     // P0 2B-1 — إنفاذ وقت-الإرسال خارج شرط وجود الجلسة عمداً: طلب مزامنة
     // بلا جلسة حاضرة (logout أثناء الطيران) يُرفض أيضاً — لا إرسال مجهول.
     final expectedOwner = options.extra[expectedOwnerKey];
     if (expectedOwner is int) {
-      final actualOwner =
-          session == null ? null : int.tryParse(session.user.id);
+      final actualOwner = session == null
+          ? null
+          : int.tryParse(session.user.id);
       if (actualOwner != expectedOwner) {
-        AppLogger.warning(
-            'Refusing queue dispatch under a different session');
+        AppLogger.warning('Refusing queue dispatch under a different session');
         handler.reject(
           DioException(
             requestOptions: options,
@@ -106,8 +110,9 @@ class AuthInterceptor extends Interceptor {
       if (requestHost == baseHost || requestHost.isEmpty || baseHost.isEmpty) {
         final cookie = 'JSESSIONID=${session.sessionCredential}';
         final existingCookie = options.headers['Cookie'];
-        options.headers['Cookie'] =
-            existingCookie != null ? '$existingCookie; $cookie' : cookie;
+        options.headers['Cookie'] = existingCookie != null
+            ? '$existingCookie; $cookie'
+            : cookie;
         options.extra[_sessionAttachedKey] = true;
       }
     }
@@ -125,17 +130,16 @@ class AuthInterceptor extends Interceptor {
         // P0 leak fix: بيانات اعتماد أقدم من المخزن الحالي (طلب وُلد بين
         // bump والمسح، أو جلسة سابقة) — يُتجاهل ولا مساس بالجلسة الجديدة.
         // لا يُطبع أي secret — الأجيال أعداد فقط.
-        AppLogger.warning(
-            'Ignoring 401 with outdated credential generation');
+        AppLogger.warning('Ignoring 401 with outdated credential generation');
       } else {
         final requestEpoch = err.requestOptions.extra[epochKey] as int?;
-        if (requestEpoch == null ||
-            requestEpoch == SessionEpoch.current) {
+        if (requestEpoch == null || requestEpoch == SessionEpoch.current) {
           onUnauthenticated?.call(requestEpoch ?? SessionEpoch.current);
         } else {
           // P0 Stage 1: 401 قديم من جلسة سابقة — يُتجاهل ولا يطرد الجلسة الجديدة.
           AppLogger.warning(
-              'Ignoring stale 401 from epoch $requestEpoch (current ${SessionEpoch.current})');
+            'Ignoring stale 401 from epoch $requestEpoch (current ${SessionEpoch.current})',
+          );
         }
       }
     }

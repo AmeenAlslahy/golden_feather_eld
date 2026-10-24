@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+import 'package:golden_feather_eld/core/theme/app_spacing.dart';
 import '../../domain/entities/dvir_report.dart';
 
 /// §396.13 review dialog: shows the previous inspection summary and asks the
@@ -33,19 +34,16 @@ class PreviousDvirReviewModal extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(loc.dvirReviewBeforeDriving),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text('$dateLabel \u2014 $condition'),
-            const SizedBox(height: 8),
-            Text(
-              loc.dvirRecordedDefects,
-              style: context.styles.bodyBold,
-            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(loc.dvirRecordedDefects, style: context.styles.bodyBold),
             if (previousDefects.isEmpty)
               Text(loc.dvirNone)
             else
               for (final line in previousDefects) Text('\u2022 $line'),
             if ((latest.repairStatus ?? '').trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 loc.dvirRepairStatus +
                     latest.repairStatus!.trim() +

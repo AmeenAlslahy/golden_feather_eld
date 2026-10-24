@@ -19,7 +19,8 @@ class HardwareMapper {
       'driverId': reading.driverId.value,
       'speed': reading.speedMps * _mpsToKmh,
       if (reading.rpm != null) 'rpm': reading.rpm,
-      if (reading.odometerMiles != null) 'odometer': reading.odometerMiles! * _milesToKm,
+      if (reading.odometerMiles != null)
+        'odometer': reading.odometerMiles! * _milesToKm,
       if (reading.engineHours != null) 'engineHours': reading.engineHours,
       if (reading.engineOn != null) 'engineOn': reading.engineOn,
     };

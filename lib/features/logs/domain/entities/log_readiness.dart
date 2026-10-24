@@ -33,13 +33,13 @@ class CarrierProposedEditEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        carrierName,
-        carrierReason,
-        proposedStatus,
-        previousValuesSummary,
-        newValuesSummary,
-      ];
+    id,
+    carrierName,
+    carrierReason,
+    proposedStatus,
+    previousValuesSummary,
+    newValuesSummary,
+  ];
 }
 
 class LogReadiness extends Equatable {
@@ -76,7 +76,8 @@ class LogReadiness extends Equatable {
   static String formatRequirement(String req) {
     return req.replaceAllMapped(
       RegExp(
-          r'\d{4}-\d{1,2}-\d{1,2}[T ]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?'),
+        r'\d{4}-\d{1,2}-\d{1,2}[T ]\d{1,2}:\d{2}(?::\d{2})?(?:Z|[+-]\d{2}:?\d{2})?',
+      ),
       (m) {
         final parsed = DateTime.tryParse(m.group(0)!);
         if (parsed == null) return m.group(0)!;
@@ -90,15 +91,15 @@ class LogReadiness extends Equatable {
 
   @override
   List<Object?> get props => [
-        dailyLogId,
-        driverId,
-        driverName,
-        logDate,
-        readinessStatus,
-        missingRequirements,
-        legalStatement,
-        availableActions,
-        carrierProposedEditsPending,
-        pendingCarrierEdits,
-      ];
+    dailyLogId,
+    driverId,
+    driverName,
+    logDate,
+    readinessStatus,
+    missingRequirements,
+    legalStatement,
+    availableActions,
+    carrierProposedEditsPending,
+    pendingCarrierEdits,
+  ];
 }

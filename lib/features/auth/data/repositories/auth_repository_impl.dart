@@ -6,7 +6,7 @@ import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
-import '../../domain/entities/auth_session.dart';
+import '../../../../core/session/auth_session.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../backend/contracts/auth_backend.dart';
 import '../datasources/auth_local_data_source.dart';
@@ -24,10 +24,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthLocalDataSource localDataSource,
     required ServerConfigProvider configProvider,
     required NetworkInfo networkInfo,
-  })  : _authBackend = authBackend,
-        _localDataSource = localDataSource,
-        _configProvider = configProvider,
-        _networkInfo = networkInfo;
+  }) : _authBackend = authBackend,
+       _localDataSource = localDataSource,
+       _configProvider = configProvider,
+       _networkInfo = networkInfo;
 
   String? _getServerUrl() {
     final url = _configProvider.serverUrl;
@@ -43,31 +43,36 @@ class AuthRepositoryImpl implements AuthRepository {
     final serverUrl = _getServerUrl();
     if (serverUrl == null) return const Left(MissingConfigurationFailure());
     return guardedNetwork(_networkInfo, () async {
-    final backendType = _configProvider.backendType;
-    final result = await _authBackend.login(
-      identifier: identifier,
-      password: password,
-      serverUrl: serverUrl,
-      backendType: backendType,
-    );
+      final backendType = _configProvider.backendType;
+      final result = await _authBackend.login(
+        identifier: identifier,
+        password: password,
+        serverUrl: serverUrl,
+        backendType: backendType,
+      );
 
-    return result.fold(
-      (error) {
-        if (error.code == 'unauthorized') return const Left(InvalidCredentialsFailure());
-        return Left(ServerFailure(message: error.code));
-      },
-      (rawJson) async {
-        final sessionDto = AuthSessionDto.create(
-          serverOrigin: rawJson['serverOrigin'],
-          sessionCredential: rawJson['credential'],
-          userModel: UserModel.fromMetadata(rawJson['user'], defaultEmail: identifier),
-        );
+      return result.fold(
+        (error) {
+          if (error.code == 'unauthorized') {
+            return const Left(InvalidCredentialsFailure());
+          }
+          return Left(ServerFailure(message: error.code));
+        },
+        (rawJson) async {
+          final sessionDto = AuthSessionDto.create(
+            serverOrigin: rawJson['serverOrigin'],
+            sessionCredential: rawJson['credential'],
+            userModel: UserModel.fromMetadata(
+              rawJson['user'],
+              defaultEmail: identifier,
+            ),
+          );
 
-        await _localDataSource.saveSession(sessionDto.toEntity());
-        await _localDataSource.saveUser(sessionDto.userModel);
-        return Right(sessionDto.userModel);
-      }
-    );
+          await _localDataSource.saveSession(sessionDto.toEntity());
+          await _localDataSource.saveUser(sessionDto.userModel);
+          return Right(sessionDto.userModel);
+        },
+      );
     });
   }
 
@@ -114,10 +119,12 @@ class AuthRepositoryImpl implements AuthRepository {
     return const Left(NetworkFailure());
   }
 
-  Future<Either<Failure, User>> _validateRemoteSession(AuthSession savedSession) async {
+  Future<Either<Failure, User>> _validateRemoteSession(
+    AuthSession savedSession,
+  ) async {
     final backendType = _configProvider.backendType;
     final sessionDto = AuthSessionDto.fromEntity(savedSession);
-    
+
     final result = await _authBackend.validateSession(
       serverOrigin: sessionDto.serverOrigin,
       sessionCredential: sessionDto.sessionCredential,
@@ -138,11 +145,11 @@ class AuthRepositoryImpl implements AuthRepository {
           sessionCredential: rawJson['credential'],
           userModel: UserModel.fromMetadata(rawJson['user']),
         );
-        
+
         await _localDataSource.saveSession(validSessionDto.toEntity());
         await _localDataSource.saveUser(validSessionDto.userModel);
         return Right(validSessionDto.userModel);
-      }
+      },
     );
   }
 
@@ -159,7 +166,11 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
     } catch (e, stackTrace) {
-      AppLogger.warning('Backend logout failed, proceeding with local clear', e, stackTrace);
+      AppLogger.warning(
+        'Backend logout failed, proceeding with local clear',
+        e,
+        stackTrace,
+      );
     } finally {
       await _clearLocalData();
     }

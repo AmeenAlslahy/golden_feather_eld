@@ -29,8 +29,10 @@ class UserModel extends User {
     );
   }
 
-  factory UserModel.fromJson(Map<String, dynamic> json,
-      {String? defaultEmail}) {
+  factory UserModel.fromJson(
+    Map<String, dynamic> json, {
+    String? defaultEmail,
+  }) {
     // Traccar API returns id as int, name, email, administrator boolean
     final idValue = json['id']?.toString() ?? '';
     final nameValue =
@@ -68,8 +70,10 @@ class UserModel extends User {
     );
   }
 
-  factory UserModel.fromMetadata(Map<String, dynamic> metadata,
-      {String? defaultEmail}) {
+  factory UserModel.fromMetadata(
+    Map<String, dynamic> metadata, {
+    String? defaultEmail,
+  }) {
     final email =
         metadata['email'] ?? metadata['name'] ?? defaultEmail ?? 'unknown';
     return UserModel(

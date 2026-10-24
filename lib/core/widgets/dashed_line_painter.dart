@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DashedLinePainter extends CustomPainter {
   final Color color;
   DashedLinePainter({required this.color});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint()

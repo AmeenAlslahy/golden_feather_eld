@@ -17,8 +17,8 @@ class SendLogsSection extends StatelessWidget {
     return Container(
       decoration: AppDecorations.band(context.colorScheme.surface),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xl,
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.sectionGap,
       ),
       child: Column(
         children: [

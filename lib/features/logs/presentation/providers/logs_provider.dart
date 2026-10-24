@@ -22,6 +22,7 @@ class LogsState {
   /// آخر صفحة جُلبت من الخادم (`page` في الترقيم الموحّد).
   final int page;
   final bool hasReachedMax;
+  final String? loadMoreError;
 
   /// True while the events of [selectedLog] are being fetched.
   final bool isLoadingEvents;
@@ -37,6 +38,7 @@ class LogsState {
     this.error,
     this.page = 0,
     this.hasReachedMax = false,
+    this.loadMoreError,
     this.isLoadingEvents = false,
     this.eventsError,
     this.serverForm,
@@ -52,6 +54,8 @@ class LogsState {
     bool clearError = false,
     int? page,
     bool? hasReachedMax,
+    String? loadMoreError,
+    bool clearLoadMoreError = false,
     bool? isLoadingEvents,
     String? eventsError,
     bool clearEventsError = false,
@@ -65,41 +69,42 @@ class LogsState {
       error: clearError ? null : (error ?? this.error),
       page: page ?? this.page,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      loadMoreError: clearLoadMoreError
+          ? null
+          : (loadMoreError ?? this.loadMoreError),
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
-      eventsError:
-          clearEventsError ? null : (eventsError ?? this.eventsError),
+      eventsError: clearEventsError ? null : (eventsError ?? this.eventsError),
       serverForm: clearServerForm ? null : (serverForm ?? this.serverForm),
     );
   }
 }
 
 /// مزود السجلات
-final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>((ref) {
-  final repository = ref.watch(logRepositoryProvider);
-  final driverId = ref.watch(currentDriverIdProvider);
-  final notifier = LogsNotifier(repository, driverId, ref);
-  
-  final sub = ref.read(appEventBusProvider).stream.listen((event) {
-    if (event == AppEvent.logDataChanged) {
-      notifier.loadLogs(refresh: true);
-    }
-  });
-  
-  ref.onDispose(sub.cancel);
-  
-  return notifier;
-});
+final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>(
+  (ref) {
+    final repository = ref.watch(logRepositoryProvider);
+    final driverId = ref.watch(currentDriverIdProvider);
+    final notifier = LogsNotifier(repository, driverId, ref);
+
+    final sub = ref.read(appEventBusProvider).stream.listen((event) {
+      if (event == AppEvent.logDataChanged) {
+        notifier.loadLogs(refresh: true);
+      }
+    });
+
+    ref.onDispose(sub.cancel);
+
+    return notifier;
+  },
+);
 
 class LogsNotifier extends StateNotifier<LogsState> {
   final LogRepository _repository;
   final int? _driverId;
   final Ref? _ref;
 
-  LogsNotifier(
-    this._repository,
-    this._driverId, [
-    this._ref,
-  ]) : super(const LogsState()) {
+  LogsNotifier(this._repository, this._driverId, [this._ref])
+    : super(const LogsState()) {
     if (_driverId != null) {
       loadLogs();
     }
@@ -112,9 +117,13 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     final isFirstLoad = state.logs.isEmpty || refresh;
     if (isFirstLoad) {
-      state = state.copyWith(isLoading: true, clearError: true);
+      state = state.copyWith(
+        isLoading: true,
+        clearError: true,
+        clearLoadMoreError: true,
+      );
     } else {
-      state = state.copyWith(isLoading: true);
+      state = state.copyWith(isLoading: true, clearLoadMoreError: true);
     }
 
     final currentPage = refresh ? 0 : state.page;
@@ -130,12 +139,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     result.match(
       (failure) {
-        if (failure is NetworkFailure || failure.message == 'noInternet') {
-          state = state.copyWith(isLoading: false);
+        final isNetworkFailure =
+            failure is NetworkFailure || failure.message == 'noInternet';
+        if (isFirstLoad) {
+          state = isNetworkFailure
+              ? state.copyWith(isLoading: false)
+              : state.copyWith(isLoading: false, error: failure.message);
         } else {
           state = state.copyWith(
             isLoading: false,
-            error: failure.message,
+            loadMoreError: failure.message,
           );
         }
       },
@@ -155,6 +168,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
           // الترقيم الموحّد: `hasNext` من الخادم هو الفيصل.
           hasReachedMax: !page.hasNext,
           clearError: true,
+          clearLoadMoreError: true,
         );
       },
     );
@@ -163,9 +177,14 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// تحديد سجل محدد للتفاصيل ثم جلب أحداثه.
   ///
   /// قائمة `GET /eld/daily-logs` لا تتضمن الأحداث؛ لذلك تُجلب عند فتح اليوم
-  /// من `GET /eld/daily-logs/{id}/graph-grid` (SRS 5.2).
+  /// من `GET /eld/daily-logs/{id}/events`. يتولى backend استخدام
+  /// `/graph-grid` كمسار توافق إذا لم يكن `/events` مدعوماً على الخادم.
   void selectLog(DailyLog log) {
-    state = state.copyWith(selectedLog: log, clearEventsError: true, clearServerForm: true);
+    state = state.copyWith(
+      selectedLog: log,
+      clearEventsError: true,
+      clearServerForm: true,
+    );
     _applyRowToLiveDashboard(log);
     // التفاصيل ثم النموذج بالترتيب: النموذج (`/form`) أعلى سلطة من صف
     // القائمة، فيُطبَّق أخيراً مهما تأخرت أو سبقت استجابات الشبكة.
@@ -188,14 +207,16 @@ class LogsNotifier extends StateNotifier<LogsState> {
         (log.vehicleName == null || log.vehicleName!.isEmpty)) {
       return;
     }
-    _ref?.read(dashboardDataProvider.notifier).applyServerForm(
-      DailyFormData(
-        vehicleUniqueId: log.uniqueId.isNotEmpty ? log.uniqueId : null,
-        vehicleName: log.vehicleName,
-        trailers: log.trailers,
-        shippingDocuments: log.shippingDocuments,
-      ),
-    );
+    _ref
+        ?.read(dashboardDataProvider.notifier)
+        .applyServerForm(
+          DailyFormData(
+            vehicleUniqueId: log.uniqueId.isNotEmpty ? log.uniqueId : null,
+            vehicleName: log.vehicleName,
+            trailers: log.trailers,
+            shippingDocuments: log.shippingDocuments,
+          ),
+        );
   }
 
   /// نموذج اليوم المحفوظ في الخادم (`GET /eld/daily-logs/{id}/form`) —
@@ -226,7 +247,9 @@ class LogsNotifier extends StateNotifier<LogsState> {
   DailyFormData _selectedFormBase(DailyLog current) {
     return state.serverForm ??
         DailyFormData(
-          vehicleUniqueId: current.uniqueId.isNotEmpty ? current.uniqueId : null,
+          vehicleUniqueId: current.uniqueId.isNotEmpty
+              ? current.uniqueId
+              : null,
           vehicleName: current.vehicleName,
           trailers: current.trailers,
           shippingDocuments: current.shippingDocuments,
@@ -269,8 +292,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
     state = state.copyWith(
       serverForm: DailyFormData(
         vehicleId: vehicleId,
-        vehicleUniqueId:
-            vehicleUniqueId.isEmpty ? null : vehicleUniqueId,
+        vehicleUniqueId: vehicleUniqueId.isEmpty ? null : vehicleUniqueId,
         vehicleName: vehicleName.isEmpty ? null : vehicleName,
         coDriverId: base.coDriverId,
         coDriverName: base.coDriverName,
@@ -335,14 +357,12 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
     result.match(
       (failure) {
-        if (failure is NetworkFailure || failure.message == 'noInternet') {
-          state = state.copyWith(isLoadingEvents: false);
-        } else {
-          state = state.copyWith(
-            isLoadingEvents: false,
-            eventsError: failure.message,
-          );
-        }
+        // Inspection views must distinguish an empty day from an event-load
+        // failure, including offline/network failures, so they can offer retry.
+        state = state.copyWith(
+          isLoadingEvents: false,
+          eventsError: failure.message,
+        );
       },
       (events) {
         // نحافظ على حالة التوسيع الحالية للأحداث ذات المعرّف نفسه.
@@ -351,8 +371,9 @@ class LogsNotifier extends StateNotifier<LogsState> {
             if (e.isExpanded) e.id,
         };
         final merged = events
-            .map((e) =>
-                expanded.contains(e.id) ? e.copyWith(isExpanded: true) : e)
+            .map(
+              (e) => expanded.contains(e.id) ? e.copyWith(isExpanded: true) : e,
+            )
             .toList();
         _replaceSelected(state.selectedLog!.copyWith(events: merged));
         state = state.copyWith(isLoadingEvents: false, clearEventsError: true);
@@ -381,18 +402,22 @@ class LogsNotifier extends StateNotifier<LogsState> {
       return e;
     }).toList();
 
-    final updatedLog = state.selectedLog!.copyWith(
-      events: updatedEvents,
-    );
+    final updatedLog = state.selectedLog!.copyWith(events: updatedEvents);
 
-    state = state.copyWith(selectedLog: updatedLog);
+    // Keep the selected log and the matching item in `logs` in sync. The
+    // detail page resolves the active log from that list first, so updating
+    // only `selectedLog` leaves the event tile with a stale `isExpanded`.
+    _replaceSelected(updatedLog);
   }
 
-
-
   /// إضافة حدث جديد للسجل المحدد (POST /eld/duty-status، أو محلياً دون اتصال).
-  Future<Either<Failure, void>> addEvent(LogEvent event, {String? reason}) async {
-    if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
+  Future<Either<Failure, void>> addEvent(
+    LogEvent event, {
+    String? reason,
+  }) async {
+    if (state.selectedLog == null) {
+      return const Left(ServerFailure(message: 'No log selected'));
+    }
 
     final result = _driverId != null
         ? await _repository.addEvent(
@@ -400,29 +425,32 @@ class LogsNotifier extends StateNotifier<LogsState> {
             reason: reason,
             ownerDriverId: _driverId,
           )
-        : await _repository.addEvent(
-            event,
-            reason: reason,
-          );
+        : await _repository.addEvent(event, reason: reason);
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    return result.fold(
-      (failure) => Left(failure),
-      (ok) {
-        if (!ok) return const Left(ServerFailure(message: 'Failed to save event'));
-        _replaceSelected(state.selectedLog!.copyWith(
+    return result.fold((failure) => Left(failure), (ok) {
+      if (!ok) {
+        return const Left(ServerFailure(message: 'Failed to save event'));
+      }
+      _replaceSelected(
+        state.selectedLog!.copyWith(
           events: <LogEvent>[...state.selectedLog!.events, event],
-        ));
-        unawaited(loadSelectedLogEvents());
-        return const Right(null);
-      },
-    );
+        ),
+      );
+      unawaited(loadSelectedLogEvents());
+      return const Right(null);
+    });
   }
 
   /// تعديل حدث (العقد الموحّد: PUT /eld/daily-logs/{logId}/events/{eventId}
   /// مع سبب إلزامي؛ الرواسب القديمة تعود لمسار /eld/duty-status).
-  Future<Either<Failure, void>> updateEvent(LogEvent event, {required String reason}) async {
-    if (state.selectedLog == null) return const Left(ServerFailure(message: 'No log selected'));
+  Future<Either<Failure, void>> updateEvent(
+    LogEvent event, {
+    required String reason,
+  }) async {
+    if (state.selectedLog == null) {
+      return const Left(ServerFailure(message: 'No log selected'));
+    }
 
     final confirmed = _driverId != null
         ? await _repository.updateEvent(
@@ -438,26 +466,27 @@ class LogsNotifier extends StateNotifier<LogsState> {
           );
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    return confirmed.fold(
-      (failure) => Left(failure),
-      (persistedEvent) {
-        if (persistedEvent == null) {
-          _replaceSelected(state.selectedLog!.copyWith(
+    return confirmed.fold((failure) => Left(failure), (persistedEvent) {
+      if (persistedEvent == null) {
+        _replaceSelected(
+          state.selectedLog!.copyWith(
             events: state.selectedLog!.events
                 .map((e) => e.id == event.id ? event : e)
                 .toList(),
-          ));
-        } else {
-          _replaceSelected(state.selectedLog!.copyWith(
+          ),
+        );
+      } else {
+        _replaceSelected(
+          state.selectedLog!.copyWith(
             events: state.selectedLog!.events
                 .map((e) => e.id == persistedEvent.id ? persistedEvent : e)
                 .toList(),
-          ));
-        }
-        unawaited(loadSelectedLogEvents());
-        return const Right(null);
-      },
-    );
+          ),
+        );
+      }
+      unawaited(loadSelectedLogEvents());
+      return const Right(null);
+    });
   }
 
   /// تحديث سجل بالكامل (مثل إكمال النموذج)

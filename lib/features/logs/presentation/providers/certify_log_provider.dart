@@ -56,10 +56,13 @@ class CertifyLogState {
     }
     if (readinessData == null) return false;
     final status = readinessData!.readinessStatus.toUpperCase();
-    if (status == _statusReady || status == 'CERTIFIED' || status == 'ALREADY_CERTIFIED') {
+    if (status == _statusReady ||
+        status == 'CERTIFIED' ||
+        status == 'ALREADY_CERTIFIED') {
       return true;
     }
-    return readinessData!.missingRequirements.isEmpty && !readinessData!.carrierProposedEditsPending;
+    return readinessData!.missingRequirements.isEmpty &&
+        !readinessData!.carrierProposedEditsPending;
   }
 
   /// نصوص الموانع للعرض: رموز `validationCodes` أولاً (مترجمة أينما
@@ -74,7 +77,8 @@ class CertifyLogState {
 
   static const Map<String, String> _validationCodeTexts = {
     'FORM_NOT_FINAL': 'The daily form is not complete for this day.',
-    'SIGNATURE_REQUIRED': 'A digital signature is required before certification.',
+    'SIGNATURE_REQUIRED':
+        'A digital signature is required before certification.',
   };
 
   static String _validationCodeText(String code) =>
@@ -130,14 +134,14 @@ final class CertifyFailed extends CertifyOutcome {
 /// the state is released as soon as the certify tab is closed.
 final certifyLogProvider = StateNotifierProvider.autoDispose
     .family<CertifyLogNotifier, CertifyLogState, DailyLogId>((ref, logId) {
-  final notifier = CertifyLogNotifier(
-    ref,
-    logId,
-    ref.watch(logRepositoryProvider),
-  );
-  notifier._fetchReadiness();
-  return notifier;
-});
+      final notifier = CertifyLogNotifier(
+        ref,
+        logId,
+        ref.watch(logRepositoryProvider),
+      );
+      notifier._fetchReadiness();
+      return notifier;
+    });
 
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final Ref _ref;
@@ -145,18 +149,23 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
 
   CertifyLogNotifier(this._ref, this._logId, this._repository)
-      : super(const CertifyLogState(isLoading: true));
+    : super(const CertifyLogState(isLoading: true));
 
   /// Read lazily so a locale switch translates the next message without
   /// rebuilding the notifier (which would drop the loaded readiness).
-  AppLocalizations get _loc => lookupAppLocalizations(_ref.read(localeProvider));
+  AppLocalizations get _loc =>
+      lookupAppLocalizations(_ref.read(localeProvider));
 
   /// Driver-facing text only — never the failure code or exception text.
   String _message(Failure failure) => anyErrorUserMessage(failure, loc: _loc);
 
   /// Re-fetch readiness (retry button, or after answering a carrier edit).
   Future<void> checkReadiness() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearOutcome: true,
+    );
     await _fetchReadiness();
   }
 
@@ -194,7 +203,11 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     required CarrierEditResponse response,
     String? driverNotes,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearOutcome: true,
+    );
     final result = await _repository.respondToCarrierEdit(
       logId: _logId,
       editId: editId,
@@ -259,7 +272,11 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
       return failOutcome;
     }
 
-    state = state.copyWith(isLoading: true, clearError: true, clearOutcome: true);
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearOutcome: true,
+    );
     // الوثيقة: جسم POST /certify = `{ certified: true, signatureImage }`
     // حيث signatureImage هي صورة التوقيع المرسوم (PNG base64).
     final result = await _repository.certifyLog(
@@ -276,7 +293,10 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
         _ref.read(logDraftSignatureProvider(_logId).notifier).clearDraft();
         _ref.invalidate(logsProvider);
         _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
-        return CertifySucceeded(_loc.logSuccessfullyCertified, isLogCertified: true);
+        return CertifySucceeded(
+          _loc.logSuccessfullyCertified,
+          isLogCertified: true,
+        );
       },
     );
     state = state.copyWith(isLoading: false, outcome: outcome);

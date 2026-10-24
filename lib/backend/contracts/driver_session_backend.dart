@@ -14,7 +14,6 @@ abstract interface class DriverSessionBackend {
   /// GET /eld/sessions/co-driver
   Future<Result<RawJson>> getCurrentCoDriver();
 
-
   /// POST /eld/hardware/connect
   // TODO(P2): replace with DriverSession
   Future<Result<RawJson>> connect({

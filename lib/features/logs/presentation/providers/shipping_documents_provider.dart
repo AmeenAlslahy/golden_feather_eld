@@ -13,11 +13,7 @@ enum ShippingDocumentActionFailure {
 }
 
 /// حدث ناتج عن عملية على وثائق الشحن.
-enum ShippingDocumentEvent {
-  none,
-  addedSuccessfully,
-  failed,
-}
+enum ShippingDocumentEvent { none, addedSuccessfully, failed }
 
 /// حالة إدارة وثائق الشحن بالكامل.
 class ShippingDocumentsState {
@@ -56,11 +52,14 @@ class ShippingDocumentsNotifier
       // سجل سابق: المصدر قيمه المحفوظة الخاصة به، لا حالة اللوحة الحية.
       final form = logsState.serverForm;
       return ShippingDocumentsState(
-        documents: List.of(form?.shippingDocuments ?? selected.shippingDocuments),
+        documents: List.of(
+          form?.shippingDocuments ?? selected.shippingDocuments,
+        ),
       );
     }
-    final raw =
-        ref.watch(dashboardDataProvider.select((d) => d.shippingDocuments));
+    final raw = ref.watch(
+      dashboardDataProvider.select((d) => d.shippingDocuments),
+    );
     return ShippingDocumentsState(documents: splitFormList(raw));
   }
 
@@ -131,10 +130,11 @@ class ShippingDocumentsNotifier
 }
 
 /// موفر وثائق الشحن
-final shippingDocumentsProvider = AutoDisposeNotifierProvider<
-    ShippingDocumentsNotifier, ShippingDocumentsState>(
-  ShippingDocumentsNotifier.new,
-);
+final shippingDocumentsProvider =
+    AutoDisposeNotifierProvider<
+      ShippingDocumentsNotifier,
+      ShippingDocumentsState
+    >(ShippingDocumentsNotifier.new);
 
 /// الاسم البديل للتوافق البرمجي الكامل
 final shippingDocumentsControllerProvider = shippingDocumentsProvider;

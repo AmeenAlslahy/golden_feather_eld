@@ -58,12 +58,12 @@ class EldEngineAdapter implements BackendAdapter {
   late final SignatureBackend signature = EldSignatureBackend(_apiClient);
 
   @override
-  late final StatusDashboardBackend statusDashboard =
-      EldStatusDashboardBackend(_apiClient);
+  late final StatusDashboardBackend statusDashboard = EldStatusDashboardBackend(
+    _apiClient,
+  );
 
   @override
-  late final RulesScreenBackend rulesScreen =
-      EldRulesScreenBackend(_apiClient);
+  late final RulesScreenBackend rulesScreen = EldRulesScreenBackend(_apiClient);
 
   @override
   late final DailyLogsBackend dailyLogs = EldDailyLogsBackend(_apiClient);
@@ -72,15 +72,15 @@ class EldEngineAdapter implements BackendAdapter {
   late final DutyStatusBackend dutyStatus = EldDutyStatusBackend(_apiClient);
 
   @override
-  late final DriverSessionBackend driverSession =
-      EldDriverSessionBackend(_apiClient);
+  late final DriverSessionBackend driverSession = EldDriverSessionBackend(
+    _apiClient,
+  );
 
   @override
   late final DvirBackend dvir = EldDvirBackend(_apiClient);
 
   @override
-  late final InspectionBackend inspection =
-      EldInspectionBackend(_apiClient);
+  late final InspectionBackend inspection = EldInspectionBackend(_apiClient);
 
   @override
   late final UnidentifiedEventsBackend unidentifiedEvents =
@@ -94,10 +94,8 @@ class EldEngineAdapter implements BackendAdapter {
 
   // ==========================================================================
 
-  EldEngineAdapter._({
-    required this.identity,
-    required ApiClient apiClient,
-  }) : _apiClient = apiClient;
+  EldEngineAdapter._({required this.identity, required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   /// Creates an ELD Engine adapter.
   factory EldEngineAdapter.create({

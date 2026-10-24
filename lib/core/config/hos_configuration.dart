@@ -64,8 +64,10 @@ class HosConfiguration {
       shiftLimitMinutes: shiftLimitMinutes ?? this.shiftLimitMinutes,
       cycleLimitHours: cycleLimitHours ?? this.cycleLimitHours,
       breakDurationMinutes: breakDurationMinutes ?? this.breakDurationMinutes,
-      movingSpeedThresholdKmh: movingSpeedThresholdKmh ?? this.movingSpeedThresholdKmh,
-      driveBeforeBreakMinutes: driveBeforeBreakMinutes ?? this.driveBeforeBreakMinutes,
+      movingSpeedThresholdKmh:
+          movingSpeedThresholdKmh ?? this.movingSpeedThresholdKmh,
+      driveBeforeBreakMinutes:
+          driveBeforeBreakMinutes ?? this.driveBeforeBreakMinutes,
       maxConsecutiveDays: maxConsecutiveDays ?? this.maxConsecutiveDays,
       weeklyRestartHours: weeklyRestartHours ?? this.weeklyRestartHours,
     );
@@ -90,8 +92,10 @@ class HosConfiguration {
       shiftLimitMinutes: json['shiftLimitMinutes'] as int? ?? 14 * 60,
       cycleLimitHours: json['cycleLimitHours'] as int? ?? 70,
       breakDurationMinutes: json['breakDurationMinutes'] as int? ?? 30,
-      movingSpeedThresholdKmh: (json['movingSpeedThresholdKmh'] as num?)?.toDouble() ?? 8.0,
-      driveBeforeBreakMinutes: json['driveBeforeBreakMinutes'] as int? ?? 8 * 60,
+      movingSpeedThresholdKmh:
+          (json['movingSpeedThresholdKmh'] as num?)?.toDouble() ?? 8.0,
+      driveBeforeBreakMinutes:
+          json['driveBeforeBreakMinutes'] as int? ?? 8 * 60,
       maxConsecutiveDays: json['maxConsecutiveDays'] as int? ?? 8,
       weeklyRestartHours: json['weeklyRestartHours'] as int? ?? 34,
     );

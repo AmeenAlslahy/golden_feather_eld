@@ -1,5 +1,6 @@
 import '../providers/dvir_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,10 +67,7 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
               value: checked,
               title: Text(item.label(loc)),
               subtitle: item.critical
-                  ? Text(
-                      loc.dvirSafetyAffecting,
-                      style: context.styles.error.copyWith(fontSize: 11),
-                    )
+                  ? Text(loc.dvirSafetyAffecting, style: context.styles.error)
                   : null,
               onChanged: (v) => setState(() {
                 if (v == true) {
@@ -84,17 +82,19 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
             ),
             if (checked)
               Padding(
-                padding: const EdgeInsets.only(left: 40, bottom: 8),
+                padding: const EdgeInsetsDirectional.only(
+                  start: AppSpacing.xxl,
+                  bottom: AppSpacing.sm,
+                ),
                 child: AppTextField(
                   controller: _noteFor(item),
                   style: context.styles.caption,
                   isDense: true,
                   hint: loc.dvirDescriptionOptional,
-                  onChanged: (text) =>
-                      _picked[item.code] = DvirDefectSelection(
-                        item: item,
-                        description: text,
-                      ),
+                  onChanged: (text) => _picked[item.code] = DvirDefectSelection(
+                    item: item,
+                    description: text,
+                  ),
                 ),
               ),
           ],
@@ -147,10 +147,7 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
 
     return AlertDialog(
       title: Text(dialogTitle),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: contentWidget,
-      ),
+      content: SizedBox(width: double.maxFinite, child: contentWidget),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
@@ -164,4 +161,3 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
     );
   }
 }
-

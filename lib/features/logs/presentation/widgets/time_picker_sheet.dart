@@ -9,7 +9,11 @@ class TimePickerSheet extends StatefulWidget {
   final Function(String) onDone;
   final DateTime initialTime;
 
-  const TimePickerSheet({super.key, required this.onDone, required this.initialTime});
+  const TimePickerSheet({
+    super.key,
+    required this.onDone,
+    required this.initialTime,
+  });
 
   @override
   State<TimePickerSheet> createState() => _TimePickerSheetState();
@@ -68,7 +72,8 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
               TextButton(
                 onPressed: () {
                   // Always use English AM/PM so parseEditFormTime can parse it properly.
-                  final time = '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} $_selectedPeriod';
+                  final time =
+                      '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} $_selectedPeriod';
                   widget.onDone(time);
                 },
                 child: Text(context.loc.saveButton, style: context.styles.gold),

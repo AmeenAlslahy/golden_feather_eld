@@ -23,10 +23,10 @@ class TrackingRepositoryImpl implements TrackingRepository {
     required TrackingLocalDataSource localDataSource,
     required NativeEventChannelClient nativeClient,
     required LocalStorageService storage,
-  })  : _service = service,
-        _localDataSource = localDataSource,
-        _nativeClient = nativeClient,
-        _storage = storage;
+  }) : _service = service,
+       _localDataSource = localDataSource,
+       _nativeClient = nativeClient,
+       _storage = storage;
 
   @override
   Stream<LocationEntity> get locationStream {
@@ -63,20 +63,18 @@ class TrackingRepositoryImpl implements TrackingRepository {
       }
 
       if (!locationStatus.isGranted) {
-        return const Left(PermissionFailure(
-          message: 'صلاحية الموقع في الخلفية مطلوبة',
-        ));
+        return const Left(
+          PermissionFailure(message: 'صلاحية الموقع في الخلفية مطلوبة'),
+        );
       }
 
       // ٢. فحص إذا كان GPS مفعلاً
       final isLocationServiceEnabled =
           await Geolocator.isLocationServiceEnabled().catchError(
-        (error) => throw Exception('Error updating position: $error'),
-      );
+            (error) => throw Exception('Error updating position: $error'),
+          );
       if (!isLocationServiceEnabled) {
-        return const Left(PermissionFailure(
-          message: 'خدمة الموقع غير مفعلة',
-        ));
+        return const Left(PermissionFailure(message: 'خدمة الموقع غير مفعلة'));
       }
 
       // ٣. كل شيء جاهز - ابدأ التتبع
@@ -85,13 +83,12 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _service
           .start(); // Start service which triggers immediate location emission
       AppLogger.info(
-          'Tracking service started, waiting for location stream...');
+        'Tracking service started, waiting for location stream...',
+      );
       return const Right(true);
     } catch (e) {
       AppLogger.error('Failed to start tracking', e);
-      return const Left(TrackingFailure(
-        message: 'فشل بدء التتبع',
-      ));
+      return const Left(TrackingFailure(message: 'فشل بدء التتبع'));
     }
   }
 
@@ -104,9 +101,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       return const Right(true);
     } catch (e) {
       AppLogger.error('Failed to stop tracking', e);
-      return const Left(TrackingFailure(
-        message: 'فشل إيقاف التتبع',
-      ));
+      return const Left(TrackingFailure(message: 'فشل إيقاف التتبع'));
     }
   }
 
@@ -129,7 +124,8 @@ class TrackingRepositoryImpl implements TrackingRepository {
 
       // Fallback to Geolocator
       final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        desiredAccuracy: LocationAccuracy.high,
+      );
       final fallbackLocation = LocationModel(
         latitude: position.latitude,
         longitude: position.longitude,
@@ -142,15 +138,14 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _localDataSource.saveLastLocation(fallbackLocation);
       return Right(fallbackLocation);
     } catch (e) {
-      return const Left(TrackingFailure(
-        message: 'فشل الحصول على الموقع',
-      ));
+      return const Left(TrackingFailure(message: 'فشل الحصول على الموقع'));
     }
   }
 
   @override
-  Future<Either<Failure, LocationEntity>> requestPosition(
-      {String? alarm}) async {
+  Future<Either<Failure, LocationEntity>> requestPosition({
+    String? alarm,
+  }) async {
     try {
       await _service.requestPosition(alarm: alarm);
 
@@ -161,7 +156,8 @@ class TrackingRepositoryImpl implements TrackingRepository {
 
       // Fallback to Geolocator
       final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        desiredAccuracy: LocationAccuracy.high,
+      );
       final fallbackLocation = LocationModel(
         latitude: position.latitude,
         longitude: position.longitude,
@@ -174,9 +170,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _localDataSource.saveLastLocation(fallbackLocation);
       return Right(fallbackLocation);
     } catch (e) {
-      return const Left(TrackingFailure(
-        message: 'فشل طلب الموقع',
-      ));
+      return const Left(TrackingFailure(message: 'فشل طلب الموقع'));
     }
   }
 
@@ -192,9 +186,7 @@ class TrackingRepositoryImpl implements TrackingRepository {
       }).toList();
       return Right(logs);
     } catch (e) {
-      return const Left(TrackingFailure(
-        message: 'فشل جلب السجلات',
-      ));
+      return const Left(TrackingFailure(message: 'فشل جلب السجلات'));
     }
   }
 
@@ -204,23 +196,20 @@ class TrackingRepositoryImpl implements TrackingRepository {
       await _localDataSource.clearLogs();
       return const Right(true);
     } catch (e) {
-      return const Left(TrackingFailure(
-        message: 'فشل مسح السجلات',
-      ));
+      return const Left(TrackingFailure(message: 'فشل مسح السجلات'));
     }
   }
 
   @override
   Future<Either<Failure, bool>> updateConfig(
-      TrackingConfigEntity config) async {
+    TrackingConfigEntity config,
+  ) async {
     try {
       await _service.updateConfig();
       AppLogger.info('Tracking config updated');
       return const Right(true);
     } catch (e) {
-      return const Left(TrackingFailure(
-        message: 'فشل تحديث الإعدادات',
-      ));
+      return const Left(TrackingFailure(message: 'فشل تحديث الإعدادات'));
     }
   }
 

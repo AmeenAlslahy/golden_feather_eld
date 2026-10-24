@@ -2,11 +2,7 @@ import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/log_certify_state.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/audit_entry.dart';
+import 'package:golden_feather_eld/features/hos/domain/repositories/duty_period_store.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
@@ -19,11 +15,7 @@ import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/log_readiness.dart';
-import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/backend/contracts/status_dashboard_backend.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
-import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 
 class MockSyncEngine implements SyncEngine {
   final List<PendingEvent> submitted = [];
@@ -123,133 +115,16 @@ StatusDashboard _sampleDashboard() {
   );
 }
 
-class MockLogRepository implements LogRepository {
+class MockDutyPeriodStore implements DutyPeriodStore {
   List<DutyPeriod> savedPeriods = [];
 
   @override
-  Future<Either<Failure, DailyLog>> getLogById(DailyLogId logId) async =>
-      throw UnimplementedError();
+  Future<List<DutyPeriod>> getPeriods(DateTime date) async => const [];
 
   @override
-  Future<Either<Failure, DailyFormData?>> getForm(DailyLogId logId) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, FormSaveResult>> saveForm({
-    required DailyLogId logId,
-    required DailyFormUpdate form,
-    int? ownerDriverId,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, bool>> savePeriod(DutyPeriod period) async {
+  Future<void> savePeriod(DutyPeriod period) async {
     savedPeriods.add(period);
-    return const Right(true);
   }
-
-  @override
-  Future<Either<Failure, bool>> addEvent(
-    LogEvent event, {
-    String? reason,
-    int? ownerDriverId,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, List<AuditEntry>>> getAuditEntries(
-    DateTime date,
-  ) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, List<LogEvent>>> getEvents(
-    DailyLogId logId,
-    DateTime date,
-  ) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, List<DutyPeriod>>> getPeriods(DateTime date) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, bool>> logAudit(AuditEntry entry) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, LogEvent?>> updateEvent(
-    LogEvent event, {
-    required String reason,
-    DailyLogId? logId,
-    int? ownerDriverId,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, DailyLogPage>> getDailyLogs({
-    required int driverId,
-    int page = 0,
-    int size = 20,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, LogReadiness>> getReadiness(DailyLogId logId) async {
-    return Right(
-      LogReadiness(
-        dailyLogId: logId.value,
-        driverId: 12345,
-        driverName: 'Mock Driver',
-        logDate: '2023-01-01',
-        readinessStatus: 'READY',
-        missingRequirements: const [],
-        availableActions: const [],
-        legalStatement: 'Mock Legal Statement',
-        carrierProposedEditsPending: false,
-        pendingCarrierEdits: const [],
-      ),
-    );
-  }
-
-  @override
-  Future<Either<Failure, bool>> certifyLog({
-    required DailyLogId logId,
-    required int driverId,
-    bool certified = true,
-    String? signatureImageBase64,
-  }) async {
-    return const Right(true);
-  }
-
-  @override
-  Future<Either<Failure, LogCertifyState>> getCertifyState(
-    DailyLogId logId,
-  ) async =>
-      throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, bool>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required String editId,
-    required String action,
-    String? driverNotes,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, bool>> reassignDriving({
-    required DailyLogId logId,
-    required int statusId,
-    required int targetCoDriverId,
-    required String annotation,
-  }) async => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, List<AuditEntry>>> getRecentAuditEntries({
-    int limit = 100,
-  }) async => const Right([]);
-
-  @override
-  Future<void> saveDraftSignature(DailyLogId logId, String pointsJson) async {}
-
-  @override
-  Future<String?> getDraftSignature(DailyLogId logId) async => null;
-
-  @override
-  Future<void> deleteDraftSignature(DailyLogId logId) async {}
 }
 
 // Replaced FakeClock with FakeTrustedTimeProvider inline in setUp
@@ -284,18 +159,18 @@ class FakeLocalStorage implements LocalStorageService {
 void main() {
   group('DutyStatusTracker FakeClock Tests', () {
     late DutyStatusTracker tracker;
-    late MockLogRepository mockRepo;
+    late MockDutyPeriodStore mockRepo;
     late FakeTrustedTimeProvider clock;
     late FakeLocalStorage db;
 
     setUp(() {
-      mockRepo = MockLogRepository();
+      mockRepo = MockDutyPeriodStore();
       clock = FakeTrustedTimeProvider(
         initialUtcTime: DateTime.utc(2023, 1, 1, 12, 0, 0),
       );
       db = FakeLocalStorage();
       tracker = DutyStatusTracker(
-        logRepository: mockRepo,
+        dutyPeriodStore: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
         dashboardBackend: MockDashboardBackend(),
@@ -457,7 +332,7 @@ void main() {
       // New app session
       final newDb = FakeLocalStorage()..data = savedData;
       final newTracker = DutyStatusTracker(
-        logRepository: mockRepo,
+        dutyPeriodStore: mockRepo,
         localStorage: newDb,
         syncEngine: MockSyncEngine(),
         dashboardBackend: MockDashboardBackend(),
@@ -483,16 +358,16 @@ void main() {
 
   group('Fake Location Streamer Tests', () {
     late DutyStatusTracker tracker;
-    late MockLogRepository mockRepo;
+    late MockDutyPeriodStore mockRepo;
     late FakeTrustedTimeProvider clock;
     late FakeLocalStorage db;
 
     setUp(() {
-      mockRepo = MockLogRepository();
+      mockRepo = MockDutyPeriodStore();
       clock = FakeTrustedTimeProvider(initialUtcTime: DateTime.now().toUtc());
       db = FakeLocalStorage();
       tracker = DutyStatusTracker(
-        logRepository: mockRepo,
+        dutyPeriodStore: mockRepo,
         localStorage: db,
         syncEngine: MockSyncEngine(),
         dashboardBackend: MockDashboardBackend(),
@@ -676,7 +551,7 @@ void main() {
   });
 
   group('legal duty stamp', () {
-    late MockLogRepository mockRepo;
+    late MockDutyPeriodStore mockRepo;
     late FakeLocalStorage db;
     late MockSyncEngine sync;
     late MockDashboardBackend dashboard;
@@ -686,7 +561,7 @@ void main() {
       int? Function()? readDriverId,
     }) {
       return DutyStatusTracker(
-        logRepository: mockRepo,
+        dutyPeriodStore: mockRepo,
         localStorage: db,
         syncEngine: sync,
         dashboardBackend: dashboard,
@@ -696,7 +571,7 @@ void main() {
     }
 
     setUp(() {
-      mockRepo = MockLogRepository();
+      mockRepo = MockDutyPeriodStore();
       db = FakeLocalStorage();
       sync = MockSyncEngine();
       dashboard = MockDashboardBackend();
@@ -773,12 +648,12 @@ void main() {
   });
 
   group('P0 — transition durability & idempotency key', () {
-    late MockLogRepository mockRepo;
+    late MockDutyPeriodStore mockRepo;
     late FakeLocalStorage db;
     late FakeTrustedTimeProvider clock;
 
     setUp(() {
-      mockRepo = MockLogRepository();
+      mockRepo = MockDutyPeriodStore();
       db = FakeLocalStorage();
       clock = FakeTrustedTimeProvider(
         initialUtcTime: DateTime.utc(2026, 3, 1, 8),
@@ -788,15 +663,14 @@ void main() {
     DutyStatusTracker build({
       required MockSyncEngine sync,
       LocalStorageService? storage,
-      LogRepository? repository,
-    }) =>
-        DutyStatusTracker(
-          logRepository: repository ?? mockRepo,
-          localStorage: storage ?? db,
-          syncEngine: sync,
-          dashboardBackend: MockDashboardBackend(),
-          timeProvider: clock,
-        );
+      DutyPeriodStore? store,
+    }) => DutyStatusTracker(
+      dutyPeriodStore: store ?? mockRepo,
+      localStorage: storage ?? db,
+      syncEngine: sync,
+      dashboardBackend: MockDashboardBackend(),
+      timeProvider: clock,
+    );
 
     test('clientId is stamped and equals the queued event id', () async {
       final sync = MockSyncEngine();
@@ -807,14 +681,16 @@ void main() {
 
       expect(sync.submitted, hasLength(1));
       final event = sync.submitted.single;
-      expect(event.payload['clientId'], event.id,
-          reason: 'مفتاح idempotency لغلق ازدواج السجل عند فقد ردّ الخادم');
+      expect(
+        event.payload['clientId'],
+        event.id,
+        reason: 'مفتاح idempotency لغلق ازدواج السجل عند فقد ردّ الخادم',
+      );
       expect(event.id, isNotEmpty);
       tracker.dispose();
     });
 
-    test('declared status is persisted before the event is enqueued',
-        () async {
+    test('declared status is persisted before the event is enqueued', () async {
       final order = <String>[];
       final tracker = build(
         sync: _OrderedSyncEngine(order),
@@ -824,26 +700,33 @@ void main() {
       tracker.manualTransition('on_duty');
       await pumpEventQueue();
 
-      expect(order, ['status:on_duty', 'enqueue'],
-          reason: 'قبل الإصلاح كان الطابور يُطلق دون انتظار كتابة الحالة');
+      expect(order, [
+        'status:on_duty',
+        'enqueue',
+      ], reason: 'قبل الإصلاح كان الطابور يُطلق دون انتظار كتابة الحالة');
       tracker.dispose();
     });
 
-    test('throwing submitEvent is contained and status stays persisted',
-        () async {
-      final tracker = build(sync: _ThrowingSyncEngine());
+    test(
+      'throwing submitEvent is contained and status stays persisted',
+      () async {
+        final tracker = build(sync: _ThrowingSyncEngine());
 
-      tracker.manualTransition('on_duty');
-      await pumpEventQueue();
+        tracker.manualTransition('on_duty');
+        await pumpEventQueue();
 
-      expect(db.data['current_duty_status'], 'on_duty',
-          reason: 'الفشل يُحتوى ولا يُسقط الكتابة المحلية');
-      tracker.dispose();
-    });
+        expect(
+          db.data['current_duty_status'],
+          'on_duty',
+          reason: 'الفشل يُحتوى ولا يُسقط الكتابة المحلية',
+        );
+        tracker.dispose();
+      },
+    );
 
     test('throwing savePeriod does not drop the queued event', () async {
       final sync = MockSyncEngine();
-      final tracker = build(sync: sync, repository: _ThrowingPeriodRepo());
+      final tracker = build(sync: sync, store: _ThrowingPeriodRepo());
 
       tracker.manualTransition('on_duty');
       await pumpEventQueue();
@@ -852,8 +735,11 @@ void main() {
       tracker.manualTransition('off_duty'); // يغلق فترة ⇒ savePeriod يرمي
       await pumpEventQueue();
 
-      expect(sync.submitted, hasLength(2),
-          reason: 'فشل حفظ الفترة يجب ألا يُسقط حدث المزامنة');
+      expect(
+        sync.submitted,
+        hasLength(2),
+        reason: 'فشل حفظ الفترة يجب ألا يُسقط حدث المزامنة',
+      );
       tracker.dispose();
     });
   });
@@ -890,9 +776,9 @@ class _ThrowingSyncEngine extends MockSyncEngine {
   }
 }
 
-class _ThrowingPeriodRepo extends MockLogRepository {
+class _ThrowingPeriodRepo extends MockDutyPeriodStore {
   @override
-  Future<Either<Failure, bool>> savePeriod(DutyPeriod period) async {
+  Future<void> savePeriod(DutyPeriod period) async {
     throw StateError('disk full');
   }
 }

@@ -3,6 +3,7 @@ import '../../../../core/error/app_error.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../application/models/rules_screen_model.dart';
+import '../../application/models/rules_screen_update_request.dart';
 import '../datasources/rules_screen_local_cache.dart';
 
 class RulesScreenRepository {
@@ -17,13 +18,31 @@ class RulesScreenRepository {
     return result.fold(
       (failure) {
         if (_isOfflineFailure(failure)) {
-          final cached = _cache.loadRulesScreen();
+          final cached = _cache.loadRulesScreen(driverId: driverId);
           if (cached != null) return ok(cached);
         }
         return err(failure);
       },
       (model) async {
-        await _cache.saveRulesScreen(model);
+        await _cache.saveRulesScreen(model, driverId: driverId);
+        return ok(model);
+      },
+    );
+  }
+
+  Future<Result<RulesScreenModel>> saveRulesScreen({
+    required DriverId driverId,
+    required RulesScreenUpdateRequest request,
+  }) async {
+    final result = await _backend.saveRulesScreen(
+      driverId: driverId,
+      update: request.toJson(),
+    );
+
+    return result.fold(
+      (failure) => err(failure),
+      (model) async {
+        await _cache.saveRulesScreen(model, driverId: driverId);
         return ok(model);
       },
     );
@@ -32,6 +51,8 @@ class RulesScreenRepository {
   static bool _isOfflineFailure(AppError failure) {
     return failure is NetworkError ||
         failure.l10nKey == 'errNoInternet' ||
-        failure.code.startsWith('network');
+        failure.code.startsWith('network') ||
+        failure.code.contains('timeout') ||
+        failure.code.contains('offline');
   }
 }

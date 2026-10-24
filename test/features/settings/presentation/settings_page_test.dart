@@ -21,6 +21,7 @@ class _Storage extends Mock implements LocalStorageService {}
 class _Adapter extends Mock implements BackendAdapter {}
 
 class _Account extends Mock implements AccountBackend {}
+
 /// Settings — interface language, theme and server URL. The read-only
 /// fleet settings card was removed by product decision, so there is no
 /// `GET /eld/config/settings` coverage here anymore.
@@ -39,7 +40,11 @@ void main() {
     when(() => storage.setBackendType(any())).thenAnswer((_) async {});
   });
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    ThemeData? theme,
+    double textScale = 1.0,
+  }) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -48,25 +53,31 @@ void main() {
     final adapter = _Adapter();
     final mock = MockAdapter();
     final account = _Account();
-    when(() => account.getMyAccount()).thenAnswer((_) async => const Left(UnknownError(code: 'test')));
+    when(
+      () => account.getMyAccount(),
+    ).thenAnswer((_) async => const Left(UnknownError(code: 'test')));
     when(() => adapter.account).thenReturn(account);
     when(() => adapter.auth).thenReturn(mock.auth);
     when(() => adapter.isMock).thenReturn(true);
 
-
-
-      await tester.pumpWidget(
+    await tester.pumpWidget(
       ProviderScope(
         overrides: [
           localStorageProvider.overrideWithValue(storage),
           activeBackendProvider.overrideWithValue(adapter),
-                  ],
+        ],
         child: Consumer(
           builder: (context, ref, _) => MaterialApp(
-            theme: AppTheme.light,
+            theme: theme ?? AppTheme.light,
             locale: ref.watch(localeProvider),
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
             home: const SettingsPage(),
           ),
         ),
@@ -90,19 +101,21 @@ void main() {
     );
   });
 
-  testWidgets('switching to Arabic persists and re-renders the page in Arabic',
-      (tester) async {
-    await pump(tester);
+  testWidgets(
+    'switching to Arabic persists and re-renders the page in Arabic',
+    (tester) async {
+      await pump(tester);
 
-    await tester.tap(find.text('Arabic'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Arabic'));
+      await tester.pumpAndSettle();
 
-    verify(() => storage.setLanguage('ar')).called(1);
-    expect(find.text('الإعدادات'), findsOneWidget);
-    expect(find.text('Settings'), findsNothing);
-    expect(find.text('لغة الواجهة'), findsOneWidget);
-    expect(find.text('Interface language'), findsNothing);
-  });
+      verify(() => storage.setLanguage('ar')).called(1);
+      expect(find.text('الإعدادات'), findsOneWidget);
+      expect(find.text('Settings'), findsNothing);
+      expect(find.text('لغة الواجهة'), findsOneWidget);
+      expect(find.text('Interface language'), findsNothing);
+    },
+  );
 
   testWidgets('theme choice is persisted', (tester) async {
     await pump(tester);
@@ -112,8 +125,9 @@ void main() {
     verify(() => storage.setTheme('dark')).called(1);
   });
 
-  testWidgets('server URL: empty is refused, valid is saved with eld backend',
-      (tester) async {
+  testWidgets('server URL: empty is refused, valid is saved with eld backend', (
+    tester,
+  ) async {
     await pump(tester);
 
     final field = find.byType(TextField).first;
@@ -152,7 +166,9 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(
-        find.byType(TextField).first, ' https://eld.example.com ');
+      find.byType(TextField).first,
+      ' https://eld.example.com ',
+    );
     await tester.tap(save);
     await tester.pump();
     await tester.pumpAndSettle();
@@ -163,5 +179,28 @@ void main() {
     // timer is left when the widget tree is disposed.
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('renders in dark mode without overflow', (tester) async {
+    await pump(tester, theme: AppTheme.dark);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Settings'), findsOneWidget);
+  });
+
+  testWidgets('supports Arabic RTL at 200% text scale without overflow', (
+    tester,
+  ) async {
+    await pump(tester, textScale: 2.0);
+
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Arabic'));
+    await tester.pumpAndSettle();
+
+    expect(
+      Directionality.of(tester.element(find.byType(SettingsPage))),
+      TextDirection.rtl,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

@@ -12,8 +12,9 @@ import '../repositories/tracking_repository_impl.dart';
 // --- DI: طبقة البيانات هي من تركّب مصادرها ومستودعها (المرحلة 3b) ---
 
 /// مزود مصدر البيانات المحلي
-final trackingLocalDataSourceProvider =
-    Provider<TrackingLocalDataSource>((ref) {
+final trackingLocalDataSourceProvider = Provider<TrackingLocalDataSource>((
+  ref,
+) {
   final storage = ref.watch(localStorageProvider);
   return TrackingLocalDataSourceImpl(storage);
 });
@@ -26,8 +27,9 @@ final trackingServiceFullProvider = Provider<TrackingService>((ref) {
 });
 
 /// مزود العميل الأصلي
-final nativeEventChannelClientProvider =
-    Provider<NativeEventChannelClient>((ref) {
+final nativeEventChannelClientProvider = Provider<NativeEventChannelClient>((
+  ref,
+) {
   final time = ref.watch(timeAuthorityProvider);
   final client = NativeEventChannelClient(
     validator: NativeLocationQualityValidator(nowUtc: time.nowUtc),

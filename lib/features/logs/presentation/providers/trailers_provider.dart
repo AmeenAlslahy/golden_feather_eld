@@ -4,19 +4,10 @@ import '../../domain/daily_form_rules.dart';
 import 'logs_provider.dart';
 
 /// أسباب فشل عمليات المقطورات وفق قواعد النموذج اليومي (SRS 5.5–5.13).
-enum TrailerActionFailure {
-  empty,
-  limitReached,
-  invalidFormat,
-  alreadyExists,
-}
+enum TrailerActionFailure { empty, limitReached, invalidFormat, alreadyExists }
 
 /// حدث ناتج عن عملية على المقطورات.
-enum TrailerEvent {
-  none,
-  addedSuccessfully,
-  failed,
-}
+enum TrailerEvent { none, addedSuccessfully, failed }
 
 /// حالة إدارة المقطورات بالكامل.
 class TrailersState {
@@ -66,9 +57,7 @@ class TrailersNotifier extends AutoDisposeNotifier<TrailersState> {
   void _persist(List<String> next) {
     final selected = ref.read(logsProvider).selectedLog;
     if (selected != null && !selected.today) {
-      ref
-          .read(logsProvider.notifier)
-          .updateSelectedFormLists(trailers: next);
+      ref.read(logsProvider.notifier).updateSelectedFormLists(trailers: next);
       return;
     }
     ref.read(dashboardDataProvider.notifier).updateTrailers(next);
@@ -126,8 +115,8 @@ class TrailersNotifier extends AutoDisposeNotifier<TrailersState> {
 /// موفر إدارة المقطورات
 final trailersProvider =
     AutoDisposeNotifierProvider<TrailersNotifier, TrailersState>(
-  TrailersNotifier.new,
-);
+      TrailersNotifier.new,
+    );
 
 /// الاسم البديل للتوافق البرمجي الكامل
 final trailersControllerProvider = trailersProvider;

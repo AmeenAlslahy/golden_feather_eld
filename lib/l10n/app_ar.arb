@@ -725,6 +725,7 @@
   "pendingDays": "معلّق {days} يوم",
   "enterTrailerNumber": "أدخل رقم المقطورة.",
   "trailerNumberFormatError": "رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).",
+  "trailerNumberTooLong": "رقم المقطورة طويل جداً (حتى 50).",
   "enterDocumentNumber": "أدخل رقم المستند.",
   "documentNumberTooLong": "رقم مستند الشحن طويل جداً (حتى 100).",
   "oneDocumentAtATime": "أدخل مستنداً واحداً في كل مرة (بدون فاصلة).",
@@ -865,6 +866,7 @@
   "dvirDriverSessionMissing": "جلسة السائق مفقودة. سجّل الدخول مجدداً قبل التوقيع.",
   "dvirVehicleIdMissing": "معرّف المركبة مفقود. اختر مركبة قبل التوقيع.",
   "dvirPrevNoServerId": "التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.",
+  "dvirPrevUnavailable": "تعذّر التحقق من تقرير الفحص السابق. اتصل بالإنترنت أو افتح سجل التقارير قبل التوقيع.",
   "dvirPreviousInspection": "الفحص السابق",
   "dvirReviewBeforeDriving": "راجع التقرير السابق ووقّع عليه قبل القيادة.",
   "dvirRecordedDefects": "العيوب المسجّلة:",
@@ -1124,5 +1126,9 @@
   "noDefectsReported": "لم يتم الإبلاغ عن أي عيوب",
   "statusDetected": "تم الاكتشاف",
   "invalidOdometerReading": "قيمة العداد غير صالحة",
-  "statusUnknown": "غير معروف"
+  "statusUnknown": "غير معروف",
+  "createdAt": "تاريخ الإنشاء",
+  "zoomIn": "تكبير",
+  "zoomOut": "تصغير",
+  "fitWidth": "ملائمة العرض (100%)"
 }

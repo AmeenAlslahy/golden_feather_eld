@@ -46,17 +46,24 @@ void main() {
     await pumpPage(tester);
 
     expect(find.byType(InspectionModeSection), findsOneWidget);
-    expect(find.byType(SendLogsSection), findsOneWidget);
     expect(find.text(locOf(tester).instructions), findsOneWidget);
 
-    // المقطع الثالث كسول خارج نافذة البناء — يُبنى بعد التمرير إليه.
-    await tester.drag(find.byType(ListView), const Offset(0, -700));
-    await tester.pumpAndSettle();
+    // السحب للأسفل يكشف بقية المقاطع — كل الأقسام موجودة في الصفحة.
+    await tester.scrollUntilVisible(
+      find.byType(SendLogsSection),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byType(SendLogsSection), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byType(MalfunctionManualSection),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.byType(MalfunctionManualSection), findsOneWidget);
   });
 
-  testWidgets('وضع مقطع واحد: يعرض المقطع المطلوب فقط بعنوانه',
-      (tester) async {
+  testWidgets('وضع مقطع واحد: يعرض المقطع المطلوب فقط بعنوانه', (tester) async {
     await pumpPage(tester, section: InstructionsSection.inspection);
     expect(find.byType(InspectionModeSection), findsOneWidget);
     expect(find.byType(SendLogsSection), findsNothing);
@@ -66,7 +73,10 @@ void main() {
     await pumpPage(tester, section: InstructionsSection.sendLogs);
     expect(find.byType(SendLogsSection), findsOneWidget);
     expect(find.byType(InspectionModeSection), findsNothing);
-    expect(find.text(locOf(tester).dataTransferInstructionSheet), findsOneWidget);
+    expect(
+      find.text(locOf(tester).dataTransferInstructionSheet),
+      findsOneWidget,
+    );
 
     await pumpPage(tester, section: InstructionsSection.malfunction);
     expect(find.byType(MalfunctionManualSection), findsOneWidget);
@@ -79,26 +89,30 @@ void main() {
     await openZoom(tester, openSendLogs);
 
     expect(find.byType(SendLogsSection), findsNWidgets(2));
-    final viewer =
-        tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+    final viewer = tester.widget<InteractiveViewer>(
+      find.byType(InteractiveViewer),
+    );
     expect(
       viewer.transformationController!.value.getMaxScaleOnAxis(),
       moreOrLessEquals(1.3, epsilon: 0.01),
     );
   });
 
-  testWidgets('لمس المحتوى لا يغلق الطبقة ولمس الفراغ أسفلها يغلقها',
-      (tester) async {
+  testWidgets('لمس المحتوى لا يغلق الطبقة ولمس الفراغ أسفلها يغلقها', (
+    tester,
+  ) async {
     // شاشة أطول من الورقة المكبَّرة حتى يوجد فراغ فعلي أسفلها.
     await pumpPage(
       tester,
       section: InstructionsSection.inspection,
-      physicalSize: const Size(1080, 3600),
+      physicalSize: const Size(1080, 6000),
     );
-    await openZoom(tester, find.byKey(const Key('instructions_open_inspection')));
+    await openZoom(
+      tester,
+      find.byKey(const Key('instructions_open_inspection')),
+    );
 
-    final contentRect =
-        tester.getRect(find.byType(InspectionModeSection).last);
+    final contentRect = tester.getRect(find.byType(InspectionModeSection).last);
     await tester.tapAt(contentRect.center);
     await tester.pumpAndSettle();
     expect(overlay, findsOneWidget);
@@ -119,8 +133,9 @@ void main() {
     expect(overlay, findsNothing);
   });
 
-  testWidgets('زر الرجوع أثناء التكبير يغلق الطبقة ويُبقي الصفحة',
-      (tester) async {
+  testWidgets('زر الرجوع أثناء التكبير يغلق الطبقة ويُبقي الصفحة', (
+    tester,
+  ) async {
     await pumpPage(tester, section: InstructionsSection.sendLogs);
     await openZoom(tester, openSendLogs);
 
@@ -130,8 +145,9 @@ void main() {
     expect(find.byType(InstructionsPage), findsOneWidget);
   });
 
-  testWidgets('رجوع النظام أثناء التكبير يغلق الطبقة ويُبقي الصفحة',
-      (tester) async {
+  testWidgets('رجوع النظام أثناء التكبير يغلق الطبقة ويُبقي الصفحة', (
+    tester,
+  ) async {
     await pumpPage(tester, section: InstructionsSection.sendLogs);
     await openZoom(tester, openSendLogs);
 
@@ -139,5 +155,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(overlay, findsNothing);
     expect(find.byType(InstructionsPage), findsOneWidget);
+  });
+
+  testWidgets('أزرار التحكم بالتكبير: التكبير والتصغير وملائمة العرض', (
+    tester,
+  ) async {
+    await pumpPage(tester, section: InstructionsSection.sendLogs);
+    await openZoom(tester, openSendLogs);
+
+    final viewer = tester.widget<InteractiveViewer>(
+      find.byType(InteractiveViewer),
+    );
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      moreOrLessEquals(1.3, epsilon: 0.05),
+    );
+
+    // ملائمة العرض 100%
+    await tester.tap(find.byIcon(Icons.fit_screen_outlined));
+    await tester.pumpAndSettle();
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      moreOrLessEquals(1.0, epsilon: 0.05),
+    );
+
+    // تكبير (+)
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      greaterThan(1.2),
+    );
+
+    // تصغير (-)
+    await tester.tap(find.byIcon(Icons.remove));
+    await tester.pumpAndSettle();
+    expect(
+      viewer.transformationController!.value.getMaxScaleOnAxis(),
+      lessThan(1.3),
+    );
   });
 }

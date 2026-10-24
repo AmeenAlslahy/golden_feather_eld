@@ -2,7 +2,6 @@ import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_status_badge.dart';
@@ -59,7 +58,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     if (!alwaysStatus.isGranted) {
       _showRequiredPermissionDialog(
         title: 'صلاحية الموقع مطلوبة',
-        message: 'يحتاج تطبيق ELD إلى الوصول للموقع الجغرافي بشكل دائم '
+        message:
+            'يحتاج تطبيق ELD إلى الوصول للموقع الجغرافي بشكل دائم '
             'لتسجيل مسار المركبة وساعات القيادة تلقائياً.\n\n'
             'هذا متطلب قانوني من FMCSA ولا يمكن عمل التطبيق بدونه.',
         isRequired: true,
@@ -75,7 +75,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     if (!status.isGranted) {
       _showRequiredPermissionDialog(
         title: 'صلاحية البلوتوث',
-        message: 'يحتاج التطبيق للاتصال بجهاز ELD في المركبة.\n\n'
+        message:
+            'يحتاج التطبيق للاتصال بجهاز ELD في المركبة.\n\n'
             'يمكنك المتابعة بدون بلوتوث ولكن سيتم تسجيل '
             'ساعات القيادة يدوياً.',
         isRequired: false,
@@ -112,7 +113,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
           children: [
             Icon(
               isRequired ? Icons.error : Icons.warning_amber,
-              color: isRequired ? AppColors.dangerRed : AppColors.warningYellow,
+              color: isRequired ? context.danger : context.warning,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(child: Text(title)),
@@ -165,28 +166,28 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 48),
+                      const SizedBox(height: AppSpacing.lg),
 
                       // شعار التطبيق
                       Icon(
                         Icons.local_shipping,
-                        size: 80,
+                        size: AppSpacing.iconFeature,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.lg),
 
                       Text(
                         'صلاحيات التطبيق',
                         textAlign: TextAlign.center,
                         style: context.styles.pageTitle,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         'يحتاج تطبيق ELD للصلاحيات التالية\nللعمل بشكل قانوني',
                         textAlign: TextAlign.center,
                         style: context.styles.body,
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: AppSpacing.sectionGap),
 
                       // الصلاحيات المطلوبة
                       _buildPermissionTile(
@@ -237,7 +238,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                         isGranted: _cameraGranted,
                         onRequest: _requestCamera,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.sectionGap),
                     ],
                   ),
                 ),
@@ -275,8 +276,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isGranted ? AppColors.successGreen : context.styles.subtitle.color,
-          size: 32,
+          color: isGranted ? context.success : context.styles.subtitle.color,
+          size: AppSpacing.iconSize,
         ),
         title: Row(
           children: [
@@ -290,11 +291,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
         ),
         subtitle: Text(subtitle),
         trailing: isGranted
-            ? const Icon(Icons.check_circle, color: AppColors.successGreen)
-            : TextButton(
-                onPressed: onRequest,
-                child: Text(context.loc.grant),
-              ),
+            ? Icon(Icons.check_circle, color: context.success)
+            : TextButton(onPressed: onRequest, child: Text(context.loc.grant)),
       ),
     );
   }

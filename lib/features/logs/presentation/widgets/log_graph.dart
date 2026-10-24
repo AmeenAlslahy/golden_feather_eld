@@ -21,16 +21,20 @@ class LogGraph extends ConsumerWidget {
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
     final fallbackNow = ref.watch(timeAuthorityProvider).nowUtc().toLocal();
-    final referenceDate = (logDate ?? (sortedEvents.isNotEmpty ? sortedEvents.first.startTime : fallbackNow)).toLocal();
-    final midnight = DateTime(referenceDate.year, referenceDate.month, referenceDate.day);
+    final referenceDate =
+        (logDate ??
+                (sortedEvents.isNotEmpty
+                    ? sortedEvents.first.startTime
+                    : fallbackNow))
+            .toLocal();
+    final midnight = DateTime(
+      referenceDate.year,
+      referenceDate.month,
+      referenceDate.day,
+    );
 
     final points = <EldGraphPoint>[];
-    final stats = <String, double>{
-      'OFF': 0.0,
-      'SB': 0.0,
-      'D': 0.0,
-      'ON': 0.0,
-    };
+    final stats = <String, double>{'OFF': 0.0, 'SB': 0.0, 'D': 0.0, 'ON': 0.0};
 
     for (final event in sortedEvents) {
       final startTime = event.startTime.toLocal();
@@ -76,10 +80,7 @@ class LogGraph extends ConsumerWidget {
     return Container(
       height: 190,
       color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.only(
-        top: AppSpacing.md,
-        bottom: AppSpacing.md,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.md),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SizedBox(

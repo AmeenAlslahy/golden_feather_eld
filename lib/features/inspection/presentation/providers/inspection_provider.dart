@@ -50,7 +50,6 @@ class InspectionState {
   /// خطأ تحميل/تطابق اليوم فقط — منفصل عن [error].
   final String? dayError;
 
-
   /// الوضع مقفل؟ (مطلوب لبوابة الرجوع وقفلAppBar).
   bool get locked => isInspectionMode && isPinLocked;
 
@@ -261,9 +260,7 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   }
 
   Future<void> _registerServerStart(DriverId driver) async {
-    final result = await _repository.registerInspectionStart(
-      driverId: driver,
-    );
+    final result = await _repository.registerInspectionStart(driverId: driver);
     if (!mounted) return;
     result.fold(
       (failure) => AppLogger.warning(
@@ -302,31 +299,36 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     );
     if (!mounted) return;
 
-    result.fold((error) {
-      // P3: لا سجل مُصنَّع في طبقة العرض — يوم بلا بيانات مُتحقَّق منها
-      // يعني لافتة صريحة مع بقاء آخر زوج صالح معروضاً (عقد Option A)؛
-      // وتوفير كاش الدورة الموثّق مسؤولية المستودع وحده.
-      state = _dayFailed(_message(error));
-    }, (log) {
-      // ⑤ Backstop ضد الرد القديم/غير المتطابق: لا commit ولا
-      // fallback تاريخ — السبب في السجلات فقط، والمستخدم يرى رسالة
-      // عامة عبر anyErrorUserMessage.
-      final matches = log.logDate.year == 1970 || _sameCycleDay(log.logDate, requestedDate);
-      if (!matches) {
-        AppLogger.warning(
-          'selectDay: response logDate does not match requested cycle '
-          'day — refused ($requestedDate)',
-        );
-        state = _dayFailed(
-          _message(const ServerFailure(message: 'day log mismatch')),
-        );
-        return;
-      }
-      final committedLog = log.logDate.year == 1970
-          ? log.copyWith(logDate: requestedDate)
-          : log;
-      state = _dayCommitted(index, committedLog); // ⑥ الالتزام الذري
-    });
+    result.fold(
+      (error) {
+        // P3: لا سجل مُصنَّع في طبقة العرض — يوم بلا بيانات مُتحقَّق منها
+        // يعني لافتة صريحة مع بقاء آخر زوج صالح معروضاً (عقد Option A)؛
+        // وتوفير كاش الدورة الموثّق مسؤولية المستودع وحده.
+        state = _dayFailed(_message(error));
+      },
+      (log) {
+        // ⑤ Backstop ضد الرد القديم/غير المتطابق: لا commit ولا
+        // fallback تاريخ — السبب في السجلات فقط، والمستخدم يرى رسالة
+        // عامة عبر anyErrorUserMessage.
+        final matches =
+            log.logDate.year == 1970 ||
+            _sameCycleDay(log.logDate, requestedDate);
+        if (!matches) {
+          AppLogger.warning(
+            'selectDay: response logDate does not match requested cycle '
+            'day — refused ($requestedDate)',
+          );
+          state = _dayFailed(
+            _message(const ServerFailure(message: 'day log mismatch')),
+          );
+          return;
+        }
+        final committedLog = log.logDate.year == 1970
+            ? log.copyWith(logDate: requestedDate)
+            : log;
+        state = _dayCommitted(index, committedLog); // ⑥ الالتزام الذري
+      },
+    );
   }
 
   /// هوية يوم الدورة: مقارنة تقويمية على القيم في كل من UTC و Local
@@ -334,12 +336,16 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
   static bool _sameCycleDay(DateTime a, DateTime b) {
     final aUtc = a.toUtc();
     final bUtc = b.toUtc();
-    if (aUtc.year == bUtc.year && aUtc.month == bUtc.month && aUtc.day == bUtc.day) {
+    if (aUtc.year == bUtc.year &&
+        aUtc.month == bUtc.month &&
+        aUtc.day == bUtc.day) {
       return true;
     }
     final aLoc = a.toLocal();
     final bLoc = b.toLocal();
-    return aLoc.year == bLoc.year && aLoc.month == bLoc.month && aLoc.day == bLoc.day;
+    return aLoc.year == bLoc.year &&
+        aLoc.month == bLoc.month &&
+        aLoc.day == bLoc.day;
   }
 
   /// إنهاء التفتيش — يعيد الحالة كاملة إلى الافتراضي ويمسح الرمز.
@@ -358,10 +364,16 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     required String comment,
   }) async {
     if (!isValidInspectionComment(comment)) {
-      return TransferOutcome(accepted: false, text: _loc.inspectionCommentErrorLength);
+      return TransferOutcome(
+        accepted: false,
+        text: _loc.inspectionCommentErrorLength,
+      );
     }
     if (_driverId <= 0) {
-      return TransferOutcome(accepted: false, text: _loc.driverSessionMissingSignIn);
+      return TransferOutcome(
+        accepted: false,
+        text: _loc.driverSessionMissingSignIn,
+      );
     }
 
     final driver = DriverId(_driverId);

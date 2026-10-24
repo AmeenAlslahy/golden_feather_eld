@@ -5,7 +5,6 @@ import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
@@ -110,17 +109,13 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
           context.loc.unidentifiedEvents,
           style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(),
         actions: [
           PopupMenuButton<String>(
             tooltip: context.loc.filter,
             icon: Icon(
               state.hasFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
-              color: AppColors.surface,
+              color: context.onGold,
             ),
             onSelected: (key) {
               switch (key) {
@@ -148,15 +143,12 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            color: AppColors.surface,
+            color: context.onGold,
             onPressed: notifier.refresh,
           ),
         ],
         bottom: TabBar(
           controller: _tabs,
-          indicatorColor: AppColors.surface,
-          labelColor: AppColors.surface,
-          unselectedLabelColor: AppColors.surface.withValues(alpha: 0.7),
           tabs: [
             Tab(text: context.loc.unclaimed.toUpperCase()),
             Tab(text: context.loc.rejected.toUpperCase()),
@@ -180,7 +172,7 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
                 if (state.hasFilters)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
+                      horizontal: AppSpacing.screenPadding,
                     ),
                     child: Wrap(
                       spacing: AppSpacing.xs,

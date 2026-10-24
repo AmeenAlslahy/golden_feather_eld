@@ -15,10 +15,7 @@ class SqliteDutyEventJournal implements DutyEventJournal {
   final Future<Database> Function() _database;
 
   @override
-  Future<void> append(
-    DutyEventRecord record, {
-    PendingEvent? syncEvent,
-  }) async {
+  Future<void> append(DutyEventRecord record, {PendingEvent? syncEvent}) async {
     final db = await _database();
     await db.transaction((txn) async {
       // IGNORE keeps the first evidence row for an event id. Replay/retry can
@@ -72,9 +69,6 @@ class SqliteDutyEventJournal implements DutyEventJournal {
       return (a.seq ?? 0).compareTo(b.seq ?? 0);
     });
 
-    return DutyEventJournalLoad(
-      records: records,
-      corruptedRows: corrupted,
-    );
+    return DutyEventJournalLoad(records: records, corruptedRows: corrupted);
   }
 }

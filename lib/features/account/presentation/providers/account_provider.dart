@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../backend/contracts/account_backend.dart';
-import '../../../../core/constants/storage_constants.dart';
 import '../../../../core/network/core_providers.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
@@ -15,11 +14,7 @@ class AccountState {
   final bool isLoading;
   final String? error;
 
-  const AccountState({
-    this.accountData,
-    this.isLoading = false,
-    this.error,
-  });
+  const AccountState({this.accountData, this.isLoading = false, this.error});
 
   AccountState copyWith({
     DriverAccount? accountData,
@@ -65,10 +60,11 @@ class AccountNotifier extends StateNotifier<AccountState> {
 
   void _saveCachedAccount(String owner, DriverAccount account) {
     try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        box.put('account:$owner', jsonEncode(account.toJson()));
-      }
+      final storage = _ref.read(localStorageProvider);
+      storage.prefs.setString(
+        'driver_account_cache_$owner',
+        jsonEncode(account.toJson()),
+      );
     } catch (e) {
       AppLogger.warning('Failed to save account to disk: $e');
     }
@@ -76,13 +72,11 @@ class AccountNotifier extends StateNotifier<AccountState> {
 
   DriverAccount? _loadCachedAccount(String owner) {
     try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        final rawStr = box.get('account:$owner');
-        if (rawStr != null && rawStr.isNotEmpty) {
-          final json = jsonDecode(rawStr) as Map<String, dynamic>;
-          return DriverAccount.fromJson(json);
-        }
+      final storage = _ref.read(localStorageProvider);
+      final rawStr = storage.prefs.getString('driver_account_cache_$owner');
+      if (rawStr != null && rawStr.isNotEmpty) {
+        final json = jsonDecode(rawStr) as Map<String, dynamic>;
+        return DriverAccount.fromJson(json);
       }
     } catch (e) {
       AppLogger.warning('Failed to load account from disk: $e');
@@ -125,7 +119,11 @@ class AccountNotifier extends StateNotifier<AccountState> {
     if (!isOnline) {
       final cached = _loadCachedAccount(owner);
       final account = cached ?? _synthesizeFromAuth(authState.user!);
-      state = state.copyWith(isLoading: false, accountData: account, clearError: true);
+      state = state.copyWith(
+        isLoading: false,
+        accountData: account,
+        clearError: true,
+      );
       return;
     }
 
@@ -147,26 +145,42 @@ class AccountNotifier extends StateNotifier<AccountState> {
         (failure) {
           final cached = _loadCachedAccount(owner);
           if (cached != null) {
-            state = state.copyWith(isLoading: false, accountData: cached, clearError: true);
+            state = state.copyWith(
+              isLoading: false,
+              accountData: cached,
+              clearError: true,
+            );
           } else if (failure.code.startsWith('network') ||
               failure.code.contains('timeout') ||
               failure.code.contains('offline')) {
             final fallback = _synthesizeFromAuth(authState.user!);
-            state = state.copyWith(isLoading: false, accountData: fallback, clearError: true);
+            state = state.copyWith(
+              isLoading: false,
+              accountData: fallback,
+              clearError: true,
+            );
           } else {
             state = state.copyWith(isLoading: false, error: failure.l10nKey);
           }
         },
         (driverAccount) {
           _saveCachedAccount(owner, driverAccount);
-          state = state.copyWith(isLoading: false, accountData: driverAccount, clearError: true);
+          state = state.copyWith(
+            isLoading: false,
+            accountData: driverAccount,
+            clearError: true,
+          );
         },
       );
     } catch (_) {
       if (!_isCurrent(seq, owner, epoch)) return;
       final cached = _loadCachedAccount(owner);
       if (cached != null) {
-        state = state.copyWith(isLoading: false, accountData: cached, clearError: true);
+        state = state.copyWith(
+          isLoading: false,
+          accountData: cached,
+          clearError: true,
+        );
       } else {
         state = state.copyWith(isLoading: false, error: 'unexpected');
       }
@@ -208,7 +222,11 @@ class AccountNotifier extends StateNotifier<AccountState> {
         (driverAccount) {
           if (owner != null) _saveCachedAccount(owner, driverAccount);
           // تحديث البيانات المرجعة في الشاشة
-          state = state.copyWith(isLoading: false, accountData: driverAccount, clearError: true);
+          state = state.copyWith(
+            isLoading: false,
+            accountData: driverAccount,
+            clearError: true,
+          );
           return true;
         },
       );
@@ -220,25 +238,20 @@ class AccountNotifier extends StateNotifier<AccountState> {
   }
 }
 
-final accountProvider = StateNotifierProvider<AccountNotifier, AccountState>((ref) {
-  final notifier = AccountNotifier(
-    ref.watch(accountBackendProvider),
-    ref,
-  );
+final accountProvider = StateNotifierProvider<AccountNotifier, AccountState>((
+  ref,
+) {
+  final notifier = AccountNotifier(ref.watch(accountBackendProvider), ref);
 
   // P0 Stage 1: أي غياب هوية أو انتقال أو تغير مالك يُسقط الحالة فوراً
   // (متزامن، بلا API). الجلب لمالك جديد يتم عند فتح صفحة الحساب.
-  ref.listen<AuthState>(
-    authStateProvider,
-    (previous, next) {
-      if (next.user == null || next.transitioning) {
-        notifier.reset();
-        return;
-      }
-      notifier.bindOwner(next.user!.id, next.sessionEpoch);
-    },
-    fireImmediately: true,
-  );
+  ref.listen<AuthState>(authStateProvider, (previous, next) {
+    if (next.user == null || next.transitioning) {
+      notifier.reset();
+      return;
+    }
+    notifier.bindOwner(next.user!.id, next.sessionEpoch);
+  }, fireImmediately: true);
 
   return notifier;
 });

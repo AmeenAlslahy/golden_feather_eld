@@ -8,12 +8,14 @@ class NativeLocationQualityValidator {
   /// [nowUtc] defaults to the device clock; production wires the trusted
   /// `TimeAuthority.nowUtc` so freshness checks survive a skewed device clock.
   NativeLocationQualityValidator({DateTime Function()? nowUtc})
-      : _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
+    : _nowUtc = nowUtc ?? (() => DateTime.now().toUtc());
 
   final DateTime Function() _nowUtc;
 
   NativeLocationEvent validate(
-      NativeLocationEvent event, DateTime? lastRecordedAt) {
+    NativeLocationEvent event,
+    DateTime? lastRecordedAt,
+  ) {
     // Basic coordinate bounds
     if (event.latitude < -90 ||
         event.latitude > 90 ||
@@ -56,8 +58,9 @@ class NativeLocationQualityValidator {
 }
 
 class NativeEventChannelClient {
-  static const EventChannel _eventChannel =
-      EventChannel('com.goldenfeather.eld/traccar/events');
+  static const EventChannel _eventChannel = EventChannel(
+    'com.goldenfeather.eld/traccar/events',
+  );
 
   StreamSubscription? _subscription;
   final StreamController<NativeLocationEvent> _locationController =
@@ -66,7 +69,7 @@ class NativeEventChannelClient {
   DateTime? _lastRecordedAt;
 
   NativeEventChannelClient({NativeLocationQualityValidator? validator})
-      : _validator = validator ?? NativeLocationQualityValidator();
+    : _validator = validator ?? NativeLocationQualityValidator();
 
   Stream<NativeLocationEvent> get locationStream => _locationController.stream;
 
@@ -84,9 +87,12 @@ class NativeEventChannelClient {
             final parsedEvent = _parseEvent(Map<String, dynamic>.from(event));
             if (parsedEvent != null) {
               AppLogger.info(
-                  'NativeEventChannelClient: Event parsed successfully');
-              final validatedEvent =
-                  _validator.validate(parsedEvent, _lastRecordedAt);
+                'NativeEventChannelClient: Event parsed successfully',
+              );
+              final validatedEvent = _validator.validate(
+                parsedEvent,
+                _lastRecordedAt,
+              );
               if (validatedEvent.qualityStatus == LocationQualityStatus.valid ||
                   validatedEvent.qualityStatus ==
                       LocationQualityStatus.suspicious ||
@@ -96,12 +102,14 @@ class NativeEventChannelClient {
               _locationController.add(validatedEvent);
             } else {
               AppLogger.info(
-                  'NativeEventChannelClient: Event parsing failed (returned null)');
+                'NativeEventChannelClient: Event parsing failed (returned null)',
+              );
             }
           } catch (e) {
             AppLogger.error(
-                'NativeEventChannelClient: Malformed event caught in try-catch',
-                e);
+              'NativeEventChannelClient: Malformed event caught in try-catch',
+              e,
+            );
           }
         } else {
           AppLogger.info('NativeEventChannelClient: Event is not a Map');
@@ -109,7 +117,9 @@ class NativeEventChannelClient {
       },
       onError: (dynamic error) {
         AppLogger.error(
-            'NativeEventChannelClient: Stream error from native', error);
+          'NativeEventChannelClient: Stream error from native',
+          error,
+        );
       },
       cancelOnError:
           false, // Ensure stream survives malformed events or temporary errors
@@ -128,8 +138,10 @@ class NativeEventChannelClient {
 
       if (lat == null || lon == null || timestampMs == null) return null;
 
-      final recordedAt =
-          DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true);
+      final recordedAt = DateTime.fromMillisecondsSinceEpoch(
+        timestampMs,
+        isUtc: true,
+      );
       final receivedAt = DateTime.now().toUtc(); // Time of receipt in Flutter
 
       return NativeLocationEvent(
@@ -143,7 +155,9 @@ class NativeEventChannelClient {
         accuracyMeters: accuracy,
         source: LocationSource.localNative,
         platform: Platform.isIOS ? 'iOS' : 'Android',
-        isMock: data['isMock'] == true, // Default to false unless provided by native
+        isMock:
+            data['isMock'] ==
+            true, // Default to false unless provided by native
         qualityStatus: LocationQualityStatus.valid, // Will be validated later
         metadata: data, // تمرير كامل الـ Map لاستخراج fromEcm وغيرها لاحقاً
       );

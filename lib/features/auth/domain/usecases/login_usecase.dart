@@ -17,15 +17,13 @@ class LoginUseCase {
   }) async {
     // التحقق من صحة المدخلات في طبقة Use Case قبل الوصول للـ Repository
     if (!identifier.isValid) {
-      return const Left(ValidationFailure(
-        message: 'Invalid identifier format',
-      ));
+      return const Left(
+        ValidationFailure(message: 'Invalid identifier format'),
+      );
     }
 
     if (!password.isValid) {
-      return const Left(ValidationFailure(
-        message: 'Invalid password',
-      ));
+      return const Left(ValidationFailure(message: 'Invalid password'));
     }
 
     // استدعاء المستودع

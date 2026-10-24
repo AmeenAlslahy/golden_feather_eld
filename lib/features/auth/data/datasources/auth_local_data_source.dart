@@ -1,16 +1,18 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/utils/logger.dart';
-import '../../domain/entities/auth_session.dart';
+import '../../../../core/session/auth_session.dart';
+import '../../../../core/session/auth_session_reader.dart';
 import '../models/auth_session_dto.dart';
 import '../../../../core/domain/entities/user.dart';
 import '../../../../core/data/models/user_model.dart';
 
-abstract class AuthLocalDataSource {
+abstract class AuthLocalDataSource implements AuthSessionReader {
   /// حفظ الجلسة بأمان
   Future<void> saveSession(AuthSession session);
 
   /// استعادة الجلسة
+  @override
   Future<AuthSession?> getSession();
 
   /// مسح الجلسة
@@ -29,6 +31,7 @@ abstract class AuthLocalDataSource {
   /// حفظ/مسح ناجح للجلسة. الـ interceptor يوسم به الطلبات، وعند 401
   /// تُتجاهل الطلبات التي لا يطابق إصدارها الحالي (جلسة أقدم)، دون
   /// مقارنة نص الـ Cookie نفسه أو طباعته أبداً.
+  @override
   int get credentialGeneration;
 }
 
@@ -49,9 +52,8 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   int get credentialGeneration => _credentialGeneration;
 
-  AuthLocalDataSourceImpl({
-    FlutterSecureStorage? secureStorage,
-  }) : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+  AuthLocalDataSourceImpl({FlutterSecureStorage? secureStorage})
+    : _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   @override
   Future<void> saveSession(AuthSession session) async {
@@ -61,7 +63,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       await _secureStorage.write(key: _sessionKey, value: jsonString);
       _sessionCache = session;
       _credentialGeneration++;
-      AppLogger.info('Session securely stored for origin: ${session.serverOrigin}');
+      AppLogger.info(
+        'Session securely stored for origin: ${session.serverOrigin}',
+      );
     } catch (e) {
       AppLogger.error('Failed to securely store session', e);
       throw Exception('Secure storage write failed');

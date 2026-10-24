@@ -34,7 +34,8 @@ class SyncLocalDataSourceImpl implements SyncLocalDataSource {
   Future<void> saveItems(List<SyncItem> items) async {
     final prefs = await SharedPreferences.getInstance();
     final data = jsonEncode(
-        items.map((e) => SyncItemModel.fromEntity(e).toJson()).toList());
+      items.map((e) => SyncItemModel.fromEntity(e).toJson()).toList(),
+    );
     await prefs.setString(_queueKey, data);
   }
 

@@ -6,7 +6,6 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/vehicle_selection.dart';
-import '../../../../backend/contracts/hardware_backend.dart';
 import '../../../../backend/contracts/raw_json.dart';
 import '../../../../backend/contracts/vehicle_backend.dart';
 import '../../../../core/result/result.dart';
@@ -14,7 +13,6 @@ import '../datasources/vehicle_local_cache.dart';
 
 class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleBackend _vehicleBackend;
-  final HardwareBackend _hardwareBackend;
   final NetworkInfo _networkInfo;
 
   /// تخزين دائم لقائمة المركبات.
@@ -26,11 +24,9 @@ class VehicleRepositoryImpl implements VehicleRepository {
 
   VehicleRepositoryImpl({
     required VehicleBackend vehicleBackend,
-    required HardwareBackend hardwareBackend,
     required NetworkInfo networkInfo,
     VehicleLocalCache? cache,
-  })  : _vehicleBackend = vehicleBackend,
-       _hardwareBackend = hardwareBackend,
+  }) : _vehicleBackend = vehicleBackend,
        _networkInfo = networkInfo,
        _cache = cache {
     _restoreFromCache();
@@ -38,129 +34,107 @@ class VehicleRepositoryImpl implements VehicleRepository {
 
   @override
   Future<Either<Failure, List<Vehicle>>> getVehicles() {
-    return _readList(_vehicleBackend.getMyVehicles());
+    return _readList(_vehicleBackend.getMyVehicles(), companyFleet: false);
   }
 
   @override
   Future<Either<Failure, List<Vehicle>>> getCompanyVehicles() {
-    return _readList(_vehicleBackend.getCompanyFleet());
+    return _readList(_vehicleBackend.getCompanyFleet(), companyFleet: true);
   }
 
   List<Vehicle>? _cachedVehicles;
+  List<Vehicle>? _cachedCompanyVehicles;
 
   void _restoreFromCache() {
     try {
-      final decoded = _cache?.load();
-      if (decoded == null) return;
-      final vehicles = parseVehicleList(decoded);
-      if (vehicles != null && vehicles.isNotEmpty) _cachedVehicles = vehicles;
+      final personalRaw = _cache?.load();
+      final companyRaw = _cache?.load(companyFleet: true);
+      final personal = personalRaw == null
+          ? null
+          : parseVehicleList(personalRaw);
+      final company = companyRaw == null ? null : parseVehicleList(companyRaw);
+      if (personal != null) _cachedVehicles = personal;
+      if (company != null) _cachedCompanyVehicles = company;
     } catch (e) {
       AppLogger.warning('Vehicle cache restore skipped: $e');
     }
   }
 
-  void _persistToCache(RawJson raw) {
-    _cache?.save(raw);
-  }
-
   Future<Either<Failure, List<Vehicle>>> _readList(
-    Future<Result<RawJson>> request,
-  ) async {
+    Future<Result<RawJson>> request, {
+    required bool companyFleet,
+  }) async {
+    final cached = companyFleet ? _cachedCompanyVehicles : _cachedVehicles;
     if (!_networkInfo.isConnected) {
-      if (_cachedVehicles != null && _cachedVehicles!.isNotEmpty) {
-        return Right(_cachedVehicles!);
+      if (cached != null) {
+        return Right(cached);
       }
-      return const Right([]);
+      return const Left(NetworkFailure());
     }
     try {
       final result = await request;
       return await result.fold(
-        (error) {
-          if (_cachedVehicles != null && _cachedVehicles!.isNotEmpty) {
-            return Right(_cachedVehicles!);
+        (error) async {
+          if (cached != null) {
+            return Right(cached);
           }
           return Left(ServerFailure(message: _message(error)));
         },
-        (data) {
-          final vehicles = parseVehicleList(data);
-          if (vehicles == null) {
-            if (_cachedVehicles != null && _cachedVehicles!.isNotEmpty) {
-              return Right(_cachedVehicles!);
+        (data) async {
+          final parsedVehicles = parseVehicleList(data);
+          if (parsedVehicles == null) {
+            if (cached != null) {
+              return Right(cached);
             }
             return const Left(
               ServerFailure(message: 'vehicle_list_unreadable'),
             );
           }
-          _cachedVehicles = vehicles;
-          _persistToCache(data);
+          var vehicles = parsedVehicles;
+          // `/my-vehicles` uses DriverVehicleClassification, whose current
+          // contract omits Traccar's uniqueId. The company-fleet response
+          // includes it, so enrich only by the shared server vehicle ID.
+          // Never treat that numeric ID as the uniqueId itself.
+          if (!companyFleet &&
+              vehicles.any(
+                (vehicle) => vehicle.uniqueId?.trim().isNotEmpty != true,
+              )) {
+            final fleetResult = await getCompanyVehicles();
+            fleetResult.match((_) {}, (fleetVehicles) {
+              final fleetById = {
+                for (final vehicle in fleetVehicles)
+                  if (vehicle.uniqueId?.trim().isNotEmpty == true)
+                    vehicle.id: vehicle,
+              };
+              vehicles = vehicles
+                  .map((vehicle) {
+                    final fleetVehicle = fleetById[vehicle.id];
+                    if (vehicle.uniqueId?.trim().isNotEmpty == true ||
+                        fleetVehicle == null) {
+                      return vehicle;
+                    }
+                    return vehicle.copyWith(
+                      uniqueId: fleetVehicle.uniqueId,
+                      deviceId: fleetVehicle.deviceId ?? vehicle.deviceId,
+                    );
+                  })
+                  .toList(growable: false);
+            });
+          }
+          if (companyFleet) {
+            _cachedCompanyVehicles = vehicles;
+          } else {
+            _cachedVehicles = vehicles;
+          }
+          _cache?.save(data, companyFleet: companyFleet);
           return Right(vehicles);
         },
       );
     } catch (_) {
-      if (_cachedVehicles != null && _cachedVehicles!.isNotEmpty) {
-        return Right(_cachedVehicles!);
+      if (cached != null) {
+        return Right(cached);
       }
       return const Left(ServerFailure(message: 'vehicle_list_unreadable'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> selectVehicle(String uniqueId) async {
-    final id = uniqueId.trim();
-    if (id.isEmpty || id == 'unknown' || id == 'No Vehicle') {
-      return const Left(ServerFailure(message: 'vehicle_identifier_missing'));
-    }
-    if (!_networkInfo.isConnected) {
-      if (_cachedVehicles != null) {
-        _cachedVehicles = _cachedVehicles!.map((v) {
-          final match = v.uniqueId == id || v.id == id;
-          return v.copyWith(
-            activeForCurrentDriver: match,
-            selectedByServer: match,
-          );
-        }).toList();
-      }
-      return const Right(true);
-    }
-    try {
-      final result = await _hardwareBackend.connectSession(uniqueId: id);
-      return await result.fold(
-        (error) async {
-          if (_cachedVehicles != null) {
-            _cachedVehicles = _cachedVehicles!.map((v) {
-              final match = v.uniqueId == id || v.id == id;
-              return v.copyWith(
-                activeForCurrentDriver: match,
-                selectedByServer: match,
-              );
-            }).toList();
-          }
-          return const Right(true);
-        },
-        (_) async {
-          if (_cachedVehicles != null) {
-            _cachedVehicles = _cachedVehicles!.map((v) {
-              final match = v.uniqueId == id || v.id == id;
-              return v.copyWith(
-                activeForCurrentDriver: match,
-                selectedByServer: match,
-              );
-            }).toList();
-          }
-          return const Right(true);
-        },
-      );
-    } catch (_) {
-      if (_cachedVehicles != null) {
-        _cachedVehicles = _cachedVehicles!.map((v) {
-          final match = v.uniqueId == id || v.id == id;
-          return v.copyWith(
-            activeForCurrentDriver: match,
-            selectedByServer: match,
-          );
-        }).toList();
-      }
-      return const Right(true);
     }
   }
 

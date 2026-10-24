@@ -8,22 +8,19 @@ class EldCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
-  const EldCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.onTap,
-  });
+  const EldCard({super.key, required this.child, this.padding, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      color: Theme.of(context).cardTheme.color ??
+      color:
+          Theme.of(context).cardTheme.color ??
           Theme.of(context).colorScheme.surface,
       elevation: 0.5,
-      shadowColor:
-          Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+      shadowColor: Theme.of(
+        context,
+      ).colorScheme.onSurface.withValues(alpha: 0.05),
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),

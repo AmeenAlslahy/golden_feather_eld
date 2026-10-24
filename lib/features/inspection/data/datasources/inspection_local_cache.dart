@@ -90,13 +90,13 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
   }
 
   @override
-  Future<void> saveCycle(List<DotInspectionCycleDay> cycle, {int? ownerId}) async {
+  Future<void> saveCycle(
+    List<DotInspectionCycleDay> cycle, {
+    int? ownerId,
+  }) async {
     try {
       final list = cycle.map((d) => _encodeCycleDay(d)).toList();
-      final map = {
-        'ownerId': ownerId,
-        'data': list,
-      };
+      final map = {'ownerId': ownerId, 'data': list};
       await _storage.prefs.setString(_cycleKey, jsonEncode(map));
     } catch (e) {
       AppLogger.warning('InspectionLocalCache.saveCycle failed: $e');
@@ -155,7 +155,9 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
       for (final entry in map.entries) {
         if (prefix != null && !entry.key.startsWith(prefix)) continue;
         if (entry.value is Map<String, dynamic>) {
-          result[entry.key] = DotInspectionMapper.fromLogJson(entry.value as Map<String, dynamic>);
+          result[entry.key] = DotInspectionMapper.fromLogJson(
+            entry.value as Map<String, dynamic>,
+          );
         }
       }
       return result;
@@ -193,11 +195,13 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
           'complete': packet.complete,
           'missingItems': packet.missing,
           'items': packet.items
-              .map((i) => {
-                    'title': i.title,
-                    'available': i.available,
-                    'mandatory': i.mandatory,
-                  })
+              .map(
+                (i) => {
+                  'title': i.title,
+                  'available': i.available,
+                  'mandatory': i.mandatory,
+                },
+              )
               .toList(),
         },
       };
@@ -225,23 +229,25 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
   }
 
   @override
-  Future<void> saveTransfers(List<TransferAuditRow> transfers, {int? ownerId}) async {
+  Future<void> saveTransfers(
+    List<TransferAuditRow> transfers, {
+    int? ownerId,
+  }) async {
     try {
       final list = transfers
-          .map((t) => {
-                'channel': t.channel,
-                'recipient': t.recipient,
-                'status': t.status,
-                'transferredAt': t.transferredAt,
-                'message': t.message,
-                'period': t.period,
-                'recordCount': t.recordCount,
-              })
+          .map(
+            (t) => {
+              'channel': t.channel,
+              'recipient': t.recipient,
+              'status': t.status,
+              'transferredAt': t.transferredAt,
+              'message': t.message,
+              'period': t.period,
+              'recordCount': t.recordCount,
+            },
+          )
           .toList();
-      final map = {
-        'ownerId': ownerId,
-        'data': list,
-      };
+      final map = {'ownerId': ownerId, 'data': list};
       await _storage.prefs.setString(_transfersKey, jsonEncode(map));
     } catch (e) {
       AppLogger.warning('InspectionLocalCache.saveTransfers failed: $e');
@@ -280,81 +286,83 @@ class PrefsInspectionLocalCache implements InspectionLocalCache {
   }
 
   static Map<String, dynamic> _encodeCycleDay(DotInspectionCycleDay d) => {
-        'driver': {'id': d.driverId.value, 'name': d.driverName},
-        'logDate': d.logDate.toIso8601String(),
-        'displayDate': d.displayDate,
-        'displayLocation': d.displayLocation,
-        'certified': d.certified,
-        'certifiedAt': d.certifiedAt?.toIso8601String(),
-        'eldRegistrationId': d.eldRegistrationId,
-        'eldIdentifier': d.eldIdentifier,
-        'eldProvider': d.eldProvider,
-        'vehicleNumber': d.vehicleNumber,
-        'uniqueId': d.uniqueId,
-        'vin': d.vin,
-        'startOdometerKm': d.startOdometerKm,
-        'endOdometerKm': d.endOdometerKm,
-        'totalDistanceKm': d.totalDistanceKm,
-        'engineHours': d.engineHours,
-        'trailers': d.trailers,
-        'shippingDocuments': d.shippingDocuments,
-        'carrierName': d.carrierName,
-        'usdotNumber': d.usdotNumber,
-        'mainOfficeAddress': d.mainOfficeAddress,
-        'homeTerminalAddress': d.homeTerminalAddress,
-        'activeDataDiagnostics': d.activeDataDiagnostics,
-        'activeDeviceMalfunctions': d.activeDeviceMalfunctions,
-        'exemptDriver': d.exemptDriver,
-        'exemptReason': d.exemptReason,
-        'hasUnidentifiedDriving': d.hasUnidentifiedDriving,
-        'unidentifiedDrivingCount': d.unidentifiedDrivingCount,
-      };
+    'driver': {'id': d.driverId.value, 'name': d.driverName},
+    'logDate': d.logDate.toIso8601String(),
+    'displayDate': d.displayDate,
+    'displayLocation': d.displayLocation,
+    'certified': d.certified,
+    'certifiedAt': d.certifiedAt?.toIso8601String(),
+    'eldRegistrationId': d.eldRegistrationId,
+    'eldIdentifier': d.eldIdentifier,
+    'eldProvider': d.eldProvider,
+    'vehicleNumber': d.vehicleNumber,
+    'uniqueId': d.uniqueId,
+    'vin': d.vin,
+    'startOdometerKm': d.startOdometerKm,
+    'endOdometerKm': d.endOdometerKm,
+    'totalDistanceKm': d.totalDistanceKm,
+    'engineHours': d.engineHours,
+    'trailers': d.trailers,
+    'shippingDocuments': d.shippingDocuments,
+    'carrierName': d.carrierName,
+    'usdotNumber': d.usdotNumber,
+    'mainOfficeAddress': d.mainOfficeAddress,
+    'homeTerminalAddress': d.homeTerminalAddress,
+    'activeDataDiagnostics': d.activeDataDiagnostics,
+    'activeDeviceMalfunctions': d.activeDeviceMalfunctions,
+    'exemptDriver': d.exemptDriver,
+    'exemptReason': d.exemptReason,
+    'hasUnidentifiedDriving': d.hasUnidentifiedDriving,
+    'unidentifiedDrivingCount': d.unidentifiedDrivingCount,
+  };
 
   static Map<String, dynamic> _encodeLog(DotInspectionLog l) => {
-        'driver': {'id': l.driverId.value, 'name': l.driverName},
-        'logDate': l.logDate.toIso8601String(),
-        'displayDate': l.displayDate,
-        'displayLocation': l.displayLocation,
-        'certified': l.certified,
-        'certifiedAt': l.certifiedAt?.toIso8601String(),
-        'eldRegistrationId': l.eldRegistrationId,
-        'eldIdentifier': l.eldIdentifier,
-        'eldProvider': l.eldProvider,
-        'vehicleNumber': l.vehicleNumber,
-        'uniqueId': l.uniqueId,
-        'vin': l.vin,
-        'startOdometerKm': l.startOdometerKm,
-        'endOdometerKm': l.endOdometerKm,
-        'totalDistanceKm': l.totalDistanceKm,
-        'engineHours': l.engineHours,
-        'trailers': l.trailers,
-        'shippingDocuments': l.shippingDocuments,
-        'carrierName': l.carrierName,
-        'usdotNumber': l.usdotNumber,
-        'mainOfficeAddress': l.mainOfficeAddress,
-        'homeTerminalAddress': l.homeTerminalAddress,
-        'activeDataDiagnostics': l.activeDataDiagnostics,
-        'activeDeviceMalfunctions': l.activeDeviceMalfunctions,
-        'readOnly': l.readOnly,
-        'period24HourStartTime': l.period24HourStartTime,
-        'driverLicenseNumber': l.driverLicenseNumber,
-        'driverLicenseState': l.driverLicenseState,
-        'coDriverName': l.coDriverName,
-        'coDriverId': l.coDriverId,
-        'events': l.events
-            .map((e) => {
-                  'sequenceNumber': e.sequenceNumber,
-                  'timeEt': e.timeEt,
-                  'eventCode': e.eventCode,
-                  'eventType': e.eventType,
-                  'description': e.description,
-                  'location': e.location,
-                  'odometer': e.odometer,
-                  'engineHours': e.engineHours,
-                  'origin': e.origin,
-                  'notes': e.notes,
-                  'certificationEvent': e.certificationEvent,
-                })
-            .toList(),
-      };
+    'driver': {'id': l.driverId.value, 'name': l.driverName},
+    'logDate': l.logDate.toIso8601String(),
+    'displayDate': l.displayDate,
+    'displayLocation': l.displayLocation,
+    'certified': l.certified,
+    'certifiedAt': l.certifiedAt?.toIso8601String(),
+    'eldRegistrationId': l.eldRegistrationId,
+    'eldIdentifier': l.eldIdentifier,
+    'eldProvider': l.eldProvider,
+    'vehicleNumber': l.vehicleNumber,
+    'uniqueId': l.uniqueId,
+    'vin': l.vin,
+    'startOdometerKm': l.startOdometerKm,
+    'endOdometerKm': l.endOdometerKm,
+    'totalDistanceKm': l.totalDistanceKm,
+    'engineHours': l.engineHours,
+    'trailers': l.trailers,
+    'shippingDocuments': l.shippingDocuments,
+    'carrierName': l.carrierName,
+    'usdotNumber': l.usdotNumber,
+    'mainOfficeAddress': l.mainOfficeAddress,
+    'homeTerminalAddress': l.homeTerminalAddress,
+    'activeDataDiagnostics': l.activeDataDiagnostics,
+    'activeDeviceMalfunctions': l.activeDeviceMalfunctions,
+    'readOnly': l.readOnly,
+    'period24HourStartTime': l.period24HourStartTime,
+    'driverLicenseNumber': l.driverLicenseNumber,
+    'driverLicenseState': l.driverLicenseState,
+    'coDriverName': l.coDriverName,
+    'coDriverId': l.coDriverId,
+    'events': l.events
+        .map(
+          (e) => {
+            'sequenceNumber': e.sequenceNumber,
+            'timeEt': e.timeEt,
+            'eventCode': e.eventCode,
+            'eventType': e.eventType,
+            'description': e.description,
+            'location': e.location,
+            'odometer': e.odometer,
+            'engineHours': e.engineHours,
+            'origin': e.origin,
+            'notes': e.notes,
+            'certificationEvent': e.certificationEvent,
+          },
+        )
+        .toList(),
+  };
 }

@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_info_row.dart';
@@ -57,14 +57,16 @@ class _DvirDetailPageState extends ConsumerState<DvirDetailPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : report == null
-              ? Center(
-                  child: Text(
-                    state.error ?? context.loc.dvirListNoRecords,
-                    style: context.styles.error,
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : _DetailBody(report: report),
+          ? Center(
+              child: Text(
+                state.error == null
+                    ? context.loc.dvirListNoRecords
+                    : anyErrorUserMessage(state.error!, loc: context.loc),
+                style: context.styles.error,
+                textAlign: TextAlign.center,
+              ),
+            )
+          : _DetailBody(report: report),
     );
   }
 }
@@ -80,7 +82,7 @@ class _DetailBody extends StatelessWidget {
     final retention = report.retentionUntil;
 
     final statusLabel = report.vehicleOperationalStatus.label(loc);
-    final statusColor = report.vehicleOperationalStatus.color(context.styles);
+    final statusColor = report.vehicleOperationalStatus.color(context);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -98,34 +100,44 @@ class _DetailBody extends StatelessWidget {
               value: statusLabel,
               valueColor: statusColor,
             ),
+            EldInfoRow(
+              label: loc.vehicleCondition,
+              value: report.conditionStatus.label(loc),
+              valueColor: report.conditionStatus.color(context),
+            ),
             EldInfoRow(label: loc.driverName, value: report.driverName),
             EldInfoRow(
-                label: loc.dvirTimeET,
-                value: report.date != null
-                    ? DateFormat('d MMM yy, hh:mm a', loc.localeName)
-                        .format(report.date!.toLocal())
-                    : '—'),
+              label: loc.dvirTimeET,
+              value: report.date != null
+                  ? DateFormat(
+                      'd MMM yy, hh:mm a',
+                      loc.localeName,
+                    ).format(report.date!.toLocal())
+                  : '—',
+            ),
             EldInfoRow(
-                label: loc.location,
-                value: (report.location ?? '').isEmpty
-                    ? loc.dvirLocationUnavailable
-                    : report.location!),
+              label: loc.location,
+              value: (report.location ?? '').isEmpty
+                  ? loc.dvirLocationUnavailable
+                  : report.location!,
+            ),
             EldInfoRow(
               label: loc.dvirOdometerMi,
-              value:
-                  '${report.odometer?.toStringAsFixed(0) ?? "-"} mi',
+              value: '${report.odometer?.toStringAsFixed(0) ?? "-"} mi',
             ),
             EldInfoRow(label: loc.vehicle, value: report.vehicleId),
             if ((report.trailerId ?? '').isNotEmpty)
               EldInfoRow(label: loc.trailer, value: report.trailerId!),
             EldInfoRow(
-                label: loc.companyName,
-                value: (report.companyName ?? '').isEmpty
-                    ? loc.dvirCompanyUnavailable
-                    : report.companyName!),
+              label: loc.companyName,
+              value: (report.companyName ?? '').isEmpty
+                  ? loc.dvirCompanyUnavailable
+                  : report.companyName!,
+            ),
             EldInfoRow(
-                label: loc.remarks,
-                value: (report.notes ?? '').isEmpty ? '—' : report.notes!),
+              label: loc.remarks,
+              value: (report.notes ?? '').isEmpty ? '—' : report.notes!,
+            ),
             EldInfoRow(
               label: loc.dvirRetentionUntil,
               value: retention != null
@@ -134,13 +146,15 @@ class _DetailBody extends StatelessWidget {
             ),
           ],
         ),
-        
+
         // --- Trailers Section ---
         if (report.trailers.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           _Section(
-            title: 'Trailers', // loc.trailers
-            children: report.trailers.map((t) => _TrailerCard(trailer: t)).toList(),
+            title: loc.trailers,
+            children: report.trailers
+                .map((t) => _TrailerCard(trailer: t))
+                .toList(),
           ),
         ],
 
@@ -148,7 +162,7 @@ class _DetailBody extends StatelessWidget {
         if (report.photos.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
           _Section(
-            title: 'Photos attached', // loc.dvirPhotos
+            title: loc.dvirPhotosAttached,
             children: [
               Wrap(
                 spacing: AppSpacing.sm,
@@ -191,21 +205,29 @@ class _DetailBody extends StatelessWidget {
         ),
 
         // --- Mechanic Certification Section ---
-        if (report.certified || (report.mechanicName != null && report.mechanicName!.isNotEmpty)) ...[
+        if (report.certified ||
+            (report.mechanicName != null &&
+                report.mechanicName!.isNotEmpty)) ...[
           const SizedBox(height: AppSpacing.md),
           _Section(
-            title: 'Mechanic Certification',
+            title: loc.mechanicCertification,
             children: [
-              EldInfoRow(label: 'Mechanic', value: report.mechanicName ?? '—'),
               EldInfoRow(
-                label: 'Status',
+                label: loc.mechanicLabel,
+                value: report.mechanicName ?? '—',
+              ),
+              EldInfoRow(
+                label: loc.statusTitle,
                 value: report.repairStatus ?? '—',
-                valueColor: report.repairStatus == 'REPAIRED' 
-                  ? AppColors.successText 
-                  : AppColors.warningText,
+                valueColor: report.repairStatus == 'REPAIRED'
+                    ? context.success
+                    : context.warning,
               ),
               if (report.repairNotes != null && report.repairNotes!.isNotEmpty)
-                EldInfoRow(label: 'Repair Notes', value: report.repairNotes!),
+                EldInfoRow(
+                  label: loc.repairNotesLabel,
+                  value: report.repairNotes!,
+                ),
             ],
           ),
         ],
@@ -216,17 +238,14 @@ class _DetailBody extends StatelessWidget {
             title: loc.dvirPrevReviewSection,
             children: [
               EldInfoRow(
-                  label: loc.reviewedBy,
-                  value: report.reviewingDriverName ?? '—'),
+                label: loc.reviewedBy,
+                value: report.reviewingDriverName ?? '—',
+              ),
             ],
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
-        if (!report.isSubmitted)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: AppDetailEditButton(report: report),
-          ),
+        if (!report.isSubmitted) AppDetailEditButton(report: report),
         const SizedBox(height: AppSpacing.xl),
       ],
     );
@@ -267,7 +286,7 @@ class _Section extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.largeCard),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -313,8 +332,9 @@ class _SignatureImageState extends State<_SignatureImage> {
 
   static Uint8List? _decode(String dataUrl) {
     try {
-      final base64Part =
-          dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
+      final base64Part = dataUrl.contains(',')
+          ? dataUrl.split(',')[1]
+          : dataUrl;
       return base64Decode(base64Part);
     } catch (_) {
       return null;
@@ -325,8 +345,10 @@ class _SignatureImageState extends State<_SignatureImage> {
   Widget build(BuildContext context) {
     final bytes = _bytes;
     if (bytes == null) {
-      return Text(context.loc.dvirImageNotAvailable,
-          style: context.styles.muted);
+      return Text(
+        context.loc.dvirImageNotAvailable,
+        style: context.styles.muted,
+      );
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.input),
@@ -343,8 +365,8 @@ class _DefectCard extends StatelessWidget {
 
   Color _severityColor(BuildContext context) {
     final severity = defect.severity;
-    if (severity == DefectSeverity.high) return AppColors.dangerText;
-    if (severity == DefectSeverity.medium) return AppColors.warningText;
+    if (severity == DefectSeverity.high) return context.danger;
+    if (severity == DefectSeverity.medium) return context.warning;
     return context.styles.subtitle.color!;
   }
 
@@ -358,12 +380,11 @@ class _DefectCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: sevColor, width: 3),
-        ),
+        border: Border(left: BorderSide(color: sevColor, width: 3)),
         borderRadius: BorderRadius.circular(AppRadius.input),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.5),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,22 +392,27 @@ class _DefectCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(defect.item.label(context.loc),
-                    style: context.styles.body.copyWith(
-                      fontWeight: FontWeight.w600,
-                    )),
+                child: Text(
+                  defect.item.label(context.loc),
+                  style: context.styles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               if (defect.severity != null)
-                Text(defect.severity!.wire,
-                    style: context.styles.caption
-                        .copyWith(color: sevColor, fontWeight: FontWeight.w700)),
+                Text(
+                  defect.severity!.wire,
+                  style: context.styles.caption.copyWith(
+                    color: sevColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
             ],
           ),
           if (defect.description != null && defect.description!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(defect.description!,
-                  style: context.styles.subtitle),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text(defect.description!, style: context.styles.subtitle),
             ),
           const SizedBox(height: AppSpacing.sm),
           // SRS 7.6 Stepper: OPEN → UNDER_REPAIR → REPAIRED → CERTIFIED → CLOSED
@@ -397,29 +423,26 @@ class _DefectCard extends StatelessWidget {
                   Expanded(
                     child: Container(
                       height: 2,
-                      color: i <= currentIdx
-                          ? AppColors.primaryGold
-                          : Theme.of(context).dividerColor,
+                      color: i <= currentIdx ? context.gold : context.divider,
                     ),
                   ),
                 Icon(
                   i < currentIdx
                       ? Icons.check_circle
                       : i == currentIdx
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                  size: 14,
-                  color: i <= currentIdx
-                      ? AppColors.primaryGold
-                      : Theme.of(context).dividerColor,
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  size: AppSpacing.iconSmall,
+                  color: i <= currentIdx ? context.gold : context.divider,
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 4),
-          Text(defect.stage.wire,
-              style: context.styles.caption
-                  .copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            defect.stage.wire,
+            style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -437,7 +460,9 @@ class _TrailerCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(AppRadius.input),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
@@ -446,30 +471,38 @@ class _TrailerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.directions_car_filled_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 8),
+              Icon(
+                Icons.directions_car_filled_outlined,
+                size: AppSpacing.iconMedium,
+                color: context.gold,
+              ),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 trailer.trailerNumber,
-                style: context.styles.body.copyWith(fontWeight: FontWeight.w700),
+                style: context.styles.body.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           if (trailer.defects.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             for (final defect in trailer.defects)
               Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('• ', style: TextStyle(color: AppColors.dangerText)),
-                    Expanded(child: Text(defect, style: context.styles.subtitle)),
+                    Text('• ', style: context.styles.error),
+                    Expanded(
+                      child: Text(defect, style: context.styles.subtitle),
+                    ),
                   ],
                 ),
               ),
           ] else ...[
-            const SizedBox(height: 8),
-            Text('No defects reported', style: context.styles.subtitle),
+            const SizedBox(height: AppSpacing.sm),
+            Text(context.loc.noDefectsReported, style: context.styles.subtitle),
           ],
         ],
       ),
@@ -506,8 +539,9 @@ class _PhotoThumbnailState extends State<_PhotoThumbnail> {
 
   static Uint8List? _decode(String dataUrl) {
     try {
-      final base64Part =
-          dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
+      final base64Part = dataUrl.contains(',')
+          ? dataUrl.split(',')[1]
+          : dataUrl;
       return base64Decode(base64Part);
     } catch (_) {
       return null;
@@ -517,7 +551,7 @@ class _PhotoThumbnailState extends State<_PhotoThumbnail> {
   @override
   Widget build(BuildContext context) {
     final bytes = _bytes;
-    if (bytes == null) return _errorPlaceholder();
+    if (bytes == null) return _errorPlaceholder(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.input),
       child: Image.memory(
@@ -525,21 +559,20 @@ class _PhotoThumbnailState extends State<_PhotoThumbnail> {
         width: 80,
         height: 80,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _errorPlaceholder(),
+        errorBuilder: (_, __, ___) => _errorPlaceholder(context),
       ),
     );
   }
 
-  Widget _errorPlaceholder() {
+  Widget _errorPlaceholder(BuildContext context) {
     return Container(
       width: 80,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.2),
+        color: context.colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.input),
       ),
-      child: const Icon(Icons.broken_image, color: Colors.grey),
+      child: Icon(Icons.broken_image, color: context.styles.subtitle.color),
     );
   }
 }
-

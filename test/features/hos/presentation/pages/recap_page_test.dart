@@ -165,4 +165,19 @@ void main() {
     expect(find.byType(EldRetryView), findsNothing);
     expect(find.text('Total'), findsOneWidget);
   });
+
+  testWidgets('empty days renders localized noData text', (tester) async {
+    when(() => repo.getWeeklyRecap(driverId: any(named: 'driverId')))
+        .thenAnswer((_) async => const Right(
+              WeeklyRecap(
+                cycleRule: CycleRule.usa70_8,
+                cycleUsed: Duration.zero,
+                cycleRemaining: Duration(hours: 70),
+                availableTomorrow: Duration(hours: 70),
+                days: [],
+              ),
+            ));
+    await pump(tester);
+    expect(find.text('No data'), findsOneWidget);
+  });
 }

@@ -67,25 +67,21 @@ final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>(
     final notifier = CoDriverNotifier(
       repository: ref.watch(coDriverRepositoryProvider),
     );
-    ref.listen<AuthState>(
-      authStateProvider,
-      (previous, next) {
-        if (next.user == null || next.transitioning) {
-          notifier.reset();
-          return;
-        }
-        final id = int.tryParse(next.user!.id);
-        if (id != notifier.ownerDriverId ||
-            next.sessionEpoch != notifier.ownerEpoch) {
-          notifier.bindOwner(id, next.sessionEpoch);
-          notifier.reload();
-        }
-      },
-    );
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (next.user == null || next.transitioning) {
+        notifier.reset();
+        return;
+      }
+      final id = int.tryParse(next.user!.id);
+      if (id != notifier.ownerDriverId ||
+          next.sessionEpoch != notifier.ownerEpoch) {
+        notifier.bindOwner(id, next.sessionEpoch);
+        notifier.reload();
+      }
+    });
     final auth = ref.read(authStateProvider);
     if (auth.user != null && !auth.transitioning) {
-      notifier.bindOwner(
-          int.tryParse(auth.user!.id), auth.sessionEpoch);
+      notifier.bindOwner(int.tryParse(auth.user!.id), auth.sessionEpoch);
       notifier.reload();
     }
     return notifier;

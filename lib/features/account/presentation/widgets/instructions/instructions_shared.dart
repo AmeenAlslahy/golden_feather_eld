@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_decorations.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -45,15 +44,9 @@ class InstructionsChecklistItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.check_circle,
-            size: _iconSize,
-            color: AppColors.white,
-          ),
+          Icon(Icons.check_circle, size: _iconSize, color: context.onBand),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(text, style: context.styles.onBandItem),
-          ),
+          Expanded(child: Text(text, style: context.styles.onBandItem)),
         ],
       ),
     );
@@ -87,13 +80,13 @@ class InstructionsSquareChecklistItem extends StatelessWidget {
             width: _boxSize,
             height: _boxSize,
             decoration: AppDecorations.solid(
-              AppColors.checkSquare,
+              context.textPrimary.withValues(alpha: 0.54),
               radius: AppRadius.indicator,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check,
               size: _checkSize,
-              color: AppColors.white,
+              color: context.colors.surface,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),

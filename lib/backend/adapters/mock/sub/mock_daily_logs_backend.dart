@@ -21,7 +21,7 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       'formStatus': 'COMPLETED',
       'certificationStatus': 'CERTIFIED',
       'totals': {
-        'total': {'seconds': 23160, 'formatted': '06:26:00'}
+        'total': {'seconds': 23160, 'formatted': '06:26:00'},
       },
       'certified': true,
       'logStatus': 'CERTIFIED',
@@ -35,11 +35,11 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       'formStatus': 'INCOMPLETE',
       'certificationStatus': 'UNCERTIFIED',
       'totals': {
-        'total': {'seconds': 36900, 'formatted': '10:15:00'}
+        'total': {'seconds': 36900, 'formatted': '10:15:00'},
       },
       'certified': false,
       'logStatus': 'DRAFT',
-    }
+    },
   ];
 
   @override
@@ -147,11 +147,13 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     CertifyRequestDto request, {
     int? expectedOwnerDriverId,
   }) async {
-    return ok(CertifyResponseDto(
-      dailyLogId: request.dailyLogId,
-      certificationStatus: 'CERTIFIED',
-      isCertified: true,
-    ));
+    return ok(
+      CertifyResponseDto(
+        dailyLogId: request.dailyLogId,
+        certificationStatus: 'CERTIFIED',
+        isCertified: true,
+      ),
+    );
   }
 
   @override
@@ -173,35 +175,32 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     required DailyLogId logId,
     required RawJson form,
     int? expectedOwnerDriverId,
-  }) =>
-      throw UnimplementedError('MockDailyLogsBackend.saveForm — Phase 2');
+  }) => throw UnimplementedError('MockDailyLogsBackend.saveForm — Phase 2');
 
   @override
-  Future<Result<RawJson>> getEvents(DailyLogId logId) async => ok(
-    <String, dynamic>{
-      'dailyLogId': logId.value,
-      'graphGrid': {
-        'totals': {
-          'total': {'seconds': 0, 'formatted': '00:00:00'}
+  Future<Result<RawJson>> getEvents(DailyLogId logId) async =>
+      ok(<String, dynamic>{
+        'dailyLogId': logId.value,
+        'graphGrid': {
+          'totals': {
+            'total': {'seconds': 0, 'formatted': '00:00:00'},
+          },
+          'segments': <dynamic>[],
         },
-        'segments': <dynamic>[],
-      },
-      'applicableExceptions': <dynamic>[],
-      'events': <dynamic>[],
-    },
-  );
+        'applicableExceptions': <dynamic>[],
+        'events': <dynamic>[],
+      });
 
   @override
   Future<Result<RawJson>> getEventDetails(
     DailyLogId logId,
     DutyStatusId eventId,
-  ) async =>
-      ok(<String, dynamic>{
-        'id': eventId.value,
-        'logId': logId.value,
-        'status': 'ON_DUTY',
-        'editable': true,
-      });
+  ) async => ok(<String, dynamic>{
+    'id': eventId.value,
+    'logId': logId.value,
+    'status': 'ON_DUTY',
+    'editable': true,
+  });
 
   @override
   Future<Result<RawJson>> updateEvent({
@@ -209,12 +208,11 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     required DutyStatusId eventId,
     required RawJson event,
     int? expectedOwnerDriverId,
-  }) async =>
-      ok(<String, dynamic>{
-        'id': eventId.value,
-        'logId': logId.value,
-        ...event,
-      });
+  }) async => ok(<String, dynamic>{
+    'id': eventId.value,
+    'logId': logId.value,
+    ...event,
+  });
 
   @override
   Future<Result<RawJson>> getEventsOptions(DailyLogId logId) async =>
@@ -226,10 +224,7 @@ class MockDailyLogsBackend implements DailyLogsBackend {
 
   @override
   Future<Result<RawJson>> getFormOptions(DailyLogId logId) async =>
-      ok(<String, dynamic>{
-        'vehicles': <dynamic>[],
-        'coDrivers': <dynamic>[],
-      });
+      ok(<String, dynamic>{'vehicles': <dynamic>[], 'coDrivers': <dynamic>[]});
 
   @override
   Future<Result<void>> lock(DailyLogId logId) =>
@@ -237,30 +232,36 @@ class MockDailyLogsBackend implements DailyLogsBackend {
 
   @override
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId) async {
-    return ok(ReadinessDto(
-      dailyLogId: logId.value,
-      driverId: 101,
-      driverName: 'Mock Driver',
-      logDate: '2026-09-18',
-      readinessStatus: 'READY',
-      missingRequirements: [],
-      legalStatement: 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
-      availableActions: ['CERTIFY'],
-    ));
+    return ok(
+      ReadinessDto(
+        dailyLogId: logId.value,
+        driverId: 101,
+        driverName: 'Mock Driver',
+        logDate: '2026-09-18',
+        readinessStatus: 'READY',
+        missingRequirements: [],
+        legalStatement:
+            'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
+        availableActions: ['CERTIFY'],
+      ),
+    );
   }
 
   @override
   Future<Result<CertifyStateDto>> getCertifyState(DailyLogId logId) async {
-    return ok(CertifyStateDto(
-      dailyLogId: logId.value,
-      logDate: '2026-09-18',
-      statementText: 'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
-      ruleReference: '49 CFR 395.30',
-      hasSignature: false,
-      certificationStatus: 'UNCERTIFIED',
-      certified: false,
-      canCertify: true,
-      validationCodes: const [],
-    ));
+    return ok(
+      CertifyStateDto(
+        dailyLogId: logId.value,
+        logDate: '2026-09-18',
+        statementText:
+            'I hereby certify that my data entries and my record of duty status for this 24-hour period are true and correct.',
+        ruleReference: '49 CFR 395.30',
+        hasSignature: false,
+        certificationStatus: 'UNCERTIFIED',
+        certified: false,
+        canCertify: true,
+        validationCodes: const [],
+      ),
+    );
   }
 }

@@ -1,4 +1,4 @@
-import '../../domain/entities/auth_session.dart';
+import '../../../../core/session/auth_session.dart';
 import 'package:golden_feather_eld/core/data/models/user_model.dart';
 
 class AuthSessionDto {

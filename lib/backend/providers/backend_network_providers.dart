@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_config.dart';
 import '../http/interceptors/auth_interceptor.dart';
-import '../../core/di/auth_local_data_source_provider.dart';
+import '../../core/session/auth_session_provider.dart';
 import '../http/interceptors/request_logger.dart';
 import '../http/interceptors/time_drift_interceptor.dart';
 import '../../core/time/trusted_time_provider.dart';
@@ -48,7 +48,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final client = ApiClient(config: effectiveConfig);
   final dio = client.dio;
 
-  final localDataSource = ref.watch(authLocalDataSourceProvider);
+  final localDataSource = ref.watch(authSessionReaderProvider);
   final backendType = ref.watch(backendTypeProvider);
 
   final unauthController = ref.watch(unauthenticatedEventProvider);

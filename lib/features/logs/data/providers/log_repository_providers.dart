@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../sync/data/providers/sync_providers.dart';

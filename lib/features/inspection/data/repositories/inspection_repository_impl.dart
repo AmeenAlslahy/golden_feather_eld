@@ -22,7 +22,6 @@ import '../../../../core/session/session_epoch.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../datasources/inspection_local_cache.dart';
 
-
 /// كل طريق في المستودع يمر بالحارس نفسه: فحص الشبكة مع كاشينغ محلي يضمن
 /// عمل وضع التفتيش الميداني في نقاط التفتيش النائية (FMCSA § 395.24 / SRS 6.8).
 ///
@@ -52,6 +51,7 @@ class InspectionRepositoryImpl implements InspectionRepository {
   int? _ownerScreen;
   List<DotInspectionCycleDay> _cachedCycle = [];
   int? _ownerCycle;
+
   /// المفتاح `'<driverIdValue>:<date|latest>'` — السائق جزء من الهوية.
   final Map<String, DotInspectionLog> _cachedLogs = {};
   InformationPacketView? _cachedPacket;
@@ -141,7 +141,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
   /// `required`. استجابة الدورة والحزمة لا تعلن `driver` إطلاقاً — لذلك
   /// التحقق هناك يعتمد على القيمة المُشاهَدة وقت التشغيل فقط.
   bool _verifiedOwnerMatches(DriverId? declared, DriverId requested) =>
-      declared != null && declared.value > 0 && declared.value == requested.value;
+      declared != null &&
+      declared.value > 0 &&
+      declared.value == requested.value;
 
   /// هل يمكن قبول هذا السجل للتخزين أو لتقديمه لهذا السائق؟
   ///
@@ -150,7 +152,8 @@ class InspectionRepositoryImpl implements InspectionRepository {
   /// - لا يعلن شيئاً (0/مفقود) ⇒ يُخزَّن بوسم الطلب، لكن **لا يُعدّ
   ///   مُتحقَّقاً**، فلا يصل إلى مسار FMCSA.
   bool _acceptsDataFrom(DriverId? declared, DriverId? requested) {
-    if (declared == null || declared.value <= 0) return true; // غير معروف — لا رفض
+    if (declared == null || declared.value <= 0)
+      return true; // غير معروف — لا رفض
     if (requested == null) return true; // لا يوجد طالب محدَّد للمقارنة
     return declared.value == requested.value;
   }
@@ -191,35 +194,44 @@ class InspectionRepositoryImpl implements InspectionRepository {
   }) {
     _adoptSessionIfChanged();
     final operationEpoch = _captureEpoch();
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getCycle(driverId: driverId, days: days);
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
-      return result.fold(
-        (error) => _cycleFallback(_failure(error), driverId),
-        (cycleDays) {
-          //Ownership gate: reject a mismatched declared driver outright.
-          for (final day in cycleDays) {
-            if (!_acceptsDataFrom(day.driverId, driverId)) {
-              AppLogger.error(
-                'InspectionRepository: rejecting DOT cycle stamped for driver '
-                '${day.driverId.value} while serving ${driverId?.value}',
-              );
-              return const Left(ServerFailure(message: 'inspectionOwnerMismatch'));
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getCycle(driverId: driverId, days: days);
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+        return result.fold(
+          (error) => _cycleFallback(_failure(error), driverId),
+          (cycleDays) {
+            //Ownership gate: reject a mismatched declared driver outright.
+            for (final day in cycleDays) {
+              if (!_acceptsDataFrom(day.driverId, driverId)) {
+                AppLogger.error(
+                  'InspectionRepository: rejecting DOT cycle stamped for driver '
+                  '${day.driverId.value} while serving ${driverId?.value}',
+                );
+                return const Left(
+                  ServerFailure(message: 'inspectionOwnerMismatch'),
+                );
+              }
             }
-          }
-          _cachedCycle = cycleDays;
-          _ownerCycle = driverId?.value;
-          _disk?.saveCycle(cycleDays, ownerId: driverId?.value);
-          return Right(cycleDays);
-        },
-      );
-    }, offline: () async {
-      return _cycleFallback(const NetworkFailure(), driverId);
-    });
+            _cachedCycle = cycleDays;
+            _ownerCycle = driverId?.value;
+            _disk?.saveCycle(cycleDays, ownerId: driverId?.value);
+            return Right(cycleDays);
+          },
+        );
+      },
+      offline: () async {
+        return _cycleFallback(const NetworkFailure(), driverId);
+      },
+    );
   }
 
   Either<Failure, List<DotInspectionCycleDay>> _cycleFallback(
-      Failure failure, DriverId? driverId) {
+    Failure failure,
+    DriverId? driverId,
+  ) {
     if (_cachedCycle.isNotEmpty && _ownedBy(_ownerCycle, driverId)) {
       if (driverId == null ||
           _cachedCycle.every((d) => _isVerifiedFor(d.driverId, driverId))) {
@@ -237,31 +249,41 @@ class InspectionRepositoryImpl implements InspectionRepository {
     _adoptSessionIfChanged();
     final operationEpoch = _captureEpoch();
     final key = _logKey(driverId, date);
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getLogs(driverId: driverId, date: date);
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
-      return result.fold(
-        (error) => _logsFallback(_failure(error), key, driverId),
-        (log) {
-          if (!_acceptsDataFrom(log.driverId, driverId)) {
-            AppLogger.error(
-              'InspectionRepository: rejecting DOT log stamped for driver '
-              '${log.driverId.value} while serving ${driverId.value}',
-            );
-            return const Left(ServerFailure(message: 'inspectionOwnerMismatch'));
-          }
-          _cachedLogs[key] = log;
-          _disk?.saveLog(key, log);
-          return Right(log);
-        },
-      );
-    }, offline: () async {
-      return _logsFallback(const NetworkFailure(), key, driverId);
-    });
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getLogs(driverId: driverId, date: date);
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+        return result.fold(
+          (error) => _logsFallback(_failure(error), key, driverId),
+          (log) {
+            if (!_acceptsDataFrom(log.driverId, driverId)) {
+              AppLogger.error(
+                'InspectionRepository: rejecting DOT log stamped for driver '
+                '${log.driverId.value} while serving ${driverId.value}',
+              );
+              return const Left(
+                ServerFailure(message: 'inspectionOwnerMismatch'),
+              );
+            }
+            _cachedLogs[key] = log;
+            _disk?.saveLog(key, log);
+            return Right(log);
+          },
+        );
+      },
+      offline: () async {
+        return _logsFallback(const NetworkFailure(), key, driverId);
+      },
+    );
   }
 
   Either<Failure, DotInspectionLog> _logsFallback(
-      Failure failure, String key, DriverId driverId) {
+    Failure failure,
+    String key,
+    DriverId driverId,
+  ) {
     final cached = _cachedLogs[key];
     if (cached != null) {
       if (!_acceptsDataFrom(cached.driverId, driverId)) {
@@ -346,125 +368,142 @@ class InspectionRepositoryImpl implements InspectionRepository {
   }) {
     _adoptSessionIfChanged();
     final operationEpoch = _captureEpoch();
-    return guardedNetwork(_networkInfo, () async {
-      final recipient = email?.trim() ?? '';
-      final note = comment.trim();
-      final route = routingCode?.trim();
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final recipient = email?.trim() ?? '';
+        final note = comment.trim();
+        final route = routingCode?.trim();
 
-      final result = method == TransferMethod.email && recipient.isNotEmpty
-          ? await _backend.emailLogs(
-              driverId: driverId,
-              recipientEmail: recipient,
-              comment: note,
-              routingCode: route == null || route.isEmpty ? null : route,
+        final result = method == TransferMethod.email && recipient.isNotEmpty
+            ? await _backend.emailLogs(
+                driverId: driverId,
+                recipientEmail: recipient,
+                comment: note,
+                routingCode: route == null || route.isEmpty ? null : route,
+              )
+            : await _backend.sendLogs(
+                driverId: driverId,
+                transferType: _transferTypeFor(method),
+                outputFileComment: note,
+                routingCode: route == null || route.isEmpty ? null : route,
+                recipientEmail: (recipient.isEmpty) ? null : recipient,
+              );
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+
+        return result.fold(
+          (error) => Left(_failure(error)),
+          (json) => Right(readTransferOutcome(json)),
+        );
+      },
+      offline: () async {
+        // FMCSA § 395.24 / § 395.34: Offline local generation and transfer queuing.
+        //
+        // P0: الملف المُنتج وثيقة نظامية. لا يجوز أن يحمل سجلاً أو شاشة أو
+        // دورة لاOwnership مُتحقَّق منها لهذا السائق تحديداً — لا وسم الطلب،
+        // بل **قيمة `driverId` التي يعلنها السجل نفسه**.
+        //
+        // قيد عقد موثّق (openapi.yaml 2026-10):
+        //   • `DotInspectionScreenResponse` و `InspectionLogDisplayResponse`
+        //     يُعلنان `driver -> DriverResponse`  ⇒ قابلة للتحقق.
+        //   • استجابة الدورة **لا تعلن** `driver` ⇒ التحقق يعتمد على القيمة
+        //     المُشاهَدة وقت التشغيل فقط؛ إن كانت `0` تُستبعد ولا تُعدّ مُتحقَّقة.
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+
+        final ownedLogs = _logsOwnedBy(driverId);
+        final screen = _cachedScreen;
+        final ownedScreen = _isVerifiedFor(screen?.driverId, driverId)
+            ? screen
+            : null;
+        final cycle = _cachedCycle;
+        final ownedCycle =
+            _isVerifiedFor(
+              cycle.isEmpty ? null : cycle.first.driverId,
+              driverId,
             )
-          : await _backend.sendLogs(
-              driverId: driverId,
-              transferType: _transferTypeFor(method),
-              outputFileComment: note,
-              routingCode: route == null || route.isEmpty ? null : route,
-              recipientEmail: (recipient.isEmpty) ? null : recipient,
-);
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
+            ? cycle
+            : null;
 
-      return result.fold(
-        (error) => Left(_failure(error)),
-        (json) => Right(readTransferOutcome(json)),
-      );
-    }, offline: () async {
-      // FMCSA § 395.24 / § 395.34: Offline local generation and transfer queuing.
-      //
-      // P0: الملف المُنتج وثيقة نظامية. لا يجوز أن يحمل سجلاً أو شاشة أو
-      // دورة لاOwnership مُتحقَّق منها لهذا السائق تحديداً — لا وسم الطلب،
-      // بل **قيمة `driverId` التي يعلنها السجل نفسه**.
-      //
-      // قيد عقد موثّق (openapi.yaml 2026-10):
-      //   • `DotInspectionScreenResponse` و `InspectionLogDisplayResponse`
-      //     يُعلنان `driver -> DriverResponse`  ⇒ قابلة للتحقق.
-      //   • استجابة الدورة **لا تعلن** `driver` ⇒ التحقق يعتمد على القيمة
-      //     المُشاهَدة وقت التشغيل فقط؛ إن كانت `0` تُستبعد ولا تُعدّ مُتحقَّقة.
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
-
-      final ownedLogs = _logsOwnedBy(driverId);
-      final screen = _cachedScreen;
-      final ownedScreen = _isVerifiedFor(screen?.driverId, driverId)
-          ? screen
-          : null;
-      final cycle = _cachedCycle;
-      final ownedCycle =
-          _isVerifiedFor(cycle.isEmpty ? null : cycle.first.driverId, driverId)
-              ? cycle
-              : null;
-
-      if (ownedScreen == null &&
-          ownedCycle == null &&
-          ownedLogs.isEmpty) {
-        AppLogger.error(
-          'InspectionRepository: refusing offline ELD generation for driver '
-          '${driverId.value} — no data with verified ownership',
-        );
-        return const Left(ServerFailure(message: 'inspectionNoVerifiedData'));
-      }
-
-      // P3 (49 CFR 395 Appendix A): الملف وثيقة نظامية بطابع زمني موثوق.
-      // بلا وقت موثوق لا نُصدر ملفاً بوقت مزيف — فشل صريح قابل لإعادة المحاولة.
-      final trusted = _trustedTime?.currentTime;
-      if (trusted is! TrustedTimeAvailable) {
-        AppLogger.error(
-          'InspectionRepository: refusing offline ELD generation for driver '
-          '${driverId.value} — trusted time unavailable',
-        );
-        return const Left(ServerFailure(message: 'inspectionTrustedTimeRequired'));
-      }
-      final generatedAtUtc = trusted.utc;
-
-      try {
-        final filePath = await FmcsaEldOutputGenerator.generateAndSave(
-          screen: ownedScreen,
-          cycleDays: ownedCycle ?? const [],
-          logs: ownedLogs,
-          outputFileComment: comment,
-          fileCreationUtc: generatedAtUtc,
-          fallbackDriverId: driverId.value.toString(),
-        );
-
-        //Post-generation gate: a written file is not proof of a valid file.
-        final problem = _invalidIdentifyingFields(filePath);
-        if (problem != null) {
+        if (ownedScreen == null && ownedCycle == null && ownedLogs.isEmpty) {
           AppLogger.error(
-            'InspectionRepository: discarding invalid offline ELD file '
-            '($problem): $filePath',
+            'InspectionRepository: refusing offline ELD generation for driver '
+            '${driverId.value} — no data with verified ownership',
           );
-          _deleteQuietly(filePath);
-          return const Left(ServerFailure(message: 'inspectionIncompleteOutput'));
+          return const Left(ServerFailure(message: 'inspectionNoVerifiedData'));
         }
 
-        if (_syncEngine != null) {
-          // P3: طابع الحدث الموثوق نفسه المستخدم في الملف — لا ساعة جهاز.
-          await _syncEngine.submitEvent(PendingEvent(
-            id: 'transfer_${generatedAtUtc.millisecondsSinceEpoch}',
-            type: 'inspection_transfer',
-            payload: {
-              'driverId': driverId.value,
-              'method': method.name,
-              'email': email,
-              'routingCode': routingCode,
-              'comment': comment,
-              'localFilePath': filePath,
-            },
-            createdAt: generatedAtUtc,
-          ));
+        // P3 (49 CFR 395 Appendix A): الملف وثيقة نظامية بطابع زمني موثوق.
+        // بلا وقت موثوق لا نُصدر ملفاً بوقت مزيف — فشل صريح قابل لإعادة المحاولة.
+        final trusted = _trustedTime?.currentTime;
+        if (trusted is! TrustedTimeAvailable) {
+          AppLogger.error(
+            'InspectionRepository: refusing offline ELD generation for driver '
+            '${driverId.value} — trusted time unavailable',
+          );
+          return const Left(
+            ServerFailure(message: 'inspectionTrustedTimeRequired'),
+          );
         }
+        final generatedAtUtc = trusted.utc;
 
-        return Right(TransferOutcome(
-          accepted: true,
-          text: 'OFFLINE_GENERATED:$filePath',
-        ));
-      } catch (e, st) {
-        AppLogger.error('Offline ELD file generation failed', e, st);
-        return Left(ServerFailure(message: 'Failed to generate offline ELD file: $e'));
-      }
-    });
+        try {
+          final filePath = await FmcsaEldOutputGenerator.generateAndSave(
+            screen: ownedScreen,
+            cycleDays: ownedCycle ?? const [],
+            logs: ownedLogs,
+            outputFileComment: comment,
+            fileCreationUtc: generatedAtUtc,
+            fallbackDriverId: driverId.value.toString(),
+          );
+
+          //Post-generation gate: a written file is not proof of a valid file.
+          final problem = _invalidIdentifyingFields(filePath);
+          if (problem != null) {
+            AppLogger.error(
+              'InspectionRepository: discarding invalid offline ELD file '
+              '($problem): $filePath',
+            );
+            _deleteQuietly(filePath);
+            return const Left(
+              ServerFailure(message: 'inspectionIncompleteOutput'),
+            );
+          }
+
+          if (_syncEngine != null) {
+            // P3: طابع الحدث الموثوق نفسه المستخدم في الملف — لا ساعة جهاز.
+            await _syncEngine.submitEvent(
+              PendingEvent(
+                id: 'transfer_${generatedAtUtc.millisecondsSinceEpoch}',
+                type: 'inspection_transfer',
+                payload: {
+                  'driverId': driverId.value,
+                  'method': method.name,
+                  'email': email,
+                  'routingCode': routingCode,
+                  'comment': comment,
+                  'localFilePath': filePath,
+                },
+                createdAt: generatedAtUtc,
+              ),
+            );
+          }
+
+          return Right(
+            TransferOutcome(
+              accepted: true,
+              text: 'OFFLINE_GENERATED:$filePath',
+            ),
+          );
+        } catch (e, st) {
+          AppLogger.error('Offline ELD file generation failed', e, st);
+          return Left(
+            ServerFailure(message: 'Failed to generate offline ELD file: $e'),
+          );
+        }
+      },
+    );
   }
 
   /// الحقول الإلزامية في سطر النوع 1 من 49 CFR 395 Appendix A.
@@ -480,9 +519,10 @@ class InspectionRepositoryImpl implements InspectionRepository {
     if (!file.existsSync()) return 'fileMissing';
     final String firstLine;
     try {
-      firstLine = file
-          .readAsLinesSync()
-          .firstWhere((l) => l.startsWith('1,'), orElse: () => '');
+      firstLine = file.readAsLinesSync().firstWhere(
+        (l) => l.startsWith('1,'),
+        orElse: () => '',
+      );
     } catch (_) {
       return 'headerUnreadable';
     }
@@ -510,7 +550,10 @@ class InspectionRepositoryImpl implements InspectionRepository {
     try {
       File(path).deleteSync();
     } catch (e) {
-      AppLogger.error('InspectionRepository: could not delete invalid ELD file', e);
+      AppLogger.error(
+        'InspectionRepository: could not delete invalid ELD file',
+        e,
+      );
     }
   }
 
@@ -520,40 +563,47 @@ class InspectionRepositoryImpl implements InspectionRepository {
   }) {
     _adoptSessionIfChanged();
     final operationEpoch = _captureEpoch();
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getInformationPacket(driverId: driverId);
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
-      return result.fold(
-        (error) => _packetFallback(_failure(error), driverId),
-        (json) {
-          try {
-            final packet = parseInformationPacket(json);
-            //`InformationPacketView` carries no driverId (contract limitation),
-            //so ownership here is request-scoped only and never "verified".
-            _cachedPacket = packet;
-            _ownerPacket = driverId?.value;
-            _disk?.savePacket(packet, ownerId: driverId?.value);
-            return Right(packet);
-          } catch (e, stackTrace) {
-            AppLogger.error(
-              'InspectionRepository: information packet body unreadable',
-              e,
-              stackTrace,
-            );
-            return _packetFallback(
-              const ServerFailure(message: 'packetBodyUnreadable'),
-              driverId,
-            );
-          }
-        },
-      );
-    }, offline: () async {
-      return _packetFallback(const NetworkFailure(), driverId);
-    });
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getInformationPacket(driverId: driverId);
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+        return result.fold(
+          (error) => _packetFallback(_failure(error), driverId),
+          (json) {
+            try {
+              final packet = parseInformationPacket(json);
+              //`InformationPacketView` carries no driverId (contract limitation),
+              //so ownership here is request-scoped only and never "verified".
+              _cachedPacket = packet;
+              _ownerPacket = driverId?.value;
+              _disk?.savePacket(packet, ownerId: driverId?.value);
+              return Right(packet);
+            } catch (e, stackTrace) {
+              AppLogger.error(
+                'InspectionRepository: information packet body unreadable',
+                e,
+                stackTrace,
+              );
+              return _packetFallback(
+                const ServerFailure(message: 'packetBodyUnreadable'),
+                driverId,
+              );
+            }
+          },
+        );
+      },
+      offline: () async {
+        return _packetFallback(const NetworkFailure(), driverId);
+      },
+    );
   }
 
   Either<Failure, InformationPacketView> _packetFallback(
-      Failure failure, DriverId? driverId) {
+    Failure failure,
+    DriverId? driverId,
+  ) {
     final packet = _cachedPacket;
     if (packet == null || !_ownedBy(_ownerPacket, driverId)) {
       return Left(failure);
@@ -565,32 +615,41 @@ class InspectionRepositoryImpl implements InspectionRepository {
   Future<Either<Failure, DotInspectionScreen>> getScreen({DriverId? driverId}) {
     _adoptSessionIfChanged();
     final operationEpoch = _captureEpoch();
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getScreen(driverId: driverId);
-      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
-      return result.fold(
-        (error) => _screenFallback(_failure(error), driverId),
-        (screen) {
-          if (!_acceptsDataFrom(screen.driverId, driverId)) {
-            AppLogger.error(
-              'InspectionRepository: rejecting DOT screen stamped for driver '
-              '${screen.driverId.value} while serving ${driverId?.value}',
-            );
-            return const Left(ServerFailure(message: 'inspectionOwnerMismatch'));
-          }
-          _cachedScreen = screen;
-          _ownerScreen = driverId?.value;
-          _disk?.saveScreen(screen, ownerId: driverId?.value);
-          return Right(screen);
-        },
-      );
-    }, offline: () async {
-      return _screenFallback(const NetworkFailure(), driverId);
-    });
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getScreen(driverId: driverId);
+        if (_isStale(operationEpoch))
+          return Left(_staleFailure(operationEpoch));
+        return result.fold(
+          (error) => _screenFallback(_failure(error), driverId),
+          (screen) {
+            if (!_acceptsDataFrom(screen.driverId, driverId)) {
+              AppLogger.error(
+                'InspectionRepository: rejecting DOT screen stamped for driver '
+                '${screen.driverId.value} while serving ${driverId?.value}',
+              );
+              return const Left(
+                ServerFailure(message: 'inspectionOwnerMismatch'),
+              );
+            }
+            _cachedScreen = screen;
+            _ownerScreen = driverId?.value;
+            _disk?.saveScreen(screen, ownerId: driverId?.value);
+            return Right(screen);
+          },
+        );
+      },
+      offline: () async {
+        return _screenFallback(const NetworkFailure(), driverId);
+      },
+    );
   }
 
   Either<Failure, DotInspectionScreen> _screenFallback(
-      Failure failure, DriverId? driverId) {
+    Failure failure,
+    DriverId? driverId,
+  ) {
     final screen = _cachedScreen;
     if (screen != null && _ownedBy(_ownerScreen, driverId)) {
       if (_acceptsDataFrom(screen.driverId, driverId)) {
@@ -603,13 +662,14 @@ class InspectionRepositoryImpl implements InspectionRepository {
   }
 
   @override
-  Future<Either<Failure, List<TransferAuditRow>>> getTransfers(
-      {DriverId? driverId}) {
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getTransfers(driverId: driverId);
-      return result.fold(
-        (error) => Left(_failure(error)),
-        (json) {
+  Future<Either<Failure, List<TransferAuditRow>>> getTransfers({
+    DriverId? driverId,
+  }) {
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getTransfers(driverId: driverId);
+        return result.fold((error) => Left(_failure(error)), (json) {
           try {
             // A body that is not a list is an error, never an empty record.
             final rows = parseTransferAudit(json);
@@ -630,13 +690,15 @@ class InspectionRepositoryImpl implements InspectionRepository {
               ServerFailure(message: 'transferAuditUnreadable'),
             );
           }
-        },
-      );
-    }, offline: () async {
-      final cached = _cachedTransfers ?? _disk?.loadTransfers(ownerId: driverId?.value);
-      if (cached != null) return Right(cached);
-      return const Right([]);
-    });
+        });
+      },
+      offline: () async {
+        final cached =
+            _cachedTransfers ?? _disk?.loadTransfers(ownerId: driverId?.value);
+        if (cached != null) return Right(cached);
+        return const Right([]);
+      },
+    );
   }
 
   @override

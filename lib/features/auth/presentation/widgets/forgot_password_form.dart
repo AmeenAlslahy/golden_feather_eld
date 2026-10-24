@@ -38,9 +38,7 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
     if (email.isEmpty || !email.contains('@')) {
       setState(() {
         _ok = false;
-        _feedback = _arabic
-            ? 'أدخل بريداً صالحاً.'
-            : 'Enter a valid email.';
+        _feedback = _arabic ? 'أدخل بريداً صالحاً.' : 'Enter a valid email.';
       });
       return;
     }
@@ -48,7 +46,9 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
       _sending = true;
       _feedback = null;
     });
-    final result = await ref.read(authBackendProvider).requestPasswordReset(
+    final result = await ref
+        .read(authBackendProvider)
+        .requestPasswordReset(
           email: email,
           serverUrl: ref.read(localStorageProvider).serverUrl,
         );
@@ -60,8 +60,8 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
           _ok = false;
           _feedback = error is NotFoundError
               ? (_arabic
-                  ? 'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.'
-                  : 'Reset is not available on this server. Contact your fleet manager.')
+                    ? 'الاستعادة غير متاحة على هذا الخادم. تواصل مع مدير الأسطول.'
+                    : 'Reset is not available on this server. Contact your fleet manager.')
               : anyErrorUserMessage(error, loc: AppLocalizations.of(context)!);
         });
       },
@@ -84,9 +84,9 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
       children: [
         Text(
           context.loc.resetPassword,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.md),

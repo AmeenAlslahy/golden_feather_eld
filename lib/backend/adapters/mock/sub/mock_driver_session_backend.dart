@@ -17,8 +17,8 @@ class MockDriverSessionBackend implements DriverSessionBackend {
 
   @override
   Future<Result<RawJson>> getCurrentCoDriver() => throw UnimplementedError(
-        'MockDriverSessionBackend.getCurrentCoDriver — no invented co-driver',
-      );
+    'MockDriverSessionBackend.getCurrentCoDriver — no invented co-driver',
+  );
 
   @override
   Future<Result<List<dynamic>>> getAvailableDrivers() async {
@@ -29,16 +29,14 @@ class MockDriverSessionBackend implements DriverSessionBackend {
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,
-  }) =>
-      throw UnimplementedError('MockDriverSessionBackend.connect — Phase 2');
+  }) => throw UnimplementedError('MockDriverSessionBackend.connect — Phase 2');
 
   @override
   Future<Result<void>> switchPrimaryDriver({
     required DutyStatusAction action,
     required DriverId coDriverId,
     String? reason,
-  }) =>
-      throw UnimplementedError(
-        'MockDriverSessionBackend.switchPrimaryDriver — Phase 2',
-      );
+  }) => throw UnimplementedError(
+    'MockDriverSessionBackend.switchPrimaryDriver — Phase 2',
+  );
 }

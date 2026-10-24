@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -46,7 +47,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
       ),
       builder: (context) => TimePickerSheet(
         initialTime: initial,
@@ -95,16 +96,13 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-        ), // تم تصغير الـ padding الجانبي
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. الرسم البياني الحقيقي (بدلاً من EldCard)
-              const SizedBox(height: AppSpacing.md),
               LogGraph(
                 events: selectedLog?.events ?? [],
               ), // تمرير الأحداث الحقيقية لليوم
@@ -150,65 +148,61 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
               const SizedBox(height: AppSpacing.md),
 
               // 4. المركبة — قابلة للنقر: قائمة اختيار بحوار مستقل.
-              InkWell(
-                onTap: () async {
-                  final picked = await showDialog<Vehicle>(
-                    context: context,
-                    builder: (_) => VehiclePickerDialog(
-                      currentVehicleId: dashboard.vehicleId,
-                    ),
-                  );
-                  if (picked != null && context.mounted) {
-                    if (selectedLog?.today ?? true) {
-                      ref
-                          .read(dashboardDataProvider.notifier)
-                          .updateVehicle(picked);
+              if (widget.isNewEvent)
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDialog<Vehicle>(
+                      context: context,
+                      builder: (_) => VehiclePickerDialog(
+                        currentVehicleId: dashboard.vehicleId,
+                      ),
+                    );
+                    if (picked != null && context.mounted) {
+                      if (selectedLog?.today ?? true) {
+                        ref
+                            .read(dashboardDataProvider.notifier)
+                            .updateVehicle(picked);
+                      }
                     }
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            context.loc.vehicle,
-                            style: context.styles.bodyBold.copyWith(
-                              fontSize: 14,
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              context.loc.vehicle,
+                              style: context.styles.bodyBold,
                             ),
                           ),
-                        ),
-                        Icon(
-                          Icons.edit,
-                          size: 18,
-                          color: context.styles.body.color,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(dashboard.vehicleId, style: context.styles.body),
-                    const SizedBox(height: 8),
-                    Divider(
-                      color: Theme.of(
-                        context,
-                      ).dividerColor.withValues(alpha: 0.5),
-                      height: 1,
-                    ),
-                  ],
+                          Icon(
+                            Icons.edit,
+                            size: AppSpacing.iconMedium,
+                            color: context.styles.body.color,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(dashboard.vehicleId, style: context.styles.body),
+                      const SizedBox(height: AppSpacing.sm),
+                      Divider(
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.5),
+                        height: AppSpacing.dividerHeight,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               const SizedBox(height: AppSpacing.md),
 
               // 5. الموقع (Location) - read only label
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    context.loc.location,
-                    style: context.styles.bodyBold.copyWith(fontSize: 14),
-                  ),
-                  const SizedBox(height: 4),
+                  Text(context.loc.location, style: context.styles.bodyBold),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     formState.location.isEmpty
                         ? ' '
@@ -216,12 +210,12 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                               .location, // empty space to keep height if empty
                     style: context.styles.subtitle,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Divider(
                     color: Theme.of(
                       context,
                     ).dividerColor.withValues(alpha: 0.5),
-                    height: 1,
+                    height: AppSpacing.dividerHeight,
                   ),
                 ],
               ),

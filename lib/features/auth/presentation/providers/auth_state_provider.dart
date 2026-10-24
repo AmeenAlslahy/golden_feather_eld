@@ -70,8 +70,9 @@ class AuthState {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       // النسخة السابقة كانت `(arabicErrorMessage ?? arabicErrorMessage)` —
       // مرجع ذاتي يجعل الحقل لا يمكن تعيينه إطلاقًا.
-      arabicErrorMessage:
-          clearError ? null : (arabicErrorMessage ?? this.arabicErrorMessage),
+      arabicErrorMessage: clearError
+          ? null
+          : (arabicErrorMessage ?? this.arabicErrorMessage),
       sessionEpoch: sessionEpoch ?? this.sessionEpoch,
       transitioning: transitioning ?? this.transitioning,
       sessionId: clearSessionId ? null : (sessionId ?? this.sessionId),
@@ -98,12 +99,13 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
     // من الجيل الحالي يُتجاهل.
     if (requestEpoch != SessionEpoch.current) {
       AppLogger.warning(
-          'Ignoring stale 401 from epoch $requestEpoch (current ${SessionEpoch.current})');
+        'Ignoring stale 401 from epoch $requestEpoch (current ${SessionEpoch.current})',
+      );
       return;
     }
     notifier.forceLogout();
   });
-  
+
   ref.onDispose(() {
     subscription.cancel();
   });
@@ -154,10 +156,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required LoginUseCase loginUseCase,
     required CheckAuthStatusUseCase checkAuthStatusUseCase,
     required LogoutUseCase logoutUseCase,
-  })  : _loginUseCase = loginUseCase,
-        _checkAuthStatusUseCase = checkAuthStatusUseCase,
-        _logoutUseCase = logoutUseCase,
-        super(const AuthState());
+  }) : _loginUseCase = loginUseCase,
+       _checkAuthStatusUseCase = checkAuthStatusUseCase,
+       _logoutUseCase = logoutUseCase,
+       super(const AuthState());
 
   /// استخراج دالة مساعدة لمعالجة الأخطاء وتقليل التكرار
   void _setErrorState(Failure failure, String logPrefix) {
@@ -178,24 +180,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final currentOpId = ++_operationId;
     _isOperationInProgress = true;
     state = state.copyWith(
-        status: AuthStatus.loading, clearError: true, transitioning: true);
+      status: AuthStatus.loading,
+      clearError: true,
+      transitioning: true,
+    );
 
     try {
       final sessionResult = await _checkAuthStatusUseCase();
       if (currentOpId != _operationId) return;
 
-      sessionResult.match((failure) {
-        state = AuthState(
-          status: AuthStatus.unauthenticated,
-          sessionEpoch: state.sessionEpoch,
-        );
-      }, (user) {
-        state = AuthState(
-          status: AuthStatus.authenticated,
-          user: user,
-          sessionEpoch: state.sessionEpoch,
-        );
-      });
+      sessionResult.match(
+        (failure) {
+          state = AuthState(
+            status: AuthStatus.unauthenticated,
+            sessionEpoch: state.sessionEpoch,
+          );
+        },
+        (user) {
+          state = AuthState(
+            status: AuthStatus.authenticated,
+            user: user,
+            sessionEpoch: state.sessionEpoch,
+          );
+        },
+      );
     } catch (e) {
       if (currentOpId == _operationId) {
         state = AuthState(
@@ -226,11 +234,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _isOperationInProgress = true;
 
     state = state.copyWith(
-        status: AuthStatus.loading,
-        clearError: true,
-        clearUser: true,
-        clearSessionId: true,
-        transitioning: true);
+      status: AuthStatus.loading,
+      clearError: true,
+      clearUser: true,
+      clearSessionId: true,
+      transitioning: true,
+    );
 
     try {
       // استقرار أي clear(A) معلق قبل إنشاء جلسة B.

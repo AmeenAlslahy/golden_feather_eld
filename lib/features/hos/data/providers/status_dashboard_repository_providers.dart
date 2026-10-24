@@ -29,7 +29,9 @@ DateTime _trustedNowUtc(Ref ref) {
   return DateTime.now().toUtc();
 }
 
-final statusDashboardRepositoryProvider = Provider<StatusDashboardRepository>((ref) {
+final statusDashboardRepositoryProvider = Provider<StatusDashboardRepository>((
+  ref,
+) {
   return StatusDashboardRepositoryImpl(
     ref.watch(statusDashboardBackendProvider),
     ref.watch(networkInfoProvider),

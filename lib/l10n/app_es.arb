@@ -673,6 +673,7 @@
   "pendingDays": "Pending {days} día(s)",
   "enterTrailerNumber": "Introduzca el número de remolque.",
   "trailerNumberFormatError": "El número de remolque solo puede contener letras, números, espacios y - _ # (máx. 50).",
+  "trailerNumberTooLong": "El número de remolque es demasiado largo (máx. 50).",
   "enterDocumentNumber": "Introduzca el número de documento.",
   "documentNumberTooLong": "El número de documento de envío es demasiado largo (max 100).",
   "oneDocumentAtATime": "Introduzca un documento a la vez (sin coma).",
@@ -785,6 +786,7 @@
   "dvirDriverSessionMissing": "Falta la sesión del conductor. Inicie sesión nuevamente antes de firmar el informe.",
   "dvirVehicleIdMissing": "El vehículo está desaparecido. Seleccione un vehículo antes de firmar.",
   "dvirPrevNoServerId": "El informe anterior no tiene id servidor y no puede ser revisado.",
+  "dvirPrevUnavailable": "No se pudo verificar la inspección anterior. Conéctese a Internet o abra el historial de DVIR antes de firmar.",
   "dvirPreviousInspection": "Inspección anterior",
   "dvirReviewBeforeDriving": "Revisar y firmar el informe anterior antes de conducir.",
   "dvirRecordedDefects": "Defectos registrados:",
@@ -1131,5 +1133,9 @@
   "noDefectsReported": "No se reportaron defectos",
   "statusDetected": "DETECTADO",
   "invalidOdometerReading": "Lectura de odómetro no válida",
-  "statusUnknown": "Desconocido"
+  "statusUnknown": "Desconocido",
+  "createdAt": "Creado",
+  "zoomIn": "Acercar",
+  "zoomOut": "Alejar",
+  "fitWidth": "Ajustar al ancho (100%)"
 }

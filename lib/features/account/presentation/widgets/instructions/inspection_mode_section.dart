@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_decorations.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -20,19 +19,19 @@ class InspectionModeSection extends StatelessWidget {
 
     return Container(
       decoration: AppDecorations.band(context.inspectionBand),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
       child: InstructionsSplitRow(
         visual: Container(
           height: _phoneImageHeight,
           decoration: AppDecorations.solid(
-            AppColors.white,
+            context.onBand,
             radius: AppRadius.sheet,
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.smartphone,
               size: _phoneIconSize,
-              color: AppColors.placeholderGrey,
+              color: context.textSecondary,
             ),
           ),
         ),
@@ -44,18 +43,10 @@ class InspectionModeSection extends StatelessWidget {
               style: context.styles.onBandTitle,
             ),
             const SizedBox(height: AppSpacing.md),
-            InstructionsChecklistItem(
-              text: loc.tapDotInspectionInTheMenuPress,
-            ),
-            InstructionsChecklistItem(
-              text: loc.anInspectorMayPressArrowsToVie,
-            ),
-            InstructionsChecklistItem(
-              text: loc.anInspectorMayViewTheLogFormTh,
-            ),
-            InstructionsChecklistItem(
-              text: loc.theOfficerCannotLeaveInspectio,
-            ),
+            InstructionsChecklistItem(text: loc.tapDotInspectionInTheMenuPress),
+            InstructionsChecklistItem(text: loc.anInspectorMayPressArrowsToVie),
+            InstructionsChecklistItem(text: loc.anInspectorMayViewTheLogFormTh),
+            InstructionsChecklistItem(text: loc.theOfficerCannotLeaveInspectio),
           ],
         ),
       ),

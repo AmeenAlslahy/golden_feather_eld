@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_styles.dart';
 
@@ -61,16 +62,10 @@ class _AppButtonState extends State<AppButton> {
   Color _base(ThemeData theme) {
     if (_isOutlined) return Colors.transparent;
     return switch (widget.type) {
-      EldButtonType.primary ||
-      EldButtonType.send =>
-        theme.colorScheme.primary,
-      EldButtonType.connect ||
-      EldButtonType.agree =>
-        AppColors.successGreen,
-      EldButtonType.danger =>
-        theme.colorScheme.error,
-      _ =>
-        theme.colorScheme.primary,
+      EldButtonType.primary || EldButtonType.send => theme.colorScheme.primary,
+      EldButtonType.connect || EldButtonType.agree => AppColors.successText,
+      EldButtonType.danger => AppColors.dangerText,
+      _ => theme.colorScheme.primary,
     };
   }
 
@@ -79,35 +74,34 @@ class _AppButtonState extends State<AppButton> {
       return theme.colorScheme.onSurface.withValues(alpha: 0.38);
     }
     if (_isOutlined) {
-      return AppColors.primaryGold;
+      return theme.brightness == Brightness.dark
+          ? AppColors.primaryGold
+          : AppColors.goldDeep;
     }
     return switch (widget.type) {
       EldButtonType.primary ||
-      EldButtonType.send =>
-        theme.colorScheme.onPrimary,
-      EldButtonType.connect ||
-      EldButtonType.agree =>
-        Colors.white,
-      EldButtonType.danger =>
-        theme.colorScheme.onError,
-      _ =>
-        theme.colorScheme.onPrimary,
+      EldButtonType.send => theme.colorScheme.onPrimary,
+      EldButtonType.connect || EldButtonType.agree => AppColors.white,
+      EldButtonType.danger => AppColors.white,
+      _ => theme.colorScheme.onPrimary,
     };
   }
 
   OutlinedBorder _shape(ThemeData theme) {
     if (_isOutlined) {
       final borderColor = _enabled
-          ? AppColors.primaryGold
+          ? (theme.brightness == Brightness.dark
+                ? AppColors.primaryGold
+                : AppColors.goldDeep)
           : theme.disabledColor.withValues(alpha: 0.35);
-      return StadiumBorder(
-        side: BorderSide(
-          color: borderColor,
-          width: 1.5,
-        ),
+      return RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        side: BorderSide(color: borderColor, width: 1.5),
       );
     }
-    return const StadiumBorder();
+    return RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.button),
+    );
   }
 
   @override
@@ -115,17 +109,17 @@ class _AppButtonState extends State<AppButton> {
     final theme = Theme.of(context);
     final base = !_enabled
         ? (_isOutlined
-            ? Colors.transparent
-            : (widget.type == EldButtonType.primary 
-                ? theme.colorScheme.primary.withValues(alpha: 0.4)
-                : theme.colorScheme.onSurface.withValues(alpha: 0.12)))
+              ? Colors.transparent
+              : (widget.type == EldButtonType.primary
+                    ? theme.colorScheme.primary.withValues(alpha: 0.4)
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.12)))
         : _base(theme);
 
     final overlay = _isOutlined
         ? AppColors.primaryGold.withValues(alpha: 0.12)
         : (widget.type == EldButtonType.danger
-            ? Colors.white.withValues(alpha: 0.28)
-            : Colors.black.withValues(alpha: 0.24));
+              ? AppColors.white.withValues(alpha: 0.28)
+              : AppColors.black.withValues(alpha: 0.24));
 
     final color = _pressed && _enabled
         ? (_isOutlined ? overlay : Color.alphaBlend(overlay, base))
@@ -133,7 +127,9 @@ class _AppButtonState extends State<AppButton> {
 
     return SizedBox(
       width: widget.isFullWidth ? double.infinity : null,
-      height: AppSpacing.buttonHeight,
+      height: _isOutlined
+          ? AppSpacing.secondaryButtonHeight
+          : AppSpacing.buttonHeight,
       child: Material(
         color: color,
         elevation: 0,
@@ -153,8 +149,8 @@ class _AppButtonState extends State<AppButton> {
             alignment: Alignment.center,
             child: widget.isLoading
                 ? SizedBox(
-                    width: 22,
-                    height: 22,
+                    width: AppSpacing.iconMedium,
+                    height: AppSpacing.iconMedium,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: _foreground(theme),
@@ -170,25 +166,38 @@ class _AppButtonState extends State<AppButton> {
   Widget _child(ThemeData theme) {
     final style = theme.extension<AppStyles>()!.button.copyWith(
       color: _foreground(theme),
-      fontWeight: FontWeight.w700,
     );
     if (widget.icon != null) {
-      return FittedBox(
-        fit: BoxFit.scaleDown,
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(widget.icon, size: 20, color: _foreground(theme)),
             const SizedBox(width: AppSpacing.sm),
-            Text(widget.label, style: style),
+            Flexible(
+              child: Text(
+                widget.label,
+                style: style,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
           ],
         ),
       );
     }
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Text(widget.label, style: style),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Text(
+        widget.label,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }
-

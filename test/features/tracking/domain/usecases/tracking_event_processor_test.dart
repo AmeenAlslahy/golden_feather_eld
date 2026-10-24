@@ -4,7 +4,7 @@ import 'package:golden_feather_eld/features/tracking/domain/entities/tracking_ev
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
 import 'package:golden_feather_eld/features/tracking/data/datasources/tracking_data_source.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/core/domain/entities/connection_status.dart';
 
 class MockTrackingDataSource implements TrackingDataSource {
   final _eventsController = StreamController<TrackingEvent>.broadcast();
@@ -14,7 +14,8 @@ class MockTrackingDataSource implements TrackingDataSource {
   Stream<TrackingEvent> get events => _eventsController.stream;
 
   @override
-  Stream<ConnectionStatus> get connectionStatusStream => _connectionController.stream;
+  Stream<ConnectionStatus> get connectionStatusStream =>
+      _connectionController.stream;
 
   @override
   Future<void> start() async {}
@@ -36,7 +37,9 @@ void main() {
   group('TrackingEventProcessor', () {
     test('does not fabricate odometer or engine hours', () async {
       final mockDataSource = MockTrackingDataSource();
-      final processor = TrackingEventProcessor(trackingDataSource: mockDataSource);
+      final processor = TrackingEventProcessor(
+        trackingDataSource: mockDataSource,
+      );
 
       processor.startProcessing();
 

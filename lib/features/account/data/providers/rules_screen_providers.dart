@@ -21,5 +21,6 @@ final updateRulesUseCaseProvider = Provider<UpdateRulesUseCase>((ref) {
   return UpdateRulesUseCase(
     ref.watch(rulesScreenBackendProvider),
     ref.watch(localStorageProvider),
+    ref.watch(rulesScreenLocalCacheProvider),
   );
 });

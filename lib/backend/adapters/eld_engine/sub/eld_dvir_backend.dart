@@ -31,21 +31,27 @@ class EldDvirBackend implements DvirBackend {
         'limit': limit,
         'offset': offset,
       },
-      parser: (data) => data is List ? {'data': data} : (data is Map<String, dynamic> ? data : {}),
+      parser: (data) => data is List
+          ? {'data': data}
+          : (data is Map<String, dynamic> ? data : {}),
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
 
   Future<Result<void>> _accepted(Result<dynamic> res) {
-    return Future.value(res.fold(
-      err,
-      (response) => response.isSuccess
-          ? ok(null)
-          : err(ServerError(
-              code: 'eld.request_failed',
-              context: {'message': response.message},
-            )),
-    ));
+    return Future.value(
+      res.fold(
+        err,
+        (response) => response.isSuccess
+            ? ok(null)
+            : err(
+                ServerError(
+                  code: 'eld.request_failed',
+                  context: {'message': response.message},
+                ),
+              ),
+      ),
+    );
   }
 
   @override
@@ -61,7 +67,8 @@ class EldDvirBackend implements DvirBackend {
       EldEndpoints.dvir,
       queryParameters: query.isNotEmpty ? query : null,
       data: report,
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return _accepted(res);
@@ -76,8 +83,6 @@ class EldDvirBackend implements DvirBackend {
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
 
-
-
   @override
   Future<Result<void>> review({
     required DvirId dvirId,
@@ -87,7 +92,8 @@ class EldDvirBackend implements DvirBackend {
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.dvirNextDriverReview(dvirId.value),
       data: review,
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return _accepted(res);

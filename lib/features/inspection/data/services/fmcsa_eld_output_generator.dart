@@ -34,36 +34,42 @@ class FmcsaEldOutputGenerator {
     final firstLog = logs.values.isNotEmpty ? logs.values.first : null;
     final firstCycle = cycleDays.isNotEmpty ? cycleDays.first : null;
 
-    final carrierName = screen?.carrierName ??
+    final carrierName =
+        screen?.carrierName ??
         firstLog?.carrierName ??
         firstCycle?.carrierName ??
         fallbackCarrier ??
         '';
 
-    final usdot = screen?.usdotNumber ??
+    final usdot =
+        screen?.usdotNumber ??
         firstLog?.usdotNumber ??
         firstCycle?.usdotNumber ??
         fallbackUsdot ??
         '';
 
-    final eldId = screen?.eldIdentifier ??
+    final eldId =
+        screen?.eldIdentifier ??
         firstLog?.eldIdentifier ??
         firstCycle?.eldIdentifier ??
         '';
 
-    final eldRegId = screen?.eldRegistrationId ??
+    final eldRegId =
+        screen?.eldRegistrationId ??
         firstLog?.eldRegistrationId ??
         firstCycle?.eldRegistrationId ??
         '';
 
-    final vehicleNumber = firstLog?.vehicleNumber ??
+    final vehicleNumber =
+        firstLog?.vehicleNumber ??
         firstCycle?.vehicleNumber ??
         fallbackVehicleId ??
         '';
 
     final vin = firstLog?.vin ?? firstCycle?.vin ?? '';
 
-    final fullDriverName = screen?.driverName ??
+    final fullDriverName =
+        screen?.driverName ??
         firstLog?.driverName ??
         firstCycle?.driverName ??
         fallbackDriverName ??
@@ -73,7 +79,8 @@ class FmcsaEldOutputGenerator {
     final firstName = nameParts.first;
     final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-    final driverIdStr = screen?.driverId.value.toString() ??
+    final driverIdStr =
+        screen?.driverId.value.toString() ??
         firstLog?.driverId.value.toString() ??
         firstCycle?.driverId.value.toString() ??
         fallbackDriverId ??
@@ -85,7 +92,9 @@ class FmcsaEldOutputGenerator {
     final coDriverName = firstLog?.coDriverName ?? '';
     final coDriverParts = coDriverName.trim().split(' ');
     final coFirstName = coDriverParts.isNotEmpty ? coDriverParts.first : '';
-    final coLastName = coDriverParts.length > 1 ? coDriverParts.sublist(1).join(' ') : '';
+    final coLastName = coDriverParts.length > 1
+        ? coDriverParts.sublist(1).join(' ')
+        : '';
     final coDriverId = firstLog?.coDriverId?.toString() ?? '';
 
     final buffer = StringBuffer();
@@ -104,15 +113,14 @@ class FmcsaEldOutputGenerator {
       '2,1,1,1,"$lastName","$firstName",$driverIdStr,"$licenseNumber",$licenseState',
     );
     if (coDriverId.isNotEmpty) {
-      buffer.writeln(
-        '2,2,1,2,"$coLastName","$coFirstName",$coDriverId,"",',
-      );
+      buffer.writeln('2,2,1,2,"$coLastName","$coFirstName",$coDriverId,"",');
     }
 
     // ─── 3. CMV Engine Power-Up and Shut Down (Line Type 3) ─────────────────
     // 3,SequenceNumber,RecordStatus,RecordType,EventCode,EventDate,EventTime,TotalVehicleMiles,TotalEngineHours,Lat,Lon
     var seq = 1;
-    final startOdo = firstLog?.startOdometerKm ?? firstCycle?.startOdometerKm ?? 0.0;
+    final startOdo =
+        firstLog?.startOdometerKm ?? firstCycle?.startOdometerKm ?? 0.0;
     final engineHrs = firstLog?.engineHours ?? firstCycle?.engineHours ?? 0.0;
     final initialCoords = _extractCoordinates(firstLog?.displayLocation ?? '');
     buffer.writeln(
@@ -151,8 +159,14 @@ class FmcsaEldOutputGenerator {
     }
 
     // ─── 6. Malfunctions and Diagnostic Events (Line Type 6) ────────────────
-    final malfunctions = firstLog?.activeDeviceMalfunctions ?? firstCycle?.activeDeviceMalfunctions ?? [];
-    final diagnostics = firstLog?.activeDataDiagnostics ?? firstCycle?.activeDataDiagnostics ?? [];
+    final malfunctions =
+        firstLog?.activeDeviceMalfunctions ??
+        firstCycle?.activeDeviceMalfunctions ??
+        [];
+    final diagnostics =
+        firstLog?.activeDataDiagnostics ??
+        firstCycle?.activeDataDiagnostics ??
+        [];
 
     for (final m in malfunctions) {
       buffer.writeln('6,$seq,1,1,$m,$fileDate,$fileTime');
@@ -164,12 +178,15 @@ class FmcsaEldOutputGenerator {
     }
 
     // ─── 7. File Data Check Line (Line Type 7) ──────────────────────────────
-    final totalLines = buffer.toString().split('\n').where((l) => l.trim().isNotEmpty).length + 1;
+    final totalLines =
+        buffer.toString().split('\n').where((l) => l.trim().isNotEmpty).length +
+        1;
     buffer.writeln('7,$totalLines,0000');
 
     // Write file to device storage
     final outputDirectory = await getApplicationDocumentsDirectory();
-    final fileName = 'FMCSA_ELD_${vehicleNumber}_${now.millisecondsSinceEpoch}.csv';
+    final fileName =
+        'FMCSA_ELD_${vehicleNumber}_${now.millisecondsSinceEpoch}.csv';
     final file = File('${outputDirectory.path}/$fileName');
     await file.writeAsString(buffer.toString());
 

@@ -61,12 +61,18 @@ class SQLiteOfflineQueue implements OfflineQueue {
   /// وقصّ الحروف الميتة (`failedAt`). إضافية بالكامل: `IF NOT EXISTS`
   /// تجعل الترقية قابلة للاستئناف ولا تمس أي صف.
   static Future<void> _createIndexes(DatabaseExecutor db) async {
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_pending_ready '
-        'ON $_tableName(priority ASC, createdAt ASC)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_quarantine_state '
-        'ON $_quarantineTable(state, quarantinedAt ASC)');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_dead_letters_failedAt '
-        'ON dead_letters(failedAt DESC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_pending_ready '
+      'ON $_tableName(priority ASC, createdAt ASC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_quarantine_state '
+      'ON $_quarantineTable(state, quarantinedAt ASC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_dead_letters_failedAt '
+      'ON dead_letters(failedAt DESC)',
+    );
   }
 
   /// P1.1 — durable duty-event journal (evidence layer).
@@ -94,8 +100,10 @@ class SQLiteOfflineQueue implements OfflineQueue {
         created_at INTEGER NOT NULL
       )
     ''');
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_journal_owner_time '
-        'ON $journalTable(owner_driver_id, event_time_utc ASC, seq ASC)');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_journal_owner_time '
+      'ON $journalTable(owner_driver_id, event_time_utc ASC, seq ASC)',
+    );
   }
 
   Future<Database> _initDB() async {
@@ -165,14 +173,14 @@ class SQLiteOfflineQueue implements OfflineQueue {
   /// Row shape shared by the standalone enqueue path and the atomic
   /// journal+queue transaction in [SqliteDutyEventJournal].
   static Map<String, Object?> pendingRow(PendingEvent event) => {
-        'id': event.id,
-        'type': event.type,
-        'payload': jsonEncode(event.payload),
-        'createdAt': event.createdAt.millisecondsSinceEpoch,
-        'priority': event.priority.index,
-        'retryCount': event.retryCount,
-        'nextRetryAt': event.nextRetryAt?.millisecondsSinceEpoch,
-      };
+    'id': event.id,
+    'type': event.type,
+    'payload': jsonEncode(event.payload),
+    'createdAt': event.createdAt.millisecondsSinceEpoch,
+    'priority': event.priority.index,
+    'retryCount': event.retryCount,
+    'nextRetryAt': event.nextRetryAt?.millisecondsSinceEpoch,
+  };
 
   /// Insert/REPLACE a queue row inside an existing transaction or database.
   ///
@@ -234,33 +242,21 @@ class SQLiteOfflineQueue implements OfflineQueue {
   @override
   Future<void> removeEvent(String eventId) async {
     final db = await database;
-    await db.delete(
-      _tableName,
-      where: 'id = ?',
-      whereArgs: [eventId],
-    );
+    await db.delete(_tableName, where: 'id = ?', whereArgs: [eventId]);
   }
 
   @override
   Future<void> moveToDeadLetter(PendingEvent event) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn.delete(
-        _tableName,
-        where: 'id = ?',
-        whereArgs: [event.id],
-      );
-      await txn.insert(
-        'dead_letters',
-        {
-          'id': event.id,
-          'type': event.type,
-          'payload': jsonEncode(event.payload),
-          'createdAt': event.createdAt.millisecondsSinceEpoch,
-          'failedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await txn.delete(_tableName, where: 'id = ?', whereArgs: [event.id]);
+      await txn.insert('dead_letters', {
+        'id': event.id,
+        'type': event.type,
+        'payload': jsonEncode(event.payload),
+        'createdAt': event.createdAt.millisecondsSinceEpoch,
+        'failedAt': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // 🧹 حصر سجلات الرفض النهائي.
       //
@@ -323,11 +319,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
     // crash في المنتصف يتراجع بالكامل (لا فقد ولا تكرار).
     // REPLACE يجعل النقل المتكرر idempotent (صف واحد دائماً).
     await db.transaction((txn) async {
-      await txn.delete(
-        _tableName,
-        where: 'id = ?',
-        whereArgs: [event.id],
-      );
+      await txn.delete(_tableName, where: 'id = ?', whereArgs: [event.id]);
       await txn.insert(
         _quarantineTable,
         _parkRow(
@@ -354,8 +346,12 @@ class SQLiteOfflineQueue implements OfflineQueue {
       state != StoredEventState.quarantinedUnknownOwner,
       'use moveToQuarantine for unknown-owner parking',
     );
-    return _park(event,
-        state: state, reason: reason, ownerDriverId: ownerDriverId);
+    return _park(
+      event,
+      state: state,
+      reason: reason,
+      ownerDriverId: ownerDriverId,
+    );
   }
 
   @override
@@ -378,8 +374,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
         id: map['id'] as String,
         type: map['type'] as String,
         payload: jsonDecode(map['payload'] as String) as Map<String, dynamic>,
-        createdAt:
-            DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
         priority: SyncPriority.values[map['priority'] as int],
         retryCount: map['retryCount'] as int,
       ),
@@ -388,8 +383,9 @@ class SQLiteOfflineQueue implements OfflineQueue {
         orElse: () => StoredEventState.quarantinedUnknownOwner,
       ),
       reason: (map['reason'] as String?) ?? '',
-      quarantinedAt:
-          DateTime.fromMillisecondsSinceEpoch(map['quarantinedAt'] as int),
+      quarantinedAt: DateTime.fromMillisecondsSinceEpoch(
+        map['quarantinedAt'] as int,
+      ),
       ownerDriverId: map['ownerDriverId'] as int?,
       proof: OwnershipProof.values.firstWhere(
         (p) => p.name == (map['proof'] as String? ?? 'none'),
@@ -416,21 +412,17 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
   @override
   Future<List<QuarantineRecord>> getDeferred({int limit = 50}) {
-    return _parked(
-      const [
-        StoredEventState.deferredOwnerMismatch,
-        StoredEventState.deferredUnauthenticated,
-      ],
-      limit: limit,
-    );
+    return _parked(const [
+      StoredEventState.deferredOwnerMismatch,
+      StoredEventState.deferredUnauthenticated,
+    ], limit: limit);
   }
 
   @override
   Future<List<QuarantineRecord>> getQuarantined({int limit = 50}) {
-    return _parked(
-      const [StoredEventState.quarantinedUnknownOwner],
-      limit: limit,
-    );
+    return _parked(const [
+      StoredEventState.quarantinedUnknownOwner,
+    ], limit: limit);
   }
 
   @override
@@ -447,24 +439,16 @@ class SQLiteOfflineQueue implements OfflineQueue {
       );
       if (rows.isEmpty) return;
       final record = _toRecord(rows.first);
-      await txn.insert(
-        _tableName,
-        {
-          'id': record.event.id,
-          'type': record.event.type,
-          'payload': jsonEncode(record.event.payload),
-          'createdAt': record.event.createdAt.millisecondsSinceEpoch,
-          'priority': record.event.priority.index,
-          'retryCount': record.event.retryCount,
-          'nextRetryAt': null,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-      await txn.delete(
-        _quarantineTable,
-        where: 'id = ?',
-        whereArgs: [eventId],
-      );
+      await txn.insert(_tableName, {
+        'id': record.event.id,
+        'type': record.event.type,
+        'payload': jsonEncode(record.event.payload),
+        'createdAt': record.event.createdAt.millisecondsSinceEpoch,
+        'priority': record.event.priority.index,
+        'retryCount': record.event.retryCount,
+        'nextRetryAt': null,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await txn.delete(_quarantineTable, where: 'id = ?', whereArgs: [eventId]);
     });
   }
 }

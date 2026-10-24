@@ -8,9 +8,11 @@ import '../../application/models/rules_screen_model.dart';
 import '../../data/providers/rules_screen_providers.dart';
 
 /// Provides the current state of the Rules Screen read projection.
-final rulesScreenProvider = FutureProvider.autoDispose<RulesScreenModel>((ref) async {
+final rulesScreenProvider = FutureProvider.autoDispose<RulesScreenModel>((
+  ref,
+) async {
   cacheFor(ref, const Duration(minutes: 5));
-  final user = ref.watch(authStateProvider).user;
+  final user = ref.watch(authStateProvider.select((s) => s.user));
   if (user == null) {
     throw const SessionExpiredError();
   }

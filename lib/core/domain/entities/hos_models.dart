@@ -87,8 +87,10 @@ class EldEvent {
       engineHours: (map['engineHours'] as num?)?.toDouble(),
       fromEcm: map['fromEcm'] == true,
       timestamp: map['timestamp'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int,
-              isUtc: true)
+          ? DateTime.fromMillisecondsSinceEpoch(
+              map['timestamp'] as int,
+              isUtc: true,
+            )
           : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
   }
@@ -170,11 +172,7 @@ enum HosAlertType {
 }
 
 /// مستويات الخطورة
-enum AlertSeverity {
-  info,
-  warning,
-  critical,
-}
+enum AlertSeverity { info, warning, critical }
 
 /// تنبيه
 class HosAlert extends Equatable {
@@ -224,16 +222,16 @@ class HosStatusUpdate extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentStatus,
-        limits,
-        alerts,
-        violations,
-        remainingDriveMinutes,
-        remainingShiftMinutes,
-        remainingCycleHours,
-        breakRequired,
-        breakRemainingMinutes,
-      ];
+    currentStatus,
+    limits,
+    alerts,
+    violations,
+    remainingDriveMinutes,
+    remainingShiftMinutes,
+    remainingCycleHours,
+    breakRequired,
+    breakRemainingMinutes,
+  ];
 }
 
 // ==========================================
@@ -252,12 +250,7 @@ enum HosViolationType {
 }
 
 /// مستوى الانتهاك
-enum ViolationLevel {
-  minor,
-  medium,
-  high,
-  critical;
-}
+enum ViolationLevel { minor, medium, high, critical }
 
 /// نموذج انتهاك
 class HosViolation extends Equatable {
@@ -309,12 +302,11 @@ class HosLimits extends Equatable {
 
   @override
   List<Object?> get props => [
-        remainingDriveMinutes,
-        remainingShiftMinutes,
-        remainingCycleHours,
-        breakRequired,
-        breakRemainingMinutes,
-        timeUntilBreakMinutes,
-      ];
+    remainingDriveMinutes,
+    remainingShiftMinutes,
+    remainingCycleHours,
+    breakRequired,
+    breakRemainingMinutes,
+    timeUntilBreakMinutes,
+  ];
 }
-

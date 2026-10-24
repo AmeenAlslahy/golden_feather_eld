@@ -55,7 +55,10 @@ String anyErrorUserMessage(Object error, {required AppLocalizations loc}) {
 
 String appErrorUserMessage(AppError error, {required AppLocalizations loc}) {
   // 🔴 نثر الخادم يتقدّم على كل شيء: هو التفسير الأدقّ والأقلّ التباساً.
-  for (final raw in [error.context?['serverMessage'], error.context?['message']]) {
+  for (final raw in [
+    error.context?['serverMessage'],
+    error.context?['message'],
+  ]) {
     final prose = _serverProseOrNull(raw is String ? raw : null);
     if (prose != null) return prose;
     if (raw is String && raw.trim().isNotEmpty) {
@@ -196,8 +199,7 @@ bool _looksLikeTechnicalCode(String text) {
     return true;
   }
   // Single token with no spaces like "badRequest", "validationError", "UNAUTHORIZED"
-  if (!trimmed.contains(' ') &&
-      RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmed)) {
+  if (!trimmed.contains(' ') && RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmed)) {
     return true;
   }
   return false;
@@ -241,8 +243,9 @@ bool _containsPii(String text) {
   // Phone (7+ digits allowing separators)
   if (RegExp(r'\+?\d[\d\s\-\(\)]{6,}').hasMatch(text)) return true;
   // UUID
-  if (RegExp(r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}')
-      .hasMatch(text)) {
+  if (RegExp(
+    r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
+  ).hasMatch(text)) {
     return true;
   }
   // Long digit run (IDs, tokens)

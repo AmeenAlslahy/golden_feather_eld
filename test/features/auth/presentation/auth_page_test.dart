@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/sub/mock_auth_backend.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
-import 'package:golden_feather_eld/core/di/app_providers.dart';
+import 'package:golden_feather_eld/app/di/app_providers.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
@@ -86,7 +86,9 @@ void main() {
 
   Finder loginButton() => find.widgetWithText(AppButton, 'Login');
 
-  testWidgets('empty fields are refused locally; nothing is sent', (tester) async {
+  testWidgets('empty fields are refused locally; nothing is sent', (
+    tester,
+  ) async {
     await pump(tester);
 
     await tester.ensureVisible(loginButton());
@@ -95,52 +97,67 @@ void main() {
 
     expect(find.text('Email is required'), findsOneWidget);
     expect(find.text('Password is required'), findsOneWidget);
-    verifyNever(() => repo.login(
-          identifier: any(named: 'identifier'),
-          password: any(named: 'password'),
-        ));
+    verifyNever(
+      () => repo.login(
+        identifier: any(named: 'identifier'),
+        password: any(named: 'password'),
+      ),
+    );
   });
 
-  testWidgets('valid credentials → repository login with trimmed identifier → authenticated',
-      (tester) async {
-    when(() => repo.login(
+  testWidgets(
+    'valid credentials → repository login with trimmed identifier → authenticated',
+    (tester) async {
+      when(
+        () => repo.login(
           identifier: any(named: 'identifier'),
           password: any(named: 'password'),
-        )).thenAnswer((_) async => Right(User(
-          id: '106',
-          username: 'driver106',
-          email: 'driver106@example.com',
-          fullName: 'Driver One Zero Six',
-          role: UserRole.fieldWorker,
-          createdAt: DateTime(2026, 1, 1),
-        )));
-    await pump(tester);
+        ),
+      ).thenAnswer(
+        (_) async => Right(
+          User(
+            id: '106',
+            username: 'driver106',
+            email: 'driver106@example.com',
+            fullName: 'Driver One Zero Six',
+            role: UserRole.fieldWorker,
+            createdAt: DateTime(2026, 1, 1),
+          ),
+        ),
+      );
+      await pump(tester);
 
-    await tester.enterText(find.byType(TextFormField).at(0), '  driver106  ');
-    await tester.enterText(find.byType(TextFormField).at(1), 'secret');
-    await tester.ensureVisible(loginButton());
-    await tester.tap(loginButton());
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(0), '  driver106  ');
+      await tester.enterText(find.byType(TextFormField).at(1), 'secret');
+      await tester.ensureVisible(loginButton());
+      await tester.tap(loginButton());
+      await tester.pumpAndSettle();
 
-    final captured = verify(() => repo.login(
+      final captured = verify(
+        () => repo.login(
           identifier: captureAny(named: 'identifier'),
           password: captureAny(named: 'password'),
-        )).captured;
-    expect(captured, ['driver106', 'secret']);
+        ),
+      ).captured;
+      expect(captured, ['driver106', 'secret']);
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(AuthPage)),
-    );
-    expect(container.read(currentDriverIdProvider), 106);
-  });
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AuthPage)),
+      );
+      expect(container.read(currentDriverIdProvider), 106);
+    },
+  );
 
-  testWidgets('wrong password → localized refusal; backend code never shown',
-      (tester) async {
+  testWidgets('wrong password → localized refusal; backend code never shown', (
+    tester,
+  ) async {
     var calls = 0;
-    when(() => repo.login(
-          identifier: any(named: 'identifier'),
-          password: any(named: 'password'),
-        )).thenAnswer((_) async {
+    when(
+      () => repo.login(
+        identifier: any(named: 'identifier'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer((_) async {
       calls++;
       return calls == 1
           ? const Left(InvalidCredentialsFailure())
@@ -159,42 +176,52 @@ void main() {
     await tester.tap(loginButton());
     await tester.pumpAndSettle();
     expect(find.text('network.connectionFailed'), findsNothing);
-    expect(find.text('No internet connection. Check the network and try again.'),
-        findsOneWidget);
-  });
-
-  testWidgets('Forgot Password → validates email → sends reset → back to login',
-      (tester) async {
-    await pump(tester);
-
-    await tester.tap(find.text('Forgot Password?'));
-    await tester.pumpAndSettle();
-    expect(find.text('Reset Password'), findsOneWidget);
-
-    final send = find.widgetWithText(AppButton, 'Send');
-    await tester.enterText(find.byType(TextField).first, 'not-an-email');
-    await tester.tap(send);
-    await tester.pumpAndSettle();
-    expect(find.text('Enter a valid email.'), findsOneWidget);
-    expect(authBackend.calls, isEmpty);
-
-    await tester.enterText(find.byType(TextField).first, 'driver106@example.com');
-    await tester.tap(send);
-    await tester.pumpAndSettle();
-    expect(authBackend.calls, ['driver106@example.com@https://snsoft.cloud']);
     expect(
-      find.text('If the email is registered, reset instructions will be sent.'),
+      find.text('No internet connection. Check the network and try again.'),
       findsOneWidget,
     );
-
-    await tester.ensureVisible(find.text('Back to Login'));
-    await tester.tap(find.text('Back to Login'));
-    await tester.pumpAndSettle();
-    expect(loginButton(), findsOneWidget);
   });
 
-  testWidgets('reset not offered by the server → plain guidance, no dump',
-      (tester) async {
+  testWidgets(
+    'Forgot Password → validates email → sends reset → back to login',
+    (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.text('Forgot Password?'));
+      await tester.pumpAndSettle();
+      expect(find.text('Reset Password'), findsOneWidget);
+
+      final send = find.widgetWithText(AppButton, 'Send');
+      await tester.enterText(find.byType(TextField).first, 'not-an-email');
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(find.text('Enter a valid email.'), findsOneWidget);
+      expect(authBackend.calls, isEmpty);
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'driver106@example.com',
+      );
+      await tester.tap(send);
+      await tester.pumpAndSettle();
+      expect(authBackend.calls, ['driver106@example.com@https://snsoft.cloud']);
+      expect(
+        find.text(
+          'If the email is registered, reset instructions will be sent.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('Back to Login'));
+      await tester.tap(find.text('Back to Login'));
+      await tester.pumpAndSettle();
+      expect(loginButton(), findsOneWidget);
+    },
+  );
+
+  testWidgets('reset not offered by the server → plain guidance, no dump', (
+    tester,
+  ) async {
     authBackend.nextError = const NotFoundError(
       code: 'not_found',
       context: {'raw': 'DioException 404 /api/password/reset'},
@@ -203,12 +230,17 @@ void main() {
 
     await tester.tap(find.text('Forgot Password?'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, 'driver106@example.com');
+    await tester.enterText(
+      find.byType(TextField).first,
+      'driver106@example.com',
+    );
     await tester.tap(find.widgetWithText(AppButton, 'Send'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Reset is not available on this server. Contact your fleet manager.'),
+      find.text(
+        'Reset is not available on this server. Contact your fleet manager.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('Dio'), findsNothing);

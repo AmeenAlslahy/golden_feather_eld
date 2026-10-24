@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -27,8 +26,10 @@ import '../../../../core/services/local_storage_service.dart';
 class EldConnectionState {
   final bool isConnecting;
   final bool hasFailed;
+
   /// Marker (`bluetooth_failed`, `connect_failed`) — localized by the page.
   final String? errorMessage;
+
   /// Server-side failure, localized by the page in the *current* locale.
   final AppError? error;
   final String? infoMessage;
@@ -64,11 +65,15 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   EldConnectionNotifier(this._ref) : super(EldConnectionState());
 
   Future<void> attemptConnection(String macAddress) async {
-    state = state.copyWith(isConnecting: true, hasFailed: false, errorMessage: null);
+    state = state.copyWith(
+      isConnecting: true,
+      hasFailed: false,
+      errorMessage: null,
+    );
 
     try {
       final bluetoothService = _ref.read(bluetoothServiceProvider);
-      
+
       // 1. الاتصال المحلي بالبلوتوث
       try {
         await bluetoothService.connect(macAddress);
@@ -85,9 +90,11 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
 
       // 2. التحقق من السيرفر وبدء الجلسة
       final hardwareBackend = _ref.read(hardwareBackendProvider);
-      
-      final selectedUniqueId =
-          _ref.read(vehicleProvider).selectedVehicle?.uniqueId;
+
+      final selectedUniqueId = _ref
+          .read(vehicleProvider)
+          .selectedVehicle
+          ?.uniqueId;
       final result = await hardwareBackend.connectSession(
         uniqueId: selectedUniqueId,
       );
@@ -105,21 +112,23 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
             // تفعيل خدمة تتبع Traccar Client بالهاتف متزامنة مع المركبة
             final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
             final vUniqueId = selectedVehicle?.uniqueId;
-            final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
-                ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+            final targetDeviceId =
+                selectedVehicle?.deviceId?.toString() ??
+                ((vUniqueId != null && vUniqueId.isNotEmpty)
+                    ? vUniqueId
+                    : null);
             if (targetDeviceId != null) {
               await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
             }
             try {
-              final config = await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+              final config = await _ref
+                  .read(trackingRepositoryProvider)
+                  .getCurrentConfig();
               await _ref.read(trackingRepositoryProvider).updateConfig(config);
               await _ref.read(trackingStateProvider.notifier).startTracking();
             } catch (_) {}
 
-            state = state.copyWith(
-              isConnecting: false,
-              hasFailed: false,
-            );
+            state = state.copyWith(isConnecting: false, hasFailed: false);
           },
         );
       }
@@ -146,10 +155,9 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
       return loc.enterAReasonForManualRecording;
     }
     try {
-      final result = await _ref.read(hardwareBackendProvider).setManualMode(
-            enable: enable,
-            reason: trimmed,
-          );
+      final result = await _ref
+          .read(hardwareBackendProvider)
+          .setManualMode(enable: enable, reason: trimmed);
       return await result.fold(
         (error) => anyErrorUserMessage(error, loc: loc),
         (_) => null,
@@ -163,14 +171,16 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   Future<void> continueDisconnected() async {
     final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
     final vUniqueId = selectedVehicle?.uniqueId;
-    final targetDeviceId = selectedVehicle?.deviceId?.toString() ??
+    final targetDeviceId =
+        selectedVehicle?.deviceId?.toString() ??
         ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
     if (targetDeviceId != null) {
       await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
     }
     try {
-      final config =
-          await _ref.read(trackingRepositoryProvider).getCurrentConfig();
+      final config = await _ref
+          .read(trackingRepositoryProvider)
+          .getCurrentConfig();
       await _ref.read(trackingRepositoryProvider).updateConfig(config);
       await _ref.read(trackingStateProvider.notifier).startTracking();
     } catch (_) {}
@@ -178,10 +188,9 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
     final online = _ref.read(isConnectedProvider).value ?? true;
     if (online) {
       try {
-        await _ref.read(hardwareBackendProvider).connectSession(
-              uniqueId: vUniqueId,
-              disconnected: true,
-            );
+        await _ref
+            .read(hardwareBackendProvider)
+            .connectSession(uniqueId: vUniqueId, disconnected: true);
       } catch (_) {}
     }
 
@@ -196,10 +205,13 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   }
 }
 
-final eldConnectionProvider = StateNotifierProvider.autoDispose<
-    EldConnectionNotifier, EldConnectionState>((ref) {
-  return EldConnectionNotifier(ref);
-});
+final eldConnectionProvider =
+    StateNotifierProvider.autoDispose<
+      EldConnectionNotifier,
+      EldConnectionState
+    >((ref) {
+      return EldConnectionNotifier(ref);
+    });
 
 class EldConnectionPage extends ConsumerStatefulWidget {
   const EldConnectionPage({super.key});
@@ -271,23 +283,20 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
       });
     });
     // العودة من صفحة اختيار العربة باختيار جديد → لصق ماكها فوراً.
-    ref.listen<Vehicle?>(
-      vehicleProvider.select((s) => s.selectedVehicle),
-      (previous, next) {
-        if (next != null && next != previous) {
-          _fillMacFromVehicle(next, force: true);
-        }
-      },
-    );
+    ref.listen<Vehicle?>(vehicleProvider.select((s) => s.selectedVehicle), (
+      previous,
+      next,
+    ) {
+      if (next != null && next != previous) {
+        _fillMacFromVehicle(next, force: true);
+      }
+    });
 
     // الانتقال للرئيسية عند النجاح
     ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
       if (current.infoMessage == 'disconnected_accepted' &&
           previous?.infoMessage != 'disconnected_accepted') {
-        AppFeedback.info(
-          context,
-          context.loc.serverAcceptedDisconnected,
-        );
+        AppFeedback.info(context, context.loc.serverAcceptedDisconnected);
         context.go(AppRoutes.home);
         return;
       }
@@ -310,8 +319,11 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         // الرجوع) — لا تخرج لصفحة أخرى أبداً.
         leading: IconButton(
           tooltip: context.loc.selectVehicle,
-          icon: const Icon(Icons.compare_arrows,
-              color: AppColors.surface, size: 28),
+          icon: Icon(
+            Icons.compare_arrows,
+            color: context.onGold,
+            size: AppSpacing.iconSize,
+          ),
           onPressed: () {
             context.push(AppRoutes.selectVehicle);
           },
@@ -335,7 +347,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                 // شريط التنبيه الأحمر
                 if (connectionState.hasFailed)
                   Container(
-                    color: AppColors.dangerRed,
+                    color: context.colors.error,
                     padding: const EdgeInsets.symmetric(
                       vertical: AppSpacing.md,
                       horizontal: AppSpacing.md,
@@ -366,7 +378,9 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _buildChecklistItem(context.loc.macEnteredCorrectly),
-                      _buildChecklistItem(context.loc.hardwareProperlyInstalled),
+                      _buildChecklistItem(
+                        context.loc.hardwareProperlyInstalled,
+                      ),
                       _buildChecklistItem(context.loc.vehiclePowerOn),
                       _buildChecklistItem(context.loc.bluetoothEnabled),
                       _buildChecklistItem(context.loc.gpsEnabled),
@@ -392,13 +406,13 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                           textInputAction: TextInputAction.done,
                           maxLength: 17,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9a-zA-Z:-]')),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9a-zA-Z:-]'),
+                            ),
                           ],
                           onSubmitted: (_) => _attemptConnection(),
-                          validator: (v) => macAddressError(
-                            v,
-                            loc: context.loc,
-                          ),
+                          validator: (v) =>
+                              macAddressError(v, loc: context.loc),
                         ),
                       ),
 
@@ -422,8 +436,8 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                         onPressed: connectionState.isConnecting
                             ? null
                             : () => ref
-                                .read(eldConnectionProvider.notifier)
-                                .continueDisconnected(),
+                                  .read(eldConnectionProvider.notifier)
+                                  .continueDisconnected(),
                       ),
                     ],
                   ),
@@ -433,7 +447,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           ),
           if (connectionState.isConnecting)
             Container(
-              color: Colors.black38,
+              color: context.colors.scrim.withValues(alpha: 0.38),
               alignment: Alignment.center,
               child: Card(
                 elevation: 8,
@@ -485,27 +499,22 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
 
   Widget _buildChecklistItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(
+      padding: const EdgeInsetsDirectional.only(
         bottom: AppSpacing.sm,
-        left: AppSpacing.sm,
+        start: AppSpacing.sm,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ✅ نقطة بسيطة بدلاً من CircleAvatar
           const Padding(
-            padding: EdgeInsets.only(top: 8.0, right: AppSpacing.sm),
-            child: Icon(
-              Icons.circle,
-              size: 6,
+            padding: EdgeInsetsDirectional.only(
+              top: AppSpacing.sm,
+              end: AppSpacing.sm,
             ),
+            child: Icon(Icons.circle, size: AppSpacing.iconBullet),
           ),
-          Expanded(
-            child: Text(
-              text,
-              style: context.styles.subtitle,
-            ),
-          ),
+          Expanded(child: Text(text, style: context.styles.subtitle)),
         ],
       ),
     );

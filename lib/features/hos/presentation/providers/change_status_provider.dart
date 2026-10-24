@@ -191,13 +191,13 @@ class ChangeStatusState {
       selectedOption == DutyStatusOption.yardMoves;
 
   List<DutyStatusOption> get availableOptions => [
-        DutyStatusOption.offDuty,
-        DutyStatusOption.sleeperBerth,
-        DutyStatusOption.driving,
-        DutyStatusOption.onDuty,
-        if (isPersonalConveyanceAllowed) DutyStatusOption.personalConveyance,
-        if (isYardMoveAllowed) DutyStatusOption.yardMoves,
-      ];
+    DutyStatusOption.offDuty,
+    DutyStatusOption.sleeperBerth,
+    DutyStatusOption.driving,
+    DutyStatusOption.onDuty,
+    if (isPersonalConveyanceAllowed) DutyStatusOption.personalConveyance,
+    if (isYardMoveAllowed) DutyStatusOption.yardMoves,
+  ];
 
   bool get hasValidCustomLocation =>
       customLocation.length >= 5 && customLocation.length <= 60;
@@ -358,8 +358,7 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       // 1. تحديث محرك HOS الداخلي (عبر الخادم أولاً كما قبل) — مع
       // إحداثيات GPS الحقيقية إن وُجدت لتُختم في الحدث المرسل للخادم.
       final gps = _ref.read(trackingStateProvider).currentLocation;
-      final hasGps =
-          gps != null && (gps.latitude != 0 || gps.longitude != 0);
+      final hasGps = gps != null && (gps.latitude != 0 || gps.longitude != 0);
       final outcome = await _ref
           .read(hosStatusProvider.notifier)
           .changeStatus(
@@ -396,8 +395,8 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
                     : currentDashboard.driver,
                 regulatoryConstraints:
                     serverDashboard.regulatoryConstraints.limits.isNotEmpty
-                        ? serverDashboard.regulatoryConstraints
-                        : currentDashboard.regulatoryConstraints,
+                    ? serverDashboard.regulatoryConstraints
+                    : currentDashboard.regulatoryConstraints,
               )
             : serverDashboard;
         _ref
@@ -418,7 +417,8 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
         } else {
           final local = _buildLocalDashboard();
           if (local != null) {
-            _ref.read(statusDashboardProvider.notifier)
+            _ref
+                .read(statusDashboardProvider.notifier)
                 .applyServerDashboard(local);
           }
         }
@@ -448,19 +448,18 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     if (result is! HosEngineReady) return null;
     final current = _ref.read(statusDashboardProvider).valueOrNull;
     final driverId = _ref.read(currentDriverIdProvider);
-    return const HosOfflineDashboardBuilder().build(
-      engineResult: result,
-      driverId: const DriverId(0),
-      driverName: '',
-      driverDisplayText: '',
-    ).copyWith(
-      driver: current?.driver ??
-          DriverRef(
-            id: DriverId(driverId ?? 0),
-            name: '',
-            displayText: '',
-          ),
-    );
+    return const HosOfflineDashboardBuilder()
+        .build(
+          engineResult: result,
+          driverId: const DriverId(0),
+          driverName: '',
+          driverDisplayText: '',
+        )
+        .copyWith(
+          driver:
+              current?.driver ??
+              DriverRef(id: DriverId(driverId ?? 0), name: '', displayText: ''),
+        );
   }
 }
 
@@ -496,8 +495,9 @@ final changeStatusProvider =
         isYardMoves: initialOption.isYardMoves,
         // P3: تعبئة الموقع من GPS الحقيقي بدل '' — كان زر UPDATE يبقى
         // معطلاً حتى مع قفل موقع حي على الجهاز.
-        initialLocation:
-            gpsLocationText(ref.read(trackingStateProvider).currentLocation),
+        initialLocation: gpsLocationText(
+          ref.read(trackingStateProvider).currentLocation,
+        ),
         isPersonalConveyanceAllowed: isPersonalConveyanceAllowed,
         isYardMoveAllowed: isYardMoveAllowed,
         isVehicleMoving: isMoving,

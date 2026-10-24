@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
 import '../../../../../core/utils/duration_format.dart';
 import '../../../../../core/widgets/app_theme_toggle_button.dart';
@@ -38,9 +39,7 @@ Duration computeElapsedSinceSnapshot({
     // ⚠️ لا مرساة موثوقة بعد (أول تشغيل بلا أي رد خادم). نستعمل ساعة
     // الجهاز كأدنى بديل — أأمن من تجميد العدّاد على صفر.
     final wall = DateTime.now().toUtc().difference(stamp.toUtc());
-    return wall.isNegative
-        ? Duration.zero
-        : Duration(seconds: wall.inSeconds);
+    return wall.isNegative ? Duration.zero : Duration(seconds: wall.inSeconds);
   }
   return Duration(seconds: stopwatchElapsed.inSeconds);
 }
@@ -69,6 +68,9 @@ class MainCircularTimer extends ConsumerStatefulWidget {
   /// غير مرتبطتين ويجعل العدّاد قابلاً للتلاعب.
   final DateTime? snapshotTimestamp;
 
+  /// اختياري: مصدر موحّد للزمن المنقضي لمزامنة الدائرة مع بقية عناصر الشاشة
+  final ValueListenable<Duration>? elapsedNotifier;
+
   const MainCircularTimer({
     super.key,
     required this.circle,
@@ -77,6 +79,7 @@ class MainCircularTimer extends ConsumerStatefulWidget {
     this.hosIndicators,
     this.onTap,
     this.snapshotTimestamp,
+    this.elapsedNotifier,
     this.cycleLimit = const Duration(hours: 70),
   });
 
@@ -90,6 +93,9 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
   late final Stopwatch _stopwatch;
   late final ValueNotifier<Duration> _elapsedNotifier;
 
+  ValueListenable<Duration> get _effectiveElapsedNotifier =>
+      widget.elapsedNotifier ?? _elapsedNotifier;
+
   @override
   bool get wantKeepAlive => true;
 
@@ -98,19 +104,17 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
   /// [computeElapsedSinceSnapshot] هي المرجع الوحيد؛ هذه مجرد مغلّف يقرأ
   /// المزوّدات. البطاقات تستخدم نفس الدالة.
   Duration _computeElapsed() => computeElapsedSinceSnapshot(
-        trustedTime: ref.read(trustedTimeProvider).currentTime,
-        snapshotTimestamp: widget.snapshotTimestamp,
-        stopwatchElapsed: _stopwatch.elapsed,
-      );
+    trustedTime: ref.read(trustedTimeProvider).currentTime,
+    snapshotTimestamp: widget.snapshotTimestamp,
+    stopwatchElapsed: _stopwatch.elapsed,
+  );
 
   @override
   void initState() {
     super.initState();
     _stopwatch = Stopwatch()..start();
     _elapsedNotifier = ValueNotifier(
-      widget.snapshotTimestamp != null
-          ? _computeElapsed()
-          : Duration.zero,
+      widget.snapshotTimestamp != null ? _computeElapsed() : Duration.zero,
     );
     _startTickerIfNeeded();
   }
@@ -118,14 +122,9 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
   @override
   void didUpdateWidget(MainCircularTimer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // كان يوجد فرع ثانٍ يُعيد ضبط المؤقت ويصفّر Elapsed عندما يتغيّر
-    // circle.remaining أو hosIndicators — لكنه كان مشروطاً بـ
-    // snapshotTimestamp == null، وهو شرط لا يتحقق أبداً في مسار الإنتاج
-    // (StatusDashboardPage يمرّر دائماً الطابع الزمني غير القابل لل空).
-    // وبقاءه شيفرة حيّة-but-ميتة خطورة: لو مرّر مستدعٍ مستقبلي قيمة null
-    // لأ Rubioالوقت الذي استُهلك. حُذف عمداً.
-    if (oldWidget.snapshotTimestamp != widget.snapshotTimestamp ||
-        oldWidget.dutyStatus != widget.dutyStatus) {
+    if (widget.elapsedNotifier == null &&
+        (oldWidget.snapshotTimestamp != widget.snapshotTimestamp ||
+            oldWidget.dutyStatus != widget.dutyStatus)) {
       _stopwatch.reset();
       _stopwatch.start();
       _elapsedNotifier.value = _computeElapsed();
@@ -133,19 +132,16 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
     }
   }
 
-  bool get _isRestDuty => CircularTimerLogic.isRestDuty(
-        widget.dutyStatus,
-        widget.statusLabel,
-      );
+  bool get _isRestDuty =>
+      CircularTimerLogic.isRestDuty(widget.dutyStatus, widget.statusLabel);
 
-  bool get _isActiveDuty => CircularTimerLogic.isActiveDuty(
-        widget.dutyStatus,
-        _isRestDuty,
-      );
+  bool get _isActiveDuty =>
+      CircularTimerLogic.isActiveDuty(widget.dutyStatus, _isRestDuty);
 
   void _startTickerIfNeeded() {
     _ticker?.cancel();
     _ticker = null;
+    if (widget.elapsedNotifier != null) return;
     if (_isActiveDuty) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) _elapsedNotifier.value = _computeElapsed();
@@ -174,7 +170,7 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
           math.min(constraints.maxWidth - 32, maxAvailableHeight),
           340,
         );
-        
+
         return SizedBox(
           width: double.infinity,
           height: constraints.maxHeight,
@@ -183,7 +179,7 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
             children: [
               // الدائرة المتحركة — وحدها القابلة للنقر لفتح تغيير الحالة
               ValueListenableBuilder<Duration>(
-                valueListenable: _elapsedNotifier,
+                valueListenable: _effectiveElapsedNotifier,
                 builder: (context, elapsedSinceSnapshot, child) {
                   final uiState = CircularTimerLogic.calculateUiState(
                     circle: widget.circle,
@@ -202,7 +198,9 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                   // (ساعة أو أقل، أو تقدم >= 90%) يتحول إلى الأحمر/التحذيري، والأخضر للوقت الآمن فقط.
                   final Color arcColor;
                   final Color timeTextColor;
-                  final isCritical = liveRemaining <= const Duration(hours: 1) || progress >= 0.90;
+                  final isCritical =
+                      liveRemaining <= const Duration(hours: 1) ||
+                      progress >= 0.90;
                   if (isRest) {
                     arcColor = theme.disabledColor;
                     timeTextColor = theme.hintColor;
@@ -211,15 +209,16 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                     timeTextColor = theme.colorScheme.error;
                   } else {
                     // أخضر ناصع (Safe color)
-                    arcColor = AppColors.successGreen;
-                    timeTextColor = AppColors.successGreen;
+                    arcColor = context.success;
+                    timeTextColor = context.success;
                   }
 
                   final timeString = isRest
                       ? '00:00'
                       : DurationFormat.hhMm(liveRemaining, signed: true);
                   final remainingText =
-                      AppLocalizations.of(context)?.remainingLabel ?? 'Remaining';
+                      AppLocalizations.of(context)?.remainingLabel ??
+                      'Remaining';
 
                   return Semantics(
                     button: widget.onTap != null,
@@ -245,7 +244,9 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                               Text(
                                 remainingText,
                                 style: theme.textTheme.titleMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
                                   fontSize: circleSize * 0.05,
                                 ),
                               ),
@@ -267,7 +268,9 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w400,
                                   fontSize: circleSize * 0.075,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
                                 ),
                               ),
                               SizedBox(height: circleSize * 0.05),

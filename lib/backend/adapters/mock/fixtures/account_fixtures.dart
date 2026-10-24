@@ -39,7 +39,7 @@ const accountMyAccountFixture = <String, dynamic>{
   'license': {
     'state': 'MI',
     'number': 'A350622298913',
-    'formatted': 'MI, A350622298913'
+    'formatted': 'MI, A350622298913',
   },
   'carrier': 'Top Logistics LLC',
   'mainOfficeAddress': '100 Main St, Dallas, TX',

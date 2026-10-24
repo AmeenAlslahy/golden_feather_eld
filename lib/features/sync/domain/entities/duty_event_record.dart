@@ -74,21 +74,21 @@ class DutyEventRecord {
   final DateTime createdAt;
 
   Map<String, Object?> toRow() => {
-        if (seq != null) 'seq': seq,
-        'event_id': eventId,
-        'owner_driver_id': ownerDriverId,
-        'source': source.name,
-        'status': status,
-        'event_time_utc': eventTimeUtc?.toUtc().millisecondsSinceEpoch,
-        'received_at_utc': receivedAtUtc.toUtc().millisecondsSinceEpoch,
-        'time_source': timeSource.name,
-        'time_confidence': timeConfidence.name,
-        'monotonic_ms': monotonicMs,
-        'payload': jsonEncode(payload),
-        'sync_state': syncState.name,
-        'server_event_id': serverEventId,
-        'created_at': createdAt.toUtc().millisecondsSinceEpoch,
-      };
+    if (seq != null) 'seq': seq,
+    'event_id': eventId,
+    'owner_driver_id': ownerDriverId,
+    'source': source.name,
+    'status': status,
+    'event_time_utc': eventTimeUtc?.toUtc().millisecondsSinceEpoch,
+    'received_at_utc': receivedAtUtc.toUtc().millisecondsSinceEpoch,
+    'time_source': timeSource.name,
+    'time_confidence': timeConfidence.name,
+    'monotonic_ms': monotonicMs,
+    'payload': jsonEncode(payload),
+    'sync_state': syncState.name,
+    'server_event_id': serverEventId,
+    'created_at': createdAt.toUtc().millisecondsSinceEpoch,
+  };
 
   /// Throws [FormatException] when a row cannot be decoded. The loader catches
   /// per row so one corrupt record cannot hide the rest of the evidence.
@@ -121,16 +121,19 @@ class DutyEventRecord {
     return DutyEventRecord(
       seq: row['seq'] is int ? row['seq'] as int : null,
       eventId: eventId,
-      ownerDriverId:
-          row['owner_driver_id'] is int ? row['owner_driver_id'] as int : null,
+      ownerDriverId: row['owner_driver_id'] is int
+          ? row['owner_driver_id'] as int
+          : null,
       source: DutyEventSource.values.firstWhere(
         (s) => s.name == row['source'],
         orElse: () => DutyEventSource.manual,
       ),
       status: status,
       eventTimeUtc: eventTime,
-      receivedAtUtc:
-          DateTime.fromMillisecondsSinceEpoch(receivedAt, isUtc: true),
+      receivedAtUtc: DateTime.fromMillisecondsSinceEpoch(
+        receivedAt,
+        isUtc: true,
+      ),
       timeSource: DutyTimeSource.values.firstWhere(
         (s) => s.name == row['time_source'],
         orElse: () => DutyTimeSource.device,
@@ -139,16 +142,18 @@ class DutyEventRecord {
         (s) => s.name == row['time_confidence'],
         orElse: () => DutyTimeConfidence.untrusted,
       ),
-      monotonicMs: row['monotonic_ms'] is int ? row['monotonic_ms'] as int : null,
+      monotonicMs: row['monotonic_ms'] is int
+          ? row['monotonic_ms'] as int
+          : null,
       payload: decoded,
       syncState: DutyEventSyncState.values.firstWhere(
         (s) => s.name == row['sync_state'],
         orElse: () => DutyEventSyncState.pendingReview,
       ),
-      serverEventId:
-          row['server_event_id'] is String ? row['server_event_id'] as String : null,
-      createdAt:
-          DateTime.fromMillisecondsSinceEpoch(createdAt, isUtc: true),
+      serverEventId: row['server_event_id'] is String
+          ? row['server_event_id'] as String
+          : null,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt, isUtc: true),
     );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../core/widgets/app_button.dart';
 import '../../../../../core/widgets/app_feedback.dart';
@@ -28,20 +27,25 @@ class CertifyTab extends ConsumerStatefulWidget {
 class _CertifyTabState extends ConsumerState<CertifyTab> {
   final _formKey = GlobalKey<FormState>();
   late final SignatureController _signatureController;
+  bool _signatureControllerInitialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    final initialDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_signatureControllerInitialized) return;
+    final initialDraft = ref.read(
+      logDraftSignatureProvider(widget.selectedLog.id),
+    );
     // نسخة قابلة للتعديل: SignatureController يضيف النقاط إلى نفس القائمة
     // التي نسلّمها، وقائمة المسودة `List.unmodifiable` → كانت تكسر الرسم.
     _signatureController = SignatureController(
       points: initialDraft.isNotEmpty ? List<Point>.of(initialDraft) : null,
       penStrokeWidth: 3,
-      penColor: Colors.black,
-      exportBackgroundColor: Colors.white,
+      penColor: context.textPrimary,
+      exportBackgroundColor: Theme.of(context).colorScheme.surface,
     );
     _signatureController.addListener(_onSignatureChanged);
+    _signatureControllerInitialized = true;
   }
 
   void _onSignatureChanged() {
@@ -55,27 +59,37 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   void didUpdateWidget(covariant CertifyTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedLog.id != widget.selectedLog.id) {
-      final newDraft = ref.read(logDraftSignatureProvider(widget.selectedLog.id));
+      final newDraft = ref.read(
+        logDraftSignatureProvider(widget.selectedLog.id),
+      );
       _signatureController.value = List<Point>.of(newDraft);
     }
   }
 
   @override
   void dispose() {
-    _signatureController.removeListener(_onSignatureChanged);
-    _signatureController.dispose();
+    if (_signatureControllerInitialized) {
+      _signatureController.removeListener(_onSignatureChanged);
+      _signatureController.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<List<Point>>(logDraftSignatureProvider(widget.selectedLog.id), (previous, current) {
+    ref.listen<List<Point>>(logDraftSignatureProvider(widget.selectedLog.id), (
+      previous,
+      current,
+    ) {
       if (_signatureController.isEmpty && current.isNotEmpty) {
         _signatureController.value = List<Point>.of(current);
       }
     });
 
-    ref.listen<CertifyLogState>(certifyLogProvider(widget.selectedLog.id), (previous, current) {
+    ref.listen<CertifyLogState>(certifyLogProvider(widget.selectedLog.id), (
+      previous,
+      current,
+    ) {
       final outcome = current.outcome;
       if (outcome != null && outcome != previous?.outcome) {
         switch (outcome) {
@@ -90,7 +104,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
       }
     });
 
-    final notifier = ref.read(certifyLogProvider(widget.selectedLog.id).notifier);
+    final notifier = ref.read(
+      certifyLogProvider(widget.selectedLog.id).notifier,
+    );
     final state = ref.watch(certifyLogProvider(widget.selectedLog.id));
 
     if (state.isLoading && state.readinessData == null) {
@@ -107,27 +123,37 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: context.colors.error),
+            Icon(
+              Icons.error_outline,
+              size: AppSpacing.iconHero,
+              color: context.colors.error,
+            ),
             const SizedBox(height: AppSpacing.md),
-            Text(state.error!, textAlign: TextAlign.center, style: context.styles.error),
+            Text(
+              state.error!,
+              textAlign: TextAlign.center,
+              style: context.styles.error,
+            ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: context.loc.retryButton,
               onPressed: notifier.checkReadiness,
-            )
+            ),
           ],
         ),
       );
     }
 
-    final readinessData = state.readinessData ??
+    final readinessData =
+        state.readinessData ??
         LogReadiness(
           dailyLogId: widget.selectedLog.id.value,
           driverId: 0,
           driverName: widget.selectedLog.driverName ?? '',
           logDate: widget.selectedLog.date.toIso8601String().split('T').first,
-          readinessStatus:
-              widget.selectedLog.isFormComplete ? 'READY' : 'NOT_READY',
+          readinessStatus: widget.selectedLog.isFormComplete
+              ? 'READY'
+              : 'NOT_READY',
           missingRequirements: widget.selectedLog.isFormComplete
               ? const []
               : [context.loc.fillFormFirst],
@@ -135,11 +161,17 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           availableActions: const ['CERTIFY'],
         );
 
-    final isReady = state.isReady ||
+    final isReady =
+        state.isReady ||
         (state.readinessData == null && widget.selectedLog.isFormComplete);
 
     if (!isReady) {
-      return _buildNotReadyView(context, notifier, readinessData, state.isLoading);
+      return _buildNotReadyView(
+        context,
+        notifier,
+        readinessData,
+        state.isLoading,
+      );
     }
 
     return _buildReadyView(context, notifier, readinessData, state.isLoading);
@@ -158,8 +190,8 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
         children: [
           Icon(
             Icons.warning_amber_rounded,
-            size: 64,
-            color: context.styles.warning.color ?? AppColors.warningYellow,
+            size: AppSpacing.iconFeature,
+            color: context.warning,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
@@ -175,17 +207,16 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           const SizedBox(height: AppSpacing.md),
           ...readinessData.formattedMissingRequirements.map(
             (req) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Row(
                 children: [
-                  Icon(Icons.circle, size: 8, color: context.colors.error),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      req,
-                      style: context.styles.body,
-                    ),
+                  Icon(
+                    Icons.circle,
+                    size: AppSpacing.iconDot,
+                    color: context.colors.error,
                   ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: Text(req, style: context.styles.body)),
                 ],
               ),
             ),
@@ -196,17 +227,15 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             onPressed: () async {
               final saved = await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const EditLogPage(
-                    event: null,
-                    isNewEvent: true,
-                  ),
+                  builder: (_) =>
+                      const EditLogPage(event: null, isNewEvent: true),
                 ),
               );
               if (saved == true && mounted) {
                 await notifier.checkReadiness();
               }
             },
-            icon: const Icon(Icons.add, size: 20),
+            icon: const Icon(Icons.add, size: AppSpacing.iconMedium),
             label: Text(context.loc.addButton),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -256,8 +285,8 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             const SizedBox(height: AppSpacing.xl),
             Text(
               readinessData.legalStatement.trim().isEmpty
-                ? context.loc.certifyLegalStatement
-                : readinessData.legalStatement,
+                  ? context.loc.certifyLegalStatement
+                  : readinessData.legalStatement,
               textAlign: TextAlign.center,
               style: context.styles.body.copyWith(
                 height: 1.5,
@@ -310,4 +339,3 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     );
   }
 }
-

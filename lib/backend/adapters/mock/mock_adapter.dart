@@ -99,9 +99,7 @@ class MockAdapter implements BackendAdapter {
   late final HardwareBackend hardware = MockHardwareBackend();
 
   @override
-
   // ==========================================================================
-
   @override
   Future<void> dispose() async {
     // Mocks hold only in-memory state; nothing to release.

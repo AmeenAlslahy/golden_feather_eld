@@ -39,7 +39,7 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
     var skippedRows = 0;
 
     for (final key in _auditBox.keys) {
-      if (key is! String) continue;               // مفتاح غير نصي
+      if (key is! String) continue; // مفتاح غير نصي
       final jsonStr = _auditBox.get(key);
       if (jsonStr == null || jsonStr.isEmpty) continue;
       if (!key.startsWith(_keyPrefix) || !key.contains('_')) {
@@ -60,7 +60,8 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
         if (decoded is! Map<String, dynamic>) {
           skippedRows++;
           AppLogger.warning(
-              'HosAuditRepositoryImpl: audit row "$key" is not an object; skipped');
+            'HosAuditRepositoryImpl: audit row "$key" is not an object; skipped',
+          );
           continue;
         }
 
@@ -71,13 +72,15 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
         final type = HosViolationType.values
             .where((e) => e.name == typeName)
             .firstOrNull;
-        final level =
-            ViolationLevel.values.where((e) => e.name == levelName).firstOrNull;
+        final level = ViolationLevel.values
+            .where((e) => e.name == levelName)
+            .firstOrNull;
 
         if (type == null || level == null || timestampRaw is! String) {
           skippedRows++;
           AppLogger.warning(
-              'HosAuditRepositoryImpl: audit row "$key" has unknown enum/fields; skipped');
+            'HosAuditRepositoryImpl: audit row "$key" has unknown enum/fields; skipped',
+          );
           continue;
         }
 
@@ -85,20 +88,23 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
         if (parsed == null) {
           skippedRows++;
           AppLogger.warning(
-              'HosAuditRepositoryImpl: audit row "$key" has unparsable timestamp; skipped');
+            'HosAuditRepositoryImpl: audit row "$key" has unparsable timestamp; skipped',
+          );
           continue;
         }
 
         final details = decoded['details'];
-        results.add(HosViolation(
-          type: type,
-          level: level,
-          message: decoded['message'] is String
-              ? decoded['message'] as String
-              : '',
-          timestamp: parsed,
-          details: details is Map<String, dynamic> ? details : null,
-        ));
+        results.add(
+          HosViolation(
+            type: type,
+            level: level,
+            message: decoded['message'] is String
+                ? decoded['message'] as String
+                : '',
+            timestamp: parsed,
+            details: details is Map<String, dynamic> ? details : null,
+          ),
+        );
       } catch (e, st) {
         // الصف الفاسد لا يُسقط بقية سجل المخالفات — لكنه يبقى مرئياً
         // للتشخيص بدل الابتلاع الصامت (سجل تدقيق قانوني).
@@ -113,8 +119,9 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
 
     if (skippedRows > 0) {
       AppLogger.warning(
-          'HosAuditRepositoryImpl: $skippedRows audit row(s) skipped as '
-          'unreadable or foreign to this box');
+        'HosAuditRepositoryImpl: $skippedRows audit row(s) skipped as '
+        'unreadable or foreign to this box',
+      );
     }
     return results;
   }

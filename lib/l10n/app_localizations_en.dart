@@ -2138,6 +2138,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Trailer number may contain letters, numbers, spaces and - _ # only (max 50).';
 
   @override
+  String get trailerNumberTooLong => 'Trailer number is too long (max 50).';
+
+  @override
   String get enterDocumentNumber => 'Enter the document number.';
 
   @override
@@ -2532,6 +2535,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dvirPrevNoServerId =>
       'The previous report has no server id and cannot be reviewed.';
+
+  @override
+  String get dvirPrevUnavailable =>
+      'The previous inspection could not be verified. Connect to the internet or open the DVIR history before signing.';
 
   @override
   String get dvirPreviousInspection => 'Previous inspection';
@@ -3202,4 +3209,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusUnknown => 'Unknown';
+
+  @override
+  String get createdAt => 'Created';
+
+  @override
+  String get zoomIn => 'Zoom In';
+
+  @override
+  String get zoomOut => 'Zoom Out';
+
+  @override
+  String get fitWidth => 'Fit Width (100%)';
 }

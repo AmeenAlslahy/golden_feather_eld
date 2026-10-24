@@ -6,7 +6,7 @@ abstract class IdGenerator {
 
 class UuidIdGenerator implements IdGenerator {
   const UuidIdGenerator();
-  
+
   @override
   String v4() => const Uuid().v4();
 }

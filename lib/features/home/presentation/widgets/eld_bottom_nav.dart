@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/extensions/context_extensions.dart';
 
-/// Available يسار، Recap يمين — مطابق للقطة.
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
+
+/// Navigation for the two HOS dashboard views.
 class EldBottomNav extends StatelessWidget {
   final bool showingRecap;
   final VoidCallback onRecap;
@@ -19,9 +19,10 @@ class EldBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      height: AppSpacing.navBarHeight,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,36 +64,31 @@ class _NavSegment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // بناءً على الهوية البصرية الموجودة:
-    // الخلفية النشطة: رمادي داكن (مائل للأسود) أو حسب الـ Theme
-    // الخلفية غير النشطة: رمادي فاتح جداً (مثل AppColors.border أو surface)
-    final bgColor = isActive
-        ? AppColors.textSecondary
-        : Theme.of(context).colorScheme.surface;
-
-    final fgColor = isActive
-        ? AppColors
-              .surface // أبيض
-        : AppColors.textSecondary;
+    final background = isActive ? context.gold : context.colors.surface;
+    final foreground = isActive ? context.onGold : context.textSecondary;
 
     return Material(
-      color: bgColor,
+      color: background,
       child: InkWell(
         onTap: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: fgColor, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: context.styles.body.copyWith(
-                color: fgColor,
-                fontSize: AppTypography.captionSize,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+        child: Semantics(
+          button: true,
+          selected: isActive,
+          label: label,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: foreground, size: AppSpacing.iconMedium),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                label,
+                style: context.styles.subtitle.copyWith(
+                  color: foreground,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -157,12 +157,13 @@ class MockInspectionBackend implements InspectionBackend {
     int? daysCount,
     DateTime? endDate,
     int? expectedOwnerDriverId,
-  }) =>
-      throw UnimplementedError('MockInspectionBackend.emailLogs — Phase 2');
+  }) => throw UnimplementedError('MockInspectionBackend.emailLogs — Phase 2');
 
   @override
   Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) =>
-      throw UnimplementedError('MockInspectionBackend.getInformationPacket — Phase 2');
+      throw UnimplementedError(
+        'MockInspectionBackend.getInformationPacket — Phase 2',
+      );
 
   @override
   Future<Result<RawJson>> sendLogs({
@@ -174,8 +175,7 @@ class MockInspectionBackend implements InspectionBackend {
     int? daysCount,
     DateTime? endDate,
     int? expectedOwnerDriverId,
-  }) =>
-      throw UnimplementedError('MockInspectionBackend.sendLogs — Phase 2');
+  }) => throw UnimplementedError('MockInspectionBackend.sendLogs — Phase 2');
 
   @override
   Future<Result<RawJson>> startInspection({
@@ -185,11 +185,11 @@ class MockInspectionBackend implements InspectionBackend {
     String? inspectorAgency,
     String? location,
     String? notes,
-  }) =>
-      throw UnimplementedError('MockInspectionBackend.startInspection — Phase 2');
+  }) => throw UnimplementedError(
+    'MockInspectionBackend.startInspection — Phase 2',
+  );
 
   @override
   Future<Result<RawJson>> getTransfers({DriverId? driverId}) =>
       throw UnimplementedError('MockInspectionBackend.getTransfers — Phase 2');
-
 }

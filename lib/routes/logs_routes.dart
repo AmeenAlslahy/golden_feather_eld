@@ -11,35 +11,34 @@ class LogsRoutes {
   LogsRoutes._();
 
   static List<RouteBase> get routes => [
-        GoRoute(
-          path: AppRoutes.logs,
-          name: 'logs',
-          builder: (context, state) => const LogsListPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.suggestedEvents,
-          name: 'suggestedEvents',
-          builder: (context, state) => const SuggestedEventsPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.unidentifiedEvents,
-          name: 'unidentifiedEvents',
-          builder: (context, state) => const UnidentifiedEventsPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.logDetail,
-          name: 'logDetail',
-          builder: (context, state) => LogDetailPage(
-            logId: state.pathParameters['id'],
-          ),
-        ),
-        GoRoute(
-          path: AppRoutes.editLog,
-          name: 'editLog',
-          builder: (context, state) {
-            final event = state.extra as LogEvent?; // تمرير الـ event كـ extra
-            return EditLogPage(event: event);
-          },
-        ),
-      ];
+    GoRoute(
+      path: AppRoutes.logs,
+      name: 'logs',
+      builder: (context, state) => const LogsListPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.suggestedEvents,
+      name: 'suggestedEvents',
+      builder: (context, state) => const SuggestedEventsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.unidentifiedEvents,
+      name: 'unidentifiedEvents',
+      builder: (context, state) => const UnidentifiedEventsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.logDetail,
+      name: 'logDetail',
+      builder: (context, state) =>
+          LogDetailPage(logId: state.pathParameters['id']),
+    ),
+    GoRoute(
+      path: AppRoutes.editLog,
+      name: 'editLog',
+      builder: (context, state) {
+        final event = state.extra as LogEvent?; // تمرير الـ event كـ extra
+        return EditLogPage(event: event);
+      },
+    ),
+  ];
 }

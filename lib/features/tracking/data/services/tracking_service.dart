@@ -16,8 +16,8 @@ class TrackingService {
   TrackingService({
     required TraccarNativeClient tracker,
     required LocalStorageService storage,
-  })  : _tracker = tracker,
-        _storage = storage;
+  }) : _tracker = tracker,
+       _storage = storage;
 
   // ========== التهيئة ==========
 
@@ -33,9 +33,11 @@ class TrackingService {
         if (config['serverUrl'].isEmpty ||
             config['serverUrl'].contains('mock-traccar-server')) {
           AppLogger.error(
-              '❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar');
+            '❌ Tracking blocked: Invalid or Mock URL used in temporaryTraccar',
+          );
           throw Exception(
-              'Configuration Error: Valid Server URL required for temporaryTraccar');
+            'Configuration Error: Valid Server URL required for temporaryTraccar',
+          );
         }
       }
 
@@ -143,7 +145,8 @@ class TrackingService {
     try {
       await _tracker.requestImmediatePosition(alarm: alarm);
       AppLogger.info(
-          '📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}');
+        '📍 Position requested${alarm != null ? " with alarm: $alarm" : ""}',
+      );
     } catch (e) {
       AppLogger.error('Failed to request position', e);
       rethrow;

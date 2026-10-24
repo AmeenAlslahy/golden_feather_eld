@@ -21,12 +21,10 @@ final vehicleLocalCacheProvider = Provider<VehicleLocalCache>((ref) {
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
   final vehicleBackend = ref.watch(vehicleBackendProviderAlias);
-  final hardwareBackend = ref.watch(hardwareBackendProvider);
   final networkInfo = ref.watch(networkInfoProvider);
 
   return VehicleRepositoryImpl(
     vehicleBackend: vehicleBackend,
-    hardwareBackend: hardwareBackend,
     networkInfo: networkInfo,
     // حتى تبقى قائمة المركبات متاحة بعد إعادة التشغيل بدون شبكة.
     cache: ref.watch(vehicleLocalCacheProvider),

@@ -732,6 +732,7 @@
   },
   "enterTrailerNumber": "Enter the trailer number.",
   "trailerNumberFormatError": "Trailer number may contain letters, numbers, spaces and - _ # only (max 50).",
+  "trailerNumberTooLong": "Trailer number is too long (max 50).",
   "enterDocumentNumber": "Enter the document number.",
   "documentNumberTooLong": "Shipping document number is too long (max 100).",
   "oneDocumentAtATime": "Enter one document at a time (no comma).",
@@ -872,6 +873,7 @@
   "dvirDriverSessionMissing": "Driver session is missing. Sign in again before signing the report.",
   "dvirVehicleIdMissing": "Vehicle id is missing. Select a vehicle before signing.",
   "dvirPrevNoServerId": "The previous report has no server id and cannot be reviewed.",
+  "dvirPrevUnavailable": "The previous inspection could not be verified. Connect to the internet or open the DVIR history before signing.",
   "dvirPreviousInspection": "Previous inspection",
   "dvirReviewBeforeDriving": "Review and sign the previous report before driving.",
   "dvirRecordedDefects": "Recorded defects:",
@@ -1131,5 +1133,9 @@
   "noDefectsReported": "No defects reported",
   "statusDetected": "DETECTED",
   "invalidOdometerReading": "Invalid odometer reading",
-  "statusUnknown": "Unknown"
+  "statusUnknown": "Unknown",
+  "createdAt": "Created",
+  "zoomIn": "Zoom In",
+  "zoomOut": "Zoom Out",
+  "fitWidth": "Fit Width (100%)"
 }

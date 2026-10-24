@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
+import '../../../../../core/theme/app_spacing.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/time/trusted_time_provider.dart';
 import '../../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
@@ -42,6 +45,9 @@ class HosIndicatorsCard extends ConsumerStatefulWidget {
   /// اسم الحالة المعروض (يُستخدم في كشف الراحة كحل احتياطي).
   final String statusLabel;
 
+  /// اختياري: مصدر موحّد للزمن المنقضي لمزامنة البطاقة مع الدائرة المركزية
+  final ValueListenable<Duration>? elapsedNotifier;
+
   const HosIndicatorsCard({
     super.key,
     required this.indicators,
@@ -49,17 +55,20 @@ class HosIndicatorsCard extends ConsumerStatefulWidget {
     this.snapshotTimestamp,
     this.dutyStatus,
     this.statusLabel = '',
+    this.elapsedNotifier,
   });
 
   @override
-  ConsumerState<HosIndicatorsCard> createState() =>
-      _HosIndicatorsCardState();
+  ConsumerState<HosIndicatorsCard> createState() => _HosIndicatorsCardState();
 }
 
 class _HosIndicatorsCardState extends ConsumerState<HosIndicatorsCard> {
   Timer? _ticker;
   late final Stopwatch _stopwatch;
   late final ValueNotifier<Duration> _elapsedNotifier;
+
+  ValueListenable<Duration> get _effectiveElapsedNotifier =>
+      widget.elapsedNotifier ?? _elapsedNotifier;
 
   @override
   void initState() {
@@ -72,9 +81,10 @@ class _HosIndicatorsCardState extends ConsumerState<HosIndicatorsCard> {
   @override
   void didUpdateWidget(HosIndicatorsCard old) {
     super.didUpdateWidget(old);
-    if (old.snapshotTimestamp != widget.snapshotTimestamp ||
-        old.dutyStatus != widget.dutyStatus ||
-        old.indicators != widget.indicators) {
+    if (widget.elapsedNotifier == null &&
+        (old.snapshotTimestamp != widget.snapshotTimestamp ||
+            old.dutyStatus != widget.dutyStatus ||
+            old.indicators != widget.indicators)) {
       _stopwatch.reset();
       _stopwatch.start();
       _elapsedNotifier.value = _computeElapsed();
@@ -83,19 +93,18 @@ class _HosIndicatorsCardState extends ConsumerState<HosIndicatorsCard> {
   }
 
   Duration _computeElapsed() => computeElapsedSinceSnapshot(
-        trustedTime: ref.read(trustedTimeProvider).currentTime,
-        snapshotTimestamp: widget.snapshotTimestamp,
-        stopwatchElapsed: _stopwatch.elapsed,
-      );
+    trustedTime: ref.read(trustedTimeProvider).currentTime,
+    snapshotTimestamp: widget.snapshotTimestamp,
+    stopwatchElapsed: _stopwatch.elapsed,
+  );
 
-  bool get _isRestDuty => CircularTimerLogic.isRestDuty(
-        widget.dutyStatus,
-        widget.statusLabel,
-      );
+  bool get _isRestDuty =>
+      CircularTimerLogic.isRestDuty(widget.dutyStatus, widget.statusLabel);
 
   void _startTickerIfNeeded() {
     _ticker?.cancel();
     _ticker = null;
+    if (widget.elapsedNotifier != null) return;
     // في الراحة لا عمل ولا قيادة: لا شيء ينزلق، فلا داعي لنبضة كل ثانية.
     if (!_isRestDuty) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -118,7 +127,7 @@ class _HosIndicatorsCardState extends ConsumerState<HosIndicatorsCard> {
     final descriptions = _descriptions(context);
 
     return ValueListenableBuilder<Duration>(
-      valueListenable: _elapsedNotifier,
+      valueListenable: _effectiveElapsedNotifier,
       builder: (context, elapsed, _) {
         final live = CircularTimerLogic.liveIndicators(
           indicators: widget.indicators,
@@ -134,36 +143,24 @@ class _HosIndicatorsCardState extends ConsumerState<HosIndicatorsCard> {
               // الشريط تحت دائرة الوقت: كان يستخدم رمز الخلفية الفاتحة فيظهر
               // أبيض في الوضع الداكن (بلاغ المالك).
               color: context.colorScheme.surfaceBright,
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Text(
                 loc.hoursOfService,
                 textAlign: TextAlign.center,
-                style: context.styles.subtitle.copyWith(
-                  fontSize: 13,
-                  letterSpacing: 1.0,
-                ),
+                style: context.styles.caption.copyWith(letterSpacing: 1.0),
               ),
             ),
             const Divider(height: 1),
-            _IndicatorRow(
-              indicator: live.drive,
-              description: descriptions[0],
-            ),
+            _IndicatorRow(indicator: live.drive, description: descriptions[0]),
             const Divider(height: 1),
-            _IndicatorRow(
-              indicator: live.shift,
-              description: descriptions[1],
-            ),
+            _IndicatorRow(indicator: live.shift, description: descriptions[1]),
             const Divider(height: 1),
             _IndicatorRow(
               indicator: live.breakTime,
               description: descriptions[2],
             ),
             const Divider(height: 1),
-            _IndicatorRow(
-              indicator: live.cycle,
-              description: descriptions[3],
-            ),
+            _IndicatorRow(indicator: live.cycle, description: descriptions[3]),
             const Divider(height: 1),
           ],
         );
@@ -212,7 +209,10 @@ class _IndicatorRow extends StatelessWidget {
         : description;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -222,16 +222,12 @@ class _IndicatorRow extends StatelessWidget {
                 Text(
                   indicator.label,
                   style: context.styles.sectionTitle.copyWith(
-                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: context.styles.body.color,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  detail,
-                  style: context.styles.subtitle.copyWith(fontSize: 12),
-                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(detail, style: context.styles.caption),
               ],
             ),
           ),
@@ -240,7 +236,7 @@ class _IndicatorRow extends StatelessWidget {
               DurationFormat.hhMm(indicator.value),
               textAlign: TextAlign.end,
               style: context.styles.body.copyWith(
-                fontSize: 28,
+                fontSize: AppTypography.headerSize,
                 fontWeight: FontWeight.w400,
                 color: isCritical ? context.styles.error.color : null,
               ),

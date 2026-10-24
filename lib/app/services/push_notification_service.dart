@@ -19,8 +19,8 @@ class PushNotificationService {
   PushNotificationService({
     required TrackingService trackingService,
     required LocalStorageService storage,
-  })  : _trackingService = trackingService,
-        _storage = storage;
+  }) : _trackingService = trackingService,
+       _storage = storage;
 
   /// تهيئة الخدمة
   static Future<void> init({
@@ -29,7 +29,8 @@ class PushNotificationService {
   }) async {
     if (Firebase.apps.isEmpty) {
       AppLogger.warning(
-          'Firebase is not initialized. PushNotificationService is disabled.');
+        'Firebase is not initialized. PushNotificationService is disabled.',
+      );
       return;
     }
 
@@ -44,8 +45,9 @@ class PushNotificationService {
       FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
       FirebaseMessaging.onMessage.listen(service._onMessage);
       FirebaseMessaging.onMessageOpenedApp.listen(service._onMessageOpenedApp);
-      FirebaseMessaging.instance.onTokenRefresh
-          .listen((token) => service._uploadToken(token));
+      FirebaseMessaging.instance.onTokenRefresh.listen(
+        (token) => service._uploadToken(token),
+      );
 
       unawaited(service._uploadInitialToken());
       AppLogger.info('📨 PushNotificationService initialized');
@@ -101,8 +103,10 @@ class PushNotificationService {
       AppLogger.info('📨 Push event received: $eventId');
       final notification = message.notification;
       if (notification != null) {
-        _showInAppNotification(notification.title ?? 'تنبيه',
-            notification.body ?? 'حدث جديد من Traccar');
+        _showInAppNotification(
+          notification.title ?? 'تنبيه',
+          notification.body ?? 'حدث جديد من Traccar',
+        );
       }
     }
   }
@@ -134,10 +138,12 @@ class PushNotificationService {
 
     try {
       final request = await HttpClient().postUrl(Uri.parse(url));
-      request.headers.contentType =
-          ContentType.parse('application/x-www-form-urlencoded');
+      request.headers.contentType = ContentType.parse(
+        'application/x-www-form-urlencoded',
+      );
       request.write(
-          'id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}');
+        'id=${Uri.encodeComponent(id)}&notificationToken=${Uri.encodeComponent(token)}',
+      );
       await request.close();
       AppLogger.info('📤 Token uploaded to server');
     } catch (e) {

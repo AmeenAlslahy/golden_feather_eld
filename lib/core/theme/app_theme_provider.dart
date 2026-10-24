@@ -4,8 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/local_storage_service.dart';
 
 /// مزود حالة الثيم.
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
+  ref,
+) {
   final storage = ref.watch(localStorageProvider);
   return ThemeModeNotifier(storage);
 });

@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum AppEvent {
-  logDataChanged,
-}
+enum AppEvent { logDataChanged }
 
 class AppEventBus {
   final _controller = StreamController<AppEvent>.broadcast();

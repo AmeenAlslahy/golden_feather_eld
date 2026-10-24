@@ -7,23 +7,18 @@ import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
 class TraccarApiClientImpl implements TraccarApiClient {
   final ApiClient _apiClient;
 
-  TraccarApiClientImpl(
-      {required ApiClient apiClient})
-      : _apiClient = apiClient;
+  TraccarApiClientImpl({required ApiClient apiClient}) : _apiClient = apiClient;
 
   @override
   Future<Map<String, dynamic>> authenticate(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       final response = await _apiClient.post<dynamic>(
         EldEndpoints.session,
-        data: {
-          'email': email,
-          'password': password,
-        },
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        data: {'email': email, 'password': password},
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       );
 
       return await response.match(
@@ -32,7 +27,9 @@ class TraccarApiClientImpl implements TraccarApiClient {
           if (res.isSuccess && res.data != null) {
             return res.data as Map<String, dynamic>;
           } else {
-            throw Exception('Authentication failed with status: ${res.statusCode}');
+            throw Exception(
+              'Authentication failed with status: ${res.statusCode}',
+            );
           }
         },
       );
@@ -83,8 +80,11 @@ class TraccarApiClientImpl implements TraccarApiClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getEvents(String deviceId,
-      {DateTime? from, DateTime? to}) async {
+  Future<List<Map<String, dynamic>>> getEvents(
+    String deviceId, {
+    DateTime? from,
+    DateTime? to,
+  }) async {
     try {
       final Map<String, dynamic> queryParams = {'deviceId': deviceId};
       if (from != null) queryParams['from'] = from.toUtc().toIso8601String();
@@ -122,7 +122,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
           if (!res.isSuccess && res.statusCode != 202) {
             throw Exception('Failed to update position: ${res.statusCode}');
           }
-        }
+        },
       );
     } catch (e) {
       throw Exception('Error updating position: $e');

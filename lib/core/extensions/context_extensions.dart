@@ -12,7 +12,9 @@ extension ContextExtensions on BuildContext {
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
   ColorScheme get colors => theme.colorScheme;
-  AppStyles get styles => theme.extension<AppStyles>()!;
+  AppStyles get styles =>
+      theme.extension<AppStyles>() ??
+      AppStyles.fromBrightness(theme.brightness);
   MediaQueryData get mediaQuery => MediaQuery.of(this);
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;
@@ -21,60 +23,83 @@ extension ContextExtensions on BuildContext {
   // ========== ترجمة حالات السائق ==========
   String translateStatus(String statusCode) {
     switch (statusCode.toUpperCase()) {
-      case 'OFF': return loc.statusOff;
-      case 'SB': return loc.statusSb;
-      case 'D': return loc.statusD;
-      case 'ON': return loc.statusOn;
-      case 'PC': return loc.statusPc;
-      case 'YM': return loc.statusYm;
-      default: return statusCode;
+      case 'OFF':
+        return loc.statusOff;
+      case 'SB':
+        return loc.statusSb;
+      case 'D':
+        return loc.statusD;
+      case 'ON':
+        return loc.statusOn;
+      case 'PC':
+        return loc.statusPc;
+      case 'YM':
+        return loc.statusYm;
+      default:
+        return statusCode;
     }
   }
 
   // ========== ترجمة حالات DVIR ==========
   String translateInspectionType(String typeCode) {
     switch (typeCode) {
-      case 'preTrip': return loc.dvirPreTrip;
-      case 'postTrip': return loc.dvirPostTrip;
-      default: return typeCode;
+      case 'preTrip':
+        return loc.dvirPreTrip;
+      case 'postTrip':
+        return loc.dvirPostTrip;
+      default:
+        return typeCode;
     }
   }
 
   String translateVehicleCondition(String conditionCode) {
     switch (conditionCode) {
-      case 'safe': return loc.dvirSafeToDrive;
-      case 'needsRepair': return loc.dvirNeedsRepair;
-      case 'unsafe': return loc.dvirUnsafe;
-      default: return conditionCode;
+      case 'safe':
+        return loc.dvirSafeToDrive;
+      case 'needsRepair':
+        return loc.dvirNeedsRepair;
+      case 'unsafe':
+        return loc.dvirUnsafe;
+      default:
+        return conditionCode;
     }
   }
 
   String translateInspectionItem(String itemCode) {
     switch (itemCode) {
-      case 'brakes': return loc.dvirBrakes;
-      case 'tires': return loc.dvirTires;
-      case 'lights': return loc.dvirLights;
-      case 'steering': return loc.dvirSteering;
-      case 'trailerCoupling': return loc.dvirTrailerCoupling;
-      case 'emergencyEquipment': return loc.dvirEmergencyEquipment;
-      case 'engine': return loc.dvirEngine;
-      case 'fuelSystem': return loc.dvirFuelSystem;
-      case 'exhaustSystem': return loc.dvirExhaustSystem;
-      case 'suspension': return loc.dvirSuspension;
-      case 'mirrors': return loc.dvirMirrors;
-      case 'windshield': return loc.dvirWindshield;
-      default: return itemCode;
+      case 'brakes':
+        return loc.dvirBrakes;
+      case 'tires':
+        return loc.dvirTires;
+      case 'lights':
+        return loc.dvirLights;
+      case 'steering':
+        return loc.dvirSteering;
+      case 'trailerCoupling':
+        return loc.dvirTrailerCoupling;
+      case 'emergencyEquipment':
+        return loc.dvirEmergencyEquipment;
+      case 'engine':
+        return loc.dvirEngine;
+      case 'fuelSystem':
+        return loc.dvirFuelSystem;
+      case 'exhaustSystem':
+        return loc.dvirExhaustSystem;
+      case 'suspension':
+        return loc.dvirSuspension;
+      case 'mirrors':
+        return loc.dvirMirrors;
+      case 'windshield':
+        return loc.dvirWindshield;
+      default:
+        return itemCode;
     }
   }
 
   // ========== الوضع واللغة ==========
   bool get isDark => theme.brightness == Brightness.dark;
-  bool get isArabic =>
-      Localizations.localeOf(this).languageCode == 'ar';
+  bool get isArabic => Localizations.localeOf(this).languageCode == 'ar';
 }
-
-
-
 
 /// الألوان الدلالية المحسومة حسب الوضع.
 ///
@@ -93,11 +118,47 @@ extension AppSemanticColors on BuildContext {
   Color get border => isDark ? AppColors.darkBorder : AppColors.border;
 
   /// سطح الشاشة العام حسب الوضع.
-  Color get screenSurface =>
-      isDark ? AppColors.surfaceDark : AppColors.surface;
+  Color get screenSurface => isDark ? AppColors.surfaceDark : AppColors.surface;
 
   /// الذهبي الآمن للنص حسب الخلفية (goldDeep فاتح / primaryGold داكن).
   Color get gold => isDark ? AppColors.primaryGold : AppColors.goldDeep;
+
+  Color get onGold => colors.onPrimary;
+
+  Color get success => styles.success.color!;
+
+  Color get danger => styles.error.color!;
+
+  Color get warning => styles.warning.color!;
+
+  Color get info => isDark ? AppColors.infoOnDark : AppColors.infoText;
+
+  Color get successContainer =>
+      isDark ? AppColors.darkSuccessBg : AppColors.successBg;
+
+  Color get dangerContainer =>
+      isDark ? AppColors.darkDangerBg : AppColors.dangerBg;
+
+  Color get warningContainer =>
+      isDark ? AppColors.darkWarningBg : AppColors.warningBg;
+
+  Color get infoContainer => isDark ? AppColors.darkInfoBg : AppColors.infoBg;
+
+  Color get goldContainer => isDark ? AppColors.darkGoldBg : AppColors.goldBg;
+
+  Color get divider => theme.dividerColor;
+
+  Color get onBand => styles.onBandItem.color!;
+
+  Color get onDark => AppColors.darkTextPrimary;
+
+  Color get onDarkMuted => AppColors.darkTextSecondary;
+
+  Color get successOnDark => AppColors.successOnDark;
+
+  Color get warningOnDark => AppColors.warningOnDark;
+
+  Color get dangerOnDark => AppColors.dangerOnDark;
 
   /// شريط قسم وضع التفتيش (داكن دائم بدرجتين).
   Color get inspectionBand =>
@@ -108,5 +169,13 @@ extension AppSemanticColors on BuildContext {
       isDark ? AppColors.manualBandDark : AppColors.manualBand;
 
   /// شريط رأس معاينة التفتيش — داكن في الوضعين بدرجة لكل وضع.
-  Color get previewBand => isDark ? AppColors.darkBorder : AppColors.surfaceDark;
+  Color get previewBand =>
+      isDark ? AppColors.darkBorder : AppColors.surfaceDark;
+
+  /// أسطح العناصر البديلة للصور والوسائط المتوافقة مع الوضعين.
+  Color get placeholderSurface =>
+      isDark ? AppColors.placeholderSurfaceDark : AppColors.placeholderSurfaceLight;
+
+  Color get placeholderBorder =>
+      isDark ? AppColors.placeholderBorderDark : AppColors.placeholderBorderLight;
 }

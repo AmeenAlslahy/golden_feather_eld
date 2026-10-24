@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 
 /// Dense striped header matching the Inspection Logs screenshot.
@@ -44,32 +45,33 @@ class InspectionLogHeaderTable extends StatelessWidget {
     return id?.toString() ?? '';
   }
 
-  String get _vehicle =>
-      _pick(log?.vehicleNumber, day?.vehicleNumber);
+  String get _vehicle => _pick(log?.vehicleNumber, day?.vehicleNumber);
   String get _vin => _pick(log?.vin, day?.vin);
   String get _trailers => _pick(log?.trailers, day?.trailers);
-  String get _shipping =>
-      _pick(log?.shippingDocuments, day?.shippingDocuments);
+  String get _shipping => _pick(log?.shippingDocuments, day?.shippingDocuments);
   String get _carrier {
-    final name =
-        _pick(log?.carrierName, day?.carrierName, screen?.carrierName);
-    final usdot =
-        _pick(log?.usdotNumber, day?.usdotNumber, screen?.usdotNumber);
+    final name = _pick(log?.carrierName, day?.carrierName, screen?.carrierName);
+    final usdot = _pick(
+      log?.usdotNumber,
+      day?.usdotNumber,
+      screen?.usdotNumber,
+    );
     if (usdot.isEmpty) return name;
     return '$name (DOT # $usdot)';
   }
 
-  String get _office =>
-      _pick(log?.mainOfficeAddress, day?.mainOfficeAddress);
+  String get _office => _pick(log?.mainOfficeAddress, day?.mainOfficeAddress);
   String get _terminal =>
       _pick(log?.homeTerminalAddress, day?.homeTerminalAddress);
-  String get _reg => _pick(log?.eldRegistrationId, day?.eldRegistrationId,
-      screen?.eldRegistrationId);
-  String get _eldId => _pick(
-      log?.eldIdentifier, day?.eldIdentifier, screen?.eldIdentifier);
+  String get _reg => _pick(
+    log?.eldRegistrationId,
+    day?.eldRegistrationId,
+    screen?.eldRegistrationId,
+  );
+  String get _eldId =>
+      _pick(log?.eldIdentifier, day?.eldIdentifier, screen?.eldIdentifier);
   String get _provider => _pick(log?.eldProvider, day?.eldProvider);
-  String get _location =>
-      _pick(log?.displayLocation, day?.displayLocation);
+  String get _location => _pick(log?.displayLocation, day?.displayLocation);
   String get _logDate {
     final dt = log?.logDate ?? day?.logDate;
     if (dt != null) {
@@ -105,14 +107,12 @@ class InspectionLogHeaderTable extends StatelessWidget {
   bool get _unidentified =>
       day?.hasUnidentifiedDriving ?? ((day?.unidentifiedDrivingCount ?? 0) > 0);
   // اتحاد المصدرين: مؤشر نشط في أي منهما يجب أن يظهر (395.8(k)).
-  List<String> get _diagList => {
-        ...?day?.activeDataDiagnostics,
-        ...?log?.activeDataDiagnostics,
-      }.toList();
+  List<String> get _diagList =>
+      {...?day?.activeDataDiagnostics, ...?log?.activeDataDiagnostics}.toList();
   List<String> get _malfList => {
-        ...?day?.activeDeviceMalfunctions,
-        ...?log?.activeDeviceMalfunctions,
-      }.toList();
+    ...?day?.activeDeviceMalfunctions,
+    ...?log?.activeDeviceMalfunctions,
+  }.toList();
 
   bool get _diag => _diagList.isNotEmpty;
   // 395.8(k)/8.3 — an indicator that is ON must say which code(s) are active.
@@ -226,7 +226,13 @@ class InspectionLogHeaderTable extends StatelessWidget {
           'Main Office',
           'Home Terminal',
         ]),
-        _valueRow(context, [_trailers, _shipping, _carrier, _office, _terminal]),
+        _valueRow(context, [
+          _trailers,
+          _shipping,
+          _carrier,
+          _office,
+          _terminal,
+        ]),
       ],
     );
   }
@@ -242,13 +248,11 @@ class InspectionLogHeaderTable extends StatelessWidget {
           for (final label in labels)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsetsDirectional.only(end: 6),
                 child: Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: context.styles.caption.copyWith(
                     fontWeight: FontWeight.w700,
-                    height: 1.15,
                     color: cs.onSurfaceVariant,
                   ),
                 ),
@@ -270,14 +274,10 @@ class InspectionLogHeaderTable extends StatelessWidget {
           for (final value in values)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsetsDirectional.only(end: 6),
                 child: Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.25,
-                    color: cs.onSurface,
-                  ),
+                  style: context.styles.body.copyWith(color: cs.onSurface),
                 ),
               ),
             ),

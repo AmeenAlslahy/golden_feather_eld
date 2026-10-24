@@ -43,7 +43,8 @@ class MockHardwareBackend implements HardwareBackend {
         'engine_telemetry': false,
       },
       'rejectionReasons': <String>['No ELD data received yet.'],
-      'recommendedAction': 'Start the engine and wait for the device to report.',
+      'recommendedAction':
+          'Start the engine and wait for the device to report.',
     });
   }
 

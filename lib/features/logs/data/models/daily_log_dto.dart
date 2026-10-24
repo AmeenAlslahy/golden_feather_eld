@@ -53,7 +53,9 @@ class DailyLogDto {
   factory DailyLogDto.fromJson(Map<String, dynamic> json) {
     final logDateStr = json['logDate'] as String?;
     if (logDateStr == null || logDateStr.trim().isEmpty) {
-      throw const FormatException('Missing or empty logDate in DailyLog payload');
+      throw const FormatException(
+        'Missing or empty logDate in DailyLog payload',
+      );
     }
 
     final driver = json['driver'];
@@ -75,22 +77,29 @@ class DailyLogDto {
         ? Map<String, dynamic>.from(json['formIndicator'] as Map)
         : null;
     final formIndicatorPositive = formIndicator?['positive'] as bool?;
-    final formIndicatorColor = formIndicator?['color']?.toString().toUpperCase();
+    final formIndicatorColor = formIndicator?['color']
+        ?.toString()
+        .toUpperCase();
 
     var formStatusStr = (json['formStatus'] as String?)?.trim();
-    if (formStatusStr == null || formStatusStr.isEmpty || formStatusStr.toUpperCase() == 'UNKNOWN') {
+    if (formStatusStr == null ||
+        formStatusStr.isEmpty ||
+        formStatusStr.toUpperCase() == 'UNKNOWN') {
       if (formIndicator?['status'] is String) {
         formStatusStr = formIndicator!['status'].toString();
-      } else if (formIndicatorPositive == true || formIndicatorColor == 'GREEN') {
+      } else if (formIndicatorPositive == true ||
+          formIndicatorColor == 'GREEN') {
         formStatusStr = 'COMPLETE';
-      } else if (formIndicatorPositive == false || formIndicatorColor == 'RED') {
+      } else if (formIndicatorPositive == false ||
+          formIndicatorColor == 'RED') {
         formStatusStr = 'DRAFT';
       }
     }
 
     // الاعتماد: `certificationStatus` نصاً؛ وعند غيابه نستنتج من
     // `certified: true` أو من `logStatus` عندما تكون قيمته قيمة اعتماد معروفة.
-    var certificationStatusStr = (json['certificationStatus'] as String?)?.trim();
+    var certificationStatusStr = (json['certificationStatus'] as String?)
+        ?.trim();
     if (certificationStatusStr == null ||
         certificationStatusStr.isEmpty ||
         certificationStatusStr.toUpperCase() == 'UNKNOWN') {
@@ -106,8 +115,8 @@ class DailyLogDto {
       }
     }
 
-    final formattedWorkTime =
-        (json['formattedTotalWorkTime'] as String?)?.trim();
+    final formattedWorkTime = (json['formattedTotalWorkTime'] as String?)
+        ?.trim();
 
     return DailyLogDto(
       id: json['id'] as int? ?? 0,
@@ -115,14 +124,16 @@ class DailyLogDto {
       logDate: logDateStr,
       formattedTotalWorkTime:
           formattedWorkTime != null && formattedWorkTime.isNotEmpty
-              ? formattedWorkTime
-              : (formattedFromTotals ?? ''),
-      totalDurationMinutes: json['totalDurationMinutes'] as int? ??
+          ? formattedWorkTime
+          : (formattedFromTotals ?? ''),
+      totalDurationMinutes:
+          json['totalDurationMinutes'] as int? ??
           (totalSeconds != null ? (totalSeconds / 60).round() : 0),
       formStatus: formStatusStr ?? 'UNKNOWN',
       certificationStatus: certificationStatusStr ?? 'UNKNOWN',
       today: json['today'] as bool? ?? false,
-      events: (json['events'] as List<dynamic>?)
+      events:
+          (json['events'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
@@ -177,7 +188,9 @@ class DailyLogDto {
     return DailyLog(
       id: DailyLogId(id),
       uniqueId: uniqueId,
-      date: DateTime.tryParse(logDate) ?? (throw FormatException('Invalid logDate format: $logDate')),
+      date:
+          DateTime.tryParse(logDate) ??
+          (throw FormatException('Invalid logDate format: $logDate')),
       formattedTotalWorkTime: formattedTotalWorkTime,
       totalDrivingHours: totalDurationMinutes / 60.0,
       formStatus: mappedFormStatus,

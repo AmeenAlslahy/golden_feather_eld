@@ -39,15 +39,15 @@ class LogCertifyState extends Equatable {
 
   @override
   List<Object?> get props => [
-        dailyLogId,
-        logDate,
-        statementText,
-        ruleReference,
-        hasSignature,
-        signatureImageData,
-        certificationStatus,
-        certified,
-        canCertify,
-        validationCodes,
-      ];
+    dailyLogId,
+    logDate,
+    statementText,
+    ruleReference,
+    hasSignature,
+    signatureImageData,
+    certificationStatus,
+    certified,
+    canCertify,
+    validationCodes,
+  ];
 }

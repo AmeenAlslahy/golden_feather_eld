@@ -69,10 +69,7 @@ class BackendRegistry {
 
   /// Convenience factory for a single-adapter registry.
   factory BackendRegistry.single(BackendAdapter adapter) {
-    return BackendRegistry(
-      adapters: [adapter],
-      activeId: adapter.identity.id,
-    );
+    return BackendRegistry(adapters: [adapter], activeId: adapter.identity.id);
   }
 
   /// The currently active adapter.
@@ -108,9 +105,9 @@ class BackendRegistry {
     final results = await Future.wait([
       for (final adapter in _adapters.values)
         adapter.dispose().then<Object?>(
-              (_) => null,
-              onError: (Object e, StackTrace st) => e,
-            ),
+          (_) => null,
+          onError: (Object e, StackTrace st) => e,
+        ),
     ]);
 
     final errors = results.whereType<Object>().toList();

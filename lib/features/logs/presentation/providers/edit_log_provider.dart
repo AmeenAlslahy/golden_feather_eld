@@ -86,7 +86,9 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       final timeAuthority = ref.read(timeAuthorityProvider);
 
       // FMCSA § 395: Duty status events cannot be recorded in the future
-      if (newStart.isAfter(timeAuthority.nowUtc().toLocal().add(const Duration(minutes: 1)))) {
+      if (newStart.isAfter(
+        timeAuthority.nowUtc().toLocal().add(const Duration(minutes: 1)),
+      )) {
         throw EditLogError(EditLogErrorCode.invalidTime);
       }
 
@@ -102,8 +104,9 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       }
 
       final idGenerator = ref.read(idGeneratorProvider);
-      
-      final updatedEvent = existing?.copyWith(
+
+      final updatedEvent =
+          existing?.copyWith(
             status: status,
             startTime: newStart,
             location: location,
@@ -126,7 +129,7 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       final result = isNewEvent
           ? await notifier.addEvent(updatedEvent, reason: reason)
           : await notifier.updateEvent(updatedEvent, reason: reason);
-          
+
       final saveFailed = result.fold((_) => true, (_) => false);
       if (saveFailed) {
         throw EditLogError(EditLogErrorCode.saveFailed);
@@ -142,7 +145,9 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       );
 
       final repo = ref.read(logRepositoryProvider);
-      final auditSaved = (await repo.logAudit(entry)).fold((_) => false, (ok) => ok);
+      final auditSaved = (await repo.logAudit(
+        entry,
+      )).fold((_) => false, (ok) => ok);
       if (!auditSaved) {
         throw EditLogError(EditLogErrorCode.auditFailed);
       }
@@ -155,9 +160,11 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
 }
 
 /// موفر تعديل السجل
-final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, void>(() {
-  return EditLogNotifier();
-});
+final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, void>(
+  () {
+    return EditLogNotifier();
+  },
+);
 
 /// اسم بديل للتوافق البرمجي الكامل مع الكود القائم
 final editLogControllerProvider = editLogProvider;

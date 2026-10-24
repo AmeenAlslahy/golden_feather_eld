@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_status_badge.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
@@ -23,7 +22,7 @@ class SyncStatusIndicator extends ConsumerWidget {
         ref.read(syncStateProvider.notifier).syncNow();
       },
       child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        padding: const EdgeInsetsDirectional.only(end: AppSpacing.sm),
         child: AppStatusBadge(
           label: syncState.isSyncing
               ? context.loc.syncing
@@ -35,8 +34,7 @@ class SyncStatusIndicator extends ConsumerWidget {
           trailing: syncState.totalFailed > 0
               ? Text(
                   '(${context.loc.syncFailed(syncState.totalFailed.toString())})',
-                  style: context.styles.caption
-                      .copyWith(fontSize: 10, color: AppColors.dangerText),
+                  style: context.styles.caption.copyWith(color: context.danger),
                 )
               : null,
         ),

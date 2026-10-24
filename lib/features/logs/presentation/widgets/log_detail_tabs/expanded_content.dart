@@ -40,10 +40,7 @@ class ExpandedContent extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: context.styles.caption,
-          ),
+          Text('$label: ', style: context.styles.caption),
           Expanded(
             child: Text(
               value,

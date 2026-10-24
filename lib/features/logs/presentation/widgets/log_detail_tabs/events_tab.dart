@@ -57,43 +57,45 @@ class EventsTab extends ConsumerWidget {
         ),
         _StatusTotalsRow(events: events),
         Expanded(
-            child: Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: RefreshIndicator(
-                onRefresh: () =>
-                    ref.read(logsProvider.notifier).loadSelectedLogEvents(),
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return LogEventTile(
-                      event: event,
-                      logDate: selectedLog.date,
-                      onTap: () {
-                        ref
-                            .read(logsProvider.notifier)
-                            .toggleEventExpansion(event.id);
-                      },
-                      // SRS 5.2 / §395.30(b): automatically recorded driving
-                      // and server-locked events have no pencil at all.
-                      onEdit: (event.automatedDriving == true ||
-                              event.editable == false)
-                          ? null
-                          : () {
-                              context.push(
-                                  AppRoutes.editLog.replaceAll(':id', event.id),
-                                  extra: event);
-                            },
-                    );
-                  },
-                ),
+          child: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: RefreshIndicator(
+              onRefresh: () =>
+                  ref.read(logsProvider.notifier).loadSelectedLogEvents(),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  final event = events[index];
+                  return LogEventTile(
+                    event: event,
+                    logDate: selectedLog.date,
+                    onTap: () {
+                      ref
+                          .read(logsProvider.notifier)
+                          .toggleEventExpansion(event.id);
+                    },
+                    // SRS 5.2 / §395.30(b): automatically recorded driving
+                    // and server-locked events have no pencil at all.
+                    onEdit:
+                        (event.automatedDriving == true ||
+                            event.editable == false)
+                        ? null
+                        : () {
+                            context.push(
+                              AppRoutes.editLog.replaceAll(':id', event.id),
+                              extra: event,
+                            );
+                          },
+                  );
+                },
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }
 

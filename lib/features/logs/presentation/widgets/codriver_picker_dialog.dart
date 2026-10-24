@@ -1,7 +1,6 @@
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
 
@@ -48,49 +47,50 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
         width: double.maxFinite,
         child: codriverState.isLoading
             ? const SizedBox(
-                height: 100, child: Center(child: CircularProgressIndicator()))
+                height: 100,
+                child: Center(child: CircularProgressIndicator()),
+              )
             : codriverState.error != null
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Error: ${codriverState.error}',
-                        style: context.styles.error,
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () => ref
-                            .read(codriverProvider.notifier)
-                            .reload(),
-                        child: Text(context.loc.retryButton),
-                      ),
-                    ],
-                  )
-                : SingleChildScrollView(
-                    child: RadioGroup<String>(
-                      groupValue: _selectedId,
-                      onChanged: (value) => setState(() => _selectedId = value),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: codrivers.map((driver) {
-                          final isSelected = driver.id == _selectedId;
-                          return RadioListTile<String>(
-                            title: Text(
-                              driver.name,
-                              style: context.styles.body.copyWith(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            value: driver.id,
-                            activeColor: AppColors.primaryGold,
-                            contentPadding: EdgeInsets.zero,
-                          );
-                        }).toList(),
-                      ),
-                    ),
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Error: ${codriverState.error}',
+                    style: context.styles.error,
                   ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(codriverProvider.notifier).reload(),
+                    child: Text(context.loc.retryButton),
+                  ),
+                ],
+              )
+            : SingleChildScrollView(
+                child: RadioGroup<String>(
+                  groupValue: _selectedId,
+                  onChanged: (value) => setState(() => _selectedId = value),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: codrivers.map((driver) {
+                      final isSelected = driver.id == _selectedId;
+                      return RadioListTile<String>(
+                        title: Text(
+                          driver.name,
+                          style: context.styles.body.copyWith(
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        value: driver.id,
+                        activeColor: context.gold,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
       ),
       actions: [
         TextButton(

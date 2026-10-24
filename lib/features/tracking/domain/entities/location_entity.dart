@@ -67,17 +67,17 @@ class LocationEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        latitude,
-        longitude,
-        altitude,
-        speed,
-        bearing,
-        accuracy,
-        timestamp,
-        provider,
-        odometerMiles,
-        engineHours,
-      ];
+    latitude,
+    longitude,
+    altitude,
+    speed,
+    bearing,
+    accuracy,
+    timestamp,
+    provider,
+    odometerMiles,
+    engineHours,
+  ];
 }
 
 /// كيان إعدادات التتبع
@@ -110,18 +110,18 @@ class TrackingConfigEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        serverUrl,
-        deviceId,
-        accuracy,
-        distanceMeters,
-        intervalSeconds,
-        angleDegrees,
-        heartbeatSeconds,
-        buffer,
-        wakeLock,
-        stopDetection,
-        preferPlatformProviders,
-      ];
+    serverUrl,
+    deviceId,
+    accuracy,
+    distanceMeters,
+    intervalSeconds,
+    angleDegrees,
+    heartbeatSeconds,
+    buffer,
+    wakeLock,
+    stopDetection,
+    preferPlatformProviders,
+  ];
 }
 
 /// كيان سجل التتبع
@@ -129,10 +129,7 @@ class TrackingLogEntity extends Equatable {
   final int time;
   final String message;
 
-  const TrackingLogEntity({
-    required this.time,
-    required this.message,
-  });
+  const TrackingLogEntity({required this.time, required this.message});
 
   DateTime get dateTime => DateTime.fromMillisecondsSinceEpoch(time);
 

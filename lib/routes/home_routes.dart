@@ -9,30 +9,30 @@ class HomeRoutes {
   HomeRoutes._();
 
   static List<RouteBase> get routes => [
-        GoRoute(
-          path: AppRoutes.home,
-          name: 'home',
-          builder: (context, state) => const HomePage(),
-        ),
-        GoRoute(
-          path: AppRoutes.status,
-          name: 'status',
-          builder: (context, state) => const StatusDashboardPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.hos,
-          name: 'hos',
-          builder: (context, state) => const StatusDashboardPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.selectVehicle,
-          name: 'selectVehicle',
-          builder: (context, state) => const SelectVehiclePage(),
-        ),
-        GoRoute(
-          path: AppRoutes.codriver,
-          name: 'codriver',
-          builder: (context, state) => const CoDriverPage(),
-        ),
-      ];
+    GoRoute(
+      path: AppRoutes.home,
+      name: 'home',
+      builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.status,
+      name: 'status',
+      builder: (context, state) => const StatusDashboardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.hos,
+      name: 'hos',
+      builder: (context, state) => const StatusDashboardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.selectVehicle,
+      name: 'selectVehicle',
+      builder: (context, state) => const SelectVehiclePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.codriver,
+      name: 'codriver',
+      builder: (context, state) => const CoDriverPage(),
+    ),
+  ];
 }

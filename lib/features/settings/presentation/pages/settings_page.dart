@@ -59,13 +59,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     // final fleet = ref.watch(fleetSettingsProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           context.loc.settingsTitle,
           style: context.styles.appBarTitle,
         ),
-        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -82,7 +80,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         },
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
           children: [
             EldCard(
               child: Column(
@@ -113,16 +111,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     onSelectionChanged: (value) async {
                       final code = value.first;
                       ref.read(localeProvider.notifier).setLocale(code);
-                      
+
                       final accountState = ref.read(accountProvider);
                       // If user is logged in, sync to server
                       if (accountState.accountData != null) {
-                        final langName = code == 'ar' ? 'Arabic' : (code == 'es' ? 'Spanish' : 'English');
-                        final currentOdo = accountState.accountData?.odometer ?? 'mi';
-                        await ref.read(accountProvider.notifier).updatePreferences(
-                          language: langName,
-                          odometerUnit: currentOdo,
-                        );
+                        final langName = code == 'ar'
+                            ? 'Arabic'
+                            : (code == 'es' ? 'Spanish' : 'English');
+                        final currentOdo =
+                            accountState.accountData?.odometer ?? 'mi';
+                        await ref
+                            .read(accountProvider.notifier)
+                            .updatePreferences(
+                              language: langName,
+                              odometerUnit: currentOdo,
+                            );
                       }
                     },
                   ),

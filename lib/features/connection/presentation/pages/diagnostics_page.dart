@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../domain/entities/hardware_alert.dart';
@@ -34,7 +33,7 @@ class DiagnosticsPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            color: AppColors.surface,
+            color: context.onGold,
             onPressed: () => ref.invalidate(hardwareAlertsProvider),
           ),
         ],
@@ -48,10 +47,12 @@ class DiagnosticsPage extends ConsumerWidget {
           ),
         ),
         data: (alerts) {
-          final malfunctions =
-              alerts.where(_isMalfunction).toList(growable: false);
-          final diagnostics =
-              alerts.where((a) => !_isMalfunction(a)).toList(growable: false);
+          final malfunctions = alerts
+              .where(_isMalfunction)
+              .toList(growable: false);
+          final diagnostics = alerts
+              .where((a) => !_isMalfunction(a))
+              .toList(growable: false);
 
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -66,13 +67,13 @@ class DiagnosticsPage extends ConsumerWidget {
                 for (final a in diagnostics)
                   EventCard(alert: a, malfunction: false),
               const SizedBox(height: AppSpacing.lg),
-              Text(loc.eldMalfunctionTitle,
-                  style: context.styles.sectionTitle),
+              Text(loc.eldMalfunctionTitle, style: context.styles.sectionTitle),
               const SizedBox(height: AppSpacing.sm),
               if (malfunctions.isEmpty)
                 Text(loc.dvirListNoRecords, style: context.styles.muted)
               else ...[
-                for (final a in malfunctions) EventCard(alert: a, malfunction: true),
+                for (final a in malfunctions)
+                  EventCard(alert: a, malfunction: true),
                 const SizedBox(height: AppSpacing.md),
                 // SRS 3.7 / 7.14: إجراءات العطل النشط — إخطار الناقل +
                 // التسجيل اليدوي + طلب التمديد. الأزرار إرشادية للسائق.
@@ -80,12 +81,16 @@ class DiagnosticsPage extends ConsumerWidget {
               ],
               if (kDebugMode) ...[
                 const SizedBox(height: AppSpacing.xl),
-                Text(loc.simulateMalfunctionDebug,
-                    style: context.styles.caption),
+                Text(
+                  loc.simulateMalfunctionDebug,
+                  style: context.styles.caption,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
                   onPressed: () => AppFeedback.info(
-                      context, loc.simulatedMalfunctionRecorded),
+                    context,
+                    loc.simulatedMalfunctionRecorded,
+                  ),
                   child: Text(loc.simulateMalfunction),
                 ),
               ],
@@ -96,6 +101,3 @@ class DiagnosticsPage extends ConsumerWidget {
     );
   }
 }
-
-
-

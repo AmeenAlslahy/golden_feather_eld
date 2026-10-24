@@ -5,6 +5,7 @@ import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repos
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_feather_eld/core/config/hos_configuration.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
@@ -71,9 +72,6 @@ void main() {
     ).thenAnswer((_) async => const Right(null));
     when(() => repo.getCompanyVehicles()).thenAnswer(
       (_) async => const Right([companyUnassigned, companyBusy, spare]),
-    );
-    when(() => repo.selectVehicle(any())).thenAnswer(
-      (_) async => const Right(true),
     );
   });
 
@@ -255,13 +253,17 @@ void main() {
   testWidgets('load failure shows a sanitized message with retry', (
     tester,
   ) async {
-    when(() => repo.getVehicles()).thenAnswer((_) async => const Right([]));
+    when(() => repo.getVehicles()).thenAnswer(
+      (_) async =>
+          const Left(ServerFailure(message: 'vehicle_list_unreadable')),
+    );
     await pump(tester, speedMps: 0.0);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('VIEW MY VEHICLES'));
-    await tester.pumpAndSettle();
 
-    expect(find.text('No vehicles available'), findsOneWidget);
+    expect(find.text('The vehicle list could not be read.'), findsOneWidget);
     expect(find.byIcon(Icons.refresh), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    verify(() => repo.getVehicles()).called(2);
   });
 }

@@ -10,13 +10,13 @@ import '../../../../domain/duty_status/duty_status_code.dart';
 extension DutyStatusCodeL10n on DutyStatusCode {
   /// The l10n key for the full status name.
   String get l10nKey => switch (this) {
-        DutyStatusCode.offDuty => 'offDuty',
-        DutyStatusCode.sleeperBerth => 'sleeperBerth',
-        DutyStatusCode.driving => 'drivingStatus',
-        DutyStatusCode.onDutyNotDriving => 'onDuty',
-        DutyStatusCode.yardMove => 'yardMoves',
-        DutyStatusCode.personalConveyance => 'personalUse',
-      };
+    DutyStatusCode.offDuty => 'offDuty',
+    DutyStatusCode.sleeperBerth => 'sleeperBerth',
+    DutyStatusCode.driving => 'drivingStatus',
+    DutyStatusCode.onDutyNotDriving => 'onDuty',
+    DutyStatusCode.yardMove => 'yardMoves',
+    DutyStatusCode.personalConveyance => 'personalUse',
+  };
 
   /// Resolves the display name using the current locale.
   String displayName(BuildContext context) {

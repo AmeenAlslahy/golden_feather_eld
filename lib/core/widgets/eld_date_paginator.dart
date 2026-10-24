@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../extensions/context_extensions.dart';
 
@@ -29,12 +30,15 @@ class EldDatePaginator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBgColor = backgroundColor ?? context.previewBand;
-    final effectiveTextColor = textColor ?? Colors.white;
-    final effectiveIconColor = iconColor ?? Colors.white;
+    final effectiveTextColor = textColor ?? AppColors.white;
+    final effectiveIconColor = iconColor ?? AppColors.white;
 
     return Container(
       color: effectiveBgColor,
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        vertical: 4,
+        horizontal: AppSpacing.sm,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -47,7 +51,9 @@ class EldDatePaginator extends StatelessWidget {
             children: [
               Text(
                 dateLabel,
-                style: context.styles.appBarTitle.copyWith(color: effectiveTextColor),
+                style: context.styles.appBarTitle.copyWith(
+                  color: effectiveTextColor,
+                ),
               ),
               if (isLoading) ...[
                 const SizedBox(width: AppSpacing.sm),
@@ -56,7 +62,9 @@ class EldDatePaginator extends StatelessWidget {
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(effectiveTextColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      effectiveTextColor,
+                    ),
                   ),
                 ),
               ],

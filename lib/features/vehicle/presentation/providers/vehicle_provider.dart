@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/providers/vehicle_repository_providers.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/vehicle.dart';
+import '../../domain/vehicle_selection.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 /// حالة شاشة المركبات
@@ -14,6 +15,11 @@ class VehicleState {
   final String? error;
   final bool isInitialized;
   final bool isSuccess;
+  // Nullable storage keeps pre-hot-reload VehicleState instances readable
+  // after this field is introduced; null means the personal list.
+  final bool? _isCompanyFleet;
+
+  bool get isCompanyFleet => _isCompanyFleet ?? false;
 
   const VehicleState({
     this.vehicles = const [],
@@ -23,15 +29,16 @@ class VehicleState {
     this.error,
     this.isInitialized = false,
     this.isSuccess = false,
-  });
+    bool isCompanyFleet = false,
+  }) : _isCompanyFleet = isCompanyFleet;
 
   List<Vehicle> get filteredVehicles {
-    if (searchQuery.isEmpty) return vehicles;
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return vehicles;
     return vehicles.where((v) {
-      final query = searchQuery.toLowerCase();
-      return v.id.contains(query) ||
+      return v.id.toLowerCase().contains(query) ||
           v.name.toLowerCase().contains(query) ||
-          v.year.contains(query);
+          v.year.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -44,6 +51,8 @@ class VehicleState {
     String? error,
     bool? isInitialized,
     bool? isSuccess,
+    bool? isCompanyFleet,
+    bool clearError = false,
   }) {
     return VehicleState(
       vehicles: vehicles ?? this.vehicles,
@@ -52,9 +61,10 @@ class VehicleState {
           : (selectedVehicle ?? this.selectedVehicle),
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
-      error: error, // Can be null to clear error
+      error: clearError ? null : (error ?? this.error),
       isInitialized: isInitialized ?? this.isInitialized,
       isSuccess: isSuccess ?? this.isSuccess,
+      isCompanyFleet: isCompanyFleet ?? this.isCompanyFleet,
     );
   }
 }
@@ -73,23 +83,19 @@ class VehicleState {
 final vehicleProvider = StateNotifierProvider<VehicleNotifier, VehicleState>((
   ref,
 ) {
-  final notifier =
-      VehicleNotifier(ref.watch(vehicleRepositoryProvider));
-  ref.listen<AuthState>(
-    authStateProvider,
-    (previous, next) {
-      if (next.user == null || next.transitioning) {
-        notifier.reset();
-        return;
-      }
-      final id = next.user!.id;
-      if (id != notifier.ownerDriverId ||
-          next.sessionEpoch != notifier.ownerEpoch) {
-        notifier.bindOwner(id, next.sessionEpoch);
-        notifier.loadVehicles(forceRefresh: true);
-      }
-    },
-  );
+  final notifier = VehicleNotifier(ref.watch(vehicleRepositoryProvider));
+  ref.listen<AuthState>(authStateProvider, (previous, next) {
+    if (next.user == null || next.transitioning) {
+      notifier.reset();
+      return;
+    }
+    final id = next.user!.id;
+    if (id != notifier.ownerDriverId ||
+        next.sessionEpoch != notifier.ownerEpoch) {
+      notifier.bindOwner(id, next.sessionEpoch);
+      notifier.loadVehicles(forceRefresh: true);
+    }
+  });
   final auth = ref.read(authStateProvider);
   if (auth.user != null && !auth.transitioning) {
     notifier.bindOwner(auth.user!.id, auth.sessionEpoch);
@@ -139,17 +145,34 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   /// إسقاط فوري (عند بدء logout) — متزامن، بلا API.
   void reset() => bindOwner(null, null);
 
-  Future<void> loadVehicles({bool forceRefresh = false, bool background = false}) async {
+  Future<void> loadVehicles({
+    bool forceRefresh = false,
+    bool background = false,
+  }) async {
     // P0 corrections: تسلسل جديد لكل طلب فعلي — الأحدث فقط يكتب
     // (latest-wins لكل قراءة)، والأقدم يُتجاهل بصمت دون تحويله لخطأ
     // جلسة جديدة. الزيادة بعد فحص الـ latch حتى لا يُبطل فحصٌ لا يُرسل
     // طلباً حقيقياً جارٍ.
-    if (state.isInitialized && !forceRefresh) return;
+    if (state.isInitialized && !state.isCompanyFleet && !forceRefresh) return;
     final seq = ++_loadSeq;
     final owner = _ownerDriverId;
+    final switchingFromCompanyFleet = state.isCompanyFleet;
 
     if (!background) {
-      state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+      state = state.copyWith(
+        vehicles: switchingFromCompanyFleet ? const [] : null,
+        isLoading: true,
+        isInitialized: false,
+        isCompanyFleet: false,
+        clearError: true,
+        isSuccess: false,
+      );
+    } else {
+      state = state.copyWith(
+        vehicles: switchingFromCompanyFleet ? const [] : null,
+        isCompanyFleet: false,
+        isInitialized: false,
+      );
     }
 
     final result = await _repository.getVehicles();
@@ -167,29 +190,20 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       (vehicles) {
         final currentSelectedId = state.selectedVehicle?.id;
         final serverSelected = _serverSelected(vehicles);
-        final selected = serverSelected ??
+        final selected =
+            serverSelected ??
             (currentSelectedId != null
                 ? vehicles.where((v) => v.id == currentSelectedId).firstOrNull
-                : null) ??
-            (vehicles.isEmpty ? state.selectedVehicle : null);
-
-        final normalizedVehicles = selected != null
-            ? vehicles.map((v) {
-                final isSelected = v.id == selected.id;
-                return v.copyWith(
-                  activeForCurrentDriver: isSelected,
-                  selectedByServer: isSelected,
-                );
-              }).toList()
-            : vehicles;
+                : null);
 
         state = state.copyWith(
-          vehicles: normalizedVehicles,
+          vehicles: vehicles,
           selectedVehicle: selected,
-          clearSelected: selected == null && vehicles.isNotEmpty,
+          clearSelected: selected == null,
           isLoading: false,
           isInitialized: true,
-          error: null,
+          isCompanyFleet: false,
+          clearError: true,
         );
       },
     );
@@ -198,7 +212,15 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   Future<void> loadCompanyVehicles() async {
     final seq = ++_loadSeq;
     final owner = _ownerDriverId;
-    state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+    final switchingFromPersonal = !state.isCompanyFleet;
+    state = state.copyWith(
+      vehicles: switchingFromPersonal ? const [] : null,
+      isLoading: true,
+      isInitialized: false,
+      isCompanyFleet: true,
+      clearError: true,
+      isSuccess: false,
+    );
     final result = await _repository.getCompanyVehicles();
     // P0 Stage 1 — سياج الردود المتأخرة.
     if (!mounted || seq != _loadSeq || owner != _ownerDriverId) return;
@@ -211,7 +233,8 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
           vehicles: vehicles,
           isLoading: false,
           isInitialized: true,
-          error: null,
+          isCompanyFleet: true,
+          clearError: true,
         );
       },
     );
@@ -229,22 +252,22 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
 
   /// البحث عن مركبة
   void search(String query) {
-    state = state.copyWith(searchQuery: query, error: state.error);
+    state = state.copyWith(searchQuery: query);
   }
 
   /// اختيار مركبة — SRS 9.3/9.4: حركة غير معروفة ≠ متوقفة،
   /// والحركة فوق العتبة تمنع الاختيار.
-  Future<void> selectVehicle(
+  void selectVehicle(
     Vehicle vehicle, {
     required double? speedMps,
     required double thresholdKmh,
     required bool trackingLive,
-  }) async {
-    state = state.copyWith(isLoading: true, error: null, isSuccess: false);
+  }) {
+    if (state.isLoading) return;
 
     // SRS 9.4: المركبة قيد الحركة فعلياً (تيار موقع حي) — رفض فوري.
     if (trackingLive && speedMps != null && speedMps * 3.6 >= thresholdKmh) {
-      state = state.copyWith(isLoading: false, error: 'vehicleMoving');
+      state = state.copyWith(error: 'vehicleMoving', isSuccess: false);
       return;
     }
 
@@ -257,46 +280,22 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
             state.selectedVehicle?.id != 'No Vehicle');
 
     if (hasActiveSession && trackingLive && speedMps == null) {
-      state = state.copyWith(isLoading: false, error: 'motionUnknown');
+      state = state.copyWith(error: 'motionUnknown', isSuccess: false);
       return;
     }
 
-    final targetId = vehicle.uniqueId?.trim().isNotEmpty == true
-        ? vehicle.uniqueId!.trim()
-        : vehicle.id.trim();
+    if (readOperableUniqueId(vehicle.uniqueId) == null) {
+      state = state.copyWith(error: 'identifierMissing', isSuccess: false);
+      return;
+    }
 
-    final result = await _repository.selectVehicle(targetId);
-
-    if (!mounted) return;
-
-    result.fold(
-      (failure) {
-        state = state.copyWith(
-          isLoading: false,
-          isSuccess: false,
-          error: failure.message,
-        );
-      },
-      (_) {
-        final updatedVehicles = state.vehicles.map((v) {
-          final isCurrent = v.id == vehicle.id;
-          return v.copyWith(
-            activeForCurrentDriver: isCurrent,
-            selectedByServer: isCurrent,
-          );
-        }).toList();
-
-        state = state.copyWith(
-          vehicles: updatedVehicles,
-          isLoading: false,
-          selectedVehicle: vehicle.copyWith(
-            activeForCurrentDriver: true,
-            selectedByServer: true,
-          ),
-          isSuccess: true,
-          error: null,
-        );
-      },
+    state = state.copyWith(
+      isLoading: false,
+      // This is only the driver's local choice. The server session is opened
+      // after Bluetooth succeeds on the Connection page.
+      selectedVehicle: vehicle,
+      isSuccess: true,
+      clearError: true,
     );
   }
 }

@@ -27,41 +27,68 @@ class DvirStatusModal extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
-              title: Text(DvirConditionStatus.satisfactory.label(loc), style: context.styles.body),
+              title: Text(
+                DvirConditionStatus.satisfactory.label(loc),
+                style: context.styles.body,
+              ),
               selected: selectedStatus == DvirConditionStatus.satisfactory,
               trailing: selectedStatus == DvirConditionStatus.satisfactory
                   ? Icon(Icons.check, color: context.colorScheme.primary)
                   : null,
-              enabled: !hasDefect,
-              subtitle: hasDefect 
-                ? Text(loc.dvirDefectRecorded, style: context.styles.subtitle) 
-                : null,
-              onTap: hasDefect
-                  ? null
-                  : () => Navigator.pop(
-                        context,
-                        DvirConditionStatus.satisfactory,
-                      ),
+              // القاعدة (من يجوز له اختيار ما) في النطاق؛ الحوار يعرضها.
+              enabled: DvirConditionStatus.satisfactory.driverMaySelect(
+                hasDefects: hasDefect,
+              ),
+              subtitle: hasDefect
+                  ? Text(loc.dvirDefectRecorded, style: context.styles.subtitle)
+                  : null,
+              onTap:
+                  DvirConditionStatus.satisfactory.driverMaySelect(
+                    hasDefects: hasDefect,
+                  )
+                  ? () =>
+                        Navigator.pop(context, DvirConditionStatus.satisfactory)
+                  : null,
             ),
             ListTile(
-              title: Text(DvirConditionStatus.hasDefects.label(loc), style: context.styles.body),
+              title: Text(
+                DvirConditionStatus.hasDefects.label(loc),
+                style: context.styles.body,
+              ),
               selected: selectedStatus == DvirConditionStatus.hasDefects,
               trailing: selectedStatus == DvirConditionStatus.hasDefects
                   ? Icon(Icons.check, color: context.colorScheme.primary)
                   : null,
-              onTap: () => Navigator.pop(context, DvirConditionStatus.hasDefects),
+              onTap: () =>
+                  Navigator.pop(context, DvirConditionStatus.hasDefects),
             ),
             // حالتا الإصلاح يضبطهما الناقل بعد شهادة الإصلاح — ليست قراراً
             // للسائق هنا (SRS 7.6).
             ListTile(
-              enabled: false,
-              title: Text(DvirConditionStatus.defectsCorrected.label(loc), style: context.styles.body),
-              subtitle: Text(loc.dvirNoRepairCert, style: context.styles.subtitle),
+              enabled: DvirConditionStatus.defectsCorrected.driverMaySelect(
+                hasDefects: hasDefect,
+              ),
+              title: Text(
+                DvirConditionStatus.defectsCorrected.label(loc),
+                style: context.styles.body,
+              ),
+              subtitle: Text(
+                loc.dvirNoRepairCert,
+                style: context.styles.subtitle,
+              ),
             ),
             ListTile(
-              enabled: false,
-              title: Text(DvirConditionStatus.defectsNotCorrected.label(loc), style: context.styles.body),
-              subtitle: Text(loc.dvirSetByCarrier, style: context.styles.subtitle),
+              enabled: DvirConditionStatus.defectsNotCorrected.driverMaySelect(
+                hasDefects: hasDefect,
+              ),
+              title: Text(
+                DvirConditionStatus.defectsNotCorrected.label(loc),
+                style: context.styles.body,
+              ),
+              subtitle: Text(
+                loc.dvirSetByCarrier,
+                style: context.styles.subtitle,
+              ),
             ),
           ],
         ),

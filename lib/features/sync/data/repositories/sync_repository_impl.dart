@@ -24,13 +24,15 @@ class SyncRepositoryImpl implements SyncRepository {
     required SyncLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
     required RemoteEventDispatcher dispatcher,
-  })  : _localDataSource = localDataSource,
-        _networkInfo = networkInfo,
-        _dispatcher = dispatcher;
+  }) : _localDataSource = localDataSource,
+       _networkInfo = networkInfo,
+       _dispatcher = dispatcher;
 
   @override
   Future<Either<Failure, bool>> enqueue(
-      SyncEventType type, Map<String, dynamic> data) async {
+    SyncEventType type,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final items = await _localDataSource.getPendingItems();
       final newItem = SyncItem(
@@ -73,17 +75,17 @@ class SyncRepositoryImpl implements SyncRepository {
             updatedItems.add(item);
           } else {
             if (item.retryCount < _maxRetries) {
-              updatedItems.add(item.copyWith(
-                retryCount: item.retryCount + 1,
-              ));
+              updatedItems.add(item.copyWith(retryCount: item.retryCount + 1));
             }
           }
         } catch (e) {
           if (item.retryCount < _maxRetries) {
-            updatedItems.add(item.copyWith(
-              retryCount: item.retryCount + 1,
-              errorMessage: e.toString(),
-            ));
+            updatedItems.add(
+              item.copyWith(
+                retryCount: item.retryCount + 1,
+                errorMessage: e.toString(),
+              ),
+            );
           }
         }
       }
@@ -95,7 +97,8 @@ class SyncRepositoryImpl implements SyncRepository {
       }
 
       AppLogger.info(
-          '📊 Queue processed: $successCount succeeded, ${updatedItems.length} pending');
+        '📊 Queue processed: $successCount succeeded, ${updatedItems.length} pending',
+      );
       return Right(successCount);
     } catch (e) {
       AppLogger.error('Failed to process queue', e);
@@ -115,17 +118,14 @@ class SyncRepositoryImpl implements SyncRepository {
       createdAt: item.createdAt,
     );
     final result = await _dispatcher.dispatch(event);
-    return result.match(
-      (failure) {
-        if (failure is QuarantinedFailure) {
-          _quarantinedIds.add(item.id);
-          return false;
-        }
-        AppLogger.error('Failed to send event: ${failure.message}');
+    return result.match((failure) {
+      if (failure is QuarantinedFailure) {
+        _quarantinedIds.add(item.id);
         return false;
-      },
-      (_) => true,
-    );
+      }
+      AppLogger.error('Failed to send event: ${failure.message}');
+      return false;
+    }, (_) => true);
   }
 
   @override

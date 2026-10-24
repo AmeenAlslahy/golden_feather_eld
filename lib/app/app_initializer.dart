@@ -10,6 +10,10 @@ import 'services/push_notification_service.dart';
 import '../core/services/utc_sync_service.dart';
 import '../core/config/app_environment.dart';
 import '../core/utils/logger.dart';
+import '../core/events/eld_events_provider.dart';
+import '../core/session/auth_session_provider.dart';
+import '../features/tracking/data/datasources/live_tracking_data_source.dart';
+import 'di/auth_local_data_source_provider.dart';
 import '../features/sync/presentation/providers/sync_provider.dart';
 import '../features/sync/data/providers/sync_providers.dart';
 import 'orchestrators/tracking_orchestrator.dart';
@@ -31,7 +35,8 @@ class AppInitializer {
       AppLogger.info('Firebase initialized successfully');
     } catch (e) {
       AppLogger.warning(
-          'Firebase initialization failed (App will continue without Firebase services): $e');
+        'Firebase initialization failed (App will continue without Firebase services): $e',
+      );
     }
 
     // 3. تهيئة الخدمات الأساسية (Hive يُفتح بالتوازي دون حجب الإقلاع)
@@ -90,6 +95,12 @@ class AppInitializer {
         localDatabaseServiceProvider.overrideWithValue(localDatabaseService),
         trackingServiceProvider.overrideWithValue(trackingService),
         utcSyncServiceProvider.overrideWithValue(utcSync),
+        liveEldEventSourceProvider.overrideWith(
+          (ref) => ref.watch(liveTrackingDataSourceProvider),
+        ),
+        authSessionReaderProvider.overrideWith(
+          (ref) => ref.watch(authLocalDataSourceProvider),
+        ),
       ],
     );
   }

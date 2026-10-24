@@ -12,7 +12,6 @@
 ///   - Response caching.
 library;
 
-
 import 'dart:typed_data';
 import 'package:dio/dio.dart'; // ignore_architecture
 import 'package:fpdart/fpdart.dart' as fp;
@@ -43,8 +42,8 @@ class ApiClient {
     Dio? dio,
     this.maxRetries = 2,
     this.retryBackoff = const Duration(milliseconds: 400),
-  })  : _config = config.normalized(),
-        _dio = dio ?? Dio() {
+  }) : _config = config.normalized(),
+       _dio = dio ?? Dio() {
     _dio.transformer = LenientJsonTransformer();
     _dio.options
       ..baseUrl = _config.baseUrl
@@ -188,10 +187,7 @@ class ApiClient {
     return _execute<T>(
       () async {
         final formData = FormData.fromMap({
-          fieldName: MultipartFile.fromBytes(
-            fileBytes,
-            filename: fileName,
-          ),
+          fieldName: MultipartFile.fromBytes(fileBytes, filename: fileName),
           ...?additionalFields,
         });
 
@@ -234,21 +230,25 @@ class ApiClient {
 
       final bytes = response.data;
       if (bytes == null) {
-        return fp.Left(ServerError(
-          code: 'server.emptyBinaryResponse',
-          context: {'uri': response.requestOptions.uri.toString()},
-        ));
+        return fp.Left(
+          ServerError(
+            code: 'server.emptyBinaryResponse',
+            context: {'uri': response.requestOptions.uri.toString()},
+          ),
+        );
       }
 
       return fp.Right(Uint8List.fromList(bytes));
     } on DioException catch (e) {
       return fp.Left(mapDioException(e));
     } catch (e, st) {
-      return fp.Left(UnknownError(
-        code: 'client.downloadUnexpected',
-        cause: e,
-        stackTrace: st,
-      ));
+      return fp.Left(
+        UnknownError(
+          code: 'client.downloadUnexpected',
+          cause: e,
+          stackTrace: st,
+        ),
+      );
     }
   }
 
@@ -298,12 +298,14 @@ class ApiClient {
         // IDs only, no credentials.
         final signal = e.error;
         if (signal is OwnerMismatchSignal) {
-          return fp.Left(OwnerMismatchError(
-            context: {
-              'expectedOwnerDriverId': signal.expectedOwnerDriverId,
-              'actualOwnerDriverId': signal.actualOwnerDriverId,
-            },
-          ));
+          return fp.Left(
+            OwnerMismatchError(
+              context: {
+                'expectedOwnerDriverId': signal.expectedOwnerDriverId,
+                'actualOwnerDriverId': signal.actualOwnerDriverId,
+              },
+            ),
+          );
         }
         // Retry only idempotent requests after a transient transport
         // failure, and never once the caller
@@ -319,11 +321,13 @@ class ApiClient {
           await Future<void>.delayed(retryBackoff * attempt);
         }
       } catch (e, st) {
-        return fp.Left(UnknownError(
-          code: 'client.requestUnexpected',
-          cause: e,
-          stackTrace: st,
-        ));
+        return fp.Left(
+          UnknownError(
+            code: 'client.requestUnexpected',
+            cause: e,
+            stackTrace: st,
+          ),
+        );
       }
     }
   }

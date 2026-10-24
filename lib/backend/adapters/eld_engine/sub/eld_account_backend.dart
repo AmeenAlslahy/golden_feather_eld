@@ -12,7 +12,10 @@ class EldAccountBackend implements AccountBackend {
 
   const EldAccountBackend(this._apiClient);
 
-  Map<String, dynamic> _mapAccountJson(Map<String, dynamic> json, {DriverId? fallbackDriverId}) {
+  Map<String, dynamic> _mapAccountJson(
+    Map<String, dynamic> json, {
+    DriverId? fallbackDriverId,
+  }) {
     // 1. معالجة المعرف driverId
     if (json['driverId'] == null) {
       json['driverId'] = json['id'] ?? fallbackDriverId?.value ?? 0;
@@ -25,18 +28,14 @@ class EldAccountBackend implements AccountBackend {
       final parts = licenseStr.split(',');
       final state = parts.isNotEmpty ? parts[0].trim() : '';
       final number = parts.length > 1 ? parts[1].trim() : licenseStr;
-      
+
       json['license'] = {
         'state': state,
         'number': number,
         'formatted': licenseStr,
       };
     } else if (json['license'] == null) {
-      json['license'] = {
-        'state': '',
-        'number': '',
-        'formatted': 'N/A',
-      };
+      json['license'] = {'state': '', 'number': '', 'formatted': 'N/A'};
     }
 
     // 3. معالجة المنطقة الزمنية timeZone
@@ -55,7 +54,10 @@ class EldAccountBackend implements AccountBackend {
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) {
-      final mappedJson = _mapAccountJson(r.data ?? <String, dynamic>{}, fallbackDriverId: driverId);
+      final mappedJson = _mapAccountJson(
+        r.data ?? <String, dynamic>{},
+        fallbackDriverId: driverId,
+      );
       return DriverAccount.fromJson(mappedJson);
     });
   }
@@ -67,10 +69,7 @@ class EldAccountBackend implements AccountBackend {
   }) async {
     final res = await _apiClient.put<RawJson>(
       EldEndpoints.accountPreferences,
-      data: {
-        'language': language,
-        'odometer': odometerUnit,
-      },
+      data: {'language': language, 'odometer': odometerUnit},
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) {

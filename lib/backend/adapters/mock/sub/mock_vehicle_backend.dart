@@ -17,5 +17,4 @@ class MockVehicleBackend implements VehicleBackend {
   @override
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId}) async =>
       ok(<String, dynamic>{'data': <dynamic>[]});
-
 }

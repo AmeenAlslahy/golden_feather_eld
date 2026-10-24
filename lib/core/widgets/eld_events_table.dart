@@ -24,10 +24,7 @@ class EldTableRow {
 }
 
 class EldEventsTable extends StatelessWidget {
-  const EldEventsTable({
-    super.key,
-    required this.rows,
-  });
+  const EldEventsTable({super.key, required this.rows});
 
   final List<EldTableRow> rows;
 
@@ -37,10 +34,7 @@ class EldEventsTable extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Center(
-          child: Text(
-            context.loc.noData,
-            style: context.styles.muted,
-          ),
+          child: Text(context.loc.noData, style: context.styles.muted),
         ),
       );
     }
@@ -60,42 +54,54 @@ class EldEventsTable extends StatelessWidget {
                 width: 60,
                 child: Text(
                   context.loc.time,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Expanded(
                 flex: 2,
                 child: Text(
                   context.loc.status,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Expanded(
                 flex: 3,
                 child: Text(
                   context.loc.location,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               SizedBox(
                 width: 60,
                 child: Text(
                   context.loc.odom,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               SizedBox(
                 width: 55,
                 child: Text(
                   context.loc.eng,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               SizedBox(
                 width: 40,
                 child: Text(
                   context.loc.src,
-                  style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+                  style: context.styles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -131,13 +137,7 @@ class _EventRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              row.time,
-              style: valueStyle,
-            ),
-          ),
+          SizedBox(width: 60, child: Text(row.time, style: valueStyle)),
           Expanded(
             flex: 2,
             child: Text(
@@ -157,20 +157,8 @@ class _EventRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          SizedBox(
-            width: 60,
-            child: Text(
-              row.odom,
-              style: valueStyle,
-            ),
-          ),
-          SizedBox(
-            width: 55,
-            child: Text(
-              row.eng,
-              style: valueStyle,
-            ),
-          ),
+          SizedBox(width: 60, child: Text(row.odom, style: valueStyle)),
+          SizedBox(width: 55, child: Text(row.eng, style: valueStyle)),
           SizedBox(
             width: 40,
             child: Text(

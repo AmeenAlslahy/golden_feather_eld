@@ -8,12 +8,15 @@ import '../../../../core/events/app_events.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../vehicle/domain/vehicle_selection.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
 
 /// Reads the live list shape: a raw array, or an object containing that array.
 /// Server rows are keyed by `statusId`, not a local id.
 List<Map<String, dynamic>> parseUnidentifiedList(Map<String, dynamic> json) {
-  final raw = json['items'] ?? json['events'] ?? json['content'] ?? json['data'];
+  final raw =
+      json['items'] ?? json['events'] ?? json['content'] ?? json['data'];
   if (raw is! List) return const [];
   return raw.whereType<Map>().map(normalizeUnidentifiedItem).toList();
 }
@@ -29,8 +32,17 @@ Map<String, dynamic> normalizeUnidentifiedItem(Map<dynamic, dynamic> raw) {
     'dutyStatus': '${item['status'] ?? item['dutyStatus'] ?? 'DRIVING'}',
     'startTime': item['startTime'],
     'endTime': item['endTime'],
+    'durationMinutes': item['durationMinutes'],
     'formattedDuration': item['formattedDuration'],
-    'location': item['locationText'] ?? item['location'] ?? item['locationDescription'] ?? '',
+    'startOdometerKm': item['startOdometerKm'],
+    'endOdometerKm': item['endOdometerKm'],
+    'totalDistanceKm': item['totalDistanceKm'],
+    'createdAt': item['createdAt'],
+    'location':
+        item['locationText'] ??
+        item['location'] ??
+        item['locationDescription'] ??
+        '',
     'vehicleName': item['vehicleName'],
     'uniqueId': item['uniqueId'],
     'allocationStatus': item['allocationStatus'],
@@ -46,7 +58,12 @@ class UnidentifiedEventItem {
   final String dutyStatus;
   final String startTime;
   final String endTime;
+  final int? durationMinutes;
   final String formattedDuration;
+  final num? startOdometerKm;
+  final num? endOdometerKm;
+  final num? totalDistanceKm;
+  final String createdAt;
   final String location;
   final String vehicleName;
   final String uniqueId;
@@ -60,7 +77,12 @@ class UnidentifiedEventItem {
     this.dutyStatus = 'DRIVING',
     this.startTime = '',
     this.endTime = '',
+    this.durationMinutes,
     this.formattedDuration = '',
+    this.startOdometerKm,
+    this.endOdometerKm,
+    this.totalDistanceKm,
+    this.createdAt = '',
     this.location = '',
     this.vehicleName = '',
     this.uniqueId = '',
@@ -76,17 +98,30 @@ class UnidentifiedEventItem {
       dutyStatus: '${item['dutyStatus'] ?? 'DRIVING'}',
       startTime: '${item['startTime'] ?? ''}',
       endTime: '${item['endTime'] ?? ''}',
+      durationMinutes: _asInt(item['durationMinutes']),
       formattedDuration: '${item['formattedDuration'] ?? ''}',
+      startOdometerKm: _asNum(item['startOdometerKm']),
+      endOdometerKm: _asNum(item['endOdometerKm']),
+      totalDistanceKm: _asNum(item['totalDistanceKm']),
+      createdAt: '${item['createdAt'] ?? ''}',
       location: '${item['location'] ?? ''}',
       vehicleName: '${item['vehicleName'] ?? ''}',
       uniqueId: '${item['uniqueId'] ?? ''}',
       allocationStatus: '${item['allocationStatus'] ?? ''}',
       rejectionReason: '${item['rejectionReason'] ?? ''}',
-      daysPending:
-          item['daysPending'] is int ? item['daysPending'] as int : null,
+      daysPending: item['daysPending'] is int
+          ? item['daysPending'] as int
+          : null,
       overdue: item['overdue'] == true,
     );
   }
+}
+
+int? _asInt(Object? value) => value is int ? value : int.tryParse('$value');
+
+num? _asNum(Object? value) {
+  if (value is num) return value;
+  return num.tryParse('$value');
 }
 
 /// نتائج إحصائيات الأحداث غير المحددة (SRS 11.2 & SRS 11.6)
@@ -161,8 +196,9 @@ class UnidentifiedListState {
       items: items ?? this.items,
       tab: tab ?? this.tab,
       currentVehicleOnly: currentVehicleOnly ?? this.currentVehicleOnly,
-      vehicleUniqueId:
-          clearVehicle ? null : (vehicleUniqueId ?? this.vehicleUniqueId),
+      vehicleUniqueId: clearVehicle
+          ? null
+          : (vehicleUniqueId ?? this.vehicleUniqueId),
       dateFilter: clearDateFilter ? null : (dateFilter ?? this.dateFilter),
       unclaimedCount: unclaimedCount ?? this.unclaimedCount,
       rejectedCount: rejectedCount ?? this.rejectedCount,
@@ -191,17 +227,22 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
       await ref.read(vehicleProvider.notifier).loadVehicles();
       vehicleState = ref.read(vehicleProvider);
     }
-    final v = vehicleState.selectedVehicle;
-    final uid = v?.uniqueId ?? v?.id;
-    return (uid != null && uid.isNotEmpty) ? uid : null;
+    final vehicle = vehicleState.selectedVehicle;
+    // Vehicle selection already accepts `vehicle.id` when the API omits
+    // `uniqueId`; the unidentified-events endpoint accepts the device/vehicle
+    // identifier in the same query field. Use that selected identifier before
+    // falling back to the dashboard's owner-scoped current selection.
+    return readOperableUniqueId(vehicle?.uniqueId) ??
+        readOperableUniqueId(vehicle?.id) ??
+        readOperableUniqueId(ref.read(dashboardDataProvider).vehicleId);
   }
 
   /// [uniqueId] — SRS 11.2 vehicle filter, passed through to the server
   /// (`GET /eld/unidentified-events?uniqueId=`); null = all vehicles.
   Future<void> load({UnidentifiedTab? tab, String? uniqueId}) async {
     final activeTab = tab ?? state.tab;
-    final vehicleFilter = uniqueId ??
-        (state.currentVehicleOnly ? state.vehicleUniqueId : null);
+    final vehicleFilter =
+        uniqueId ?? (state.currentVehicleOnly ? state.vehicleUniqueId : null);
 
     state = state.copyWith(loading: true, clearError: true, tab: activeTab);
     final driverId = ref.read(currentDriverIdProvider);
@@ -239,10 +280,12 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
       (json) {
         final rawMaps = _parse(json);
         final events = rawMaps.map(UnidentifiedEventItem.fromMap).toList();
-        final unclaimed =
-            activeTab == UnidentifiedTab.unclaimed ? events.length : otherCount;
-        final rejected =
-            activeTab == UnidentifiedTab.rejected ? events.length : otherCount;
+        final unclaimed = activeTab == UnidentifiedTab.unclaimed
+            ? events.length
+            : otherCount;
+        final rejected = activeTab == UnidentifiedTab.rejected
+            ? events.length
+            : otherCount;
 
         final filtered = _filterByDate(events, state.dateFilter);
         final now = ref.read(timeAuthorityProvider).nowUtc();
@@ -297,10 +340,12 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
       return when == null || !when.toUtc().isBefore(since);
     }).length;
 
-    final unclaimed =
-        tab == UnidentifiedTab.unclaimed ? items.length : unclaimedCount;
-    final rejected =
-        tab == UnidentifiedTab.rejected ? items.length : rejectedCount;
+    final unclaimed = tab == UnidentifiedTab.unclaimed
+        ? items.length
+        : unclaimedCount;
+    final rejected = tab == UnidentifiedTab.rejected
+        ? items.length
+        : rejectedCount;
     final total = (unclaimed == null || rejected == null)
         ? items.length
         : unclaimed + rejected;
@@ -368,7 +413,9 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     if (annotation.trim().isEmpty) {
       return const ServerFailure(message: 'An annotation is required.');
     }
-    final result = await ref.read(unidentifiedEventsBackendProvider).claim(
+    final result = await ref
+        .read(unidentifiedEventsBackendProvider)
+        .claim(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
           annotation: annotation.trim(),
@@ -391,7 +438,9 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     if (reason.trim().isEmpty) {
       return const ServerFailure(message: 'A rejection reason is required.');
     }
-    final result = await ref.read(unidentifiedEventsBackendProvider).reject(
+    final result = await ref
+        .read(unidentifiedEventsBackendProvider)
+        .reject(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
           rejectionReason: reason.trim(),
@@ -411,10 +460,12 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
   }
 }
 
-final unidentifiedEventsProvider = StateNotifierProvider<
-    UnidentifiedEventsNotifier, UnidentifiedListState>((ref) {
-  return UnidentifiedEventsNotifier(ref);
-});
+final unidentifiedEventsProvider =
+    StateNotifierProvider<UnidentifiedEventsNotifier, UnidentifiedListState>((
+      ref,
+    ) {
+      return UnidentifiedEventsNotifier(ref);
+    });
 
 /// حساب إحصائيات الأحداث غير المحددة (دالة مساعدة للتوافقية)
 UnidentifiedStats calculateUnidentifiedStats({
@@ -441,10 +492,12 @@ UnidentifiedStats calculateUnidentifiedStats({
     return when == null || !when.toUtc().isBefore(since);
   }).length;
 
-  final unclaimed =
-      tab == UnidentifiedTab.unclaimed ? eventItems.length : unclaimedCount;
-  final rejected =
-      tab == UnidentifiedTab.rejected ? eventItems.length : rejectedCount;
+  final unclaimed = tab == UnidentifiedTab.unclaimed
+      ? eventItems.length
+      : unclaimedCount;
+  final rejected = tab == UnidentifiedTab.rejected
+      ? eventItems.length
+      : rejectedCount;
   final total = (unclaimed == null || rejected == null)
       ? eventItems.length
       : unclaimed + rejected;
@@ -458,10 +511,7 @@ UnidentifiedStats calculateUnidentifiedStats({
 }
 
 /// تصفية الأحداث بالتاريخ محلياً (دالة مساعدة للتوافقية)
-List<T> filterUnidentifiedEventsByDate<T>(
-  List<T> items,
-  DateTime? day,
-) {
+List<T> filterUnidentifiedEventsByDate<T>(List<T> items, DateTime? day) {
   if (day == null) return items;
   return items.where((item) {
     final String raw;
@@ -479,5 +529,3 @@ List<T> filterUnidentifiedEventsByDate<T>(
         when.day == day.day;
   }).toList();
 }
-
-

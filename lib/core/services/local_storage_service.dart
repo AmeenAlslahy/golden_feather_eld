@@ -42,7 +42,8 @@ class LocalStorageService implements ServerConfigProvider {
     _prefs = await SharedPreferencesWithCache.create(
       sharedPreferencesOptions: Platform.isAndroid
           ? const SharedPreferencesAsyncAndroidOptions(
-              backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences)
+              backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences,
+            )
           : const SharedPreferencesOptions(),
       cacheOptions: const SharedPreferencesWithCacheOptions(
         allowList: {
@@ -74,6 +75,8 @@ class LocalStorageService implements ServerConfigProvider {
           'hos_dashboard_snapshot', // آخر لوحة ناجحة (StatusDashboardRepository)
           'hos_recap_snapshot', // آخر ملخص أسبوعي ناجح
           'vehicle_list_cache', // آخر قائمة مركبات ناجحة
+          'vehicle_my_list_cache', // مركبات السائق
+          'vehicle_company_list_cache', // قائمة أسطول الشركة منفصلة
           'codriver_list_cache', // قائمة السائقين المساعدين (CoDriverRepository)
           'codriver_current_cache', // السائق المساعد الحالي
           'inspection_screen_cache', // شاشة التفتيش (InspectionRepository)
@@ -91,7 +94,9 @@ class LocalStorageService implements ServerConfigProvider {
       for (final key in {'interval', 'distance', 'angle', 'heartbeat'}) {
         if (_prefs.get(key) is String) {
           await _prefs.setInt(
-              key, int.tryParse(_prefs.getString(key) ?? '') ?? 0);
+            key,
+            int.tryParse(_prefs.getString(key) ?? '') ?? 0,
+          );
         }
       }
     }
@@ -110,7 +115,7 @@ class LocalStorageService implements ServerConfigProvider {
     // وضع الإعدادات الافتراضية إذا لم تكن موجودة
     const String defaultServer = 'https://snsoft.cloud';
     final currentUrl = _prefs.getString('url');
-        
+
     if (currentUrl == null || currentUrl.isEmpty) {
       await _prefs.setString('url', defaultServer);
       await _prefs.setString('backend_type', 'eld');
@@ -181,8 +186,7 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> setBackendType(String value) =>
       _trackingStorage.setBackendType(value);
 
-  Future<void> setOnboardingSeen() =>
-      _preferencesStorage.setOnboardingSeen();
+  Future<void> setOnboardingSeen() => _preferencesStorage.setOnboardingSeen();
   Future<void> setLanguage(String value) =>
       _preferencesStorage.setLanguage(value);
   Future<void> setTheme(String value) => _preferencesStorage.setTheme(value);
@@ -196,7 +200,7 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> applyFromUri(Uri uri) => _trackingStorage.applyFromUri(uri);
 
   // ========== تخزين HOS Configuration ==========
-  
+
   HosConfiguration get hosConfiguration {
     final jsonStr = _prefs.getString('hos_configuration');
     if (jsonStr != null && jsonStr.isNotEmpty) {
@@ -216,7 +220,6 @@ class LocalStorageService implements ServerConfigProvider {
 
   // ========== تخزين المركبة ==========
 
-
   Future<void> saveSelectedVehicleId(String id) =>
       _preferencesStorage.saveSelectedVehicleId(id);
   Future<void> clearSelectedVehicle() =>
@@ -231,12 +234,14 @@ class LocalStorageService implements ServerConfigProvider {
   Future<void> clearAll() async {
     final currentUrl = _prefs.getString('url');
     final currentBackend = _prefs.getString('backend_type');
-    
+
     await _prefs.clear();
-    
+
     if (currentUrl != null) await _prefs.setString('url', currentUrl);
-    if (currentBackend != null) await _prefs.setString('backend_type', currentBackend);
-    
+    if (currentBackend != null) {
+      await _prefs.setString('backend_type', currentBackend);
+    }
+
     await _setDefaults();
   }
 }

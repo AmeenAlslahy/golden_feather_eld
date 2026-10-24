@@ -32,10 +32,12 @@ class EldUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
       err,
       (response) => response.isSuccess
           ? ok(null)
-          : err(ServerError(
-              code: 'eld.request_failed',
-              context: {'message': response.message},
-            )),
+          : err(
+              ServerError(
+                code: 'eld.request_failed',
+                context: {'message': response.message},
+              ),
+            ),
     );
   }
 

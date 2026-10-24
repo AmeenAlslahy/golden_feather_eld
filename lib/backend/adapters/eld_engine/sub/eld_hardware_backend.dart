@@ -39,10 +39,7 @@ class EldHardwareBackend implements HardwareBackend {
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.hardwareManualMode,
       queryParameters: query.isNotEmpty ? query : null,
-      data: {
-        'enable': enable,
-        'reason': reason,
-      },
+      data: {'enable': enable, 'reason': reason},
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});

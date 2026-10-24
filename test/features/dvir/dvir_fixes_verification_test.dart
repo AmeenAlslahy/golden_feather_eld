@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/contracts/dvir_backend.dart';
+import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
-import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/features/dvir/data/mappers/dvir_mappers.dart';
 import 'package:golden_feather_eld/features/dvir/data/repositories/dvir_repository_impl.dart';
 import 'package:golden_feather_eld/features/dvir/domain/dvir_catalog.dart';
@@ -14,11 +14,17 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockDvirBackend extends Mock implements DvirBackend {}
-class _MockStorageService extends Mock implements TrackingConfigStorageService {}
 
 class _OnlineNetworkInfo implements NetworkInfo {
   @override
   bool get isConnected => true;
+  @override
+  Stream<bool> get onConnectionChange => const Stream.empty();
+}
+
+class _OfflineNetworkInfo implements NetworkInfo {
+  @override
+  bool get isConnected => false;
   @override
   Stream<bool> get onConnectionChange => const Stream.empty();
 }
@@ -29,19 +35,152 @@ void main() {
     registerFallbackValue(<String, dynamic>{});
   });
   group('DVIR-01: DvirConditionStatus.fromWire unknown handling', () {
-    test('unrecognized string returns unknown (never silently satisfactory)', () {
-      expect(DvirConditionStatus.fromWire('Random Unknown String'), DvirConditionStatus.unknown);
-      expect(DvirConditionStatus.fromWire('Out of Service'), DvirConditionStatus.unknown);
-      expect(DvirConditionStatus.fromWire(null), DvirConditionStatus.unknown);
-      expect(DvirConditionStatus.fromWire(''), DvirConditionStatus.unknown);
-      expect(DvirConditionStatus.fromWire('   '), DvirConditionStatus.unknown);
-    });
+    test(
+      'unrecognized string returns unknown (never silently satisfactory)',
+      () {
+        expect(
+          DvirConditionStatus.fromWire('Random Unknown String'),
+          DvirConditionStatus.unknown,
+        );
+        expect(
+          DvirConditionStatus.fromWire('Out of Service'),
+          DvirConditionStatus.unknown,
+        );
+        expect(DvirConditionStatus.fromWire(null), DvirConditionStatus.unknown);
+        expect(DvirConditionStatus.fromWire(''), DvirConditionStatus.unknown);
+        expect(
+          DvirConditionStatus.fromWire('   '),
+          DvirConditionStatus.unknown,
+        );
+      },
+    );
 
     test('recognized wire strings return exact enum', () {
-      expect(DvirConditionStatus.fromWire('Vehicle Condition Satisfactory'), DvirConditionStatus.satisfactory);
-      expect(DvirConditionStatus.fromWire('Has Defects'), DvirConditionStatus.hasDefects);
-      expect(DvirConditionStatus.fromWire('Defects Corrected'), DvirConditionStatus.defectsCorrected);
-      expect(DvirConditionStatus.fromWire('Defects Need Not Be Corrected'), DvirConditionStatus.defectsNotCorrected);
+      expect(
+        DvirConditionStatus.fromWire('Vehicle Condition Satisfactory'),
+        DvirConditionStatus.satisfactory,
+      );
+      expect(
+        DvirConditionStatus.fromWire('Has Defects'),
+        DvirConditionStatus.hasDefects,
+      );
+      expect(
+        DvirConditionStatus.fromWire('Defects Corrected'),
+        DvirConditionStatus.defectsCorrected,
+      );
+      expect(
+        DvirConditionStatus.fromWire('Defects Need Not Be Corrected'),
+        DvirConditionStatus.defectsNotCorrected,
+      );
+    });
+  });
+
+  group('DvirConditionStatus.resolvedFor', () {
+    test('satisfactory is upgraded only when defects exist', () {
+      expect(
+        DvirConditionStatus.satisfactory.resolvedFor(hasDefects: true),
+        DvirConditionStatus.hasDefects,
+      );
+      expect(
+        DvirConditionStatus.satisfactory.resolvedFor(hasDefects: false),
+        DvirConditionStatus.satisfactory,
+      );
+    });
+
+    test('every non-satisfactory status is preserved', () {
+      for (final status in DvirConditionStatus.values) {
+        if (status == DvirConditionStatus.satisfactory) continue;
+        expect(
+          status.resolvedFor(hasDefects: true),
+          status,
+          reason: status.wire,
+        );
+        expect(
+          status.resolvedFor(hasDefects: false),
+          status,
+          reason: status.wire,
+        );
+      }
+    });
+  });
+
+  group('DVIR condition status preservation', () {
+    late _MockDvirBackend backend;
+    late DvirRepositoryImpl repository;
+
+    setUp(() {
+      backend = _MockDvirBackend();
+      repository = DvirRepositoryImpl(
+        dvirBackend: backend,
+        networkInfo: _OnlineNetworkInfo(),
+        offlineQueue: MemoryOfflineQueue(),
+      );
+    });
+
+    test('server status is preserved exactly, not inferred', () async {
+      const cases = [
+        (
+          'Vehicle Condition Satisfactory',
+          DvirConditionStatus.satisfactory,
+          VehicleCondition.safe,
+        ),
+        (
+          'Has Defects',
+          DvirConditionStatus.hasDefects,
+          VehicleCondition.needsRepair,
+        ),
+        (
+          'Defects Corrected',
+          DvirConditionStatus.defectsCorrected,
+          VehicleCondition.needsRepair,
+        ),
+        (
+          'Defects Need Not Be Corrected',
+          DvirConditionStatus.defectsNotCorrected,
+          VehicleCondition.needsRepair,
+        ),
+        (
+          'Out of Service',
+          DvirConditionStatus.unknown,
+          VehicleCondition.needsRepair,
+        ),
+      ];
+
+      for (final (wire, status, condition) in cases) {
+        when(() => backend.getById(any())).thenAnswer(
+          (_) async => ok(<String, dynamic>{
+            'id': 100,
+            'status': wire,
+            'hasDefects': false,
+            'nextDriverReviewed': false,
+            'defects': const [],
+          }),
+        );
+
+        final result = await repository.getDvirDetails('100');
+        final report = result.getOrElse((_) => throw StateError('left'));
+
+        expect(report.conditionStatus, status, reason: wire);
+        expect(report.condition, condition, reason: wire);
+      }
+    });
+  });
+
+  group('DVIR catalog offline behavior', () {
+    test('offline catalog is a failure, not a false-empty list', () async {
+      final repository = DvirRepositoryImpl(
+        dvirBackend: _MockDvirBackend(),
+        networkInfo: _OfflineNetworkInfo(),
+        offlineQueue: MemoryOfflineQueue(),
+      );
+
+      final result = await repository.getDefectsCatalog();
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (failure) => expect(failure, isA<NetworkFailure>()),
+        (_) => fail('offline catalog must not report an empty catalog'),
+      );
     });
   });
 
@@ -123,25 +262,23 @@ void main() {
       );
     });
 
-    test('returns Right(null) when server returns {message: "No Records"} without hasPreviousDvir', () async {
-      when(() => backend.getPreviousDvir('TRUCK-1')).thenAnswer(
-        (_) async => ok(<String, dynamic>{
-          'success': true,
-          'message': 'No Records',
-        }),
-      );
+    test(
+      'returns Right(null) when server returns {message: "No Records"} without hasPreviousDvir',
+      () async {
+        when(() => backend.getPreviousDvir('TRUCK-1')).thenAnswer(
+          (_) async =>
+              ok(<String, dynamic>{'success': true, 'message': 'No Records'}),
+        );
 
-      final result = await repository.getPreviousDvir('TRUCK-1');
-      expect(result.isRight(), isTrue);
-      expect(result.getOrElse((_) => throw StateError('left')), isNull);
-    });
+        final result = await repository.getPreviousDvir('TRUCK-1');
+        expect(result.isRight(), isTrue);
+        expect(result.getOrElse((_) => throw StateError('left')), isNull);
+      },
+    );
 
     test('returns Right(null) when server returns data: null', () async {
       when(() => backend.getPreviousDvir('TRUCK-2')).thenAnswer(
-        (_) async => ok(<String, dynamic>{
-          'success': true,
-          'data': null,
-        }),
+        (_) async => ok(<String, dynamic>{'success': true, 'data': null}),
       );
 
       final result = await repository.getPreviousDvir('TRUCK-2');
@@ -149,17 +286,20 @@ void main() {
       expect(result.getOrElse((_) => throw StateError('left')), isNull);
     });
 
-    test('returns Left when server says hasPreviousDvir: true but body is unreadable', () async {
-      when(() => backend.getPreviousDvir('TRUCK-3')).thenAnswer(
-        (_) async => ok(<String, dynamic>{
-          'hasPreviousDvir': true,
-          'invalidField': 123,
-        }),
-      );
+    test(
+      'returns Left when server says hasPreviousDvir: true but body is unreadable',
+      () async {
+        when(() => backend.getPreviousDvir('TRUCK-3')).thenAnswer(
+          (_) async => ok(<String, dynamic>{
+            'hasPreviousDvir': true,
+            'invalidField': 123,
+          }),
+        );
 
-      final result = await repository.getPreviousDvir('TRUCK-3');
-      expect(result.isLeft(), isTrue);
-    });
+        final result = await repository.getPreviousDvir('TRUCK-3');
+        expect(result.isLeft(), isTrue);
+      },
+    );
   });
 
   group('DVIR-04: Odometer validation', () {
@@ -221,13 +361,10 @@ void main() {
 
   group('DVIR-06 & DVIR-08: Provider lifecycle & stale state clearing', () {
     late _MockDvirBackend backend;
-    late _MockStorageService storageService;
     late DvirRepositoryImpl repository;
 
     setUp(() {
       backend = _MockDvirBackend();
-      storageService = _MockStorageService();
-      when(() => storageService.deviceId).thenReturn('V1');
       repository = DvirRepositoryImpl(
         dvirBackend: backend,
         networkInfo: _OnlineNetworkInfo(),
@@ -250,9 +387,9 @@ void main() {
     });
 
     test('loadDvirDetails clears stale report when fetching new one', () async {
-      when(() => backend.list(uniqueId: any(named: 'uniqueId'))).thenAnswer(
-        (_) async => ok(<String, dynamic>{'data': []}),
-      );
+      when(
+        () => backend.list(uniqueId: any(named: 'uniqueId')),
+      ).thenAnswer((_) async => ok(<String, dynamic>{'data': []}));
       when(() => backend.getById(any())).thenAnswer(
         (_) async => ok(<String, dynamic>{
           'id': 99,
@@ -260,10 +397,7 @@ void main() {
         }),
       );
 
-      final notifier = DvirNotifier(
-        repository: repository,
-        storageService: storageService,
-      );
+      final notifier = DvirNotifier(repository: repository);
 
       notifier.state = notifier.state.copyWith(
         currentReport: const DvirReport(
@@ -292,28 +426,69 @@ void main() {
       );
     });
 
-    test('report with defects submitted with satisfactory status is reconciled to Has Defects on wire', () async {
-      when(() => backend.create(any())).thenAnswer((_) async => ok(null));
+    test(
+      'report with defects submitted with satisfactory status is reconciled to Has Defects on wire',
+      () async {
+        when(() => backend.create(any())).thenAnswer((_) async => ok(null));
 
-      const reportWithDefects = DvirReport(
-        id: '',
-        type: InspectionType.preTrip,
-        driverName: 'Driver',
-        vehicleId: 'V1',
-        deviceId: 7,
-        hasDefects: true,
-        vehicleDefects: 'Brakes spongy',
-        signature: 'dGVzdA==',
+        // مصدر الحقيقة الواحد بعد إعادة الهيكلة: مصنع النطاق يطبّق
+        // DVIR-09 عند البناء — الإدخال المتناقض يُصالَح قبل السلك.
+        final reportWithDefects = DvirReport.draft(
+          type: InspectionType.preTrip,
+          inspectionTimeUtc: DateTime.utc(2026, 10, 14),
+          driverName: 'Driver',
+          vehicleId: 'V1',
+          deviceId: 7,
+          selectedStatus:
+              DvirConditionStatus.satisfactory, // Contradictory input
+          hasAnyDefect: true,
+          selectedDefects: const [],
+          signatureData: 'dGVzdA==',
+          vehicleDefects: 'Brakes spongy',
+        );
+
+        await repository.submitDvirReport(reportWithDefects, driverId: 10);
+
+        final captured =
+            verify(() => backend.create(captureAny())).captured.first
+                as Map<String, dynamic>;
+        expect(captured['status'], 'Has Defects');
+      },
+    );
+  });
+
+  group('SRS 7.6: driverMaySelect — من يجوز للسائق اختياره', () {
+    test(
+      'satisfactory allowed only with no recorded defects (DVIR-09 face)',
+      () {
+        expect(
+          DvirConditionStatus.satisfactory.driverMaySelect(hasDefects: false),
+          isTrue,
+        );
+        expect(
+          DvirConditionStatus.satisfactory.driverMaySelect(hasDefects: true),
+          isFalse,
+        );
+      },
+    );
+
+    test('hasDefects always selectable; repair statuses are carrier-only', () {
+      expect(
+        DvirConditionStatus.hasDefects.driverMaySelect(hasDefects: false),
+        isTrue,
       );
-
-      await repository.submitDvirReport(
-        reportWithDefects,
-        driverId: 10,
-        status: DvirConditionStatus.satisfactory, // Contradictory input
+      expect(
+        DvirConditionStatus.hasDefects.driverMaySelect(hasDefects: true),
+        isTrue,
       );
-
-      final captured = verify(() => backend.create(captureAny())).captured.first as Map<String, dynamic>;
-      expect(captured['status'], 'Has Defects');
+      for (final status in [
+        DvirConditionStatus.defectsCorrected,
+        DvirConditionStatus.defectsNotCorrected,
+        DvirConditionStatus.unknown,
+      ]) {
+        expect(status.driverMaySelect(hasDefects: false), isFalse);
+        expect(status.driverMaySelect(hasDefects: true), isFalse);
+      }
     });
   });
 

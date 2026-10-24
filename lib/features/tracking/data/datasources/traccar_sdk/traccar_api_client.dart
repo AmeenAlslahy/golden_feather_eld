@@ -14,6 +14,9 @@ abstract class TraccarApiClient {
   Future<List<Map<String, dynamic>>> getPositions(String deviceId);
 
   /// جلب الأحداث (Events)
-  Future<List<Map<String, dynamic>>> getEvents(String deviceId,
-      {DateTime? from, DateTime? to});
+  Future<List<Map<String, dynamic>>> getEvents(
+    String deviceId, {
+    DateTime? from,
+    DateTime? to,
+  });
 }

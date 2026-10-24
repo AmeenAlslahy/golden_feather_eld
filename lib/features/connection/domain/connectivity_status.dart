@@ -67,7 +67,8 @@ class ConnectivityStatus {
   bool get hasDiagnostic => diagnostics.isNotEmpty;
 
   bool get hasMalfunction =>
-      connectionStatus?.toUpperCase() == 'MALFUNCTION' || malfunctions.isNotEmpty;
+      connectionStatus?.toUpperCase() == 'MALFUNCTION' ||
+      malfunctions.isNotEmpty;
 }
 
 /// A non-object body is an error. A missing status is not treated as connected.
@@ -142,7 +143,10 @@ bool? _bool(dynamic value) {
 List<String>? _strings(dynamic value) {
   if (value == null) return const [];
   if (value is! List) return null;
-  return value.map((item) => item.toString().trim()).where((item) => item.isNotEmpty).toList();
+  return value
+      .map((item) => item.toString().trim())
+      .where((item) => item.isNotEmpty)
+      .toList();
 }
 
 /// Accepts standard colon/dash-separated MAC (`AA:BB:CC:DD:EE:FF`),

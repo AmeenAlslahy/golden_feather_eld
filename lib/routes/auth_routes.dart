@@ -10,30 +10,30 @@ class AuthRoutes {
   AuthRoutes._();
 
   static List<RouteBase> get routes => [
-        GoRoute(
-          path: AppRoutes.splash,
-          name: 'splash',
-          builder: (context, state) => const SplashPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.onboarding,
-          name: 'onboarding',
-          builder: (context, state) => const OnboardingPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.permissions,
-          name: 'permissions',
-          builder: (context, state) => const PermissionsPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.login,
-          name: 'login',
-          builder: (context, state) => const AuthPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.connection,
-          name: 'connection',
-          builder: (context, state) => const EldConnectionPage(),
-        ),
-      ];
+    GoRoute(
+      path: AppRoutes.splash,
+      name: 'splash',
+      builder: (context, state) => const SplashPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.onboarding,
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.permissions,
+      name: 'permissions',
+      builder: (context, state) => const PermissionsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      name: 'login',
+      builder: (context, state) => const AuthPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.connection,
+      name: 'connection',
+      builder: (context, state) => const EldConnectionPage(),
+    ),
+  ];
 }

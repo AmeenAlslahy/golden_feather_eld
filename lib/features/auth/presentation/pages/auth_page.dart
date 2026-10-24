@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
 import '../providers/auth_state_provider.dart';
@@ -27,10 +28,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-              child: SingleChildScrollView(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.xl,
+              horizontal: AppSpacing.screenPadding,
+              vertical: AppSpacing.sectionGap,
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
@@ -40,7 +41,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 children: [
                   // شعار التطبيق
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(AppRadius.round),
                     child: Image.asset(
                       'assets/images/ic_launcher.png',
                       width: 120,
@@ -77,7 +78,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: context.colors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
                         border: Border.all(
                           color: context.colors.error.withValues(alpha: 0.3),
                         ),
@@ -93,14 +94,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           if (authState.errorMessage != null)
                             Expanded(
                               child: Text(
-                                context
-                                    .translateErrorKey(authState.errorMessage!),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                context.translateErrorKey(
+                                  authState.errorMessage!,
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color:
-                                          Theme.of(context).colorScheme.error,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                       height: 1.3,
                                     ),
                               ),
@@ -113,9 +114,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   if (isLoading)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
 
                   // التبديل بين النماذج مع انتقال سلس

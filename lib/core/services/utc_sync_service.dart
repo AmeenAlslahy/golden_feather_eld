@@ -16,14 +16,16 @@ class UtcSyncService {
     final now = DateTime.now();
     if (serverTime == null) {
       AppLogger.warning(
-          'UTC sync skipped: no server reference time (device clock must not anchor trusted time)');
+        'UTC sync skipped: no server reference time (device clock must not anchor trusted time)',
+      );
       return;
     }
     try {
       _drift = serverTime.toUtc().difference(now);
 
       AppLogger.info(
-          '🕐 UTC Sync: server=${serverTime.toUtc().toIso8601String()}');
+        '🕐 UTC Sync: server=${serverTime.toUtc().toIso8601String()}',
+      );
       AppLogger.info('   Local: ${now.toIso8601String()}');
       AppLogger.info('   Drift: ${_drift?.inSeconds}s');
     } catch (e) {

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/backend/contracts/contract_enums.dart';
 import 'package:golden_feather_eld/backend/contracts/driver_session_backend.dart';
@@ -6,6 +9,7 @@ import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/network/network_info.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
+import 'package:golden_feather_eld/core/session/session_epoch.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/codriver/data/datasources/codriver_local_cache.dart';
 import 'package:golden_feather_eld/features/codriver/data/repositories/codriver_repository_impl.dart';
@@ -14,14 +18,16 @@ import 'package:golden_feather_eld/features/sync/domain/entities/event_ownership
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/features/sync/domain/repositories/offline_queue.dart';
 
-class _MockDriverSessionBackend extends Mock
-    implements DriverSessionBackend {}
+class _MockDriverSessionBackend extends Mock implements DriverSessionBackend {}
 
 class _MockNetworkInfo extends Mock implements NetworkInfo {}
 
 class _MockCoDriverLocalCache extends Mock implements CoDriverLocalCache {}
 
 class _MockOfflineQueue extends Mock implements OfflineQueue {}
+
+T? _right<T>(Either<Failure, T> result) =>
+    result.fold((_) => null, (value) => value);
 
 void main() {
   late _MockDriverSessionBackend mockBackend;
@@ -47,6 +53,7 @@ void main() {
   });
 
   setUp(() {
+    SessionEpoch.resetForTests();
     mockBackend = _MockDriverSessionBackend();
     mockNetworkInfo = _MockNetworkInfo();
     mockLocalCache = _MockCoDriverLocalCache();
@@ -54,7 +61,13 @@ void main() {
 
     when(() => mockLocalCache.loadAvailableDrivers()).thenReturn(null);
     when(() => mockLocalCache.loadCurrentCoDriver()).thenReturn(null);
-    when(() => mockLocalCache.saveCurrentCoDriver(any())).thenAnswer((_) async {});
+    when(
+      () => mockLocalCache.saveAvailableDrivers(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => mockLocalCache.saveCurrentCoDriver(any()),
+    ).thenAnswer((_) async {});
+    when(() => mockLocalCache.clear()).thenAnswer((_) async {});
     when(() => mockOfflineQueue.enqueue(any())).thenAnswer((_) async {});
 
     repository = CoDriverRepositoryImpl(
@@ -93,66 +106,75 @@ void main() {
       );
     });
 
-    test('falls back to switchPrimary with reason if legacySwitch fails', () async {
-      when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      when(
-        () => mockBackend.switchPrimaryDriver(
-          action: DutyStatusAction.legacySwitch,
-          coDriverId: const DriverId(103),
-        ),
-      ).thenAnswer((_) async => err(const ServerError(code: '400')));
-      when(
-        () => mockBackend.switchPrimaryDriver(
-          action: DutyStatusAction.switchPrimary,
-          coDriverId: const DriverId(103),
-          reason: any(named: 'reason'),
-        ),
-      ).thenAnswer((_) async => ok(null));
+    test(
+      'falls back to switchPrimary with reason if legacySwitch fails',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(true);
+        when(
+          () => mockBackend.switchPrimaryDriver(
+            action: DutyStatusAction.legacySwitch,
+            coDriverId: const DriverId(103),
+          ),
+        ).thenAnswer((_) async => err(const ServerError(code: '400')));
+        when(
+          () => mockBackend.switchPrimaryDriver(
+            action: DutyStatusAction.switchPrimary,
+            coDriverId: const DriverId(103),
+            reason: any(named: 'reason'),
+          ),
+        ).thenAnswer((_) async => ok(null));
 
-      final result = await repository.switchPrimary(
-        coDriverId: 103,
-        reason: 'سبب مخصص',
-      );
-
-      expect(result.isRight(), isTrue);
-      verify(
-        () => mockBackend.switchPrimaryDriver(
-          action: DutyStatusAction.legacySwitch,
-          coDriverId: const DriverId(103),
-        ),
-      ).called(1);
-      verify(
-        () => mockBackend.switchPrimaryDriver(
-          action: DutyStatusAction.switchPrimary,
-          coDriverId: const DriverId(103),
+        final result = await repository.switchPrimary(
+          coDriverId: 103,
           reason: 'سبب مخصص',
-        ),
-      ).called(1);
-    });
+        );
 
-    test('returns ServerFailure when coDriverId <= 0 without calling backend', () async {
-      when(() => mockNetworkInfo.isConnected).thenReturn(true);
+        expect(result.isRight(), isTrue);
+        verify(
+          () => mockBackend.switchPrimaryDriver(
+            action: DutyStatusAction.legacySwitch,
+            coDriverId: const DriverId(103),
+          ),
+        ).called(1);
+        verify(
+          () => mockBackend.switchPrimaryDriver(
+            action: DutyStatusAction.switchPrimary,
+            coDriverId: const DriverId(103),
+            reason: 'سبب مخصص',
+          ),
+        ).called(1);
+      },
+    );
 
-      final result = await repository.switchPrimary(coDriverId: 0);
+    test(
+      'returns ServerFailure when coDriverId <= 0 without calling backend',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(true);
 
-      expect(result.isLeft(), isTrue);
-      result.fold(
-        (failure) => expect(failure, isA<ServerFailure>()),
-        (_) => fail('Expected failure'),
-      );
-      verifyZeroInteractions(mockBackend);
-    });
+        final result = await repository.switchPrimary(coDriverId: 0);
 
-    test('succeeds offline by updating local state and queuing sync event without calling backend', () async {
-      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+        expect(result.isLeft(), isTrue);
+        result.fold(
+          (failure) => expect(failure, isA<ServerFailure>()),
+          (_) => fail('Expected failure'),
+        );
+        verifyZeroInteractions(mockBackend);
+      },
+    );
 
-      final result = await repository.switchPrimary(coDriverId: 102);
+    test(
+      'succeeds offline by updating local state and queuing sync event without calling backend',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(false);
 
-      expect(result.isRight(), isTrue);
-      verify(() => mockLocalCache.saveCurrentCoDriver(any())).called(1);
-      verify(() => mockOfflineQueue.enqueue(any())).called(1);
-      verifyZeroInteractions(mockBackend);
-    });
+        final result = await repository.switchPrimary(coDriverId: 102);
+
+        expect(result.isRight(), isTrue);
+        verify(() => mockLocalCache.saveCurrentCoDriver(any())).called(1);
+        verify(() => mockOfflineQueue.enqueue(any())).called(1);
+        verifyZeroInteractions(mockBackend);
+      },
+    );
   });
 
   group('P0 — ownership stamping on the queued switch event', () {
@@ -165,21 +187,29 @@ void main() {
           readDriverId: readDriverId,
         );
 
-    test('offline switch carries ownerDriverId from the live session', () async {
-      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+    test(
+      'offline switch carries ownerDriverId from the live session',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(false);
 
-      final result = await withDriver(() => 777).switchPrimary(coDriverId: 55);
+        final result = await withDriver(
+          () => 777,
+        ).switchPrimary(coDriverId: 55);
 
-      expect(result.isRight(), isTrue);
-      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
-          .captured
-          .single as PendingEvent;
-      expect(event.type, 'switch_primary_driver');
-      expect(event.payload['coDriverId'], 55);
-      expect(event.payload['ownerDriverId'], 777,
-          reason: 'بدون الختم كان الحجر الدائم في الطابور يبتلع التبديل');
-      expect(event.id, startsWith('switch_'));
-    });
+        expect(result.isRight(), isTrue);
+        final event =
+            verify(() => mockOfflineQueue.enqueue(captureAny())).captured.single
+                as PendingEvent;
+        expect(event.type, 'switch_primary_driver');
+        expect(event.payload['coDriverId'], 55);
+        expect(
+          event.payload['ownerDriverId'],
+          777,
+          reason: 'بدون الختم كان الحجر الدائم في الطابور يبتلع التبديل',
+        );
+        expect(event.id, startsWith('switch_'));
+      },
+    );
 
     test('no session → no owner key, but the switch is still queued', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(false);
@@ -187,25 +217,138 @@ void main() {
       final result = await withDriver(() => null).switchPrimary(coDriverId: 55);
 
       expect(result.isRight(), isTrue);
-      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
-          .captured
-          .single as PendingEvent;
+      final event =
+          verify(() => mockOfflineQueue.enqueue(captureAny())).captured.single
+              as PendingEvent;
       expect(event.payload.containsKey('ownerDriverId'), isFalse);
     });
 
-    test('queued switch resolves to a proven owner (no quarantine path)',
-        () async {
+    test(
+      'queued switch resolves to a proven owner (no quarantine path)',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+        await withDriver(() => 777).switchPrimary(coDriverId: 57);
+
+        final event =
+            verify(() => mockOfflineQueue.enqueue(captureAny())).captured.single
+                as PendingEvent;
+        final ownership = EventOwnershipResolver.resolve(event);
+        expect(
+          ownership.driverId,
+          777,
+          reason: 'قبل الإصلاح كان الحل UNKNOWN ⇒ حجر دائم في الطابور',
+        );
+        expect(ownership.evidence, isNot(OwnerEvidence.unknown));
+      },
+    );
+  });
+
+  group('session isolation', () {
+    test(
+      'does not share in-memory caches across repository instances',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(true);
+        when(() => mockBackend.getAvailableDrivers()).thenAnswer(
+          (_) async => ok<List<dynamic>>([
+            {'id': '7', 'name': 'Driver Seven'},
+          ]),
+        );
+
+        final firstRead = await repository.getAvailableDrivers();
+        expect(_right(firstRead)?.single.id, '7');
+
+        final otherRepository = CoDriverRepositoryImpl(
+          driverSessionBackend: mockBackend,
+          networkInfo: mockNetworkInfo,
+          localCache: mockLocalCache,
+          offlineQueue: mockOfflineQueue,
+        );
+        when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+        final secondRead = await otherRepository.getAvailableDrivers();
+
+        expect(secondRead.isRight(), isTrue);
+        expect(
+          _right(secondRead),
+          isEmpty,
+          reason: 'static caches used to leak the previous instance list',
+        );
+      },
+    );
+
+    test(
+      'session change drops cached drivers and clears the disk cache',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(true);
+        when(() => mockBackend.getAvailableDrivers()).thenAnswer(
+          (_) async => ok<List<dynamic>>([
+            {'id': '7', 'name': 'Driver Seven'},
+          ]),
+        );
+        await repository.getAvailableDrivers();
+
+        SessionEpoch.bump();
+        when(() => mockNetworkInfo.isConnected).thenReturn(false);
+
+        final result = await repository.getAvailableDrivers();
+
+        expect(result.isRight(), isTrue);
+        expect(_right(result), isEmpty);
+        verify(() => mockLocalCache.clear()).called(1);
+      },
+    );
+
+    test('session change drops the cached current co-driver', () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(true);
+      when(() => mockBackend.getCurrentCoDriver()).thenAnswer(
+        (_) async => ok<Map<String, dynamic>>({
+          'coDriverId': 11,
+          'coDriverName': 'Previous Session',
+          'teamDrivingActive': true,
+        }),
+      );
+      final before = await repository.getCurrentCoDriver();
+      expect(_right(before)?.coDriverId, 11);
+
+      SessionEpoch.bump();
       when(() => mockNetworkInfo.isConnected).thenReturn(false);
 
-      await withDriver(() => 777).switchPrimary(coDriverId: 57);
+      final after = await repository.getCurrentCoDriver();
 
-      final event = verify(() => mockOfflineQueue.enqueue(captureAny()))
-          .captured
-          .single as PendingEvent;
-      final ownership = EventOwnershipResolver.resolve(event);
-      expect(ownership.driverId, 777,
-          reason: 'قبل الإصلاح كان الحل UNKNOWN ⇒ حجر دائم في الطابور');
-      expect(ownership.evidence, isNot(OwnerEvidence.unknown));
+      expect(after.isRight(), isTrue);
+      expect(_right(after)?.coDriverId, isNull);
+      expect(_right(after)?.teamDrivingActive, isFalse);
+      verify(() => mockLocalCache.clear()).called(1);
+    });
+
+    test('a late response from the previous session is not cached', () async {
+      when(() => mockNetworkInfo.isConnected).thenReturn(true);
+      final response = Completer<Result<Map<String, dynamic>>>();
+      when(
+        () => mockBackend.getCurrentCoDriver(),
+      ).thenAnswer((_) => response.future);
+
+      final pending = repository.getCurrentCoDriver();
+      SessionEpoch.bump();
+      response.complete(
+        ok<Map<String, dynamic>>({
+          'coDriverId': 99,
+          'coDriverName': 'Stale Session',
+          'teamDrivingActive': true,
+        }),
+      );
+
+      final stale = await pending;
+      expect(stale.isLeft(), isTrue);
+
+      when(() => mockNetworkInfo.isConnected).thenReturn(false);
+      final after = await repository.getCurrentCoDriver();
+      expect(
+        _right(after)?.coDriverId,
+        isNull,
+        reason: 'a stale response must never populate the next session cache',
+      );
     });
   });
 }

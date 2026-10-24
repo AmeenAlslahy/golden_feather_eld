@@ -14,7 +14,6 @@ abstract interface class DutyStatusBackend {
     required RawJson update,
   });
 
-
   /// GET /eld/duty-status/graph-grid
   // TODO(P2): replace with GraphGrid
   Future<Result<RawJson>> getGraphGrid({

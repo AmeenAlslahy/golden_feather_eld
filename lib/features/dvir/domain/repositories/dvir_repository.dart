@@ -16,10 +16,11 @@ abstract class DvirRepository {
   /// §396.11 defect catalog from `GET /eld/dvir/catalog`.
   Future<Either<Failure, List<DvirCatalogItem>>> getDefectsCatalog();
 
+  /// الحالة الرسمية تُقرأ من `report.conditionStatus` (طُبِّعت ثوابتها عند
+  /// بناء المسودة في النطاق) — لا مصدر ثانٍ لها في التوقيع.
   Future<Either<Failure, bool>> submitDvirReport(
     DvirReport report, {
     required int driverId,
-    required DvirConditionStatus status,
   });
 
   Future<Either<Failure, bool>> reviewDvir({

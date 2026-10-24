@@ -18,8 +18,9 @@ class EldInspectionBackend implements InspectionBackend {
     return _apiClient
         .get<Map<String, dynamic>>(
           EldEndpoints.inspections,
-          queryParameters:
-              driverId != null ? {'driverId': driverId.value} : null,
+          queryParameters: driverId != null
+              ? {'driverId': driverId.value}
+              : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
         .then(
@@ -65,8 +66,7 @@ class EldInspectionBackend implements InspectionBackend {
           EldEndpoints.dotInspectionLogs,
           queryParameters: {
             if (driverId != null) 'driverId': driverId.value,
-            if (date != null)
-              'date': date.toIso8601String().split('T').first,
+            if (date != null) 'date': date.toIso8601String().split('T').first,
           },
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
@@ -109,27 +109,22 @@ class EldInspectionBackend implements InspectionBackend {
     DateTime? endDate,
     int? expectedOwnerDriverId,
   }) {
-    return _postJson(
-      EldEndpoints.dotInspectionEmailLogs,
-      {
-        'driverId': driverId.value,
-        'recipientEmail': recipientEmail,
-        if (routingCode != null) 'routingCode': routingCode,
-        if (comment != null) 'comment': comment,
-        if (daysCount != null) 'daysCount': daysCount,
-        if (endDate != null)
-          'endDate': endDate.toIso8601String().split('T').first,
-      },
-      expectedOwnerDriverId: expectedOwnerDriverId,
-    );
+    return _postJson(EldEndpoints.dotInspectionEmailLogs, {
+      'driverId': driverId.value,
+      'recipientEmail': recipientEmail,
+      if (routingCode != null) 'routingCode': routingCode,
+      if (comment != null) 'comment': comment,
+      if (daysCount != null) 'daysCount': daysCount,
+      if (endDate != null)
+        'endDate': endDate.toIso8601String().split('T').first,
+    }, expectedOwnerDriverId: expectedOwnerDriverId);
   }
 
   @override
   Future<Result<RawJson>> getInformationPacket({DriverId? driverId}) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dotInspectionPacket,
-      queryParameters:
-          driverId != null ? {'driverId': driverId.value} : null,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: _asMap,
     );
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
@@ -146,20 +141,16 @@ class EldInspectionBackend implements InspectionBackend {
     DateTime? endDate,
     int? expectedOwnerDriverId,
   }) {
-    return _postJson(
-      EldEndpoints.dotInspectionSendLogs,
-      {
-        'driverId': driverId.value,
-        'transferType': transferType.wire,
-        'outputFileComment': outputFileComment,
-        if (routingCode != null) 'routingCode': routingCode,
-        if (recipientEmail != null) 'recipientEmail': recipientEmail,
-        if (daysCount != null) 'daysCount': daysCount,
-        if (endDate != null)
-          'endDate': endDate.toIso8601String().split('T').first,
-      },
-      expectedOwnerDriverId: expectedOwnerDriverId,
-    );
+    return _postJson(EldEndpoints.dotInspectionSendLogs, {
+      'driverId': driverId.value,
+      'transferType': transferType.wire,
+      'outputFileComment': outputFileComment,
+      if (routingCode != null) 'routingCode': routingCode,
+      if (recipientEmail != null) 'recipientEmail': recipientEmail,
+      if (daysCount != null) 'daysCount': daysCount,
+      if (endDate != null)
+        'endDate': endDate.toIso8601String().split('T').first,
+    }, expectedOwnerDriverId: expectedOwnerDriverId);
   }
 
   @override
@@ -185,11 +176,9 @@ class EldInspectionBackend implements InspectionBackend {
   Future<Result<RawJson>> getTransfers({DriverId? driverId}) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dotInspectionTransfers,
-      queryParameters:
-          driverId != null ? {'driverId': driverId.value} : null,
+      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: _asMap,
     );
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
-
 }

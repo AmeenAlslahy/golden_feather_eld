@@ -12,6 +12,7 @@ import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_upda
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
 import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/logs/presentation/mappers/form_validation_mapper.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/shipping_documents_page.dart';
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/trailers_page.dart';
@@ -32,7 +33,13 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const DailyLogId(0));
     registerFallbackValue(DateTime(2026));
-    registerFallbackValue(const DailyFormUpdate(vehicleUniqueId: '', trailers: [], shippingDocuments: []));
+    registerFallbackValue(
+      const DailyFormUpdate(
+        vehicleUniqueId: '',
+        trailers: [],
+        shippingDocuments: [],
+      ),
+    );
   });
 
   group('daily_form_rules', () {
@@ -54,6 +61,9 @@ void main() {
         'Trailer number must be letters, numbers, or hyphens (max 50).',
       );
       when(
+        () => loc.trailerNumberTooLong,
+      ).thenReturn('Trailer number is too long (max 50).');
+      when(
         () => loc.enterDocumentNumber,
       ).thenReturn('Enter the document number.');
       when(
@@ -62,8 +72,9 @@ void main() {
       when(
         () => loc.oneDocumentAtATime,
       ).thenReturn('Enter one document at a time (no comma).');
-      when(() => loc.shippingDocumentFormatError)
-          .thenReturn('Shipping document format error.');
+      when(
+        () => loc.shippingDocumentFormatError,
+      ).thenReturn('Shipping document format error.');
       when(() => loc.localeName).thenReturn('en');
       when(() => loc.trailers).thenReturn('Trailers');
       when(() => loc.typeHere).thenReturn('Type here');
@@ -74,22 +85,46 @@ void main() {
       when(() => loc.noDocumentsAdded).thenReturn('No documents added');
 
       expect(trailerNumberError('TR-1402', loc), isNull);
-      expect(trailerNumberError('TR 1402', loc), isNull,
-          reason: 'spaces allowed (Arabic multi-word labels)');
-      expect(trailerNumberError('مقطورة 12', loc), isNull,
-          reason: 'Arabic letters accepted');
+      expect(
+        trailerNumberError('TR 1402', loc),
+        isNull,
+        reason: 'spaces allowed (Arabic multi-word labels)',
+      );
+      expect(
+        trailerNumberError('مقطورة 12', loc),
+        isNull,
+        reason: 'Arabic letters accepted',
+      );
       expect(trailerNumberError('', loc), isNotNull);
-      expect(trailerNumberError('a' * 51, loc), isNotNull);
-      expect(trailerNumberError('...', loc), isNotNull,
-          reason: 'punctuation-only has no substance');
+      expect(validateTrailerNumber('a' * 51), TrailerValidationError.tooLong);
+      expect(validateTrailerNumber('a' * 50), isNull);
+      expect(
+        trailerNumberError('a' * 51, loc),
+        'Trailer number is too long (max 50).',
+      );
+      expect(
+        trailerNumberError('...', loc),
+        isNotNull,
+        reason: 'punctuation-only has no substance',
+      );
       expect(trailerNumberError(',,,', loc), isNotNull);
-      expect(trailerNumberError('TR=12', loc), isNotNull,
-          reason: 'math symbols rejected');
-      expect(shippingDocumentError('BOL 2026/01', loc), isNull,
-          reason: 'slashes allowed in document numbers');
+      expect(
+        trailerNumberError('TR=12', loc),
+        isNotNull,
+        reason: 'math symbols rejected',
+      );
+      expect(
+        shippingDocumentError('BOL 2026/01', loc),
+        isNull,
+        reason: 'slashes allowed in document numbers',
+      );
       expect(shippingDocumentError('بوليصة 45', loc), isNull);
       expect(shippingDocumentError('a,b', loc), isNotNull);
       expect(shippingDocumentError('...', loc), isNotNull);
+      expect(
+        validateShippingDocument('a' * 101),
+        ShippingDocValidationError.tooLong,
+      );
       expect(shippingDocumentError('a' * 101, loc), isNotNull);
     });
   });
@@ -230,13 +265,13 @@ void main() {
         () => repo.getEvents(any(), any()),
       ).thenAnswer((_) async => const Right([]));
       // وتفاصيل الخادم (GET /eld/daily-logs/{id}) — لا يخص هذه الاختبارات.
-      when(() => repo.getLogById(any())).thenAnswer(
-        (_) async => const Left(NetworkFailure()),
-      );
+      when(
+        () => repo.getLogById(any()),
+      ).thenAnswer((_) async => const Left(NetworkFailure()));
       // ونموذج اليوم (GET /eld/daily-logs/{id}/form) — لا يخصها كذلك.
-      when(() => repo.getForm(any())).thenAnswer(
-        (_) async => const Right(null),
-      );
+      when(
+        () => repo.getForm(any()),
+      ).thenAnswer((_) async => const Right(null));
     });
 
     List<Override> overrides() => [
@@ -270,7 +305,7 @@ void main() {
       );
       final sub = container.listen(logsProvider, (_, __) {});
       addTearDown(sub.close);
-      
+
       container.read(logsProvider.notifier).selectLog(log);
       container.read(dashboardDataProvider.notifier).updateTrailers([
         'TR-1402',
@@ -297,7 +332,7 @@ void main() {
                   ownerDriverId: any(named: 'ownerDriverId'),
                 ),
               ).captured.single
-          as DailyFormUpdate;
+              as DailyFormUpdate;
       expect(captured.trailers, ['TR-1402', 'AB12']);
       expect(captured.shippingDocuments, ['BOL 2026/09-1']);
       expect(find.text('server.500'), findsNothing);
@@ -316,7 +351,8 @@ void main() {
           ownerDriverId: any(named: 'ownerDriverId'),
         ),
       ).thenAnswer(
-        (_) async => const Left(ServerFailure(message: 'Exception: server.500')),
+        (_) async =>
+            const Left(ServerFailure(message: 'Exception: server.500')),
       );
 
       final container = await pump(
@@ -326,7 +362,7 @@ void main() {
       );
       final sub = container.listen(logsProvider, (_, __) {});
       addTearDown(sub.close);
-      
+
       container.read(logsProvider.notifier).selectLog(log);
       await tester.pumpAndSettle();
 
@@ -341,86 +377,89 @@ void main() {
       await settleSnackBar(tester);
     });
 
-    testWidgets('non-today log shows and saves its own form, no dashboard leak', (
-      tester,
-    ) async {
-      final oldLog = DailyLog(
-        id: const DailyLogId(77),
-        uniqueId: 'TRK-OLD',
-        date: DateTime(2026, 9, 20),
-        totalDrivingHours: 0,
-        isFormComplete: false,
-        isCertified: false,
-      );
+    testWidgets(
+      'non-today log shows and saves its own form, no dashboard leak',
+      (tester) async {
+        final oldLog = DailyLog(
+          id: const DailyLogId(77),
+          uniqueId: 'TRK-OLD',
+          date: DateTime(2026, 9, 20),
+          totalDrivingHours: 0,
+          isFormComplete: false,
+          isCertified: false,
+        );
 
-      when(() => repo.getForm(any())).thenAnswer(
-        (_) async => const Right(
-          DailyFormData(
-            vehicleUniqueId: 'TRK-OLD',
-            vehicleName: 'Old Truck',
-            trailers: ['SRV-1'],
-            shippingDocuments: ['SRV-DOC'],
+        when(() => repo.getForm(any())).thenAnswer(
+          (_) async => const Right(
+            DailyFormData(
+              vehicleUniqueId: 'TRK-OLD',
+              vehicleName: 'Old Truck',
+              trailers: ['SRV-1'],
+              shippingDocuments: ['SRV-DOC'],
+            ),
           ),
-        ),
-      );
-      when(
-        () => repo.saveForm(
-          logId: any(named: 'logId'),
-          form: any(named: 'form'),
-          ownerDriverId: any(named: 'ownerDriverId'),
-        ),
-      ).thenAnswer(
-        (_) async => const Right(
-          FormSaveResult.online(
-            SavedFormRead(formStatus: 'COMPLETED', complete: true),
+        );
+        when(
+          () => repo.saveForm(
+            logId: any(named: 'logId'),
+            form: any(named: 'form'),
+            ownerDriverId: any(named: 'ownerDriverId'),
           ),
-        ),
-      );
+        ).thenAnswer(
+          (_) async => const Right(
+            FormSaveResult.online(
+              SavedFormRead(formStatus: 'COMPLETED', complete: true),
+            ),
+          ),
+        );
 
-      final container = await pump(
-        tester,
-        const Scaffold(body: FormTab()),
-        overrides: overrides(),
-      );
-      final sub = container.listen(logsProvider, (_, __) {});
-      addTearDown(sub.close);
+        final container = await pump(
+          tester,
+          const Scaffold(body: FormTab()),
+          overrides: overrides(),
+        );
+        final sub = container.listen(logsProvider, (_, __) {});
+        addTearDown(sub.close);
 
-      // الحالة الحية تحمل قيماً أخرى — يجب ألا تظهر في سجل سابق.
-      container.read(dashboardDataProvider.notifier).updateTrailers(['DASH-9']);
-      container
-          .read(dashboardDataProvider.notifier)
-          .updateShippingDocuments(['DASH-DOC']);
-      container.read(logsProvider.notifier).selectLog(oldLog);
-      await tester.pumpAndSettle();
+        // الحالة الحية تحمل قيماً أخرى — يجب ألا تظهر في سجل سابق.
+        container.read(dashboardDataProvider.notifier).updateTrailers([
+          'DASH-9',
+        ]);
+        container.read(dashboardDataProvider.notifier).updateShippingDocuments([
+          'DASH-DOC',
+        ]);
+        container.read(logsProvider.notifier).selectLog(oldLog);
+        await tester.pumpAndSettle();
 
-      expect(find.text('SRV-1'), findsOneWidget);
-      expect(find.text('SRV-DOC'), findsOneWidget);
-      expect(find.text('DASH-9'), findsNothing);
-      expect(find.text('DASH-DOC'), findsNothing);
+        expect(find.text('SRV-1'), findsOneWidget);
+        expect(find.text('SRV-DOC'), findsOneWidget);
+        expect(find.text('DASH-9'), findsNothing);
+        expect(find.text('DASH-DOC'), findsNothing);
 
-      // تعديل المقطورات من صفحتها يبقى على هذا السجل وحده.
-      container.read(trailersProvider.notifier).addTrailer('NEW-T');
-      await tester.pumpAndSettle();
-      expect(find.text('SRV-1, NEW-T'), findsOneWidget);
+        // تعديل المقطورات من صفحتها يبقى على هذا السجل وحده.
+        container.read(trailersProvider.notifier).addTrailer('NEW-T');
+        await tester.pumpAndSettle();
+        expect(find.text('SRV-1, NEW-T'), findsOneWidget);
 
-      await tester.ensureVisible(find.text('SAVE'));
-      await tester.tap(find.text('SAVE'));
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('SAVE'));
+        await tester.tap(find.text('SAVE'));
+        await tester.pumpAndSettle();
 
-      final captured =
-          verify(
-                () => repo.saveForm(
-                  logId: const DailyLogId(77),
-                  form: captureAny(named: 'form'),
-                  ownerDriverId: any(named: 'ownerDriverId'),
-                ),
-              ).captured.single
-          as DailyFormUpdate;
-      expect(captured.vehicleUniqueId, 'TRK-OLD');
-      expect(captured.trailers, ['SRV-1', 'NEW-T']);
-      expect(captured.shippingDocuments, ['SRV-DOC']);
-      await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
-    });
+        final captured =
+            verify(
+                  () => repo.saveForm(
+                    logId: const DailyLogId(77),
+                    form: captureAny(named: 'form'),
+                    ownerDriverId: any(named: 'ownerDriverId'),
+                  ),
+                ).captured.single
+                as DailyFormUpdate;
+        expect(captured.vehicleUniqueId, 'TRK-OLD');
+        expect(captured.trailers, ['SRV-1', 'NEW-T']);
+        expect(captured.shippingDocuments, ['SRV-DOC']);
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }

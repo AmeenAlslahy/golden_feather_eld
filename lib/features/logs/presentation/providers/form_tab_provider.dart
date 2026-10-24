@@ -4,6 +4,7 @@ import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
 import 'logs_provider.dart';
 import '../../domain/daily_form_rules.dart';
+import '../mappers/form_validation_mapper.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/daily_form_update.dart';
 import '../../../../core/error/user_facing_message.dart';
@@ -40,7 +41,8 @@ class FormTabData {
 
   /// التحقق من صحة المركبة قبل الحفظ
   String? validateVehicle(AppLocalizations loc, {String? logUniqueId}) {
-    final uniqueId = readOperableUniqueId(vehicleUniqueId) ??
+    final uniqueId =
+        readOperableUniqueId(vehicleUniqueId) ??
         readOperableUniqueId(logUniqueId ?? '') ??
         '';
     if (uniqueId.isEmpty) {
@@ -82,7 +84,8 @@ class FormTabData {
 
   /// تحويل البيانات المعروضة إلى كائن التحديث المطلوب إرساله إلى الخادم
   DailyFormUpdate toDailyFormUpdate({required String fallbackLogUniqueId}) {
-    final uniqueId = readOperableUniqueId(vehicleUniqueId) ??
+    final uniqueId =
+        readOperableUniqueId(vehicleUniqueId) ??
         readOperableUniqueId(fallbackLogUniqueId) ??
         '';
 
@@ -127,77 +130,79 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
   // تم تعديلها — لسجل اليوم فقط.
   final vName = liveDashboard
       ? ((dashboard.vehicleDisplayName != 'Select a vehicle' &&
-              dashboard.vehicleDisplayName.isNotEmpty)
-          ? dashboard.vehicleDisplayName
-          : (serverForm?.vehicleName?.isNotEmpty == true
-              ? serverForm!.vehicleName!
-              : (selectedLog?.vehicleName?.isNotEmpty == true
-                  ? selectedLog!.vehicleName!
-                  : dashboard.vehicleDisplayName)))
+                dashboard.vehicleDisplayName.isNotEmpty)
+            ? dashboard.vehicleDisplayName
+            : (serverForm?.vehicleName?.isNotEmpty == true
+                  ? serverForm!.vehicleName!
+                  : (selectedLog?.vehicleName?.isNotEmpty == true
+                        ? selectedLog!.vehicleName!
+                        : dashboard.vehicleDisplayName)))
       : (serverForm?.vehicleName?.isNotEmpty == true
-          ? serverForm!.vehicleName!
-          : (selectedLog.vehicleName?.isNotEmpty == true
-              ? selectedLog.vehicleName!
-              : (selectedLog.uniqueId.isNotEmpty == true
-                  ? selectedLog.uniqueId
-                  : '-')));
+            ? serverForm!.vehicleName!
+            : (selectedLog.vehicleName?.isNotEmpty == true
+                  ? selectedLog.vehicleName!
+                  : (selectedLog.uniqueId.isNotEmpty == true
+                        ? selectedLog.uniqueId
+                        : '-')));
 
   final vId = liveDashboard
-      ? ((dashboard.vehicleId != 'No Vehicle' &&
-              dashboard.vehicleId.isNotEmpty)
-          ? dashboard.vehicleId
-          : (serverForm?.vehicleUniqueId?.isNotEmpty == true
-              ? serverForm!.vehicleUniqueId!
-              : (selectedLog?.uniqueId.isNotEmpty == true
-                  ? selectedLog!.uniqueId
-                  : dashboard.vehicleId)))
+      ? ((dashboard.vehicleId != 'No Vehicle' && dashboard.vehicleId.isNotEmpty)
+            ? dashboard.vehicleId
+            : (serverForm?.vehicleUniqueId?.isNotEmpty == true
+                  ? serverForm!.vehicleUniqueId!
+                  : (selectedLog?.uniqueId.isNotEmpty == true
+                        ? selectedLog!.uniqueId
+                        : dashboard.vehicleId)))
       : (serverForm?.vehicleUniqueId?.isNotEmpty == true
-          ? serverForm!.vehicleUniqueId!
-          : (selectedLog.uniqueId.isNotEmpty == true
-              ? selectedLog.uniqueId
-              : ''));
+            ? serverForm!.vehicleUniqueId!
+            : (selectedLog.uniqueId.isNotEmpty == true
+                  ? selectedLog.uniqueId
+                  : ''));
 
   // 3. المقطورات: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
   // الخادم، ثم صف السجل
-  final trailers = (liveDashboard &&
+  final trailers =
+      (liveDashboard &&
           dashboard.trailerId != null &&
           dashboard.trailerId != 'None' &&
           dashboard.trailerId!.isNotEmpty)
       ? dashboard.trailerId!
       : (serverForm?.trailers.isNotEmpty == true
-          ? joinFormList(serverForm!.trailers)
-          : (selectedLog?.trailers.isNotEmpty == true
-              ? joinFormList(selectedLog!.trailers)
-              : '-'));
+            ? joinFormList(serverForm!.trailers)
+            : (selectedLog?.trailers.isNotEmpty == true
+                  ? joinFormList(selectedLog!.trailers)
+                  : '-'));
 
   // 4. وثائق الشحن: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
   // الخادم، ثم صف السجل
-  final docs = (liveDashboard &&
+  final docs =
+      (liveDashboard &&
           dashboard.shippingDocuments != null &&
           dashboard.shippingDocuments != 'None' &&
           dashboard.shippingDocuments!.isNotEmpty)
       ? dashboard.shippingDocuments!
       : (serverForm?.shippingDocuments.isNotEmpty == true
-          ? joinFormList(serverForm!.shippingDocuments)
-          : (selectedLog?.shippingDocuments.isNotEmpty == true
-              ? joinFormList(selectedLog!.shippingDocuments)
-              : '-'));
+            ? joinFormList(serverForm!.shippingDocuments)
+            : (selectedLog?.shippingDocuments.isNotEmpty == true
+                  ? joinFormList(selectedLog!.shippingDocuments)
+                  : '-'));
 
   // 5. السائق المساعد
-  final coDriverName = (liveDashboard &&
-          dashboard.coDriverName?.isNotEmpty == true)
+  final coDriverName =
+      (liveDashboard && dashboard.coDriverName?.isNotEmpty == true)
       ? dashboard.coDriverName!
       : (serverForm?.coDriverName?.isNotEmpty == true
-          ? serverForm!.coDriverName!
-          : '-');
+            ? serverForm!.coDriverName!
+            : '-');
 
-  final coDriverId = (liveDashboard &&
+  final coDriverId =
+      (liveDashboard &&
           dashboard.coDriverId?.isNotEmpty == true &&
           dashboard.coDriverId != 'none')
       ? dashboard.coDriverId!
       : ((serverForm?.coDriverId != null && serverForm!.coDriverId! > 0)
-          ? '${serverForm.coDriverId}'
-          : 'none');
+            ? '${serverForm.coDriverId}'
+            : 'none');
 
   return FormTabData(
     driverName: driverName,
@@ -226,7 +231,9 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
   /// تحديث المركبة المختارة: الحالة الحية لسجل اليوم، أو نموذج السجل.
   void updateVehicle(Vehicle vehicle) {
     if (!_isLiveDashboard) {
-      _ref.read(logsProvider.notifier).updateSelectedFormVehicle(
+      _ref
+          .read(logsProvider.notifier)
+          .updateSelectedFormVehicle(
             vehicleId: int.tryParse(vehicle.id),
             vehicleUniqueId: vehicle.uniqueId ?? vehicle.id,
             vehicleName: vehicle.displayName,
@@ -239,7 +246,9 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
   /// تحديث السائق المساعد: الحالة الحية لسجل اليوم، أو نموذج السجل.
   void updateCoDriver(CoDriver coDriver) {
     if (!_isLiveDashboard) {
-      _ref.read(logsProvider.notifier).updateSelectedFormCoDriver(
+      _ref
+          .read(logsProvider.notifier)
+          .updateSelectedFormCoDriver(
             coDriverId: int.tryParse(coDriver.id),
             coDriverName: coDriver.name,
           );
@@ -256,7 +265,10 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
   }) async {
     final formData = _ref.read(formTabDataProvider);
 
-    final vehicleErr = formData.validateVehicle(loc, logUniqueId: _log.uniqueId);
+    final vehicleErr = formData.validateVehicle(
+      loc,
+      logUniqueId: _log.uniqueId,
+    );
     if (vehicleErr != null) return vehicleErr;
 
     final trailerErr = formData.validateTrailers(loc);
@@ -286,64 +298,72 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     required void Function(String) onOffline,
   }) async {
     state = const FormTabState(isLoading: true);
-    
+
     // P0 2B-1 — ربط المالك المثبت من الجلسة
-    final result = await _ref.read(logRepositoryProvider).saveForm(
-      logId: _log.id,
-      form: update,
-      ownerDriverId: _ref.read(currentDriverIdProvider),
-    );
-    
+    final result = await _ref
+        .read(logRepositoryProvider)
+        .saveForm(
+          logId: _log.id,
+          form: update,
+          ownerDriverId: _ref.read(currentDriverIdProvider),
+        );
+
     if (!mounted) return null;
     state = const FormTabState(isLoading: false);
-    
-    return result.fold(
-      (error) => anyErrorUserMessage(error, loc: loc),
-      (saveResult) {
-        final hasVehicle = update.vehicleUniqueId.isNotEmpty;
-        final hasDocs = update.shippingDocuments.isNotEmpty;
-        final isLocallyComplete = hasVehicle && hasDocs;
 
-        if (saveResult.isOffline) {
-          _ref.read(logsProvider.notifier).updateLog(
+    return result.fold((error) => anyErrorUserMessage(error, loc: loc), (
+      saveResult,
+    ) {
+      final hasVehicle = update.vehicleUniqueId.isNotEmpty;
+      final hasDocs = update.shippingDocuments.isNotEmpty;
+      final isLocallyComplete = hasVehicle && hasDocs;
+
+      if (saveResult.isOffline) {
+        _ref
+            .read(logsProvider.notifier)
+            .updateLog(
+              _log.copyWith(
+                uniqueId: update.vehicleUniqueId,
+                trailers: update.trailers,
+                shippingDocuments: update.shippingDocuments,
+                isFormComplete: isLocallyComplete,
+                formStatus: isLocallyComplete
+                    ? FormStatus.completed
+                    : FormStatus.incomplete,
+              ),
+            );
+        onOffline(loc.formSavedOffline);
+        return null;
+      }
+
+      final read = saveResult.syncedData!;
+      final complete = read.complete ?? isLocallyComplete;
+      _ref
+          .read(logsProvider.notifier)
+          .updateLog(
             _log.copyWith(
               uniqueId: update.vehicleUniqueId,
               trailers: update.trailers,
               shippingDocuments: update.shippingDocuments,
-              isFormComplete: isLocallyComplete,
-              formStatus: isLocallyComplete ? FormStatus.completed : FormStatus.incomplete,
+              isFormComplete: complete,
+              formStatus: complete
+                  ? FormStatus.completed
+                  : FormStatus.incomplete,
             ),
           );
-          onOffline(loc.formSavedOffline);
-          return null;
-        }
 
-        final read = saveResult.syncedData!;
-        final complete = read.complete ?? isLocallyComplete;
-        _ref.read(logsProvider.notifier).updateLog(
-          _log.copyWith(
-            uniqueId: update.vehicleUniqueId,
-            trailers: update.trailers,
-            shippingDocuments: update.shippingDocuments,
-            isFormComplete: complete,
-            formStatus: complete ? FormStatus.completed : FormStatus.incomplete,
-          ),
-        );
-        
-        final msg = complete
-            ? loc.successMessage
-            : loc.serverSavedFormIncomplete;
-        onSuccess(msg);
-        return null;
-      }
-    );
+      final msg = complete ? loc.successMessage : loc.serverSavedFormIncomplete;
+      onSuccess(msg);
+      return null;
+    });
   }
 }
 
 /// موفر تبويب النموذج اليومي
-final formTabProvider = StateNotifierProvider.autoDispose.family<FormTabNotifier, FormTabState, DailyLog>((ref, log) {
-  return FormTabNotifier(ref, log);
-});
+final formTabProvider = StateNotifierProvider.autoDispose
+    .family<FormTabNotifier, FormTabState, DailyLog>((ref, log) {
+      return FormTabNotifier(ref, log);
+    });
 
 /// اسم بديل للتوافق البرمجي الكامل مع الكود القائم
 final formTabControllerProvider = formTabProvider;

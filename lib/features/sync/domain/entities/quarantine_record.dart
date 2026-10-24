@@ -15,11 +15,7 @@ enum StoredEventState {
 
 /// درجة الإثبات المحفوظة مع الصف (للتدقيق والمراجعة اللاحقة فقط —
 /// لا تُستخدم وحدها سبباً للإرسال: الإفراج قرار سياج Part 2).
-enum OwnershipProof {
-  none,
-  cache,
-  attested,
-}
+enum OwnershipProof { none, cache, attested }
 
 /// صف محجور/مؤجل كما هو مخزن: الحدث الأصلي intact + بيانات الحجر.
 class QuarantineRecord {

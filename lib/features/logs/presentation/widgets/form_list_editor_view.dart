@@ -32,10 +32,7 @@ class FormListEditorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(),
         title: Text(title),
       ),
       body: Column(
@@ -80,10 +77,7 @@ class FormListEditorView extends StatelessWidget {
           Expanded(
             child: items.isEmpty
                 ? Center(
-                    child: Text(
-                      emptyMessage,
-                      style: context.styles.subtitle,
-                    ),
+                    child: Text(emptyMessage, style: context.styles.subtitle),
                   )
                 : ListView.separated(
                     itemCount: items.length,
@@ -99,15 +93,15 @@ class FormListEditorView extends StatelessWidget {
                         leading: Icon(
                           itemIcon,
                           color: context.textSecondary,
-                          size: 28,
+                          size: AppSpacing.iconLarge,
                         ),
-                        title: Text(
-                          item,
-                          style: context.styles.sectionTitle,
-                        ),
+                        title: Text(item, style: context.styles.sectionTitle),
                         trailing: TextButton.icon(
                           onPressed: () => onRemove(item),
-                          icon: const Icon(Icons.delete_outline, size: 18),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            size: AppSpacing.iconSmall,
+                          ),
                           label: Text(context.loc.deleteButton),
                           style: TextButton.styleFrom(
                             foregroundColor: context.colorScheme.error,

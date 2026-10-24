@@ -10,12 +10,7 @@ enum SyncEventType {
 }
 
 /// حالة المزامنة
-enum SyncStatus {
-  pending,
-  syncing,
-  synced,
-  failed,
-}
+enum SyncStatus { pending, syncing, synced, failed }
 
 /// عنصر في طابور المزامنة
 class SyncItem extends Equatable {
@@ -58,8 +53,14 @@ class SyncItem extends Equatable {
   @override
   // data خارج المقارنة عمداً: Map بعد دورة JSON/خزنة كائن جديد
   // (identity ≠ المضمون)، فتساوٍ مضلل بالاتجاهين.
-  List<Object?> get props =>
-      [id, type, createdAt, status, retryCount, errorMessage];
+  List<Object?> get props => [
+    id,
+    type,
+    createdAt,
+    status,
+    retryCount,
+    errorMessage,
+  ];
 }
 
 /// حالة المزامنة العامة
@@ -95,6 +96,11 @@ class SyncState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [pendingItems, isSyncing, lastSyncTime, totalPending, totalFailed];
+  List<Object?> get props => [
+    pendingItems,
+    isSyncing,
+    lastSyncTime,
+    totalPending,
+    totalFailed,
+  ];
 }

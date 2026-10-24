@@ -1,7 +1,6 @@
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 // import '../../../../core/theme/app_spacing.dart';
 // import '../../../../core/theme/app_typography.dart';
 // import '../../../../core/widgets/app_button.dart';
@@ -23,7 +22,8 @@ class VehiclePickerDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<VehiclePickerDialog> createState() => _VehiclePickerDialogState();
+  ConsumerState<VehiclePickerDialog> createState() =>
+      _VehiclePickerDialogState();
 }
 
 class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
@@ -65,63 +65,61 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
                 ),
               )
             : vehicleState.error != null
-                ? Center(
-                    child: Text(
-                      vehicleState.error!,
-                      style: context.styles.error,
-                    ),
-                  )
-                : vehicles.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(context.loc.noVehiclesFound),
-                              if (!_browsingCompany && widget.allowCompanyFleet) ...[
-                                const SizedBox(height: 12),
-                                TextButton(
-                                  onPressed: () {
-                                    setState(() => _browsingCompany = true);
-                                    ref
-                                        .read(vehicleProvider.notifier)
-                                        .loadCompanyVehicles();
-                                  },
-                                  child: Text(context.loc.viewAllVehicles),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      )
-                    : RadioGroup<String>(
-                        groupValue: widget.currentVehicleId,
-                        onChanged: (value) {
-                          if (value == null) return;
-                          final picked = vehicles.where((v) => v.id == value);
-                          if (picked.isNotEmpty) Navigator.pop(context, picked.first);
-                        },
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: vehicles.length,
-                          itemBuilder: (context, index) {
-                            final vehicle = vehicles[index];
-
-                            return RadioListTile<String>(
-                              title: Text(vehicle.displayName),
-                              subtitle: vehicle.vin != null
-                                  ? Text(
-                                      '${context.loc.vin}: ${_vinTail(vehicle.vin!)}',
-                                      style: context.styles.caption)
-                                  : null,
-                              value: vehicle.id,
-                              activeColor: AppColors.primaryGold,
-                              contentPadding: EdgeInsets.zero,
-                            );
+            ? Center(
+                child: Text(vehicleState.error!, style: context.styles.error),
+              )
+            : vehicles.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(context.loc.noVehiclesFound),
+                      if (!_browsingCompany && widget.allowCompanyFleet) ...[
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () {
+                            setState(() => _browsingCompany = true);
+                            ref
+                                .read(vehicleProvider.notifier)
+                                .loadCompanyVehicles();
                           },
+                          child: Text(context.loc.viewAllVehicles),
                         ),
-                      ),
+                      ],
+                    ],
+                  ),
+                ),
+              )
+            : RadioGroup<String>(
+                groupValue: widget.currentVehicleId,
+                onChanged: (value) {
+                  if (value == null) return;
+                  final picked = vehicles.where((v) => v.id == value);
+                  if (picked.isNotEmpty) Navigator.pop(context, picked.first);
+                },
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: vehicles.length,
+                  itemBuilder: (context, index) {
+                    final vehicle = vehicles[index];
+
+                    return RadioListTile<String>(
+                      title: Text(vehicle.displayName),
+                      subtitle: vehicle.vin != null
+                          ? Text(
+                              '${context.loc.vin}: ${_vinTail(vehicle.vin!)}',
+                              style: context.styles.caption,
+                            )
+                          : null,
+                      value: vehicle.id,
+                      activeColor: context.gold,
+                      contentPadding: EdgeInsets.zero,
+                    );
+                  },
+                ),
+              ),
       ),
       actions: [
         if (widget.allowCompanyFleet)
@@ -149,7 +147,9 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
           TextButton(
             onPressed: () => _browsingCompany
                 ? ref.read(vehicleProvider.notifier).loadCompanyVehicles()
-                : ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true),
+                : ref
+                      .read(vehicleProvider.notifier)
+                      .loadVehicles(forceRefresh: true),
             child: Text(context.loc.retryButton),
           ),
         TextButton(

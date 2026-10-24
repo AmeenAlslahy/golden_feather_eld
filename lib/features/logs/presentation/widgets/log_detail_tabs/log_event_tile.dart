@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../domain/entities/daily_log.dart';
 import '../../../../../core/utils/status_color_helper.dart';
@@ -61,13 +61,16 @@ class LogEventTile extends StatelessWidget {
                   width: 3,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(1.5),
+                    borderRadius: BorderRadius.circular(AppRadius.indicator),
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsetsDirectional.only(
-                  start: AppSpacing.md + 3 + AppSpacing.md, // start margin + width + inner spacing
+                  start:
+                      AppSpacing.md +
+                      3 +
+                      AppSpacing.md, // start margin + width + inner spacing
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -75,9 +78,9 @@ class LogEventTile extends StatelessWidget {
                   children: [
                     // Top Row
                     Padding(
-                      padding: const EdgeInsets.only(
+                      padding: const EdgeInsetsDirectional.only(
                         top: AppSpacing.md,
-                        right: AppSpacing.md,
+                        end: AppSpacing.md,
                         bottom: AppSpacing.xs,
                       ),
                       child: Row(
@@ -87,14 +90,14 @@ class LogEventTile extends StatelessWidget {
                             width: 36,
                             child: Text(
                               event.status,
-                              style: context.styles.sectionTitle.copyWith(fontSize: 15),
+                              style: context.styles.sectionTitle,
                             ),
                           ),
                           SizedBox(
                             width: 110,
                             child: Text(
                               _formatTimeWithZone(event.startTime),
-                              style: context.styles.body.copyWith(fontSize: 14),
+                              style: context.styles.body,
                             ),
                           ),
                           Expanded(
@@ -102,13 +105,17 @@ class LogEventTile extends StatelessWidget {
                               children: [
                                 Text(
                                   event.formattedDuration,
-                                  style: context.styles.body.copyWith(fontSize: 14),
+                                  style: context.styles.body,
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
                                 if (_startedOnAnotherDay)
                                   Flexible(
                                     child: Text(
-                                        AppLocalizations.of(context)!.startedOnDate('${event.startTime.month}/${event.startTime.day}/${event.startTime.year}'),
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.startedOnDate(
+                                        '${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
+                                      ),
                                       style: context.styles.caption,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -119,25 +126,29 @@ class LogEventTile extends StatelessWidget {
                           if (onEdit != null)
                             IconButton(
                               onPressed: onEdit,
-                              icon:  Icon(
+                              icon: Icon(
                                 Icons.edit,
-                                size: 22,
-                                color: AppColors.textPrimaryFor(Theme.of(context).brightness),
+                                size: AppSpacing.iconMedium,
+                                color: context.textPrimary,
                               ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                              tooltip: context.loc.edit,
+                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              constraints: const BoxConstraints(
+                                minWidth: 48,
+                                minHeight: 48,
+                              ),
                             ),
                         ],
                       ),
                     ),
-                    
+
                     // Expanded content
                     AnimatedCrossFade(
                       firstChild: const SizedBox(height: AppSpacing.sm),
                       secondChild: Padding(
-                        padding: const EdgeInsets.only(
-                          left: 36, // Indent to align with Time
-                          right: AppSpacing.md,
+                        padding: const EdgeInsetsDirectional.only(
+                          start: 36,
+                          end: AppSpacing.md,
                           bottom: AppSpacing.md,
                         ),
                         child: ExpandedContent(event: event),
@@ -152,7 +163,7 @@ class LogEventTile extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Faint Divider
           Divider(
             height: 1,

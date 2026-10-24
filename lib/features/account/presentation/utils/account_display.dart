@@ -3,6 +3,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../application/models/rules_screen_model.dart';
 
 String formatHoursMinutes(AppLocalizations loc, int minutes) {
+  if (minutes <= 0) return '0 ${loc.hourAbbr}';
   final h = minutes ~/ 60;
   final m = minutes % 60;
   if (m == 0) return '$h ${loc.hourAbbr}';

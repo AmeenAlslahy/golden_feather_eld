@@ -1,13 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../utils/logger.dart';
 
-enum AppEnvironment {
-  mock,
-  development,
-  staging,
-  production,
-  temporaryTraccar,
-}
+enum AppEnvironment { mock, development, staging, production, temporaryTraccar }
 
 enum ApiBackendType { traccar, eldServer, mock }
 
@@ -30,13 +24,14 @@ class AppEnvironmentConfig {
       }
     } catch (e) {
       AppLogger.warning(
-          'Failed to load .env file. Falling back to dart-define or default.');
+        'Failed to load .env file. Falling back to dart-define or default.',
+      );
     }
 
     final envString =
         const String.fromEnvironment('APP_ENV', defaultValue: '') != ''
-            ? const String.fromEnvironment('APP_ENV')
-            : (_getEnv('TRACCAR_ENVIRONMENT') ?? 'development');
+        ? const String.fromEnvironment('APP_ENV')
+        : (_getEnv('TRACCAR_ENVIRONMENT') ?? 'development');
 
     switch (envString) {
       case 'mock':
@@ -91,7 +86,8 @@ class AppEnvironmentConfig {
   static bool get isValidTemporaryTraccarConfig {
     if (current != AppEnvironment.temporaryTraccar) return true;
 
-    final valid = apiBaseUrl.isNotEmpty &&
+    final valid =
+        apiBaseUrl.isNotEmpty &&
         traccarUsername.isNotEmpty &&
         traccarPassword.isNotEmpty &&
         traccarDeviceId.isNotEmpty &&
@@ -99,7 +95,8 @@ class AppEnvironmentConfig {
 
     if (!valid) {
       AppLogger.error(
-          'Invalid Temporary Traccar Config! Check .env variables.');
+        'Invalid Temporary Traccar Config! Check .env variables.',
+      );
     }
     return valid;
   }

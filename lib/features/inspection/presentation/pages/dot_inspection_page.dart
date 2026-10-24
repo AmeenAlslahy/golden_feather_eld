@@ -25,18 +25,18 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
 
     // تزامن وضع التفتيش مع الخادم: إذا كان التفتيش نشطاً على الخادم
     // ولم يكن وضع التفتيش مفعل محلياً، يتم الانتقال إلى التفتيش النشط تلقائياً
-    ref.listen<AsyncValue<DotInspectionScreen>>(
-      dotInspectionScreenProvider,
-      (previous, next) {
-        final screen = next.asData?.value;
-        if (screen != null &&
-            screen.inspectionActive &&
-            !state.isInspectionMode &&
-            !state.isLoading) {
-          _startDirectly();
-        }
-      },
-    );
+    ref.listen<AsyncValue<DotInspectionScreen>>(dotInspectionScreenProvider, (
+      previous,
+      next,
+    ) {
+      final screen = next.asData?.value;
+      if (screen != null &&
+          screen.inspectionActive &&
+          !state.isInspectionMode &&
+          !state.isLoading) {
+        _startDirectly();
+      }
+    });
 
     return PopScope(
       canPop: !state.locked,
@@ -52,10 +52,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
             style: context.styles.appBarTitle,
           ),
           leading: state.locked
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: _exitDirectly,
-                )
+              ? BackButton(onPressed: _exitDirectly)
               : Builder(
                   builder: (context) => IconButton(
                     icon: const Icon(Icons.menu),
@@ -87,4 +84,3 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     ref.read(inspectionProvider.notifier).endInspection();
   }
 }
-

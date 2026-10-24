@@ -20,15 +20,18 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     return _apiClient
         .get<Map<String, dynamic>>(
           EldEndpoints.status,
-          queryParameters:
-              driverId != null ? {'driverId': driverId.value} : null,
+          queryParameters: driverId != null
+              ? {'driverId': driverId.value}
+              : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .then((result) => result.mapValue(
-          (response) => StatusDashboardMapper.fromDashboardJson(
-            response.data ?? const {},
+        .then(
+          (result) => result.mapValue(
+            (response) => StatusDashboardMapper.fromDashboardJson(
+              response.data ?? const {},
+            ),
           ),
-        ));
+        );
   }
 
   @override
@@ -43,33 +46,32 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     return _apiClient
         .post<Map<String, dynamic>>(
           EldEndpoints.updateDutyStatus,
-          data: {
-            'dutyStatus': status.wire,
-            'notes': effectiveNote,
-          },
+          data: {'dutyStatus': status.wire, 'notes': effectiveNote},
           // بلا ResponseType.plain: نفس مسار GET — يفكّ ApiResponse غلاف
           // `{success, data}` تلقائياً، فلا يصل للمحوّل غلافٌ كامل يُقرأ
           // ككائن بلا مفاتيح لوحة (السبب الجذري لعرض أصفار بعد التغيير).
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .then((result) => result.mapValue((response) {
-              final json = response.data ?? const <String, dynamic>{};
-              final map = Map<String, dynamic>.from(json);
-              // لقطة اللوحة فقط إن حملها الجسم فعلاً. سجل حالة بلا حقول
-              // اللوحة ≠ لوحة بقيم صفرية — نُعيد null ونتصالح مع الخادم
-              // عبر GET بدل اختلاق أصفار تغذّي العدّادات القانونية.
-              if (!_hasDashboardSnapshot(map)) {
-                AppLogger.info(
-                  'updateDutyStatus: accepted without dashboard snapshot '
-                  '(response carries no dashboard fields)',
-                );
-                return null;
-              }
-              if (map['currentDutyStatus'] == null) {
-                map['currentDutyStatus'] = status.wire;
-              }
-              return StatusDashboardMapper.fromDashboardJson(map);
-            }));
+        .then(
+          (result) => result.mapValue((response) {
+            final json = response.data ?? const <String, dynamic>{};
+            final map = Map<String, dynamic>.from(json);
+            // لقطة اللوحة فقط إن حملها الجسم فعلاً. سجل حالة بلا حقول
+            // اللوحة ≠ لوحة بقيم صفرية — نُعيد null ونتصالح مع الخادم
+            // عبر GET بدل اختلاق أصفار تغذّي العدّادات القانونية.
+            if (!_hasDashboardSnapshot(map)) {
+              AppLogger.info(
+                'updateDutyStatus: accepted without dashboard snapshot '
+                '(response carries no dashboard fields)',
+              );
+              return null;
+            }
+            if (map['currentDutyStatus'] == null) {
+              map['currentDutyStatus'] = status.wire;
+            }
+            return StatusDashboardMapper.fromDashboardJson(map);
+          }),
+        );
   }
 
   /// هل يحمل الجسم حقول اللوحة الرقمية؟ (يكفي مؤشر واحد منها كدليل)
@@ -82,15 +84,17 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     return _apiClient
         .get<Map<String, dynamic>>(
           EldEndpoints.statusRecap,
-          queryParameters:
-              driverId != null ? {'driverId': driverId.value} : null,
+          queryParameters: driverId != null
+              ? {'driverId': driverId.value}
+              : null,
           parser: (data) => data is Map<String, dynamic> ? data : {},
         )
-        .then((result) => result.mapValue(
-          (response) => StatusDashboardMapper.fromRecapJson(
-            response.data ?? const {},
+        .then(
+          (result) => result.mapValue(
+            (response) =>
+                StatusDashboardMapper.fromRecapJson(response.data ?? const {}),
           ),
-        ));
+        );
   }
 
   static String _defaultNoteFor(DutyStatusCode status) {

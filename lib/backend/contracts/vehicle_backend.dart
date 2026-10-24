@@ -8,5 +8,4 @@ abstract interface class VehicleBackend {
 
   /// GET /eld/company-vehicles/my-vehicles
   Future<Result<RawJson>> getMyVehicles({DriverId? driverId});
-
 }

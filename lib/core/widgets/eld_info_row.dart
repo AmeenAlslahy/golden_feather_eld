@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../extensions/context_extensions.dart';
+import '../theme/app_spacing.dart';
 
 /// صف معلومات - عنوان رمادي على اليسار، قيمة سوداء على اليمين
 class EldInfoRow extends StatelessWidget {
@@ -8,6 +9,7 @@ class EldInfoRow extends StatelessWidget {
   final Color? valueColor;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final bool dense;
 
   const EldInfoRow({
     super.key,
@@ -16,16 +18,26 @@ class EldInfoRow extends StatelessWidget {
     this.valueColor,
     this.trailing,
     this.onTap,
+    this.dense = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final rowStyle = dense ? context.styles.subtitle : context.styles.body;
+
     return InkWell(
       onTap: onTap,
-      splashColor: Colors.black.withValues(alpha: 0.12),
-      highlightColor: Colors.black.withValues(alpha: 0.06),
+      splashColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: 0.12),
+      highlightColor: Theme.of(
+        context,
+      ).colorScheme.primary.withValues(alpha: 0.06),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: EdgeInsets.symmetric(
+          vertical: dense ? AppSpacing.sm : AppSpacing.rowVertical,
+          horizontal: AppSpacing.rowHorizontal,
+        ),
         child: Row(
           children: [
             // العنوان - رمادي
@@ -33,13 +45,13 @@ class EldInfoRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 label,
-                style: context.styles.body.copyWith(
+                style: rowStyle.copyWith(
                   color: context.styles.subtitle.color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.md),
             // القيمة - أسود
             Expanded(
               flex: 3,
@@ -47,12 +59,12 @@ class EldInfoRow extends StatelessWidget {
                 value,
                 textAlign: TextAlign.start,
                 style: valueColor == null
-                    ? context.styles.body
-                    : context.styles.body.copyWith(color: valueColor),
+                    ? rowStyle
+                    : rowStyle.copyWith(color: valueColor),
               ),
             ),
             if (trailing != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               trailing!,
             ],
           ],

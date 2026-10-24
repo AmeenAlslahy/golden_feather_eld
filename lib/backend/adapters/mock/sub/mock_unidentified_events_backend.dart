@@ -15,9 +15,7 @@ class MockUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
     String? uniqueId,
     DriverId? driverId,
   }) =>
-      throw UnimplementedError(
-        'MockUnidentifiedEventsBackend.list — Phase 2',
-      );
+      throw UnimplementedError('MockUnidentifiedEventsBackend.list — Phase 2');
 
   @override
   Future<Result<void>> claim({
@@ -32,8 +30,7 @@ class MockUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
     required DutyStatusId id,
     required DriverId driverId,
     required String rejectionReason,
-  }) =>
-      throw UnimplementedError(
-        'MockUnidentifiedEventsBackend.reject — Phase 2',
-      );
+  }) => throw UnimplementedError(
+    'MockUnidentifiedEventsBackend.reject — Phase 2',
+  );
 }

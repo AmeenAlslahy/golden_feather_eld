@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/daily_log.dart';
 import '../providers/logs_provider.dart';
@@ -33,9 +33,8 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
   Future<void> _showFilterDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (_) => InspectionFilterDialog(
-        initialShowActiveOnly: _showActiveEventsOnly,
-      ),
+      builder: (_) =>
+          InspectionFilterDialog(initialShowActiveOnly: _showActiveEventsOnly),
     );
 
     if (result != null && result != _showActiveEventsOnly) {
@@ -66,38 +65,58 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
     final logs = logsState.logs;
     final loc = AppLocalizations.of(context)!;
 
-    return screenAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) {
-        final selectedLog =
-            logsState.selectedLog ?? (logs.isNotEmpty ? logs.first : null);
-        // P3: بلا جواب خادم لا تُختلق هوية — القيم الحقيقية من السجل
-        // المحلي أو فراغ، ودعوى الامتثال تُترك للنص المحلي المعتمد.
-        final fallbackScreen = DotInspectionScreen(
-          screenTitle: 'DOT Inspection Mode',
-          guidanceText: 'Present this screen to the safety official upon request.',
-          handOverDeviceNotice: 'Hand over device to safety official',
-          carrierComplianceStatement: loc.eldCertifies,
-          carrierName: selectedLog?.carrierName ?? '',
-          usdotNumber: selectedLog?.usdotNumber ?? '',
-          eldIdentifier: '',
-          eldRegistrationId: '',
-          driverId: DriverId(ref.read(currentDriverIdProvider) ?? 0),
-          driverName: selectedLog?.driverName ?? '',
-          inspectionDate: selectedLog?.date ?? DateTime.now(),
-          cycleDaysCovered: 8,
-          canStartInspection: true,
-          canSendLogs: false,
-          canEmailLogs: false,
-          canViewInformationPacket: true,
-          inspectionActive: false,
-          readOnlyMode: true,
-        );
-        return _buildInspectionView(context, fallbackScreen, logsState, logs, loc);
-      },
-      data: (screen) =>
-          _buildInspectionView(context, screen, logsState, logs, loc),
+    final screen = screenAsync.valueOrNull;
+    final view = _buildInspectionView(
+      context,
+      screen ?? _fallbackScreen(logsState, loc),
+      logsState,
+      logs,
+      loc,
+      metadataUnavailable: screenAsync.hasError,
+    );
+    if (screen != null) return view;
+
+    // Daily logs remain usable while inspection metadata is loading/failing.
+    return Stack(
+      children: [
+        view,
+        if (screenAsync.isLoading)
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: LinearProgressIndicator(),
+          ),
+      ],
+    );
+  }
+
+  DotInspectionScreen _fallbackScreen(
+    LogsState logsState,
+    AppLocalizations loc,
+  ) {
+    final selectedLog =
+        logsState.selectedLog ??
+        (logsState.logs.isNotEmpty ? logsState.logs.first : null);
+    return DotInspectionScreen(
+      screenTitle: 'DOT Inspection Mode',
+      guidanceText: 'Present this screen to the safety official upon request.',
+      handOverDeviceNotice: 'Hand over device to safety official',
+      carrierComplianceStatement: loc.eldCertifies,
+      carrierName: selectedLog?.carrierName ?? '',
+      usdotNumber: selectedLog?.usdotNumber ?? '',
+      eldIdentifier: '',
+      eldRegistrationId: '',
+      driverId: DriverId(ref.read(currentDriverIdProvider) ?? 0),
+      driverName: selectedLog?.driverName ?? '',
+      inspectionDate: selectedLog?.date ?? DateTime.now(),
+      cycleDaysCovered: 8,
+      canStartInspection: true,
+      canSendLogs: false,
+      canEmailLogs: false,
+      canViewInformationPacket: true,
+      inspectionActive: false,
+      readOnlyMode: true,
     );
   }
 
@@ -106,26 +125,21 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
     DotInspectionScreen screen,
     LogsState logsState,
     List<DailyLog> logs,
-    AppLocalizations loc,
-  ) {
+    AppLocalizations loc, {
+    bool metadataUnavailable = false,
+  }) {
     final selectedLog =
         logsState.selectedLog ?? (logs.isNotEmpty ? logs.first : null);
     final currentDayIndex = selectedLog != null
         ? logs.indexWhere((l) => l.id == selectedLog.id)
         : -1;
+    final visibleEvents = _visibleEvents(selectedLog?.events ?? const []);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          loc.inspectionLogsTitle,
-          style: context.styles.appBarTitle,
-        ),
-        centerTitle: true,
+        leading: const BackButton(),
+        title: Text(loc.inspectionLogsTitle, style: context.styles.appBarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune),
@@ -138,27 +152,57 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
           : SingleChildScrollView(
               child: Column(
                 children: [
+                  if (metadataUnavailable)
+                    MaterialBanner(
+                      content: Text(loc.errRequestFailed),
+                      actions: [
+                        TextButton(
+                          onPressed: () => ref
+                              .read(dotInspectionScreenProvider.notifier)
+                              .reload(),
+                          child: Text(loc.retryButton),
+                        ),
+                      ],
+                    ),
                   // ========== شريط التاريخ ==========
                   EldDatePaginator(
                     dateLabel: selectedLog.formattedDate,
-                    canGoOlder: currentDayIndex != -1 &&
+                    canGoOlder:
+                        currentDayIndex != -1 &&
                         currentDayIndex < logs.length - 1,
                     canGoNewer: currentDayIndex > 0,
-                    onSelectOlder: () =>
-                        _goToDay(logs, currentDayIndex + 1),
-                    onSelectNewer: () =>
-                        _goToDay(logs, currentDayIndex - 1),
+                    onSelectOlder: () => _goToDay(logs, currentDayIndex + 1),
+                    onSelectNewer: () => _goToDay(logs, currentDayIndex - 1),
                   ),
-                  _InspectionSummary(
-                    screen: screen,
-                    selectedLog: selectedLog,
-                  ),
+                  _InspectionSummary(screen: screen, selectedLog: selectedLog),
                   const Divider(height: 1),
-                  LogGraph(events: selectedLog.events),
+                  if (logsState.eventsError != null)
+                    MaterialBanner(
+                      content: Text(
+                        anyErrorUserMessage(logsState.eventsError!, loc: loc),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: logsState.isLoadingEvents
+                              ? null
+                              : () => ref
+                                    .read(logsProvider.notifier)
+                                    .loadSelectedLogEvents(),
+                          child: Text(loc.retryButton),
+                        ),
+                      ],
+                    ),
+                  if (logsState.isLoadingEvents && selectedLog.events.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  if (logsState.isLoadingEvents &&
+                      selectedLog.events.isNotEmpty)
+                    const LinearProgressIndicator(),
+                  LogGraph(events: visibleEvents, logDate: selectedLog.date),
                   const Divider(height: 1),
-                  EldEventsTable(
-                    rows: _buildEventRows(selectedLog.events, context),
-                  ),
+                  EldEventsTable(rows: _buildEventRows(visibleEvents, context)),
                   const Divider(height: 1),
                   const InspectionAuditTrailSection(),
                   const SizedBox(height: AppSpacing.lg),
@@ -193,7 +237,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                   BottomNavigationBarItem(
                     icon: Badge(
                       isLabelVisible: !selectedLog.isFormComplete,
-                      backgroundColor: AppColors.dangerRed,
+                      backgroundColor: context.colors.error,
                       child: const Icon(Icons.assignment),
                     ),
                     label: context.loc.form,
@@ -217,10 +261,6 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
     BuildContext context,
   ) {
     return events
-        .where((e) {
-          if (!_showActiveEventsOnly) return true;
-          return const {'ON', 'D', 'SB', 'OFF'}.contains(e.status);
-        })
         .map(
           (e) => EldTableRow(
             time: e.formattedStartTime,
@@ -230,25 +270,39 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
             eng: e.engineHours != null
                 ? e.engineHours!.toStringAsFixed(1)
                 : '-',
-            src: 'Auto',
-            statusColor: _getStatusColor(e.status),
+            src: e.automatedDriving == null
+                ? '—'
+                : e.automatedDriving!
+                ? 'Auto'
+                : 'Driver',
+            statusColor: _getStatusColor(context, e.status),
           ),
         )
         .toList();
   }
 
-  static Color _getStatusColor(String? status) {
+  List<LogEvent> _visibleEvents(List<LogEvent> events) {
+    if (!_showActiveEventsOnly) return events;
+    return events
+        .where(
+          (event) =>
+              const {'ON', 'D', 'SB', 'OFF', 'PC', 'YM'}.contains(event.status),
+        )
+        .toList();
+  }
+
+  static Color _getStatusColor(BuildContext context, String? status) {
     switch (status) {
       case 'D':
-        return AppColors.successGreen;
+        return context.success;
       case 'ON':
-        return AppColors.warningYellow;
+        return context.warning;
       case 'SB':
-        return AppColors.infoBlue;
+        return context.info;
       case 'OFF':
-        return AppColors.textSecondary;
+        return context.textSecondary;
       default:
-        return AppColors.textPrimary;
+        return context.textPrimary;
     }
   }
 }
@@ -269,4 +323,3 @@ class _InspectionSummary extends ConsumerWidget {
     return InspectionLogHeaderTable(screen: screen, day: currentDay);
   }
 }
-

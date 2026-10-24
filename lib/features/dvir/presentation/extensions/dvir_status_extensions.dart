@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_styles.dart';
+import '../../../../core/extensions/context_extensions.dart';
 import '../../domain/entities/dvir_report.dart';
 
 extension VehicleOperationalStatusX on VehicleOperationalStatus {
@@ -13,11 +12,11 @@ extension VehicleOperationalStatusX on VehicleOperationalStatus {
     };
   }
 
-  Color color(AppStyles styles) {
+  Color color(BuildContext context) {
     return switch (this) {
-      VehicleOperationalStatus.outOfService => styles.error.color ?? AppColors.dangerText,
-      VehicleOperationalStatus.restricted => styles.warning.color ?? AppColors.warningText,
-      VehicleOperationalStatus.available => styles.success.color ?? AppColors.successText,
+      VehicleOperationalStatus.outOfService => context.danger,
+      VehicleOperationalStatus.restricted => context.warning,
+      VehicleOperationalStatus.available => context.success,
     };
   }
 }
@@ -29,9 +28,17 @@ extension DvirConditionStatusX on DvirConditionStatus {
       DvirConditionStatus.hasDefects => loc.dvirHasDefects,
       DvirConditionStatus.defectsCorrected => loc.dvirDefectsCorrected,
       DvirConditionStatus.defectsNotCorrected => loc.dvirDefectsNotCorrected,
-      DvirConditionStatus.unknown => loc.localeName == 'ar'
-          ? 'غير معروف'
-          : (loc.localeName == 'es' ? 'Desconocido' : 'Unknown'),
+      DvirConditionStatus.unknown => loc.statusUnknown,
+    };
+  }
+
+  Color color(BuildContext context) {
+    return switch (this) {
+      DvirConditionStatus.satisfactory ||
+      DvirConditionStatus.defectsCorrected => context.success,
+      DvirConditionStatus.hasDefects ||
+      DvirConditionStatus.defectsNotCorrected => context.danger,
+      DvirConditionStatus.unknown => context.warning,
     };
   }
 }

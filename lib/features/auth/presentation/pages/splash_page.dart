@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/logger.dart';
 import '../providers/auth_state_provider.dart';
 
@@ -39,7 +41,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       }
     } catch (e) {
       AppLogger.error(
-          'SplashPage: onboarding check failed — continuing to normal flow', e);
+        'SplashPage: onboarding check failed — continuing to normal flow',
+        e,
+      );
     }
 
     AppLogger.info('SplashPage: Checking permissions...');
@@ -60,36 +64,40 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     AppLogger.info('SplashPage: Checking auth status...');
     await ref.read(authStateProvider.notifier).checkAuthStatus();
-    
+
     if (!mounted) return;
     final isLoggedIn = ref.read(authStateProvider).isAuthenticated;
-    AppLogger.info('SplashPage: Auth status check complete. IsLoggedIn: $isLoggedIn');
+    AppLogger.info(
+      'SplashPage: Auth status check complete. IsLoggedIn: $isLoggedIn',
+    );
     context.goNamed(isLoggedIn ? 'connection' : 'login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Image.asset(
-                'assets/images/ic_launcher.png',
-                width: 120,
-                height: 120,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.round),
+                child: Image.asset(
+                  'assets/images/ic_launcher.png',
+                  width: 120,
+                  height: 120,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.loc.appName,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                context.loc.appName,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const CircularProgressIndicator(),
+            ],
+          ),
         ),
       ),
     );

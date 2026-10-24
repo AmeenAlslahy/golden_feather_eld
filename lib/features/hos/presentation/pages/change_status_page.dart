@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:golden_feather_eld/core/design_system.dart';
 
-import '../../../../core/widgets/app_feedback.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../duty_change_message.dart';
 import '../providers/change_status_provider.dart';
 import '../widgets/status_option_tiles.dart';
@@ -25,8 +22,9 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
   void initState() {
     super.initState();
     final state = ref.read(changeStatusProvider);
-    _customLocationController =
-        TextEditingController(text: state.customLocation);
+    _customLocationController = TextEditingController(
+      text: state.customLocation,
+    );
     _notesController = TextEditingController(text: state.notes);
   }
 
@@ -68,13 +66,10 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     final notesHint = context.loc.notes;
     final updateLabel = context.loc.updateButton.toUpperCase();
 
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.close, size: 26),
+          icon: const Icon(Icons.close, size: AppSpacing.iconSize),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(context.loc.changeStatus),
@@ -89,8 +84,11 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 builder: (context) {
                   final option = state.availableOptions[i];
                   final isCurrentStatus = option == state.initialOption;
-                  final isSelected = state.selectedOption == option && !isCurrentStatus;
-                  final disabled = (state.isVehicleMoving && option != DutyStatusOption.driving) ||
+                  final isSelected =
+                      state.selectedOption == option && !isCurrentStatus;
+                  final disabled =
+                      (state.isVehicleMoving &&
+                          option != DutyStatusOption.driving) ||
                       isCurrentStatus;
 
                   return StatusOptionTile(
@@ -118,9 +116,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 state.location.isNotEmpty
                     ? state.location
                     : context.loc.location,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.hintColor,
-                ),
+                style: context.styles.subtitle,
               ),
             ),
             const Divider(),
@@ -133,8 +129,10 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 onChanged: notifier.updateCustomLocation,
                 hint: customLocationHint,
                 isUnderlined: true,
-                errorText: state.customLocation.isNotEmpty && !state.hasValidCustomLocation 
-                    ? context.loc.invalidValue 
+                errorText:
+                    state.customLocation.isNotEmpty &&
+                        !state.hasValidCustomLocation
+                    ? context.loc.invalidValue
                     : null,
               ),
             ),
@@ -164,7 +162,9 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 label: updateLabel,
                 type: EldButtonType.primary,
                 isLoading: state.isSaving,
-                onPressed: (state.isSaving || !state.isValid) ? null : _handleSave,
+                onPressed: (state.isSaving || !state.isValid)
+                    ? null
+                    : _handleSave,
               ),
             ),
 
@@ -174,7 +174,7 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: Text(
                   context.loc.errorCannotChangeStatusWhileMoving,
-                  style: TextStyle(color: theme.colorScheme.error),
+                  style: context.styles.error,
                   textAlign: TextAlign.center,
                 ),
               ),

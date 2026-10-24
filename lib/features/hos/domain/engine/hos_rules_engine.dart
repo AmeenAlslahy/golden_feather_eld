@@ -36,9 +36,9 @@ class HosRulesEngine {
     required HosCalculator calculator,
     required HosStateMachine stateMachine,
     required TrustedTimeProvider timeProvider,
-  })  : _calculator = calculator,
-        _stateMachine = stateMachine,
-        _timeProvider = timeProvider;
+  }) : _calculator = calculator,
+       _stateMachine = stateMachine,
+       _timeProvider = timeProvider;
 
   /// معالجة حدث جديد من جهاز ELD
   HosEngineResult processEvent(EldEvent event) => _buildStatusUpdate();
@@ -61,9 +61,12 @@ class HosRulesEngine {
       if (lastRestart != null && !t.timestamp.isAfter(lastRestart)) {
         continue;
       }
-      if ((t.to == DutyStatus.offDuty || t.to == DutyStatus.sleeperBerth) && offDutyStart == null) {
+      if ((t.to == DutyStatus.offDuty || t.to == DutyStatus.sleeperBerth) &&
+          offDutyStart == null) {
         offDutyStart = t.timestamp;
-      } else if (t.to != DutyStatus.offDuty && t.to != DutyStatus.sleeperBerth && offDutyStart != null) {
+      } else if (t.to != DutyStatus.offDuty &&
+          t.to != DutyStatus.sleeperBerth &&
+          offDutyStart != null) {
         periods.add((start: offDutyStart, end: t.timestamp));
         offDutyStart = null;
       }
@@ -88,9 +91,12 @@ class HosRulesEngine {
     if (currentStatus == DutyStatus.driving &&
         newStatus != DutyStatus.driving) {
       if (currentSpeedKmh >= speedThresholdKmh) {
-        return Left(ServerFailure(
+        return Left(
+          ServerFailure(
             message:
-                'Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)'));
+                'Cannot manually change from DRIVING while vehicle is moving ($currentSpeedKmh km/h)',
+          ),
+        );
       }
     }
     return const Right(null);
@@ -109,49 +115,61 @@ class HosRulesEngine {
     // Driving alerts
     if (limits.remainingDriveMinutes <= 15 &&
         limits.remainingDriveMinutes > 0) {
-      alerts.add(HosAlert(
-        type: HosAlertType.drivingExpiring,
-        message: '15 minutes driving time remaining',
-        severity: AlertSeverity.critical,
-        remainingMinutes: limits.remainingDriveMinutes,
-      ));
+      alerts.add(
+        HosAlert(
+          type: HosAlertType.drivingExpiring,
+          message: '15 minutes driving time remaining',
+          severity: AlertSeverity.critical,
+          remainingMinutes: limits.remainingDriveMinutes,
+        ),
+      );
     } else if (limits.remainingDriveMinutes <= 30 &&
         limits.remainingDriveMinutes > 15) {
-      alerts.add(HosAlert(
-        type: HosAlertType.drivingExpiring,
-        message: '30 minutes driving time remaining',
-        severity: AlertSeverity.warning,
-        remainingMinutes: limits.remainingDriveMinutes,
-      ));
+      alerts.add(
+        HosAlert(
+          type: HosAlertType.drivingExpiring,
+          message: '30 minutes driving time remaining',
+          severity: AlertSeverity.warning,
+          remainingMinutes: limits.remainingDriveMinutes,
+        ),
+      );
     } else if (limits.remainingDriveMinutes <= 60 &&
         limits.remainingDriveMinutes > 30) {
-      alerts.add(HosAlert(
-        type: HosAlertType.drivingExpiring,
-        message: '60 minutes driving time remaining',
-        severity: AlertSeverity.info,
-        remainingMinutes: limits.remainingDriveMinutes,
-      ));
+      alerts.add(
+        HosAlert(
+          type: HosAlertType.drivingExpiring,
+          message: '60 minutes driving time remaining',
+          severity: AlertSeverity.info,
+          remainingMinutes: limits.remainingDriveMinutes,
+        ),
+      );
     }
 
     // Required 30-minute rest break alert (FMCSA § 395.3(a)(3)(ii))
     if (limits.breakRequired && limits.breakRemainingMinutes > 0) {
-      alerts.add(HosAlert(
-        type: HosAlertType.breakRequired,
-        message: 'Break required: ${limits.breakRemainingMinutes} min remaining',
-        severity: AlertSeverity.warning,
-        remainingMinutes: limits.breakRemainingMinutes,
-      ));
+      alerts.add(
+        HosAlert(
+          type: HosAlertType.breakRequired,
+          message:
+              'Break required: ${limits.breakRemainingMinutes} min remaining',
+          severity: AlertSeverity.warning,
+          remainingMinutes: limits.breakRemainingMinutes,
+        ),
+      );
     }
 
     // Shift window alert (FMCSA § 395.3(a)(2) 14-hour window)
     if (limits.remainingShiftMinutes <= 60 &&
         limits.remainingShiftMinutes > 0) {
-      alerts.add(HosAlert(
-        type: HosAlertType.shiftExpiring,
-        message: 'Shift window expiring: ${limits.remainingShiftMinutes} min remaining',
-        severity: AlertSeverity.warning,
-        remainingMinutes: limits.remainingShiftMinutes,
-      ));
+      alerts.add(
+        HosAlert(
+          type: HosAlertType.shiftExpiring,
+          message:
+              'Shift window expiring: ${limits.remainingShiftMinutes} min remaining',
+          severity: AlertSeverity.warning,
+          remainingMinutes: limits.remainingShiftMinutes,
+        ),
+      );
     }
 
     return alerts;
@@ -159,7 +177,9 @@ class HosRulesEngine {
 
   /// التحقق من الانتهاكات
   List<HosViolation> _checkViolations(
-      HosLimits limits, TrustedTimeResult timeResult) {
+    HosLimits limits,
+    TrustedTimeResult timeResult,
+  ) {
     final violations = <HosViolation>[];
 
     // We can only stamp violations if time is available.
@@ -172,30 +192,36 @@ class HosRulesEngine {
     final timestamp = timeResult.utc;
 
     if (limits.remainingDriveMinutes <= 0) {
-      violations.add(HosViolation(
-        type: HosViolationType.dailyDrivingExceeded,
-        level: ViolationLevel.critical,
-        message: '❌ تجاوز حد القيادة 11 ساعة',
-        timestamp: timestamp,
-      ));
+      violations.add(
+        HosViolation(
+          type: HosViolationType.dailyDrivingExceeded,
+          level: ViolationLevel.critical,
+          message: '❌ تجاوز حد القيادة 11 ساعة',
+          timestamp: timestamp,
+        ),
+      );
     }
 
     if (limits.remainingShiftMinutes <= 0) {
-      violations.add(HosViolation(
-        type: HosViolationType.dailyWorkExceeded,
-        level: ViolationLevel.critical,
-        message: '❌ تجاوز نافذة العمل 14 ساعة',
-        timestamp: timestamp,
-      ));
+      violations.add(
+        HosViolation(
+          type: HosViolationType.dailyWorkExceeded,
+          level: ViolationLevel.critical,
+          message: '❌ تجاوز نافذة العمل 14 ساعة',
+          timestamp: timestamp,
+        ),
+      );
     }
 
     if (limits.remainingCycleHours <= 0) {
-      violations.add(HosViolation(
-        type: HosViolationType.weeklyDrivingExceeded,
-        level: ViolationLevel.critical,
-        message: '❌ تجاوز حد الدورة الأسبوعية',
-        timestamp: timestamp,
-      ));
+      violations.add(
+        HosViolation(
+          type: HosViolationType.weeklyDrivingExceeded,
+          level: ViolationLevel.critical,
+          message: '❌ تجاوز حد الدورة الأسبوعية',
+          timestamp: timestamp,
+        ),
+      );
     }
 
     return violations;
@@ -223,17 +249,19 @@ class HosRulesEngine {
     final timeResult = _timeProvider.currentTime;
     final violations = _checkViolations(limits, timeResult);
 
-    return HosEngineReady(HosStatusUpdate(
-      currentStatus: _stateMachine.currentStatus,
-      limits: limits,
-      alerts: _generateAlerts(limits),
-      violations: violations,
-      remainingDriveMinutes: limits.remainingDriveMinutes,
-      remainingShiftMinutes: limits.remainingShiftMinutes,
-      remainingCycleHours: limits.remainingCycleHours,
-      breakRequired: limits.breakRequired,
-      breakRemainingMinutes: limits.breakRemainingMinutes,
-    ));
+    return HosEngineReady(
+      HosStatusUpdate(
+        currentStatus: _stateMachine.currentStatus,
+        limits: limits,
+        alerts: _generateAlerts(limits),
+        violations: violations,
+        remainingDriveMinutes: limits.remainingDriveMinutes,
+        remainingShiftMinutes: limits.remainingShiftMinutes,
+        remainingCycleHours: limits.remainingCycleHours,
+        breakRequired: limits.breakRequired,
+        breakRemainingMinutes: limits.breakRemainingMinutes,
+      ),
+    );
   }
 
   /// إعادة تعيين

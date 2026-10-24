@@ -19,13 +19,15 @@ String? refuseAutomaticDrivingEdit({
   return null;
 }
 
-
-
 /// يحول وقت نموذج التعديل إلى [DateTime] على يوم السجل.
 ///
 /// يدعم: `HH:mm`، `h:mm[:ss] AM/PM`. يرجع null إذا تعذر التحليل
 /// (يستخدم الداعي وقت الحدث الحالي أو الحاضر كقيمة بديلة).
-DateTime? parseEditFormTime(String raw, DateTime? logDate, [DateTime? fallbackDate]) {
+DateTime? parseEditFormTime(
+  String raw,
+  DateTime? logDate, [
+  DateTime? fallbackDate,
+]) {
   final base = logDate ?? fallbackDate;
   if (base == null) return null;
   final trimmed = raw.trim();
@@ -39,9 +41,10 @@ DateTime? parseEditFormTime(String raw, DateTime? logDate, [DateTime? fallbackDa
     }
   }
 
-  final m12 = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$',
-          caseSensitive: false)
-      .firstMatch(trimmed);
+  final m12 = RegExp(
+    r'^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
   if (m12 != null) {
     var h = int.tryParse(m12.group(1)!) ?? 0;
     final m = int.tryParse(m12.group(2)!) ?? 0;

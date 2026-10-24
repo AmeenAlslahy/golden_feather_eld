@@ -10,9 +10,9 @@ import 'package:golden_feather_eld/domain/config/server_config.dart'; // ignore_
 /// A null value means no saved config, not that the app is in mock mode.
 final serverConfigProvider =
     StateNotifierProvider<ServerConfigNotifier, ServerConfig?>((ref) {
-  final storage = ref.watch(secureStorageProvider);
-  return ServerConfigNotifier(storage);
-});
+      final storage = ref.watch(secureStorageProvider);
+      return ServerConfigNotifier(storage);
+    });
 
 class ServerConfigNotifier extends StateNotifier<ServerConfig?> {
   static const String storageKey = 'server_config_v1';
@@ -61,17 +61,18 @@ class ServerConfigNotifier extends StateNotifier<ServerConfig?> {
   }
 
   static Map<String, dynamic> _toJson(ServerConfig c) => {
-        'baseUrl': c.baseUrl,
-        'backendType': c.backendType.wire,
-        'lastTestedAt': c.lastTestedAt.toIso8601String(),
-        'isVerified': c.isVerified,
-      };
+    'baseUrl': c.baseUrl,
+    'backendType': c.backendType.wire,
+    'lastTestedAt': c.lastTestedAt.toIso8601String(),
+    'isVerified': c.isVerified,
+  };
 
   static ServerConfig _fromJson(Map<String, dynamic> json) {
     return ServerConfig(
       baseUrl: json['baseUrl'] as String? ?? '',
       backendType: BackendType.fromWire(json['backendType'] as String?),
-      lastTestedAt: DateTime.tryParse(json['lastTestedAt'] as String? ?? '') ??
+      lastTestedAt:
+          DateTime.tryParse(json['lastTestedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       isVerified: json['isVerified'] as bool? ?? false,
     );

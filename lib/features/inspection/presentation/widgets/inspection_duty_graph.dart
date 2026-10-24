@@ -30,11 +30,13 @@ class InspectionDutyGraph extends StatelessWidget {
 
       final row = _rowOf(event);
       final parsedCode = DutyStatusCode.fromAny(row);
-      parsed.add(_Segment(
-        startHour: startHour,
-        status: parsedCode.canonicalGridShortCode,
-        special: parsedCode.specialCategoryTag,
-      ));
+      parsed.add(
+        _Segment(
+          startHour: startHour,
+          status: parsedCode.canonicalGridShortCode,
+          special: parsedCode.specialCategoryTag,
+        ),
+      );
     }
     parsed.sort((a, b) => a.startHour.compareTo(b.startHour));
 
@@ -43,11 +45,7 @@ class InspectionDutyGraph extends StatelessWidget {
       // FMCSA requirement: A day with no duty status changes is recorded as
       // continuous OFF duty across the entire 24-hour period.
       points.add(
-        const EldGraphPoint(
-          startHour: 0.0,
-          endHour: 24.0,
-          status: 'OFF',
-        ),
+        const EldGraphPoint(startHour: 0.0, endHour: 24.0, status: 'OFF'),
       );
     } else {
       for (int i = 0; i < parsed.length; i++) {
@@ -73,10 +71,7 @@ class InspectionDutyGraph extends StatelessWidget {
     return Container(
       height: 180,
       color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.only(
-        top: AppSpacing.md,
-        bottom: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.xs),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SizedBox(
@@ -197,9 +192,5 @@ class _Segment {
   final String status;
   final String? special;
 
-  const _Segment({
-    required this.startHour,
-    required this.status,
-    this.special,
-  });
+  const _Segment({required this.startHour, required this.status, this.special});
 }

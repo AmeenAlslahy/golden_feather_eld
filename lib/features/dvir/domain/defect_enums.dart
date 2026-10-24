@@ -27,11 +27,13 @@ enum DefectLifecycleStage {
   const DefectLifecycleStage(this.wire);
   final String wire;
 
-  static DefectLifecycleStage fromWire(String? value) {
-    if (value == null || value.trim().isEmpty) return DefectLifecycleStage.open;
+  static DefectLifecycleStage? tryFromWire(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
     return DefectLifecycleStage.values
         .where((s) => s.wire == value.trim().toUpperCase())
-        .firstOrNull ??
-        DefectLifecycleStage.open;
+        .firstOrNull;
   }
+
+  static DefectLifecycleStage fromWire(String? value) =>
+      tryFromWire(value) ?? DefectLifecycleStage.open;
 }

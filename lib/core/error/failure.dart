@@ -18,11 +18,7 @@ abstract class Failure extends Equatable {
   /// [_isSafeUserFacingText] في [anyErrorUserMessage] قبل الوصول للسائق.
   final String? serverMessage;
 
-  const Failure({
-    required this.message,
-    this.statusCode,
-    this.serverMessage,
-  });
+  const Failure({required this.message, this.statusCode, this.serverMessage});
 
   @override
   List<Object?> get props => [message, statusCode, serverMessage];
@@ -39,40 +35,28 @@ class ServerFailure extends Failure {
 
 /// إخفاق مخصص عند انقطاع الإنترنت
 class NetworkFailure extends Failure {
-  const NetworkFailure({
-    super.message = 'noInternet',
-  });
+  const NetworkFailure({super.message = 'noInternet'});
 }
 
 /// فشل المصادقة
 class AuthFailure extends Failure {
-  const AuthFailure({
-    super.message = 'sessionExpired',
-  });
+  const AuthFailure({super.message = 'sessionExpired'});
 }
 
 class MissingConfigurationFailure extends Failure {
-  const MissingConfigurationFailure({
-    super.message = 'serverNotConfigured',
-  });
+  const MissingConfigurationFailure({super.message = 'serverNotConfigured'});
 }
 
 class InvalidConfigurationFailure extends Failure {
-  const InvalidConfigurationFailure({
-    super.message = 'invalidConfiguration',
-  });
+  const InvalidConfigurationFailure({super.message = 'invalidConfiguration'});
 }
 
 class InvalidCredentialsFailure extends Failure {
-  const InvalidCredentialsFailure({
-    super.message = 'invalidCredentials',
-  });
+  const InvalidCredentialsFailure({super.message = 'invalidCredentials'});
 }
 
 class SessionMissingFailure extends Failure {
-  const SessionMissingFailure({
-    super.message = 'sessionMissing',
-  });
+  const SessionMissingFailure({super.message = 'sessionMissing'});
 }
 
 /// لا توجد لقطة لوحة محفوظة يمكن عرضها (جهاز بلا شبكة + لا كاش).
@@ -82,44 +66,32 @@ class SessionMissingFailure extends Failure {
 /// الآن يبني上层 اللوحة من المحرك المحلي، وإن تعذّر ذلك تُعرض
 /// حالة "غير متاح" بدل أرقام ملفّقة.
 class NoDashboardSnapshotFailure extends Failure {
-  const NoDashboardSnapshotFailure({
-    super.message = 'noDashboardSnapshot',
-  });
+  const NoDashboardSnapshotFailure({super.message = 'noDashboardSnapshot'});
 }
 
 /// لا يوجد ملخص أسبوعي محفوظ يمكن عرضه (جهاز بلا شبكة + لا كاش).
 class NoRecapSnapshotFailure extends Failure {
-  const NoRecapSnapshotFailure({
-    super.message = 'noRecapSnapshot',
-  });
+  const NoRecapSnapshotFailure({super.message = 'noRecapSnapshot'});
 }
 
 /// فشل التخزين المؤقت
 class CacheFailure extends Failure {
-  const CacheFailure({
-    required super.message,
-  });
+  const CacheFailure({required super.message});
 }
 
 /// فشل الصلاحيات
 class PermissionFailure extends Failure {
-  const PermissionFailure({
-    required super.message,
-  });
+  const PermissionFailure({required super.message});
 }
 
 /// فشل التتبع
 class TrackingFailure extends Failure {
-  const TrackingFailure({
-    required super.message,
-  });
+  const TrackingFailure({required super.message});
 }
 
 /// فشل المزامنة
 class SyncFailure extends Failure {
-  const SyncFailure({
-    required super.message,
-  });
+  const SyncFailure({required super.message});
 }
 
 /// رفض نهائي من الخادم — إعادة الإرسال لن تنجح أبداً.
@@ -166,10 +138,7 @@ class RejectedFailure extends Failure {
 class ValidationFailure extends Failure {
   final Map<String, String>? fieldErrors;
 
-  const ValidationFailure({
-    required super.message,
-    this.fieldErrors,
-  });
+  const ValidationFailure({required super.message, this.fieldErrors});
 }
 
 /// P0 2B-1 — حدث محجور لعدم تطابق الملكية (لا يُعاد إرساله تلقائياً).
@@ -194,7 +163,13 @@ class QuarantinedFailure extends Failure {
   }) : super(message: 'sync.quarantined');
 
   @override
-  List<Object?> get props => [message, statusCode, reason, ownerDriverId, parkState];
+  List<Object?> get props => [
+    message,
+    statusCode,
+    reason,
+    ownerDriverId,
+    parkState,
+  ];
 }
 
 /// P0 2B-1 — إشارة رفض وقت-الإرسال تُحمَل داخل DioException.

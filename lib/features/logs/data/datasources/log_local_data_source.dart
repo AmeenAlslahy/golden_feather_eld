@@ -24,9 +24,15 @@ abstract class LogLocalDataSource {
 
   /// SRS 6.8 — read-only snapshot of the last server answers so the Logs
   /// list and a day's events stay available without a connection.
-  Future<void> cacheDailyLogs(int driverId, List<Map<String, dynamic>> logsJson);
+  Future<void> cacheDailyLogs(
+    int driverId,
+    List<Map<String, dynamic>> logsJson,
+  );
   Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId);
-  Future<void> cacheLogEvents(DailyLogId logId, List<Map<String, dynamic>> eventsJson);
+  Future<void> cacheLogEvents(
+    DailyLogId logId,
+    List<Map<String, dynamic>> eventsJson,
+  );
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
   Future<void> saveSignature(DailyLogId logId, String base64Signature);
   Future<String?> getSignature(DailyLogId logId);
@@ -68,7 +74,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<void> cacheDailyLogs(
-      int driverId, List<Map<String, dynamic>> logsJson) async {
+    int driverId,
+    List<Map<String, dynamic>> logsJson,
+  ) async {
     try {
       await _cacheBox.put('logs:$driverId', jsonEncode(logsJson));
     } catch (e) {
@@ -82,7 +90,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<void> cacheLogEvents(
-      DailyLogId logId, List<Map<String, dynamic>> eventsJson) async {
+    DailyLogId logId,
+    List<Map<String, dynamic>> eventsJson,
+  ) async {
     try {
       await _cacheBox.put('events:${logId.value}', jsonEncode(eventsJson));
     } catch (e) {
@@ -92,8 +102,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(
-          DailyLogId logId) async =>
-      _readCachedList('events:${logId.value}');
+    DailyLogId logId,
+  ) async => _readCachedList('events:${logId.value}');
 
   @override
   Future<void> saveSignature(DailyLogId logId, String base64Signature) async {
@@ -134,7 +144,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<void> cacheDailyForm(
-      DailyLogId logId, Map<String, dynamic> formJson) async {
+    DailyLogId logId,
+    Map<String, dynamic> formJson,
+  ) async {
     try {
       await _cacheBox.put('form:${logId.value}', jsonEncode(formJson));
     } catch (e) {
@@ -234,8 +246,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     String entityName,
   ) async {
     try {
-      final dateStr =
-          AppDateUtils.extractDateStr(data[timestampKey] as String?);
+      final dateStr = AppDateUtils.extractDateStr(
+        data[timestampKey] as String?,
+      );
       final currentList = _getListFromBox(box, dateStr);
       currentList.add(data);
 
@@ -281,22 +294,33 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     for (final e in data) {
       final id = e['id'] as String?;
       final startTimeStr = e['startTime'] as String?;
-      if (id == null || id.isEmpty || startTimeStr == null || startTimeStr.isEmpty) {
-        AppLogger.warning('LogLocalDataSource.getEvents: skipped malformed event');
+      if (id == null ||
+          id.isEmpty ||
+          startTimeStr == null ||
+          startTimeStr.isEmpty) {
+        AppLogger.warning(
+          'LogLocalDataSource.getEvents: skipped malformed event',
+        );
         continue;
       }
       try {
-        events.add(LogEvent(
-          id: id,
-          status: e['status'] as String,
-          startTime: DateTime.parse(startTimeStr),
-          duration: Duration(seconds: _readDurationSeconds(e)),
-          location: e['location'] as String? ?? 'Unknown',
-          odometer: (e['odometer'] as num?)?.toDouble(),
-          engineHours: (e['engineHours'] as num?)?.toDouble(),
-        ));
+        events.add(
+          LogEvent(
+            id: id,
+            status: e['status'] as String,
+            startTime: DateTime.parse(startTimeStr),
+            duration: Duration(seconds: _readDurationSeconds(e)),
+            location: e['location'] as String? ?? 'Unknown',
+            odometer: (e['odometer'] as num?)?.toDouble(),
+            engineHours: (e['engineHours'] as num?)?.toDouble(),
+          ),
+        );
       } catch (ex, st) {
-        AppLogger.warning('LogLocalDataSource.getEvents: failed to parse event $id', ex, st);
+        AppLogger.warning(
+          'LogLocalDataSource.getEvents: failed to parse event $id',
+          ex,
+          st,
+        );
       }
     }
     return events;
@@ -347,11 +371,15 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   }
 
   @override
-  Future<List<DutyPeriod>> getPeriods(DateTime date, [DateTime? referenceNow]) async {
+  Future<List<DutyPeriod>> getPeriods(
+    DateTime date, [
+    DateTime? referenceNow,
+  ]) async {
     final data = await _getFromBox(_periodsBox, date, 'periods');
     final now = referenceNow;
     final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
-    final fallbackEnd = (now != null &&
+    final fallbackEnd =
+        (now != null &&
             now.year == date.year &&
             now.month == date.month &&
             now.day == date.day)
@@ -359,19 +387,21 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
         : endOfDay;
 
     return data
-        .map((e) => DutyPeriod(
-              status: e['status'] as String? ?? 'off_duty',
-              startTime: DateTime.parse(e['startTime'] as String),
-              endTime: e['endTime'] != null
-                  ? DateTime.parse(e['endTime'] as String)
-                  : fallbackEnd,
-              startOdometer: (e['startOdometer'] as num?)?.toDouble(),
-              endOdometer: (e['endOdometer'] as num?)?.toDouble(),
-              startLat: (e['startLat'] as num?)?.toDouble(),
-              startLon: (e['startLon'] as num?)?.toDouble(),
-              endLat: (e['endLat'] as num?)?.toDouble(),
-              endLon: (e['endLon'] as num?)?.toDouble(),
-            ))
+        .map(
+          (e) => DutyPeriod(
+            status: e['status'] as String? ?? 'off_duty',
+            startTime: DateTime.parse(e['startTime'] as String),
+            endTime: e['endTime'] != null
+                ? DateTime.parse(e['endTime'] as String)
+                : fallbackEnd,
+            startOdometer: (e['startOdometer'] as num?)?.toDouble(),
+            endOdometer: (e['endOdometer'] as num?)?.toDouble(),
+            startLat: (e['startLat'] as num?)?.toDouble(),
+            startLon: (e['startLon'] as num?)?.toDouble(),
+            endLat: (e['endLat'] as num?)?.toDouble(),
+            endLon: (e['endLon'] as num?)?.toDouble(),
+          ),
+        )
         .toList();
   }
 

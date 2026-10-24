@@ -38,7 +38,9 @@ class CarrierEditCard extends StatelessWidget {
                 child: AppButton(
                   label: context.loc.reject,
                   type: EldButtonType.danger,
-                  onPressed: busy ? null : () => onRespond(CarrierEditResponse.reject),
+                  onPressed: busy
+                      ? null
+                      : () => onRespond(CarrierEditResponse.reject),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -46,7 +48,9 @@ class CarrierEditCard extends StatelessWidget {
                 child: AppButton(
                   label: context.loc.accept,
                   type: EldButtonType.agree,
-                  onPressed: busy ? null : () => onRespond(CarrierEditResponse.accept),
+                  onPressed: busy
+                      ? null
+                      : () => onRespond(CarrierEditResponse.accept),
                 ),
               ),
             ],

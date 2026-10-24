@@ -4,5 +4,5 @@ enum ConnectionStatus {
   connecting,
   disconnected,
   error,
-  unconfigured
+  unconfigured,
 }

@@ -154,16 +154,13 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const BackButton(),
         title: Text(title, style: context.styles.appBarTitle),
       ),
       body: _sent
           ? _buildSuccessView(context, message, loc)
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
               child: Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -174,7 +171,7 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                     // one or two labelled underline fields, one SEND button.
                     Text(
                       widget.isEmailMode ? loc.sendLogsViaEmail : loc.send8Logs,
-                      style: context.styles.subtitle.copyWith(fontSize: 18),
+                      style: context.styles.sectionTitle,
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     if (widget.isEmailMode) ...[
@@ -201,49 +198,49 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                         keyboardType: TextInputType.text,
                         validator: _commentFieldError,
                       ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _FieldLabel(loc.dataTransferType),
-                    DropdownButtonFormField<TransferMethod>(
-                      initialValue: _selectedMethod,
-                      dropdownColor: Theme.of(
-                        context,
-                      ).inputDecorationTheme.fillColor,
-                      decoration: const InputDecoration(),
-                      items: [
-                        DropdownMenuItem(
-                          value: TransferMethod.webService,
-                          child: Text(
-                            loc.transferMethodWebServices,
-                            style: context.styles.body,
+                      const SizedBox(height: AppSpacing.xl),
+                      _FieldLabel(loc.dataTransferType),
+                      DropdownButtonFormField<TransferMethod>(
+                        initialValue: _selectedMethod,
+                        dropdownColor: Theme.of(
+                          context,
+                        ).inputDecorationTheme.fillColor,
+                        decoration: const InputDecoration(),
+                        items: [
+                          DropdownMenuItem(
+                            value: TransferMethod.webService,
+                            child: Text(
+                              loc.transferMethodWebServices,
+                              style: context.styles.body,
+                            ),
                           ),
-                        ),
-                        DropdownMenuItem(
-                          value: TransferMethod.email,
-                          child: Text(
-                            loc.transferMethodEmail,
-                            style: context.styles.body,
+                          DropdownMenuItem(
+                            value: TransferMethod.email,
+                            child: Text(
+                              loc.transferMethodEmail,
+                              style: context.styles.body,
+                            ),
                           ),
-                        ),
-                      ],
-                      onChanged: (method) {
-                        if (method != null) {
-                          setState(() => _selectedMethod = method);
-                        }
-                      },
-                    ),
-                    // SRS 8.4: عند اختيار Email يظهر حقل المرسل إليه.
-                    if (_selectedMethod == TransferMethod.email) ...[
-                      const SizedBox(height: AppSpacing.lg),
-                      _FieldLabel(loc.recipientEmail),
-                      AppTextField(
-                        controller: _emailController,
-                        hint: 'some@email.com',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: _emailFieldError,
+                        ],
+                        onChanged: (method) {
+                          if (method != null) {
+                            setState(() => _selectedMethod = method);
+                          }
+                        },
                       ),
+                      // SRS 8.4: عند اختيار Email يظهر حقل المرسل إليه.
+                      if (_selectedMethod == TransferMethod.email) ...[
+                        const SizedBox(height: AppSpacing.lg),
+                        _FieldLabel(loc.recipientEmail),
+                        AppTextField(
+                          controller: _emailController,
+                          hint: 'some@email.com',
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _emailFieldError,
+                        ),
                       ],
                     ],
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppSpacing.sectionGap),
                     AppButton(
                       label: loc.sendAction,
                       type: EldButtonType.primary,
@@ -262,27 +259,28 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     String? message,
     AppLocalizations loc,
   ) {
-    final isOffline = message != null && message.startsWith('OFFLINE_GENERATED:');
-    final localPath = isOffline ? message.substring('OFFLINE_GENERATED:'.length) : null;
+    final isOffline =
+        message != null && message.startsWith('OFFLINE_GENERATED:');
+    final localPath = isOffline
+        ? message.substring('OFFLINE_GENERATED:'.length)
+        : null;
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.all(AppSpacing.sectionGap),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle_outline,
-              color: Color(0xFF28A745),
-              size: 64,
+              color: context.success,
+              size: AppSpacing.iconFeature,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              isOffline
-                  ? loc.offlineEldGeneratedTitle
-                  : loc.transferAccepted,
+              isOffline ? loc.offlineEldGeneratedTitle : loc.transferAccepted,
               textAlign: TextAlign.center,
-              style: context.styles.pageTitle.copyWith(fontSize: 18),
+              style: context.styles.pageTitle,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
@@ -298,10 +296,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
                 label: loc.shareOrExportCsv,
                 type: EldButtonType.primary,
                 onPressed: () {
-                  Share.shareXFiles(
-                    [XFile(localPath)],
-                    text: 'FMCSA ELD Output File - Roadside Inspection',
-                  );
+                  Share.shareXFiles([
+                    XFile(localPath),
+                  ], text: 'FMCSA ELD Output File - Roadside Inspection');
                 },
               ),
             ],

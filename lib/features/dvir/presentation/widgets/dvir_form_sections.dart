@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_signature_canvas.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../domain/dvir_vehicle.dart';
 import '../../domain/entities/dvir_report.dart';
 import 'package:signature/signature.dart';
@@ -14,13 +14,11 @@ import 'package:signature/signature.dart';
 import 'dvir_form_components.dart';
 
 class DvirNoticeSection extends StatelessWidget {
-  final DashboardData dashboard;
   final bool hasExistingReport;
   final bool hasPreviousToReview;
 
   const DvirNoticeSection({
     super.key,
-    required this.dashboard,
     required this.hasExistingReport,
     required this.hasPreviousToReview,
   });
@@ -30,11 +28,9 @@ class DvirNoticeSection extends StatelessWidget {
     if (!hasExistingReport && hasPreviousToReview) {
       return Container(
         width: double.infinity,
-        color: AppColors.warningYellow.withValues(alpha: 0.2),
+        color: context.warning.withValues(alpha: 0.2),
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text(
-          AppLocalizations.of(context)!.dvirPreviousReviewNotice,
-        ),
+        child: Text(AppLocalizations.of(context)!.dvirPreviousReviewNotice),
       );
     }
     return const SizedBox.shrink();
@@ -62,12 +58,16 @@ class DvirInspectionTypeSection extends StatelessWidget {
         segments: [
           ButtonSegment<InspectionType>(
             value: InspectionType.preTrip,
-            label: Text(context.translateInspectionType(InspectionType.preTrip.name)),
+            label: Text(
+              context.translateInspectionType(InspectionType.preTrip.name),
+            ),
             icon: const Icon(Icons.play_circle_outline),
           ),
           ButtonSegment<InspectionType>(
             value: InspectionType.postTrip,
-            label: Text(context.translateInspectionType(InspectionType.postTrip.name)),
+            label: Text(
+              context.translateInspectionType(InspectionType.postTrip.name),
+            ),
             icon: const Icon(Icons.stop_circle_outlined),
           ),
         ],
@@ -103,9 +103,12 @@ class DvirTimeSection extends StatelessWidget {
       title: loc.dvirTimeET,
       child: GestureDetector(
         onTap: readOnly ? null : onTap,
-        child: Text(currentTime, style: context.styles.body.copyWith(
-          color: readOnly ? null : context.colorScheme.primary,
-        )),
+        child: Text(
+          currentTime,
+          style: context.styles.body.copyWith(
+            color: readOnly ? null : context.colorScheme.primary,
+          ),
+        ),
       ),
     );
   }
@@ -155,21 +158,13 @@ class DvirOdometerSection extends StatelessWidget {
         hint: loc.dvirOdometerHint,
         readOnly: readOnly,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-        ],
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
         validator: (value) {
           if (value == null || value.trim().isEmpty) return null;
-          final sanitized = value.trim().replaceAll(',', '');
-          final parsed = double.tryParse(sanitized);
-          if (parsed == null || parsed.isNaN || parsed < 0) {
-            return loc.localeName == 'ar'
-                ? 'قيمة العداد غير صالحة'
-                : (loc.localeName == 'es'
-                    ? 'Lectura de odómetro no válida'
-                    : 'Invalid odometer reading');
-          }
-          return null;
+          // نفس قاعدة النطاق التي تُطبَّق عند الإرسال — لا منطق مزدوج.
+          return parseDvirOdometer(value) == null
+              ? loc.invalidOdometerReading
+              : null;
         },
       ),
     );
@@ -177,16 +172,20 @@ class DvirOdometerSection extends StatelessWidget {
 }
 
 class DvirVehicleSection extends StatelessWidget {
-  final DashboardData dashboard;
-  final TextEditingController defectsController;
+  final String vehicleId;
+  final String vehicleDisplayName;
+
+  /// نص العيوب قيمة مشتقة من الاختيارات — لا متحكم هنا.
+  final String defectsText;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
   final VoidCallback? onSelectVehicle;
 
   const DvirVehicleSection({
     super.key,
-    required this.dashboard,
-    required this.defectsController,
+    required this.vehicleId,
+    required this.vehicleDisplayName,
+    required this.defectsText,
     required this.readOnly,
     this.onSelectDefects,
     this.onSelectVehicle,
@@ -197,7 +196,8 @@ class DvirVehicleSection extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     return DvirTwoColumn(
       left: FormField<String>(
-        initialValue: dashboard.vehicleId,
+        key: ValueKey(vehicleId),
+        initialValue: vehicleId,
         validator: (value) {
           if (isUnassignedVehicleId(value)) {
             return loc.dvirVehicleIdMissing;
@@ -216,17 +216,17 @@ class DvirVehicleSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    dashboard.vehicleDisplayName,
+                    vehicleDisplayName,
                     style: context.styles.body.copyWith(
                       color: hasError ? errorColor : null,
                     ),
                   ),
                   if (hasError)
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
                       child: Text(
                         field.errorText!,
-                        style: context.styles.error.copyWith(fontSize: 12),
+                        style: context.styles.error,
                       ),
                     ),
                 ],
@@ -238,7 +238,7 @@ class DvirVehicleSection extends StatelessWidget {
       right: DvirCell(
         title: loc.defectsTitle,
         child: DvirDropdownField(
-          text: defectsController.text,
+          text: defectsText,
           hint: loc.defectsTitle,
           onTap: onSelectDefects,
           readOnly: readOnly,
@@ -249,43 +249,40 @@ class DvirVehicleSection extends StatelessWidget {
 }
 
 class DvirTrailerSection extends StatelessWidget {
-  final DashboardData dashboard;
-  final TextEditingController defectsController;
+  final TextEditingController controller;
+
+  /// نص عيوب المقطورة قيمة مشتقة من الاختيارات — لا متحكم هنا.
+  final String defectsText;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
-  final VoidCallback? onSelectTrailer;
 
   const DvirTrailerSection({
     super.key,
-    required this.dashboard,
-    required this.defectsController,
+    required this.controller,
+    required this.defectsText,
     required this.readOnly,
     this.onSelectDefects,
-    this.onSelectTrailer,
   });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final trailerId = dashboard.trailerId?.trim();
-    final hasTrailer = trailerId != null && trailerId.isNotEmpty;
     return DvirTwoColumn(
-      left: GestureDetector(
-        onTap: readOnly ? null : onSelectTrailer,
-        child: DvirCell(
-          title: loc.trailers,
-          child: Text(
-            hasTrailer ? trailerId : loc.trailers,
-            style: hasTrailer
-                ? context.styles.body
-                : context.styles.subtitle,
-          ),
+      left: DvirCell(
+        title: loc.trailers,
+        // DVIR-local field: the report may inspect a trailer that is not the
+        // current daily-form trailer, and editing it here must never rewrite
+        // the daily form's list.
+        child: DvirFlatTextField(
+          controller: controller,
+          hint: loc.trailer,
+          readOnly: readOnly,
         ),
       ),
       right: DvirCell(
         title: loc.defectsTitle,
         child: DvirDropdownField(
-          text: defectsController.text,
+          text: defectsText,
           hint: loc.defectsTitle,
           onTap: onSelectDefects,
           readOnly: readOnly,
@@ -410,27 +407,58 @@ class DvirSignatureSection extends StatelessWidget {
   }
 }
 
-class _ReadOnlySignature extends StatelessWidget {
+/// توقيع القراءة فقط — يُفكّ base64 مرة واحدة عند تغيّر القيمة فقط
+/// (نفس إصلاح P2 المطبق في شاشة التفاصيل)، لا في كل build.
+class _ReadOnlySignature extends StatefulWidget {
   final String dataUrl;
 
   const _ReadOnlySignature({required this.dataUrl});
 
   @override
-  Widget build(BuildContext context) {
+  State<_ReadOnlySignature> createState() => _ReadOnlySignatureState();
+}
+
+class _ReadOnlySignatureState extends State<_ReadOnlySignature> {
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = _decode(widget.dataUrl);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReadOnlySignature oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dataUrl != widget.dataUrl) {
+      _bytes = _decode(widget.dataUrl);
+    }
+  }
+
+  static Uint8List? _decode(String dataUrl) {
     try {
-      final base64Part =
-          dataUrl.contains(',') ? dataUrl.split(',')[1] : dataUrl;
-      final bytes = base64Decode(base64Part);
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
-      );
+      final base64Part = dataUrl.contains(',')
+          ? dataUrl.split(',')[1]
+          : dataUrl;
+      return base64Decode(base64Part);
     } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _bytes;
+    if (bytes == null) {
       return Text(
         AppLocalizations.of(context)!.dvirImageNotAvailable,
         style: context.styles.muted,
       );
     }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.medium),
+      child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
+    );
   }
 }
 
@@ -451,41 +479,12 @@ class DvirSubmitButtonSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 48,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF28A745),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            elevation: 0,
-          ),
-          onPressed: isSubmitting || !timeAvailable ? null : onSubmit,
-          child: isSubmitting
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : const Text(
-                  'SIGN',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-        ),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      child: AppButton(
+        label: AppLocalizations.of(context)!.dvirSign,
+        type: EldButtonType.agree,
+        isLoading: isSubmitting,
+        onPressed: !timeAvailable ? null : onSubmit,
       ),
     );
   }

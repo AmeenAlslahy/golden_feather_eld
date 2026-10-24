@@ -28,7 +28,11 @@ class _Logs extends Mock implements LogRepository {}
 class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
   _AuthNotifier(super.state);
   @override
-  Future<bool> login({required String username, required String password, String? serverUrl}) async => true;
+  Future<bool> login({
+    required String username,
+    required String password,
+    String? serverUrl,
+  }) async => true;
   @override
   void forceLogout() {}
   @override
@@ -129,11 +133,13 @@ void main() {
 
   setUp(() {
     logs = _Logs();
-    when(() => logs.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => const Right(DailyLogPage.empty));
+    when(
+      () => logs.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => const Right(DailyLogPage.empty));
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -146,10 +152,12 @@ void main() {
       isAssigned: true,
       activeForCurrentDriver: true,
     );
-    when(() => vehicles.getSelectedVehicle())
-        .thenAnswer((_) async => const Right(truck));
-    when(() => vehicles.getVehicles())
-        .thenAnswer((_) async => const Right([truck]));
+    when(
+      () => vehicles.getSelectedVehicle(),
+    ).thenAnswer((_) async => const Right(truck));
+    when(
+      () => vehicles.getVehicles(),
+    ).thenAnswer((_) async => const Right([truck]));
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -191,19 +199,22 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('lists server rows with counters, and no device-local rows',
-      (tester) async {
+  testWidgets('lists server rows with counters, and no device-local rows', (
+    tester,
+  ) async {
     backend = _Backend(rows: List.of(rows));
     await pump(tester);
 
     expect(find.text('Unidentified Events'), findsOneWidget);
-    expect(find.text('I-80 mile 12'), findsOneWidget);
+    expect(find.text('Location: I-80 mile 12'), findsOneWidget);
     expect(find.text('Truck 4'), findsOneWidget);
-    expect(find.text('ELD: imei-4'), findsOneWidget);
+    expect(find.text('ELD Identifier: imei-4'), findsOneWidget);
     expect(find.text('PENDING REVIEW'), findsOneWidget);
     // Both tabs are fetched so the counters are real: 3 unclaimed, 0 rejected.
-    expect(backend.tabsRequested,
-        containsAll([UnidentifiedTab.unclaimed, UnidentifiedTab.rejected]));
+    expect(
+      backend.tabsRequested,
+      containsAll([UnidentifiedTab.unclaimed, UnidentifiedTab.rejected]),
+    );
     expect(find.text('0'), findsOneWidget);
     expect(find.text('Pending 1 day(s)'), findsOneWidget);
     expect(find.text('Overdue'), findsOneWidget);
@@ -217,11 +228,14 @@ void main() {
     expect(find.text('NOT MINE'), findsAtLeastNWidgets(2));
   });
 
-  testWidgets('ASSUME without an annotation is refused; with one it claims',
-      (tester) async {
+  testWidgets('ASSUME without an annotation is refused; with one it claims', (
+    tester,
+  ) async {
     backend = _Backend(rows: List.of(rows));
     await pump(tester);
-    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(UnidentifiedEventsPage)),
+    );
     final sub = container.listen(logsProvider, (_, __) {});
     addTearDown(sub.close);
 
@@ -241,7 +255,10 @@ void main() {
     // With text → claim with the server statusId and the signed-in driver.
     await tester.tap(find.text('ASSUME').first);
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'I was driving, forgot to log in');
+    await tester.enterText(
+      find.byType(TextField),
+      'I was driving, forgot to log in',
+    );
     await tester.tap(find.text('OK'));
     await tester.pump();
     // The success overlay is inserted immediately; assert before any
@@ -256,44 +273,55 @@ void main() {
 
     expect(backend.calls, ['claim:501:106:I was driving, forgot to log in']);
     // List reloaded from the server: the claimed row is gone.
-    expect(find.text('I-80 mile 12'), findsNothing);
-    expect(find.text('Yard'), findsOneWidget);
+    expect(find.text('Location: I-80 mile 12'), findsNothing);
+    expect(find.text('Location: Yard'), findsOneWidget);
     // The driver's own record changed → daily logs re-read from the server
     // and the driver is pointed at the log for possible re-certification.
-    verify(() => logs.getDailyLogs(
-          driverId: 106,
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).called(greaterThanOrEqualTo(1));
+    verify(
+      () => logs.getDailyLogs(
+        driverId: 106,
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).called(greaterThanOrEqualTo(1));
     // Expire any remaining feedback timers so nothing is left pending.
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
-  testWidgets('NOT MINE sends the rejection reason through reject',
-      (tester) async {
+  testWidgets('NOT MINE sends the rejection reason through reject', (
+    tester,
+  ) async {
     backend = _Backend(rows: List.of(rows));
     await pump(tester);
-    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(UnidentifiedEventsPage)),
+    );
     final sub = container.listen(logsProvider, (_, __) {});
     addTearDown(sub.close);
 
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('NOT MINE').at(1));
     await tester.pumpAndSettle();
     expect(find.text('Required rejection reason'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'Vehicle was with the mechanic');
+    await tester.enterText(
+      find.byType(TextField),
+      'Vehicle was with the mechanic',
+    );
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
 
     expect(backend.calls, ['reject:502:106:Vehicle was with the mechanic']);
-    expect(find.text('Yard'), findsNothing);
+    expect(find.text('Location: Yard'), findsNothing);
     // Pump past the AppFeedback auto-dismiss timer (3s).
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a server refusal is shown as a plain message, row stays',
-      (tester) async {
+  testWidgets('a server refusal is shown as a plain message, row stays', (
+    tester,
+  ) async {
     backend = _Backend(rows: List.of(rows))
       ..nextError = const ConflictError(
         code: 'UNIDENTIFIED_CLAIM_FAILED',
@@ -301,7 +329,9 @@ void main() {
         context: {'message': 'This event was already assigned.'},
       );
     await pump(tester);
-    final container = ProviderScope.containerOf(tester.element(find.byType(UnidentifiedEventsPage)));
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(UnidentifiedEventsPage)),
+    );
     final sub = container.listen(logsProvider, (_, __) {});
     addTearDown(sub.close);
 
@@ -312,34 +342,36 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('This event was already assigned.'), findsOneWidget);
-    expect(find.text('I-80 mile 12'), findsOneWidget);
+    expect(find.text('Location: I-80 mile 12'), findsOneWidget);
     // Pump past the AppFeedback auto-dismiss timer (3s).
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
   });
 
-  testWidgets('SRS 11.2 filters: current vehicle goes to the server, date is local',
-      (tester) async {
-    backend = _Backend(rows: List.of(rows));
-    await pump(tester);
-    await tester.pumpAndSettle();
-    // Both tabs are fetched per load (counters); neither carries a vehicle.
-    expect(backend.uniqueIdsRequested, [null, null]);
+  testWidgets(
+    'SRS 11.2 filters: current vehicle goes to the server, date is local',
+    (tester) async {
+      backend = _Backend(rows: List.of(rows));
+      await pump(tester);
+      await tester.pumpAndSettle();
+      // Both tabs are fetched per load (counters); neither carries a vehicle.
+      expect(backend.uniqueIdsRequested, [null, null]);
 
-    await tester.tap(find.byIcon(Icons.filter_alt_outlined));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Current vehicle only'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.filter_alt_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Current vehicle only'));
+      await tester.pumpAndSettle();
 
-    expect(backend.uniqueIdsRequested.last, 'imei-4');
-    expect(find.text('Current vehicle'), findsOneWidget);
+      expect(backend.uniqueIdsRequested.last, 'imei-4');
+      expect(find.text('Current vehicle'), findsOneWidget);
 
-    // Clear → reloads without the vehicle filter.
-    await tester.tap(find.byIcon(Icons.filter_alt));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Clear filters'));
-    await tester.pumpAndSettle();
-    expect(backend.uniqueIdsRequested.last, isNull);
-    expect(find.text('Current vehicle'), findsNothing);
-  });
+      // Clear → reloads without the vehicle filter.
+      await tester.tap(find.byIcon(Icons.filter_alt));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Clear filters'));
+      await tester.pumpAndSettle();
+      expect(backend.uniqueIdsRequested.last, isNull);
+      expect(find.text('Current vehicle'), findsNothing);
+    },
+  );
 }

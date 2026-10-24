@@ -27,11 +27,13 @@ class PrefsCoDriverLocalCache implements CoDriverLocalCache {
   Future<void> saveAvailableDrivers(List<CoDriver> drivers) async {
     try {
       final list = drivers
-          .map((d) => {
-                'id': d.id,
-                'name': d.name,
-                if (d.licenseNumber != null) 'licenseNumber': d.licenseNumber,
-              })
+          .map(
+            (d) => {
+              'id': d.id,
+              'name': d.name,
+              if (d.licenseNumber != null) 'licenseNumber': d.licenseNumber,
+            },
+          )
           .toList();
       await _storage.prefs.setString(_driversKey, jsonEncode(list));
     } catch (e) {
@@ -48,11 +50,13 @@ class PrefsCoDriverLocalCache implements CoDriverLocalCache {
       if (decoded is! List) return null;
       return decoded
           .whereType<Map>()
-          .map((item) => CoDriver(
-                id: item['id']?.toString() ?? '',
-                name: item['name']?.toString() ?? 'Unknown',
-                licenseNumber: item['licenseNumber']?.toString(),
-              ))
+          .map(
+            (item) => CoDriver(
+              id: item['id']?.toString() ?? '',
+              name: item['name']?.toString() ?? 'Unknown',
+              licenseNumber: item['licenseNumber']?.toString(),
+            ),
+          )
           .toList();
     } catch (e) {
       AppLogger.warning('CoDriverLocalCache.loadAvailableDrivers failed: $e');

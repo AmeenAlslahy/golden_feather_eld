@@ -23,10 +23,7 @@ abstract interface class DutyEventJournal {
   ///
   /// Throws when the transaction fails; callers must not apply the transition
   /// in that case.
-  Future<void> append(
-    DutyEventRecord record, {
-    PendingEvent? syncEvent,
-  });
+  Future<void> append(DutyEventRecord record, {PendingEvent? syncEvent});
 
   /// Read rows for the given owner, ordered by legal time then insertion.
   /// Corrupt rows are counted and skipped, never deleted.

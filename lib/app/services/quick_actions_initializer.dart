@@ -57,11 +57,7 @@ class _QuickActionsInitializerState
         localizedTitle: loc.startAction,
         icon: 'play',
       ),
-      ShortcutItem(
-        type: 'stop',
-        localizedTitle: loc.stopAction,
-        icon: 'stop',
-      ),
+      ShortcutItem(type: 'stop', localizedTitle: loc.stopAction, icon: 'stop'),
       ShortcutItem(
         type: 'sos',
         localizedTitle: loc.sosAction,

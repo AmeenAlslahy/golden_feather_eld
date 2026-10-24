@@ -38,10 +38,10 @@ class SyncEngine {
     required TimeAuthority timeAuthority,
     RetryPolicy? retryPolicy,
     this.observeAuth,
-  })  : _queue = queue,
-        _dispatcher = dispatcher,
-        _timeAuthority = timeAuthority,
-        _retryPolicy = retryPolicy ?? const RetryPolicy();
+  }) : _queue = queue,
+       _dispatcher = dispatcher,
+       _timeAuthority = timeAuthority,
+       _retryPolicy = retryPolicy ?? const RetryPolicy();
 
   /// إرسال حدث جديد
   Future<void> submitEvent(PendingEvent event) async {
@@ -105,8 +105,9 @@ class SyncEngine {
           await _queue.releaseToPending(record.event.id);
           released++;
           AppLogger.info(
-              'SyncEngine: released deferred event ${record.event.id} '
-              'to owner ${ctx.driverId}');
+            'SyncEngine: released deferred event ${record.event.id} '
+            'to owner ${ctx.driverId}',
+          );
         }
       }
     } catch (e) {
@@ -142,7 +143,9 @@ class SyncEngine {
             try {
               result = await _dispatcher.dispatch(event);
             } catch (e) {
-              result = Left(ServerFailure(message: 'Failed to dispatch event: $e'));
+              result = Left(
+                ServerFailure(message: 'Failed to dispatch event: $e'),
+              );
             }
             await _settle(event, result);
             _completeReport(event.id, result);
@@ -168,10 +171,7 @@ class SyncEngine {
     );
   }
 
-  Future<void> _settle(
-    PendingEvent event,
-    Either<Failure, bool> result,
-  ) async {
+  Future<void> _settle(PendingEvent event, Either<Failure, bool> result) async {
     await result.match(
       (failure) async {
         // 🔴 رفض نهائي من الخادم (409/4xx) — لا إعادة محاولة.
@@ -187,8 +187,9 @@ class SyncEngine {
         if (failure is RejectedFailure) {
           await _queue.moveToDeadLetter(event);
           AppLogger.warning(
-              'SyncEngine: event ${event.id} permanently rejected by server '
-              '(${failure.code}) — dead-lettered without retry');
+            'SyncEngine: event ${event.id} permanently rejected by server '
+            '(${failure.code}) — dead-lettered without retry',
+          );
           return;
         }
         // P0 2B-1 — حجر الملكية ليس فشل إرسال: نقل ذري لخارج الطابور،
@@ -210,7 +211,8 @@ class SyncEngine {
             );
           }
           AppLogger.warning(
-              'SyncEngine: parked ${event.id} (${failure.reason})');
+            'SyncEngine: parked ${event.id} (${failure.reason})',
+          );
           return;
         }
         final nextRetry = _retryPolicy.calculateNextRetry(
@@ -218,13 +220,16 @@ class SyncEngine {
           nowUtc: _timeAuthority.nowUtc(),
         );
         if (nextRetry != null) {
-          await _queue.updateEvent(event.copyWith(
-            retryCount: event.retryCount + 1,
-            nextRetryAt: nextRetry,
-          ));
-        } 
-        else {
-          AppLogger.warning('SyncEngine: Event ${event.id} exhausted retries. Moving to dead-letter.');
+          await _queue.updateEvent(
+            event.copyWith(
+              retryCount: event.retryCount + 1,
+              nextRetryAt: nextRetry,
+            ),
+          );
+        } else {
+          AppLogger.warning(
+            'SyncEngine: Event ${event.id} exhausted retries. Moving to dead-letter.',
+          );
           await _queue.moveToDeadLetter(event);
         }
       },

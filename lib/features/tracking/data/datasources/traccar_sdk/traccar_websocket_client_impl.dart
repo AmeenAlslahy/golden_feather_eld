@@ -51,13 +51,13 @@ class TraccarWebSocketClientImpl implements TraccarWebSocketClient {
       // استخدام Uri لاستبدال scheme بشكل آمن
       final uri = Uri.parse(_serverUrl!);
       final wsScheme = uri.scheme == 'https' ? 'wss' : 'ws';
-      final wsUri = uri.replace(scheme: wsScheme, path: '/api${EldEndpoints.socket}');
+      final wsUri = uri.replace(
+        scheme: wsScheme,
+        path: '/api${EldEndpoints.socket}',
+      );
       final wsUrl = wsUri.toString();
 
-      _webSocket = await WebSocket.connect(
-        wsUrl,
-        headers: {'Cookie': _cookie},
-      );
+      _webSocket = await WebSocket.connect(wsUrl, headers: {'Cookie': _cookie});
 
       // إعادة ضبط محاولات إعادة الاتصال عند النجاح
       _reconnectAttempts = 0;

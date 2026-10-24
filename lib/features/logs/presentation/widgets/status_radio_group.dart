@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
 class StatusRadioGroup extends StatelessWidget {
@@ -34,7 +33,9 @@ class StatusRadioGroup extends StatelessWidget {
               title: Text(
                 status['label']!,
                 style: context.styles.body.copyWith(
-                  fontWeight: isSelected ? AppTypography.semiBold : AppTypography.regular,
+                  fontWeight: isSelected
+                      ? AppTypography.semiBold
+                      : AppTypography.regular,
                   color: isSelected ? context.styles.gold.color : null,
                 ),
               ),
@@ -45,7 +46,7 @@ class StatusRadioGroup extends StatelessWidget {
               onChanged: (value) {
                 if (value != null) onChanged(value);
               },
-              activeColor: AppColors.primaryGold,
+              activeColor: context.gold,
               controlAffinity: ListTileControlAffinity.trailing,
               contentPadding: EdgeInsets.zero,
             ),

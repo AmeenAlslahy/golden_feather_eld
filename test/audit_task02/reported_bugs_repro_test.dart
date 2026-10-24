@@ -40,7 +40,7 @@ import 'package:golden_feather_eld/features/hos/domain/engine/hos_state_machine.
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/recap_provider.dart';
 import 'package:golden_feather_eld/features/hos/presentation/providers/status_dashboard_providers.dart';
-import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/hos/domain/repositories/duty_period_store.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/dispatch_auth.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
@@ -80,52 +80,65 @@ class _Backend implements StatusDashboardBackend {
   @override
   Future<Result<WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async {
     if (onlineFails) return err(const NetworkError(code: 'net', l10nKey: 'n'));
-    return ok(WeeklyRecap(
-      cycleRule: CycleRule.usa70_8,
-      cycleUsed: lastRecapUsed,
-      cycleRemaining: const Duration(hours: 9),
-      availableTomorrow: const Duration(hours: 9),
-      days: [
-        RecapDay(
-          date: DateTime(2026, 3, 1),
-          dayOfWeek: 'Mon',
-          driving: const Duration(hours: 6),
-          onDuty: const Duration(hours: 9),
-          totalWork: const Duration(hours: 9),
-        ),
-      ],
-    ));
+    return ok(
+      WeeklyRecap(
+        cycleRule: CycleRule.usa70_8,
+        cycleUsed: lastRecapUsed,
+        cycleRemaining: const Duration(hours: 9),
+        availableTomorrow: const Duration(hours: 9),
+        days: [
+          RecapDay(
+            date: DateTime(2026, 3, 1),
+            dayOfWeek: 'Mon',
+            driving: const Duration(hours: 6),
+            onDuty: const Duration(hours: 9),
+            totalWork: const Duration(hours: 9),
+          ),
+        ],
+      ),
+    );
   }
 
   StatusDashboard build({DutyStatusCode? status}) => StatusDashboard(
-        driver: const DriverRef(
-            id: DriverId(646), name: 'N', displayText: 'N-646'),
-        operationalAlerts: const OperationalAlerts(
-            toolIcon: false,
-            warningTriangleIcon: false,
-            connectionStatus: ConnectionStatus.ok),
-        currentDutyStatus: status ?? DutyStatusCode.onDutyNotDriving,
-        remainingCircle: RemainingCircle(
-            remaining: drive, label: 'Remaining', progress: 0.5),
-        hosIndicators: HosIndicators(
-          drive: HosIndicator(
-              label: 'DRIVE', value: drive, type: IndicatorType.remaining),
-          shift: const HosIndicator(
-              label: 'SHIFT',
-              value: Duration(hours: 10),
-              type: IndicatorType.remaining),
-          breakTime: const HosIndicator(
-              label: 'BREAK',
-              value: Duration(hours: 7),
-              type: IndicatorType.remaining),
-          cycle: const HosIndicator(
-              label: 'CYCLE',
-              value: Duration(hours: 50),
-              type: IndicatorType.remaining),
-        ),
-        regulatoryConstraints: const RegulatoryConstraints(
-            ruleSet: CycleRule.usa70_8, limits: ['maxDrivingHours: 11']),
-      );
+    driver: const DriverRef(id: DriverId(646), name: 'N', displayText: 'N-646'),
+    operationalAlerts: const OperationalAlerts(
+      toolIcon: false,
+      warningTriangleIcon: false,
+      connectionStatus: ConnectionStatus.ok,
+    ),
+    currentDutyStatus: status ?? DutyStatusCode.onDutyNotDriving,
+    remainingCircle: RemainingCircle(
+      remaining: drive,
+      label: 'Remaining',
+      progress: 0.5,
+    ),
+    hosIndicators: HosIndicators(
+      drive: HosIndicator(
+        label: 'DRIVE',
+        value: drive,
+        type: IndicatorType.remaining,
+      ),
+      shift: const HosIndicator(
+        label: 'SHIFT',
+        value: Duration(hours: 10),
+        type: IndicatorType.remaining,
+      ),
+      breakTime: const HosIndicator(
+        label: 'BREAK',
+        value: Duration(hours: 7),
+        type: IndicatorType.remaining,
+      ),
+      cycle: const HosIndicator(
+        label: 'CYCLE',
+        value: Duration(hours: 50),
+        type: IndicatorType.remaining,
+      ),
+    ),
+    regulatoryConstraints: const RegulatoryConstraints(
+      ruleSet: CycleRule.usa70_8,
+      limits: ['maxDrivingHours: 11'],
+    ),
+  );
 }
 
 class _Adapter implements BackendAdapter {
@@ -154,16 +167,19 @@ class _Net implements NetworkInfo {
 
 class _Auth extends StateNotifier<AuthState> implements AuthNotifier {
   _Auth()
-      : super(AuthState(
-            status: AuthStatus.authenticated,
-            user: User(
-                id: '646',
-                username: 'n',
-                email: 'n@t.com',
-                fullName: 'Naseem',
-                role: UserRole.fieldWorker,
-                createdAt: DateTime(2026)),
-          ));
+    : super(
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: User(
+            id: '646',
+            username: 'n',
+            email: 'n@t.com',
+            fullName: 'Naseem',
+            role: UserRole.fieldWorker,
+            createdAt: DateTime(2026),
+          ),
+        ),
+      );
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
@@ -199,26 +215,28 @@ class _Sync implements SyncEngine {
   Future<int> releaseEligible({int limit = 50}) async => 0;
 }
 
-class _LogRepo implements LogRepository {
+class _PeriodStore implements DutyPeriodStore {
   @override
-  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+  Future<List<DutyPeriod>> getPeriods(DateTime date) async => const [];
+
   @override
-  Future<Either<Failure, bool>> savePeriod(DutyPeriod p) async =>
-      const Right(true);
+  Future<void> savePeriod(DutyPeriod p) async {}
 }
 
 ProviderContainer _c({
   required StatusDashboardBackend backend,
   required bool online,
 }) {
-  final c = ProviderContainer(overrides: [
-    activeBackendProvider.overrideWithValue(_Adapter(backend)),
-    networkInfoProvider.overrideWithValue(_Net(online)),
-    authStateProvider.overrideWith((ref) => _Auth()),
-    // FAKE: production supplies this via AppInitializer.createProviderContainer
-    // after LocalStorageService.init(); a bare container has uninitialised prefs.
-    localStorageProvider.overrideWithValue(_Storage()),
-  ]);
+  final c = ProviderContainer(
+    overrides: [
+      activeBackendProvider.overrideWithValue(_Adapter(backend)),
+      networkInfoProvider.overrideWithValue(_Net(online)),
+      authStateProvider.overrideWith((ref) => _Auth()),
+      // FAKE: production supplies this via AppInitializer.createProviderContainer
+      // after LocalStorageService.init(); a bare container has uninitialised prefs.
+      localStorageProvider.overrideWithValue(_Storage()),
+    ],
+  );
   addTearDown(c.dispose);
   return c;
 }
@@ -230,31 +248,39 @@ void main() {
   // BUG 1 - offline must NOT fabricate offDuty + maximum legal allowances
   // =========================================================================
   group('BUG 1 fixed - no fabricated offline dashboard', () {
-    test('cold offline start never advertises maximum legal allowances',
-        () async {
-      // REAL: statusDashboardProvider -> notifier -> repository -> guardedNetwork
-      // FAKE: backend, NetworkInfo, auth
-      final c = _c(backend: _Backend(), online: false);
+    test(
+      'cold offline start never advertises maximum legal allowances',
+      () async {
+        // REAL: statusDashboardProvider -> notifier -> repository -> guardedNetwork
+        // FAKE: backend, NetworkInfo, auth
+        final c = _c(backend: _Backend(), online: false);
 
-      Object? caught;
-      StatusDashboard? value;
-      try {
-        value = await c.read(statusDashboardProvider.future);
-      } catch (e) {
-        caught = e;
-      }
+        Object? caught;
+        StatusDashboard? value;
+        try {
+          value = await c.read(statusDashboardProvider.future);
+        } catch (e) {
+          caught = e;
+        }
 
-      // ignore: avoid_print
-      print('BUG1_STATUS=$value ERR=${caught.runtimeType}');
+        // ignore: avoid_print
+        print('BUG1_STATUS=$value ERR=${caught.runtimeType}');
 
-      if (value != null) {
-        expect(value.hosIndicators.drive.value, isNot(const Duration(hours: 11)),
-            reason: 'must not advertise a full 11h driving allowance');
-        expect(value.hosIndicators.cycle.value, isNot(const Duration(hours: 70)));
-      } else {
-        expect(caught, isA<Failure>());
-      }
-    });
+        if (value != null) {
+          expect(
+            value.hosIndicators.drive.value,
+            isNot(const Duration(hours: 11)),
+            reason: 'must not advertise a full 11h driving allowance',
+          );
+          expect(
+            value.hosIndicators.cycle.value,
+            isNot(const Duration(hours: 70)),
+          );
+        } else {
+          expect(caught, isA<Failure>());
+        }
+      },
+    );
 
     test('the fabricated constants are gone from the repository', () async {
       // REAL repository, offline network, no disk cache injected
@@ -264,8 +290,11 @@ void main() {
       // ignore: avoid_print
       print('BUG1_REPO=${result.fold((l) => l.runtimeType, (r) => 'RIGHT')}');
 
-      expect(result.isLeft(), isTrue,
-          reason: 'explicit failure, never a fabricated Right');
+      expect(
+        result.isLeft(),
+        isTrue,
+        reason: 'explicit failure, never a fabricated Right',
+      );
       expect(result.getLeft().toNullable(), isA<NoDashboardSnapshotFailure>());
     });
 
@@ -274,21 +303,24 @@ void main() {
       final storage = _Storage();
       final sync = _Sync();
       final tracker = DutyStatusTracker(
-        logRepository: _LogRepo(),
+        dutyPeriodStore: _PeriodStore(),
         localStorage: storage,
         syncEngine: sync,
         // FAILS -> the tracker takes its offline branch and must queue.
         dashboardBackend: _Backend(onlineFails: true),
         timeProvider: FakeTrustedTimeProvider(
-            initialUtcTime: DateTime.utc(2026, 3, 1, 8)),
+          initialUtcTime: DateTime.utc(2026, 3, 1, 8),
+        ),
         readDriverId: () => 646,
       );
       await tracker.submitManualChange('on_duty');
 
       // ignore: avoid_print
-      print('BUG1_LOCAL=${tracker.currentStatus} '
-          'PERSISTED=${storage.currentDutyStatus} '
-          'QUEUED=${sync.submitted.length}');
+      print(
+        'BUG1_LOCAL=${tracker.currentStatus} '
+        'PERSISTED=${storage.currentDutyStatus} '
+        'QUEUED=${sync.submitted.length}',
+      );
 
       expect(tracker.currentStatus, 'on_duty');
       expect(storage.currentDutyStatus, 'on_duty');
@@ -301,43 +333,52 @@ void main() {
   // BUG 2 - offline change updates the page; Recap is not zeros
   // =========================================================================
   group('BUG 2 fixed - offline change and Recap', () {
-    test('offline submitManualChange returns no server dashboard (expected)',
-        () async {
-      final storage = _Storage();
-      final sync = _Sync();
-      final tracker = DutyStatusTracker(
-        logRepository: _LogRepo(),
-        localStorage: storage,
-        syncEngine: sync,
-        dashboardBackend: _Backend(onlineFails: true),
-        timeProvider: FakeTrustedTimeProvider(
-            initialUtcTime: DateTime.utc(2026, 3, 1, 8)),
-        readDriverId: () => 646,
-      );
+    test(
+      'offline submitManualChange returns no server dashboard (expected)',
+      () async {
+        final storage = _Storage();
+        final sync = _Sync();
+        final tracker = DutyStatusTracker(
+          dutyPeriodStore: _PeriodStore(),
+          localStorage: storage,
+          syncEngine: sync,
+          dashboardBackend: _Backend(onlineFails: true),
+          timeProvider: FakeTrustedTimeProvider(
+            initialUtcTime: DateTime.utc(2026, 3, 1, 8),
+          ),
+          readDriverId: () => 646,
+        );
 
-      final result = await tracker.submitManualChange('driving');
+        final result = await tracker.submitManualChange('driving');
 
-      // ignore: avoid_print
-      print('BUG2_ACCEPTED=${result.accepted} '
+        // ignore: avoid_print
+        print(
+          'BUG2_ACCEPTED=${result.accepted} '
           'DASHBOARD_NULL=${result.dashboard == null} '
           'LOCAL=${tracker.currentStatus} '
           'PERSISTED=${storage.currentDutyStatus} '
-          'QUEUED=${sync.submitted.length}');
+          'QUEUED=${sync.submitted.length}',
+        );
 
-      expect(result.accepted, isTrue);
-      expect(result.dashboard, isNull,
-          reason: 'no server snapshot offline - the notifier builds one locally');
-      expect(tracker.currentStatus, 'driving');
-      expect(storage.currentDutyStatus, 'driving');
-      expect(sync.submitted.length, 1);
-      tracker.dispose();
-    });
+        expect(result.accepted, isTrue);
+        expect(
+          result.dashboard,
+          isNull,
+          reason:
+              'no server snapshot offline - the notifier builds one locally',
+        );
+        expect(tracker.currentStatus, 'driving');
+        expect(storage.currentDutyStatus, 'driving');
+        expect(sync.submitted.length, 1);
+        tracker.dispose();
+      },
+    );
 
-    test('the offline dashboard is COMPUTED from real accumulated driving',
-        () {
+    test('the offline dashboard is COMPUTED from real accumulated driving', () {
       // REAL HosRulesEngine + real builder. FAKE clock only.
       final time = FakeTrustedTimeProvider(
-          initialUtcTime: DateTime.utc(2026, 3, 1, 8));
+        initialUtcTime: DateTime.utc(2026, 3, 1, 8),
+      );
       final engine = HosRulesEngine(
         calculator: HosCalculator(HosConfiguration.usa70_8(), time),
         stateMachine: HosStateMachine(time),
@@ -354,8 +395,10 @@ void main() {
       );
 
       // ignore: avoid_print
-      print('BUG2_LOCAL_DRIVE=${built.hosIndicators.drive.value} '
-          'STATUS=${built.currentDutyStatus}');
+      print(
+        'BUG2_LOCAL_DRIVE=${built.hosIndicators.drive.value} '
+        'STATUS=${built.currentDutyStatus}',
+      );
 
       // 11h limit - 6h consumed = 5h, NOT the old fabricated 11h.
       expect(built.hosIndicators.drive.value, const Duration(hours: 5));
@@ -378,11 +421,17 @@ void main() {
       print('BUG2_RECAP=$value ERR=${caught.runtimeType}');
 
       if (value != null) {
-        expect(value.days, isNotEmpty,
-            reason: 'never present an empty week as real data');
+        expect(
+          value.days,
+          isNotEmpty,
+          reason: 'never present an empty week as real data',
+        );
       } else {
-        expect(caught, isA<Failure>(),
-            reason: 'explicit failure instead of "0 used / 70 remaining"');
+        expect(
+          caught,
+          isA<Failure>(),
+          reason: 'explicit failure instead of "0 used / 70 remaining"',
+        );
       }
     });
   });
@@ -391,58 +440,68 @@ void main() {
   // BUG 3 - request sequencing (F-03)
   // =========================================================================
   group('BUG 3 fixed - dashboard write ordering', () {
-    test('a stale in-flight GET can no longer overwrite a newer POST result',
-        () async {
-      // REAL notifier + REAL repository. FAKE backend.
-      final gate = Completer<Result<StatusDashboard>>();
-      final backend = _Backend(drive: const Duration(hours: 9));
-      backend.calls.add(gate);
-      final c = _c(backend: backend, online: true);
+    test(
+      'a stale in-flight GET can no longer overwrite a newer POST result',
+      () async {
+        // REAL notifier + REAL repository. FAKE backend.
+        final gate = Completer<Result<StatusDashboard>>();
+        final backend = _Backend(drive: const Duration(hours: 9));
+        backend.calls.add(gate);
+        final c = _c(backend: backend, online: true);
 
-      final firstLoad = c.read(statusDashboardProvider.future);
-      await Future<void>.delayed(Duration.zero);
+        final firstLoad = c.read(statusDashboardProvider.future);
+        await Future<void>.delayed(Duration.zero);
 
-      // POST arrives first (newest).
-      final notifier = c.read(statusDashboardProvider.notifier);
-      backend.drive = const Duration(hours: 9);
-      notifier.applyServerDashboard(backend.build());
-      final afterPost = c.read(statusDashboardProvider).value!;
+        // POST arrives first (newest).
+        final notifier = c.read(statusDashboardProvider.notifier);
+        backend.drive = const Duration(hours: 9);
+        notifier.applyServerDashboard(backend.build());
+        final afterPost = c.read(statusDashboardProvider).value!;
 
-      // The older GET resolves afterwards with stale data.
-      backend.drive = const Duration(hours: 2);
-      gate.complete(ok(backend.build()));
-      await firstLoad;
-      await Future<void>.delayed(Duration.zero);
-      final settled = c.read(statusDashboardProvider).value!;
+        // The older GET resolves afterwards with stale data.
+        backend.drive = const Duration(hours: 2);
+        gate.complete(ok(backend.build()));
+        await firstLoad;
+        await Future<void>.delayed(Duration.zero);
+        final settled = c.read(statusDashboardProvider).value!;
 
-      // ignore: avoid_print
-      print('BUG3_AFTER_POST=${afterPost.hosIndicators.drive.value} '
-          'AFTER_STALE_GET=${settled.hosIndicators.drive.value}');
+        // ignore: avoid_print
+        print(
+          'BUG3_AFTER_POST=${afterPost.hosIndicators.drive.value} '
+          'AFTER_STALE_GET=${settled.hosIndicators.drive.value}',
+        );
 
-      expect(afterPost.hosIndicators.drive.value, const Duration(hours: 9));
-      expect(settled.hosIndicators.drive.value, const Duration(hours: 9),
-          reason: 'the request-sequence guard must discard the older response');
-    });
+        expect(afterPost.hosIndicators.drive.value, const Duration(hours: 9));
+        expect(
+          settled.hosIndicators.drive.value,
+          const Duration(hours: 9),
+          reason: 'the request-sequence guard must discard the older response',
+        );
+      },
+    );
 
-    test('concurrent refresh() calls are still deduped (1 HTTP call)', () async {
-      final backend = _Backend();
-      final gate = Completer<Result<StatusDashboard>>();
-      backend.calls.add(gate);
-      final c = _c(backend: backend, online: true);
+    test(
+      'concurrent refresh() calls are still deduped (1 HTTP call)',
+      () async {
+        final backend = _Backend();
+        final gate = Completer<Result<StatusDashboard>>();
+        backend.calls.add(gate);
+        final c = _c(backend: backend, online: true);
 
-      final a = c.read(statusDashboardProvider.future);
-      await Future<void>.delayed(Duration.zero);
-      final b = c.read(statusDashboardProvider.notifier).refresh();
-      await Future<void>.delayed(Duration.zero);
+        final a = c.read(statusDashboardProvider.future);
+        await Future<void>.delayed(Duration.zero);
+        final b = c.read(statusDashboardProvider.notifier).refresh();
+        await Future<void>.delayed(Duration.zero);
 
-      // ignore: avoid_print
-      print('BUG3_HTTPCALLS=${backend.getDashboardCount}');
-      expect(backend.getDashboardCount, 1);
+        // ignore: avoid_print
+        print('BUG3_HTTPCALLS=${backend.getDashboardCount}');
+        expect(backend.getDashboardCount, 1);
 
-      gate.complete(ok(backend.build()));
-      await a;
-      await b;
-    });
+        gate.complete(ok(backend.build()));
+        await a;
+        await b;
+      },
+    );
   });
 
   // =========================================================================
@@ -450,7 +509,10 @@ void main() {
   // =========================================================================
   group('Offline parity - persistence and hydration', () {
     test('a failed refresh preserves the last good dashboard', () async {
-      final c = _c(backend: _Backend(drive: const Duration(hours: 4)), online: true);
+      final c = _c(
+        backend: _Backend(drive: const Duration(hours: 4)),
+        online: true,
+      );
       await c.read(statusDashboardProvider.future);
       final before = c.read(statusDashboardProvider).value!;
 
@@ -465,19 +527,22 @@ void main() {
     test('hydration rebuilds driving totals from persisted duty periods', () {
       // REAL HosStateMachine.hydrateFromPeriods. Simulated persisted periods.
       final time = FakeTrustedTimeProvider(
-          initialUtcTime: DateTime.utc(2026, 3, 2, 12));
+        initialUtcTime: DateTime.utc(2026, 3, 2, 12),
+      );
       final sm = HosStateMachine(time);
 
       final base = DateTime.utc(2026, 3, 2, 6);
       final periods = [
         DutyPeriod(
-            status: 'driving',
-            startTime: base,
-            endTime: base.add(const Duration(hours: 6))),
+          status: 'driving',
+          startTime: base,
+          endTime: base.add(const Duration(hours: 6)),
+        ),
         DutyPeriod(
-            status: 'on_duty',
-            startTime: base.add(const Duration(hours: 6)),
-            endTime: base.add(const Duration(hours: 7))),
+          status: 'on_duty',
+          startTime: base.add(const Duration(hours: 6)),
+          endTime: base.add(const Duration(hours: 7)),
+        ),
       ];
 
       sm.hydrateFromPeriods(
@@ -494,8 +559,10 @@ void main() {
       final update = (engine.currentStatus as HosEngineReady).update;
 
       // ignore: avoid_print
-      print('PARITY_HYDRATED_DRIVE=${update.remainingDriveMinutes} '
-          'STATUS=${update.currentStatus.name}');
+      print(
+        'PARITY_HYDRATED_DRIVE=${update.remainingDriveMinutes} '
+        'STATUS=${update.currentStatus.name}',
+      );
 
       // 11h - 6h driving = 5h remaining (300 min), not the full 660.
       expect(update.remainingDriveMinutes, 300);
@@ -504,7 +571,8 @@ void main() {
 
     test('hydration with no periods leaves a clean 11h allowance', () {
       final time = FakeTrustedTimeProvider(
-          initialUtcTime: DateTime.utc(2026, 3, 2, 12));
+        initialUtcTime: DateTime.utc(2026, 3, 2, 12),
+      );
       final sm = HosStateMachine(time);
       sm.hydrateFromPeriods(
         periods: const [],
@@ -528,19 +596,21 @@ void main() {
   // Sync safety - must NOT be "fixed"
   // =========================================================================
   group('Sync safety - retries never drop data', () {
-    test('RetryPolicy never returns null, so dead-lettering stays unreachable',
-        () {
-      const policy = RetryPolicy();
-      final now = DateTime.utc(2026, 3, 1, 8);
-      final delays = <Duration>[];
-      for (var i = 0; i < 12; i++) {
-        final next = policy.calculateNextRetry(i, nowUtc: now);
-        expect(next, isNotNull);
-        delays.add(next!.difference(now));
-      }
-      // ignore: avoid_print
-      print('SYNC_MAX_DELAY=${delays.last}');
-      expect(delays.last, const Duration(seconds: 50));
-    });
+    test(
+      'RetryPolicy never returns null, so dead-lettering stays unreachable',
+      () {
+        const policy = RetryPolicy();
+        final now = DateTime.utc(2026, 3, 1, 8);
+        final delays = <Duration>[];
+        for (var i = 0; i < 12; i++) {
+          final next = policy.calculateNextRetry(i, nowUtc: now);
+          expect(next, isNotNull);
+          delays.add(next!.difference(now));
+        }
+        // ignore: avoid_print
+        print('SYNC_MAX_DELAY=${delays.last}');
+        expect(delays.last, const Duration(seconds: 50));
+      },
+    );
   });
 }

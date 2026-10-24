@@ -1,10 +1,7 @@
-import 'dart:convert';
 import 'package:fpdart/fpdart.dart';
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../../../sync/domain/entities/pending_event.dart';
 import '../../../sync/domain/repositories/offline_queue.dart';
-import '../../../../core/constants/storage_constants.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
@@ -21,18 +18,22 @@ import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../mappers/dvir_mappers.dart';
 import '../mappers/dvir_defect_mappers.dart';
+import '../datasources/dvir_report_cache.dart';
 import '../../domain/entities/dvir_defect.dart';
-import '../../domain/defect_enums.dart';
 
 class DvirRepositoryImpl implements DvirRepository {
   final DvirBackend dvirBackend;
   final NetworkInfo networkInfo;
   final OfflineQueue offlineQueue;
+  final DvirReportCache _cache;
   final Uuid _uuid;
 
-  final Map<String, Future<Either<Failure, List<DvirReport>>>> _inFlightReports = {};
-  final Map<String, Future<Either<Failure, DvirReport?>>> _inFlightPrevious = {};
-  final Map<String, Future<Either<Failure, List<DvirDefect>>>> _inFlightDefects = {};
+  final Map<String, Future<Either<Failure, List<DvirReport>>>>
+  _inFlightReports = {};
+  final Map<String, Future<Either<Failure, DvirReport?>>> _inFlightPrevious =
+      {};
+  final Map<String, Future<Either<Failure, List<DvirDefect>>>>
+  _inFlightDefects = {};
   final Map<String, List<DvirReport>> _cachedReports = {};
   final Map<String, DvirReport?> _cachedPrevious = {};
 
@@ -40,103 +41,136 @@ class DvirRepositoryImpl implements DvirRepository {
     required this.dvirBackend,
     required this.networkInfo,
     required this.offlineQueue,
-  }) : _uuid = const Uuid();
+    DvirReportCache cache = const DvirReportCache(),
+  }) : _cache = cache,
+       _uuid = const Uuid();
 
   Failure _failure(AppError error) {
     AppLogger.error('DvirRepository backend error: ${error.code}');
     return ServerFailure(message: error.code);
   }
 
-  void _saveReportsToDisk(String key, List<dynamic> rawReports) {
-    try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        box.put('dvir_reports:$key', jsonEncode(rawReports));
+  /// خطأ عابر (شبكة/مهلة/انقطاع) = الإرسال قابل للطابور دون اتصال؛
+  /// ما عداه فشل صلب يُعرض على السائق ولا يُصفّ في طابور.
+  static bool _isTransientNetworkError(AppError error) {
+    return error is NetworkError ||
+        error.code.startsWith('network') ||
+        error.code.contains('timeout') ||
+        error.code.contains('offline') ||
+        error.code.contains('connection');
+  }
+
+  /// SRS 6.8 — دون اتصال: ضع الحدث في طابور المزامنة ولا تُفقد بيانات
+  /// السائق أبداً؛ نسخة الجلسة تُظهر التقرير في القائمة فوراً.
+  Future<Either<Failure, bool>> _enqueueCreate(
+    Map<String, dynamic> body,
+    DvirReport report,
+  ) async {
+    await offlineQueue.enqueue(
+      PendingEvent(
+        id: _uuid.v4(),
+        type: 'dvir_create',
+        payload: body,
+        createdAt: DateTime.now().toUtc(),
+      ),
+    );
+    _addToLocalCache(report);
+    return const Right(true);
+  }
+
+  /// SRS 6.8 / 7.9 — مراجعة §396.13 دون اتصال: نفس العقد، طابور + تحديث
+  /// الكاش حتى لا يُطلب من السائق نفسه مراجعةً أعطاها.
+  Future<Either<Failure, bool>> _enqueueReview({
+    required int dvirId,
+    required ReviewDvirRequestDto dto,
+    required String reviewerName,
+  }) async {
+    await offlineQueue.enqueue(
+      PendingEvent(
+        id: _uuid.v4(),
+        type: 'dvir_review',
+        payload: {'dvirId': dvirId, 'review': dto.toJson()},
+        createdAt: DateTime.now().toUtc(),
+      ),
+    );
+    _updateReviewInCache('$dvirId', reviewerName);
+    return const Right(true);
+  }
+
+  List<DvirReport>? _loadReportsFromCache(String key) {
+    final cached = _cache.readReports(key);
+    if (cached == null) return null;
+    final reports = <DvirReport>[];
+    var skipped = 0;
+    for (final json in cached) {
+      try {
+        reports.add(mapDvirDtoToReport(DvirDto.fromJson(json)));
+      } catch (error) {
+        skipped++;
+        AppLogger.warning('Skipped unreadable cached DVIR: $error');
       }
-    } catch (e) {
-      AppLogger.warning('Failed to save DVIR reports to disk: $e');
+    }
+    if (skipped > 0) {
+      AppLogger.warning(
+        'DVIR cache contained $skipped unreadable record(s); '
+        'the remaining ${reports.length} loaded.',
+      );
+    }
+    return reports;
+  }
+
+  /// A tri-state cache read: `null` = unknown, `known: true` = the server
+  /// answered (with or without a report).
+  ({bool known, DvirReport? report})? _cachedPreviousAnswer(String key) {
+    if (_cachedPrevious.containsKey(key)) {
+      final report = _cachedPrevious[key];
+      if (report == null || (int.tryParse(report.id) ?? 0) > 0) {
+        return (known: true, report: report);
+      }
+    }
+    final disk = _cache.readPrevious(key);
+    if (disk == null) return null;
+    final raw = disk.report;
+    if (raw == null) return (known: true, report: null);
+    try {
+      final report = mapDvirDtoToReport(DvirDto.fromJson(raw));
+      _cachedPrevious[key] = report;
+      return (known: true, report: report);
+    } catch (error) {
+      AppLogger.warning('Skipped unreadable cached previous DVIR: $error');
+      return null;
     }
   }
 
-  List<DvirReport>? _loadReportsFromDisk(String key) {
-    try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        final rawStr = box.get('dvir_reports:$key');
-        if (rawStr != null && rawStr.isNotEmpty) {
-          final list = jsonDecode(rawStr) as List<dynamic>;
-          return list.map((json) {
-            final dto = DvirDto.fromJson(json as Map<String, dynamic>);
-            return _mapDtoToEntity(dto);
-          }).toList();
-        }
-      }
-    } catch (e) {
-      AppLogger.warning('Failed to load DVIR reports from disk: $e');
-    }
-    return null;
-  }
-
-  void _savePreviousToDisk(String key, Map<String, dynamic> candidate) {
-    try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        box.put('dvir_prev:$key', jsonEncode(candidate));
-      }
-    } catch (e) {
-      AppLogger.warning('Failed to save previous DVIR to disk: $e');
-    }
-  }
-
-  DvirReport? _loadPreviousFromDisk(String key) {
-    try {
-      if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-        final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-        final rawStr = box.get('dvir_prev:$key');
-        if (rawStr != null && rawStr.isNotEmpty) {
-          final map = jsonDecode(rawStr) as Map<String, dynamic>;
-          return _mapDtoToEntity(DvirDto.fromJson(map));
-        }
-      }
-    } catch (e) {
-      AppLogger.warning('Failed to load previous DVIR from disk: $e');
-    }
-    return null;
-  }
-
-  void _addToLocalCache(DvirReport report, [Map<String, dynamic>? rawBody]) {
+  /// Adds an offline-submitted report to the *session* cache only.
+  ///
+  /// The durable copy of the submission is the offline queue event, not this
+  /// cache: request bodies have no server `id` and must never be parsed as
+  /// DVIR records (that used to break the whole vehicle cache on restart).
+  void _addToLocalCache(DvirReport report) {
     final key = report.vehicleId.trim();
-    final current = _cachedReports[key] ?? _loadReportsFromDisk(key) ?? [];
+    final current = _cachedReports[key] ?? _loadReportsFromCache(key) ?? [];
     final updated = [
       report,
-      ...current.where((r) => r.id != report.id),
+      ...current.where((r) => r.id.isEmpty || r.id != report.id),
     ];
     _cachedReports[key] = updated;
-    _cachedPrevious[key] = report;
-    if (rawBody != null) {
-      try {
-        if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
-          final box = Hive.box<String>(StorageConstants.dailyLogsCacheBox);
-          final existing = box.get('dvir_reports:$key');
-          final list = existing != null ? (jsonDecode(existing) as List<dynamic>) : [];
-          list.insert(0, rawBody);
-          box.put('dvir_reports:$key', jsonEncode(list));
-          box.put('dvir_prev:$key', jsonEncode(rawBody));
-        }
-      } catch (e) {
-        AppLogger.warning('Failed to persist submitted DVIR to disk: $e');
-      }
+    if ((int.tryParse(report.id) ?? 0) > 0) {
+      _cachedPrevious[key] = report;
     }
   }
 
   void _updateReviewInCache(String dvirId, String reviewerName) {
-    for (final list in _cachedReports.values) {
+    final reviewed = <String>{};
+    for (final entry in _cachedReports.entries) {
+      final list = entry.value;
       for (int i = 0; i < list.length; i++) {
         if (list[i].id == dvirId) {
           list[i] = list[i].copyWith(
             nextDriverReviewed: true,
             reviewingDriverName: reviewerName,
           );
+          reviewed.add(entry.key);
         }
       }
     }
@@ -146,6 +180,17 @@ class DvirRepositoryImpl implements DvirRepository {
         _cachedPrevious[key] = prev.copyWith(
           nextDriverReviewed: true,
           reviewingDriverName: reviewerName,
+        );
+        reviewed.add(key);
+      }
+    }
+    final parsedId = int.tryParse(dvirId);
+    if (parsedId != null) {
+      for (final vehicleId in reviewed) {
+        _cache.markReviewCompleted(
+          vehicleId: vehicleId,
+          dvirId: parsedId,
+          reviewerName: reviewerName,
         );
       }
     }
@@ -172,45 +217,53 @@ class DvirRepositoryImpl implements DvirRepository {
     String vehicleId,
   ) async {
     final key = vehicleId.trim();
-    return guardedNetwork(networkInfo, () async {
-      // معرّف غير معيّن (فارغ أو "No Vehicle") يعني قائمة بلا تصفية مركبة.
-      final result = isUnassignedVehicleId(vehicleId)
-          ? await dvirBackend.list()
-          : await dvirBackend.list(uniqueId: vehicleId);
+    return guardedNetwork(
+      networkInfo,
+      () async {
+        // معرّف غير معيّن (فارغ أو "No Vehicle") يعني قائمة بلا تصفية مركبة.
+        final result = isUnassignedVehicleId(vehicleId)
+            ? await dvirBackend.list()
+            : await dvirBackend.list(uniqueId: vehicleId);
 
-      return result.fold((error) {
+        return result.fold(
+          (error) {
+            if (_cachedReports.containsKey(key)) {
+              return Right(_cachedReports[key]!);
+            }
+            final diskReports = _loadReportsFromCache(key);
+            if (diskReports != null) {
+              _cachedReports[key] = diskReports;
+              return Right(diskReports);
+            }
+            return Left(_failure(error));
+          },
+          (rawJson) {
+            final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
+            final reports = rawReports.map((json) {
+              final dto = DvirDto.fromJson(json as Map<String, dynamic>);
+              return mapDvirDtoToReport(dto);
+            }).toList();
+            _cachedReports[key] = reports;
+            _cache.saveReports(key, rawReports);
+            return Right(reports);
+          },
+        );
+      },
+      offline: () async {
+        AppLogger.debug(
+          'DVIR reports request not sent: network guard reports offline.',
+        );
         if (_cachedReports.containsKey(key)) {
           return Right(_cachedReports[key]!);
         }
-        final diskReports = _loadReportsFromDisk(key);
-        if (diskReports != null && diskReports.isNotEmpty) {
+        final diskReports = _loadReportsFromCache(key);
+        if (diskReports != null) {
           _cachedReports[key] = diskReports;
           return Right(diskReports);
         }
-        return Left(_failure(error));
-      }, (
-        rawJson,
-      ) {
-        final rawReports = (rawJson['data'] as List<dynamic>?) ?? [];
-        final reports = rawReports.map((json) {
-          final dto = DvirDto.fromJson(json as Map<String, dynamic>);
-          return _mapDtoToEntity(dto);
-        }).toList();
-        _cachedReports[key] = reports;
-        _saveReportsToDisk(key, rawReports);
-        return Right(reports);
-      });
-    }, offline: () async {
-      if (_cachedReports.containsKey(key)) {
-        return Right(_cachedReports[key]!);
-      }
-      final diskReports = _loadReportsFromDisk(key);
-      if (diskReports != null && diskReports.isNotEmpty) {
-        _cachedReports[key] = diskReports;
-        return Right(diskReports);
-      }
-      return const Left(NetworkFailure());
-    });
+        return const Left(NetworkFailure());
+      },
+    );
   }
 
   @override
@@ -228,73 +281,90 @@ class DvirRepositoryImpl implements DvirRepository {
     }
   }
 
-  Future<Either<Failure, DvirReport?>> _fetchPreviousDvir(String vehicleId) async {
+  Future<Either<Failure, DvirReport?>> _fetchPreviousDvir(
+    String vehicleId,
+  ) async {
     final key = vehicleId.trim();
-    return guardedNetwork(networkInfo, () async {
-      if (isUnassignedVehicleId(vehicleId)) {
-        return const Right(null);
-      }
-      final Result<RawJson> result;
-      try {
-        result = await dvirBackend.getPreviousDvir(vehicleId.trim());
-      } catch (e, stackTrace) {
-        AppLogger.error('DvirRepository: pre-trip read failed', e, stackTrace);
-        return const Left(ServerFailure(message: 'pre-trip read failed'));
-      }
-      return result.fold((error) {
-        if (_cachedPrevious.containsKey(key)) {
-          return Right(_cachedPrevious[key]);
-        }
-        return Left(_failure(error));
-      }, (
-        raw,
-      ) {
-        final nested = raw['data'];
-        final body = nested is Map ? Map<String, dynamic>.from(nested) : raw;
-        // Live shape with no record: {message:"No Records", hasPreviousDvir:false} or empty data.
-        if (body['hasPreviousDvir'] == false ||
-            (raw['data'] == null && body['hasPreviousDvir'] != true) ||
-            (body['message'] == 'No Records' && body['hasPreviousDvir'] != true)) {
-          _cachedPrevious[key] = null;
+    return guardedNetwork(
+      networkInfo,
+      () async {
+        if (isUnassignedVehicleId(vehicleId)) {
           return const Right(null);
         }
-        final candidate = _previousDvirObject(body);
-        if (candidate == null) {
-          // If server explicitly stated hasPreviousDvir: true but provided no DVIR object,
-          // it is malformed, so return Left so caller can fall back to the vehicle list.
-          if (body['hasPreviousDvir'] == true) {
-            return const Left(
-              ServerFailure(message: 'pre-trip body has no DVIR'),
-            );
-          }
-          _cachedPrevious[key] = null;
-          return const Right(null);
-        }
+        final Result<RawJson> result;
         try {
-          final mapped = _mapDtoToEntity(DvirDto.fromJson(candidate));
-          _cachedPrevious[key] = mapped;
-          _savePreviousToDisk(key, candidate);
-          return Right(mapped);
+          result = await dvirBackend.getPreviousDvir(vehicleId.trim());
         } catch (e, stackTrace) {
           AppLogger.error(
-            'DvirRepository: pre-trip body unreadable',
+            'DvirRepository: pre-trip read failed',
             e,
             stackTrace,
           );
-          return const Left(ServerFailure(message: 'pre-trip body unreadable'));
+          return const Left(ServerFailure(message: 'pre-trip read failed'));
         }
-      });
-    }, offline: () async {
-      if (_cachedPrevious.containsKey(key)) {
-        return Right(_cachedPrevious[key]);
-      }
-      final diskPrev = _loadPreviousFromDisk(key);
-      if (diskPrev != null) {
-        _cachedPrevious[key] = diskPrev;
-        return Right(diskPrev);
-      }
-      return Right(_cachedPrevious[key]);
-    });
+        return result.fold(
+          (error) {
+            final cached = _cachedPreviousAnswer(key);
+            if (cached != null) return Right(cached.report);
+            return Left(_failure(error));
+          },
+          (raw) {
+            final nested = raw['data'];
+            final body = nested is Map
+                ? Map<String, dynamic>.from(nested)
+                : raw;
+            // Live shape with no record: {message:"No Records", hasPreviousDvir:false} or empty data.
+            if (body['hasPreviousDvir'] == false ||
+                (raw['data'] == null && body['hasPreviousDvir'] != true) ||
+                (body['message'] == 'No Records' &&
+                    body['hasPreviousDvir'] != true)) {
+              _cachedPrevious[key] = null;
+              _cache.saveNoPrevious(key);
+              return const Right(null);
+            }
+            final candidate = _previousDvirObject(body);
+            if (candidate == null) {
+              // If server explicitly stated hasPreviousDvir: true but provided no DVIR object,
+              // it is malformed, so return Left so caller can fall back to the vehicle list.
+              if (body['hasPreviousDvir'] == true) {
+                return const Left(
+                  ServerFailure(message: 'pre-trip body has no DVIR'),
+                );
+              }
+              _cachedPrevious[key] = null;
+              _cache.saveNoPrevious(key);
+              return const Right(null);
+            }
+            try {
+              final mapped = mapDvirDtoToReport(DvirDto.fromJson(candidate));
+              _cachedPrevious[key] = mapped;
+              _cache.savePrevious(key, candidate);
+              return Right(mapped);
+            } catch (e, stackTrace) {
+              AppLogger.error(
+                'DvirRepository: pre-trip body unreadable',
+                e,
+                stackTrace,
+              );
+              return const Left(
+                ServerFailure(message: 'pre-trip body unreadable'),
+              );
+            }
+          },
+        );
+      },
+      offline: () async {
+        AppLogger.debug(
+          'DVIR previous inspection request not sent: network guard reports offline.',
+        );
+        // Only a recorded server answer is authoritative. No cache means the
+        // §396.13 obligation is *unknown*; the caller must not silently treat
+        // that as "there is no previous report".
+        final cached = _cachedPreviousAnswer(key);
+        if (cached != null) return Right(cached.report);
+        return const Left(NetworkFailure());
+      },
+    );
   }
 
   /// The record may be the body itself or nested under a documented-looking
@@ -318,11 +388,9 @@ class DvirRepositoryImpl implements DvirRepository {
         return const Left(ServerFailure(message: 'Invalid DVIR ID'));
       }
       final result = await dvirBackend.getById(DvirId(parsedId));
-      return result.fold((error) => Left(_failure(error)), (
-        rawJson,
-      ) {
+      return result.fold((error) => Left(_failure(error)), (rawJson) {
         try {
-          return Right(_mapDtoToEntity(DvirDto.fromJson(rawJson)));
+          return Right(mapDvirDtoToReport(DvirDto.fromJson(rawJson)));
         } catch (e, stackTrace) {
           AppLogger.error(
             'DvirRepository: failed to parse DVIR details',
@@ -339,18 +407,24 @@ class DvirRepositoryImpl implements DvirRepository {
 
   @override
   Future<Either<Failure, List<DvirCatalogItem>>> getDefectsCatalog() async {
-    return guardedNetwork(networkInfo, () async {
-      final result = await dvirBackend.getDefectsCatalog();
-      return result.fold((error) => Left(_failure(error)), (raw) {
-        final items = parseDvirCatalog(raw);
-        // جسم غير مقروء خطأ، وليس كتالوجاً فارغاً.
-        return items == null
-            ? const Left(ServerFailure(message: 'catalog body is not a list'))
-            : Right(items);
-      });
-    }, offline: () async {
-      return const Right([]);
-    });
+    return guardedNetwork(
+      networkInfo,
+      () async {
+        final result = await dvirBackend.getDefectsCatalog();
+        return result.fold((error) => Left(_failure(error)), (raw) {
+          final items = parseDvirCatalog(raw);
+          // جسم غير مقروء خطأ، وليس كتالوجاً فارغاً.
+          return items == null
+              ? const Left(ServerFailure(message: 'catalog body is not a list'))
+              : Right(items);
+        });
+      },
+      offline: () async {
+        // An empty list would claim the §396.11 catalog is empty. Offline
+        // means unknown, so the picker shows its offline explanation instead.
+        return const Left(NetworkFailure());
+      },
+    );
   }
 
   @override
@@ -387,97 +461,60 @@ class DvirRepositoryImpl implements DvirRepository {
   Future<Either<Failure, List<DvirDefect>>> _fetchActiveDefects(
     String uniqueId,
   ) async {
-    return guardedNetwork(networkInfo, () async {
-      final result = await dvirBackend.getVehicleDefects(uniqueId);
-      return result.fold((error) => Left(_failure(error)), (raw) {
-        final defects = parseDvirDefectList(raw['data'] ?? raw['items'] ?? raw);
-        return defects == null
-            ? const Left(ServerFailure(message: 'vehicleDefectsUnreadable'))
-            : Right(defects);
-      });
-    }, offline: () async {
-      return const Right([]);
-    });
+    return guardedNetwork(
+      networkInfo,
+      () async {
+        final result = await dvirBackend.getVehicleDefects(uniqueId);
+        return result.fold((error) => Left(_failure(error)), (raw) {
+          final defects = parseDvirDefectList(
+            raw['data'] ?? raw['items'] ?? raw,
+          );
+          return defects == null
+              ? const Left(ServerFailure(message: 'vehicleDefectsUnreadable'))
+              : Right(defects);
+        });
+      },
+      offline: () async {
+        return const Left(NetworkFailure());
+      },
+    );
   }
 
   @override
   Future<Either<Failure, bool>> submitDvirReport(
     DvirReport report, {
     required int driverId,
-    required DvirConditionStatus status,
   }) async {
     // SRS 6.8 — offline: enqueue DVIR for sync, never lose the driver's report.
-    final body = _buildCreateBody(report, driverId: driverId, status: status);
+    // الحالة الرسمية من الكيان نفسه (طُبِّعت ثوابتها عند البناء في
+    // `DvirReport.draft`)؛ لا مصدر ثانٍ للحقيقة هنا.
+    final body = _buildCreateBody(report, driverId: driverId);
     if (body == null) {
       return const Left(
         ServerFailure(message: 'Driver, vehicle, or signature is missing.'),
       );
     }
     if (!networkInfo.isConnected) {
-      await offlineQueue.enqueue(
-        PendingEvent(
-          id: _uuid.v4(),
-          type: 'dvir_create',
-          payload: body,
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
-      _addToLocalCache(report, body);
-      return const Right(true);
+      return _enqueueCreate(body, report);
     }
     return guardedNetwork(networkInfo, () async {
       final result = await dvirBackend.create(body);
-      return await result.fold(
-        (error) async {
-          if (error is NetworkError ||
-              error.code.startsWith('network') ||
-              error.code.contains('timeout') ||
-              error.code.contains('offline') ||
-              error.code.contains('connection')) {
-            await offlineQueue.enqueue(
-              PendingEvent(
-                id: _uuid.v4(),
-                type: 'dvir_create',
-                payload: body,
-                createdAt: DateTime.now().toUtc(),
-              ),
-            );
-            _addToLocalCache(report, body);
-            return const Right(true);
-          }
-          return Left(_failure(error));
-        },
-        (_) async {
-          _addToLocalCache(report, body);
+      return result.fold(
+        (error) => _isTransientNetworkError(error)
+            ? _enqueueCreate(body, report)
+            : Left(_failure(error)),
+        (_) {
+          _addToLocalCache(report);
           return const Right(true);
         },
       );
-    }, offline: () async {
-      await offlineQueue.enqueue(
-        PendingEvent(
-          id: _uuid.v4(),
-          type: 'dvir_create',
-          payload: body,
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
-      _addToLocalCache(report, body);
-      return const Right(true);
-    });
+    }, offline: () => _enqueueCreate(body, report));
   }
 
   Map<String, dynamic>? _buildCreateBody(
     DvirReport report, {
     required int driverId,
-    required DvirConditionStatus status,
   }) {
-    // Reconcile status: if the report has defects, status cannot be satisfactory.
-    final effectiveStatus =
-        (report.hasDefects || report.selectedDefects.isNotEmpty) &&
-                status == DvirConditionStatus.satisfactory
-            ? DvirConditionStatus.hasDefects
-            : status;
-
     final inspectionTypeWire = report.type == InspectionType.postTrip
         ? 'Post-Trip'
         : 'Pre-Trip';
@@ -486,9 +523,10 @@ class DvirRepositoryImpl implements DvirRepository {
       driverId: driverId,
       deviceId: report.deviceId,
       uniqueId: report.vehicleId,
-      status: effectiveStatus.wire,
+      status: report.conditionStatus.wire,
       signatureData: report.signature,
-      inspectionTime: report.date?.toUtc().toIso8601String() ??
+      inspectionTime:
+          report.date?.toUtc().toIso8601String() ??
           DateTime.now().toUtc().toIso8601String(),
       inspectionType: inspectionTypeWire,
       location: report.location,
@@ -498,8 +536,9 @@ class DvirRepositoryImpl implements DvirRepository {
       remarks: report.notes,
       vehicleDefects: report.vehicleDefects,
       trailerDefects: report.trailerDefects,
-      catalogDefects:
-          report.selectedDefects.map(defectSelectionToWire).toList(),
+      catalogDefects: report.selectedDefects
+          .map(defectSelectionToWire)
+          .toList(),
     );
   }
 
@@ -525,143 +564,38 @@ class DvirRepositoryImpl implements DvirRepository {
     );
     // SRS 6.8 / 7.9 — offline: enqueue §396.13 review for sync.
     if (!networkInfo.isConnected) {
-      await offlineQueue.enqueue(
-        PendingEvent(
-          id: _uuid.v4(),
-          type: 'dvir_review',
-          payload: {
-            'dvirId': parsedId,
-            'review': dto.toJson(),
-          },
-          createdAt: DateTime.now().toUtc(),
-        ),
+      return _enqueueReview(
+        dvirId: parsedId,
+        dto: dto,
+        reviewerName: reviewingDriverName,
       );
-      _updateReviewInCache(dvirId, reviewingDriverName);
-      return const Right(true);
     }
-    return guardedNetwork(networkInfo, () async {
-      final result = await dvirBackend.review(
-        dvirId: DvirId(parsedId),
-        review: dto.toJson(),
-      );
-      return await result.fold(
-        (error) async {
-          if (error is NetworkError ||
-              error.code.startsWith('network') ||
-              error.code.contains('timeout') ||
-              error.code.contains('offline') ||
-              error.code.contains('connection')) {
-            await offlineQueue.enqueue(
-              PendingEvent(
-                id: _uuid.v4(),
-                type: 'dvir_review',
-                payload: {
-                  'dvirId': parsedId,
-                  'review': dto.toJson(),
-                },
-                createdAt: DateTime.now().toUtc(),
-              ),
-            );
+    return guardedNetwork(
+      networkInfo,
+      () async {
+        final result = await dvirBackend.review(
+          dvirId: DvirId(parsedId),
+          review: dto.toJson(),
+        );
+        return result.fold(
+          (error) => _isTransientNetworkError(error)
+              ? _enqueueReview(
+                  dvirId: parsedId,
+                  dto: dto,
+                  reviewerName: reviewingDriverName,
+                )
+              : Left(_failure(error)),
+          (_) {
             _updateReviewInCache(dvirId, reviewingDriverName);
             return const Right(true);
-          }
-          return Left(_failure(error));
-        },
-        (_) async {
-          _updateReviewInCache(dvirId, reviewingDriverName);
-          return const Right(true);
-        },
-      );
-    }, offline: () async {
-      await offlineQueue.enqueue(
-        PendingEvent(
-          id: _uuid.v4(),
-          type: 'dvir_review',
-          payload: {
-            'dvirId': parsedId,
-            'review': dto.toJson(),
           },
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
-      _updateReviewInCache(dvirId, reviewingDriverName);
-      return const Right(true);
-    });
-  }
-
-  static DateTime? _parseDate(DvirDto dto) {
-    final raw = dto.inspectionTime?.trim();
-    if (raw != null && raw.isNotEmpty) {
-      final parsed = DateTime.tryParse(raw);
-      if (parsed != null) return parsed;
-    }
-    final created = dto.createdAt?.trim();
-    if (created != null && created.isNotEmpty) {
-      final parsed = DateTime.tryParse(created);
-      if (parsed != null) return parsed;
-    }
-    return null;
-  }
-
-  DvirReport _mapDtoToEntity(DvirDto dto) {
-    return DvirReport(
-      id: dto.id.toString(),
-      type: _parseInspectionType(dto.inspectionType),
-      date: _parseDate(dto),
-      driverName: dto.driver?.name ?? '',
-      vehicleId: (dto.uniqueId?.isNotEmpty == true ? dto.uniqueId : dto.vehicleName) ?? '',
-      trailerId: dto.trailerNumber,
-      odometer: dto.odometer,
-      condition: _parseVehicleCondition(dto.status),
-      signature: dto.signatureData,
-      notes: dto.remarks,
-      isSubmitted: true,
-      location: dto.location,
-      companyName: dto.companyName,
-      hasDefects: dto.hasDefects,
-      defectsCount: dto.defectsCount,
-      defectsSummary: dto.defectsSummary,
-      outOfService: dto.outOfService,
-      certified: dto.certified,
-      mechanicName: dto.mechanicName,
-      repairStatus: dto.repairStatus,
-      repairNotes: dto.repairNotes,
-      reviewingDriverName: dto.reviewingDriverName,
-      nextDriverReviewed: dto.nextDriverReviewed,
-      selectedDefects: [
-        for (final defect in dto.defects)
-          if ((defect.itemCode ?? '').trim().isNotEmpty || (defect.itemName ?? '').trim().isNotEmpty)
-            DvirDefectSelection(
-              item: DvirCatalogItem(
-                code: defect.itemCode?.trim() ?? 'GENERIC',
-                name: defect.itemName ?? defect.itemCode ?? 'Unknown defect',
-                category: defect.category ?? '',
-                critical: defect.safetyAffecting || defect.outOfService,
-              ),
-              description: defect.description,
-              severity: DefectSeverity.fromWire(defect.severity),
-              stage: DefectLifecycleStage.fromWire(defect.stage),
-            ),
-      ],
-      photos: dto.photos,
-      trailers: dto.trailers.map((t) => DvirTrailer(
-        trailerNumber: t.trailerNumber,
-        defects: t.defects.map((d) => d.description ?? d.itemName ?? '').where((s) => s.isNotEmpty).toList(),
-      )).toList(),
+        );
+      },
+      offline: () => _enqueueReview(
+        dvirId: parsedId,
+        dto: dto,
+        reviewerName: reviewingDriverName,
+      ),
     );
-  }
-
-  InspectionType _parseInspectionType(String? type) {
-    if (type == InspectionType.postTrip.name) return InspectionType.postTrip;
-    return InspectionType.preTrip;
-  }
-
-  VehicleCondition _parseVehicleCondition(String? condition) {
-    // الحالة الرسمية من الخادم عبر الـ enum؛ أي حالة غير معروفة تبقى
-    // متحفظة (needsRepair) — الأمان يفضّل التحفظ على التفاؤل.
-    final status = DvirConditionStatus.fromWire(condition);
-    return status == DvirConditionStatus.satisfactory
-        ? VehicleCondition.safe
-        : VehicleCondition.needsRepair;
   }
 }

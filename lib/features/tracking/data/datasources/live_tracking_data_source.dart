@@ -9,13 +9,16 @@ import 'traccar_sdk/traccar_api_client_impl.dart';
 import 'traccar_sdk/traccar_websocket_client_impl.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_data_source.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/core/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/core/domain/ports/live_eld_event_source.dart';
 import 'package:golden_feather_eld/features/tracking/domain/usecases/tracking_event_processor.dart';
 import 'package:golden_feather_eld/features/tracking/data/providers/tracking_providers.dart';
 
-abstract class LiveTrackingDataSource {
+abstract class LiveTrackingDataSource implements LiveEldEventSource {
+  @override
   Stream<EldEvent> get events;
   Stream<LocationPoint> get locations;
+  @override
   Stream<ConnectionStatus> get connectionStatus;
   Future<bool> start();
   Future<void> stop();
@@ -54,20 +57,20 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
 
       final now = DateTime.now();
 
-      _eventsController.add(EldEvent(
-        timestamp: now,
-        speedMph: _mockSpeed,
-        speedDurationSeconds: 5,
-        odometerMiles: _mockOdometer,
-        engineHours: _mockEngineHours,
-        fromEcm: true,
-      ));
+      _eventsController.add(
+        EldEvent(
+          timestamp: now,
+          speedMph: _mockSpeed,
+          speedDurationSeconds: 5,
+          odometerMiles: _mockOdometer,
+          engineHours: _mockEngineHours,
+          fromEcm: true,
+        ),
+      );
 
-      _locationsController.add(LocationPoint(
-        latitude: _mockLat,
-        longitude: _mockLon,
-        timestamp: now,
-      ));
+      _locationsController.add(
+        LocationPoint(latitude: _mockLat, longitude: _mockLon, timestamp: now),
+      );
     });
     return true;
   }
@@ -79,14 +82,16 @@ class MockLiveTrackingDataSource implements LiveTrackingDataSource {
     _connectionController.add(ConnectionStatus.disconnected);
 
     final now = DateTime.now();
-    _eventsController.add(EldEvent(
-      timestamp: now,
-      speedMph: _mockSpeed,
-      speedDurationSeconds: 0,
-      odometerMiles: _mockOdometer,
-      engineHours: _mockEngineHours,
-      fromEcm: true,
-    ));
+    _eventsController.add(
+      EldEvent(
+        timestamp: now,
+        speedMph: _mockSpeed,
+        speedDurationSeconds: 0,
+        odometerMiles: _mockOdometer,
+        engineHours: _mockEngineHours,
+        fromEcm: true,
+      ),
+    );
   }
 
   void dispose() {
@@ -136,21 +141,18 @@ final liveTrackingDataSourceProvider = Provider<LiveTrackingDataSource>((ref) {
     return dataSource;
   } else {
     final traccarDataSource = TraccarDataSource(
-      apiClient: TraccarApiClientImpl(
-        apiClient: ref.watch(apiClientProvider),
-      ),
+      apiClient: TraccarApiClientImpl(apiClient: ref.watch(apiClientProvider)),
       webSocketClient: TraccarWebSocketClientImpl(),
       nativeClient: TraccarNativeClientImpl(),
       nativeEventClient: ref.watch(nativeEventChannelClientProvider),
     );
 
     // إنشاء EventProcessor
-    final processor =
-        TrackingEventProcessor(trackingDataSource: traccarDataSource);
-
-    final dataSource = ProcessorLiveTrackingDataSource(
-      processor: processor,
+    final processor = TrackingEventProcessor(
+      trackingDataSource: traccarDataSource,
     );
+
+    final dataSource = ProcessorLiveTrackingDataSource(processor: processor);
 
     // Start processing (starts native tracking)
     dataSource.start();

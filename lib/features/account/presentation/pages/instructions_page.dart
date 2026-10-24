@@ -54,8 +54,9 @@ class _InstructionsPageState extends State<InstructionsPage> {
   @override
   Widget build(BuildContext context) {
     final sections = _visibleSections();
-    final zoomedContent =
-        _zoomedSection == null ? null : sections[_zoomedSection];
+    final zoomedContent = _zoomedSection == null
+        ? null
+        : sections[_zoomedSection];
 
     return PopScope(
       canPop: _zoomedSection == null,

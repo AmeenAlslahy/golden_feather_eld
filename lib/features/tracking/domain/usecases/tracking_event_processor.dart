@@ -3,7 +3,7 @@ import 'dart:async';
 import '../../../../core/utils/logger.dart';
 
 import '../entities/tracking_event.dart';
-import '../entities/connection_status.dart';
+import '../../../../core/domain/entities/connection_status.dart';
 import '../repositories/tracking_data_source_port.dart';
 // For EldEvent
 import '../../../../core/domain/entities/location_point.dart';
@@ -23,9 +23,8 @@ class TrackingEventProcessor {
   StreamSubscription? _connectionSubscription;
   Timer? _mockTimer;
 
-  TrackingEventProcessor({
-    TrackingDataSourcePort? trackingDataSource,
-  }) : _trackingDataSource = trackingDataSource;
+  TrackingEventProcessor({TrackingDataSourcePort? trackingDataSource})
+    : _trackingDataSource = trackingDataSource;
 
   Stream<EldEvent> get eldEventsStream => _eldEventsController.stream;
   Stream<LocationPoint> get locationStream => _locationEventsController.stream;
@@ -35,10 +34,10 @@ class TrackingEventProcessor {
   void startProcessing() {
     if (_trackingDataSource != null) {
       _subscription = _trackingDataSource.events.listen(_processTrackingEvent);
-      _connectionSubscription =
-          _trackingDataSource.connectionStatusStream.listen((status) {
-        _connectionStatusController.add(status);
-      });
+      _connectionSubscription = _trackingDataSource.connectionStatusStream
+          .listen((status) {
+            _connectionStatusController.add(status);
+          });
     } else {
       _startMockProcessing();
     }
@@ -60,26 +59,28 @@ class TrackingEventProcessor {
 
       final now = DateTime.now();
 
-      _eldEventsController.add(EldEvent(
-        timestamp: now,
-        speedMph: mockSpeed,
-        speedDurationSeconds: 5,
-        odometerMiles: null,
-        engineHours: null,
-        fromEcm: true, // مهم جداً: جعل محرك HOS يعتقد أن هذه الأحداث حقيقية لاختبار التحويل للقيادة
-      ));
+      _eldEventsController.add(
+        EldEvent(
+          timestamp: now,
+          speedMph: mockSpeed,
+          speedDurationSeconds: 5,
+          odometerMiles: null,
+          engineHours: null,
+          fromEcm:
+              true, // مهم جداً: جعل محرك HOS يعتقد أن هذه الأحداث حقيقية لاختبار التحويل للقيادة
+        ),
+      );
 
-      _locationEventsController.add(LocationPoint(
-        latitude: mockLat,
-        longitude: mockLon,
-        timestamp: now,
-      ));
+      _locationEventsController.add(
+        LocationPoint(latitude: mockLat, longitude: mockLon, timestamp: now),
+      );
     });
   }
 
   void _processTrackingEvent(TrackingEvent event) {
     AppLogger.info(
-        '📍 [TrackingEventProcessor] Received event: Lat=${event.latitude}, Lon=${event.longitude}, Speed=${event.speed}');
+      '📍 [TrackingEventProcessor] Received event: Lat=${event.latitude}, Lon=${event.longitude}, Speed=${event.speed}',
+    );
     // 1. تحويل الحدث إلى EldEvent لمحرك HOS و Diagnostics
     final eldEvent = _mapToEldEvent(event);
     _eldEventsController.add(eldEvent);
@@ -92,8 +93,9 @@ class TrackingEventProcessor {
   EldEvent _mapToEldEvent(TrackingEvent event) {
     // 3. الحفاظ على إشارة fromEcm التي قد تأتي من البلوتوث (OBD)
     // أو إذا كان الحدث مسجلاً صراحة بأنه قادم من obd
-    final isFromEcm = event.source == TrackingEventSource.obd || 
-                      event.metadata['fromEcm'] == true;
+    final isFromEcm =
+        event.source == TrackingEventSource.obd ||
+        event.metadata['fromEcm'] == true;
 
     return EldEvent(
       timestamp: event.timestampUtc,

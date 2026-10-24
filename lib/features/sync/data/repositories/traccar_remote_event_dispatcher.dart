@@ -14,7 +14,7 @@ import '../../../../backend/contracts/dvir_backend.dart';
 import '../../../../backend/contracts/inspection_backend.dart';
 import '../../../../backend/contracts/contract_enums.dart';
 import '../../../../domain/shared/value_objects.dart';
-import '../../../auth/data/datasources/auth_local_data_source.dart';
+import '../../../../core/session/auth_session_reader.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 
 /// يوجه أحداث الطابور إلى endpoints الخادم الصحيحة حسب النوع.
@@ -30,7 +30,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   final DutyStatusBackend _dutyStatusBackend;
   final DailyLogsBackend _dailyLogsBackend;
   final DvirBackend _dvirBackend;
-  final AuthLocalDataSource _localDataSource;
+  final AuthSessionReader _localDataSource;
   final InspectionBackend? _inspectionBackend;
 
   /// P0 — تبديل السائق المشارك كان يسقط على `default` (endpoint خاطئ)
@@ -56,8 +56,8 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     DriverSessionBackend? Function()? readDriverSessionBackend,
     required this.observeAuth,
     this.cachedLogOwner,
-  })  : _inspectionBackend = inspectionBackend,
-        _readDriverSessionBackend = readDriverSessionBackend;
+  }) : _inspectionBackend = inspectionBackend,
+       _readDriverSessionBackend = readDriverSessionBackend;
 
   Future<int> _driverId() async {
     final session = await _localDataSource.getSession();
@@ -111,45 +111,38 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   /// P0 2B-1 — تعيين مركزي واحد لنتائج الـ backends (يمنع تكرار folds):
   /// رفض وقت-الإرسال (OwnerMismatchError من الـ interceptor) يُحوَّل لحجر
   /// بلا retry؛ أي خطأ آخر يسلك المسار القديم حرفياً (سلوك retry بلا تغيير).
-  Either<Failure, bool> _mapResult<T>(
-    Either<AppError, T> result,
-    int owner,
-  ) {
-    return result.fold(
-      (error) {
-        if (error is OwnerMismatchError) {
-          AppLogger.warning(
-              'Dispatch fenced at HTTP boundary for owner $owner');
-          return Left(QuarantinedFailure(
+  Either<Failure, bool> _mapResult<T>(Either<AppError, T> result, int owner) {
+    return result.fold((error) {
+      if (error is OwnerMismatchError) {
+        AppLogger.warning('Dispatch fenced at HTTP boundary for owner $owner');
+        return Left(
+          QuarantinedFailure(
             reason: 'send-time-owner-mismatch',
             ownerDriverId: owner,
             parkState: 'deferredOwnerMismatch',
-          ));
-        }
-        // 🔴 رفض نهائي: الخادم لن يقبل هذه البيانات أبداً.
-        //
-        // المثال المُبلَّغ: حفظ نموذج يوم معتمد ⇒ 409
-        // "السجل اليومي معتمد مسبقاً، لا يمكن تعديل بيانات النموذج
-        // قبل إلغاء الاعتماد". كان أي خطأ يصبح ServerFailure قابلاً
-        // لإعادة المحاولة، وبما أن RetryPolicy تعيد المحاولة إلى ما لا
-        // نهاية (FMCSA: لا تُفقد بيانات HOS) كان هذا الحدث يُعاد إرساله
-        // كل ~50 ثانية إلى الأبد، ويغرق السجلات بلا فائدة.
-        //
-        // 409 / 400 / 422 / 404 / 403 رفض نهائي ⇒ dead-letter فوراً.
-        // العابرة (شبكة، 5xx، 408، 429) تبقى على مسار إعادة المحاولة.
-        if (isTerminalDispatchRejection(error)) {
-          AppLogger.warning(
-              'Dispatch rejected permanently for owner $owner: '
-              '${error.code} — dead-lettering without retry');
-          return Left(RejectedFailure(
-            code: error.code,
-            l10nKey: error.l10nKey,
-          ));
-        }
-        return Left(ServerFailure(message: error.code));
-      },
-      (_) => const Right(true),
-    );
+          ),
+        );
+      }
+      // 🔴 رفض نهائي: الخادم لن يقبل هذه البيانات أبداً.
+      //
+      // المثال المُبلَّغ: حفظ نموذج يوم معتمد ⇒ 409
+      // "السجل اليومي معتمد مسبقاً، لا يمكن تعديل بيانات النموذج
+      // قبل إلغاء الاعتماد". كان أي خطأ يصبح ServerFailure قابلاً
+      // لإعادة المحاولة، وبما أن RetryPolicy تعيد المحاولة إلى ما لا
+      // نهاية (FMCSA: لا تُفقد بيانات HOS) كان هذا الحدث يُعاد إرساله
+      // كل ~50 ثانية إلى الأبد، ويغرق السجلات بلا فائدة.
+      //
+      // 409 / 400 / 422 / 404 / 403 رفض نهائي ⇒ dead-letter فوراً.
+      // العابرة (شبكة، 5xx، 408، 429) تبقى على مسار إعادة المحاولة.
+      if (isTerminalDispatchRejection(error)) {
+        AppLogger.warning(
+          'Dispatch rejected permanently for owner $owner: '
+          '${error.code} — dead-lettering without retry',
+        );
+        return Left(RejectedFailure(code: error.code, l10nKey: error.l10nKey));
+      }
+      return Left(ServerFailure(message: error.code));
+    }, (_) => const Right(true));
   }
 
   /// هل هذا الخطأ نهائي بنيوياً (لا يصلحه الانتظار ولا إعادة الإرسال)؟
@@ -217,8 +210,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       return null;
     }
     final raw = event.payload['logId'];
-    final value =
-        raw is int ? raw : int.tryParse('${raw ?? ''}');
+    final value = raw is int ? raw : int.tryParse('${raw ?? ''}');
     return value != null && value > 0 ? value : null;
   }
 
@@ -264,18 +256,20 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   ) async {
     final backend = _readDriverSessionBackend?.call();
     final rawId = event.payload['coDriverId'];
-    final coDriverId =
-        rawId is int ? rawId : int.tryParse('${rawId ?? ''}');
+    final coDriverId = rawId is int ? rawId : int.tryParse('${rawId ?? ''}');
     if (backend == null || coDriverId == null || coDriverId <= 0) {
       // لا مسار آمن ⇒ رفض نهائي صريح. السقوط على `default` كان يرسل
       // الحمولة إلى endpoint عام لا يفهمها، فيضيع التبديل بلا أثر.
       AppLogger.warning(
-          'switch_primary_driver unroutable '
-          '(backend=${backend != null}, coDriverId=$rawId)');
-      return const Left(RejectedFailure(
-        code: 'switch_co_driver_unroutable',
-        l10nKey: 'conflict',
-      ));
+        'switch_primary_driver unroutable '
+        '(backend=${backend != null}, coDriverId=$rawId)',
+      );
+      return const Left(
+        RejectedFailure(
+          code: 'switch_co_driver_unroutable',
+          l10nKey: 'conflict',
+        ),
+      );
     }
 
     final reasonRaw = event.payload['reason'];
@@ -339,7 +333,8 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         update: {
           'status': payload['status'],
           'startTime': payload['startTime'],
-          if (payload['locationText'] != null) 'locationText': payload['locationText'],
+          if (payload['locationText'] != null)
+            'locationText': payload['locationText'],
           if (payload['notes'] != null) 'editReason': payload['notes'],
         },
       );
@@ -386,7 +381,8 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     // الوثيقة: جسم POST /certify = `{ certified, signatureImage }`؛
     // نقرأ المخطط الجديد ونتسامح مع حدث قديم ما زال في الطابور
     // (certifiedTrue بلا صورة توقيع).
-    final certified = event.payload['certified'] as bool? ??
+    final certified =
+        event.payload['certified'] as bool? ??
         event.payload['certifiedTrue'] as bool? ??
         true;
     final signatureImage = event.payload['signatureImage'] as String?;
@@ -406,8 +402,10 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     int owner,
   ) async {
     final payload = Map<String, dynamic>.from(event.payload);
-    final result =
-        await _dvirBackend.create(payload, expectedOwnerDriverId: owner);
+    final result = await _dvirBackend.create(
+      payload,
+      expectedOwnerDriverId: owner,
+    );
     return _mapResult(result, owner);
   }
 

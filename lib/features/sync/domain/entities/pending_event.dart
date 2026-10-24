@@ -21,10 +21,7 @@ class PendingEvent extends Equatable {
     this.nextRetryAt,
   });
 
-  PendingEvent copyWith({
-    int? retryCount,
-    DateTime? nextRetryAt,
-  }) {
+  PendingEvent copyWith({int? retryCount, DateTime? nextRetryAt}) {
     return PendingEvent(
       id: id,
       type: type,
@@ -37,8 +34,14 @@ class PendingEvent extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, type, createdAt, priority, retryCount, nextRetryAt];
+  List<Object?> get props => [
+    id,
+    type,
+    createdAt,
+    priority,
+    retryCount,
+    nextRetryAt,
+  ];
 }
 
 class RetryPolicy {
@@ -57,13 +60,12 @@ class RetryPolicy {
   /// **Requires** an explicit `nowUtc` — no implicit `DateTime.now()`.
   /// The caller (SyncEngine) provides this from `TimeAuthority` to
   /// ensure retries are not affected by device clock changes.
-  DateTime? calculateNextRetry(
-    int currentRetries, {
-    required DateTime nowUtc,
-  }) {
+  DateTime? calculateNextRetry(int currentRetries, {required DateTime nowUtc}) {
     // FMCSA: Never drop HOS data, cap at max retries delay and keep retrying.
-    final effectiveRetries = currentRetries >= maxRetries ? maxRetries : (currentRetries + 1);
-    
+    final effectiveRetries = currentRetries >= maxRetries
+        ? maxRetries
+        : (currentRetries + 1);
+
     // Linear backoff: base × factor × (effectiveRetries) — locked by pending_event_test.
     final delaySeconds =
         baseDelay.inSeconds * (backoffFactor * effectiveRetries);

@@ -38,14 +38,14 @@ class ApiConfig {
     this.connectTimeout = const Duration(seconds: 12),
     this.receiveTimeout = const Duration(seconds: 30),
     this.sendTimeout = const Duration(seconds: 30),
-    this.defaultHeaders = const {
-      'Accept': 'application/json',
-    },
+    this.defaultHeaders = const {'Accept': 'application/json'},
   });
 
   factory ApiConfig.fromEnvironment() {
-    String baseUrl =
-        const String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    String baseUrl = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: '',
+    );
     if (baseUrl.isEmpty) {
       baseUrl = AppEnvironmentConfig.apiBaseUrl;
     }
@@ -94,12 +94,8 @@ class ApiConfig {
           sendTimeout == other.sendTimeout;
 
   @override
-  int get hashCode => Object.hash(
-        baseUrl,
-        connectTimeout,
-        receiveTimeout,
-        sendTimeout,
-      );
+  int get hashCode =>
+      Object.hash(baseUrl, connectTimeout, receiveTimeout, sendTimeout);
 
   @override
   String toString() =>

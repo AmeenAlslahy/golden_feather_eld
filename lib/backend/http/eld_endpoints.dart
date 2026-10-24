@@ -17,16 +17,22 @@ class EldEndpoints {
   // ==========================================================================
   /// جلسة
   static const String session = '/session';
+
   /// طلب إعادة تعيين كلمة المرور
   static const String password = '/password';
+
   /// قائمة الأجهزة
   static const String devices = '/devices';
+
   /// المواقع وبيانات التتبع
   static const String positions = '/positions';
+
   /// أحداث الأجهزة والنظام
   static const String events = '/events';
+
   /// قائمة السائقين
   static const String drivers = '/drivers';
+
   /// اتصال مقبس الويب المباشر
   static const String socket = '/socket';
   // ==========================================================================
@@ -36,14 +42,17 @@ class EldEndpoints {
   // 1. Account
   /// الحساب
   static const String account = '/eld/account';
+
   /// تفضيلات الحساب
   static const String accountPreferences = '/eld/account/preferences';
 
   // 2. Status Dashboard
-  /// لوحة التحكم 
+  /// لوحة التحكم
   static const String status = '/eld/status';
+
   /// تحديث حالة العمل
-  static const String updateDutyStatus = '/eld/status/duty-status'; // (POST) Update duty status
+  static const String updateDutyStatus =
+      '/eld/status/duty-status'; // (POST) Update duty status
   /// ملخص حالة العمل
   static const String statusRecap = '/eld/status/recap';
 
@@ -53,73 +62,108 @@ class EldEndpoints {
   // 4. Daily Logs
   /// السجلات اليومية
   static const String dailyLogs = '/eld/daily-logs';
+
   /// ملخص السجلات اليومية (إحصاءات مع نفس مرشحات القائمة)
   static const String dailyLogSummary = '/eld/daily-logs/summary';
+
   /// تفاصيل السجلات اليومية
   static String dailyLogDetails(int logId) => '/eld/daily-logs/$logId';
+
   /// الرد على تعديلات الناقل
-  static String respondCarrierEdit(int logId, String editId) => '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
+  static String respondCarrierEdit(int logId, String editId) =>
+      '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
+
   /// المصادقة على السجل
   static String certifyLog(int logId) => '/eld/daily-logs/$logId/certify';
+
   /// إعادة تعيين القيادة
-  static String reassignDriving(int logId, int statusId) => '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
+  static String reassignDriving(int logId, int statusId) =>
+      '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
+
   /// نموذج السجلات اليومية
   static String dailyLogForm(int logId) => '/eld/daily-logs/$logId/form';
+
   /// خيارات النموذج (مركبات مسموحة + سائقون مساعدون — للقوائم المنسدلة)
-  static String dailyLogFormOptions(int logId) => '/eld/daily-logs/$logId/form/options';
+  static String dailyLogFormOptions(int logId) =>
+      '/eld/daily-logs/$logId/form/options';
+
   /// أحداث السجل اليومي (GraphGrid + الأحداث القابلة للتعديل)
   static String dailyLogEvents(int logId) => '/eld/daily-logs/$logId/events';
+
   /// مسار قديم (غير موجود في المواصفة الجديدة) — احتياط فقط عندما يعيد
   /// `GET /events` خطأ 404 لأن الخادم لم يُحدَّث بعد. نفس الحمولة: `data.events`.
-  static String dailyLogGraphGrid(int logId) => '/eld/daily-logs/$logId/graph-grid';
+  static String dailyLogGraphGrid(int logId) =>
+      '/eld/daily-logs/$logId/graph-grid';
+
   /// حدث واحد داخل سجل يومي (تفاصيل/تعديل)
-  static String dailyLogEvent(int logId, int eventId) => '/eld/daily-logs/$logId/events/$eventId';
+  static String dailyLogEvent(int logId, int eventId) =>
+      '/eld/daily-logs/$logId/events/$eventId';
+
   /// الخيارات المسموحة لتعديل الأحداث (حالات + تصنيفات خاصة)
-  static String dailyLogEventsOptions(int logId) => '/eld/daily-logs/$logId/events/options';
+  static String dailyLogEventsOptions(int logId) =>
+      '/eld/daily-logs/$logId/events/options';
+
   /// قفل السجلات اليومية
   static String lockLog(int logId) => '/eld/daily-logs/$logId/lock';
+
   /// التحقق من جاهزية السجلات اليومية
   static String checkReadiness(int logId) => '/eld/daily-logs/$logId/readiness';
+
   /// حالة الفريق
   static String teamStatus(int logId) => '/eld/daily-logs/$logId/team';
 
   // 5. Sessions & Connections
   /// الحصول على الجلسة
   static String getSession(int driverId) => '/eld/sessions/$driverId';
+
   /// أعضاء الجلسة
-  static String sessionMembers(int sessionId) => '/eld/sessions/$sessionId/members';
+  static String sessionMembers(int sessionId) =>
+      '/eld/sessions/$sessionId/members';
+
   /// Live contract: `POST /eld/hardware/connect`. `/eld/sessions/connect` does not exist.
   /// ربط الجهاز بالجلسة
   static const String connectSession = '/eld/hardware/connect';
+
   /// إدارة السائق المساعد
   static const String manageCoDriver = '/eld/sessions/co-driver';
+
   /// تبديل السائق الأساسي
-  static const String switchPrimaryDriver = '/eld/sessions/primary-driver/switch';
+  static const String switchPrimaryDriver =
+      '/eld/sessions/primary-driver/switch';
 
   // 6. Duty Status Events
   /// حالات العمل
   static const String recordDutyStatus = '/eld/duty-status';
+
   /// تحديث حالة العمل
   static String editDutyStatus(int statusId) => '/eld/duty-status/$statusId';
+
   /// نموذج تعديل حالة العمل
-  static String editDutyStatusForm(int statusId) => '/eld/duty-status/$statusId/edit-form';
+  static String editDutyStatusForm(int statusId) =>
+      '/eld/duty-status/$statusId/edit-form';
+
   /// مخطط زمني لحالات العمل
   static const String graphGridTimeline = '/eld/duty-status/graph-grid';
 
   // 7. DVIR Management
-  /// إدارة فحص المركبات 
+  /// إدارة فحص المركبات
   static const String dvir = '/eld/dvir';
-  /// تفاصيل فحص المركبات 
+
+  /// تفاصيل فحص المركبات
   static String dvirDetails(int id) => '/eld/dvir/$id';
 
-  /// مراجعة فحص المركبات 
+  /// مراجعة فحص المركبات
   static String dvirNextDriverReview(int id) => '/eld/dvir/$id/review';
-  /// كتالوج فحص المركبات 
+
+  /// كتالوج فحص المركبات
   static const String dvirCatalog = '/eld/dvir/catalog';
+
   /// فحص المركبات السابق
   static String dvirPrevious(String uniqueId) => '/eld/dvir/pre-trip/$uniqueId';
+
   /// تفاصيل عيب DVIR (سجل الإصلاحات والاعتمادات)
   static String dvirDefectDetails(int id) => '/eld/dvir/defects/$id';
+
   /// العيوب النشطة لمركبة محددة
   static String dvirVehicleDefects(String uniqueId) =>
       '/eld/dvir/defects/device/$uniqueId';
@@ -128,42 +172,60 @@ class EldEndpoints {
   /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
   /// تفتيش الطرق
   static const String inspections = '/eld/dot-inspection';
+
   /// سجلات الدورة (8 أيام أو نطاق التدقيق)
   static const String dotInspectionCycle = '/eld/dot-inspection/cycle';
+
   /// عرض سجل التفتيش ليوم محدد
   static const String dotInspectionLogs = '/eld/dot-inspection/logs';
 
   // 17. Hardware
   /// تنبيةات الجهاز
   static const String hardwareAlerts = '/eld/hardware/alerts';
+
   /// الوضع اليدوي
   static const String hardwareManualMode = '/eld/hardware/manual-mode';
-  /// جاهزية الجهاز 
+
+  /// جاهزية الجهاز
   static const String hardwareReadiness = '/eld/hardware/readiness';
+
   /// حالة الجهاز
   static const String hardwareStatus = '/eld/hardware/status';
+
   /// بث قراءات المحرك اللحظية
   static const String hardwareTelemetry = '/eld/hardware/telemetry';
 
   // Driver-scope contract paths (SRS §7.13, §7.15, §9.1, §11).
-  /// الاحداث الغير معرفة 
+  /// الاحداث الغير معرفة
   static const String unidentifiedEvents = '/eld/unidentified-events';
-  /// المطالبة بالاحداث الغير معرفة 
-  static String claimUnidentified(int id) => '/eld/unidentified-events/$id/claim';
-  /// رفض الاحداث الغير معرفة 
-  static String rejectUnidentified(int id) => '/eld/unidentified-events/$id/reject';
-  /// مركبات الشركة 
+
+  /// المطالبة بالاحداث الغير معرفة
+  static String claimUnidentified(int id) =>
+      '/eld/unidentified-events/$id/claim';
+
+  /// رفض الاحداث الغير معرفة
+  static String rejectUnidentified(int id) =>
+      '/eld/unidentified-events/$id/reject';
+
+  /// مركبات الشركة
   static const String companyVehicles = '/eld/company-vehicles';
-  /// مركباتي 
+
+  /// مركباتي
   static const String myVehicles = '/eld/company-vehicles/my-vehicles';
-  /// البريد الإلكتروني لتفتيش الطرق 
+
+  /// البريد الإلكتروني لتفتيش الطرق
   static const String dotInspectionEmailLogs = '/eld/dot-inspection/email-logs';
+
   /// ارسال السجلات عبر البريد الإلكتروني
   static const String dotInspectionSendLogs = '/eld/dot-inspection/send-logs';
-  /// بدء تفتيش الطرق 
+
+  /// بدء تفتيش الطرق
   static const String dotInspectionStart = '/eld/dot-inspection/start';
-  /// حزمة المعلومات لتفتيش الطرق 
-  static const String dotInspectionPacket = '/eld/dot-inspection/information-packet';
-  /// تحويلات تفتيش الطرق 
+
+  /// حزمة المعلومات لتفتيش الطرق
+  static const String dotInspectionPacket =
+      '/eld/dot-inspection/information-packet';
+
+  /// تحويلات تفتيش الطرق
   static const String dotInspectionTransfers = '/eld/dot-inspection/transfers';
 }

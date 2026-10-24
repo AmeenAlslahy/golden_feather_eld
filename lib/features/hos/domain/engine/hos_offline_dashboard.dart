@@ -21,20 +21,26 @@ class HosOfflineDashboardBuilder {
     String driverDisplayText = '',
   }) {
     final code = _codeOf(engineResult);
-    final limits = engineResult is HosEngineReady ? engineResult.update.limits : null;
+    final limits = engineResult is HosEngineReady
+        ? engineResult.update.limits
+        : null;
 
     // دون أرقام موثوقة لا نخترع: نُرجع صفراً فقط عندما لا يوجد أي مصدر،
     // والشارح يعرض حالة "غير متاح" عبر hosIndicators منعدم القيمة.
-    final driveRemaining =
-        Duration(minutes: limits?.remainingDriveMinutes ?? 0);
-    final shiftRemaining =
-        Duration(minutes: limits?.remainingShiftMinutes ?? 0);
+    final driveRemaining = Duration(
+      minutes: limits?.remainingDriveMinutes ?? 0,
+    );
+    final shiftRemaining = Duration(
+      minutes: limits?.remainingShiftMinutes ?? 0,
+    );
     final cycleRemaining = Duration(
-        minutes: ((limits?.remainingCycleHours ?? 0) * 60).round());
+      minutes: ((limits?.remainingCycleHours ?? 0) * 60).round(),
+    );
     final breakRemaining = Duration(
-        minutes: limits != null
-            ? (limits.breakRequired ? 0 : limits.timeUntilBreakMinutes)
-            : 480);
+      minutes: limits != null
+          ? (limits.breakRequired ? 0 : limits.timeUntilBreakMinutes)
+          : 480,
+    );
 
     return StatusDashboard(
       driver: DriverRef(
@@ -50,10 +56,7 @@ class HosOfflineDashboardBuilder {
       ),
       currentDutyStatus: code,
       remainingCircle: RemainingCircle(
-        remaining: _governingRemaining(
-          dutyStatus: code,
-          limits: limits,
-        ),
+        remaining: _governingRemaining(dutyStatus: code, limits: limits),
         label: 'Remaining',
         progress: 0.0,
       ),
@@ -97,7 +100,8 @@ class HosOfflineDashboardBuilder {
     required HosLimits? limits,
   }) {
     if (limits == null) return Duration.zero;
-    final isRest = dutyStatus == DutyStatusCode.offDuty ||
+    final isRest =
+        dutyStatus == DutyStatusCode.offDuty ||
         dutyStatus == DutyStatusCode.sleeperBerth ||
         dutyStatus == DutyStatusCode.personalConveyance;
     if (isRest) return Duration.zero;

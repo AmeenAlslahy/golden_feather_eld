@@ -44,13 +44,16 @@ enum DutyStatusCode {
 
     // Aliases for loosely typed systems
     if (upper == 'SLEEPER') return DutyStatusCode.sleeperBerth;
-    if (lower == 'personal_conveyance') return DutyStatusCode.personalConveyance;
+    if (lower == 'personal_conveyance')
+      return DutyStatusCode.personalConveyance;
 
-    AppLogger.warning('DutyStatusCode.fromAny: unknown value "$value" — falling back to offDuty');
+    AppLogger.warning(
+      'DutyStatusCode.fromAny: unknown value "$value" — falling back to offDuty',
+    );
     return DutyStatusCode.offDuty;
   }
 
-/// تحليل **صارم**: يعيد `null` عند قيمة غير معروفة أو فارغة.
+  /// تحليل **صارم**: يعيد `null` عند قيمة غير معروفة أو فارغة.
   ///
   /// [fromAny] يرجع `offDuty` لكل ما لا يعرفه — وهو سلوك صحيح لعرض
   /// متسق، لكنه **خطير** حين تُستخدم القيمة لفرض حالة على آلة حالة:
@@ -67,7 +70,8 @@ enum DutyStatusCode {
       }
     }
     if (upper == 'SLEEPER') return DutyStatusCode.sleeperBerth;
-    if (lower == 'personal_conveyance') return DutyStatusCode.personalConveyance;
+    if (lower == 'personal_conveyance')
+      return DutyStatusCode.personalConveyance;
     return null;
   }
 
@@ -77,7 +81,9 @@ enum DutyStatusCode {
   /// Parses from a short code.
   static DutyStatusCode? fromShortCode(String? code) {
     final c = fromAny(code);
-    return c == DutyStatusCode.offDuty && code?.toUpperCase() != 'OFF' ? null : c;
+    return c == DutyStatusCode.offDuty && code?.toUpperCase() != 'OFF'
+        ? null
+        : c;
   }
 
   /// FMCSA Duty Status Code (1=OFF, 2=SB, 3=D, 4=ON)
@@ -114,33 +120,34 @@ enum DutyStatusCode {
 
   /// Whether this status counts as "on-duty" for HOS purposes.
   bool get countsAsOnDuty => switch (this) {
-        DutyStatusCode.offDuty => false,
-        DutyStatusCode.sleeperBerth => false,
-        DutyStatusCode.driving => true,
-        DutyStatusCode.onDutyNotDriving => true,
-        DutyStatusCode.yardMove => true,
-        DutyStatusCode.personalConveyance => false,
-      };
+    DutyStatusCode.offDuty => false,
+    DutyStatusCode.sleeperBerth => false,
+    DutyStatusCode.driving => true,
+    DutyStatusCode.onDutyNotDriving => true,
+    DutyStatusCode.yardMove => true,
+    DutyStatusCode.personalConveyance => false,
+  };
 
   /// The canonical 4-line grid duty status short code ('OFF', 'SB', 'D', 'ON')
   /// per FMCSA §395.2/§395.3. PC maps to 'OFF', YM maps to 'ON'.
   String get canonicalGridShortCode => switch (this) {
-        DutyStatusCode.offDuty || DutyStatusCode.personalConveyance => 'OFF',
-        DutyStatusCode.sleeperBerth => 'SB',
-        DutyStatusCode.driving => 'D',
-        DutyStatusCode.onDutyNotDriving || DutyStatusCode.yardMove => 'ON',
-      };
+    DutyStatusCode.offDuty || DutyStatusCode.personalConveyance => 'OFF',
+    DutyStatusCode.sleeperBerth => 'SB',
+    DutyStatusCode.driving => 'D',
+    DutyStatusCode.onDutyNotDriving || DutyStatusCode.yardMove => 'ON',
+  };
 
   /// Whether this is a special driving category (PC or YM).
   bool get isSpecialDrivingCategory =>
-      this == DutyStatusCode.personalConveyance || this == DutyStatusCode.yardMove;
+      this == DutyStatusCode.personalConveyance ||
+      this == DutyStatusCode.yardMove;
 
   /// Returns 'PC' or 'YM' if special driving category, otherwise null.
   String? get specialCategoryTag => switch (this) {
-        DutyStatusCode.personalConveyance => 'PC',
-        DutyStatusCode.yardMove => 'YM',
-        _ => null,
-      };
+    DutyStatusCode.personalConveyance => 'PC',
+    DutyStatusCode.yardMove => 'YM',
+    _ => null,
+  };
 
   /// Centralized normalizer: maps any status string to canonical grid short code ('OFF', 'SB', 'D', 'ON').
   static String normalizeToGridShortCode(String? status) {

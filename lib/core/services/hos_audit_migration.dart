@@ -79,7 +79,8 @@ class HosAuditBoxMigration {
           await legacyBox.delete(key);
         } catch (e) {
           AppLogger.warning(
-              'HOS audit migration: delete failed for "$key": $e');
+            'HOS audit migration: delete failed for "$key": $e',
+          );
         }
       }
       migrated++;
@@ -95,8 +96,9 @@ class HosAuditBoxMigration {
     );
     if (!dryRun) {
       AppLogger.info(
-          'HOS audit migration complete: ${report.migrated} violation(s) '
-          'moved, ${report.skippedLogRows} log row(s) left untouched');
+        'HOS audit migration complete: ${report.migrated} violation(s) '
+        'moved, ${report.skippedLogRows} log row(s) left untouched',
+      );
     }
     return report;
   }
@@ -147,14 +149,12 @@ Future<void> openHosAuditBoxAndMigrate() async {
     final target = await Hive.openBox<String>(StorageConstants.hosAuditBox);
     if (!Hive.isBoxOpen(StorageConstants.auditBox)) {
       AppLogger.info(
-          'HOS audit migration skipped: legacy audit_box not open yet');
+        'HOS audit migration skipped: legacy audit_box not open yet',
+      );
       return;
     }
     final legacy = Hive.box<String>(StorageConstants.auditBox);
-    await HosAuditBoxMigration(
-      legacyBox: legacy,
-      targetBox: target,
-    ).run();
+    await HosAuditBoxMigration(legacyBox: legacy, targetBox: target).run();
   } catch (e, st) {
     // الترحيل لا يجوز أن يمنع الإقلاع. الفشل يعني بقاء السلوك السابق
     // (المخالفات لا تُقرأ) — أخطر من التوقف، فنُسجّله ونكمل.

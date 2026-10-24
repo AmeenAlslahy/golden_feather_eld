@@ -6,10 +6,7 @@ import 'package:golden_feather_eld/features/dvir/domain/entities/dvir_report.dar
 /// RESTRICTED for any other open defect, AVAILABLE otherwise. The defect
 /// status is never merged into the vehicle status field.
 void main() {
-  DvirReport report({
-    bool hasDefects = false,
-    bool outOfService = false,
-  }) =>
+  DvirReport report({bool hasDefects = false, bool outOfService = false}) =>
       DvirReport(
         id: 'dvir-1',
         type: InspectionType.preTrip,
@@ -41,8 +38,7 @@ void main() {
     );
   });
 
-  test('outOfService flag wins over plain defects (SRS: no field merging)',
-      () {
+  test('outOfService flag wins over plain defects (SRS: no field merging)', () {
     // OOS dominates even though other defects are also open; the two
     // concepts stay separate fields and are never merged into one value.
     final r = report(hasDefects: true, outOfService: true);

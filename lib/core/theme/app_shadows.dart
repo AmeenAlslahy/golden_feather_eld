@@ -10,19 +10,11 @@ abstract final class AppShadows {
 
   /// ظل البطاقة القياسي (أسود 4%، انتشار 6، هبوط 2).
   static const List<BoxShadow> card = [
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 6,
-      offset: Offset(0, 2),
-    ),
+    BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 2)),
   ];
 
   /// ظل العناصر المرتفعة كرأس الدليل (أسود 5%، انتشار 8، هبوط 4).
   static const List<BoxShadow> raised = [
-    BoxShadow(
-      color: Color(0x0D000000),
-      blurRadius: 8,
-      offset: Offset(0, 4),
-    ),
+    BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 4)),
   ];
 }

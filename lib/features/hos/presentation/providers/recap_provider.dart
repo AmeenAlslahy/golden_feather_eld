@@ -13,7 +13,7 @@ final getWeeklyRecapUseCaseProvider = Provider<GetWeeklyRecapUseCase>((ref) {
 
 final recapProvider = FutureProvider<WeeklyRecap>((ref) async {
   ref.keepAlive();
-  
+
   final bus = ref.watch(appEventBusProvider);
   final sub = bus.stream.listen((event) {
     if (event == AppEvent.logDataChanged) {
@@ -31,8 +31,5 @@ final recapProvider = FutureProvider<WeeklyRecap>((ref) async {
   final getWeeklyRecapUseCase = ref.watch(getWeeklyRecapUseCaseProvider);
 
   final result = await getWeeklyRecapUseCase.execute();
-  return result.fold(
-    (failure) => throw failure,
-    (recap) => recap,
-  );
+  return result.fold((failure) => throw failure, (recap) => recap);
 });

@@ -19,10 +19,9 @@ class CertifyRequestDto {
   Map<String, dynamic> toJson() {
     return {
       'certified': certified,
-      'signatureImage':
-          (signatureImage != null && signatureImage!.isNotEmpty)
-              ? signatureImage
-              : null,
+      'signatureImage': (signatureImage != null && signatureImage!.isNotEmpty)
+          ? signatureImage
+          : null,
     };
   }
 }
@@ -61,22 +60,25 @@ class CertifyResponseDto {
         ? Map<String, dynamic>.from(json['certification'] as Map)
         : const <String, dynamic>{};
 
-    final status = (cert['status'] ?? json['certificationStatus'] ??
-            json['logStatus'])
-        ?.toString();
+    final status =
+        (cert['status'] ?? json['certificationStatus'] ?? json['logStatus'])
+            ?.toString();
 
     return CertifyResponseDto(
-      dailyLogId: (json['dailyLogId'] as num?)?.toInt() ??
+      dailyLogId:
+          (json['dailyLogId'] as num?)?.toInt() ??
           (json['id'] as num?)?.toInt() ??
           0,
       logDate: json['logDate']?.toString() ?? '',
       certificationStatus: status ?? 'UNCERTIFIED',
-      isCertified: cert['certified'] == true ||
+      isCertified:
+          cert['certified'] == true ||
           json['isCertified'] == true ||
           status?.toUpperCase() == 'CERTIFIED',
-      certifiedAt: cert['certifiedAt']?.toString() ??
-          json['certifiedAt']?.toString(),
-      certificateId: cert['certificateId']?.toString() ??
+      certifiedAt:
+          cert['certifiedAt']?.toString() ?? json['certifiedAt']?.toString(),
+      certificateId:
+          cert['certificateId']?.toString() ??
           json['certificateId']?.toString(),
       logStatus: json['logStatus']?.toString(),
     );
@@ -136,27 +138,34 @@ class CertifyStateDto {
     final status = json['certificationStatus']?.toString();
 
     return CertifyStateDto(
-      dailyLogId: (json['dailyLogId'] as num?)?.toInt() ??
+      dailyLogId:
+          (json['dailyLogId'] as num?)?.toInt() ??
           (json['id'] as num?)?.toInt() ??
           0,
       logDate: json['logDate']?.toString() ?? '',
-      statementText: statement['text']?.toString() ??
+      statementText:
+          statement['text']?.toString() ??
           json['statementText']?.toString() ??
           '',
-      ruleReference: statement['ruleReference']?.toString() ??
+      ruleReference:
+          statement['ruleReference']?.toString() ??
           json['ruleReference']?.toString() ??
           '',
-      hasSignature: signature['hasSignature'] == true ||
+      hasSignature:
+          signature['hasSignature'] == true ||
           json['hasSignature'] == true ||
           (signature['imageData']?.toString() ?? '').isNotEmpty,
-      signatureImageData: signature['imageData']?.toString() ??
+      signatureImageData:
+          signature['imageData']?.toString() ??
           json['signatureImageData']?.toString(),
       certificationStatus: status ?? 'UNCERTIFIED',
-      certified: json['certified'] == true ||
+      certified:
+          json['certified'] == true ||
           json['isCertified'] == true ||
           status?.toUpperCase() == 'CERTIFIED',
       canCertify: json['canCertify'] == true,
-      validationCodes: (json['validationCodes'] as List?)
+      validationCodes:
+          (json['validationCodes'] as List?)
               ?.map((e) => e.toString())
               .where((e) => e.isNotEmpty)
               .toList() ??

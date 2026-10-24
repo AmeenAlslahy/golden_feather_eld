@@ -77,16 +77,19 @@ class EldDriverSessionBackend implements DriverSessionBackend {
       EldEndpoints.switchPrimaryDriver,
       queryParameters: payload,
       data: payload,
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.fold(
       err,
       (response) => response.isSuccess
           ? ok(null)
-          : err(ServerError(
-              code: 'eld.request_failed',
-              context: {'message': response.message},
-            )),
+          : err(
+              ServerError(
+                code: 'eld.request_failed',
+                context: {'message': response.message},
+              ),
+            ),
     );
   }
 }

@@ -21,7 +21,7 @@ class StatusOptionTile extends StatelessWidget {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final unselectedRadioColor = theme.disabledColor.withValues(alpha: 0.5);
-    
+
     final isClickable = enabled && onTap != null;
 
     return Column(
@@ -56,15 +56,8 @@ class StatusOptionTile extends StatelessWidget {
             ),
           ),
         ),
-        if (!isLast)
-          const Divider(
-            height: 1,
-            thickness: 1,
-          ),
+        if (!isLast) const Divider(height: 1, thickness: 1),
       ],
     );
   }
 }
-
-
-

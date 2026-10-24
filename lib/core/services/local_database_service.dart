@@ -33,5 +33,6 @@ class LocalDatabaseService {
 
 final localDatabaseServiceProvider = Provider<LocalDatabaseService>((ref) {
   throw UnimplementedError(
-      'Initialize localDatabaseServiceProvider in main.dart');
+    'Initialize localDatabaseServiceProvider in main.dart',
+  );
 });

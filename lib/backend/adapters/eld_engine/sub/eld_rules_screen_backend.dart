@@ -48,4 +48,3 @@ class EldRulesScreenBackend implements RulesScreenBackend {
     return getRulesScreen(driverId: driverId);
   }
 }
-

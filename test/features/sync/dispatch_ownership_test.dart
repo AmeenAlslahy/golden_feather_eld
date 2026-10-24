@@ -15,7 +15,7 @@ import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/time/time_authority.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
+import 'package:golden_feather_eld/core/session/auth_session.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/traccar_remote_event_dispatcher.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/dispatch_auth.dart';
@@ -27,20 +27,20 @@ import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dar
 // ─── Fakes ────────────────────────────────────────────────────────────────
 
 User _user(String id) => User(
-      id: id,
-      fullName: 'Driver $id',
-      email: '$id@demo.com',
-      username: id,
-      role: UserRole.fieldWorker,
-      createdAt: DateTime.utc(2026, 1, 1),
-    );
+  id: id,
+  fullName: 'Driver $id',
+  email: '$id@demo.com',
+  username: id,
+  role: UserRole.fieldWorker,
+  createdAt: DateTime.utc(2026, 1, 1),
+);
 
 AuthSession _session(String driverId) => AuthSession(
-      serverOrigin: 'https://api.example.com',
-      sessionCredential: 'CRED-$driverId',
-      user: _user(driverId),
-      createdAt: DateTime.utc(2026, 3, 1),
-    );
+  serverOrigin: 'https://api.example.com',
+  sessionCredential: 'CRED-$driverId',
+  user: _user(driverId),
+  createdAt: DateTime.utc(2026, 3, 1),
+);
 
 class _SessionDS implements AuthLocalDataSource {
   AuthSession? session;
@@ -120,11 +120,13 @@ class _LogsBackend implements DailyLogsBackend {
     lastCertifyDriverId = expectedOwnerDriverId ?? -1;
     final gate = certifyGate;
     if (gate != null) await gate.future;
-    return ok(CertifyResponseDto(
-      dailyLogId: request.dailyLogId,
-      certificationStatus: 'CERTIFIED',
-      isCertified: true,
-    ));
+    return ok(
+      CertifyResponseDto(
+        dailyLogId: request.dailyLogId,
+        certificationStatus: 'CERTIFIED',
+        isCertified: true,
+      ),
+    );
   }
 
   @override
@@ -185,11 +187,11 @@ PendingEvent _event(String id, String type, Map<String, dynamic> payload) =>
     );
 
 Map<String, dynamic> _certPayload({int? owner, int logId = 9}) => {
-      'logId': logId,
-      'certified': true,
-      'signatureImage': 'c2ln', // base64 bytes (opaque to the dispatcher)
-      if (owner != null) 'ownerDriverId': owner,
-    };
+  'logId': logId,
+  'certified': true,
+  'signatureImage': 'c2ln', // base64 bytes (opaque to the dispatcher)
+  if (owner != null) 'ownerDriverId': owner,
+};
 
 // ─── Harness ──────────────────────────────────────────────────────────────
 
@@ -204,17 +206,18 @@ class _Harness {
   bool transitioning = false;
   final Map<int, int> cacheOwners = {};
 
-  late final TraccarRemoteEventDispatcher dispatcher = TraccarRemoteEventDispatcher(
-    duty,
-    logs,
-    dvir,
-    sessionDS,
-    observeAuth: () async => DispatchAuthContext(
-      driverId: authDriverId,
-      transitioning: transitioning,
-    ),
-    cachedLogOwner: (logId) async => cacheOwners[logId],
-  );
+  late final TraccarRemoteEventDispatcher dispatcher =
+      TraccarRemoteEventDispatcher(
+        duty,
+        logs,
+        dvir,
+        sessionDS,
+        observeAuth: () async => DispatchAuthContext(
+          driverId: authDriverId,
+          transitioning: transitioning,
+        ),
+        cachedLogOwner: (logId) async => cacheOwners[logId],
+      );
 
   late final SyncEngine engine = SyncEngine(
     queue: queue,
@@ -247,11 +250,11 @@ class _Harness {
 
 void main() {
   group('dispatch ownership enforcement', () {
-    test('T1: A event + B session → zero HTTP, parked as mismatch',
-        () async {
+    test('T1: A event + B session → zero HTTP, parked as mismatch', () async {
       final h = _Harness();
       await h.queue.enqueue(
-          _event('c1', 'certification', _certPayload(owner: 101)));
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
       await h.authAs('202');
 
       await h.engine.triggerSync();
@@ -261,22 +264,25 @@ void main() {
       final deferred = await h.queue.getDeferred();
       expect(deferred, hasLength(1));
       expect(deferred.single.ownerDriverId, 101);
-      expect(deferred.single.state,
-          StoredEventState.deferredOwnerMismatch);
+      expect(deferred.single.state, StoredEventState.deferredOwnerMismatch);
       expect(await h.queue.getQuarantined(), isEmpty);
     });
 
     test('T2: A event + A session → allowed exactly once', () async {
       final h = _Harness();
       await h.queue.enqueue(
-          _event('c1', 'certification', _certPayload(owner: 101)));
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
       await h.authAs('101');
 
       await h.engine.triggerSync();
 
       expect(h.logs.certifyCalls, 1);
-      expect(h.logs.lastCertifyDriverId, 101,
-          reason: 'sent strictly as the proven owner');
+      expect(
+        h.logs.lastCertifyDriverId,
+        101,
+        reason: 'sent strictly as the proven owner',
+      );
       expect(await h.queue.count, 0);
       expect(await h.parkedTotal(), 0);
     });
@@ -284,7 +290,8 @@ void main() {
     test('T3: unknown owner → quarantined, never dispatched', () async {
       final h = _Harness();
       await h.queue.enqueue(
-          _event('f1', 'daily_log_form', {'logId': 55, 'form': {}}));
+        _event('f1', 'daily_log_form', {'logId': 55, 'form': {}}),
+      );
       await h.authAs('202');
 
       await h.engine.triggerSync();
@@ -301,22 +308,30 @@ void main() {
       final h = _Harness();
       h.logs.certifyGate = Completer<void>();
       await h.queue.enqueue(
-          _event('c1', 'certification', _certPayload(owner: 101)));
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
       await h.queue.enqueue(
-          _event('c2', 'certification', _certPayload(owner: 101)));
+        _event('c2', 'certification', _certPayload(owner: 101)),
+      );
       await h.authAs('101');
 
       unawaited(h.engine.triggerSync());
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(h.logs.certifyCalls, 1,
-          reason: 'first dispatch authorized under A');
+      expect(
+        h.logs.certifyCalls,
+        1,
+        reason: 'first dispatch authorized under A',
+      );
 
       await h.logout(); // session gone mid-flight
       h.logs.certifyGate!.complete();
       await Future<void>.delayed(const Duration(milliseconds: 200));
 
-      expect(h.logs.certifyCalls, 1,
-          reason: 'no new dispatch starts after logout');
+      expect(
+        h.logs.certifyCalls,
+        1,
+        reason: 'no new dispatch starts after logout',
+      );
       final deferred = await h.queue.getDeferred();
       expect(deferred.map((r) => r.event.id), contains('c2'));
     });
@@ -324,7 +339,8 @@ void main() {
     test('T5: owner returns → eligible event restored and sent', () async {
       final h = _Harness();
       await h.queue.enqueue(
-          _event('c1', 'certification', _certPayload(owner: 101)));
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
       await h.authAs('202');
       await h.engine.triggerSync();
       expect(await h.parkedTotal(), 1);
@@ -341,7 +357,8 @@ void main() {
     test('T7+T8: parked rows never retry, never deleted', () async {
       final h = _Harness();
       await h.queue.enqueue(
-          _event('f1', 'daily_log_form', {'logId': 55, 'form': {}}));
+        _event('f1', 'daily_log_form', {'logId': 55, 'form': {}}),
+      );
       await h.authAs('202');
       const before = 1;
 
@@ -355,13 +372,12 @@ void main() {
       expect(await h.queue.getQuarantined(), hasLength(1));
     });
 
-    test('T9: owner field and resolver agree (incl. canonical key)',
-        () async {
+    test('T9: owner field and resolver agree (incl. canonical key)', () async {
       // Legacy slots still resolve.
       expect(
         EventOwnershipResolver.resolve(
-                _event('d', 'duty_status', {'driverId': 101}))
-            .driverId,
+          _event('d', 'duty_status', {'driverId': 101}),
+        ).driverId,
         101,
       );
       // New canonical slot resolves for every type, including cert/form.
@@ -373,16 +389,19 @@ void main() {
       );
       expect(
         EventOwnershipResolver.resolve(
-          _event('f', 'daily_log_form',
-              {'logId': 1, 'form': {}, 'ownerDriverId': 303}),
+          _event('f', 'daily_log_form', {
+            'logId': 1,
+            'form': {},
+            'ownerDriverId': 303,
+          }),
         ).driverId,
         303,
       );
       // Legacy events without any slot stay UNKNOWN (never inferred).
       expect(
         EventOwnershipResolver.resolve(
-                _event('c', 'certification', _certPayload()))
-            .evidence,
+          _event('c', 'certification', _certPayload()),
+        ).evidence,
         OwnerEvidence.unknown,
       );
     });
@@ -414,64 +433,70 @@ void main() {
               const DispatchAuthContext(driverId: 101, transitioning: false),
         );
 
-    PendingEvent switchEvent({int? owner}) => _event(
-          'sw1',
-          'switch_primary_driver',
-          {
-            'coDriverId': 55,
-            'reason': 'offline shift change',
-            if (owner != null) 'ownerDriverId': owner,
-          },
+    PendingEvent switchEvent({int? owner}) =>
+        _event('sw1', 'switch_primary_driver', {
+          'coDriverId': 55,
+          'reason': 'offline shift change',
+          if (owner != null) 'ownerDriverId': owner,
+        });
+
+    test(
+      'legacy action first without reason (OAS-exact) under proven owner',
+      () async {
+        final result = await build(
+          backend: session,
+        ).dispatch(switchEvent(owner: 101));
+
+        expect(result.isRight(), isTrue);
+        expect(session.calls, 1);
+        expect(session.lastAction, DutyStatusAction.legacySwitch);
+        expect(session.lastCoDriverId, 55);
+        expect(
+          session.lastReason,
+          isNull,
+          reason: 'legacy لا يقبل reason في OAS',
         );
+      },
+    );
 
-    test('legacy action first without reason (OAS-exact) under proven owner',
-        () async {
-      final result =
-          await build(backend: session).dispatch(switchEvent(owner: 101));
+    test(
+      'legacy failure falls back to switchPrimary with the reason',
+      () async {
+        session.legacyResult = err(const ServerError(code: '400'));
 
-      expect(result.isRight(), isTrue);
-      expect(session.calls, 1);
-      expect(session.lastAction, DutyStatusAction.legacySwitch);
-      expect(session.lastCoDriverId, 55);
-      expect(session.lastReason, isNull,
-          reason: 'legacy لا يقبل reason في OAS');
-    });
+        final result = await build(
+          backend: session,
+        ).dispatch(switchEvent(owner: 101));
 
-    test('legacy failure falls back to switchPrimary with the reason',
-        () async {
-      session.legacyResult = err(const ServerError(code: '400'));
+        expect(result.isRight(), isTrue);
+        expect(session.calls, 2);
+        expect(session.lastAction, DutyStatusAction.switchPrimary);
+        expect(session.lastReason, 'offline shift change');
+      },
+    );
 
-      final result =
-          await build(backend: session).dispatch(switchEvent(owner: 101));
+    test(
+      'missing backend → deterministic rejection, never the generic route',
+      () async {
+        final result = await build().dispatch(switchEvent(owner: 101));
 
-      expect(result.isRight(), isTrue);
-      expect(session.calls, 2);
-      expect(session.lastAction, DutyStatusAction.switchPrimary);
-      expect(session.lastReason, 'offline shift change');
-    });
-
-    test('missing backend → deterministic rejection, never the generic route',
-        () async {
-      final result = await build().dispatch(switchEvent(owner: 101));
-
-      expect(result.isLeft(), isTrue);
-      result.fold(
-        (failure) {
+        expect(result.isLeft(), isTrue);
+        result.fold((failure) {
           expect(failure, isA<RejectedFailure>());
           expect(
             (failure as RejectedFailure).code,
             'switch_co_driver_unroutable',
             reason: 'كان يسقط على default فيضيع التبديل بلا أثر',
           );
-        },
-        (_) => fail('expected a rejection'),
-      );
-      expect(session.calls, 0);
-    });
+        }, (_) => fail('expected a rejection'));
+        expect(session.calls, 0);
+      },
+    );
 
     test('unproven owner is fenced before any switch call happens', () async {
-      final result =
-          await build(backend: session).dispatch(switchEvent(owner: null));
+      final result = await build(
+        backend: session,
+      ).dispatch(switchEvent(owner: null));
 
       expect(session.calls, 0, reason: 'الحجر يسبق التوجيه');
       expect(result.isLeft(), isTrue);

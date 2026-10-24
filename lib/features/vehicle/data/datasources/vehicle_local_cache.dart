@@ -17,8 +17,8 @@ import 'package:golden_feather_eld/core/utils/logger.dart';
 /// **الجهاز** لا السائق فلا يصلح كقفل. والخادم يربط المركبات بتوكن
 /// الجلسة في كل طلب، فالكاش عرض محلي فقط ولا يُرسل للخادم.
 abstract class VehicleLocalCache {
-  Future<void> save(RawJson rawJson);
-  RawJson? load();
+  Future<void> save(RawJson rawJson, {bool companyFleet = false});
+  RawJson? load({bool companyFleet = false});
 
   /// مسح الكاش المحفوظ (تسجيل خروج / تبديل سائق).
   Future<void> clear();
@@ -29,21 +29,29 @@ class PrefsVehicleLocalCache implements VehicleLocalCache {
 
   final LocalStorageService _storage;
 
-  static const String _key = 'vehicle_list_cache';
+  static const String _personalKey = 'vehicle_my_list_cache';
+  static const String _companyKey = 'vehicle_company_list_cache';
+  static const String _legacyKey = 'vehicle_list_cache';
+
+  String _keyFor({required bool companyFleet}) =>
+      companyFleet ? _companyKey : _personalKey;
 
   @override
-  Future<void> save(RawJson rawJson) async {
+  Future<void> save(RawJson rawJson, {bool companyFleet = false}) async {
     try {
-      await _storage.prefs.setString(_key, jsonEncode(rawJson));
+      await _storage.prefs.setString(
+        _keyFor(companyFleet: companyFleet),
+        jsonEncode(rawJson),
+      );
     } catch (e) {
       AppLogger.warning('VehicleLocalCache.save failed: $e');
     }
   }
 
   @override
-  RawJson? load() {
+  RawJson? load({bool companyFleet = false}) {
     try {
-      final raw = _storage.prefs.getString(_key);
+      final raw = _storage.prefs.getString(_keyFor(companyFleet: companyFleet));
       if (raw == null || raw.isEmpty) return null;
       final decoded = jsonDecode(raw);
       return decoded is Map<String, dynamic> ? decoded : null;
@@ -56,7 +64,9 @@ class PrefsVehicleLocalCache implements VehicleLocalCache {
   @override
   Future<void> clear() async {
     try {
-      await _storage.prefs.remove(_key);
+      await _storage.prefs.remove(_personalKey);
+      await _storage.prefs.remove(_companyKey);
+      await _storage.prefs.remove(_legacyKey);
     } catch (e) {
       AppLogger.warning('VehicleLocalCache.clear failed: $e');
     }

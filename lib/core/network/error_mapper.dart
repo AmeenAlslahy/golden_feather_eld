@@ -23,10 +23,7 @@ AppError mapDioException(DioException e) {
         l10nKey: 'networkTimeout',
         cause: e,
         stackTrace: e.stackTrace,
-        context: {
-          'type': e.type.name,
-          'uri': e.requestOptions.uri.toString(),
-        },
+        context: {'type': e.type.name, 'uri': e.requestOptions.uri.toString()},
       );
 
     case DioExceptionType.connectionError:

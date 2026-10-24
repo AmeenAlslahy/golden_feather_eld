@@ -14,10 +14,7 @@ class RuntimeBackendChoice {
   final bool useMock;
   final String serverUrl;
 
-  const RuntimeBackendChoice({
-    required this.useMock,
-    required this.serverUrl,
-  });
+  const RuntimeBackendChoice({required this.useMock, required this.serverUrl});
 }
 
 const String fallbackServerOrigin = 'https://snsoft.cloud';
@@ -28,7 +25,8 @@ RuntimeBackendChoice resolveRuntimeBackend({
   required String savedServerUrl,
   required String savedBackendType,
 }) {
-  final useMock = environment == AppEnvironment.mock ||
+  final useMock =
+      environment == AppEnvironment.mock ||
       (environment == AppEnvironment.development && savedBackendType == 'mock');
 
   final saved = savedServerUrl.trim();

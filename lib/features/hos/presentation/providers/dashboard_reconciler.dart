@@ -49,7 +49,8 @@ class DashboardReconciler with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _arm();
     AppLogger.info(
-        'DashboardReconciler started (every ${interval.inMinutes} min)');
+      'DashboardReconciler started (every ${interval.inMinutes} min)',
+    );
   }
 
   void stop() {

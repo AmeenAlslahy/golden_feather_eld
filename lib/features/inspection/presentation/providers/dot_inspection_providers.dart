@@ -14,8 +14,8 @@ import '../../domain/transfer_audit.dart';
 /// Provides the inspection screen for the current driver.
 final dotInspectionScreenProvider =
     AsyncNotifierProvider<DotInspectionScreenNotifier, DotInspectionScreen>(
-  DotInspectionScreenNotifier.new,
-);
+      DotInspectionScreenNotifier.new,
+    );
 
 class DotInspectionScreenNotifier extends AsyncNotifier<DotInspectionScreen> {
   Future<DotInspectionScreen> _fetch() {
@@ -35,19 +35,22 @@ class DotInspectionScreenNotifier extends AsyncNotifier<DotInspectionScreen> {
 }
 
 /// Official transfer audit. A local edit list is not this record.
-final transferAuditProvider = FutureProvider<List<TransferAuditRow>>((ref) async {
+final transferAuditProvider = FutureProvider<List<TransferAuditRow>>((
+  ref,
+) async {
   final driverId = ref.watch(currentDriverIdProvider);
-  final result = await ref.watch(inspectionRepositoryProvider).getTransfers(
-        driverId: driverId == null ? null : DriverId(driverId),
-      );
+  final result = await ref
+      .watch(inspectionRepositoryProvider)
+      .getTransfers(driverId: driverId == null ? null : DriverId(driverId));
   return result.fold((f) => throw f, (rows) => rows);
 });
 
 /// Provides the 8-day cycle for the current driver.
 final dotInspectionCycleProvider =
-    AsyncNotifierProvider<DotInspectionCycleNotifier, List<DotInspectionCycleDay>>(
-  DotInspectionCycleNotifier.new,
-);
+    AsyncNotifierProvider<
+      DotInspectionCycleNotifier,
+      List<DotInspectionCycleDay>
+    >(DotInspectionCycleNotifier.new);
 
 class DotInspectionCycleNotifier
     extends AsyncNotifier<List<DotInspectionCycleDay>> {
@@ -56,7 +59,10 @@ class DotInspectionCycleNotifier
     final driverId = ref.watch(currentDriverIdProvider);
     return ref
         .watch(inspectionRepositoryProvider)
-        .getCycle(driverId: driverId == null ? null : DriverId(driverId), days: 8)
+        .getCycle(
+          driverId: driverId == null ? null : DriverId(driverId),
+          days: 8,
+        )
         .then((result) => result.fold((f) => throw f, (days) => days));
   }
 }
@@ -82,7 +88,7 @@ DotInspectionCycleDay? findMatchingCycleDay(
 /// يُرجع يوم دورة التفتيش المطابق لتاريخ السجل المحدد
 final matchingInspectionCycleDayProvider =
     Provider.family<DotInspectionCycleDay?, DateTime?>((ref, logDate) {
-  if (logDate == null) return null;
-  final cycle = ref.watch(dotInspectionCycleProvider).valueOrNull;
-  return findMatchingCycleDay(cycle, logDate);
-});
+      if (logDate == null) return null;
+      final cycle = ref.watch(dotInspectionCycleProvider).valueOrNull;
+      return findMatchingCycleDay(cycle, logDate);
+    });

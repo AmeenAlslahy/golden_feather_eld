@@ -40,6 +40,7 @@ class DashboardData {
     String? driverLicense,
     String? vehicleId,
     int? deviceId,
+    bool clearDeviceId = false,
     String? vehicleDisplayName,
     String? trailerId,
     String? shippingDocuments,
@@ -51,7 +52,7 @@ class DashboardData {
       driverName: driverName ?? this.driverName,
       driverLicense: driverLicense ?? this.driverLicense,
       vehicleId: vehicleId ?? this.vehicleId,
-      deviceId: deviceId ?? this.deviceId,
+      deviceId: clearDeviceId ? null : (deviceId ?? this.deviceId),
       vehicleDisplayName: vehicleDisplayName ?? this.vehicleDisplayName,
       trailerId: trailerId ?? this.trailerId,
       shippingDocuments: shippingDocuments ?? this.shippingDocuments,
@@ -93,17 +94,17 @@ class DashboardData {
 
   @override
   int get hashCode => Object.hash(
-        driverName,
-        driverLicense,
-        vehicleId,
-        deviceId,
-        vehicleDisplayName,
-        trailerId,
-        shippingDocuments,
-        coDriverName,
-        coDriverId,
-        documentsInfo,
-      );
+    driverName,
+    driverLicense,
+    vehicleId,
+    deviceId,
+    vehicleDisplayName,
+    trailerId,
+    shippingDocuments,
+    coDriverName,
+    coDriverId,
+    documentsInfo,
+  );
 }
 
 class DashboardNotifier extends StateNotifier<DashboardData> {
@@ -133,15 +134,14 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
   }
 
   void updateUserData(String name, String? email) {
-    state = state.copyWith(
-      driverName: name,
-    );
+    state = state.copyWith(driverName: name);
   }
 
   void updateVehicle(Vehicle? vehicle) {
     if (vehicle == null) {
       state = state.copyWith(
         vehicleId: 'No Vehicle',
+        clearDeviceId: true,
         vehicleDisplayName: 'Select a vehicle',
       );
       return;
@@ -150,6 +150,7 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
     state = state.copyWith(
       vehicleId: vehicle.id.isNotEmpty ? vehicle.id : 'No Vehicle',
       deviceId: vehicle.deviceId,
+      clearDeviceId: vehicle.deviceId == null,
       vehicleDisplayName: vehicle.displayName,
     );
   }
@@ -191,8 +192,8 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
     if (form.vehicleUniqueId != null &&
         form.vehicleUniqueId!.trim().isNotEmpty) {
       final uniqueId = form.vehicleUniqueId!.trim();
-      final displayName = form.vehicleName != null &&
-              form.vehicleName!.trim().isNotEmpty
+      final displayName =
+          form.vehicleName != null && form.vehicleName!.trim().isNotEmpty
           ? form.vehicleName!.trim()
           : uniqueId;
       state = state.copyWith(
@@ -205,52 +206,42 @@ class DashboardNotifier extends StateNotifier<DashboardData> {
 
 final dashboardDataProvider =
     StateNotifierProvider<DashboardNotifier, DashboardData>((ref) {
-  final notifier = DashboardNotifier();
+      final notifier = DashboardNotifier();
 
-  // Listen to Auth State
-  //
-  // P0 Stage 1: أي غياب هوية أو انتقال جارٍ أو تغير مالك يُسقط الترويسة
-  // فوراً (متزامن، بلا API) قبل أي تحديث — فلا تُعرض بيانات A في جلسة B.
-  ref.listen(
-    authStateProvider,
-    (previous, next) {
-      if (next.user == null || next.transitioning) {
-        notifier.reset();
-        return;
-      }
-      notifier.bindOwner(next.user!.id, next.sessionEpoch);
-      notifier.updateUserData(next.user!.fullName, next.user!.email);
-    },
-    fireImmediately: true,
-  );
+      // Listen to Auth State
+      //
+      // P0 Stage 1: أي غياب هوية أو انتقال جارٍ أو تغير مالك يُسقط الترويسة
+      // فوراً (متزامن، بلا API) قبل أي تحديث — فلا تُعرض بيانات A في جلسة B.
+      ref.listen(authStateProvider, (previous, next) {
+        if (next.user == null || next.transitioning) {
+          notifier.reset();
+          return;
+        }
+        notifier.bindOwner(next.user!.id, next.sessionEpoch);
+        notifier.updateUserData(next.user!.fullName, next.user!.email);
+      }, fireImmediately: true);
 
-  // Listen to Vehicle State
-  ref.listen(
-    vehicleProvider,
-    (previous, next) {
-      if (next.selectedVehicle != null) {
-        notifier.updateVehicle(next.selectedVehicle);
-      }
-    },
-    fireImmediately: true,
-  );
+      // Listen to Vehicle State
+      ref.listen(vehicleProvider, (previous, next) {
+        if (next.selectedVehicle != null) {
+          notifier.updateVehicle(next.selectedVehicle);
+        }
+      }, fireImmediately: true);
 
-  // Listen to CoDriver State
-  ref.listen(
-    codriverProvider,
-    (previous, next) {
-      if (next.currentCoDriver != null) {
-        notifier.updateCoDriver(CoDriver(
-          id: next.currentCoDriver!.coDriverId.toString(),
-          name: next.currentCoDriver!.name ?? 'Unknown',
-        ));
-      } else {
-        // If the live session has no co-driver, we might clear it or keep what was saved on the form
-        // For now, let's just update it to null to clear it if it's not set
-      }
-    },
-    fireImmediately: true,
-  );
+      // Listen to CoDriver State
+      ref.listen(codriverProvider, (previous, next) {
+        if (next.currentCoDriver != null) {
+          notifier.updateCoDriver(
+            CoDriver(
+              id: next.currentCoDriver!.coDriverId.toString(),
+              name: next.currentCoDriver!.name ?? 'Unknown',
+            ),
+          );
+        } else {
+          // If the live session has no co-driver, we might clear it or keep what was saved on the form
+          // For now, let's just update it to null to clear it if it's not set
+        }
+      }, fireImmediately: true);
 
-  return notifier;
-});
+      return notifier;
+    });

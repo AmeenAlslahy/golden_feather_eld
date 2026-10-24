@@ -6,12 +6,7 @@
 library;
 
 /// طريقة نقل السجلات (SRS 8.4 telematics / email).
-enum TransferMethod {
-  webService,
-  email,
-  bluetooth,
-  usb;
-}
+enum TransferMethod { webService, email, bluetooth, usb }
 
 /// The live send path rejects a comment outside 4–60 characters; the UI
 /// localizes the refusal with `inspectionCommentErrorLength`.

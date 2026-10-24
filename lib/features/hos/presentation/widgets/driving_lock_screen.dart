@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/utils/duration_format.dart';
 import '../../../home/presentation/pages/home_page.dart';
@@ -17,10 +17,12 @@ class DrivingLockScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = context.loc;
     final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
-    final driveRemaining = dashboard?.hosIndicators.drive.value ?? dashboard?.remainingCircle.remaining;
+    final driveRemaining =
+        dashboard?.hosIndicators.drive.value ??
+        dashboard?.remainingCircle.remaining;
 
     return Container(
-      color: Colors.black.withValues(alpha: 0.92), // خلفية داكنة جداً
+      color: context.colors.scrim.withValues(alpha: 0.92), // خلفية داكنة جداً
       width: double.infinity,
       height: double.infinity,
       child: Center(
@@ -31,18 +33,22 @@ class DrivingLockScreen extends ConsumerWidget {
               GestureDetector(
                 onDoubleTap: () {
                   // UI Bypass: Just hide the screen locally so we can test other pages
-                  if (kDebugMode) ref.read(developerBypassDrivingScreenProvider.notifier).state = true;
+                  if (kDebugMode)
+                    ref
+                            .read(developerBypassDrivingScreenProvider.notifier)
+                            .state =
+                        true;
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.directions_car,
-                  color: AppColors.primaryGold,
-                  size: 72,
+                  color: context.gold,
+                  size: AppSpacing.iconHeroLarge,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 loc.vehicleInMotionTitle,
-                style: context.styles.pageTitle.copyWith(color: AppColors.white),
+                style: context.styles.pageTitle.copyWith(color: context.onBand),
                 textAlign: TextAlign.center,
               ),
               if (driveRemaining != null) ...[
@@ -50,9 +56,8 @@ class DrivingLockScreen extends ConsumerWidget {
                 Text(
                   loc.remainingLabel.toUpperCase(),
                   style: context.styles.caption.copyWith(
-                    color: AppColors.darkTextSecondary,
+                    color: context.onDarkMuted,
                     letterSpacing: 1.5,
-                    fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -60,9 +65,9 @@ class DrivingLockScreen extends ConsumerWidget {
                   DurationFormat.hhMm(driveRemaining),
                   style: context.styles.timer.copyWith(
                     color: driveRemaining <= const Duration(minutes: 15)
-                        ? AppColors.dangerOnDark
-                        : AppColors.primaryGold,
-                    fontSize: 52,
+                        ? context.dangerOnDark
+                        : context.gold,
+                    fontSize: AppTypography.heroTimerSize,
                   ),
                 ),
               ],
@@ -71,7 +76,9 @@ class DrivingLockScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Text(
                   loc.vehicleInMotionDesc,
-                  style: context.styles.body.copyWith(color: AppColors.darkTextSecondary),
+                  style: context.styles.body.copyWith(
+                    color: context.onDarkMuted,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -82,4 +89,3 @@ class DrivingLockScreen extends ConsumerWidget {
     );
   }
 }
-

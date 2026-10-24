@@ -52,7 +52,6 @@ abstract class BackendAdapter {
 
   HardwareBackend? get hardware;
 
-
   SignatureBackend? get signature;
 
   // ==========================================================================

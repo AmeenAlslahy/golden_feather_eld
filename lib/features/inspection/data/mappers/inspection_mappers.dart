@@ -13,35 +13,38 @@ TransferOutcome readTransferOutcome(Map<String, dynamic> json) {
   // Live contract: the server answers 'PENDING' for an accepted transfer
   // that is queued, so acceptance is deny-listed, not whitelisted. A
   // missing status (HTTP 200 + message only) is also an acceptance.
-  final failed = const {'failed', 'error', 'rejected', 'denied'}
-      .contains(statusText.toLowerCase());
+  final failed = const {
+    'failed',
+    'error',
+    'rejected',
+    'denied',
+  }.contains(statusText.toLowerCase());
   final text = messageText.isNotEmpty
       ? messageText
       : statusText.isNotEmpty
-          ? statusText
-          : 'The server accepted the transfer request.';
+      ? statusText
+      : 'The server accepted the transfer request.';
   return TransferOutcome(accepted: !failed, text: text);
 }
 
 /// A packet is complete only when the server says so and no mandatory item is missing.
 InformationPacketView parseInformationPacket(Map<String, dynamic> json) {
-  final missing = (json['missingItems'] as List?)
+  final missing =
+      (json['missingItems'] as List?)
           ?.map((item) => item.toString().trim())
           .where((item) => item.isNotEmpty)
           .toList() ??
       const <String>[];
-  final items = (json['items'] as List?)
-          ?.whereType<Map>()
-          .map((raw) {
-            final item = Map<String, dynamic>.from(raw);
-            final title = '${item['title'] ?? item['code'] ?? ''}'.trim();
-            return PacketLine(
-              title: title.isEmpty ? 'Untitled item' : title,
-              available: item['available'] == true,
-              mandatory: item['mandatory'] != false,
-            );
-          })
-          .toList() ??
+  final items =
+      (json['items'] as List?)?.whereType<Map>().map((raw) {
+        final item = Map<String, dynamic>.from(raw);
+        final title = '${item['title'] ?? item['code'] ?? ''}'.trim();
+        return PacketLine(
+          title: title.isEmpty ? 'Untitled item' : title,
+          available: item['available'] == true,
+          mandatory: item['mandatory'] != false,
+        );
+      }).toList() ??
       const <PacketLine>[];
   final missingMandatory = items
       .where((item) => item.mandatory && !item.available)
@@ -56,8 +59,8 @@ InformationPacketView parseInformationPacket(Map<String, dynamic> json) {
     statusText: statusText.isNotEmpty
         ? statusText
         : complete
-            ? 'Complete'
-            : 'Incomplete',
+        ? 'Complete'
+        : 'Incomplete',
     complete: complete,
     missing: allMissing,
     items: items,
@@ -80,7 +83,14 @@ List<dynamic>? _asList(Object? raw) {
   if (raw is List) return raw;
   if (raw is! Map) return null;
   final map = Map<String, dynamic>.from(raw);
-  for (final key in ['transfers', 'items', 'history', 'records', 'data', 'body']) {
+  for (final key in [
+    'transfers',
+    'items',
+    'history',
+    'records',
+    'data',
+    'body',
+  ]) {
     final value = map[key];
     if (value is List) return value;
     if (value is Map) {

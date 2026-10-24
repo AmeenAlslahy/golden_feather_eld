@@ -61,5 +61,4 @@ abstract interface class InspectionBackend {
 
   /// GET /eld/dot-inspection/transfers
   Future<Result<RawJson>> getTransfers({DriverId? driverId});
-
 }

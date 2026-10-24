@@ -33,7 +33,8 @@ class ManualRecordingSection extends ConsumerWidget {
     final failed = ref.watch(eldConnectionProvider).hasFailed;
     final serverState = status?.connectionStatus?.toUpperCase();
     final manualActive = status?.manualModeActive == true;
-    final degraded = failed ||
+    final degraded =
+        failed ||
         status?.hasMalfunction == true ||
         serverState == 'MALFUNCTION' ||
         serverState == 'DISCONNECTED' ||
@@ -51,21 +52,23 @@ class ManualRecordingSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            loc.eldMalfunctionTitle,
-            style: context.styles.body,
-          ),
+          Text(loc.eldMalfunctionTitle, style: context.styles.body),
           const SizedBox(height: AppSpacing.sm),
           for (final step in steps)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs, left: AppSpacing.sm),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.xs,
+                left: AppSpacing.sm,
+              ),
               child: Text('• $step', style: context.styles.subtitle),
             ),
           const SizedBox(height: AppSpacing.sm),
           if (manualActive) ...[
             Text(
               status?.manualModeReason != null
-                  ? loc.eldMalfunctionManualActiveWithReason(status!.manualModeReason!)
+                  ? loc.eldMalfunctionManualActiveWithReason(
+                      status!.manualModeReason!,
+                    )
                   : loc.eldMalfunctionManualActive,
               style: context.styles.warning,
             ),
@@ -76,10 +79,7 @@ class ManualRecordingSection extends ConsumerWidget {
               onPressed: () => _promptManualMode(context, ref, enable: false),
             ),
           ] else if (status?.manualRecordingAllowed == false)
-            Text(
-              loc.eldMalfunctionServerNotAllow,
-              style: context.styles.error,
-            )
+            Text(loc.eldMalfunctionServerNotAllow, style: context.styles.error)
           else
             AppButton(
               label: loc.eldMalfunctionStartManual,
@@ -104,7 +104,9 @@ class ManualRecordingSection extends ConsumerWidget {
     );
     if (reason == null || !context.mounted) return;
 
-    final error = await ref.read(eldConnectionProvider.notifier).setManualMode(
+    final error = await ref
+        .read(eldConnectionProvider.notifier)
+        .setManualMode(
           enable: enable,
           reason: reason,
           loc: AppLocalizations.of(context)!,
@@ -117,15 +119,9 @@ class ManualRecordingSection extends ConsumerWidget {
     if (error != null) {
       AppFeedback.error(context, anyErrorUserMessage(error, loc: context.loc));
     } else if (enable) {
-      AppFeedback.success(
-        context,
-        context.loc.eldMalfunctionStartSuccess,
-      );
+      AppFeedback.success(context, context.loc.eldMalfunctionStartSuccess);
     } else {
-      AppFeedback.success(
-        context,
-        context.loc.eldMalfunctionEndSuccess,
-      );
+      AppFeedback.success(context, context.loc.eldMalfunctionEndSuccess);
     }
   }
 }

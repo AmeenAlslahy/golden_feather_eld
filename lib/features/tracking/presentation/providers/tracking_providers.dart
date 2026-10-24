@@ -7,8 +7,9 @@ import 'package:geolocator/geolocator.dart';
 export '../../data/providers/tracking_providers.dart';
 
 /// مزود حالة خدمة الـ GPS
-final gpsStatusProvider =
-    StreamProvider.autoDispose<ServiceStatus>((ref) async* {
+final gpsStatusProvider = StreamProvider.autoDispose<ServiceStatus>((
+  ref,
+) async* {
   bool isEnabled = await Geolocator.isLocationServiceEnabled();
   yield isEnabled ? ServiceStatus.enabled : ServiceStatus.disabled;
   yield* Geolocator.getServiceStatusStream();

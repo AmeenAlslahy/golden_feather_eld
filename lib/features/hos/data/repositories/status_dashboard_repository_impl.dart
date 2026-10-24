@@ -42,8 +42,8 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
     this._networkInfo, {
     DashboardLocalCache? disk,
     DateTime Function()? trustedNowUtc,
-  })  : _disk = disk,
-        _trustedNowUtc = trustedNowUtc ?? (() => DateTime.now().toUtc()) {
+  }) : _disk = disk,
+       _trustedNowUtc = trustedNowUtc ?? (() => DateTime.now().toUtc()) {
     // استعادة فورية عند البناء حتى لو كان التطبيق مغلقاً مدة طويلة —
     // ومعها لحظة القياس، وإلا لأُلغيت مدة الإغلاق من العدّاد.
     _cachedSnapshot = _disk?.loadDashboard();
@@ -51,7 +51,9 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   }
 
   @override
-  Future<Either<Failure, StatusDashboard>> getDashboard({DriverId? driverId}) async {
+  Future<Either<Failure, StatusDashboard>> getDashboard({
+    DriverId? driverId,
+  }) async {
     if (_inFlightDashboard != null) {
       return _inFlightDashboard!;
     }
@@ -64,36 +66,47 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
     }
   }
 
-  Future<Either<Failure, StatusDashboard>> _fetchDashboard(DriverId? driverId) async {
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getDashboard(driverId: driverId);
-      return result.fold(
-        (error) {
-          // الخادم تعذّر، لكن لدينا آخر لقطة معروفة — نعرضها بدل الخطأ،
-          // وهي محمّلة بلحظة قياسها الأصلية فيبقى العدّاد صادقاً.
-          final cached = _cachedSnapshot;
-          if (cached != null) return Right(cached.dashboard);
-          return Left(ServerFailure(
-              message: error.code,
-              statusCode: error.context?['statusCode'] as int?));
-        },
-        (data) {
-          // استجابة حيّة ⇒ تُقاس لحظة وصولها على الساعة الموثوقة.
-          final takenAt = _trustedNowUtc();
-          _cachedSnapshot =
-              CachedDashboard(dashboard: data, takenAt: takenAt);
-          _disk?.saveDashboard(data, takenAt: takenAt);
-          return Right(data);
-        },
-      );
-    }, offline: () async {
-      final cached = _cachedSnapshot;
-      if (cached != null) return Right(cached.dashboard);
-      // لا نولّد أرقاماً مُختلَقة: كان المسار يُرجع offDuty مع
-      // 11:00/14:00/8:00/70:00 وهو رصيد قانوني غير موجود.
-      // نبني اللوحة أعلاه من المحرك المحلي عبر HosOfflineDashboardBuilder.
-      return const Left(NoDashboardSnapshotFailure());
-    });
+  Future<Either<Failure, StatusDashboard>> _fetchDashboard(
+    DriverId? driverId,
+  ) async {
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getDashboard(driverId: driverId);
+        return result.fold(
+          (error) {
+            // الخادم تعذّر، لكن لدينا آخر لقطة معروفة — نعرضها بدل الخطأ،
+            // وهي محمّلة بلحظة قياسها الأصلية فيبقى العدّاد صادقاً.
+            final cached = _cachedSnapshot;
+            if (cached != null) return Right(cached.dashboard);
+            return Left(
+              ServerFailure(
+                message: error.code,
+                statusCode: error.context?['statusCode'] as int?,
+              ),
+            );
+          },
+          (data) {
+            // استجابة حيّة ⇒ تُقاس لحظة وصولها على الساعة الموثوقة.
+            final takenAt = _trustedNowUtc();
+            _cachedSnapshot = CachedDashboard(
+              dashboard: data,
+              takenAt: takenAt,
+            );
+            _disk?.saveDashboard(data, takenAt: takenAt);
+            return Right(data);
+          },
+        );
+      },
+      offline: () async {
+        final cached = _cachedSnapshot;
+        if (cached != null) return Right(cached.dashboard);
+        // لا نولّد أرقاماً مُختلَقة: كان المسار يُرجع offDuty مع
+        // 11:00/14:00/8:00/70:00 وهو رصيد قانوني غير موجود.
+        // نبني اللوحة أعلاه من المحرك المحلي عبر HosOfflineDashboardBuilder.
+        return const Left(NoDashboardSnapshotFailure());
+      },
+    );
   }
 
   @override
@@ -110,27 +123,33 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   }
 
   @override
-  Future<Either<Failure, WeeklyRecap>> getWeeklyRecap({DriverId? driverId}) async {
-    return guardedNetwork(_networkInfo, () async {
-      final result = await _backend.getWeeklyRecap(driverId: driverId);
-      return result.fold(
-        (error) {
-          // لا كاش ⇒ "غير متاح" صراحةً. البديل القديم كان يبني أسبوعاً
-          // فارغاً مع 8 ساعات متاحة غداً — رصيد قانوني غير موجود.
-          final cached = _cachedRecap;
-          if (cached != null) return Right(cached);
-          return const Left(NoRecapSnapshotFailure());
-        },
-        (data) {
-          _cachedRecap = data;
-          _disk?.saveRecap(data);
-          return Right(data);
-        },
-      );
-    }, offline: () async {
-      final cached = _cachedRecap;
-      if (cached != null) return Right(cached);
-      return const Left(NoRecapSnapshotFailure());
-    });
+  Future<Either<Failure, WeeklyRecap>> getWeeklyRecap({
+    DriverId? driverId,
+  }) async {
+    return guardedNetwork(
+      _networkInfo,
+      () async {
+        final result = await _backend.getWeeklyRecap(driverId: driverId);
+        return result.fold(
+          (error) {
+            // لا كاش ⇒ "غير متاح" صراحةً. البديل القديم كان يبني أسبوعاً
+            // فارغاً مع 8 ساعات متاحة غداً — رصيد قانوني غير موجود.
+            final cached = _cachedRecap;
+            if (cached != null) return Right(cached);
+            return const Left(NoRecapSnapshotFailure());
+          },
+          (data) {
+            _cachedRecap = data;
+            _disk?.saveRecap(data);
+            return Right(data);
+          },
+        );
+      },
+      offline: () async {
+        final cached = _cachedRecap;
+        if (cached != null) return Right(cached);
+        return const Left(NoRecapSnapshotFailure());
+      },
+    );
   }
 }

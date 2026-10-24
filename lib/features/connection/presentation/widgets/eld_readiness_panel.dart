@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/hardware_status_provider.dart';
@@ -24,16 +23,11 @@ class EldReadinessPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            loc.eldReadinessTitle,
-            style: context.styles.bodyBold,
-          ),
+          Text(loc.eldReadinessTitle, style: context.styles.bodyBold),
           const SizedBox(height: AppSpacing.xs),
           readiness.when(
-            loading: () => Text(
-              loc.eldReadinessChecking,
-              style: context.styles.body,
-            ),
+            loading: () =>
+                Text(loc.eldReadinessChecking, style: context.styles.body),
             error: (error, _) => Text(
               anyErrorUserMessage(error, loc: AppLocalizations.of(context)!),
               style: context.styles.error,
@@ -45,15 +39,17 @@ class EldReadinessPanel extends ConsumerWidget {
     );
   }
 
-  Widget _body(BuildContext context, HardwareReadiness data, AppLocalizations loc) {
+  Widget _body(
+    BuildContext context,
+    HardwareReadiness data,
+    AppLocalizations loc,
+  ) {
     final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          data.ready
-              ? loc.eldReadinessReady
-              : loc.eldReadinessNotReady,
+          data.ready ? loc.eldReadinessReady : loc.eldReadinessNotReady,
           style: data.ready ? context.styles.success : context.styles.error,
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -64,8 +60,8 @@ class EldReadinessPanel extends ConsumerWidget {
               children: [
                 Icon(
                   entry.value ? Icons.check_circle : Icons.cancel,
-                  size: 18,
-                  color: entry.value ? AppColors.successText : colors.error,
+                  size: AppSpacing.iconMedium,
+                  color: entry.value ? context.success : colors.error,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -81,7 +77,10 @@ class EldReadinessPanel extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xs),
           for (final reason in data.rejectionReasons)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs, left: AppSpacing.sm),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.xs,
+                left: AppSpacing.sm,
+              ),
               child: Text('• $reason', style: context.styles.subtitle),
             ),
         ],

@@ -46,17 +46,17 @@ class User extends Equatable {
   /// جلب بيانات المستخدم
   @override
   List<Object?> get props => [
-        id,
-        username,
-        email,
-        fullName,
-        phone,
-        role,
-        isActive,
-        lastLogin,
-        createdAt,
-        attributes,
-      ];
+    id,
+    username,
+    email,
+    fullName,
+    phone,
+    role,
+    isActive,
+    lastLogin,
+    createdAt,
+    attributes,
+  ];
 }
 
 /// أدوار المستخدمين

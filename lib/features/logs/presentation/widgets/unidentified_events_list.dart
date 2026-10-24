@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_spacing.dart';
+
+import '../../../../core/design_system.dart';
 import '../providers/unidentified_events_provider.dart';
 
-/// قائمة عرض بطاقات الأحداث غير المحددة
+/// List of server-provided unidentified driving events.
 class UnidentifiedEventsList extends StatelessWidget {
   final List<UnidentifiedEventItem> items;
   final String? error;
@@ -29,6 +29,7 @@ class UnidentifiedEventsList extends StatelessWidget {
           child: Text(
             error ?? context.loc.noRecords,
             textAlign: TextAlign.center,
+            style: context.styles.subtitle,
           ),
         ),
       );
@@ -70,63 +71,89 @@ class _UnidentifiedEventCard extends StatelessWidget {
         ? item.startTime
         : '${item.startTime} – ${item.endTime}';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.dutyStatus,
-                    style: context.styles.bodyBold,
-                  ),
+    return EldCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(item.dutyStatus, style: context.styles.bodyBold),
+              ),
+              if (item.allocationStatus.isNotEmpty)
+                AppStatusPill(
+                  label: item.allocationStatus.replaceAll('_', ' '),
+                  color: context.gold,
                 ),
-                // SRS 11.2 — allocation state chip from the server.
-                if (item.allocationStatus.isNotEmpty)
-                  Chip(
-                    label: Text(item.allocationStatus.replaceAll('_', ' ')),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (timeRange.isNotEmpty) Text(timeRange, style: context.styles.body),
+          if (item.formattedDuration.isNotEmpty)
+            Text(item.formattedDuration, style: context.styles.subtitle)
+          else if (item.durationMinutes != null)
+            Text(
+              '${item.durationMinutes} ${context.loc.minute}',
+              style: context.styles.subtitle,
+            ),
+          if (item.startOdometerKm != null || item.endOdometerKm != null)
+            Text(
+              '${context.loc.odometer}: '
+              '${item.startOdometerKm?.toString() ?? '—'} → '
+              '${item.endOdometerKm?.toString() ?? '—'} km',
+              style: context.styles.subtitle,
+            ),
+          if (item.totalDistanceKm != null)
+            Text(
+              '${context.loc.distance}: ${item.totalDistanceKm} km',
+              style: context.styles.subtitle,
+            ),
+          if (item.vehicleName.isNotEmpty)
+            Text(item.vehicleName, style: context.styles.bodyBold),
+          if (item.uniqueId.isNotEmpty)
+            Text(
+              '${context.loc.eldIdentifier}: ${item.uniqueId}',
+              style: context.styles.subtitle,
+            ),
+          if (item.location.isNotEmpty)
+            Text(
+              '${context.loc.location}: ${item.location}',
+              style: context.styles.subtitle,
+            ),
+          if (item.daysPending != null)
+            Text(context.loc.pendingDays(item.daysPending!)),
+          if (item.overdue)
+            Text(
+              context.loc.overdue,
+              style: context.styles.error.copyWith(fontWeight: FontWeight.bold),
+            ),
+          if (item.rejectionReason.isNotEmpty)
+            Text(item.rejectionReason, style: context.styles.error),
+          if (item.createdAt.isNotEmpty)
+            Text(
+              '${context.loc.createdAt}: ${item.createdAt}',
+              style: context.styles.caption,
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(context.loc.originalRecordPreserved),
+          ),
+          if (canAct && item.statusId != null)
+            Wrap(
+              spacing: AppSpacing.sm,
+              children: [
+                TextButton(
+                  onPressed: () => onClaim(item.statusId!),
+                  child: Text(context.loc.assume),
+                ),
+                TextButton(
+                  onPressed: () => onReject(item.statusId!),
+                  child: Text(context.loc.notMine),
+                ),
               ],
             ),
-            const SizedBox(height: 4),
-            if (timeRange.isNotEmpty) Text(timeRange),
-            if (item.formattedDuration.isNotEmpty) Text(item.formattedDuration),
-            if (item.vehicleName.isNotEmpty) Text(item.vehicleName),
-            // SRS 11.2 — ELD / vehicle identifier of the record.
-            if (item.uniqueId.isNotEmpty) Text('ELD: ${item.uniqueId}'),
-            if (item.location.isNotEmpty) Text(item.location),
-            if (item.daysPending != null)
-              Text(context.loc.pendingDays(item.daysPending!)),
-            if (item.overdue)
-              Text(
-                context.loc.overdue,
-                style: context.styles.error.copyWith(fontWeight: FontWeight.bold),
-              ),
-            if (item.rejectionReason.isNotEmpty) Text(item.rejectionReason),
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(context.loc.originalRecordPreserved),
-            ),
-            if (canAct && item.statusId != null)
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () => onClaim(item.statusId!),
-                    child: Text(context.loc.assume),
-                  ),
-                  TextButton(
-                    onPressed: () => onReject(item.statusId!),
-                    child: Text(context.loc.notMine),
-                  ),
-                ],
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

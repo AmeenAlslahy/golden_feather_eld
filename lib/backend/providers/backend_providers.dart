@@ -23,6 +23,7 @@ import '../contracts/unidentified_events_backend.dart';
 import '../contracts/vehicle_backend.dart';
 import '../core/backend_adapter.dart';
 import '../core/backend_registry.dart';
+
 /// View of [activeBackendProvider]. Not a second selector and not a second client.
 final backendRegistryProvider = Provider<BackendRegistry>((ref) {
   return BackendRegistry.single(ref.watch(activeBackendProvider));
@@ -58,60 +59,80 @@ final activeBackendProvider = Provider<BackendAdapter>((ref) {
 
 final authBackendProvider = Provider<AuthBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.auth ?? (throw StateError('AuthBackend not supported by active adapter'));
+  return adapter.auth ??
+      (throw StateError('AuthBackend not supported by active adapter'));
 });
 
 final accountBackendProvider = Provider<AccountBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.account ?? (throw StateError('AccountBackend not supported by active adapter'));
+  return adapter.account ??
+      (throw StateError('AccountBackend not supported by active adapter'));
 });
 
 final dailyLogsBackendProvider = Provider<DailyLogsBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.dailyLogs ?? (throw StateError('DailyLogsBackend not supported by active adapter'));
+  return adapter.dailyLogs ??
+      (throw StateError('DailyLogsBackend not supported by active adapter'));
 });
 
 final driverSessionBackendProvider = Provider<DriverSessionBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.driverSession ?? (throw StateError('DriverSessionBackend not supported by active adapter'));
+  return adapter.driverSession ??
+      (throw StateError(
+        'DriverSessionBackend not supported by active adapter',
+      ));
 });
 
 final dutyStatusBackendProvider = Provider<DutyStatusBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.dutyStatus ?? (throw StateError('DutyStatusBackend not supported by active adapter'));
+  return adapter.dutyStatus ??
+      (throw StateError('DutyStatusBackend not supported by active adapter'));
 });
 
 final dvirBackendProvider = Provider<DvirBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.dvir ?? (throw StateError('DvirBackend not supported by active adapter'));
+  return adapter.dvir ??
+      (throw StateError('DvirBackend not supported by active adapter'));
 });
 
 final hardwareBackendProvider = Provider<HardwareBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.hardware ?? (throw StateError('HardwareBackend not supported by active adapter'));
+  return adapter.hardware ??
+      (throw StateError('HardwareBackend not supported by active adapter'));
 });
 
 final inspectionBackendProvider = Provider<InspectionBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.inspection ?? (throw StateError('InspectionBackend not supported by active adapter'));
+  return adapter.inspection ??
+      (throw StateError('InspectionBackend not supported by active adapter'));
 });
 
 final rulesScreenBackendProvider = Provider<RulesScreenBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.rulesScreen ?? (throw StateError('RulesScreenBackend not supported by active adapter'));
+  return adapter.rulesScreen ??
+      (throw StateError('RulesScreenBackend not supported by active adapter'));
 });
 
 final statusDashboardBackendProvider = Provider<StatusDashboardBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.statusDashboard ?? (throw StateError('StatusDashboardBackend not supported by active adapter'));
+  return adapter.statusDashboard ??
+      (throw StateError(
+        'StatusDashboardBackend not supported by active adapter',
+      ));
 });
 
-final unidentifiedEventsBackendProvider = Provider<UnidentifiedEventsBackend>((ref) {
+final unidentifiedEventsBackendProvider = Provider<UnidentifiedEventsBackend>((
+  ref,
+) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.unidentifiedEvents ?? (throw StateError('UnidentifiedEventsBackend not supported by active adapter'));
+  return adapter.unidentifiedEvents ??
+      (throw StateError(
+        'UnidentifiedEventsBackend not supported by active adapter',
+      ));
 });
 
 final vehicleBackendProvider = Provider<VehicleBackend>((ref) {
   final adapter = ref.watch(activeBackendProvider);
-  return adapter.vehicle ?? (throw StateError('VehicleBackend not supported by active adapter'));
+  return adapter.vehicle ??
+      (throw StateError('VehicleBackend not supported by active adapter'));
 });

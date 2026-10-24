@@ -41,11 +41,7 @@ class ApiFieldError {
   final String message;
   final String? code;
 
-  const ApiFieldError({
-    required this.field,
-    required this.message,
-    this.code,
-  });
+  const ApiFieldError({required this.field, required this.message, this.code});
 
   static ApiFieldError? tryParse(Object? raw) {
     if (raw is! Map) return null;
@@ -61,7 +57,8 @@ class ApiFieldError {
   }
 
   @override
-  String toString() => code == null ? '$field: $message' : '$field ($code): $message';
+  String toString() =>
+      code == null ? '$field: $message' : '$field ($code): $message';
 }
 
 /// Pagination metadata from the unified envelope.
@@ -188,7 +185,8 @@ class ApiResponse<T> {
       final envelopeError = map['error'];
       final payload = map['data'];
 
-      final isSuccess = (statusCode >= 200 && statusCode < 300) &&
+      final isSuccess =
+          (statusCode >= 200 && statusCode < 300) &&
           (envelopeStatus == null || envelopeStatus == true);
 
       return ApiResponse<T>(
@@ -247,10 +245,7 @@ class ApiResponse<T> {
     return result;
   }
 
-  static T? _parsePayload<T>(
-    dynamic payload,
-    T Function(dynamic)? parser,
-  ) {
+  static T? _parsePayload<T>(dynamic payload, T Function(dynamic)? parser) {
     if (payload == null) return null;
 
     if (parser != null) {

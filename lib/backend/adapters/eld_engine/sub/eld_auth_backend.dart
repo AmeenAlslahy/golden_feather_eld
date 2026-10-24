@@ -39,10 +39,22 @@ class EldAuthBackend implements AuthBackend {
 
       // 404 = مسار غير موجود، وليس رفضاً للمصادقة؛ إظهاره "بيانات غير صالحة"
       // يُضلّل التشخيص.
-      if (response.statusCode == 401 || response.statusCode == 400 || response.statusCode == 403) {
-         return err(ServerError(code: 'unauthorized', context: {'statusCode': response.statusCode}));
+      if (response.statusCode == 401 ||
+          response.statusCode == 400 ||
+          response.statusCode == 403) {
+        return err(
+          ServerError(
+            code: 'unauthorized',
+            context: {'statusCode': response.statusCode},
+          ),
+        );
       } else if (response.statusCode != 200 && response.statusCode != 201) {
-         return err(ServerError(code: 'server_error', context: {'statusCode': response.statusCode}));
+        return err(
+          ServerError(
+            code: 'server_error',
+            context: {'statusCode': response.statusCode},
+          ),
+        );
       }
 
       dynamic parsedData;
@@ -55,7 +67,7 @@ class EldAuthBackend implements AuthBackend {
       } else {
         parsedData = response.data;
       }
-      
+
       parsedData ??= {};
 
       String? credential;
@@ -73,11 +85,18 @@ class EldAuthBackend implements AuthBackend {
       }
 
       if (credential == null || credential.isEmpty) {
-        return err(ServerError(code: 'missing_credential', context: {'backendType': backendType}));
+        return err(
+          ServerError(
+            code: 'missing_credential',
+            context: {'backendType': backendType},
+          ),
+        );
       }
 
       dynamic userData = parsedData;
-      if (userData is Map<String, dynamic> && userData.containsKey('data') && userData['status'] == true) {
+      if (userData is Map<String, dynamic> &&
+          userData.containsKey('data') &&
+          userData['status'] == true) {
         userData = userData['data'];
       }
       if (userData is! Map<String, dynamic>) {
@@ -113,13 +132,28 @@ class EldAuthBackend implements AuthBackend {
       );
 
       if (response.statusCode == 401 || response.statusCode == 403) {
-         return err(ServerError(code: 'unauthorized', context: {'statusCode': response.statusCode, 'backendType': backendType}));
+        return err(
+          ServerError(
+            code: 'unauthorized',
+            context: {
+              'statusCode': response.statusCode,
+              'backendType': backendType,
+            },
+          ),
+        );
       } else if (response.statusCode != 200) {
-         return err(ServerError(code: 'server_error', context: {'statusCode': response.statusCode}));
+        return err(
+          ServerError(
+            code: 'server_error',
+            context: {'statusCode': response.statusCode},
+          ),
+        );
       }
 
       dynamic userData = response.data;
-      if (userData is Map<String, dynamic> && userData.containsKey('data') && userData['status'] == true) {
+      if (userData is Map<String, dynamic> &&
+          userData.containsKey('data') &&
+          userData['status'] == true) {
         userData = userData['data'];
       }
       if (userData is! Map<String, dynamic>) {
@@ -134,7 +168,9 @@ class EldAuthBackend implements AuthBackend {
     } on DioException catch (e) {
       return err(mapDioException(e));
     } catch (e, st) {
-      return err(UnknownError(code: 'validate_session_error', cause: e, stackTrace: st));
+      return err(
+        UnknownError(code: 'validate_session_error', cause: e, stackTrace: st),
+      );
     }
   }
 
@@ -151,13 +187,16 @@ class EldAuthBackend implements AuthBackend {
         followRedirects: false,
         validateStatus: (status) => true,
       );
-      
+
       // Defaulting to DELETE for logout
-      await _apiClient.dio.delete('$serverOrigin/api${EldEndpoints.session}', options: options);
+      await _apiClient.dio.delete(
+        '$serverOrigin/api${EldEndpoints.session}',
+        options: options,
+      );
       return ok(null);
     } catch (e) {
-       // Fail gracefully
-       return ok(null);
+      // Fail gracefully
+      return ok(null);
     }
   }
 
@@ -187,14 +226,18 @@ class EldAuthBackend implements AuthBackend {
       if (response.statusCode == 404) {
         return err(const NotFoundError(code: 'password.resetUnavailable'));
       }
-      return err(ServerError(
-        code: 'password.resetFailed',
-        context: {'statusCode': response.statusCode},
-      ));
+      return err(
+        ServerError(
+          code: 'password.resetFailed',
+          context: {'statusCode': response.statusCode},
+        ),
+      );
     } on DioException catch (e) {
       return err(mapDioException(e));
     } catch (e, st) {
-      return err(UnknownError(code: 'password.resetFailed', cause: e, stackTrace: st));
+      return err(
+        UnknownError(code: 'password.resetFailed', cause: e, stackTrace: st),
+      );
     }
   }
 }

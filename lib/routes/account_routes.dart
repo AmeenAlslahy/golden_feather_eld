@@ -13,40 +13,40 @@ class AccountRoutes {
   AccountRoutes._();
 
   static List<RouteBase> get routes => [
-        GoRoute(
-          path: AppRoutes.account,
-          name: 'account',
-          builder: (context, state) => const AccountPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.rules,
-          name: 'rules',
-          builder: (context, state) => const RulesPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.infoPacket,
-          name: 'info-packet',
-          builder: (context, state) => const InfoPacketPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.userManual,
-          name: 'user-manual',
-          builder: (context, state) => const UserManualPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.instructions,
-          name: 'instructions',
-          builder: (context, state) => const InstructionsPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.about,
-          name: 'about',
-          builder: (context, state) => const AboutPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.settings,
-          name: 'settings',
-          builder: (context, state) => const SettingsPage(),
-        ),
-      ];
+    GoRoute(
+      path: AppRoutes.account,
+      name: 'account',
+      builder: (context, state) => const AccountPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.rules,
+      name: 'rules',
+      builder: (context, state) => const RulesPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.infoPacket,
+      name: 'info-packet',
+      builder: (context, state) => const InfoPacketPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.userManual,
+      name: 'user-manual',
+      builder: (context, state) => const UserManualPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.instructions,
+      name: 'instructions',
+      builder: (context, state) => const InstructionsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.about,
+      name: 'about',
+      builder: (context, state) => const AboutPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      name: 'settings',
+      builder: (context, state) => const SettingsPage(),
+    ),
+  ];
 }

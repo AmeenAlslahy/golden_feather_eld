@@ -55,6 +55,9 @@ void main() {
   Future<void> pump(
     WidgetTester tester, {
     required List<Override> overrides,
+    ThemeData? theme,
+    Locale locale = const Locale('en'),
+    double textScale = 1.0,
   }) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
@@ -66,14 +69,22 @@ void main() {
         overrides: [
           localStorageProvider.overrideWithValue(_Storage()),
           isConnectedProvider.overrideWith((ref) => Stream.value(true)),
-          gpsStatusProvider.overrideWith((ref) => Stream.value(ServiceStatus.enabled)),
+          gpsStatusProvider.overrideWith(
+            (ref) => Stream.value(ServiceStatus.enabled),
+          ),
           ...overrides,
         ],
         child: MaterialApp(
-          theme: AppTheme.light,
-          locale: const Locale('en'),
+          theme: theme ?? AppTheme.light,
+          locale: locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           home: const AboutPage(),
         ),
       ),
@@ -86,22 +97,32 @@ void main() {
   /// technical card in and collect again.
   Future<List<String>> allRows(WidgetTester tester) async {
     final top = rows(tester);
-    await tester.scrollUntilVisible(find.text('Technical Info'), 200,
-        scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      find.text('Technical Info'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pump(const Duration(milliseconds: 100));
     return {...top, ...rows(tester)}.toList();
   }
 
-  testWidgets('shows versions from the server and app/device identity', (tester) async {
-    await pump(tester, overrides: [
-      hardwareAlertsProvider.overrideWith(() => _Alerts(const [])),
-      hardwareStatusProvider.overrideWith((ref) async => const ConnectivityStatus(
+  testWidgets('shows versions from the server and app/device identity', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      overrides: [
+        hardwareAlertsProvider.overrideWith(() => _Alerts(const [])),
+        hardwareStatusProvider.overrideWith(
+          (ref) async => const ConnectivityStatus(
             connectionStatus: 'CONNECTED',
             engineVersion: '5.2.1',
             deviceVersion: 'HW-3.0',
             lastHeartbeat: '2026-09-24T06:00:00Z',
-          )),
-    ]);
+          ),
+        ),
+      ],
+    );
     expect(find.text('About'), findsOneWidget);
     // Server tile + the ELD connectivity panel (SRS 3.8) both read Connected.
     expect(find.text('Connected'), findsWidgets);
@@ -117,18 +138,25 @@ void main() {
   });
 
   testWidgets('missing versions are N/A and alerts are listed', (tester) async {
-    await pump(tester, overrides: [
-      hardwareAlertsProvider.overrideWith(() => _Alerts([
+    await pump(
+      tester,
+      overrides: [
+        hardwareAlertsProvider.overrideWith(
+          () => _Alerts([
             HardwareAlert(
               id: 'a1',
               type: 'MALFUNCTION',
               message: 'Power compliance malfunction',
               timestamp: DateTime(2026, 9, 24),
             ),
-          ])),
-      hardwareStatusProvider.overrideWith(
-          (ref) async => const ConnectivityStatus(connectionStatus: 'CONNECTED')),
-    ]);
+          ]),
+        ),
+        hardwareStatusProvider.overrideWith(
+          (ref) async =>
+              const ConnectivityStatus(connectionStatus: 'CONNECTED'),
+        ),
+      ],
+    );
     expect(find.text('Active alerts'), findsOneWidget);
     expect(find.text('• Power compliance malfunction'), findsOneWidget);
     final r = await allRows(tester);
@@ -138,13 +166,20 @@ void main() {
   });
 
   testWidgets('failures are sanitized — no raw exception text', (tester) async {
-    await pump(tester, overrides: [
-      hardwareAlertsProvider.overrideWith(_FailingAlerts.new),
-      hardwareStatusProvider.overrideWith(
-          (ref) async => throw Exception('DioException Hibernate extension')),
-    ]);
-    await tester.scrollUntilVisible(find.text('Technical Info'), 200,
-        scrollable: find.byType(Scrollable).first);
+    await pump(
+      tester,
+      overrides: [
+        hardwareAlertsProvider.overrideWith(_FailingAlerts.new),
+        hardwareStatusProvider.overrideWith(
+          (ref) async => throw Exception('DioException Hibernate extension'),
+        ),
+      ],
+    );
+    await tester.scrollUntilVisible(
+      find.text('Technical Info'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.textContaining('Dio'), findsNothing);
@@ -152,8 +187,54 @@ void main() {
     expect(find.textContaining('Exception'), findsNothing);
     expect(find.textContaining('Error:'), findsNothing);
     expect(
-      find.text('The request could not be completed. Check the network and try again.'),
+      find.text(
+        'The request could not be completed. Check the network and try again.',
+      ),
       findsWidgets,
     );
+  });
+
+  testWidgets('renders in dark mode without overflow', (tester) async {
+    await pump(
+      tester,
+      theme: AppTheme.dark,
+      overrides: [
+        hardwareAlertsProvider.overrideWith(() => _Alerts(const [])),
+        hardwareStatusProvider.overrideWith(
+          (ref) async =>
+              const ConnectivityStatus(connectionStatus: 'CONNECTED'),
+        ),
+      ],
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Connected'), findsWidgets);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -3000));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('supports Arabic RTL at 200% text scale', (tester) async {
+    await pump(
+      tester,
+      locale: const Locale('ar'),
+      textScale: 2.0,
+      overrides: [
+        hardwareAlertsProvider.overrideWith(() => _Alerts(const [])),
+        hardwareStatusProvider.overrideWith(
+          (ref) async =>
+              const ConnectivityStatus(connectionStatus: 'CONNECTED'),
+        ),
+      ],
+    );
+
+    expect(
+      Directionality.of(tester.element(find.byType(AboutPage))),
+      TextDirection.rtl,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -5000));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }

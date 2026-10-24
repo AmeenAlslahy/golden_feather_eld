@@ -10,12 +10,16 @@ class SignatureDraftCodec {
   /// تحويل قائمة النقاط إلى نص JSON
   static String encodePoints(List<Point> points) {
     if (points.isEmpty) return '[]';
-    final list = points.map((p) => {
-      'x': p.offset.dx,
-      'y': p.offset.dy,
-      't': p.type.name,
-      'p': p.pressure,
-    }).toList();
+    final list = points
+        .map(
+          (p) => {
+            'x': p.offset.dx,
+            'y': p.offset.dy,
+            't': p.type.name,
+            'p': p.pressure,
+          },
+        )
+        .toList();
     return jsonEncode(list);
   }
 

@@ -73,21 +73,19 @@ class AppStyles extends ThemeExtension<AppStyles> {
   /// — الآن كل نمط يُشتق من الرموز مباشرة حسب الإضاءة.
   factory AppStyles.fromBrightness(Brightness brightness) {
     final isLight = brightness == Brightness.light;
-    final primary =
-        isLight ? AppColors.textPrimary : AppColors.darkTextPrimary;
-    final secondary =
-        isLight ? AppColors.textSecondary : AppColors.darkTextSecondary;
+    final primary = isLight ? AppColors.textPrimary : AppColors.darkTextPrimary;
+    final secondary = isLight
+        ? AppColors.textSecondary
+        : AppColors.darkTextSecondary;
     final danger = isLight ? AppColors.dangerText : AppColors.dangerOnDark;
-    final success =
-        isLight ? AppColors.successText : AppColors.successOnDark;
-    final warning =
-        isLight ? AppColors.warningText : AppColors.warningOnDark;
+    final success = isLight ? AppColors.successText : AppColors.successOnDark;
+    final warning = isLight ? AppColors.warningText : AppColors.warningOnDark;
     final gold = isLight ? AppColors.goldDeep : AppColors.primaryGold;
-    return  AppStyles(
+    return AppStyles(
       appBarTitle: const TextStyle(
-        fontSize: AppTypography.bodySize,
-        fontWeight: AppTypography.bold,
-        color: AppColors.surface,
+        fontSize: AppTypography.appBarTitleSize,
+        fontWeight: AppTypography.semiBold,
+        color: AppColors.onGold,
         height: 1.3,
       ),
       pageTitle: TextStyle(
@@ -98,10 +96,10 @@ class AppStyles extends ThemeExtension<AppStyles> {
         height: 1.25,
       ),
       sectionTitle: TextStyle(
-        fontSize: AppTypography.bodySize,
+        fontSize: AppTypography.sectionTitleSize,
         fontWeight: AppTypography.semiBold,
         color: primary,
-        height: 1.3,
+        height: 1.5,
       ),
       body: TextStyle(
         fontSize: AppTypography.bodySize,
@@ -113,7 +111,7 @@ class AppStyles extends ThemeExtension<AppStyles> {
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.bold,
         color: primary,
-        height: 1.3,
+        height: 1.5,
       ),
       arabicBody: TextStyle(
         fontSize: AppTypography.bodySize,
@@ -128,11 +126,11 @@ class AppStyles extends ThemeExtension<AppStyles> {
         height: 1.4,
       ),
       caption: TextStyle(
-        fontSize: AppTypography.smallSize,
+        fontSize: AppTypography.captionSize,
         fontWeight: AppTypography.regular,
         color: secondary,
         letterSpacing: 0.2,
-        height: 1.3,
+        height: 1.33,
       ),
       onBandTitle: const TextStyle(
         fontSize: AppTypography.sheetTitleSize,
@@ -179,10 +177,10 @@ class AppStyles extends ThemeExtension<AppStyles> {
       ),
       button: const TextStyle(
         fontSize: AppTypography.bodySize,
-        fontWeight: AppTypography.bold,
-        color: AppColors.surface,
-        letterSpacing: 0.6,
-        height: 1.2,
+        fontWeight: AppTypography.semiBold,
+        color: AppColors.onGold,
+        letterSpacing: 0.2,
+        height: 1.25,
       ),
       error: TextStyle(
         fontSize: AppTypography.subtitleSize,
@@ -215,7 +213,7 @@ class AppStyles extends ThemeExtension<AppStyles> {
         height: 1.5,
       ),
       number: TextStyle(
-        fontSize: 18,
+        fontSize: AppTypography.numberSize,
         fontWeight: AppTypography.bold,
         color: primary,
         fontFeatures: const [FontFeature.tabularFigures()],
@@ -322,5 +320,3 @@ class AppStyles extends ThemeExtension<AppStyles> {
     );
   }
 }
-
-

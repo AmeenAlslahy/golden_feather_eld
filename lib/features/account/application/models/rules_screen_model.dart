@@ -10,19 +10,19 @@ class RulesScreenModel {
   final String restart;
   final String restBreak;
   final bool sixteenHourException;
-  
+
   /// Options available for dropdowns
   final Map<String, List<String>> options;
-  
+
   /// Fields that the user is authorized to edit
   final Set<String> editableFields;
-  
+
   /// Fields that must be rendered as read-only info rows
   final Set<String> readOnlyFields;
-  
+
   /// Fixed settings dictated by the fleet
   final Map<String, dynamic> fixedSettings;
-  
+
   /// Authorization notice or generic warning
   final String notice;
 
@@ -67,8 +67,9 @@ class RulesScreenModel {
     if (rawOptions is Map) {
       for (final entry in rawOptions.entries) {
         if (entry.value is List) {
-          options[entry.key.toString()] =
-              (entry.value as List).map((e) => e.toString()).toList();
+          options[entry.key.toString()] = (entry.value as List)
+              .map((e) => e.toString())
+              .toList();
         }
       }
     }
@@ -84,15 +85,13 @@ class RulesScreenModel {
       cargoType: json['cargoType']?.toString() ?? '',
       restart: json['restart']?.toString() ?? '',
       restBreak: json['restBreak']?.toString() ?? '',
-      sixteenHourException: json['sixteenHourException'] == true,
+      sixteenHourException: parseBool(json['sixteenHourException']),
       options: options,
-      editableFields: (json['editableFields'] as List?)
-              ?.map((e) => e.toString())
-              .toSet() ??
+      editableFields:
+          (json['editableFields'] as List?)?.map((e) => e.toString()).toSet() ??
           const {},
-      readOnlyFields: (json['readOnlyFields'] as List?)
-              ?.map((e) => e.toString())
-              .toSet() ??
+      readOnlyFields:
+          (json['readOnlyFields'] as List?)?.map((e) => e.toString()).toSet() ??
           const {},
       fixedSettings: json['fixedSettings'] is Map
           ? Map<String, dynamic>.from(json['fixedSettings'] as Map)
@@ -105,14 +104,12 @@ class RulesScreenModel {
   /// الخادم قد يرسل مفاتيح نصية (personalConveyance: "Allowed")
   /// أو الصيغة المنطقية (*Enabled: true) — هذا الفاحص الموحد يقبل الصيغتين.
   bool get isPersonalConveyanceAllowed => _isSettingAllowed(const [
-        'personalConveyance',
-        'personalConveyanceEnabled',
-      ]);
+    'personalConveyance',
+    'personalConveyanceEnabled',
+  ]);
 
-  bool get isYardMoveAllowed => _isSettingAllowed(const [
-        'yardMoves',
-        'yardMoveEnabled',
-      ]);
+  bool get isYardMoveAllowed =>
+      _isSettingAllowed(const ['yardMoves', 'yardMoveEnabled']);
 
   static const _allowedValues = {
     'allowed',
@@ -123,6 +120,14 @@ class RulesScreenModel {
     'on',
     'permitted',
   };
+
+  static bool parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    final t = value.toString().trim().toLowerCase();
+    return _allowedValues.contains(t);
+  }
+
   static const _forbiddenValues = {
     'forbidden',
     'false',
@@ -132,7 +137,8 @@ class RulesScreenModel {
     'off',
   };
 
-  bool _isSettingAllowed(List<String> keys) => tryIsSettingAllowed(keys) ?? false;
+  bool _isSettingAllowed(List<String> keys) =>
+      tryIsSettingAllowed(keys) ?? false;
 
   /// نتيجة ثلاثية: true مباح، false ممنوع، null غير معروف/غير موجود.
   bool? tryIsSettingAllowed(List<String> keys) {

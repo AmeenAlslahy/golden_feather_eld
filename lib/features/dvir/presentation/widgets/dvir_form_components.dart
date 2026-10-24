@@ -1,40 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
+
 class DvirFieldGroup extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const DvirFieldGroup({
-    super.key,
-    required this.title,
-    required this.child,
-  });
+  const DvirFieldGroup({super.key, required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE0E0E0),
-            width: 1,
-          ),
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.rowVertical,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
+          Text(title, style: context.styles.sectionTitle),
+          const SizedBox(height: AppSpacing.sm),
           child,
         ],
       ),
@@ -45,6 +37,7 @@ class DvirFieldGroup extends StatelessWidget {
 class DvirCell extends StatelessWidget {
   final String title;
   final Widget child;
+
   /// null = يستخدم لون الثيم الافتراضي (outline).
   /// يُمرر فقط عند تجاوز اللون (مثل حالة خطأ التحقق).
   final Color? borderColor;
@@ -62,24 +55,17 @@ class DvirCell extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: borderColor ?? const Color(0xFFE0E0E0),
+            color: borderColor ?? Theme.of(context).dividerColor,
             width: 1,
           ),
         ),
       ),
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
+          Text(title, style: context.styles.sectionTitle),
+          const SizedBox(height: AppSpacing.sm),
           child,
         ],
       ),
@@ -91,29 +77,25 @@ class DvirTwoColumn extends StatelessWidget {
   final Widget left;
   final Widget right;
 
-  const DvirTwoColumn({
-    super.key,
-    required this.left,
-    required this.right,
-  });
+  const DvirTwoColumn({super.key, required this.left, required this.right});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE0E0E0),
-            width: 1,
-          ),
+          bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(child: left),
-          const SizedBox(width: 24),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(child: right),
         ],
       ),
@@ -144,13 +126,13 @@ class DvirFlatTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 14, color: Colors.black),
+      style: context.styles.body,
       readOnly: readOnly,
       validator: validator,
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF9E9E9E)),
+        hintStyle: context.styles.subtitle,
         border: InputBorder.none,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 2),
@@ -184,10 +166,7 @@ class DvirDropdownField extends StatelessWidget {
           width: double.infinity,
           child: Text(
             hasValue ? text : hint,
-            style: TextStyle(
-              fontSize: 14,
-              color: hasValue ? Colors.black : const Color(0xFF9E9E9E),
-            ),
+            style: hasValue ? context.styles.body : context.styles.subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -196,4 +175,3 @@ class DvirDropdownField extends StatelessWidget {
     );
   }
 }
-

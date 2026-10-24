@@ -5,7 +5,9 @@ import 'rules_screen_provider.dart';
 
 /// Exposes the driver's active rules, derived from the rules screen projection.
 /// Must be autoDispose because it watches rulesScreenProvider (which is autoDispose).
-final driverRulesProvider = Provider.autoDispose<AsyncValue<DriverRules>>((ref) {
+final driverRulesProvider = Provider.autoDispose<AsyncValue<DriverRules>>((
+  ref,
+) {
   return ref.watch(rulesScreenProvider).whenData((model) {
     return DriverRules(
       isPersonalConveyanceAllowed: model.isPersonalConveyanceAllowed,

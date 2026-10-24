@@ -15,7 +15,7 @@ import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/domain/duty_status/weekly_recap.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/hos/domain/engine/tracking/duty_status_tracker.dart';
-import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/hos/domain/repositories/duty_period_store.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/sqlite_duty_event_journal.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/sqlite_offline_queue.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/dispatch_auth.dart';
@@ -68,7 +68,7 @@ void main() {
       _TestSyncEngine? sync,
     }) {
       final tracker = DutyStatusTracker(
-        logRepository: _TestLogRepository(),
+        dutyPeriodStore: _TestDutyPeriodStore(),
         localStorage: storage,
         syncEngine: sync ?? _TestSyncEngine(),
         dashboardBackend: _TestDashboardBackend(),
@@ -319,7 +319,7 @@ void main() {
       'T12b failed append leaves tracker state and stream unchanged',
       () async {
         final tracker = DutyStatusTracker(
-          logRepository: _TestLogRepository(),
+          dutyPeriodStore: _TestDutyPeriodStore(),
           localStorage: _TestStorage(),
           syncEngine: _TestSyncEngine(),
           dashboardBackend: _TestDashboardBackend(),
@@ -416,7 +416,7 @@ void main() {
           initialUtcTime: DateTime.utc(2026, 3, 1, 8),
         );
         final tracker = DutyStatusTracker(
-          logRepository: _TestLogRepository(),
+          dutyPeriodStore: _TestDutyPeriodStore(),
           localStorage: _TestStorage(),
           syncEngine: _TestSyncEngine(),
           dashboardBackend: _TestDashboardBackend(),
@@ -468,7 +468,7 @@ void main() {
           ),
         );
         final tracker = DutyStatusTracker(
-          logRepository: _TestLogRepository(),
+          dutyPeriodStore: _TestDutyPeriodStore(),
           localStorage: _TestStorage(),
           syncEngine: _TestSyncEngine(),
           dashboardBackend: _TestDashboardBackend(),
@@ -519,7 +519,7 @@ void main() {
     test('T7 a failed initial read is retryable', () async {
       final journal = _FlakyJournal();
       final tracker = DutyStatusTracker(
-        logRepository: _TestLogRepository(),
+        dutyPeriodStore: _TestDutyPeriodStore(),
         localStorage: _TestStorage(),
         syncEngine: _TestSyncEngine(),
         dashboardBackend: _TestDashboardBackend(),
@@ -546,7 +546,7 @@ void main() {
           NetworkError(code: 'network.offline', l10nKey: 'errNetwork'),
         );
       final tracker = DutyStatusTracker(
-        logRepository: _TestLogRepository(),
+        dutyPeriodStore: _TestDutyPeriodStore(),
         localStorage: _TestStorage(),
         syncEngine: _TestSyncEngine(),
         dashboardBackend: dashboard,
@@ -676,13 +676,12 @@ class _TestStorage implements LocalStorageService {
   }
 }
 
-class _TestLogRepository implements LogRepository {
+class _TestDutyPeriodStore implements DutyPeriodStore {
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<List<DutyPeriod>> getPeriods(DateTime date) async => const [];
 
   @override
-  Future<Either<Failure, bool>> savePeriod(DutyPeriod period) async =>
-      const Right(true);
+  Future<void> savePeriod(DutyPeriod period) async {}
 }
 
 class _TestSyncEngine implements SyncEngine {

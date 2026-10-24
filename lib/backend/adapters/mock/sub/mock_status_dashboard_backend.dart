@@ -49,7 +49,8 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
   // ==========================================================================
 
   StatusDashboard _buildDashboard() {
-    final isRest = _currentStatus == DutyStatusCode.offDuty ||
+    final isRest =
+        _currentStatus == DutyStatusCode.offDuty ||
         _currentStatus == DutyStatusCode.sleeperBerth ||
         _currentStatus == DutyStatusCode.personalConveyance;
 
@@ -165,14 +166,8 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
       days: List.generate(7, (i) {
         final date = startDate.add(Duration(days: i));
         // Deterministic pattern per day index.
-        final driving = Duration(
-          hours: 6 + (i % 3),
-          minutes: (i * 15) % 60,
-        );
-        final onDuty = Duration(
-          hours: 7 + (i % 2),
-          minutes: (i * 10) % 60,
-        );
+        final driving = Duration(hours: 6 + (i % 3), minutes: (i * 15) % 60);
+        final onDuty = Duration(hours: 7 + (i % 2), minutes: (i * 10) % 60);
         return RecapDay(
           date: date,
           dayOfWeek: _dayOfWeek(date),

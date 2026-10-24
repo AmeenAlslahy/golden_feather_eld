@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../routes.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/network/core_providers.dart';
 import '../providers/dot_inspection_providers.dart';
 import '../providers/inspection_provider.dart';
@@ -84,7 +85,9 @@ class InspectionStartView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenAsync = ref.watch(dotInspectionScreenProvider);
     final screen = screenAsync.asData?.value;
-    final isOnline = ref.watch(networkInfoProvider.select((n) => n.isConnected));
+    final isOnline = ref.watch(
+      networkInfoProvider.select((n) => n.isConnected),
+    );
 
     final gate = InspectionCapabilityGate(
       serverAnswered: screen != null,
@@ -156,12 +159,17 @@ class InspectionStartView extends ConsumerWidget {
       children: [
         if (screenAsync.isLoading)
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
             child: LinearProgressIndicator(minHeight: 2),
           ),
         if (error != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.md,
+              AppSpacing.screenPadding,
+              AppSpacing.md,
+            ),
             child: Text(
               error,
               textAlign: TextAlign.center,
@@ -175,7 +183,12 @@ class InspectionStartView extends ConsumerWidget {
         // الخادم معطّل — بينما هو سليم والإقرار هو ما تعذّر.
         if (gate.offlineWithoutServerAnswer)
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.md,
+              AppSpacing.screenPadding,
+              AppSpacing.sm,
+            ),
             child: Column(
               children: [
                 Text(
@@ -183,7 +196,7 @@ class InspectionStartView extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: context.styles.subtitle,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   loc.weakConnectionDelayedData,
                   textAlign: TextAlign.center,
@@ -195,7 +208,12 @@ class InspectionStartView extends ConsumerWidget {
         // الخادم متصل ولم يجب بعد ⇒ جلبٌ جارٍ، لا خطأ.
         else if (screenAsync.hasError)
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.md,
+              AppSpacing.screenPadding,
+              AppSpacing.sm,
+            ),
             child: Column(
               children: [
                 Text(
@@ -214,7 +232,7 @@ class InspectionStartView extends ConsumerWidget {
           if (i > 0) const Divider(height: 1, thickness: 1),
           InspectionActionSection(data: section),
         ],
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.sectionGap),
       ],
     );
   }
@@ -233,7 +251,10 @@ class InspectionActionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.sectionGap,
+      ),
       child: Column(
         children: [
           Text(
@@ -242,21 +263,21 @@ class InspectionActionSection extends StatelessWidget {
             style: context.styles.body,
           ),
           if (data.description != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               data.description!,
               textAlign: TextAlign.center,
               style: context.styles.muted,
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.md),
           AppButton(
             label: data.buttonLabel,
             type: EldButtonType.primary,
             onPressed: data.enabled ? data.onPressed : null,
           ),
           if (!data.enabled && data.disabledMessage != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               data.disabledMessage!,
               textAlign: TextAlign.center,

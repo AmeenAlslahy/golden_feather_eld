@@ -7,6 +7,10 @@ library;
 
 const _placeholders = {'', 'None', '-', 'none'};
 
+/// Server contract limits for daily-form list items.
+const int maxTrailerNumberLength = 50;
+const int maxShippingDocumentLength = 100;
+
 /// Splits the stored form value into its items, dropping placeholders.
 List<String> splitFormList(String? raw) {
   if (raw == null) return const [];
@@ -26,12 +30,10 @@ String joinFormList(List<String> items) =>
 /// مرفوضة — والفاصلة (`,`) فاصل عناصر أصلاً. [extra] يضيف رموزاً
 /// خاصة بنوع (مثل `/` لأرقام وثائق الشحن BOL).
 final RegExp _labelBase = RegExp(r'^[\p{L}\p{N}\s\-_#]+$', unicode: true);
-final RegExp _labelWithSlash =
-    RegExp(r'^[\p{L}\p{N}\s\-_#/]+$', unicode: true);
+final RegExp _labelWithSlash = RegExp(r'^[\p{L}\p{N}\s\-_#/]+$', unicode: true);
 
 /// الجوهر المطلوب: حرف أو رقم واحد على الأقل — "..." أو ",,," مرفوضة.
-final RegExp _labelSubstance =
-    RegExp(r'[\p{L}\p{N}]', unicode: true);
+final RegExp _labelSubstance = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
 /// نص حر (موقع/سبب): حروف وأرقام كل اللغات + ترقيم نصي أساسي فقط.
 /// تُرفض علامات الرياضيات (`= + * / \ < > | ~ ` ^ % $ &`) والأقواس
@@ -57,24 +59,20 @@ bool isFreeTextValid(String value, {int maxLength = 200}) {
   return _freeTextChars.hasMatch(v) && _labelSubstance.hasMatch(v);
 }
 
-enum TrailerValidationError {
-  empty,
-  tooLong,
-  formatError,
-}
+enum TrailerValidationError { empty, tooLong, formatError }
 
-enum ShippingDocValidationError {
-  empty,
-  tooLong,
-  containsComma,
-  formatError,
-}
+enum ShippingDocValidationError { empty, tooLong, containsComma, formatError }
 
 /// يتحقق من صحة رقم المقطورة ويعيد رمز الخطأ في المجال أو null إذا كان صحيحاً.
 TrailerValidationError? validateTrailerNumber(String value) {
   final v = value.trim();
   if (v.isEmpty) return TrailerValidationError.empty;
-  if (!isFormLabelValid(v, 50)) return TrailerValidationError.formatError;
+  if (v.length > maxTrailerNumberLength) {
+    return TrailerValidationError.tooLong;
+  }
+  if (!isFormLabelValid(v, maxTrailerNumberLength)) {
+    return TrailerValidationError.formatError;
+  }
   return null;
 }
 
@@ -82,39 +80,12 @@ TrailerValidationError? validateTrailerNumber(String value) {
 ShippingDocValidationError? validateShippingDocument(String value) {
   final v = value.trim();
   if (v.isEmpty) return ShippingDocValidationError.empty;
-  if (v.length > 100) return ShippingDocValidationError.tooLong;
+  if (v.length > maxShippingDocumentLength) {
+    return ShippingDocValidationError.tooLong;
+  }
   if (v.contains(',')) return ShippingDocValidationError.containsComma;
-  if (!isFormLabelValid(v, 100, allowSlash: true)) {
+  if (!isFormLabelValid(v, maxShippingDocumentLength, allowSlash: true)) {
     return ShippingDocValidationError.formatError;
   }
   return null;
-}
-
-/// `UpdateDailyFormRequest.trailers[].trailerNumber` rule.
-String? trailerNumberError(String value, dynamic loc) {
-  final err = validateTrailerNumber(value);
-  if (err == null) return null;
-  switch (err) {
-    case TrailerValidationError.empty:
-      return (loc?.enterTrailerNumber as String?) ?? 'Enter trailer number';
-    case TrailerValidationError.tooLong:
-    case TrailerValidationError.formatError:
-      return (loc?.trailerNumberFormatError as String?) ?? 'Invalid trailer number format';
-  }
-}
-
-/// `UpdateDailyFormRequest.shippingDocuments[].documentNumber` rule.
-String? shippingDocumentError(String value, dynamic loc) {
-  final err = validateShippingDocument(value);
-  if (err == null) return null;
-  switch (err) {
-    case ShippingDocValidationError.empty:
-      return (loc?.enterDocumentNumber as String?) ?? 'Enter document number';
-    case ShippingDocValidationError.tooLong:
-      return (loc?.documentNumberTooLong as String?) ?? 'Document number too long';
-    case ShippingDocValidationError.containsComma:
-      return (loc?.oneDocumentAtATime as String?) ?? 'One document at a time';
-    case ShippingDocValidationError.formatError:
-      return (loc?.shippingDocumentFormatError as String?) ?? 'Invalid document number format';
-  }
 }

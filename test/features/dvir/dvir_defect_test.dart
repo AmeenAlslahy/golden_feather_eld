@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/dvir/data/mappers/dvir_defect_mappers.dart';
+import 'package:golden_feather_eld/features/dvir/domain/defect_enums.dart';
 
 void main() {
   // شكل حي من GET /eld/dvir/defects/{id} (مواصفة §07.1) — لا حقول مخترعة.
@@ -44,15 +45,17 @@ void main() {
       expect(defect, isNotNull);
       expect(defect!.id, 42);
       expect(defect.itemCode, 'BRAKES');
-      expect(defect.severity, 'HIGH');
-      expect(defect.stage, 'OPEN');
+      expect(defect.severity, DefectSeverity.high);
+      expect(defect.stage, DefectLifecycleStage.open);
       expect(defect.outOfService, isTrue);
       expect(defect.repairActions, hasLength(1));
       expect(defect.repairActions.first.performedByName, 'Mechanic John');
       expect(defect.repairActions.first.workOrderNumber, 'WO-98421');
       expect(defect.certifications, hasLength(1));
-      expect(defect.certifications.first.certifiedByName,
-          'Carrier Safety Officer');
+      expect(
+        defect.certifications.first.certifiedByName,
+        'Carrier Safety Officer',
+      );
     });
 
     test('absent fields stay null and unknown id returns null', () {
@@ -68,6 +71,31 @@ void main() {
       expect(defect.repairActions, isEmpty);
       expect(defect.certifications, isEmpty);
     });
+
+    test(
+      'severity and stage are domain enums; unknown wire values stay null',
+      () {
+        final defect = parseDvirDefect({
+          'id': 7,
+          'severity': 'medium',
+          'stage': 'under_repair',
+        });
+        expect(defect!.severity, DefectSeverity.medium);
+        expect(defect.stage, DefectLifecycleStage.underRepair);
+
+        final unknown = parseDvirDefect({
+          'id': 8,
+          'severity': 'critical',
+          'stage': 'off_duty',
+        });
+        expect(unknown!.severity, isNull);
+        expect(unknown.stage, isNull);
+
+        final missing = parseDvirDefect({'id': 9});
+        expect(missing!.severity, isNull);
+        expect(missing.stage, isNull);
+      },
+    );
   });
 
   group('parseDvirDefectList', () {
@@ -76,16 +104,23 @@ void main() {
       expect(bare, hasLength(1));
       expect(bare!.first.id, 42);
 
-      final enveloped = parseDvirDefectList({'data': [liveDefect]});
+      final enveloped = parseDvirDefectList({
+        'data': [liveDefect],
+      });
       expect(enveloped, hasLength(1));
 
-      final items = parseDvirDefectList({'items': [liveDefect]});
+      final items = parseDvirDefectList({
+        'items': [liveDefect],
+      });
       expect(items, hasLength(1));
     });
 
     test('one unreadable row rejects the whole body (never partial truth)', () {
       expect(
-        parseDvirDefectList([liveDefect, {'itemName': 'no-id-row'}]),
+        parseDvirDefectList([
+          liveDefect,
+          {'itemName': 'no-id-row'},
+        ]),
         isNull,
       );
       expect(parseDvirDefectList({'unexpected': true}), isNull);

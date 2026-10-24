@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 
 import '../../../../domain/shared/value_objects.dart';
+import '../../data/codecs/signature_draft_codec.dart';
 import '../../data/providers/log_repository_providers.dart';
 import '../../domain/repositories/log_repository.dart';
-import '../../domain/signature_draft_codec.dart';
 
 /// يدير مسودة التوقيع لكل سجل يومي بالذاكرة مع الحفظ الدائم على الجهاز
 class LogDraftSignatureNotifier extends StateNotifier<List<Point>> {
@@ -48,8 +48,12 @@ class LogDraftSignatureNotifier extends StateNotifier<List<Point>> {
 
 /// موفر يدير مسودة التوقيع بالذاكرة ويزامنها مع التخزين المحلي، دون autoDispose
 /// حتى لا تضيع مسودة السائق عند التنقل بين الشاشات أو عند تدمير عناصر الواجهة.
-final logDraftSignatureProvider = StateNotifierProvider.family<
-    LogDraftSignatureNotifier, List<Point>, DailyLogId>((ref, logId) {
-  final repository = ref.watch(logRepositoryProvider);
-  return LogDraftSignatureNotifier(logId, repository);
-});
+final logDraftSignatureProvider =
+    StateNotifierProvider.family<
+      LogDraftSignatureNotifier,
+      List<Point>,
+      DailyLogId
+    >((ref, logId) {
+      final repository = ref.watch(logRepositoryProvider);
+      return LogDraftSignatureNotifier(logId, repository);
+    });

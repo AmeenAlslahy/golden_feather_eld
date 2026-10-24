@@ -17,10 +17,8 @@ class EldConnectivityPanel extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: status.when(
-        loading: () => Text(
-          loc.eldDiagnosticReading,
-          style: context.styles.body,
-        ),
+        loading: () =>
+            Text(loc.eldDiagnosticReading, style: context.styles.body),
         error: (error, _) => Text(
           anyErrorUserMessage(error, loc: AppLocalizations.of(context)!),
           style: context.styles.error,
@@ -42,10 +40,8 @@ class EldConnectivityPanel extends ConsumerWidget {
         loc.eldDiagnosticLastValidDataFormat(data.lastHeartbeat!),
       if (data.dataAgeSeconds != null)
         loc.eldDiagnosticDataAgeFormat(data.dataAgeSeconds!.toString()),
-      if (data.normalOperationAllowed == false)
-        loc.eldDiagnosticNotReady,
-      if (data.isReliable == false)
-        loc.eldDiagnosticDataNotReliable,
+      if (data.normalOperationAllowed == false) loc.eldDiagnosticNotReady,
+      if (data.isReliable == false) loc.eldDiagnosticDataNotReliable,
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -226,6 +226,21 @@ void main() {
       );
       expect(ui.liveRemaining, const Duration(hours: -1, minutes: -30));
     });
+
+    test('قيمة الخادم السالبة (تجاوز حدّ) تبقى سالبة مع مرور الوقت ولا تُصفَّر', () {
+      final ui = CircularTimerLogic.calculateUiState(
+        circle: const RemainingCircle(
+          remaining: Duration(hours: -1, minutes: -30),
+          label: 'Remaining',
+          progress: 1,
+        ),
+        dutyStatus: DutyStatusCode.driving,
+        hosIndicators: null,
+        statusLabel: 'Driving',
+        elapsedSinceSnapshot: const Duration(minutes: 5),
+      );
+      expect(ui.liveRemaining, const Duration(hours: -1, minutes: -35));
+    });
   });
 
   group('الخادم هو المرجع: استبدال كامل بلا تقليص أحادي', () {

@@ -105,7 +105,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             },
             onSubmitted: (_) => _handleLogin(),
           ),
-          
+
           // نسيت كلمة المرور؟ (إرشاد فقط: الاستعادة تتم عبر المنصة المركزية)
           Align(
             alignment: AlignmentDirectional.centerEnd,

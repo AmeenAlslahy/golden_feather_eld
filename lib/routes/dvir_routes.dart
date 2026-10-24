@@ -9,25 +9,25 @@ class DvirRoutes {
   DvirRoutes._();
 
   static List<RouteBase> get routes => [
-        GoRoute(
-          path: AppRoutes.dvir,
-          name: 'dvir',
-          builder: (context, state) => const DvirListPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.dvirForm,
-          name: 'dvirForm',
-          builder: (context, state) => const DvirFormPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.inspection,
-          name: 'inspection',
-          builder: (context, state) => const DotInspectionPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.sendLogs,
-          name: 'sendLogs',
-          builder: (context, state) => const SendLogsPage(),
-        ),
-      ];
+    GoRoute(
+      path: AppRoutes.dvir,
+      name: 'dvir',
+      builder: (context, state) => const DvirListPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.dvirForm,
+      name: 'dvirForm',
+      builder: (context, state) => const DvirFormPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.inspection,
+      name: 'inspection',
+      builder: (context, state) => const DotInspectionPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.sendLogs,
+      name: 'sendLogs',
+      builder: (context, state) => const SendLogsPage(),
+    ),
+  ];
 }

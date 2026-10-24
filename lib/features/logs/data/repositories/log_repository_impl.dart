@@ -90,31 +90,32 @@ class LogRepositoryImpl implements LogRepository {
       return result.match(
         (failure) => throw ServerException(message: failure.l10nKey),
         (data) {
-        final logsJson = (data['data'] as List<dynamic>? ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        if (page == 0) {
-          // Fire-and-forget; a cache failure must not fail the read.
-          _cacheQuietly(_localDataSource.cacheDailyLogs(driverId, logsJson));
-        }
-        final pagination = data['pagination'] is Map
-            ? Map<String, dynamic>.from(data['pagination'] as Map)
-            : const <String, dynamic>{};
-        return DailyLogPage(
-          logs: _toDailyLogs(logsJson),
-          page: page,
-          // خادم بلا `pagination` (عقد أقدم): اكتمال الصفحة = لا مزيد.
-          hasNext: pagination.isEmpty
-              ? logsJson.length >= size
-              : pagination['hasNext'] == true,
-          totalElements: pagination['totalElements'] is int
-              ? pagination['totalElements'] as int
-              : null,
-          totalPages: pagination['totalPages'] is int
-              ? pagination['totalPages'] as int
-              : null,
-        );
-      });
+          final logsJson = (data['data'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .toList();
+          if (page == 0) {
+            // Fire-and-forget; a cache failure must not fail the read.
+            _cacheQuietly(_localDataSource.cacheDailyLogs(driverId, logsJson));
+          }
+          final pagination = data['pagination'] is Map
+              ? Map<String, dynamic>.from(data['pagination'] as Map)
+              : const <String, dynamic>{};
+          return DailyLogPage(
+            logs: _toDailyLogs(logsJson),
+            page: page,
+            // خادم بلا `pagination` (عقد أقدم): اكتمال الصفحة = لا مزيد.
+            hasNext: pagination.isEmpty
+                ? logsJson.length >= size
+                : pagination['hasNext'] == true,
+            totalElements: pagination['totalElements'] is int
+                ? pagination['totalElements'] as int
+                : null,
+            totalPages: pagination['totalPages'] is int
+                ? pagination['totalPages'] as int
+                : null,
+          );
+        },
+      );
     }, tag: 'LogRepositoryImpl.getDailyLogs');
   }
 
@@ -133,9 +134,11 @@ class LogRepositoryImpl implements LogRepository {
         final cached = await _localDataSource.getCachedDailyLogs(owner);
         if (cached != null) {
           final found = cached
-              .where((m) =>
-                  m['id'] == logId.value ||
-                  m['id']?.toString() == logId.value.toString())
+              .where(
+                (m) =>
+                    m['id'] == logId.value ||
+                    m['id']?.toString() == logId.value.toString(),
+              )
               .toList();
           if (found.isNotEmpty) {
             return Right(DailyLogDto.fromJson(found.first).toEntity());
@@ -214,7 +217,8 @@ class LogRepositoryImpl implements LogRepository {
             'status': wire,
             'startTime': event.startTime.toUtc().toIso8601String(),
             if (event.location.isNotEmpty) 'locationText': event.location,
-            if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
+            if (reason != null && reason.trim().isNotEmpty)
+              'notes': reason.trim(),
             'origin': 'MANUAL',
             'clientId': event.id,
             if (ownerDriverId != null) 'driverId': ownerDriverId,
@@ -265,7 +269,10 @@ class LogRepositoryImpl implements LogRepository {
         tag: 'LogRepositoryImpl.updateEvent(local)',
       );
       if (localResult.isLeft()) {
-        return localResult.fold((failure) => Left(failure), (_) => Right(event));
+        return localResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(event),
+        );
       }
 
       await _offlineQueue.enqueue(
@@ -288,34 +295,24 @@ class LogRepositoryImpl implements LogRepository {
       return Right(event);
     }
 
-    // Online:
-    //   - numeric statusId + parent logId → العقد الموحّد
-    //     (`PUT /eld/daily-logs/{logId}/events/{eventId}`): الحقول
-    //     `status`/`startTime`/`notes` + `location{description}`.
-    //   - statusId بلا logId (سجل قديم) → PUT /eld/duty-status/{id} بـ
-    //     `editReason` (كما كان).
-    //   - معرّف UUID محلي → POST /eld/duty-status مع `clientId` ليكمل
-    //     الخادم التماثل.
-    // §395.30 — سبب السائق الإلزامي يصل على كل المسارات في الحقل الذي
-    // يقرأه المسار فعلاً.
-    final result = statusId != null && logId != null
-        ? await _dailyLogsBackend.updateEvent(
-            logId: logId,
-            eventId: DutyStatusId(statusId),
-            event: _mapEventUpdateToJson(wire, event, reason),
-            expectedOwnerDriverId: ownerDriverId,
-          )
-        : statusId == null
-            ? await _dutyStatusBackend.record({
-                ...base,
-                'notes': reason.trim(),
-                'origin': 'MANUAL',
-                'clientId': event.id,
-              })
-            : await _dutyStatusBackend.update(
-                statusId: DutyStatusId(statusId),
-                update: {...base, 'editReason': reason.trim()},
-              );
+    // Local UUIDs are created through POST /eld/duty-status.
+    // Persisted events use PUT /eld/duty-status/{id}; the unified
+    // PUT /eld/daily-logs/{logId}/events/{eventId} returned 404 on the live API.
+    // Keep the failing call commented until that route is available:
+    // final unifiedResult = await _dailyLogsBackend.updateEvent(...);
+    // Correct path: this endpoint requires `editReason` and accepts
+    // `locationText` (already included in `base`).
+    final result = statusId == null
+        ? await _dutyStatusBackend.record({
+            ...base,
+            'notes': reason.trim(),
+            'origin': 'MANUAL',
+            'clientId': event.id,
+          })
+        : await _dutyStatusBackend.update(
+            statusId: DutyStatusId(statusId),
+            update: {...base, 'editReason': reason.trim()},
+          );
 
     return result.fold((error) => Left(ServerFailure(message: error.l10nKey)), (
       raw,
@@ -348,21 +345,6 @@ class LogRepositoryImpl implements LogRepository {
   /// تعديل وقت البدء (`editRestrictions` في الوثيقة تحدّد نافذته)،
   /// و`location.description` هو الشكل المتاح محلياً (المحرر لا يجمع
   /// إحداثيات). `vehicleId` غير متاح في مسار التعديل الحالي.
-  Map<String, dynamic> _mapEventUpdateToJson(
-    String wire,
-    LogEvent event,
-    String reason,
-  ) {
-    return {
-      'status': wire,
-      'specialCategory': null,
-      'startTime': event.startTime.toUtc().toIso8601String(),
-      'notes': reason.trim(),
-      if (event.location.isNotEmpty)
-        'location': {'description': event.location},
-    };
-  }
-
   /// جسم PUT /eld/daily-logs/{id}/form وفق مواصفة الخادم الحالية:
   /// `uniqueId` (نصي) + `coDriverId` + `trailers` + `shippingDocuments`
   /// + `notes`. لا يُشتق معرّف رقمي من نص `uniqueId` (كان يُنتج معرّفاً
@@ -393,19 +375,22 @@ class LogRepositoryImpl implements LogRepository {
 
     return executeWithHandling(() async {
       final response = await _dailyLogsBackend.getForm(logId);
-      return response.fold((error) => throw ServerException(
-        message: error.code,
-        // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
-        serverMessage: error.context?['serverMessage']?.toString(),
-      ), (json) {
-        final data = json['data'] is Map
-            ? Map<String, dynamic>.from(json['data'] as Map)
-            : json;
-        if (data.isEmpty) return null;
+      return response.fold(
+        (error) => throw ServerException(
+          message: error.code,
+          // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
+          serverMessage: error.context?['serverMessage']?.toString(),
+        ),
+        (json) {
+          final data = json['data'] is Map
+              ? Map<String, dynamic>.from(json['data'] as Map)
+              : json;
+          if (data.isEmpty) return null;
 
-        _localDataSource.cacheDailyForm(logId, data);
-        return _parseDailyFormData(data);
-      });
+          _localDataSource.cacheDailyForm(logId, data);
+          return _parseDailyFormData(data);
+        },
+      );
     }, tag: 'LogRepositoryImpl.getForm');
   }
 
@@ -450,10 +435,12 @@ class LogRepositoryImpl implements LogRepository {
     // الوثيقة: `vehicle.identifier`/`vehicle.id`؛ نقرأ أيضاً الأشكال
     // المسطّحة القديمة (uniqueId/vehicleName) كي لا ينكسر سجل من عقد أقدم.
     final vehicleId = (vehicle?['id'] as num?)?.toInt();
-    final vehicleUniqueId = vehicle?['identifier']?.toString() ??
+    final vehicleUniqueId =
+        vehicle?['identifier']?.toString() ??
         vehicle?['uniqueId']?.toString() ??
         data['uniqueId']?.toString();
-    final vehicleName = vehicle?['name']?.toString() ??
+    final vehicleName =
+        vehicle?['name']?.toString() ??
         vehicle?['displayName']?.toString() ??
         data['vehicleName']?.toString();
 
@@ -521,10 +508,10 @@ class LogRepositoryImpl implements LogRepository {
 
       return response.fold(
         (error) => throw ServerException(
-        message: error.code,
-        // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
-        serverMessage: error.context?['serverMessage']?.toString(),
-      ),
+          message: error.code,
+          // 🔴 لا تُرمى رسالة الخادم: هي تفسير دقيق مكتوب للقارئ.
+          serverMessage: error.context?['serverMessage']?.toString(),
+        ),
         (json) {
           final read = SavedFormDto.fromJson(json);
           if (ownerDriverId != null && read.complete != null) {
@@ -551,56 +538,61 @@ class LogRepositoryImpl implements LogRepository {
       final cached = await _localDataSource.getCachedDailyLogs(owner);
       if (cached == null) return const Left(NetworkFailure());
       final found = cached
-          .where((m) =>
-              m['id'] == logId.value ||
-              m['id']?.toString() == logId.value.toString())
+          .where(
+            (m) =>
+                m['id'] == logId.value ||
+                m['id']?.toString() == logId.value.toString(),
+          )
           .toList();
       if (found.isEmpty) return const Left(NetworkFailure());
       final log = DailyLogDto.fromJson(found.first).toEntity();
       final isComplete = log.isFormComplete;
-      return Right(LogReadiness(
-        dailyLogId: logId.value,
-        driverId: owner,
-        driverName: log.driverName ?? '',
-        logDate: DateFormat('yyyy-MM-dd').format(log.date),
-        readinessStatus: isComplete ? 'READY' : 'NOT_READY',
-        missingRequirements: isComplete
-            ? const []
-            : const ['The daily form is not complete for this day.'],
-        // الفراغ يجعل الواجهة تستخدم النص القانوني المترجم المعتمد.
-        legalStatement: '',
-        availableActions: const ['CERTIFY'],
-      ));
+      return Right(
+        LogReadiness(
+          dailyLogId: logId.value,
+          driverId: owner,
+          driverName: log.driverName ?? '',
+          logDate: DateFormat('yyyy-MM-dd').format(log.date),
+          readinessStatus: isComplete ? 'READY' : 'NOT_READY',
+          missingRequirements: isComplete
+              ? const []
+              : const ['The daily form is not complete for this day.'],
+          // الفراغ يجعل الواجهة تستخدم النص القانوني المترجم المعتمد.
+          legalStatement: '',
+          availableActions: const ['CERTIFY'],
+        ),
+      );
     }
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.getReadiness(logId);
       return result.match(
         (failure) => throw ServerException(message: failure.l10nKey),
         (data) {
-        return LogReadiness(
-          dailyLogId: data.dailyLogId,
-          driverId: data.driverId,
-          driverName: data.driverName,
-          logDate: data.logDate,
-          readinessStatus: data.readinessStatus,
-          missingRequirements: data.missingRequirements,
-          legalStatement: data.legalStatement,
-          availableActions: data.availableActions,
-          carrierProposedEditsPending: data.carrierProposedEditsPending,
-          pendingCarrierEdits: data.pendingCarrierEdits
-              .map(
-                (e) => CarrierProposedEditEntity(
-                  id: e.id,
-                  carrierName: e.carrierName,
-                  carrierReason: e.carrierReason,
-                  proposedStatus: e.proposedStatus,
-                  previousValuesSummary: e.previousValuesSummary,
-                  newValuesSummary: e.newValuesSummary,
-                ),
-              )
-              .toList(),
-        );
-      });
+          return LogReadiness(
+            dailyLogId: data.dailyLogId,
+            driverId: data.driverId,
+            driverName: data.driverName,
+            logDate: data.logDate,
+            readinessStatus: data.readinessStatus,
+            missingRequirements: data.missingRequirements,
+            legalStatement: data.legalStatement,
+            availableActions: data.availableActions,
+            carrierProposedEditsPending: data.carrierProposedEditsPending,
+            pendingCarrierEdits: data.pendingCarrierEdits
+                .map(
+                  (e) => CarrierProposedEditEntity(
+                    id: e.id,
+                    carrierName: e.carrierName,
+                    carrierReason: e.carrierReason,
+                    proposedStatus: e.proposedStatus,
+                    previousValuesSummary: e.previousValuesSummary,
+                    newValuesSummary: e.newValuesSummary,
+                  ),
+                )
+                .toList(),
+          );
+        },
+      );
     }, tag: 'LogRepositoryImpl.getReadiness');
   }
 
@@ -616,10 +608,9 @@ class LogRepositoryImpl implements LogRepository {
     // لا نسجّل ضجيجاً — شاشة الاعتماد تعود لبيانات الجاهزية وحدها.
     final backendError = result.fold((e) => e, (_) => null);
     if (backendError != null && _isEndpointUnsupported(backendError)) {
-      return const Left(ServerFailure(
-        message: 'certify_state_unavailable',
-        statusCode: 404,
-      ));
+      return const Left(
+        ServerFailure(message: 'certify_state_unavailable', statusCode: 404),
+      );
     }
     return executeWithHandling(() async {
       return result.match(
@@ -735,7 +726,8 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<Either<Failure, List<DutyPeriod>>> getPeriods(DateTime date) {
     return executeWithHandling(
-      () => _localDataSource.getPeriods(date, _timeAuthority.nowUtc().toLocal()),
+      () =>
+          _localDataSource.getPeriods(date, _timeAuthority.nowUtc().toLocal()),
       tag: 'LogRepositoryImpl.getPeriods',
     );
   }

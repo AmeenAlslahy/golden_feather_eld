@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -82,8 +82,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 child: Text(
                   loc.onboardingSkip,
                   style: context.styles.body.copyWith(
-                    color: AppColors.textSecondaryFor(
-                        Theme.of(context).brightness),
+                    color: context.textSecondary,
                   ),
                 ),
               ),
@@ -97,7 +96,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   final slide = _slides[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xl),
+                      horizontal: AppSpacing.xl,
+                    ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -105,11 +105,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                           width: 140,
                           height: 140,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryGold.withValues(alpha: 0.12),
+                            color: context.gold.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(slide.icon,
-                              size: 64, color: AppColors.primaryGold),
+                          child: Icon(
+                            slide.icon,
+                            size: AppSpacing.iconHeroLarge,
+                            color: context.gold,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         Text(
@@ -137,15 +140,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                 for (var i = 0; i < _slides.length; i++)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: i == _page ? 24 : 8,
-                    height: 8,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                    ),
+                    width: i == _page ? AppSpacing.lg : AppSpacing.sm,
+                    height: AppSpacing.sm,
                     decoration: BoxDecoration(
-                      color: i == _page
-                          ? AppColors.primaryGold
-                          : AppColors.textSecondaryFor(
-                              Theme.of(context).brightness),
-                      borderRadius: BorderRadius.circular(4),
+                      color: i == _page ? context.gold : context.textSecondary,
+                      borderRadius: BorderRadius.circular(AppRadius.small),
                     ),
                   ),
               ],
@@ -175,9 +177,5 @@ class _Slide {
   final String Function(AppLocalizations) title;
   final String Function(AppLocalizations) body;
 
-  const _Slide({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+  const _Slide({required this.icon, required this.title, required this.body});
 }

@@ -41,7 +41,7 @@ class TimeFieldWidget extends StatelessWidget {
                 Icon(
                   Icons.access_time,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  size: 20,
+                  size: AppSpacing.iconMedium,
                 ),
               ],
             ),

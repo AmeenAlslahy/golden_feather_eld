@@ -4,14 +4,14 @@ import 'dart:async';
 
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../../core/config/app_environment.dart';
-import '../../../../core/di/auth_local_data_source_provider.dart';
+import '../../../../core/session/auth_session_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart'; // ignore_architecture
 import '../../../logs/data/datasources/log_local_data_source.dart'; // ignore_architecture
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/events/eld_events_provider.dart';
-import '../../../tracking/domain/entities/connection_status.dart';
+import '../../../../core/domain/entities/connection_status.dart';
 import '../../domain/entities/dispatch_auth.dart';
 import '../../domain/entities/pending_event.dart';
 import '../../domain/repositories/duty_event_journal.dart';
@@ -91,7 +91,7 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   final dutyStatusBackend = ref.watch(dutyStatusBackendProvider);
   final dailyLogsBackend = ref.watch(dailyLogsBackendProvider);
   final dvirBackend = ref.watch(dvirBackendProvider);
-  final localDataSource = ref.watch(authLocalDataSourceProvider);
+  final localDataSource = ref.watch(authSessionReaderProvider);
   final inspectionBackend = ref.watch(inspectionBackendProvider);
   return TraccarRemoteEventDispatcher(
     dutyStatusBackend,
@@ -108,9 +108,7 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
     observeAuth: () async {
       final auth = ref.read(authStateProvider);
       return DispatchAuthContext(
-        driverId: auth.user == null
-            ? null
-            : int.tryParse(auth.user!.id),
+        driverId: auth.user == null ? null : int.tryParse(auth.user!.id),
         transitioning: auth.transitioning,
       );
     },
@@ -133,16 +131,17 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
     observeAuth: () async {
       final auth = ref.read(authStateProvider);
       return DispatchAuthContext(
-        driverId: auth.user == null
-            ? null
-            : int.tryParse(auth.user!.id),
+        driverId: auth.user == null ? null : int.tryParse(auth.user!.id),
         transitioning: auth.transitioning,
       );
     },
   );
 
   // استماع لحالة الاتصال من نظام التتبع عبر Provider المعماري النظيف
-  ref.listen<AsyncValue<ConnectionStatus>>(eldConnectionStatusProvider, (_, next) {
+  ref.listen<AsyncValue<ConnectionStatus>>(eldConnectionStatusProvider, (
+    _,
+    next,
+  ) {
     if (next.value == ConnectionStatus.connected) {
       // عند عودة الاتصال، نقوم بمحاولة المزامنة
       engine.triggerSync();
@@ -155,8 +154,8 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
       .watch(networkInfoProvider)
       .onConnectionChange
       .listen((online) {
-    if (online) engine.triggerSync();
-  });
+        if (online) engine.triggerSync();
+      });
   ref.onDispose(() => networkSubscription.cancel());
 
   // نبضة دورية.

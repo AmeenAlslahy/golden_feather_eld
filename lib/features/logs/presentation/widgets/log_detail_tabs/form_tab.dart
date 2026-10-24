@@ -45,22 +45,22 @@ class _FormTabState extends ConsumerState<FormTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. اسم السائق (للقراءة فقط)
-            _FormRow(
-              title: context.loc.driver,
-              value: formData.driverName,
-            ),
+            _FormRow(title: context.loc.driver, value: formData.driverName),
             divider,
 
             // 2. المركبة
             _FormRow(
-              key: ValueKey('vehicle_${selectedLog?.id}_${formData.vehicleUniqueId}'),
+              key: ValueKey(
+                'vehicle_${selectedLog?.id}_${formData.vehicleUniqueId}',
+              ),
               title: context.loc.vehicles,
               value: formData.vehicleName,
               validator: (_) => formData.validateVehicle(
                 context.loc,
                 logUniqueId: selectedLog?.uniqueId,
               ),
-              onEdit: () => _editVehicle(context, selectedLog, formData.vehicleUniqueId),
+              onEdit: () =>
+                  _editVehicle(context, selectedLog, formData.vehicleUniqueId),
             ),
             divider,
 
@@ -76,7 +76,9 @@ class _FormTabState extends ConsumerState<FormTab> {
 
             // 4. وثائق الشحن
             _FormRow(
-              key: ValueKey('shipping_${selectedLog?.id}_${formData.shippingDocuments}'),
+              key: ValueKey(
+                'shipping_${selectedLog?.id}_${formData.shippingDocuments}',
+              ),
               title: context.loc.shippingDocuments,
               value: formData.shippingDocuments,
               validator: (_) => formData.validateShippingDocuments(context.loc),
@@ -86,11 +88,14 @@ class _FormTabState extends ConsumerState<FormTab> {
 
             // 5. السائق المساعد
             _FormRow(
-              key: ValueKey('codriver_${selectedLog?.id}_${formData.coDriverId}'),
+              key: ValueKey(
+                'codriver_${selectedLog?.id}_${formData.coDriverId}',
+              ),
               title: context.loc.coDriver,
               value: formData.coDriverName,
               validator: (_) => formData.validateCoDriver(context.loc),
-              onEdit: () => _editCoDriver(context, selectedLog, formData.coDriverId),
+              onEdit: () =>
+                  _editCoDriver(context, selectedLog, formData.coDriverId),
             ),
             const SizedBox(height: AppSpacing.xl),
 
@@ -147,9 +152,8 @@ class _FormTabState extends ConsumerState<FormTab> {
   ) async {
     final coDriver = await showDialog<CoDriver>(
       context: context,
-      builder: (_) => CoDriverPickerDialog(
-        currentCoDriverId: currentCoDriverId,
-      ),
+      builder: (_) =>
+          CoDriverPickerDialog(currentCoDriverId: currentCoDriverId),
     );
     if (coDriver != null && selectedLog != null && context.mounted) {
       ref.read(formTabProvider(selectedLog).notifier).updateCoDriver(coDriver);
@@ -158,10 +162,7 @@ class _FormTabState extends ConsumerState<FormTab> {
 
   // ========== إجراء حفظ النموذج عبر Notifier ==========
 
-  Future<void> _handleSave(
-    BuildContext context,
-    DailyLog? selectedLog,
-  ) async {
+  Future<void> _handleSave(BuildContext context, DailyLog? selectedLog) async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedLog == null) return;
 
@@ -192,59 +193,59 @@ class _FormRow extends FormField<String> {
     super.validator,
     VoidCallback? onEdit,
   }) : super(
-          initialValue: value,
-          builder: (field) {
-            final context = field.context;
-            final hasError = field.hasError;
-            final errorColor = context.colors.error;
+         initialValue: value,
+         builder: (field) {
+           final context = field.context;
+           final hasError = field.hasError;
+           final errorColor = context.colors.error;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: context.styles.bodyBold.copyWith(
-                            color: hasError ? errorColor : null,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          value,
-                          style: context.styles.body.copyWith(
-                            color: hasError ? errorColor : null,
-                          ),
-                        ),
-                        if (hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Text(
-                              field.errorText!,
-                              style: context.styles.error.copyWith(fontSize: 12),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (onEdit != null)
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit,
-                        size: 18,
-                        color: context.styles.body.color,
-                      ),
-                      onPressed: onEdit,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
+           return Padding(
+             padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+             child: Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+                 Expanded(
+                   child: Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Text(
+                         title,
+                         style: context.styles.bodyBold.copyWith(
+                           color: hasError ? errorColor : null,
+                         ),
+                       ),
+                       const SizedBox(height: 4),
+                       Text(
+                         value,
+                         style: context.styles.body.copyWith(
+                           color: hasError ? errorColor : null,
+                         ),
+                       ),
+                       if (hasError)
+                         Padding(
+                           padding: const EdgeInsets.only(top: AppSpacing.xs),
+                           child: Text(
+                             field.errorText!,
+                             style: context.styles.error,
+                           ),
+                         ),
+                     ],
+                   ),
+                 ),
+                 if (onEdit != null)
+                   IconButton(
+                     icon: Icon(
+                       Icons.edit,
+                       size: 18,
+                       color: context.styles.body.color,
+                     ),
+                     onPressed: onEdit,
+                     padding: EdgeInsets.zero,
+                     constraints: const BoxConstraints(),
+                   ),
+               ],
+             ),
+           );
+         },
+       );
 }

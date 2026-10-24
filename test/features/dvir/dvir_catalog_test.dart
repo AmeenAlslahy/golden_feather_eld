@@ -25,10 +25,16 @@ void main() {
     expect(items, isNotNull);
     expect(items!.length, 2);
     expect(items.first.code, 'BRAKES_SERVICE');
-    expect(items.first.label(lookupAppLocalizations(const Locale('ar'))), 'مكابح الخدمة');
+    expect(
+      items.first.label(lookupAppLocalizations(const Locale('ar'))),
+      'مكابح الخدمة',
+    );
     expect(items.first.critical, isTrue);
     expect(items.last.code, 'HORN');
-    expect(items.last.label(lookupAppLocalizations(const Locale('ar'))), 'Horn');
+    expect(
+      items.last.label(lookupAppLocalizations(const Locale('ar'))),
+      'Horn',
+    );
   });
 
   test('an unreadable body is null, not an empty catalog', () {

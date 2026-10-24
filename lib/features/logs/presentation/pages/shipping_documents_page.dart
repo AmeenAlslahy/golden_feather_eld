@@ -15,8 +15,7 @@ class ShippingDocumentsPage extends ConsumerStatefulWidget {
       _ShippingDocumentsPageState();
 }
 
-class _ShippingDocumentsPageState
-    extends ConsumerState<ShippingDocumentsPage> {
+class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
   final _controller = TextEditingController();
 
   @override
@@ -27,7 +26,10 @@ class _ShippingDocumentsPageState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<ShippingDocumentsState>(shippingDocumentsProvider, (previous, next) {
+    ref.listen<ShippingDocumentsState>(shippingDocumentsProvider, (
+      previous,
+      next,
+    ) {
       if (next.event == ShippingDocumentEvent.addedSuccessfully) {
         _controller.clear();
       } else if (next.event == ShippingDocumentEvent.failed) {

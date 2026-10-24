@@ -18,8 +18,8 @@ HardwareAlert _hardwareAlertFromJson(Map<String, dynamic> json) {
   );
 }
 
-class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert>> {
-
+class HardwareAlertsNotifier
+    extends AutoDisposeAsyncNotifier<List<HardwareAlert>> {
   @override
   Future<List<HardwareAlert>> build() async {
     return _fetchFromBackend();
@@ -53,16 +53,19 @@ class HardwareAlertsNotifier extends AutoDisposeAsyncNotifier<List<HardwareAlert
         }
         if (alertsList.isEmpty) return [];
 
-        return alertsList.map((e) {
-          // If the API returns a string directly
-          if (e is String) {
-            return HardwareAlert(id: '', type: '', message: e);
-          }
-          if (e is Map<String, dynamic>) {
-            return _hardwareAlertFromJson(e);
-          }
-          return HardwareAlert(id: '', type: '', message: e.toString());
-        }).where((alert) => alert.message.trim().isNotEmpty).toList();
+        return alertsList
+            .map((e) {
+              // If the API returns a string directly
+              if (e is String) {
+                return HardwareAlert(id: '', type: '', message: e);
+              }
+              if (e is Map<String, dynamic>) {
+                return _hardwareAlertFromJson(e);
+              }
+              return HardwareAlert(id: '', type: '', message: e.toString());
+            })
+            .where((alert) => alert.message.trim().isNotEmpty)
+            .toList();
       },
     );
   }
@@ -78,6 +81,9 @@ List<dynamic>? _alertList(Map<String, dynamic> json) {
 }
 
 final hardwareAlertsProvider =
-    AsyncNotifierProvider.autoDispose<HardwareAlertsNotifier, List<HardwareAlert>>(() {
-  return HardwareAlertsNotifier();
-});
+    AsyncNotifierProvider.autoDispose<
+      HardwareAlertsNotifier,
+      List<HardwareAlert>
+    >(() {
+      return HardwareAlertsNotifier();
+    });

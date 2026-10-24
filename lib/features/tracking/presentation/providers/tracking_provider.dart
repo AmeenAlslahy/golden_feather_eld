@@ -58,11 +58,11 @@ final currentVehicleSpeedProvider = StateProvider<double?>((ref) => null);
 /// مزود حالة التتبع
 final trackingStateProvider =
     StateNotifierProvider<TrackingNotifier, TrackingState>((ref) {
-  final repository = ref.watch(trackingRepositoryProvider);
-  final notifier = TrackingNotifier(repository, ref);
+      final repository = ref.watch(trackingRepositoryProvider);
+      final notifier = TrackingNotifier(repository, ref);
 
-  return notifier;
-});
+      return notifier;
+    });
 
 class TrackingNotifier extends StateNotifier<TrackingState> {
   final TrackingRepository _repository;
@@ -120,7 +120,8 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
       },
       (_) {
         AppLogger.info(
-            'Tracking service started. Waiting for first location...');
+          'Tracking service started. Waiting for first location...',
+        );
       },
     );
   }
@@ -210,15 +211,10 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
 
     result.match(
       (failure) {
-        state = state.copyWith(
-          errorMessage: failure.message,
-        );
+        state = state.copyWith(errorMessage: failure.message);
       },
       (location) {
-        state = state.copyWith(
-          currentLocation: location,
-          errorMessage: null,
-        );
+        state = state.copyWith(currentLocation: location, errorMessage: null);
       },
     );
   }
@@ -248,5 +244,4 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   void clearError() {
     state = state.copyWith(clearError: true);
   }
-
 }

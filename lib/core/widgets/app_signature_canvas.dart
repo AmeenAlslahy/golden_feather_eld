@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import '../extensions/context_extensions.dart';
+import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 
 /// A reusable, theme-aware signature pad used across the driver app.
@@ -68,17 +69,17 @@ class AppSignatureCanvas extends StatelessWidget {
             height: height,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               border: Border.all(
-                color: errorText != null 
-                    ? colorScheme.error 
+                color: errorText != null
+                    ? colorScheme.error
                     : colorScheme.outline.withValues(alpha: 0.5),
                 width: errorText != null ? 2 : 1,
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.input),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(AppRadius.input),
               child: Stack(
                 children: [
                   // Placeholder — hidden once the driver starts drawing.
@@ -90,7 +91,8 @@ class AppSignatureCanvas extends StatelessWidget {
                         child: Text(
                           placeholder ?? loc.drawYourSignatureHere,
                           textAlign: TextAlign.center,
-                          style: placeholderStyle ??
+                          style:
+                              placeholderStyle ??
                               context.styles.subtitle.copyWith(fontSize: 16),
                         ),
                       );
@@ -115,17 +117,14 @@ class AppSignatureCanvas extends StatelessWidget {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 4.0),
-                    child: Text(
-                      errorText!,
-                      style: context.styles.error.copyWith(fontSize: 12),
-                    ),
+                    child: Text(errorText!, style: context.styles.error),
                   ),
                 ),
               if (showClear)
                 Center(
                   child: InkWell(
                     onTap: () => controller.clear(),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.badge),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.sm,
@@ -134,8 +133,6 @@ class AppSignatureCanvas extends StatelessWidget {
                       child: Text(
                         loc.clearSignature,
                         style: context.styles.body.copyWith(
-                          fontSize: 14,
-                          color: Colors.black,
                           decoration: TextDecoration.underline,
                           decorationStyle: TextDecorationStyle.dotted,
                         ),
@@ -151,10 +148,14 @@ class AppSignatureCanvas extends StatelessWidget {
                   Expanded(
                     child: errorText != null
                         ? Padding(
-                            padding: const EdgeInsets.only(top: 6.0, left: 8.0, right: 8.0),
+                            padding: const EdgeInsetsDirectional.only(
+                              top: 6,
+                              start: AppSpacing.sm,
+                              end: AppSpacing.sm,
+                            ),
                             child: Text(
                               errorText!,
-                              style: context.styles.error.copyWith(fontSize: 12),
+                              style: context.styles.error,
                             ),
                           )
                         : const SizedBox.shrink(),
@@ -162,7 +163,7 @@ class AppSignatureCanvas extends StatelessWidget {
                   if (showClear)
                     InkWell(
                       onTap: () => controller.clear(),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(AppRadius.badge),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.sm,
@@ -201,32 +202,32 @@ class AppSignatureFormField extends FormField<bool> {
     super.onSaved,
     super.validator,
   }) : super(
-          initialValue: controller.isNotEmpty,
-          builder: (FormFieldState<bool> field) {
-            // Re-evaluate whenever the controller changes so validation clears instantly
-            return ListenableBuilder(
-              listenable: controller,
-              builder: (context, _) {
-                // Update internal field state silently so validators run correctly
-                // Check if changed to avoid unnecessary cycles, though ListenableBuilder manages this well.
-                if (field.value != controller.isNotEmpty) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    field.didChange(controller.isNotEmpty);
-                  });
-                }
-                
-                return AppSignatureCanvas(
-                  controller: controller,
-                  placeholder: placeholder,
-                  placeholderStyle: placeholderStyle,
-                  centerClear: centerClear,
-                  height: height,
-                  showClear: showClear,
-                  padding: padding,
-                  errorText: field.errorText,
-                );
-              },
-            );
-          },
-        );
+         initialValue: controller.isNotEmpty,
+         builder: (FormFieldState<bool> field) {
+           // Re-evaluate whenever the controller changes so validation clears instantly
+           return ListenableBuilder(
+             listenable: controller,
+             builder: (context, _) {
+               // Update internal field state silently so validators run correctly
+               // Check if changed to avoid unnecessary cycles, though ListenableBuilder manages this well.
+               if (field.value != controller.isNotEmpty) {
+                 WidgetsBinding.instance.addPostFrameCallback((_) {
+                   field.didChange(controller.isNotEmpty);
+                 });
+               }
+
+               return AppSignatureCanvas(
+                 controller: controller,
+                 placeholder: placeholder,
+                 placeholderStyle: placeholderStyle,
+                 centerClear: centerClear,
+                 height: height,
+                 showClear: showClear,
+                 padding: padding,
+                 errorText: field.errorText,
+               );
+             },
+           );
+         },
+       );
 }

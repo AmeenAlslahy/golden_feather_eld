@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../extensions/context_extensions.dart';
 import '../theme/app_decorations.dart';
 import '../theme/app_spacing.dart';
-import '../theme/app_typography.dart';
 
 /// شارة حالة صغيرة: نقطة/أيقونة + نص داخل حاوية ملوّنة شفافة.
 ///
@@ -28,7 +28,7 @@ class AppStatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
-        vertical: 4,
+        vertical: AppSpacing.xs,
       ),
       decoration: AppDecorations.tinted(color),
       child: Row(
@@ -36,14 +36,13 @@ class AppStatusPill extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Icon(icon, size: iconSize, color: color),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.xs),
           ],
           Text(
             label,
-            style: TextStyle(
+            style: context.styles.caption.copyWith(
               color: color,
-              fontSize: 12,
-              fontWeight: AppTypography.semiBold,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

@@ -19,8 +19,9 @@ class StatusDashboardMapper {
     return StatusDashboard(
       driver: _parseDriver(json['driver']),
       operationalAlerts: _parseAlerts(json['operationalAlerts']),
-      currentDutyStatus:
-          DutyStatusCode.fromWire(json['currentDutyStatus'] as String?),
+      currentDutyStatus: DutyStatusCode.fromWire(
+        json['currentDutyStatus'] as String?,
+      ),
       remainingCircle: _parseRemainingCircle(json['remainingCircle']),
       hosIndicators: _parseHosIndicators(json['hosIndicators']),
       regulatoryConstraints: _parseConstraints(json['regulatoryConstraints']),
@@ -114,7 +115,10 @@ class StatusDashboardMapper {
 
   static RegulatoryConstraints _parseConstraints(Object? raw) {
     if (raw is! Map<String, dynamic>) {
-      return const RegulatoryConstraints(ruleSet: CycleRule.unknown, limits: []);
+      return const RegulatoryConstraints(
+        ruleSet: CycleRule.unknown,
+        limits: [],
+      );
     }
     return RegulatoryConstraints(
       ruleSet: CycleRule.fromWire(raw['ruleSet'] as String?),
@@ -143,10 +147,6 @@ class StatusDashboardMapper {
   // ==========================================================================
   // Primitive parsers
   // ==========================================================================
-
-
-
-
 
   static List<String> _asStringList(Object? v) {
     if (v is! List) return const [];

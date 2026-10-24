@@ -2,8 +2,8 @@ import 'dart:async';
 
 import '../../../../../core/utils/logger.dart';
 import '../../../../../core/error/app_error.dart';
-import '../../../../logs/domain/repositories/log_repository.dart';
 import '../../../../../core/services/local_storage_service.dart';
+import '../../repositories/duty_period_store.dart';
 
 /// متتبع حالة السائق (Domain Pure)
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
@@ -46,7 +46,7 @@ class ManualDutyChangeResult {
 }
 
 class DutyStatusTracker {
-  final LogRepository _logRepository;
+  final DutyPeriodStore _periodStore;
   final LocalStorageService _localStorage;
   final SyncEngine _syncEngine;
   final StatusDashboardBackend _dashboardBackend;
@@ -88,14 +88,14 @@ class DutyStatusTracker {
   int _consecutiveMovingEvents = 0;
 
   DutyStatusTracker({
-    required LogRepository logRepository,
+    required DutyPeriodStore dutyPeriodStore,
     required LocalStorageService localStorage,
     required SyncEngine syncEngine,
     required StatusDashboardBackend dashboardBackend,
     required TrustedTimeProvider timeProvider,
     int? Function()? readDriverId,
     DutyEventJournal? journal,
-  }) : _logRepository = logRepository,
+  }) : _periodStore = dutyPeriodStore,
        _localStorage = localStorage,
        _syncEngine = syncEngine,
        _dashboardBackend = dashboardBackend,
@@ -470,12 +470,8 @@ class DutyStatusTracker {
 
     if (period != null) {
       try {
-        final result = await _logRepository.savePeriod(period);
-        result.match(
-          (failure) =>
-              AppLogger.error('Failed to save period', failure.message),
-          (_) => AppLogger.info('Period saved successfully'),
-        );
+        await _periodStore.savePeriod(period);
+        AppLogger.info('Period saved successfully');
       } catch (e) {
         AppLogger.error('Failed to save period', e);
       }
@@ -812,11 +808,8 @@ class DutyStatusTracker {
     );
     if (period == null) return;
     try {
-      final result = await _logRepository.savePeriod(period);
-      result.match(
-        (failure) => AppLogger.error('Failed to save period', failure.message),
-        (_) => AppLogger.info('Period saved successfully'),
-      );
+      await _periodStore.savePeriod(period);
+      AppLogger.info('Period saved successfully');
     } catch (e) {
       AppLogger.error('Failed to save period', e);
     }

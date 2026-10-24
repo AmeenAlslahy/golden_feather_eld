@@ -4,7 +4,7 @@ import 'package:golden_feather_eld/backend/http/interceptors/auth_interceptor.da
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/session/session_epoch.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
+import 'package:golden_feather_eld/core/session/auth_session.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
 /// P0 Stage 1 corrections — real interceptor path (Dio → AuthInterceptor →
@@ -22,39 +22,46 @@ void main() {
     adapter = DioAdapter(dio: dio);
     localDataSource = _FakeAuthLocalDataSource();
     firedEpochs = [];
-    dio.interceptors.add(AuthInterceptor(
-      localDataSource: localDataSource,
-      backendType: 'traccar',
-      onUnauthenticated: firedEpochs.add,
-    ));
+    dio.interceptors.add(
+      AuthInterceptor(
+        localDataSource: localDataSource,
+        backendType: 'traccar',
+        onUnauthenticated: firedEpochs.add,
+      ),
+    );
   });
 
   test(
-      'INT-01: 401 for a request created before the session change is ignored',
-      () async {
-    localDataSource.session = _session();
-    adapter.onGet(
-      '/eld/status',
-      (server) => server.reply(
-        401,
-        {'code': 'UNAUTHORIZED'},
-        delay: const Duration(milliseconds: 300),
-      ),
-    );
+    'INT-01: 401 for a request created before the session change is ignored',
+    () async {
+      localDataSource.session = _session();
+      adapter.onGet(
+        '/eld/status',
+        (server) => server.reply(401, {
+          'code': 'UNAUTHORIZED',
+        }, delay: const Duration(milliseconds: 300)),
+      );
 
-    // Request A is created (and epoch-stamped) while session A is current.
-    final future = dio.get<void>('/eld/status');
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    expect(SessionEpoch.current, 0,
-        reason: 'request must be stamped at epoch 0');
+      // Request A is created (and epoch-stamped) while session A is current.
+      final future = dio.get<void>('/eld/status');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(
+        SessionEpoch.current,
+        0,
+        reason: 'request must be stamped at epoch 0',
+      );
 
-    // Session changes to B before A's 401 arrives.
-    SessionEpoch.bump();
+      // Session changes to B before A's 401 arrives.
+      SessionEpoch.bump();
 
-    await expectLater(future, throwsA(isA<DioException>()));
-    expect(firedEpochs, isEmpty,
-        reason: 'stale 401 must not terminate the new session');
-  });
+      await expectLater(future, throwsA(isA<DioException>()));
+      expect(
+        firedEpochs,
+        isEmpty,
+        reason: 'stale 401 must not terminate the new session',
+      );
+    },
+  );
 
   test('INT-02: 401 for the current session still invalidates it', () async {
     localDataSource.session = _session();

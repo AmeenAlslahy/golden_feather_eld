@@ -30,17 +30,13 @@ class _ManualModeReasonDialogState extends State<ManualModeReasonDialog> {
     final enable = widget.enable;
     return AlertDialog(
       title: Text(
-        enable
-            ? loc.eldMalfunctionReasonStart
-            : loc.eldMalfunctionReasonEnd,
+        enable ? loc.eldMalfunctionReasonStart : loc.eldMalfunctionReasonEnd,
       ),
       content: AppTextField(
         controller: _controller,
         maxLines: 2,
         keyboardType: TextInputType.text,
-        hint: enable
-            ? loc.eldMalfunctionHintStart
-            : loc.eldMalfunctionHintEnd,
+        hint: enable ? loc.eldMalfunctionHintStart : loc.eldMalfunctionHintEnd,
       ),
       actions: [
         TextButton(

@@ -21,10 +21,12 @@ class MockAccountBackend implements AccountBackend {
     required String language,
     required String odometerUnit,
   }) async {
-    return ok(DriverAccount.fromJson({
-      ...accountMyAccountFixture,
-      'language': language,
-      'odometer': odometerUnit,
-    }));
+    return ok(
+      DriverAccount.fromJson({
+        ...accountMyAccountFixture,
+        'language': language,
+        'odometer': odometerUnit,
+      }),
+    );
   }
 }

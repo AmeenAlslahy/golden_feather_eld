@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
 import '../../../../connection/presentation/providers/hardware_alerts_provider.dart';
@@ -12,10 +11,7 @@ import '../../../../connection/presentation/providers/hardware_alerts_provider.d
 class OperationalAlertsBanner extends ConsumerWidget {
   final OperationalAlerts alerts;
 
-  const OperationalAlertsBanner({
-    super.key,
-    required this.alerts,
-  });
+  const OperationalAlertsBanner({super.key, required this.alerts});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,7 +22,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
       final alert = hardwareAlerts.first;
       return _banner(
         context,
-        color: AppColors.warningYellow,
+        color: context.warning,
         icon: Icons.info_outline,
         text: alert.message,
       );
@@ -39,25 +35,21 @@ class OperationalAlertsBanner extends ConsumerWidget {
     final loc = context.loc;
     final (color, icon, text) = switch (alerts.connectionStatus) {
       ConnectionStatus.warning => (
-          AppColors.warningYellow,
-          Icons.info_outline,
-          loc.weakConnectionDelayedData,
-        ),
+        context.warning,
+        Icons.info_outline,
+        loc.weakConnectionDelayedData,
+      ),
       ConnectionStatus.disconnected => (
-          AppColors.dangerRed,
-          Icons.cloud_off,
-          loc.noInternetConnection,
-        ),
+        context.danger,
+        Icons.cloud_off,
+        loc.noInternetConnection,
+      ),
       ConnectionStatus.unknown => (
-          context.styles.subtitle.color!,
-          Icons.info_outline,
-          loc.connectionStatusUnknown,
-        ),
-      ConnectionStatus.ok => (
-          AppColors.successGreen,
-          Icons.check_circle,
-          '',
-        ),
+        context.styles.subtitle.color!,
+        Icons.info_outline,
+        loc.connectionStatusUnknown,
+      ),
+      ConnectionStatus.ok => (context.success, Icons.check_circle, ''),
     };
 
     return _banner(context, color: color, icon: icon, text: text);
@@ -80,12 +72,7 @@ class OperationalAlertsBanner extends ConsumerWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              text,
-              style: context.styles.body,
-            ),
-          ),
+          Expanded(child: Text(text, style: context.styles.body)),
         ],
       ),
     );

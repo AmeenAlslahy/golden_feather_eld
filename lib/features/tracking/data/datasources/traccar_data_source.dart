@@ -1,6 +1,6 @@
 import 'dart:async';
 import '../../domain/entities/tracking_event.dart';
-import '../../domain/entities/connection_status.dart';
+import '../../../../core/domain/entities/connection_status.dart';
 import 'tracking_data_source.dart';
 import 'traccar_sdk/traccar_api_client.dart';
 import 'traccar_sdk/traccar_websocket_client.dart';
@@ -30,10 +30,10 @@ class TraccarDataSource implements TrackingDataSource {
     required TraccarWebSocketClient webSocketClient,
     required TraccarNativeClient nativeClient,
     required NativeEventChannelClient nativeEventClient,
-  })  : _apiClient = apiClient,
-        _webSocketClient = webSocketClient,
-        _nativeClient = nativeClient,
-        _nativeEventClient = nativeEventClient {
+  }) : _apiClient = apiClient,
+       _webSocketClient = webSocketClient,
+       _nativeClient = nativeClient,
+       _nativeEventClient = nativeEventClient {
     // ملاحظة: سيتم ربط Stream الخاص بـ WebSocket وتمريره عبر Mapper مستقبلاً هنا
 
     // نرسل حالة مبدئية "غير متصل" أو "غير مهيأ"
@@ -46,11 +46,13 @@ class TraccarDataSource implements TrackingDataSource {
         : ConnectionStatus.unconfigured;
 
     AppLogger.info(
-        'TraccarDataSource: Emitting initial ConnectionStatus.$initialStatus');
+      'TraccarDataSource: Emitting initial ConnectionStatus.$initialStatus',
+    );
     _connectionStatusController.add(initialStatus);
 
-    _wsConnectionSubscription =
-        _webSocketClient.connectionStateStream.listen((isConnected) {
+    _wsConnectionSubscription = _webSocketClient.connectionStateStream.listen((
+      isConnected,
+    ) {
       final status = isConnected
           ? ConnectionStatus.connected
           : ConnectionStatus.disconnected;
@@ -74,9 +76,12 @@ class TraccarDataSource implements TrackingDataSource {
 
     // الاستماع للقناة وتمرير الإحداثيات
     _nativeEventClient.startListening();
-    _nativeEventSubscription ??=
-        _nativeEventClient.locationStream.listen((nativeEvent) {
-      final isObd = nativeEvent.metadata['fromEcm'] == true || nativeEvent.metadata['obd'] == true;
+    _nativeEventSubscription ??= _nativeEventClient.locationStream.listen((
+      nativeEvent,
+    ) {
+      final isObd =
+          nativeEvent.metadata['fromEcm'] == true ||
+          nativeEvent.metadata['obd'] == true;
       final trackingEvent = TrackingEvent(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         deviceId: AppEnvironmentConfig.traccarDeviceId.isNotEmpty

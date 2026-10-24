@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/http/interceptors/auth_interceptor.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:golden_feather_eld/features/auth/domain/entities/auth_session.dart';
+import 'package:golden_feather_eld/core/session/auth_session.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
 /// انحدار حرج: 401 على طلب خرج **بلا جلسة** (مثل طلب تهيئة الإعدادات عند
@@ -20,47 +20,52 @@ void main() {
     adapter = DioAdapter(dio: dio);
     localDataSource = _FakeAuthLocalDataSource();
     unauthenticatedFired = false;
-    dio.interceptors.add(AuthInterceptor(
-      localDataSource: localDataSource,
-      backendType: 'traccar',
-      onUnauthenticated: (_) => unauthenticatedFired = true,
-    ));
+    dio.interceptors.add(
+      AuthInterceptor(
+        localDataSource: localDataSource,
+        backendType: 'traccar',
+        onUnauthenticated: (_) => unauthenticatedFired = true,
+      ),
+    );
   });
 
-  test('401 without an attached session must NOT fire the logout event',
-      () async {
-    localDataSource.session = null; // لا جلسة مخزنة (أو القراءة لم تكتمل)
-    adapter.onGet(
-      '/eld/company-vehicles/my-vehicles',
-      (server) => server.reply(401, {'code': 'UNAUTHORIZED'}),
-    );
+  test(
+    '401 without an attached session must NOT fire the logout event',
+    () async {
+      localDataSource.session = null; // لا جلسة مخزنة (أو القراءة لم تكتمل)
+      adapter.onGet(
+        '/eld/company-vehicles/my-vehicles',
+        (server) => server.reply(401, {'code': 'UNAUTHORIZED'}),
+      );
 
-    await expectLater(
-      dio.get<void>('/eld/company-vehicles/my-vehicles'),
-      throwsA(isA<DioException>()),
-    );
+      await expectLater(
+        dio.get<void>('/eld/company-vehicles/my-vehicles'),
+        throwsA(isA<DioException>()),
+      );
 
-    expect(unauthenticatedFired, isFalse);
-  });
+      expect(unauthenticatedFired, isFalse);
+    },
+  );
 
-  test('401 WITH an attached session fires the logout event (expired session)',
-      () async {
-    localDataSource.session = _session();
-    adapter.onGet(
-      '/eld/company-vehicles/my-vehicles',
-      (server) => server.reply(401, {'code': 'UNAUTHORIZED'}),
-    );
+  test(
+    '401 WITH an attached session fires the logout event (expired session)',
+    () async {
+      localDataSource.session = _session();
+      adapter.onGet(
+        '/eld/company-vehicles/my-vehicles',
+        (server) => server.reply(401, {'code': 'UNAUTHORIZED'}),
+      );
 
-    await expectLater(
-      dio.get<void>('/eld/company-vehicles/my-vehicles'),
-      throwsA(isA<DioException>()),
-    );
+      await expectLater(
+        dio.get<void>('/eld/company-vehicles/my-vehicles'),
+        throwsA(isA<DioException>()),
+      );
 
-    expect(unauthenticatedFired, isTrue);
-  });
+      expect(unauthenticatedFired, isTrue);
+    },
+  );
 
-  test('attaches the stored JSESSIONID cookie to outgoing requests',
-      () async {
+  test('attaches the stored JSESSIONID cookie to outgoing requests', () async {
     localDataSource.session = _session();
     // DioAdapter يطابق رؤوس الطلب: المسار ينجح فقط إذا أرفق المُعترِض
     // كوكيز الجلسة المخزنة.
@@ -70,8 +75,9 @@ void main() {
       headers: const {'Cookie': 'JSESSIONID=ABC123'},
     );
 
-    final response =
-        await dio.get<Map<String, dynamic>>('/eld/company-vehicles/my-vehicles');
+    final response = await dio.get<Map<String, dynamic>>(
+      '/eld/company-vehicles/my-vehicles',
+    );
 
     expect(response.statusCode, 200);
   });
@@ -101,8 +107,7 @@ class _FakeAuthLocalDataSource implements AuthLocalDataSource {
   int get credentialGeneration => 0;
 
   @override
-  Future<void> saveSession(AuthSession session) async =>
-      this.session = session;
+  Future<void> saveSession(AuthSession session) async => this.session = session;
 
   @override
   Future<AuthSession?> getSession() async {

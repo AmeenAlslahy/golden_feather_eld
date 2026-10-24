@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/features/vehicle/data/providers/vehicle_repository_providers.dart';
@@ -17,7 +16,7 @@ import 'package:golden_feather_eld/core/config/app_environment.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
-import 'package:golden_feather_eld/features/tracking/domain/entities/connection_status.dart';
+import 'package:golden_feather_eld/core/domain/entities/connection_status.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'package:golden_feather_eld/core/domain/entities/location_point.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/repositories/vehicle_repository.dart';
@@ -57,7 +56,10 @@ class MockLocalStorageService extends Mock implements LocalStorageService {
     }
   }
 }
-class MockTrackingConfigStorageService extends Mock implements TrackingConfigStorageService {}
+
+class MockTrackingConfigStorageService extends Mock
+    implements TrackingConfigStorageService {}
+
 class MockVehicleRepository extends Mock implements VehicleRepository {}
 
 /// P0 Stage 1: the real StatusDashboardNotifier starts a 1-minute periodic
@@ -106,15 +108,16 @@ class FakeSessionAuthRepository implements AuthRepository {
   Future<Either<Failure, User>> login({
     required dynamic identifier,
     required dynamic password,
-  }) async =>
-      Right(User(
-        id: '101',
-        fullName: 'Test User',
-        email: 'test@example.com',
-        username: 'admin',
-        role: UserRole.fieldWorker,
-        createdAt: DateTime.now(),
-      ));
+  }) async => Right(
+    User(
+      id: '101',
+      fullName: 'Test User',
+      email: 'test@example.com',
+      username: 'admin',
+      role: UserRole.fieldWorker,
+      createdAt: DateTime.now(),
+    ),
+  );
 
   @override
   Future<Either<Failure, Unit>> logout() async => const Right(unit);
@@ -128,22 +131,25 @@ class FakeSessionAuthRepository implements AuthRepository {
       const Left(ServerFailure(message: 'No session'));
 }
 
-class MockSyncNotifier extends StateNotifier<SyncState> implements SyncNotifier {
+class MockSyncNotifier extends StateNotifier<SyncState>
+    implements SyncNotifier {
   MockSyncNotifier() : super(const SyncState());
-  
+
   @override
   Future<void> syncNow() async {}
-  
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class MockHosNotifier extends StateNotifier<HosEngineResult> implements HosNotifier {
-  MockHosNotifier() : super(HosEngineTimeUnavailable(TrustedTimeState.uninitialized));
-  
+class MockHosNotifier extends StateNotifier<HosEngineResult>
+    implements HosNotifier {
+  MockHosNotifier()
+    : super(HosEngineTimeUnavailable(TrustedTimeState.uninitialized));
+
   @override
   void refresh() {}
-  
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -151,7 +157,7 @@ class MockHosNotifier extends StateNotifier<HosEngineResult> implements HosNotif
 class MockHardwareAlertsNotifier extends HardwareAlertsNotifier {
   @override
   Future<List<HardwareAlert>> build() async => [];
-  
+
   @override
   Future<void> fetchAlerts() async {}
 }
@@ -162,7 +168,8 @@ class EmptyLiveTrackingDataSource implements LiveTrackingDataSource {
   @override
   Stream<LocationPoint> get locations => const Stream.empty();
   @override
-  Stream<ConnectionStatus> get connectionStatus => Stream.value(ConnectionStatus.connected);
+  Stream<ConnectionStatus> get connectionStatus =>
+      Stream.value(ConnectionStatus.connected);
   @override
   Future<bool> start() async => true;
   @override
@@ -172,10 +179,12 @@ class EmptyLiveTrackingDataSource implements LiveTrackingDataSource {
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    await AppEnvironmentConfig.init(testEnv: {
-      'API_BASE_URL': 'http://localhost',
-      'TRACCAR_ENVIRONMENT': 'mock',
-    });
+    await AppEnvironmentConfig.init(
+      testEnv: {
+        'API_BASE_URL': 'http://localhost',
+        'TRACCAR_ENVIRONMENT': 'mock',
+      },
+    );
   });
 
   // HomePage is a full Scaffold — do NOT wrap it in another Scaffold
@@ -191,27 +200,34 @@ void main() {
     when(() => mockLocalStorage.serverUrl).thenReturn('http://mock.test');
     when(() => mockLocalStorage.backendType).thenReturn('mock');
     when(() => mockLocalStorage.deviceId).thenReturn('12345');
-    when(() => mockLocalStorage.hosConfiguration)
-        .thenReturn(HosConfiguration.usa70_8());
+    when(
+      () => mockLocalStorage.hosConfiguration,
+    ).thenReturn(HosConfiguration.usa70_8());
 
     final mockTrackingConfig = MockTrackingConfigStorageService();
     when(() => mockTrackingConfig.deviceId).thenReturn('12345');
 
     final mockVehicleRepo = MockVehicleRepository();
-    when(() => mockVehicleRepo.getVehicles()).thenAnswer((_) async => const Right([]));
-    when(() => mockVehicleRepo.getSelectedVehicle()).thenAnswer((_) async => const Right(null));
+    when(
+      () => mockVehicleRepo.getVehicles(),
+    ).thenAnswer((_) async => const Right([]));
+    when(
+      () => mockVehicleRepo.getSelectedVehicle(),
+    ).thenAnswer((_) async => const Right(null));
 
     final container = ProviderContainer(
       overrides: [
         activeBackendProvider.overrideWithValue(MockAdapter()),
-        traccarAuthRepositoryProvider
-            .overrideWithValue(FakeSessionAuthRepository()),
+        traccarAuthRepositoryProvider.overrideWithValue(
+          FakeSessionAuthRepository(),
+        ),
         localStorageProvider.overrideWithValue(mockLocalStorage),
         trackingConfigStorageProvider.overrideWithValue(mockTrackingConfig),
-        liveTrackingDataSourceProvider.overrideWithValue(EmptyLiveTrackingDataSource()),
+        liveTrackingDataSourceProvider.overrideWithValue(
+          EmptyLiveTrackingDataSource(),
+        ),
         vehicleRepositoryProvider.overrideWithValue(mockVehicleRepo),
-        statusDashboardProvider
-            .overrideWith(() => StaticDashboardNotifier()),
+        statusDashboardProvider.overrideWith(() => StaticDashboardNotifier()),
         syncStateProvider.overrideWith((ref) => MockSyncNotifier()),
         hosStatusProvider.overrideWith((ref) => MockHosNotifier()),
         hardwareAlertsProvider.overrideWith(() => MockHardwareAlertsNotifier()),
@@ -242,8 +258,9 @@ void main() {
   }
 
   group('HomePage — status dashboard', () {
-    testWidgets('shows StatusDashboardPage (single source of truth)',
-        (tester) async {
+    testWidgets('shows StatusDashboardPage (single source of truth)', (
+      tester,
+    ) async {
       await pumpHomePage(tester);
       // Wait for timers/futures to settle. Use pump(Duration) instead of pumpAndSettle
       // to avoid timeout from periodic timers if they aren't fully disposed immediately.

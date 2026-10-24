@@ -87,15 +87,18 @@ class AppTextField extends StatelessWidget {
         errorText: errorText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
-        border: customBorder ??
+        border:
+            customBorder ??
             (isUnderlined
                 ? const UnderlineInputBorder()
                 : inputDecorationTheme.border),
-        enabledBorder: customBorder ??
+        enabledBorder:
+            customBorder ??
             (isUnderlined
                 ? const UnderlineInputBorder()
                 : inputDecorationTheme.enabledBorder),
-        focusedBorder: customBorder ??
+        focusedBorder:
+            customBorder ??
             (isUnderlined
                 ? const UnderlineInputBorder()
                 : inputDecorationTheme.focusedBorder),

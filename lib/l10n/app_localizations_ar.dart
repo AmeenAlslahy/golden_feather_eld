@@ -2137,6 +2137,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).';
 
   @override
+  String get trailerNumberTooLong => 'رقم المقطورة طويل جداً (حتى 50).';
+
+  @override
   String get enterDocumentNumber => 'أدخل رقم المستند.';
 
   @override
@@ -2518,6 +2521,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dvirPrevNoServerId =>
       'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.';
+
+  @override
+  String get dvirPrevUnavailable =>
+      'تعذّر التحقق من تقرير الفحص السابق. اتصل بالإنترنت أو افتح سجل التقارير قبل التوقيع.';
 
   @override
   String get dvirPreviousInspection => 'الفحص السابق';
@@ -3179,4 +3186,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get statusUnknown => 'غير معروف';
+
+  @override
+  String get createdAt => 'تاريخ الإنشاء';
+
+  @override
+  String get zoomIn => 'تكبير';
+
+  @override
+  String get zoomOut => 'تصغير';
+
+  @override
+  String get fitWidth => 'ملائمة العرض (100%)';
 }

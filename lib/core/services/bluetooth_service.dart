@@ -16,10 +16,15 @@ class BluetoothException implements Exception {
 
 /// Service to interact with the Native Bluetooth plugin.
 class BluetoothService {
-  final MethodChannel _methodChannel = const MethodChannel(ChannelConstants.bluetooth);
-  final EventChannel _eventChannel = const EventChannel('${ChannelConstants.bluetooth}/events');
+  final MethodChannel _methodChannel = const MethodChannel(
+    ChannelConstants.bluetooth,
+  );
+  final EventChannel _eventChannel = const EventChannel(
+    '${ChannelConstants.bluetooth}/events',
+  );
 
-  final StreamController<Map<String, dynamic>> _eventStreamController = StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Map<String, dynamic>> _eventStreamController =
+      StreamController<Map<String, dynamic>>.broadcast();
   StreamSubscription? _eventSubscription;
 
   BluetoothService() {
@@ -48,7 +53,10 @@ class BluetoothService {
     try {
       await _methodChannel.invokeMethod('startScan');
     } on PlatformException catch (e) {
-      throw BluetoothException(e.code, e.message ?? 'Unknown error starting scan');
+      throw BluetoothException(
+        e.code,
+        e.message ?? 'Unknown error starting scan',
+      );
     }
   }
 
@@ -57,7 +65,10 @@ class BluetoothService {
     try {
       await _methodChannel.invokeMethod('stopScan');
     } on PlatformException catch (e) {
-      throw BluetoothException(e.code, e.message ?? 'Unknown error stopping scan');
+      throw BluetoothException(
+        e.code,
+        e.message ?? 'Unknown error stopping scan',
+      );
     }
   }
 
@@ -66,7 +77,10 @@ class BluetoothService {
     try {
       await _methodChannel.invokeMethod('connect', {'macAddress': macAddress});
     } on PlatformException catch (e) {
-      throw BluetoothException(e.code, e.message ?? 'Unknown error connecting to device');
+      throw BluetoothException(
+        e.code,
+        e.message ?? 'Unknown error connecting to device',
+      );
     }
   }
 
@@ -75,7 +89,10 @@ class BluetoothService {
     try {
       await _methodChannel.invokeMethod('disconnect');
     } on PlatformException catch (e) {
-      throw BluetoothException(e.code, e.message ?? 'Unknown error disconnecting from device');
+      throw BluetoothException(
+        e.code,
+        e.message ?? 'Unknown error disconnecting from device',
+      );
     }
   }
 

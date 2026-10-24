@@ -17,7 +17,8 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     final checker = networkInfo ?? _defaultNetworkInfo;
     if (!(checker.isConnected)) {
       AppLogger.error(
-          '${tag ?? 'Repository'} NetworkInfo: No Internet Connection');
+        '${tag ?? 'Repository'} NetworkInfo: No Internet Connection',
+      );
       return const Left(NetworkFailure());
     }
   }
@@ -32,33 +33,33 @@ Future<Either<Failure, T>> executeWithHandling<T>(
     if (e.statusCode == 401) {
       return const Left(AuthFailure());
     }
-    return Left(ServerFailure(
-      message: e.message ?? 'حدث خطأ في الخادم',
-      statusCode: e.statusCode,
-      // 🔴 رسالة الخادم القابلة للعرض تُنقل كما هي. بلاها يظهر للسائق
-      // «الخادم رفض الطلب» بينما الخادم كتب له سبباً دقيقاً.
-      serverMessage: e.serverMessage,
-    ));
+    return Left(
+      ServerFailure(
+        message: e.message ?? 'حدث خطأ في الخادم',
+        statusCode: e.statusCode,
+        // 🔴 رسالة الخادم القابلة للعرض تُنقل كما هي. بلاها يظهر للسائق
+        // «الخادم رفض الطلب» بينما الخادم كتب له سبباً دقيقاً.
+        serverMessage: e.serverMessage,
+      ),
+    );
   } on OfflineException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} OfflineException: ${e.message}');
     return const Left(NetworkFailure());
   } on UnauthorizedException catch (e) {
     AppLogger.error(
-        '${tag ?? 'Repository'} UnauthorizedException: ${e.message}');
-    return Left(AuthFailure(
-      message: e.message ?? 'انتهت صلاحية الجلسة',
-    ));
+      '${tag ?? 'Repository'} UnauthorizedException: ${e.message}',
+    );
+    return Left(AuthFailure(message: e.message ?? 'انتهت صلاحية الجلسة'));
   } on CacheException catch (e) {
     AppLogger.error('${tag ?? 'Repository'} CacheException: ${e.message}');
-    return Left(CacheFailure(
-      message: e.message ?? 'خطأ في التخزين المؤقت',
-    ));
+    return Left(CacheFailure(message: e.message ?? 'خطأ في التخزين المؤقت'));
   } catch (e, stackTrace) {
     AppLogger.error(
-        '${tag ?? 'Repository'} Unexpected Exception: $e', e, stackTrace);
+      '${tag ?? 'Repository'} Unexpected Exception: $e',
+      e,
+      stackTrace,
+    );
     // التفاصيل تبقى في السجلات فقط — نص الاستثناء قد يحوي مسارات أو بيانات حساسة.
-    return const Left(ServerFailure(
-      message: 'An unexpected error occurred',
-    ));
+    return const Left(ServerFailure(message: 'An unexpected error occurred'));
   }
 }

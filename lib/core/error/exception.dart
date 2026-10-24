@@ -9,11 +9,7 @@ class ServerException implements Exception {
   /// error.code)` فقط، فيضيع السبب الدقيق ويصل السائق «الخادم رفض الطلب».
   final String? serverMessage;
 
-  const ServerException({
-    this.message,
-    this.statusCode,
-    this.serverMessage,
-  });
+  const ServerException({this.message, this.statusCode, this.serverMessage});
 
   @override
   String toString() => 'ServerException: $message';

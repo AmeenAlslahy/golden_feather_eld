@@ -15,5 +15,5 @@ class DispatchAuthContext {
   });
 
   const DispatchAuthContext.unauthenticated()
-      : this(driverId: null, transitioning: false);
+    : this(driverId: null, transitioning: false);
 }

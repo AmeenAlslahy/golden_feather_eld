@@ -46,19 +46,7 @@ class AppConstants {
 /// أدوار المستخدمين في النظام
 
 /// حالة المزامنة
-enum SyncStatus {
-  synced,
-  syncing,
-  pending,
-  failed,
-  offline,
-}
+enum SyncStatus { synced, syncing, pending, failed, offline }
 
 /// حالة التفتيش
-enum InspectionStatus {
-  pending,
-  inProgress,
-  completed,
-  failed,
-  requiresReview;
-}
+enum InspectionStatus { pending, inProgress, completed, failed, requiresReview }

@@ -58,18 +58,18 @@ class NativeLocationEvent extends Equatable {
 
   @override
   List<Object?> get props => [
-        latitude,
-        longitude,
-        recordedAt,
-        receivedAt,
-        speedMetersPerSecond,
-        bearingDegrees,
-        altitudeMeters,
-        accuracyMeters,
-        source,
-        platform,
-        isMock,
-        qualityStatus,
-        metadata,
-      ];
+    latitude,
+    longitude,
+    recordedAt,
+    receivedAt,
+    speedMetersPerSecond,
+    bearingDegrees,
+    altitudeMeters,
+    accuracyMeters,
+    source,
+    platform,
+    isMock,
+    qualityStatus,
+    metadata,
+  ];
 }

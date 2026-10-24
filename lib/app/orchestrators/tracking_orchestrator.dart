@@ -37,13 +37,15 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
     final speed = loc.speed ?? 0.0; // meters per second
 
     // بث عند تغير حالة الحركة (> 5 mph / ~2.235 m/s) أو كل 30 ثانية
-    final isSpeedTrigger = (lastSpeedSent == null) ||
+    final isSpeedTrigger =
+        (lastSpeedSent == null) ||
         (lastSpeedSent! < FmcsaConstants.drivingSpeedThresholdMps &&
             speed >= FmcsaConstants.drivingSpeedThresholdMps) ||
         (lastSpeedSent! >= FmcsaConstants.drivingSpeedThresholdMps &&
             speed < FmcsaConstants.drivingSpeedThresholdMps);
 
-    final isTimeTrigger = lastTelemetrySent == null ||
+    final isTimeTrigger =
+        lastTelemetrySent == null ||
         now.difference(lastTelemetrySent!).inSeconds >=
             FmcsaConstants.telemetryIntervalSeconds;
 
@@ -62,10 +64,12 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
           (err) => AppLogger.warning('Telemetry send failed: ${err.code}'),
           (data) {
             AppLogger.info(
-                '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s');
+              '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s',
+            );
             final dynamic json = data;
-            final inner =
-                json is Map && json['data'] is Map ? json['data'] : json;
+            final inner = json is Map && json['data'] is Map
+                ? json['data']
+                : json;
             if (inner is Map && inner['transitionedToDriving'] == true) {
               AppLogger.info('🚗 Server reported transitionedToDriving=true');
               ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
@@ -90,7 +94,8 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
       // recording vehicle movement after the driver signs out so that it is
       // captured as Unidentified Driver time instead of being lost.
       AppLogger.info(
-          'Driver signed out — tracking continues (unidentified driver mode)');
+        'Driver signed out — tracking continues (unidentified driver mode)',
+      );
     }
   });
 
@@ -106,12 +111,15 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
 
   ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
     if (next is HosEngineReady) {
-      final prevStatus =
-          (previous is HosEngineReady) ? previous.update.currentStatus : null;
+      final prevStatus = (previous is HosEngineReady)
+          ? previous.update.currentStatus
+          : null;
       if (next.update.currentStatus == DutyStatus.driving &&
           prevStatus != DutyStatus.driving) {
         if (!notifier.isActiveOrLoading) {
-          AppLogger.info('🚀 Auto-starting tracking because status changed to DRIVING');
+          AppLogger.info(
+            '🚀 Auto-starting tracking because status changed to DRIVING',
+          );
           notifier.startTracking();
         }
       }

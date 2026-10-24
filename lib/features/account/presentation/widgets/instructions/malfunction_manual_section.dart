@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_decorations.dart';
 import '../../../../../core/theme/app_radius.dart';
 import '../../../../../core/theme/app_spacing.dart';
@@ -20,7 +19,7 @@ class MalfunctionManualSection extends StatelessWidget {
 
     return Container(
       decoration: AppDecorations.band(context.manualBand),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
       child: Column(
         children: [
           InstructionsSplitRow(
@@ -29,13 +28,13 @@ class MalfunctionManualSection extends StatelessWidget {
                 Container(
                   height: _hardwareImageHeight,
                   decoration: AppDecorations.solid(
-                    AppColors.placeholderDark,
+                    context.colors.surfaceContainerHighest,
                     radius: AppRadius.imagePlaceholder,
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.router,
-                      color: AppColors.white,
+                      color: context.styles.subtitle.color,
                       size: _hardwareIconSize,
                     ),
                   ),
@@ -104,13 +103,13 @@ class _SmallHardwarePlaceholder extends StatelessWidget {
       width: _size,
       height: _size,
       decoration: AppDecorations.solid(
-        AppColors.placeholderGrey,
+        context.colors.surfaceContainerHighest,
         radius: AppRadius.pill,
       ),
-      child: const Icon(
+      child: Icon(
         Icons.cable,
         size: _iconSize,
-        color: AppColors.white,
+        color: context.styles.subtitle.color,
       ),
     );
   }

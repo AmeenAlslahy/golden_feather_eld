@@ -41,9 +41,19 @@ class RulesScreenDto {
       restBreak: json['restBreak'] as String? ?? '',
       sixteenHourException: json['sixteenHourException'] as bool? ?? false,
       options: readRulesOptions(json['options']),
-      limits: RulesScreenLimitsDto.fromJson(json['limits'] as Map<String, dynamic>? ?? {}),
-      editableFields: (json['editableFields'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      readOnlyFields: (json['readOnlyFields'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      limits: RulesScreenLimitsDto.fromJson(
+        json['limits'] as Map<String, dynamic>? ?? {},
+      ),
+      editableFields:
+          (json['editableFields'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      readOnlyFields:
+          (json['readOnlyFields'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       fixedSettings: json['fixedSettings'] as Map<String, dynamic>? ?? {},
       notice: json['notice'] as String? ?? '',
     );
@@ -75,4 +85,3 @@ class RulesScreenLimitsDto {
     );
   }
 }
-

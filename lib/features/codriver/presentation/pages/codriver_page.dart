@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_status_badge.dart';
@@ -56,9 +55,8 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
         // this is the root destination.
         leading: Builder(
           builder: (context) => Navigator.of(context).canPop()
-              ? IconButton(
+              ? BackButton(
                   key: const Key('codriver_back'),
-                  icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.of(context).pop(),
                 )
               : IconButton(
@@ -82,7 +80,12 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     // dropdown row, full-width divider, second heading + hint,
                     // SWITCH, full-width divider.
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.screenPadding,
+                        AppSpacing.lg,
+                        AppSpacing.screenPadding,
+                        AppSpacing.sectionGap,
+                      ),
                       child: Column(
                         children: [
                           Text(
@@ -94,7 +97,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                             loc.coDriverSelectHint,
                             style: context.styles.subtitle,
                           ),
-                          const SizedBox(height: 32.0),
+                          const SizedBox(height: AppSpacing.sectionGap),
 
                           // Selector Row
                           InkWell(
@@ -129,15 +132,13 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                         ),
                                         loc,
                                       ).toUpperCase(),
-                                      style: context.styles.bodyBold.copyWith(
-                                        fontSize: 18,
-                                      ),
+                                      style: context.styles.pageTitle,
                                     ),
                                   ),
                                   Icon(
                                     Icons.keyboard_arrow_down,
                                     color: textColor,
-                                    size: 28,
+                                    size: AppSpacing.iconSize,
                                   ),
                                 ],
                               ),
@@ -148,7 +149,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     ),
                     const Divider(height: 1),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 32, 32, 32),
+                      padding: const EdgeInsets.all(AppSpacing.screenPadding),
                       child: Column(
                         children: [
                           Text(
@@ -164,12 +165,15 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                           if (codriverState.error != null) ...[
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              anyErrorUserMessage(codriverState.error!, loc: loc),
+                              anyErrorUserMessage(
+                                codriverState.error!,
+                                loc: loc,
+                              ),
                               textAlign: TextAlign.center,
                               style: context.styles.error,
                             ),
                           ],
-                          const SizedBox(height: 28),
+                          const SizedBox(height: AppSpacing.sectionGap),
                           if (codriverState.isSwitching)
                             Padding(
                               padding: const EdgeInsets.only(
@@ -185,11 +189,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                             isLoading: codriverState.isSwitching,
                             onPressed:
                                 (codriverState.isSwitching ||
-                                        codriverState.selectedCoDriver == null ||
-                                        codriverState.selectedCoDriver?.id ==
-                                            CoDriver.none.id)
-                                    ? null
-                                    : () async {
+                                    codriverState.selectedCoDriver == null ||
+                                    codriverState.selectedCoDriver?.id ==
+                                        CoDriver.none.id)
+                                ? null
+                                : () async {
                                     final hos = ref.read(hosStatusProvider);
                                     final driving = hos is HosEngineReady
                                         ? hos.update.currentStatus ==
@@ -312,7 +316,12 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     // SRS 10.3: server team state (informational, below the
                     // reference layout so it does not change it).
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.screenPadding,
+                        AppSpacing.md,
+                        AppSpacing.screenPadding,
+                        AppSpacing.lg,
+                      ),
                       child: _LinkedCoDriver(state: codriverState, loc: loc),
                     ),
                   ],
@@ -362,15 +371,14 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                       return RadioListTile<String>(
                         title: Text(
                           _driverLabel(driver, context.loc).toUpperCase(),
-                          style: context.styles.body.copyWith(
-                            fontSize: 14,
+                          style: context.styles.subtitle.copyWith(
                             color: dialogSelectedId == driver.id
-                                ? context.styles.gold.color
+                                ? context.gold
                                 : null,
                           ),
                         ),
                         value: driver.id,
-                        activeColor: AppColors.primaryGold,
+                        activeColor: context.gold,
                       );
                     },
                   ),
@@ -452,7 +460,8 @@ class _LinkedCoDriver extends StatelessWidget {
     if (linked != null && linked.isLinked) {
       value = linked.name ?? linked.coDriverId.toString();
       isError = false;
-    } else if (state.currentError != null && state.currentError != 'noInternet') {
+    } else if (state.currentError != null &&
+        state.currentError != 'noInternet') {
       value = anyErrorUserMessage(state.currentError!, loc: loc);
       isError = true;
     } else {
@@ -479,9 +488,7 @@ class _LinkedCoDriver extends StatelessWidget {
         Text(
           value,
           textAlign: TextAlign.center,
-          style: isError
-              ? context.styles.error
-              : context.styles.subtitle,
+          style: isError ? context.styles.error : context.styles.subtitle,
         ),
         if (teamBadge != null) ...[
           const SizedBox(height: AppSpacing.xs),

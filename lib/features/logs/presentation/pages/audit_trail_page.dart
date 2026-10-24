@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
 import '../providers/audit_trail_provider.dart';
@@ -18,7 +17,6 @@ class AuditTrailPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryGold,
         title: Text(context.loc.auditTrail, style: context.styles.appBarTitle),
         centerTitle: true,
       ),
@@ -59,7 +57,7 @@ class AuditTrailPage extends ConsumerWidget {
                       if (e.userName != null && e.userName!.isNotEmpty)
                         '${e.userName}${e.userRole != null && e.userRole!.isNotEmpty ? ' (${e.userRole})' : ''}',
                     ];
-                    
+
                     return ListTile(
                       dense: true,
                       leading: Icon(
@@ -70,9 +68,9 @@ class AuditTrailPage extends ConsumerWidget {
                       title: Text(
                         e.action.isNotEmpty
                             ? e.action
-                            : (e.newStatus.isNotEmpty 
-                                ? e.newStatus 
-                                : context.loc.unknownAction),
+                            : (e.newStatus.isNotEmpty
+                                  ? e.newStatus
+                                  : context.loc.unknownAction),
                         style: context.styles.body,
                       ),
                       subtitle: subtitleParts.isEmpty

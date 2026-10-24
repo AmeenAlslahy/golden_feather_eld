@@ -3,15 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/design_system.dart';
 import '../../../../core/error/user_facing_message.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/eld_card.dart';
-import '../../../../core/widgets/eld_info_row.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
@@ -32,7 +27,6 @@ class AboutPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final packageInfo = ref.watch(packageInfoProvider);
     final isConnected = ref.watch(isConnectedProvider);
     final gpsStatus = ref.watch(gpsStatusProvider);
@@ -42,27 +36,18 @@ class AboutPage extends ConsumerWidget {
     final notAvailable = loc.notAvailable;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryGold,
-        centerTitle: true,
-        title: Text(
-          loc.aboutTitle,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(loc.aboutTitle, style: context.styles.appBarTitle),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         children: [
           // ========== معلومات التطبيق ==========
           EldCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  loc.applicationInfo,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text(loc.applicationInfo, style: context.styles.sectionTitle),
                 const SizedBox(height: AppSpacing.sm),
                 EldInfoRow(
                   label: loc.appNameLabel,
@@ -81,10 +66,8 @@ class AboutPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  loading: () => EldInfoRow(
-                    label: loc.appVersionLabel,
-                    value: '...',
-                  ),
+                  loading: () =>
+                      EldInfoRow(label: loc.appVersionLabel, value: '...'),
                   error: (_, __) => EldInfoRow(
                     label: loc.appVersionLabel,
                     value: AppConstants.appVersion,
@@ -108,7 +91,7 @@ class AboutPage extends ConsumerWidget {
               children: [
                 Text(
                   loc.diagnosticsAndConnection,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: context.styles.sectionTitle,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _StatusTile(
@@ -118,7 +101,7 @@ class AboutPage extends ConsumerWidget {
                   okText: loc.connected,
                   badText: loc.disconnected,
                 ),
-                const Divider(color: AppColors.border),
+                const Divider(),
                 _StatusTile(
                   icon: Icons.gps_fixed,
                   label: loc.locationService,
@@ -126,18 +109,18 @@ class AboutPage extends ConsumerWidget {
                   okText: loc.enabled,
                   badText: loc.disabled,
                 ),
-                
-                // إضافة حالة اتصال الـ ELD 
+
+                // إضافة حالة اتصال الـ ELD
                 Consumer(
                   builder: (context, ref, _) {
                     final alertsState = ref.watch(hardwareAlertsProvider);
-                    
+
                     return alertsState.when(
                       data: (alerts) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Divider(color: AppColors.border),
+                            const Divider(),
                             _StatusTile(
                               icon: Icons.developer_board,
                               label: loc.hardwareAlerts,
@@ -147,13 +130,20 @@ class AboutPage extends ConsumerWidget {
                             ),
                             if (alerts.isNotEmpty)
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: alerts.map((a) => Text(
-                                    '• ${a.message}',
-                                    style: context.styles.error,
-                                  )).toList(),
+                                  children: alerts
+                                      .map(
+                                        (a) => Text(
+                                          '• ${a.message}',
+                                          style: context.styles.error,
+                                        ),
+                                      )
+                                      .toList(),
                                 ),
                               ),
                           ],
@@ -166,7 +156,10 @@ class AboutPage extends ConsumerWidget {
                       error: (err, _) => Padding(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         child: Text(
-                          anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
+                          anyErrorUserMessage(
+                            err,
+                            loc: AppLocalizations.of(context)!,
+                          ),
                           style: context.styles.error,
                         ),
                       ),
@@ -189,7 +182,7 @@ class AboutPage extends ConsumerWidget {
                   children: [
                     Text(
                       context.loc.technicalInfo,
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: context.styles.sectionTitle,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     hwStatusAsync.when(
@@ -209,10 +202,14 @@ class AboutPage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       // Never a raw exception string for the driver.
                       error: (err, _) => Text(
-                        anyErrorUserMessage(err, loc: AppLocalizations.of(context)!),
+                        anyErrorUserMessage(
+                          err,
+                          loc: AppLocalizations.of(context)!,
+                        ),
                         style: context.styles.error,
                       ),
                     ),
@@ -233,7 +230,7 @@ class AboutPage extends ConsumerWidget {
           //           Expanded(
           //             child: Text(
           //               loc.eldConnectionStatus,
-          //               style: Theme.of(context).textTheme.titleMedium,
+          //               style: context.styles.sectionTitle,
           //             ),
           //           ),
           //           // Retry for both server reads (data pages: retry + refresh).
@@ -278,7 +275,7 @@ class AboutPage extends ConsumerWidget {
 
           Text(
             loc.supportText,
-            style: context.textTheme.bodySmall?.copyWith(
+            style: context.styles.caption.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
@@ -306,23 +303,43 @@ class _StatusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isOk ? AppColors.successGreen : AppColors.dangerRed;
-    return Material(
-      type: MaterialType.transparency,
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: color),
-        title: Text(label,
-            style: context.styles.body),
-        trailing: Text(
-          isOk ? okText : badText,
-          style: TextStyle(
-            fontSize: AppTypography.captionSize,
-            fontWeight: AppTypography.bold,
-            color: color,
-          ),
-        ),
-      ),
+    final color = (isOk ? context.styles.success : context.styles.error).color;
+    final labelRow = Row(
+      children: [
+        Icon(icon, color: color),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(child: Text(label, style: context.styles.body)),
+      ],
+    );
+    final badge = AppStatusBadge(
+      label: isOk ? okText : badText,
+      type: isOk ? AppStatusBadgeType.success : AppStatusBadgeType.error,
+    );
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowVertical),
+      child: stacked
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                labelRow,
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 24 + AppSpacing.md,
+                    top: AppSpacing.xs,
+                  ),
+                  child: badge,
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: labelRow),
+                const SizedBox(width: AppSpacing.sm),
+                badge,
+              ],
+            ),
     );
   }
 }

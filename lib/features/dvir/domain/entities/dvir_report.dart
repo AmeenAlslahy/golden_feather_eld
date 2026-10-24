@@ -3,17 +3,10 @@ import 'package:equatable/equatable.dart';
 import '../dvir_catalog.dart';
 
 /// نوع الفحص
-enum InspectionType {
-  preTrip,
-  postTrip;
-}
+enum InspectionType { preTrip, postTrip }
 
 /// حالة المركبة
-enum VehicleCondition {
-  safe,
-  needsRepair,
-  unsafe;
-}
+enum VehicleCondition { safe, needsRepair, unsafe }
 
 /// حالة DVIR الرسمية كما يعرّفها FMCSA — قيم `wire` هي النصوص التي يرسلها
 /// الخادم ويستقبلها؛ لا تُستخدم النصوص كمعرّفات في الكود أبداً، الـ enum
@@ -38,6 +31,38 @@ enum DvirConditionStatus {
     }
     return DvirConditionStatus.unknown;
   }
+
+  /// DVIR-09 / SRS 7.1+7.6: a report with defects cannot stay satisfactory.
+  /// Every other status is preserved verbatim; no inference from defect stages
+  /// or §396.13 review state happens here.
+  DvirConditionStatus resolvedFor({required bool hasDefects}) {
+    if (hasDefects && this == DvirConditionStatus.satisfactory) {
+      return DvirConditionStatus.hasDefects;
+    }
+    return this;
+  }
+
+  /// SRS 7.6: ما يجوز للسائق اختياره يدوياً في حوار الحالة —
+  /// - حالتا الإصلاح يضبطهما الناقل بعد شهادة الإصلاح، ليستا قرار سائق.
+  /// - "سليمة" تُمنع عند وجود عيوب مسجلة (وجه آخر من DVIR-09).
+  /// - "غير معروف" ليست خياراً معروضاً أصلاً.
+  bool driverMaySelect({required bool hasDefects}) {
+    return switch (this) {
+      DvirConditionStatus.satisfactory => !hasDefects,
+      DvirConditionStatus.hasDefects => true,
+      _ => false,
+    };
+  }
+}
+
+/// يقرأ نص العداد بنفس تسامح محدد الحقل: إزالة الفواصل، ورفض السالب
+/// وغير الرقمي. فارغ أو غير صالح ⇒ `null`.
+double? parseDvirOdometer(String? text) {
+  final value = text?.trim().replaceAll(',', '') ?? '';
+  if (value.isEmpty) return null;
+  final parsed = double.tryParse(value);
+  if (parsed != null && !parsed.isNaN && !parsed.isNegative) return parsed;
+  return null;
 }
 
 /// نتيجة فحص عنصر — يُستبدل حقل العيوب في الكيان بـ [DvirDefectSelection]
@@ -50,20 +75,13 @@ enum DvirConditionStatus {
 /// - `restricted`: عيوب أخرى غير مُعالجة.
 /// - `available`: لا عيوب أو كلها مُعالجة.
 /// لا يُدمج هذا الحقل مع حالة العيب في حقل واحد.
-enum VehicleOperationalStatus {
-  outOfService,
-  restricted,
-  available,
-}
+enum VehicleOperationalStatus { outOfService, restricted, available }
 
 class DvirTrailer extends Equatable {
   final String trailerNumber;
   final List<String> defects;
 
-  const DvirTrailer({
-    required this.trailerNumber,
-    this.defects = const [],
-  });
+  const DvirTrailer({required this.trailerNumber, this.defects = const []});
 
   @override
   List<Object?> get props => [trailerNumber, defects];
@@ -84,6 +102,10 @@ class DvirReport extends Equatable {
   final String? notes;
   final String? signature;
   final VehicleCondition condition;
+
+  /// الحالة الرسمية كما أعادها الخادم. لا تُشتق من `nextDriverReviewed` أو
+  /// مراحل العيوب المحلية؛ `unknown` تعني أن المصدر لم يقدّم حالة صالحة.
+  final DvirConditionStatus conditionStatus;
   final bool isSubmitted;
 
   // Additional fields from API
@@ -132,6 +154,65 @@ class DvirReport extends Equatable {
     return DateTime(targetYear, targetMonth, targetDay, d.hour, d.minute);
   }
 
+  /// يبني تقريراً جديداً (غير مُرسل) من قيم النموذج الخام، ويطبّق
+  /// ثوابت النطاق مرة واحدة هنا فقط:
+  /// - DVIR-09: عيوب مسجلة لا تبقى على حالة "سليمة"
+  ///   ([DvirConditionStatus.resolvedFor]).
+  /// - الحالة الخشنة: عيوب ⇒ [VehicleCondition.needsRepair].
+  /// - التطبيع (trim/فارغ ⇒ null) بنفس القيم التي كان يرسلها النموذج.
+  ///
+  /// المستدعي يمرر النصوص كما هي؛ كل قرار يعيش هنا أو في دوال النطاق.
+  factory DvirReport.draft({
+    required InspectionType type,
+    required DateTime inspectionTimeUtc,
+    required String driverName,
+    required String vehicleId,
+    required int? deviceId,
+    required DvirConditionStatus selectedStatus,
+    required bool hasAnyDefect,
+    required List<DvirDefectSelection> selectedDefects,
+    required String signatureData,
+    String? trailerNumber,
+    String? odometerText,
+    String? notes,
+    String? location,
+    String? companyName,
+    String? vehicleDefects,
+    String? trailerDefects,
+  }) {
+    final status = selectedStatus.resolvedFor(hasDefects: hasAnyDefect);
+    final trailer = trailerNumber?.trim();
+    final locationTrimmed = location?.trim();
+    final companyTrimmed = companyName?.trim();
+    return DvirReport(
+      id: '',
+      type: type,
+      date: inspectionTimeUtc,
+      driverName: driverName,
+      vehicleId: vehicleId,
+      deviceId: deviceId,
+      trailerId: trailer == null || trailer.isEmpty ? null : trailer,
+      odometer: parseDvirOdometer(odometerText),
+      notes: notes != null && notes.isNotEmpty ? notes : null,
+      signature: signatureData,
+      condition: hasAnyDefect
+          ? VehicleCondition.needsRepair
+          : VehicleCondition.safe,
+      conditionStatus: status,
+      isSubmitted: false,
+      location: locationTrimmed != null && locationTrimmed.isNotEmpty
+          ? locationTrimmed
+          : null,
+      companyName: companyTrimmed != null && companyTrimmed.isNotEmpty
+          ? companyTrimmed
+          : '',
+      vehicleDefects: vehicleDefects,
+      trailerDefects: trailerDefects,
+      hasDefects: hasAnyDefect,
+      selectedDefects: selectedDefects,
+    );
+  }
+
   const DvirReport({
     required this.id,
     required this.type,
@@ -144,6 +225,7 @@ class DvirReport extends Equatable {
     this.notes,
     this.signature,
     this.condition = VehicleCondition.safe,
+    this.conditionStatus = DvirConditionStatus.unknown,
     this.isSubmitted = false,
     this.location,
     this.companyName,
@@ -176,6 +258,7 @@ class DvirReport extends Equatable {
     String? notes,
     String? signature,
     VehicleCondition? condition,
+    DvirConditionStatus? conditionStatus,
     bool? isSubmitted,
     String? location,
     String? companyName,
@@ -208,6 +291,7 @@ class DvirReport extends Equatable {
       notes: notes ?? this.notes,
       signature: signature ?? this.signature,
       condition: condition ?? this.condition,
+      conditionStatus: conditionStatus ?? this.conditionStatus,
       isSubmitted: isSubmitted ?? this.isSubmitted,
       location: location ?? this.location,
       companyName: companyName ?? this.companyName,
@@ -233,34 +317,35 @@ class DvirReport extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        type,
-        date,
-        driverName,
-        vehicleId,
-        deviceId,
-        trailerId,
-        odometer,
-        notes,
-        signature,
-        condition,
-        isSubmitted,
-        location,
-        companyName,
-        vehicleDefects,
-        trailerDefects,
-        hasDefects,
-        defectsCount,
-        defectsSummary,
-        outOfService,
-        certified,
-        mechanicName,
-        repairStatus,
-        repairNotes,
-        reviewingDriverName,
-        nextDriverReviewed,
-        selectedDefects,
-        photos,
-        trailers,
-      ];
+    id,
+    type,
+    date,
+    driverName,
+    vehicleId,
+    deviceId,
+    trailerId,
+    odometer,
+    notes,
+    signature,
+    condition,
+    conditionStatus,
+    isSubmitted,
+    location,
+    companyName,
+    vehicleDefects,
+    trailerDefects,
+    hasDefects,
+    defectsCount,
+    defectsSummary,
+    outOfService,
+    certified,
+    mechanicName,
+    repairStatus,
+    repairNotes,
+    reviewingDriverName,
+    nextDriverReviewed,
+    selectedDefects,
+    photos,
+    trailers,
+  ];
 }

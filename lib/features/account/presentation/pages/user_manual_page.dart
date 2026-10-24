@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -18,14 +17,8 @@ class UserManualPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          loc.eldUserManual,
-          style: context.styles.appBarTitle,
-        ),
+        leading: const BackButton(),
+        title: Text(loc.eldUserManual, style: context.styles.appBarTitle),
       ),
       body: ListView(
         padding: EdgeInsets.zero,
@@ -49,33 +42,37 @@ class UserManualPage extends StatelessWidget {
 
           _buildSectionTitle(loc.fleetManagerPortal, context),
           _buildFleetManagerSection(loc, context),
-          const SizedBox(height: 32.0),
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
   }
 
   Widget _buildSectionTitle(String title, BuildContext context) {
-    final lineColor = context.styles.body.color!.withValues(alpha: 0.3);
+    final lineColor =
+        (context.styles.body.color ?? context.textPrimary).withValues(alpha: 0.3);
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: context.styles.bodyBold.copyWith(fontSize: 14),
+          Text(title, style: context.styles.sectionTitle),
+          const SizedBox(height: AppSpacing.sm),
+          Divider(
+            color: lineColor,
+            thickness: AppSpacing.dividerHeight,
+            height: AppSpacing.dividerHeight,
           ),
-          const SizedBox(height: 8),
-          Divider(color: lineColor, thickness: 1, height: 1),
         ],
       ),
     );
   }
 
   Widget _buildHeader(AppLocalizations loc, BuildContext context) {
-    final iconColor = context.styles.subtitle.color!;
+    final iconColor = context.styles.subtitle.color ?? context.textSecondary;
     return Container(
       color: Theme.of(context).colorScheme.surface,
       constraints: const BoxConstraints(minHeight: 250),
@@ -88,12 +85,16 @@ class UserManualPage extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.all(AppSpacing.md),
                 decoration: AppDecorations.tinted(
-                  context.styles.body.color!,
+                  context.styles.body.color ?? context.textPrimary,
                   alpha: 0.06,
                   radius: AppRadius.largeCard,
                 ),
                 child: Center(
-                  child: Icon(Icons.local_shipping, size: 64, color: iconColor),
+                  child: Icon(
+                    Icons.local_shipping,
+                    size: AppSpacing.iconFeature,
+                    color: iconColor,
+                  ),
                 ),
               ),
             ),
@@ -101,56 +102,62 @@ class UserManualPage extends StatelessWidget {
               flex: 6,
               child: Padding(
                 padding: const EdgeInsets.only(
-                    right: AppSpacing.md,
-                    left: AppSpacing.md,
-                    top: AppSpacing.xl,
-                    bottom: AppSpacing.md),
+                  right: AppSpacing.md,
+                  left: AppSpacing.md,
+                  top: AppSpacing.xl,
+                  bottom: AppSpacing.md,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          loc.userManual,
-                          style: context.styles.bodyBold.copyWith(fontSize: 11),
+                        Flexible(
+                          child: Text(
+                            loc.userManual,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.styles.bodyBold,
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Divider(
-                            color: context.styles.body.color!
+                            color: (context.styles.body.color ??
+                                    context.textPrimary)
                                 .withValues(alpha: 0.3),
                           ),
                         ),
                       ],
                     ),
                     const Spacer(),
-                    Text(
-                      'Golden Feather ELD',
-                      style: context.styles.body
-                          .copyWith(fontSize: 24, fontWeight: FontWeight.w400),
-                    ),
+                    Text('Golden Feather ELD', style: context.styles.pageTitle),
                     const Spacer(),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md, vertical: AppSpacing.md),
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.md,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.round),
                         boxShadow: [
                           if (!context.isDark)
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
+                              color: context.colors.shadow.withValues(
+                                alpha: 0.05,
+                              ),
+                              blurRadius: AppSpacing.sm,
+                              offset: const Offset(0, AppSpacing.xs),
                             ),
                         ],
                       ),
                       child: Text(
                         loc.electronicLoggingDeviceEld,
                         textAlign: TextAlign.center,
-                        style: context.styles.body.copyWith(fontSize: 11),
+                        style: context.styles.body,
                       ),
                     ),
                   ],
@@ -165,47 +172,42 @@ class UserManualPage extends StatelessWidget {
 
   Widget _buildFeaturesSection(AppLocalizations loc, BuildContext context) {
     final features = [
-      {
-        'title': loc.recordsOfDutyStatus,
-        'desc': loc.easilyManageYourDutyStatusChan
-      },
-      {
-        'title': loc.availableHoursAndRequiredBreaks,
-        'desc': loc.stayInformedAboutYourAvailable
-      },
-      {
-        'title': loc.interAndIntrastateHosRules,
-        'desc': loc.ourAppSupportsBothInterAndIntr
-      },
-      {
-        'title': loc.roadsideInspectionFunction,
-        'desc': loc.duringRoadsideInspectionsUseTh
-      },
-      {
-        'title':
-            loc.vehicleInspectionReports,
-        'desc': loc.generatePreOrPostTripDvirsWith
-      },
-      {
-        'title':
-            loc.onlineFleetManagerPortal,
-        'desc': loc.accessTheFleetManagerPortalToM
-      },
-      {
-        'title': loc.gpsTracking,
-        'desc': loc.trackYourVehicleSLocationIn
-      },
-      {
-        'title': loc.iftaCalculations,
-        'desc': loc.automaticallyCalculateIftaData
-      },
+      (
+        title: loc.recordsOfDutyStatus,
+        desc: loc.easilyManageYourDutyStatusChan,
+      ),
+      (
+        title: loc.availableHoursAndRequiredBreaks,
+        desc: loc.stayInformedAboutYourAvailable,
+      ),
+      (
+        title: loc.interAndIntrastateHosRules,
+        desc: loc.ourAppSupportsBothInterAndIntr,
+      ),
+      (
+        title: loc.roadsideInspectionFunction,
+        desc: loc.duringRoadsideInspectionsUseTh,
+      ),
+      (
+        title: loc.vehicleInspectionReports,
+        desc: loc.generatePreOrPostTripDvirsWith,
+      ),
+      (
+        title: loc.onlineFleetManagerPortal,
+        desc: loc.accessTheFleetManagerPortalToM,
+      ),
+      (title: loc.gpsTracking, desc: loc.trackYourVehicleSLocationIn),
+      (
+        title: loc.iftaCalculations,
+        desc: loc.automaticallyCalculateIftaData,
+      ),
     ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
         children: features
-            .map((f) => _buildFeatureCard(f['title']!, f['desc']!, context))
+            .map((f) => _buildFeatureCard(f.title, f.desc, context))
             .toList(),
       ),
     );
@@ -215,29 +217,25 @@ class UserManualPage extends StatelessWidget {
     final features = [
       {
         'title': loc.setUpFleetManagerPortal,
-        'desc': loc.useYourCredentialsToSignIntoTh
+        'desc': loc.useYourCredentialsToSignIntoTh,
       },
       {
-        'title':
-            loc.monitorHosAndFmcsaCompliance,
-        'desc': loc.stayOnTopOfDriversDuty
+        'title': loc.monitorHosAndFmcsaCompliance,
+        'desc': loc.stayOnTopOfDriversDuty,
       },
       {
         'title': loc.preconfiguredStatuses,
-        'desc': loc.customizeDutyStatusesAccessByS
+        'desc': loc.customizeDutyStatusesAccessByS,
       },
       {
         'title': loc.driverAndVehicleInformation,
-        'desc': loc.trackYourDriversCurrentOrLast
+        'desc': loc.trackYourDriversCurrentOrLast,
       },
       {
         'title': loc.downloadAndTransferLogs,
-        'desc': loc.downloadAnyDriversLogsInPdf
+        'desc': loc.downloadAnyDriversLogsInPdf,
       },
-      {
-        'title': loc.filterLogs,
-        'desc': loc.saveTimeByQuicklyFindingLogsBy
-      },
+      {'title': loc.filterLogs, 'desc': loc.saveTimeByQuicklyFindingLogsBy},
     ];
 
     return Padding(
@@ -251,10 +249,16 @@ class UserManualPage extends StatelessWidget {
   }
 
   Widget _buildFeatureCard(
-      String title, String description, BuildContext context) {
+    String title,
+    String description,
+    BuildContext context,
+  ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.compact),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.compact,
+      ),
       decoration: AppDecorations.card(context),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -264,20 +268,20 @@ class UserManualPage extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: context.styles.bodyBold.copyWith(fontSize: 10),
+              style: context.styles.bodyBold,
             ),
           ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             width: 4,
             height: 24,
-            color: AppColors.primaryGold.withValues(alpha: 0.8),
+            color: context.gold.withValues(alpha: 0.8),
           ),
           Expanded(
             flex: 7,
             child: Text(
               description,
-              style: context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
+              style: context.styles.subtitle.copyWith(height: 1.6),
             ),
           ),
         ],
@@ -285,8 +289,7 @@ class UserManualPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInstallationSection(
-      AppLocalizations loc, BuildContext context) {
+  Widget _buildInstallationSection(AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
@@ -298,11 +301,17 @@ class UserManualPage extends StatelessWidget {
             child: Container(
               height: 120,
               decoration: BoxDecoration(
-                color: context.styles.body.color!,
-                borderRadius: BorderRadius.circular(8),
+                color: context.placeholderSurface,
+                borderRadius: BorderRadius.circular(AppRadius.imagePlaceholder),
+                border: Border.all(color: context.placeholderBorder),
               ),
-              child: const Center(
-                  child: Icon(Icons.router, color: Colors.white, size: 32)),
+              child: Center(
+                child: Icon(
+                  Icons.router,
+                  color: context.styles.subtitle.color,
+                  size: AppSpacing.iconXLarge,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -316,28 +325,25 @@ class UserManualPage extends StatelessWidget {
                   title: loc.installEldHardware,
                   content: Text(
                     loc.beginByLocatingTheEcmDiagnostic,
-                    style: context.styles.subtitle
-                        .copyWith(fontSize: 9, height: 1.5),
+                    style: context.styles.subtitle.copyWith(height: 1.6),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.compact),
                 _buildTabbedCard(
                   context: context,
                   title: loc.installEldSoftware,
                   content: Text(
                     loc.beforeYouStartUsingTheEld,
-                    style: context.styles.subtitle
-                        .copyWith(fontSize: 9, height: 1.5),
+                    style: context.styles.subtitle.copyWith(height: 1.6),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.compact),
                 _buildTabbedCard(
                   context: context,
                   title: loc.hoursOfService1,
                   content: Text(
                     loc.onceTheEldIsSetUp,
-                    style: context.styles.subtitle
-                        .copyWith(fontSize: 9, height: 1.5),
+                    style: context.styles.subtitle.copyWith(height: 1.6),
                   ),
                 ),
               ],
@@ -349,7 +355,9 @@ class UserManualPage extends StatelessWidget {
   }
 
   Widget _buildLogManagementSection(
-      AppLocalizations loc, BuildContext context) {
+    AppLocalizations loc,
+    BuildContext context,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Column(
@@ -363,16 +371,20 @@ class UserManualPage extends StatelessWidget {
                 child: Container(
                   height: 160,
                   decoration: BoxDecoration(
-                    color: context.styles.body.color!.withValues(alpha: 0.06),
+                    color: context.placeholderSurface,
                     borderRadius: BorderRadius.circular(AppRadius.largeCard),
                     border: Border.all(
-                        color:
-                            context.styles.body.color!.withValues(alpha: 0.3),
-                        width: 2),
+                      color: context.placeholderBorder,
+                      width: 2,
+                    ),
                   ),
                   child: Center(
-                      child: Icon(Icons.smartphone,
-                          color: context.styles.subtitle.color!, size: 48)),
+                    child: Icon(
+                      Icons.smartphone,
+                      color: context.styles.subtitle.color!,
+                      size: AppSpacing.iconHero,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
@@ -384,47 +396,48 @@ class UserManualPage extends StatelessWidget {
                       context: context,
                       title: loc.accessingLogs,
                       content: Text(
-                          loc.logInToTheEldAppWithYourUnique,
-                          style:
-                              context.styles.subtitle.copyWith(fontSize: 9)),
+                        loc.logInToTheEldAppWithYourUnique,
+                        style: context.styles.subtitle,
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.compact),
                     _buildTabbedCard(
                       context: context,
                       title: loc.viewingLogs1,
                       content: Text(
-                          loc.viewDetailedRodsForDifferentDa,
-                          style:
-                              context.styles.subtitle.copyWith(fontSize: 9)),
+                        loc.viewDetailedRodsForDifferentDa,
+                        style: context.styles.subtitle,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.compact),
           _buildTabbedCard(
             context: context,
             title: loc.editingLogs,
             content: Text(
-                loc.editDutyStatusEntriesExceptFor,
-                style: context.styles.subtitle.copyWith(fontSize: 9)),
+              loc.editDutyStatusEntriesExceptFor,
+              style: context.styles.subtitle,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.compact),
           _buildTabbedCard(
             context: context,
             title: loc.certifyingLogs,
             content: Text(
-                loc.certifyingLogsEndYourShiftByDi,
-                style: context.styles.subtitle.copyWith(fontSize: 9)),
+              loc.certifyingLogsEndYourShiftByDi,
+              style: context.styles.subtitle,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRoadsideSection(
-      AppLocalizations loc, BuildContext context) {
+  Widget _buildRoadsideSection(AppLocalizations loc, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
@@ -436,22 +449,20 @@ class UserManualPage extends StatelessWidget {
               title: loc.dotInspection,
               content: Text(
                 loc.duringARoadsideInspectionFollowThese,
-                style:
-                    context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
+                style: context.styles.subtitle.copyWith(height: 1.6),
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 40),
+              padding: const EdgeInsets.only(top: AppSpacing.xxl),
               child: _buildTabbedCard(
                 context: context,
                 title: loc.hosComplianceAlerts,
                 content: Text(
                   loc.stayCompliantWithHosRegulationsBy,
-                  style:
-                      context.styles.subtitle.copyWith(fontSize: 9, height: 1.5),
+                  style: context.styles.subtitle.copyWith(height: 1.6),
                 ),
               ),
             ),
@@ -470,11 +481,11 @@ class UserManualPage extends StatelessWidget {
             context: context,
             title: loc.createDvir,
             content: Text(
-                loc.createANewInspectionReportAccess,
-                style:
-                    context.styles.subtitle.copyWith(fontSize: 9, height: 1.5)),
+              loc.createANewInspectionReportAccess,
+              style: context.styles.subtitle.copyWith(height: 1.6),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.compact),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -483,9 +494,9 @@ class UserManualPage extends StatelessWidget {
                   context: context,
                   title: loc.editDvir,
                   content: Text(
-                      loc.editAnExistingReportGoTo,
-                      style: context.styles.subtitle
-                          .copyWith(fontSize: 9, height: 1.5)),
+                    loc.editAnExistingReportGoTo,
+                    style: context.styles.subtitle.copyWith(height: 1.6),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -494,9 +505,9 @@ class UserManualPage extends StatelessWidget {
                   context: context,
                   title: loc.deleteDvir,
                   content: Text(
-                      loc.deleteAnExistingReportInDvir,
-                      style: context.styles.subtitle
-                          .copyWith(fontSize: 9, height: 1.5)),
+                    loc.deleteAnExistingReportInDvir,
+                    style: context.styles.subtitle.copyWith(height: 1.6),
+                  ),
                 ),
               ),
             ],
@@ -510,7 +521,6 @@ class UserManualPage extends StatelessWidget {
     required BuildContext context,
     required String title,
     required Widget content,
-    bool fullWidth = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,36 +528,40 @@ class UserManualPage extends StatelessWidget {
         Row(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               child: Text(
                 title,
-                style: context.styles.muted.copyWith(
-                  fontSize: 10,
+                style: context.styles.subtitle.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             Expanded(
               child: Container(
-                height: 1,
-                color: context.styles.body.color!.withValues(alpha: 0.06),
+                height: AppSpacing.dividerHeight,
+                color: (context.styles.body.color ?? context.textPrimary)
+                    .withValues(alpha: 0.06),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Container(
-          width: fullWidth ? double.infinity : null,
+          width: double.infinity,
           decoration: AppDecorations.card(context, radius: AppRadius.input),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.compact),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: const EdgeInsets.only(top: 2, right: 8, left: 4),
-                width: 4,
-                height: 14,
-                color: AppColors.primaryGold.withValues(alpha: 0.8),
+                margin: const EdgeInsetsDirectional.only(
+                  start: AppSpacing.xs,
+                  end: AppSpacing.sm,
+                  top: AppSpacing.xs,
+                ),
+                width: AppSpacing.xs,
+                height: AppSpacing.iconSmall,
+                color: context.gold.withValues(alpha: 0.8),
               ),
               Expanded(child: content),
             ],

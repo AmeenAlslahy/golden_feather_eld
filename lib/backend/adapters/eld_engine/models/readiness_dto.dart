@@ -56,12 +56,14 @@ class ReadinessDto {
     final rawEdits = json['pendingCarrierEdits'];
     final edits = rawEdits is List
         ? rawEdits
-            .whereType<Map>()
-            .map((item) => CarrierProposedEdit.fromJson(
+              .whereType<Map>()
+              .map(
+                (item) => CarrierProposedEdit.fromJson(
                   Map<String, dynamic>.from(item),
-                ))
-            .where((edit) => edit.id.isNotEmpty)
-            .toList()
+                ),
+              )
+              .where((edit) => edit.id.isNotEmpty)
+              .toList()
         : const <CarrierProposedEdit>[];
     return ReadinessDto(
       dailyLogId: (json['dailyLogId'] as num?)?.toInt() ?? 0,
@@ -69,12 +71,14 @@ class ReadinessDto {
       driverName: json['driverName']?.toString() ?? '',
       logDate: json['logDate']?.toString() ?? '',
       readinessStatus: json['readinessStatus']?.toString() ?? 'NOT_READY',
-      missingRequirements: (json['missingRequirements'] as List<dynamic>?)
+      missingRequirements:
+          (json['missingRequirements'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
       legalStatement: json['legalStatement']?.toString() ?? '',
-      availableActions: (json['availableActions'] as List<dynamic>?)
+      availableActions:
+          (json['availableActions'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],

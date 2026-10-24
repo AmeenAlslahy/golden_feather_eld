@@ -31,8 +31,9 @@ class MemoryOfflineQueue implements OfflineQueue {
     // فرز حسب الأولوية ثم الأقدمية
     readyEvents.sort((a, b) {
       if (a.priority != b.priority) {
-        return a.priority.index
-            .compareTo(b.priority.index); // high (0), normal (1), low (2)
+        return a.priority.index.compareTo(
+          b.priority.index,
+        ); // high (0), normal (1), low (2)
       }
       return a.createdAt.compareTo(b.createdAt);
     });
@@ -57,6 +58,7 @@ class MemoryOfflineQueue implements OfflineQueue {
   Future<void> moveToDeadLetter(PendingEvent event) async {
     _queue.removeWhere((e) => e.id == event.id);
   }
+
   @override
   Future<int> get count async => _queue.length;
 
@@ -105,30 +107,22 @@ class MemoryOfflineQueue implements OfflineQueue {
   }
 
   List<QuarantineRecord> _parkedBy(Set<StoredEventState> states, int limit) {
-    final rows = _parked.values
-        .where((r) => states.contains(r.state))
-        .toList()
+    final rows = _parked.values.where((r) => states.contains(r.state)).toList()
       ..sort((a, b) => a.quarantinedAt.compareTo(b.quarantinedAt));
     return rows.take(limit).toList();
   }
 
   @override
   Future<List<QuarantineRecord>> getDeferred({int limit = 50}) async {
-    return _parkedBy(
-      const {
-        StoredEventState.deferredOwnerMismatch,
-        StoredEventState.deferredUnauthenticated,
-      },
-      limit,
-    );
+    return _parkedBy(const {
+      StoredEventState.deferredOwnerMismatch,
+      StoredEventState.deferredUnauthenticated,
+    }, limit);
   }
 
   @override
   Future<List<QuarantineRecord>> getQuarantined({int limit = 50}) async {
-    return _parkedBy(
-      const {StoredEventState.quarantinedUnknownOwner},
-      limit,
-    );
+    return _parkedBy(const {StoredEventState.quarantinedUnknownOwner}, limit);
   }
 
   @override

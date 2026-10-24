@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/design_system.dart';
-import '../../../../core/widgets/app_status_badge.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/vehicle.dart';
 
@@ -33,12 +32,17 @@ class VehicleCard extends StatelessWidget {
     ];
     final badge = _rowBadge(context.loc);
     final reason = vehicle.statusReason?.trim() ?? '';
-    return InkWell(
-      onTap: onTap,
-      splashColor: Colors.black.withValues(alpha: 0.12),
-      highlightColor: Colors.black.withValues(alpha: 0.06),
-      child: Opacity(
-        opacity: operable ? 1.0 : 0.55,
+    final textColor = operable ? context.textPrimary : context.textSecondary;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.12),
+        highlightColor: Theme.of(
+          context,
+        ).colorScheme.primary.withValues(alpha: 0.06),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
@@ -52,18 +56,25 @@ class VehicleCard extends StatelessWidget {
                   children: [
                     Text(
                       vehicle.id.isNotEmpty ? vehicle.id : vehicle.displayName,
-                      style: context.styles.bodyBold,
+                      style: context.styles.bodyBold.copyWith(color: textColor),
                     ),
                     if (subtitleBits.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         subtitleBits.join(' '),
-                        style: context.styles.caption,
+                        style: context.styles.caption.copyWith(
+                          color: textColor,
+                        ),
                       ),
                     ],
                     if (!operable && reason.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(reason, style: context.styles.caption),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        reason,
+                        style: context.styles.caption.copyWith(
+                          color: textColor,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -119,6 +130,8 @@ String vehicleErrorText(String raw, AppLocalizations loc) {
     case 'unauthorized':
       return loc.errUnauthorized;
     case 'unavailable':
+    case 'noInternet':
+    case 'vehicle_selection_failed':
       return loc.errUnavailable;
     case 'in_use':
       return loc.errInUse;

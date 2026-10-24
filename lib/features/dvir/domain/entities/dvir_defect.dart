@@ -1,3 +1,5 @@
+import '../defect_enums.dart';
+
 /// عيب DVIR — كيان نقي من تفاصيل الخادم (`GET /eld/dvir/defects/{id}`).
 /// ما لا يرسله الخادم يبقى null — لا قيم مخترعة ولا افتراضات.
 class DvirDefect {
@@ -10,8 +12,8 @@ class DvirDefect {
   final String? itemCode;
   final String? itemName;
   final String? description;
-  final String? severity;
-  final String? stage;
+  final DefectSeverity? severity;
+  final DefectLifecycleStage? stage;
   final bool? outOfService;
   final DateTime? repairDeadline;
   final List<DvirRepairAction> repairActions;

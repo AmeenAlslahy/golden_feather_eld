@@ -35,13 +35,10 @@ class EldRetryView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             IconButton(
               tooltip: context.loc.retryButton,
-              iconSize: 40,
+              iconSize: AppSpacing.iconHero,
               color: context.styles.gold.color,
               onPressed: onRetry,
-              icon: Icon(
-                Icons.refresh,
-                color: context.styles.gold.color,
-              ),
+              icon: Icon(Icons.refresh, color: context.styles.gold.color),
             ),
           ],
         ),

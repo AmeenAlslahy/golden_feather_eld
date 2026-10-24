@@ -43,7 +43,8 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
   void setStatus(String status) =>
       state = state.copyWith(selectedStatus: status);
   void setStartTime(String time) => state = state.copyWith(startTime: time);
-  void setLocation(String location) => state = state.copyWith(location: location);
+  void setLocation(String location) =>
+      state = state.copyWith(location: location);
   void setReason(String reason) => state = state.copyWith(reason: reason);
 
   /// حساب الوقت الابتدائي لاختيار الوقت استناداً إلى وقت السجل أو الوقت الحالي الموثوق
@@ -61,13 +62,14 @@ String _formatCurrentTime(TimeAuthority timeAuthority) {
 
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, LogEvent?>((ref, event) {
-  final timeAuthority = ref.watch(timeAuthorityProvider);
-  return EditLogFormNotifier(
-    EditLogFormState(
-      selectedStatus: event?.status ?? 'OFF',
-      startTime: event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
-      duration: event?.formattedDuration ?? '00:00',
-      location: event?.location ?? '',
-    ),
-  );
-});
+      final timeAuthority = ref.watch(timeAuthorityProvider);
+      return EditLogFormNotifier(
+        EditLogFormState(
+          selectedStatus: event?.status ?? 'OFF',
+          startTime:
+              event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
+          duration: event?.formattedDuration ?? '00:00',
+          location: event?.location ?? '',
+        ),
+      );
+    });

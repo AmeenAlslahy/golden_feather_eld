@@ -9,7 +9,7 @@ class TimerUiState {
   final double progress;
   final bool isRest;
 
-  TimerUiState({
+  const TimerUiState({
     required this.liveRemaining,
     required this.progress,
     required this.isRest,
@@ -19,15 +19,26 @@ class TimerUiState {
 /// يفصل المنطق التجاري وقوانين الحساب (Business Rules) عن الواجهة (Widget)
 class CircularTimerLogic {
   static bool isRestDuty(DutyStatusCode? status, String statusLabel) {
-    if (status == DutyStatusCode.offDuty ||
-        status == DutyStatusCode.sleeperBerth ||
-        status == DutyStatusCode.personalConveyance) {
-      return true;
+    if (status != null) {
+      return status == DutyStatusCode.offDuty ||
+          status == DutyStatusCode.sleeperBerth ||
+          status == DutyStatusCode.personalConveyance;
+    }
+    final parsed = DutyStatusCode.tryFromAny(statusLabel);
+    if (parsed != null) {
+      return parsed == DutyStatusCode.offDuty ||
+          parsed == DutyStatusCode.sleeperBerth ||
+          parsed == DutyStatusCode.personalConveyance;
     }
     final lower = statusLabel.toLowerCase();
     return lower.contains('off') ||
         lower.contains('sleeper') ||
-        lower.contains('personal');
+        lower.contains('personal') ||
+        lower.contains('خارج') ||
+        lower.contains('سرير') ||
+        lower.contains('شخصي') ||
+        lower.contains('fuera') ||
+        lower.contains('litera');
   }
 
   static bool isActiveDuty(DutyStatusCode? status, bool isRest) {
@@ -83,7 +94,7 @@ class CircularTimerLogic {
       // main_circular_timer_test) ولا يصحّحه مصفّر الطرح.
       final raw = circle.remaining - elapsedSinceSnapshot;
       final drivenBelowZeroByElapsed =
-          elapsedSinceSnapshot > Duration.zero && raw.isNegative;
+          !circle.remaining.isNegative && raw.isNegative;
       liveRemaining = drivenBelowZeroByElapsed ? Duration.zero : raw;
     }
 
@@ -154,7 +165,6 @@ class CircularTimerLogic {
     final isRest = isRestDuty(dutyStatus, statusLabel);
     if (isRest || elapsedSinceSnapshot <= Duration.zero) return indicators;
 
-
     // 🔴 مؤشرا القيادة والاستراحة يُحرَّكان فقط أثناء القيادة الفعلية (FMCSA § 395.3).
     // في حالة onDutyNotDriving أو yardMove يبقيان ثابتين — السائق لا يقود.
     final isDriving = dutyStatus == DutyStatusCode.driving;
@@ -163,9 +173,7 @@ class CircularTimerLogic {
         return i.copyWith(value: i.value + elapsedSinceSnapshot);
       }
       final next = i.value - elapsedSinceSnapshot;
-      return i.copyWith(
-        value: next.isNegative ? Duration.zero : next,
-      );
+      return i.copyWith(value: next.isNegative ? Duration.zero : next);
     }
 
     return indicators.copyWith(

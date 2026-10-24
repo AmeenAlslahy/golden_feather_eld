@@ -27,7 +27,6 @@ class SelectVehiclePage extends ConsumerStatefulWidget {
 class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   final _searchController = TextEditingController();
   bool _askedUnassigned = false;
-  bool _browsingCompany = false;
 
   @override
   void initState() {
@@ -51,9 +50,9 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     super.dispose();
   }
 
-  Future<void> _handleVehicleSelected(Vehicle vehicle) async {
+  void _handleVehicleSelected(Vehicle vehicle) {
     if (!listedVehicleIsOperable(
-      browsingCompanyFleet: _browsingCompany,
+      browsingCompanyFleet: ref.read(vehicleProvider).isCompanyFleet,
       vehicle: vehicle,
     )) {
       AppFeedback.error(
@@ -65,7 +64,14 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       );
       return;
     }
-    await ref
+    if (readOperableUniqueId(vehicle.uniqueId) == null) {
+      AppFeedback.error(
+        context,
+        vehicleErrorText('identifierMissing', context.loc),
+      );
+      return;
+    }
+    ref
         .read(vehicleProvider.notifier)
         .selectVehicle(
           vehicle,
@@ -89,6 +95,11 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       } else if (uid != null && uid.isNotEmpty) {
         ref.read(localStorageProvider).setDeviceId(uid);
       }
+      AppFeedback.success(
+        context,
+        context.loc.vehicleSelectedConnect(v.displayName),
+      );
+      context.go(AppRoutes.connection);
     }
   }
 
@@ -118,7 +129,6 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _browsingCompany = false);
                   ref
                       .read(vehicleProvider.notifier)
                       .loadVehicles(forceRefresh: true);
@@ -131,7 +141,6 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  setState(() => _browsingCompany = true);
                   ref.read(vehicleProvider.notifier).loadCompanyVehicles();
                 },
                 child: Text(
@@ -150,7 +159,9 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   Widget build(BuildContext context) {
     // الاستماع لتغييرات الحالة من Provider للانتقال أو إظهار خطأ
     ref.listen<VehicleState>(vehicleProvider, (previous, current) {
-      if (current.error != null && (previous?.error != current.error)) {
+      if (current.error != null &&
+          previous?.error != current.error &&
+          current.vehicles.isNotEmpty) {
         AppFeedback.error(
           context,
           vehicleErrorText(current.error!, context.loc),
@@ -160,6 +171,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       // SRS 9.1 — the "No Vehicles Assigned" prompt is for drivers with no
       // assigned vehicle at all, not merely "nothing selected yet".
       if (!_askedUnassigned &&
+          !current.isCompanyFleet &&
           current.isInitialized &&
           !current.isLoading &&
           current.selectedVehicle == null &&
@@ -169,22 +181,11 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           if (mounted) _showUnassignedDialog(context);
         });
       }
-
-      if (current.isSuccess && !(previous?.isSuccess ?? false)) {
-        final name = current.selectedVehicle?.displayName ?? '';
-        AppFeedback.success(
-          context,
-          // Select ≠ Operate: the server session is opened on the
-          // Connection page, so nothing is claimed as accepted here.
-          context.loc.vehicleSelectedConnect(name),
-        );
-        // التوجيه إلى شاشة الاتصال بالجهاز بناءً على المتطلب 3.2
-        context.go(AppRoutes.connection);
-      }
     });
 
     final vehicleState = ref.watch(vehicleProvider);
     final filteredVehicles = vehicleState.filteredVehicles;
+    final browsingCompany = vehicleState.isCompanyFleet;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -206,13 +207,14 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(_browsingCompany ? Icons.directions_car : Icons.filter_list),
-            tooltip: _browsingCompany
+            icon: Icon(
+              browsingCompany ? Icons.directions_car : Icons.filter_list,
+            ),
+            tooltip: browsingCompany
                 ? context.loc.viewMyVehicles
                 : context.loc.viewAllVehicles,
             onPressed: () {
-              setState(() => _browsingCompany = !_browsingCompany);
-              if (_browsingCompany) {
+              if (!browsingCompany) {
                 ref.read(vehicleProvider.notifier).loadCompanyVehicles();
               } else {
                 ref
@@ -247,7 +249,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                     color: Theme.of(context).colorScheme.primary,
                     backgroundColor: context.colorScheme.surface,
                     onRefresh: () {
-                      if (_browsingCompany) {
+                      if (browsingCompany) {
                         return ref
                             .read(vehicleProvider.notifier)
                             .loadCompanyVehicles();
@@ -272,7 +274,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                                       : context.loc.noVehiclesFound,
                                   isError: vehicleState.error != null,
                                   onRetry: () {
-                                    if (_browsingCompany) {
+                                    if (browsingCompany) {
                                       ref
                                           .read(vehicleProvider.notifier)
                                           .loadCompanyVehicles();
@@ -299,11 +301,12 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
                               return VehicleCard(
                                 key: ValueKey(vehicle.id),
                                 vehicle: vehicle,
-                                isCurrent: vehicle.id ==
+                                isCurrent:
+                                    vehicle.id ==
                                         vehicleState.selectedVehicle?.id ||
                                     vehicle.activeForCurrentDriver == true,
                                 operable: listedVehicleIsOperable(
-                                  browsingCompanyFleet: _browsingCompany,
+                                  browsingCompanyFleet: browsingCompany,
                                   vehicle: vehicle,
                                 ),
                                 onTap: () => _handleVehicleSelected(vehicle),

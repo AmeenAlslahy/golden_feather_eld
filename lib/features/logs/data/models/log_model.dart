@@ -35,7 +35,8 @@ class LogEventModel extends LogEvent {
     final timeRange = json['timeRange'] is Map
         ? Map<String, dynamic>.from(json['timeRange'] as Map)
         : null;
-    final startTimeStr = timeRange?['startTime']?.toString() ??
+    final startTimeStr =
+        timeRange?['startTime']?.toString() ??
         json['startTime']?.toString() ??
         json['time']?.toString();
     if (startTimeStr == null || startTimeStr.isEmpty) {
@@ -43,24 +44,28 @@ class LogEventModel extends LogEvent {
     }
 
     final rawStatus = json['status']?.toString() ?? 'OFF';
-    final code = DutyStatusCode.fromShortCode(rawStatus) ??
+    final code =
+        DutyStatusCode.fromShortCode(rawStatus) ??
         DutyStatusCode.fromWire(rawStatus);
 
     final Duration duration;
     if (timeRange?['durationSeconds'] != null) {
       duration = Duration(
-          seconds:
-              int.tryParse(timeRange!['durationSeconds'].toString()) ?? 0);
+        seconds: int.tryParse(timeRange!['durationSeconds'].toString()) ?? 0,
+      );
     } else if (json['durationMinutes'] != null) {
       duration = Duration(
-          minutes: int.tryParse(json['durationMinutes'].toString()) ?? 0);
+        minutes: int.tryParse(json['durationMinutes'].toString()) ?? 0,
+      );
     } else if (json['durationSeconds'] != null) {
       // DutyEventDto (استجابة PUT التعديل) يقدم المدة بالثواني.
       duration = Duration(
-          seconds: int.tryParse(json['durationSeconds'].toString()) ?? 0);
+        seconds: int.tryParse(json['durationSeconds'].toString()) ?? 0,
+      );
     } else {
-      duration =
-          Duration(seconds: int.tryParse(json['duration']?.toString() ?? '') ?? 0);
+      duration = Duration(
+        seconds: int.tryParse(json['duration']?.toString() ?? '') ?? 0,
+      );
     }
 
     // Odometer is displayed in miles; the server reports kilometres.

@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
-import '../../../account/presentation/providers/account_provider.dart';
-import '../../../vehicle/presentation/providers/vehicle_provider.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/time/trusted_time_provider.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../domain/dvir_catalog.dart';
-import '../../domain/dvir_vehicle.dart';
+import '../../domain/dvir_previous_review.dart';
 import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/dvir_signature.dart';
 import '../../domain/entities/dvir_report.dart';
@@ -21,15 +21,18 @@ import '../widgets/status_modal.dart';
 
 import '../widgets/defects_modal.dart';
 
+import '../providers/dvir_form_provider.dart';
 import '../providers/dvir_provider.dart';
 import '../extensions/dvir_status_extensions.dart';
 import '../widgets/previous_dvir_review_modal.dart';
 import '../../../../core/widgets/app_feedback.dart';
 
 import '../../../logs/presentation/widgets/vehicle_picker_dialog.dart';
-import '../../../logs/presentation/pages/trailers_page.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 
+/// شاشة إدراج DVIR — عرضٌ غبيّ فوق [DvirFormNotifier]: كل قرار (المركبة،
+/// العيوب، الحالة، بوابة §396.13، بناء المسودة) في الحالة/النطاق،
+/// والصفحة تجمع النصوص وتدير الحوارات والتغذية الراجعة فقط.
 class DvirFormPage extends ConsumerStatefulWidget {
   final DvirReport? existingReport;
 
@@ -42,11 +45,11 @@ class DvirFormPage extends ConsumerStatefulWidget {
 class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for the new flat layout
+  // متحكمات حقول النص التي يكتب فيها السائق فعلاً — ملك العرض.
+  // حقولا العيوب ليسا هنا: نصّهما مشتق من الاختيارات (انظر _defectsText).
   late TextEditingController _locationController;
   late TextEditingController _odometerController;
-  late TextEditingController _vehicleDefectsController;
-  late TextEditingController _trailerDefectsController;
+  late TextEditingController _trailerController;
   late TextEditingController _companyController;
   late TextEditingController _remarksController;
 
@@ -55,68 +58,37 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   late SignatureController _signatureController;
   bool _signatureReady = false;
 
-  bool _isSubmitting = false;
-
-  DvirConditionStatus _selectedStatus = DvirConditionStatus.satisfactory;
-  InspectionType _selectedInspectionType = InspectionType.preTrip;
+  // isSubmitting is read directly from dvirProvider.isSubmitting — no local
+  // duplicate to avoid divergence between widget state and provider state.
   bool _signed = false;
 
-  /// §396.11 items marked defective (from the live catalog).
-  List<DvirDefectSelection> _selectedDefects = const [];
+  DvirFormNotifier get _form =>
+      ref.read(dvirFormProvider(widget.existingReport).notifier);
 
-  bool get _hasAnyDefect =>
-      _vehicleDefectsController.text.trim().isNotEmpty ||
-      _trailerDefectsController.text.trim().isNotEmpty ||
-      _selectedDefects.isNotEmpty;
+  DvirFormState get _formState =>
+      ref.read(dvirFormProvider(widget.existingReport));
 
-  /// The report shown in read-only mode: the list summary first, then the
-  /// full server detail once `loadDvirDetails` returns.
-  DvirReport? _report;
-  DateTime? _customTime;
+  /// مصدر وحيد للحقيقة: حالة النموذج تقرر وضع القراءة فقط.
+  bool get _readOnly => _formState.readOnly;
 
   @override
   void initState() {
     super.initState();
     final r = widget.existingReport;
-    _report = r;
+    // إنشاء الحالة يقرأ المزوّدات مرة واحدة ويجمع القيم الابتدائية.
+    final initial = _formState;
     _locationController = TextEditingController(text: r?.location ?? '');
     _odometerController = TextEditingController(
       text: r?.odometer?.toString() ?? '',
     );
-    _vehicleDefectsController = TextEditingController(
-      text: r?.vehicleDefects ?? '',
-    );
-    _trailerDefectsController = TextEditingController(
-      text: r?.trailerDefects ?? '',
+    _trailerController = TextEditingController(
+      text: r?.trailerId ?? initial.initialTrailerNumber,
     );
     _companyController = TextEditingController(
-      text: r?.companyName ?? ref.read(accountProvider).accountData?.carrier ?? '',
+      text: r?.companyName ?? initial.initialCompany,
     );
     _remarksController = TextEditingController(text: r?.notes ?? '');
-    if (r == null) {
-      // New report: ask the server which previous DVIR (if any) this vehicle
-      // still owes a §396.13 review for.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final dash = ref.read(dashboardDataProvider);
-        ref
-            .read(dvirProvider.notifier)
-            .loadPreviousDvir(_dvirVehicleId(dash.vehicleId));
-      });
-    }
-    if (r != null) {
-      _applyReport(r);
-      // SRS 7.12: the list row is a summary. Read the full report
-      // (`GET /eld/dvir/{id}`) through the existing notifier and refresh the
-      // read-only view when it arrives; the summary stays if the read fails.
-      final serverId = int.tryParse(r.id);
-      if (serverId != null && serverId > 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ref.read(dvirProvider.notifier).loadDvirDetails(r.id);
-        });
-      }
-    }
+    _signed = r?.signature != null;
   }
 
   @override
@@ -127,10 +99,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     // signature the driver has already started drawing.
     if (_signatureReady) return;
     _signatureReady = true;
+    final colorScheme = Theme.of(context).colorScheme;
     _signatureController = SignatureController(
       penStrokeWidth: 3,
-      penColor: Colors.black,
-      exportBackgroundColor: Colors.white,
+      penColor: colorScheme.onSurface,
+      exportBackgroundColor: colorScheme.surface,
     );
     // زر الإرسال يعكس حالة التوقيع لحظياً — كان يبقى "SIGN" للأبد في
     // التقارير الجديدة لأن لا أحد يحدّث _signed.
@@ -141,132 +114,70 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     });
   }
 
-  /// Fills the read-only view from a report (list summary or full detail).
-  void _applyReport(DvirReport r) {
-    _report = r;
+  /// يملأ حقول القراءة فقط من تقرير وصل/تحدّث — قيمة الخادم غير الفارغة
+  /// فقط تستبدل ما في الحقل.
+  void _fillReadOnlyFields(DvirReport r) {
     _locationController.text = r.location ?? _locationController.text;
     _odometerController.text =
         r.odometer?.toString() ?? _odometerController.text;
-    _vehicleDefectsController.text =
-        r.vehicleDefects ?? _vehicleDefectsController.text;
-    _trailerDefectsController.text =
-        r.trailerDefects ?? _trailerDefectsController.text;
+    _trailerController.text = r.trailerId ?? _trailerController.text;
     _companyController.text = r.companyName ?? _companyController.text;
     _remarksController.text = r.notes ?? _remarksController.text;
-    _selectedStatus = r.condition == VehicleCondition.safe
-        ? DvirConditionStatus.satisfactory
-        : DvirConditionStatus.hasDefects;
-    _selectedInspectionType = r.type;
     _signed = r.signature != null;
-    // Only overwrite local selection if the server report has defects.
-    if (r.selectedDefects.isNotEmpty) {
-      _selectedDefects = r.selectedDefects;
-      if (_vehicleDefectsController.text.isEmpty) {
-        _vehicleDefectsController.text = r.selectedDefects
-            .where((d) => d.item.category != 'TRAILER')
-            .map((d) => d.item.name)
-            .join(', ');
-      }
-      if (_trailerDefectsController.text.isEmpty) {
-        _trailerDefectsController.text = r.selectedDefects
-            .where((d) => d.item.category == 'TRAILER')
-            .map((d) => d.item.name)
-            .join(', ');
-      }
-    }
   }
 
-  bool get _readOnly => widget.existingReport != null;
+  // ---- الحوارات: تفتح، ثم تسلّم القرار للحالة ----
 
   Future<void> _openVehicleDefectCatalog() async {
     if (_readOnly) return;
-    final vehicleDefects = _selectedDefects
-        .where((d) => d.item.category != 'TRAILER')
-        .toList();
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) => DefectCatalogDialog(
         title: '${context.loc.vehicle} - ${context.loc.defectsTitle}',
-        initial: vehicleDefects,
+        initial: _formState.selectedDefects
+            .where((d) => !d.item.isTrailer)
+            .toList(),
       ),
     );
     if (picked == null || !mounted) return;
-    final trailerDefects = _selectedDefects
-        .where((d) => d.item.category == 'TRAILER')
-        .toList();
-    setState(() {
-      _selectedDefects = [...picked, ...trailerDefects];
-      _vehicleDefectsController.text =
-          picked.map((d) => d.item.label(context.loc)).join(', ');
-      if (_selectedDefects.isNotEmpty) {
-        _selectedStatus = DvirConditionStatus.hasDefects;
-      } else if (_trailerDefectsController.text.trim().isEmpty) {
-        _selectedStatus = DvirConditionStatus.satisfactory;
-      }
-    });
+    _form.applyPickedDefects(picked, trailerScope: false);
   }
 
   Future<void> _openTrailerDefectCatalog() async {
     if (_readOnly) return;
-    final trailerDefects = _selectedDefects
-        .where((d) => d.item.category == 'TRAILER')
-        .toList();
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) => DefectCatalogDialog(
         title: '${context.loc.trailer} - ${context.loc.defectsTitle}',
         customItems: kStandardTrailerDefectItems,
-        initial: trailerDefects,
+        initial: _formState.selectedDefects
+            .where((d) => d.item.isTrailer)
+            .toList(),
       ),
     );
     if (picked == null || !mounted) return;
-    final vehicleDefects = _selectedDefects
-        .where((d) => d.item.category != 'TRAILER')
-        .toList();
-    setState(() {
-      _selectedDefects = [...vehicleDefects, ...picked];
-      _trailerDefectsController.text =
-          picked.map((d) => d.item.label(context.loc)).join(', ');
-      if (_selectedDefects.isNotEmpty) {
-        _selectedStatus = DvirConditionStatus.hasDefects;
-      } else if (_vehicleDefectsController.text.trim().isEmpty) {
-        _selectedStatus = DvirConditionStatus.satisfactory;
-      }
-    });
+    _form.applyPickedDefects(picked, trailerScope: true);
   }
 
-  Future<void> _openDefectCatalog() async {
+  /// كتالوج كامل (SRS 7.6): يُفتح عند اختيار "بها عيوب" بلا عيوب مسجلة.
+  Future<void> _openFullDefectCatalog() async {
     if (_readOnly) return;
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
-      builder: (_) => DefectCatalogDialog(initial: _selectedDefects),
+      builder: (_) => DefectCatalogDialog(initial: _formState.selectedDefects),
     );
     if (picked == null || !mounted) return;
-    setState(() {
-      _selectedDefects = picked;
-      _vehicleDefectsController.text = picked
-          .where((d) => d.item.category != 'TRAILER')
-          .map((d) => d.item.label(context.loc))
-          .join(', ');
-      final trailerText = picked
-          .where((d) => d.item.category == 'TRAILER')
-          .map((d) => d.item.label(context.loc))
-          .join(', ');
-      if (trailerText.isNotEmpty) {
-        _trailerDefectsController.text = trailerText;
-      }
-      if (picked.isNotEmpty) {
-        _selectedStatus = DvirConditionStatus.hasDefects;
-      } else if (!_hasAnyDefect) {
-        _selectedStatus = DvirConditionStatus.satisfactory;
-      }
-    });
+    _form.applyUnscopedPickedDefects(picked);
   }
 
   Future<void> _openTimePicker() async {
     if (_readOnly) return;
     final trusted = ref.read(trustedTimeProvider).currentTime;
-    final initialDate = _customTime ?? (trusted is TrustedTimeAvailable ? trusted.utc.toLocal() : DateTime.now());
+    final initialDate =
+        _formState.customTime ??
+        (trusted is TrustedTimeAvailable
+            ? trusted.utc.toLocal()
+            : DateTime.now());
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -279,15 +190,15 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       initialTime: TimeOfDay.fromDateTime(initialDate),
     );
     if (pickedTime == null || !mounted) return;
-    setState(() {
-      _customTime = DateTime(
+    _form.setCustomTime(
+      DateTime(
         pickedDate.year,
         pickedDate.month,
         pickedDate.day,
         pickedTime.hour,
         pickedTime.minute,
-      );
-    });
+      ),
+    );
   }
 
   Future<void> _openVehiclePicker() async {
@@ -295,35 +206,24 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final vehicle = await showDialog<Vehicle>(
       context: context,
       builder: (_) => const VehiclePickerDialog(
-        // 🔴 مركبات السائق فقط.
-        //
-        // ⚠️ كان `true` ⇒ يعرض الحوار **أسطول الشركة كاملاً**، ويمرّ
-        // تلقائياً إلى قائمة الشركة إذا كانت مركبات السائق فارغة.
-        //
-        // والسماح برسم تقرير فحص لمركبة لا يقودها السائق مخالفة امتثال
-        // مباشرة: التقرير يُنشئ سجل DVIR على مركبة ليست له.
-        // نفس القاعدة مطبَّقة في النموذج اليومي
-        // (`form_tab.dart: allowCompanyFleet: false`) «كي لا يُلحق أي مركبة
-        // من أسطول الشركة بالسجل».
+        // 🔴 مركبات السائق فقط — والسماح برسم تقرير فحص لمركبة لا يقودها
+        // السائق مخالفة امتثال مباشرة (نفس قاعدة النموذج اليومي:
+        // `form_tab.dart: allowCompanyFleet: false`).
         allowCompanyFleet: false,
       ),
     );
     if (vehicle != null && mounted) {
-      ref.read(dashboardDataProvider.notifier).updateVehicle(vehicle);
+      // مركبة الفحص محلية لهذا التقرير — الحالة تقرر، ولا شيء يُكتب في
+      // لوحة القيادة/النموذج اليومي.
+      _form.setInspectionVehicle(vehicle);
     }
-  }
-
-  Future<void> _openTrailersPage() async {
-    if (_readOnly) return;
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const TrailersPage()));
   }
 
   @override
   void dispose() {
     _locationController.dispose();
     _odometerController.dispose();
-    _vehicleDefectsController.dispose();
-    _trailerDefectsController.dispose();
+    _trailerController.dispose();
     _companyController.dispose();
     _remarksController.dispose();
     _signatureController.dispose();
@@ -334,256 +234,172 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final selected = await showDialog<DvirConditionStatus>(
       context: context,
       builder: (context) => DvirStatusModal(
-        hasDefect: _hasAnyDefect,
-        selectedStatus: _selectedStatus,
+        hasDefect: _formState.hasAnyDefect,
+        selectedStatus: _formState.selectedStatus,
       ),
     );
     if (selected == null || !mounted) return;
-    setState(() => _selectedStatus = selected);
+    _form.selectStatus(selected);
     // SRS 7.6: choosing Has Defects with nothing recorded opens the defects list.
-    if (selected == DvirConditionStatus.hasDefects && !_hasAnyDefect) {
-      await _openDefectCatalog();
+    if (_formState.shouldPromptDefectsAfterStatus(selected)) {
+      await _openFullDefectCatalog();
       // Mounted check after the second awaited dialog.
       if (!mounted) return;
     }
   }
 
-  Future<bool> _reviewPreviousDvirIfNeeded({
-    required DvirReport latest,
-    required int driverId,
-    required DashboardData dashboard,
-    required String signatureData,
-  }) async {
-    final previousId = int.tryParse(latest.id);
-    if (previousId == null) {
-      _snack(context.loc.dvirPrevNoServerId);
-      return false;
-    }
+  // ---- نصوص العيوب المشتقة: تنسيق عرض فقط، القرار في الحالة ----
 
+  String _defectsText(DvirFormState state, {required bool trailer}) {
+    if (state.readOnly) {
+      final report = state.existing!;
+      final server = trailer ? report.trailerDefects : report.vehicleDefects;
+      if (server != null && server.isNotEmpty) return server;
+      return report.selectedDefects
+          .where((d) => d.item.isTrailer == trailer)
+          .map((d) => d.item.name)
+          .join(', ');
+    }
     final loc = context.loc;
-    final previousDefects = <String>[
-      for (final d in latest.selectedDefects)
-        d.item.label(loc) +
-            ((d.description?.trim().isNotEmpty ?? false)
-                ? ' — ${d.description!.trim()}'
-                : ''),
-      if ((latest.vehicleDefects ?? '').trim().isNotEmpty)
-        latest.vehicleDefects!.trim(),
-      if ((latest.trailerDefects ?? '').trim().isNotEmpty)
-        latest.trailerDefects!.trim(),
-      if (latest.selectedDefects.isEmpty &&
-          (latest.vehicleDefects ?? '').trim().isEmpty &&
-          (latest.trailerDefects ?? '').trim().isEmpty &&
-          (latest.defectsSummary ?? '').trim().isNotEmpty)
-        latest.defectsSummary!.trim(),
-    ];
-
-    final reviewed = await showDialog<bool>(
-      context: context,
-      builder: (context) => PreviousDvirReviewModal(
-        latest: latest,
-        previousDefects: previousDefects,
-      ),
-    );
-
-    if (reviewed != true || !mounted) return false;
-
-    final reviewError = await ref
-        .read(dvirProvider.notifier)
-        .reviewDvir(
-          dvirId: '$previousId',
-          reviewingDriverId: driverId,
-          reviewingDriverName: dashboard.driverName,
-          signatureData: signatureData,
-          driverAgreed: true,
-        );
-
-    if (!mounted) return false;
-
-    if (reviewError != null) {
-      _snack(reviewError);
-      return false;
-    }
-
-    return true;
-  }
-
-  /// هوية المركبة للفحص: لوحة القيادة أولاً، ثم المركبة المختارة في التطبيق.
-  String _dvirVehicleId(String? dashboardVehicleId) {
-    if (!isUnassignedVehicleId(dashboardVehicleId)) {
-      return dashboardVehicleId!;
-    }
-    final selected = ref.read(vehicleProvider).selectedVehicle;
-    if (selected != null && !isUnassignedVehicleId(selected.uniqueId ?? selected.id)) {
-      return selected.uniqueId ?? selected.id;
-    }
-    return dashboardVehicleId ?? '';
-  }
-
-  Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
-    final time = ref.read(trustedTimeProvider).currentTime;
-    if (time is! TrustedTimeAvailable) {
-      AppFeedback.error(context, context.loc.dvirTimeUnavailable);
-      return;
-    }
-
-    final dashboard = ref.read(dashboardDataProvider);
-    final reportVehicleId = _dvirVehicleId(dashboard.vehicleId);
-    final selectedVehicle = ref.read(vehicleProvider).selectedVehicle;
-
-    // استخراج معرف المركبة الرقمي الصحيح (Traccar deviceId) التابع للمركبة
-    int? resolvedDeviceId = (dashboard.deviceId != null && dashboard.deviceId! > 0)
-        ? dashboard.deviceId
-        : (selectedVehicle?.deviceId != null && selectedVehicle!.deviceId! > 0)
-            ? selectedVehicle.deviceId
-            : null;
-
-    if (resolvedDeviceId == null) {
-      final vehicles = ref.read(vehicleProvider).vehicles;
-      for (final v in vehicles) {
-        if (v.uniqueId == reportVehicleId || v.id == reportVehicleId || v.name == reportVehicleId) {
-          if (v.deviceId != null && v.deviceId! > 0) {
-            resolvedDeviceId = v.deviceId;
-            break;
-          }
-        }
-      }
-    }
-
-    if (resolvedDeviceId == null) {
-      final directInt = int.tryParse(reportVehicleId);
-      if (directInt != null && directInt > 0) {
-        resolvedDeviceId = directInt;
-      } else {
-        final match = RegExp(r'\d+').firstMatch(reportVehicleId);
-        if (match != null) {
-          final digits = int.tryParse(match.group(0)!);
-          if (digits != null && digits > 0) {
-            resolvedDeviceId = digits;
-          }
-        }
-      }
-    }
-
-    if (resolvedDeviceId == null ||
-        resolvedDeviceId <= 0 ||
-        isUnassignedVehicleId(reportVehicleId)) {
-      _snack(context.loc.dvirVehicleIdMissing);
-      return;
-    }
-
-    final previousToReview = ref
-        .read(dvirProvider)
-        .previousToReview(reportVehicleId);
-
-    if (widget.existingReport != null) {
-      _snack(context.loc.dvirSavedCannotEdit);
-      return;
-    }
-
-    final signatureData = dvirSignatureData(
-      await _signatureController.toPngBytes(),
-    );
-    if (!mounted) return;
-    if (signatureData == null) {
-      // توقيع فارغ يُرفض بصوت مسموع — كان ينهي الطلب بصمت.
-      _snack(context.loc.dvirSignatureRequired);
-      return;
-    }
-    final driverId = ref.read(currentDriverIdProvider);
-    if (driverId == null || driverId <= 0) {
-      _snack(context.loc.dvirDriverSessionMissing);
-      return;
-    }
-
-    if (previousToReview != null) {
-      final success = await _reviewPreviousDvirIfNeeded(
-        latest: previousToReview,
-        driverId: driverId,
-        dashboard: dashboard,
-        signatureData: signatureData,
-      );
-      if (!success) return; // Review was aborted or failed
-    }
-
-    setState(() => _isSubmitting = true);
-    final hasDefects = _hasAnyDefect;
-    final withDefects =
-        hasDefects || _selectedStatus == DvirConditionStatus.hasDefects;
-    final report = DvirReport(
-      id: '',
-      type: _selectedInspectionType,
-      date: _customTime?.toUtc() ?? time.utc,
-      driverName: dashboard.driverName,
-      vehicleId: reportVehicleId,
-      deviceId: resolvedDeviceId,
-      // الافتراضي المعروض 'None' لا يصل إلى السجل الرسمي — يُرسل null.
-      trailerId:
-          (dashboard.trailerId == 'None' ||
-              dashboard.trailerId?.trim().isEmpty == true)
-          ? null
-          : dashboard.trailerId,
-      odometer: () {
-        final text = _odometerController.text.trim().replaceAll(',', '');
-        if (text.isEmpty) return null;
-        final val = double.tryParse(text);
-        if (val != null && !val.isNaN && !val.isNegative) return val;
-        return null;
-      }(),
-      notes: _remarksController.text.isNotEmpty
-          ? _remarksController.text
-          : null,
-      signature: signatureData,
-      condition: withDefects
-          ? VehicleCondition.needsRepair
-          : VehicleCondition.safe,
-      isSubmitted: false,
-      location: _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : null,
-      companyName: _companyController.text.trim().isNotEmpty ? _companyController.text.trim() : '',
-      vehicleDefects: _vehicleDefectsController.text,
-      trailerDefects: _trailerDefectsController.text,
-      hasDefects: withDefects,
-      selectedDefects: _selectedDefects,
-    );
-    final saved = await ref
-        .read(dvirProvider.notifier)
-        .createReport(report, driverId: driverId, status: _selectedStatus);
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    if (!saved) {
-      _snack(ref.read(dvirProvider).error ?? context.loc.errServerRejected);
-      return;
-    }
-    AppFeedback.success(context, context.loc.reportSavedSuccess);
-    Navigator.pop(context);
+    return state.selectedDefects
+        .where((d) => d.item.isTrailer == trailer)
+        .map((d) => d.item.label(loc))
+        .join(', ');
   }
 
   /// Every `_snack` call in this page reports a refusal or failure.
   void _snack(String message) => AppFeedback.error(context, message);
 
-  @override
-  Widget build(BuildContext context) {
-    final existingId = widget.existingReport?.id;
-    if (existingId != null) {
-      ref.listen<DvirReport?>(dvirProvider.select((s) => s.currentReport), (
-        previous,
-        next,
-      ) {
-        if (next == null ||
-            next.id != existingId ||
-            identical(next, previous)) {
+  /// يرسم كل نوع فشل مُطبَّع رسالته — المترجم يجبر معالجة الحالات كلها.
+  String _failureMessage(DvirSubmissionFailure failure) => switch (failure) {
+    DvirVehicleMissingFailure() => context.loc.dvirVehicleIdMissing,
+    DvirPreviousUnavailableFailure() => context.loc.dvirPrevUnavailable,
+    DvirPreviousNoServerIdFailure() => context.loc.dvirPrevNoServerId,
+    DvirTimeUnavailableFailure() => context.loc.dvirTimeUnavailable,
+    DvirReportReadOnlyFailure() => context.loc.dvirSavedCannotEdit,
+    DvirServerRejectedFailure(:final message) =>
+      message == null
+          ? context.loc.errServerRejected
+          : anyErrorUserMessage(message, loc: context.loc),
+    // إلغاء العملية (تخلّص/تغيّر مركبة) لا رسالة له — الحالة انتهت.
+    DvirFlowCancelledFailure() => '',
+  };
+
+  Future<void> _handleSubmit() async {
+    if (ref.read(dvirProvider).isSubmitting) return;
+    if (!_formKey.currentState!.validate()) return;
+    // فتح عملية الإرسال الكاملة — false يعني عملية جارية أصلاً (حتى
+    // مرحلة حوار المراجعة مشمولة، لا isSubmitting وحده). المرجع يُلتقط
+    // قبل أول await حتى يبقى finally صالحاً بعد تخلّص الواجهة.
+    final form = _form;
+    if (!form.beginSubmission()) return;
+    try {
+      // بوابة §396.13 (المركبة/الجهاز/المراجعة السابقة) — قرار الحالة.
+      final gate = await form.prepareReviewGate();
+      if (!mounted) return;
+      final gateFailure = gate.failure;
+      if (gateFailure is DvirFlowCancelledFailure) return;
+      if (gateFailure != null) {
+        _snack(_failureMessage(gateFailure));
+        return;
+      }
+
+      final signatureData = dvirSignatureData(
+        await _signatureController.toPngBytes(),
+      );
+      if (!mounted) return;
+      if (signatureData == null) {
+        // توقيع فارغ يُرفض بصوت مسموع — كان ينهي الطلب بصمت.
+        _snack(context.loc.dvirSignatureRequired);
+        return;
+      }
+      final driverId = ref.read(currentDriverIdProvider);
+      if (driverId == null || driverId <= 0) {
+        _snack(context.loc.dvirDriverSessionMissing);
+        return;
+      }
+
+      final previous = gate.previous;
+      if (previous != null) {
+        final reviewed = await showDialog<bool>(
+          context: context,
+          builder: (context) => PreviousDvirReviewModal(
+            latest: previous,
+            previousDefects: previousDvirDefectLines(
+              previous,
+              label: (d) => d.item.label(context.loc),
+            ),
+          ),
+        );
+        if (!mounted || reviewed != true) return;
+
+        final reviewError = await form.confirmPreviousReview(
+          previous: previous,
+          driverId: driverId,
+          signatureData: signatureData,
+        );
+        if (!mounted) return;
+        if (reviewError != null) {
+          _snack(anyErrorUserMessage(reviewError, loc: context.loc));
           return;
         }
-        setState(() => _applyReport(next));
-      });
+      }
+
+      final state = _formState;
+      final failure = await form.submitDraft(
+        text: DvirFormTextValue(
+          location: _locationController.text,
+          odometer: _odometerController.text,
+          trailerNumber: _trailerController.text,
+          company: _companyController.text,
+          remarks: _remarksController.text,
+          vehicleDefects: _defectsText(state, trailer: false),
+          trailerDefects: _defectsText(state, trailer: true),
+        ),
+        signatureData: signatureData,
+        driverId: driverId,
+        gatedVehicleId: gate.vehicleId,
+      );
+      if (!mounted) return;
+      if (failure is DvirFlowCancelledFailure) return;
+      if (failure != null) {
+        _snack(_failureMessage(failure));
+        return;
+      }
+      AppFeedback.success(context, context.loc.reportSavedSuccess);
+      Navigator.pop(context);
+    } catch (error, stackTrace) {
+      // بيانات السائق لا تُسجَّل (لا توقيع ولا هويات) — الاستثناء وحده.
+      AppLogger.error(
+        'DVIR submission flow failed unexpectedly',
+        error,
+        stackTrace,
+      );
+      if (!mounted) return;
+      _snack(context.loc.errRequestFailed);
+    } finally {
+      form.endSubmission();
     }
-    final dashboard = ref.watch(dashboardDataProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final formKey = widget.existingReport;
+    final formState = ref.watch(dvirFormProvider(formKey));
+    final dvirState = ref.watch(dvirProvider);
+    // تفاصيل الخادم وصلت للتقرير المفتوح للقراءة فقط ⇒ حدّث الحقول.
+    ref.listen<DvirFormState>(dvirFormProvider(formKey), (previous, next) {
+      if (!identical(previous?.existing, next.existing) &&
+          next.existing != null) {
+        _fillReadOnlyFields(next.existing!);
+      }
+    });
     final trusted = ref.watch(trustedTimeProvider).currentTime;
     final timeAvailable = trusted is TrustedTimeAvailable;
     final String currentTime = timeAvailable
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
         : context.loc.dvirTimeUnavailableShort;
+    final readOnly = formState.readOnly;
 
     return Scaffold(
       appBar: AppBar(
@@ -602,59 +418,68 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            DvirInspectionTypeSection(
+              selectedType: formState.inspectionType,
+              readOnly: readOnly,
+              onTypeChanged: _form.setInspectionType,
+            ),
+            DvirNoticeSection(
+              hasExistingReport: readOnly,
+              hasPreviousToReview: formState.hasPreviousToReview,
+            ),
             DvirTimeSection(
               currentTime: currentTime,
               onTap: _openTimePicker,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirLocationSection(
               controller: _locationController,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirOdometerSection(
               controller: _odometerController,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirVehicleSection(
-              dashboard: dashboard,
-              defectsController: _vehicleDefectsController,
-              readOnly: _readOnly,
+              vehicleId: formState.displayVehicleId,
+              vehicleDisplayName: formState.displayVehicleName,
+              defectsText: _defectsText(formState, trailer: false),
+              readOnly: readOnly,
               onSelectDefects: _openVehicleDefectCatalog,
               onSelectVehicle: _openVehiclePicker,
             ),
             DvirTrailerSection(
-              dashboard: dashboard,
-              defectsController: _trailerDefectsController,
-              readOnly: _readOnly,
+              controller: _trailerController,
+              defectsText: _defectsText(formState, trailer: true),
+              readOnly: readOnly,
               onSelectDefects: _openTrailerDefectCatalog,
-              onSelectTrailer: _openTrailersPage,
             ),
             DvirCompanySection(
               controller: _companyController,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirRemarksSection(
               controller: _remarksController,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirStatusSection(
-              selectedStatusLabel: _selectedStatus.label(context.loc),
+              selectedStatusLabel: formState.selectedStatus.label(context.loc),
               onOpenStatusModal: _openStatusModal,
-              readOnly: _readOnly,
+              readOnly: readOnly,
             ),
             DvirSignatureSection(
               controller: _signatureController,
-              readOnly: _readOnly,
-              signatureData: _report?.signature,
+              readOnly: readOnly,
+              signatureData: formState.existing?.signature,
             ),
-            if (!_readOnly)
+            if (!readOnly)
               DvirSubmitButtonSection(
                 isSigned: _signed,
-                isSubmitting: _isSubmitting,
+                isSubmitting: dvirState.isSubmitting,
                 timeAvailable: timeAvailable,
                 onSubmit: _handleSubmit,
               ),
-            const SizedBox(height: 32.0),
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),

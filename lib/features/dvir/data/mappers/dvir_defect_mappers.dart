@@ -1,11 +1,16 @@
+import '../../domain/defect_enums.dart';
 import '../../domain/entities/dvir_defect.dart';
 
 /// تحليل عيب DVIR من رد الخادم — يُعيد null للجسم غير المقروء بدل اختراع
 /// قيم؛ الحقول الغائبة تبقى null في الكيان.
 DvirDefect? parseDvirDefect(Object? raw) {
   if (raw is! Map) return null;
-  final json = raw is Map<String, dynamic> ? raw : Map<String, dynamic>.from(raw);
-  final id = json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}');
+  final json = raw is Map<String, dynamic>
+      ? raw
+      : Map<String, dynamic>.from(raw);
+  final id = json['id'] is int
+      ? json['id'] as int
+      : int.tryParse('${json['id']}');
   if (id == null) return null;
 
   return DvirDefect(
@@ -18,16 +23,22 @@ DvirDefect? parseDvirDefect(Object? raw) {
     itemCode: _asString(json['itemCode']),
     itemName: _asString(json['itemName']),
     description: _asString(json['description']),
-    severity: _asString(json['severity']),
-    stage: _asString(json['stage']),
-    outOfService: json['outOfService'] is bool ? json['outOfService'] as bool : null,
+    severity: DefectSeverity.fromWire(_asString(json['severity'])),
+    stage: DefectLifecycleStage.tryFromWire(_asString(json['stage'])),
+    outOfService: json['outOfService'] is bool
+        ? json['outOfService'] as bool
+        : null,
     repairDeadline: DateTime.tryParse('${json['repairDeadline'] ?? ''}'),
-    repairActions: _asList(json['repairActions'])
-        ?.map(_parseRepairAction)
-        .toList(growable: false) ?? const [],
-    certifications: _asList(json['certifications'])
-        ?.map(_parseCertification)
-        .toList(growable: false) ?? const [],
+    repairActions:
+        _asList(
+          json['repairActions'],
+        )?.map(_parseRepairAction).toList(growable: false) ??
+        const [],
+    certifications:
+        _asList(
+          json['certifications'],
+        )?.map(_parseCertification).toList(growable: false) ??
+        const [],
   );
 }
 
@@ -40,10 +51,10 @@ List<DvirDefect>? parseDvirDefectList(Object? body) {
     final data = body['data'] is List
         ? body['data'] as List
         : body['items'] is List
-            ? body['items'] as List
-            : body['defects'] is List
-                ? body['defects'] as List
-                : null;
+        ? body['items'] as List
+        : body['defects'] is List
+        ? body['defects'] as List
+        : null;
     if (data == null) return null;
     rows = data;
   } else {
@@ -79,7 +90,8 @@ DvirDefectCertification _parseCertification(Map raw) {
   );
 }
 
-List<Map>? _asList(Object? raw) => raw is List ? raw.whereType<Map>().toList() : null;
+List<Map>? _asList(Object? raw) =>
+    raw is List ? raw.whereType<Map>().toList() : null;
 
 int? _asInt(Object? raw) =>
     raw is int ? raw : (raw is String ? int.tryParse(raw) : null);

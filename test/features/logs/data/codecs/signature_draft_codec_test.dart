@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_feather_eld/features/logs/domain/signature_draft_codec.dart';
+import 'package:golden_feather_eld/features/logs/data/codecs/signature_draft_codec.dart';
 import 'package:signature/signature.dart';
 
 void main() {

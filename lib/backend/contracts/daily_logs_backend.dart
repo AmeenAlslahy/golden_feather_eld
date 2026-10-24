@@ -85,7 +85,10 @@ abstract interface class DailyLogsBackend {
 
   /// GET /eld/daily-logs/{id}/events/{eventId} — one event with details.
   // TODO(P2): replace with DutyEventDto
-  Future<Result<RawJson>> getEventDetails(DailyLogId logId, DutyStatusId eventId);
+  Future<Result<RawJson>> getEventDetails(
+    DailyLogId logId,
+    DutyStatusId eventId,
+  );
 
   /// PUT /eld/daily-logs/{id}/events/{eventId} — edit one event
   /// (body: `status`, `startTime`, `notes`, `location{description}`).

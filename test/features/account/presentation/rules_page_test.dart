@@ -128,8 +128,7 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
   }
 
   testWidgets('read-only account: rule source + rules are info rows, no dropdowns',
@@ -188,14 +187,19 @@ void main() {
     await tester.tap(find.text('USA 60/7').last);
     await tester.pumpAndSettle();
 
+    // Save button must be disabled when sixteenHourException is false
+    final save = find.widgetWithText(AppButton, 'Save');
+    await tester.ensureVisible(save);
+    expect(tester.widget<AppButton>(save).onPressed, isNull);
+
     // Enable the 16-hour exception (allowed because the server lists it).
     final toggle = find.byType(Switch);
     await tester.ensureVisible(toggle);
     await tester.tap(toggle);
     await tester.pump();
 
-    final save = find.widgetWithText(AppButton, 'Save');
-    await tester.ensureVisible(save);
+    // Now save button should be enabled
+    expect(tester.widget<AppButton>(save).onPressed, isNotNull);
     await tester.tap(save);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));

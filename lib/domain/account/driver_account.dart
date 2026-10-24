@@ -21,7 +21,8 @@ abstract class DriverAccount with _$DriverAccount {
     String? notice,
   }) = _DriverAccount;
 
-  factory DriverAccount.fromJson(Map<String, dynamic> json) => _$DriverAccountFromJson(json);
+  factory DriverAccount.fromJson(Map<String, dynamic> json) =>
+      _$DriverAccountFromJson(json);
 
   static const List<String> defaultAvailableLanguages = [
     'English',
@@ -39,5 +40,6 @@ abstract class LicenseInfo with _$LicenseInfo {
     required String formatted,
   }) = _LicenseInfo;
 
-  factory LicenseInfo.fromJson(Map<String, dynamic> json) => _$LicenseInfoFromJson(json);
+  factory LicenseInfo.fromJson(Map<String, dynamic> json) =>
+      _$LicenseInfoFromJson(json);
 }

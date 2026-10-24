@@ -15,10 +15,7 @@ abstract interface class HardwareBackend {
   });
 
   /// GET /eld/hardware/readiness
-  Future<Result<RawJson>> getReadiness({
-    String? uniqueId,
-    DriverId? driverId,
-  });
+  Future<Result<RawJson>> getReadiness({String? uniqueId, DriverId? driverId});
 
   /// POST /eld/hardware/connect
   Future<Result<RawJson>> connectSession({
@@ -27,10 +24,7 @@ abstract interface class HardwareBackend {
   });
 
   /// GET /eld/hardware/status
-  Future<Result<RawJson>> getStatus({
-    String? uniqueId,
-    DriverId? driverId,
-  });
+  Future<Result<RawJson>> getStatus({String? uniqueId, DriverId? driverId});
 
   /// POST /eld/hardware/telemetry
   Future<Result<RawJson>> sendTelemetry(TelemetryReading reading);

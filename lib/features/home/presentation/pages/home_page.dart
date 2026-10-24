@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../hos/presentation/pages/recap_page.dart';
 import '../../../hos/presentation/widgets/driving_lock_screen.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
-import '../../../../core/widgets/connection_status_indicator.dart';
+import '../widgets/connection_status_indicator.dart';
 import '../widgets/eld_drawer.dart';
 import '../widgets/eld_bottom_nav.dart';
 import '../providers/dashboard_provider.dart';
@@ -21,17 +21,16 @@ import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 final homeNavIndexProvider = StateProvider<int>((ref) => 0);
-final developerBypassDrivingScreenProvider = StateProvider<bool>((ref) => false);
+final developerBypassDrivingScreenProvider = StateProvider<bool>(
+  (ref) => false,
+);
 
 /// الشاشة الرئيسية لتطبيق ELD
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   List<Widget> _pagesFor(WidgetRef ref) {
-    return const [
-      StatusDashboardPage(),
-      RecapPage(),
-    ];
+    return const [StatusDashboardPage(), RecapPage()];
   }
 
   @override
@@ -47,33 +46,35 @@ class HomePage extends ConsumerWidget {
     if (!authGate.isAuthenticated || authGate.transitioning) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     // الأولوية: اسم السائق - معرّف/رقم المركبة (Top Compliance ELD Standard)
-    final rawDriverName = (dashboard.driverName != 'Unknown' && dashboard.driverName.isNotEmpty)
+    final rawDriverName =
+        (dashboard.driverName != 'Unknown' && dashboard.driverName.isNotEmpty)
         ? dashboard.driverName
         : (ref.watch(authStateProvider).user?.fullName ?? '');
 
-    final vehicleIdentifier = (dashboard.vehicleDisplayName.isNotEmpty &&
+    final vehicleIdentifier =
+        (dashboard.vehicleDisplayName.isNotEmpty &&
             dashboard.vehicleDisplayName != 'Select a vehicle' &&
             dashboard.vehicleDisplayName != 'No Vehicle')
         ? dashboard.vehicleDisplayName
         : (dashboard.vehicleId.isNotEmpty && dashboard.vehicleId != 'None'
-            ? dashboard.vehicleId
-            : null);
+              ? dashboard.vehicleId
+              : null);
 
     final driverText = vehicleIdentifier != null
         ? '$rawDriverName - $vehicleIdentifier'
         : (statusDashboardState.valueOrNull?.driver.displayText ??
-            (ref.watch(currentDriverIdProvider) != null
-                ? '$rawDriverName - ${ref.watch(currentDriverIdProvider)}'
-                : rawDriverName));
+              (ref.watch(currentDriverIdProvider) != null
+                  ? '$rawDriverName - ${ref.watch(currentDriverIdProvider)}'
+                  : rawDriverName));
 
-    final isDriving = statusDashboardState.valueOrNull?.currentDutyStatus == DutyStatusCode.driving;
+    final isDriving =
+        statusDashboardState.valueOrNull?.currentDutyStatus ==
+        DutyStatusCode.driving;
     final isMoving = ref.watch(isVehicleMovingProvider);
     final developerBypass = ref.watch(developerBypassDrivingScreenProvider);
 
@@ -84,24 +85,24 @@ class HomePage extends ConsumerWidget {
           // ========== شريط العنوان ==========
           appBar: AppBar(
             title: Text(
-              currentNavIndex == 0
-                  ? driverText
-                  : context.loc.hoursRecap,
+              currentNavIndex == 0 ? driverText : context.loc.hoursRecap,
               style: context.styles.appBarTitle,
               overflow: TextOverflow.ellipsis,
             ),
             centerTitle: currentNavIndex == 1, // توسيط العنوان في شاشة Recap
             leading: Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: Icon(Icons.menu, color: context.onGold),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
             actions: currentNavIndex == 0
-                  ? [
+                ? [
                     const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.0),
-                      child: ConnectionStatusIndicator(showWarningTriangle: false),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      child: ConnectionStatusIndicator(
+                        showWarningTriangle: false,
+                      ),
                     ),
                     const SyncStatusIndicator(),
                     // SRS 4.2 operational alerts: server-driven tool icon +
@@ -110,16 +111,22 @@ class HomePage extends ConsumerWidget {
                     Consumer(
                       builder: (context, ref, child) {
                         final gpsStatus = ref.watch(gpsStatusProvider);
-                        final isGpsOff = gpsStatus.value == ServiceStatus.disabled;
+                        final isGpsOff =
+                            gpsStatus.value == ServiceStatus.disabled;
                         final alerts = ref
                             .watch(statusDashboardProvider)
                             .valueOrNull
                             ?.operationalAlerts;
-                        final isDisconnected = (ref.watch(isConnectedProvider).value ?? true) == false;
-                        
-                        final showTool = isGpsOff || (alerts?.toolIcon ?? false);
-                        final showTriangle = isDisconnected || (alerts?.warningTriangleIcon ?? false);
-                        
+                        final isDisconnected =
+                            (ref.watch(isConnectedProvider).value ?? true) ==
+                            false;
+
+                        final showTool =
+                            isGpsOff || (alerts?.toolIcon ?? false);
+                        final showTriangle =
+                            isDisconnected ||
+                            (alerts?.warningTriangleIcon ?? false);
+
                         if (!showTool && !showTriangle) {
                           return const SizedBox.shrink();
                         }
@@ -130,18 +137,16 @@ class HomePage extends ConsumerWidget {
                             if (showTool)
                               IconButton(
                                 key: const Key('home_tool_alert'),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.build,
-                                  color: Colors.white,
-                                  size: 28,
+                                  color: context.onGold,
+                                  size: AppSpacing.iconLarge,
                                 ),
                                 onPressed: () {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                      title: Text(
-                                        loc.noticeTitle,
-                                      ),
+                                      title: Text(loc.noticeTitle),
                                       content: Text(
                                         isGpsOff
                                             ? loc.gpsTurnedOff
@@ -149,7 +154,8 @@ class HomePage extends ConsumerWidget {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
                                           child: Text(loc.okButton),
                                         ),
                                       ],
@@ -161,12 +167,13 @@ class HomePage extends ConsumerWidget {
                               IconButton(
                                 key: const Key('home_warning_triangle'),
                                 tooltip: loc.operationalAlertTooltip,
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.warning_amber,
-                                  color: Colors.white,
-                                  size: 28,
+                                  color: context.onGold,
+                                  size: AppSpacing.iconLarge,
                                 ),
-                                onPressed: () => context.push(AppRoutes.connection),
+                                onPressed: () =>
+                                    context.push(AppRoutes.connection),
                               ),
                           ],
                         );
@@ -189,12 +196,14 @@ class HomePage extends ConsumerWidget {
                   if (!isOnline && currentNavIndex == 0)
                     Container(
                       width: double.infinity,
-                      color: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      color: Theme.of(context).colorScheme.inverseSurface,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                       child: Text(
                         context.loc.noInternetBanner,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.white, fontSize: 14),
+                        style: context.styles.subtitle.copyWith(
+                          color: Theme.of(context).colorScheme.onInverseSurface,
+                        ),
                       ),
                     ),
                   Expanded(
@@ -224,9 +233,7 @@ class HomePage extends ConsumerWidget {
           ),
         ),
         if (isDriving && isMoving && !developerBypass)
-          const Positioned.fill(
-            child: DrivingLockScreen(),
-          ),
+          const Positioned.fill(child: DrivingLockScreen()),
       ],
     );
   }

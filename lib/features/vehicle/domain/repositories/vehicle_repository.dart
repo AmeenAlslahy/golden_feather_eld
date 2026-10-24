@@ -10,9 +10,6 @@ abstract class VehicleRepository {
   /// عرض أسطول الشركة. الظهور ليس إذناً بالتشغيل.
   Future<Either<Failure, List<Vehicle>>> getCompanyVehicles();
 
-  /// اختيار وربط المركبة بالجلسة على الخادم عبر `POST /eld/hardware/connect`.
-  Future<Either<Failure, bool>> selectVehicle(String uniqueId);
-
   /// جلب المركبة المختارة حالياً
   Future<Either<Failure, Vehicle?>> getSelectedVehicle();
 }

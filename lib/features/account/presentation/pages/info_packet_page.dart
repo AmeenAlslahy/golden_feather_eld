@@ -13,18 +13,13 @@ import '../../../inspection/presentation/providers/inspection_provider.dart';
 class InfoPacketPage extends ConsumerWidget {
   const InfoPacketPage({super.key});
 
-
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = context.loc;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          loc.infoPacket,
-          style: context.styles.appBarTitle,
-        ),
+        title: Text(loc.infoPacket, style: context.styles.appBarTitle),
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -34,8 +29,11 @@ class InfoPacketPage extends ConsumerWidget {
       ),
       drawer: const EldDrawer(),
       body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+          vertical: AppSpacing.md,
+        ),
         children: [
-          const SizedBox(height: AppSpacing.xl),
           _PacketStatus(packet: ref.watch(informationPacketProvider)),
           _PacketBlock(
             title: loc.userManual,
@@ -43,14 +41,19 @@ class InfoPacketPage extends ConsumerWidget {
             buttonLabel: loc.viewUserManual.toUpperCase(),
             onPressed: () => context.push(AppRoutes.userManual),
           ),
-          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: Divider(
+              color: context.border,
+              height: AppSpacing.dividerHeight,
+            ),
+          ),
           _PacketBlock(
             title: loc.instructions,
             body: loc.infoPacketInstructionsBlurb,
             buttonLabel: loc.viewInstructions.toUpperCase(),
             onPressed: () => context.push(AppRoutes.instructions),
           ),
-          const Divider(height: 1),
         ],
       ),
     );
@@ -73,12 +76,7 @@ class _PacketStatus extends StatelessWidget {
         if (view.complete) return const SizedBox.shrink();
         final missing = view.missing.join(', ');
         return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            0,
-            AppSpacing.xl,
-            AppSpacing.md,
-          ),
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Text(
             missing.isEmpty
                 ? context.loc.thePacketIsIncomplete
@@ -107,34 +105,30 @@ class _PacketBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
-        AppSpacing.xl,
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: context.styles.sectionTitle,
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: context.styles.sectionTitle.copyWith(
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: context.styles.subtitle,
+        ),
+        const SizedBox(height: AppSpacing.compact),
+        Text(
+          body,
+          textAlign: TextAlign.center,
+          style: context.styles.subtitle.copyWith(
+            color: context.textSecondary,
           ),
-          const SizedBox(height: AppSpacing.xl),
-          AppButton(
-            label: buttonLabel,
-            type: EldButtonType.primary,
-            onPressed: onPressed,
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        AppButton(
+          label: buttonLabel,
+          type: EldButtonType.primary,
+          onPressed: onPressed,
+        ),
+      ],
     );
   }
 }

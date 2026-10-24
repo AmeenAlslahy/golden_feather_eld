@@ -4138,6 +4138,12 @@ abstract class AppLocalizations {
   /// **'رقم المقطورة: حروف وأرقام ومسافات و - _ # فقط (حتى 50).'**
   String get trailerNumberFormatError;
 
+  /// No description provided for @trailerNumberTooLong.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم المقطورة طويل جداً (حتى 50).'**
+  String get trailerNumberTooLong;
+
   /// No description provided for @enterDocumentNumber.
   ///
   /// In ar, this message translates to:
@@ -4803,6 +4809,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'التقرير السابق بلا معرّف خادم ولا يمكن مراجعته.'**
   String get dvirPrevNoServerId;
+
+  /// No description provided for @dvirPrevUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر التحقق من تقرير الفحص السابق. اتصل بالإنترنت أو افتح سجل التقارير قبل التوقيع.'**
+  String get dvirPrevUnavailable;
 
   /// No description provided for @dvirPreviousInspection.
   ///
@@ -6027,6 +6039,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'غير معروف'**
   String get statusUnknown;
+
+  /// No description provided for @createdAt.
+  ///
+  /// In ar, this message translates to:
+  /// **'تاريخ الإنشاء'**
+  String get createdAt;
+
+  /// No description provided for @zoomIn.
+  ///
+  /// In ar, this message translates to:
+  /// **'تكبير'**
+  String get zoomIn;
+
+  /// No description provided for @zoomOut.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصغير'**
+  String get zoomOut;
+
+  /// No description provided for @fitWidth.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملائمة العرض (100%)'**
+  String get fitWidth;
 }
 
 class _AppLocalizationsDelegate

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -54,7 +53,7 @@ class InspectionActiveView extends ConsumerWidget {
         EldDatePaginator(
           dateLabel: _dayLabel(state),
           isLoading: state.isDayLoading,
-          backgroundColor: AppColors.primaryGold.withValues(alpha: 0.05),
+          backgroundColor: context.gold.withValues(alpha: 0.05),
           textColor: context.styles.bodyBold.color,
           iconColor: context.theme.iconTheme.color ?? context.styles.body.color,
           // ترتيب cycle: index 0 = الأحدث. الأيسر = يوم أقدم (index+1)
@@ -100,15 +99,23 @@ class InspectionActiveView extends ConsumerWidget {
                         ),
                         const Divider(height: 1),
                         EldEventsTable(
-                          rows: log.events.map((e) => EldTableRow(
-                            time: e.timeEt,
-                            status: e.eventCode,
-                            location: e.location,
-                            odom: e.odometer <= 0 ? '—' : e.odometer.toStringAsFixed(0),
-                            eng: e.engineHours <= 0 ? '—' : e.engineHours.toStringAsFixed(1),
-                            src: e.origin,
-                            statusColor: null,
-                          )).toList(),
+                          rows: log.events
+                              .map(
+                                (e) => EldTableRow(
+                                  time: e.timeEt,
+                                  status: e.eventCode,
+                                  location: e.location,
+                                  odom: e.odometer <= 0
+                                      ? '—'
+                                      : e.odometer.toStringAsFixed(0),
+                                  eng: e.engineHours <= 0
+                                      ? '—'
+                                      : e.engineHours.toStringAsFixed(1),
+                                  src: e.origin,
+                                  statusColor: null,
+                                ),
+                              )
+                              .toList(),
                         ),
                       ],
                       const SizedBox(height: AppSpacing.lg),
@@ -139,9 +146,9 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.warningYellow.withValues(alpha: 0.15),
+      color: context.warning.withValues(alpha: 0.15),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.compact),
         child: Text(
           text,
           textAlign: TextAlign.center,
@@ -151,4 +158,3 @@ class _Banner extends StatelessWidget {
     );
   }
 }
-

@@ -2156,6 +2156,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El número de remolque solo puede contener letras, números, espacios y - _ # (máx. 50).';
 
   @override
+  String get trailerNumberTooLong =>
+      'El número de remolque es demasiado largo (máx. 50).';
+
+  @override
   String get enterDocumentNumber => 'Introduzca el número de documento.';
 
   @override
@@ -2555,6 +2559,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dvirPrevNoServerId =>
       'El informe anterior no tiene id servidor y no puede ser revisado.';
+
+  @override
+  String get dvirPrevUnavailable =>
+      'No se pudo verificar la inspección anterior. Conéctese a Internet o abra el historial de DVIR antes de firmar.';
 
   @override
   String get dvirPreviousInspection => 'Inspección anterior';
@@ -3232,4 +3240,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get statusUnknown => 'Desconocido';
+
+  @override
+  String get createdAt => 'Creado';
+
+  @override
+  String get zoomIn => 'Acercar';
+
+  @override
+  String get zoomOut => 'Alejar';
+
+  @override
+  String get fitWidth => 'Ajustar al ancho (100%)';
 }

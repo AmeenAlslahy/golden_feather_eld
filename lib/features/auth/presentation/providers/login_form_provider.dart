@@ -4,13 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class LoginFormState {
   final bool obscurePassword;
 
-  const LoginFormState({
-    this.obscurePassword = true,
-  });
+  const LoginFormState({this.obscurePassword = true});
 
-  LoginFormState copyWith({
-    bool? obscurePassword,
-  }) {
+  LoginFormState copyWith({bool? obscurePassword}) {
     return LoginFormState(
       obscurePassword: obscurePassword ?? this.obscurePassword,
     );
@@ -20,8 +16,8 @@ class LoginFormState {
 /// مزود حالة نموذج تسجيل الدخول
 final loginFormProvider =
     StateNotifierProvider<LoginFormNotifier, LoginFormState>((ref) {
-  return LoginFormNotifier();
-});
+      return LoginFormNotifier();
+    });
 
 class LoginFormNotifier extends StateNotifier<LoginFormState> {
   LoginFormNotifier() : super(const LoginFormState());
@@ -29,5 +25,4 @@ class LoginFormNotifier extends StateNotifier<LoginFormState> {
   void togglePasswordVisibility() {
     state = state.copyWith(obscurePassword: !state.obscurePassword);
   }
-
 }

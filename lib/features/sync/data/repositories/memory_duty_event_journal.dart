@@ -14,10 +14,7 @@ class MemoryDutyEventJournal implements DutyEventJournal {
   List<DutyEventRecord> get records => List.unmodifiable(_records);
 
   @override
-  Future<void> append(
-    DutyEventRecord record, {
-    PendingEvent? syncEvent,
-  }) async {
+  Future<void> append(DutyEventRecord record, {PendingEvent? syncEvent}) async {
     if (!_records.any((r) => r.eventId == record.eventId)) {
       _records.add(record);
     }
@@ -31,15 +28,15 @@ class MemoryDutyEventJournal implements DutyEventJournal {
     required int ownerDriverId,
     int limit = 1000,
   }) async {
-    final records = _records
-        .where((r) => r.ownerDriverId == ownerDriverId)
-        .toList()
-      ..sort((a, b) {
-        final byTime = (a.eventTimeUtc ?? a.receivedAtUtc)
-            .compareTo(b.eventTimeUtc ?? b.receivedAtUtc);
-        if (byTime != 0) return byTime;
-        return (a.seq ?? 0).compareTo(b.seq ?? 0);
-      });
+    final records =
+        _records.where((r) => r.ownerDriverId == ownerDriverId).toList()
+          ..sort((a, b) {
+            final byTime = (a.eventTimeUtc ?? a.receivedAtUtc).compareTo(
+              b.eventTimeUtc ?? b.receivedAtUtc,
+            );
+            if (byTime != 0) return byTime;
+            return (a.seq ?? 0).compareTo(b.seq ?? 0);
+          });
     return DutyEventJournalLoad(
       records: records.take(limit).toList(),
       corruptedRows: 0,

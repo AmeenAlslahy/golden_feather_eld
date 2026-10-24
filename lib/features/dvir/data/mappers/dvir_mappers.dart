@@ -1,3 +1,5 @@
+import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
+import '../../domain/defect_enums.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../../domain/dvir_vehicle.dart';
@@ -54,6 +56,100 @@ String? _text(Object? value) {
   if (value == null) return null;
   final text = value.toString().trim();
   return text.isEmpty ? null : text;
+}
+
+/// Maps a server DVIR record into the domain entity.
+///
+/// The wire status is preserved exactly (unknown stays unknown); only the
+/// coarse [VehicleCondition] is derived from it.
+DvirReport mapDvirDtoToReport(DvirDto dto) {
+  final conditionStatus = DvirConditionStatus.fromWire(dto.status);
+  return DvirReport(
+    id: dto.id.toString(),
+    type: _parseInspectionType(dto.inspectionType),
+    date: _parseDate(dto),
+    driverName: dto.driver?.name ?? '',
+    vehicleId:
+        (dto.uniqueId?.isNotEmpty == true ? dto.uniqueId : dto.vehicleName) ??
+        '',
+    trailerId: dto.trailerNumber,
+    odometer: dto.odometer,
+    condition: _vehicleConditionFrom(conditionStatus),
+    conditionStatus: conditionStatus,
+    signature: dto.signatureData,
+    notes: dto.remarks,
+    isSubmitted: true,
+    location: dto.location,
+    companyName: dto.companyName,
+    hasDefects: dto.hasDefects,
+    defectsCount: dto.defectsCount,
+    defectsSummary: dto.defectsSummary,
+    outOfService: dto.outOfService,
+    certified: dto.certified,
+    mechanicName: dto.mechanicName,
+    repairStatus: dto.repairStatus,
+    repairNotes: dto.repairNotes,
+    reviewingDriverName: dto.reviewingDriverName,
+    nextDriverReviewed: dto.nextDriverReviewed,
+    selectedDefects: [
+      for (final defect in dto.defects)
+        if ((defect.itemCode ?? '').trim().isNotEmpty ||
+            (defect.itemName ?? '').trim().isNotEmpty)
+          DvirDefectSelection(
+            item: DvirCatalogItem(
+              code: defect.itemCode?.trim() ?? 'GENERIC',
+              name: defect.itemName ?? defect.itemCode ?? 'Unknown defect',
+              category: defect.category ?? '',
+              critical: defect.safetyAffecting || defect.outOfService,
+            ),
+            description: defect.description,
+            severity: DefectSeverity.fromWire(defect.severity),
+            stage: DefectLifecycleStage.fromWire(defect.stage),
+          ),
+    ],
+    photos: dto.photos,
+    trailers: dto.trailers
+        .map(
+          (t) => DvirTrailer(
+            trailerNumber: t.trailerNumber,
+            defects: t.defects
+                .map((d) => d.description ?? d.itemName ?? '')
+                .where((s) => s.isNotEmpty)
+                .toList(),
+          ),
+        )
+        .toList(),
+  );
+}
+
+DateTime? _parseDate(DvirDto dto) {
+  final raw = dto.inspectionTime?.trim();
+  if (raw != null && raw.isNotEmpty) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed;
+  }
+  final created = dto.createdAt?.trim();
+  if (created != null && created.isNotEmpty) {
+    final parsed = DateTime.tryParse(created);
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+InspectionType _parseInspectionType(String? type) {
+  // The server sends wire values ("Post-Trip" / "Pre-Trip"), not Dart names.
+  final t = type?.trim().toLowerCase() ?? '';
+  if (t == 'post-trip' || t == 'post_trip' || t == 'posttrip') {
+    return InspectionType.postTrip;
+  }
+  return InspectionType.preTrip;
+}
+
+VehicleCondition _vehicleConditionFrom(DvirConditionStatus status) {
+  // Unknown or any non-satisfactory wire status stays conservative.
+  return status == DvirConditionStatus.satisfactory
+      ? VehicleCondition.safe
+      : VehicleCondition.needsRepair;
 }
 
 /// Wire shape of `DvirDefectItem` on `InsertDvirRequest`.
@@ -132,13 +228,12 @@ Map<String, dynamic>? buildDvirCreateBody({
     trailer: trailerDefects,
     catalog: catalogDefects,
   );
-  // DVIR-09: تقرير بعيوب لا يُقبل على السلك بحالة "سليمة" — مصالحة
-  // إلزامية إلى Has Defects (اتساق SRS 7.1/7.6، لا تناقض قانوني).
-  var wireStatus = status.trim();
-  if (defects.isNotEmpty &&
-      wireStatus == DvirConditionStatus.satisfactory.wire) {
-    wireStatus = DvirConditionStatus.hasDefects.wire;
-  }
+  // DVIR-09: تقرير بعيوب لا يُقبل على السلك بحالة "سليمة" — المصالحة
+  // تُطبَّق مرة واحدة في domain، مع إبقاء أي نص غير معروف كما وصل.
+  final requestedStatus = DvirConditionStatus.fromWire(status);
+  final wireStatus = requestedStatus == DvirConditionStatus.unknown
+      ? status.trim()
+      : requestedStatus.resolvedFor(hasDefects: defects.isNotEmpty).wire;
 
   Map<String, dynamic>? locationMap;
   if (location != null && location.isNotEmpty) {
@@ -152,15 +247,20 @@ Map<String, dynamic>? buildDvirCreateBody({
     }
   }
 
-  List<Map<String, dynamic>> extractDetects(String category, String? customNote) {
+  List<Map<String, dynamic>> extractDetects(
+    String category,
+    String? customNote,
+  ) {
     final list = catalogDefects
         .where((d) => d['category'] == category)
-        .map((d) => {
-              'itemName': d['itemName'],
-              if (d['severity'] != null) 'severity': d['severity'],
-              if (d['stage'] != null) 'stage': d['stage'],
-              if (d['description'] != null) 'description': d['description']
-            })
+        .map(
+          (d) => {
+            'itemName': d['itemName'],
+            if (d['severity'] != null) 'severity': d['severity'],
+            if (d['stage'] != null) 'stage': d['stage'],
+            if (d['description'] != null) 'description': d['description'],
+          },
+        )
         .toList();
     if (customNote != null && customNote.trim().isNotEmpty) {
       list.add({
@@ -196,10 +296,15 @@ Map<String, dynamic>? buildDvirCreateBody({
       'detects': extractDetects('VEHICLE', vehicleDefects),
     },
     'trailers': trailerNumber != null && trailerNumber.isNotEmpty
-        ? trailerNumber.split(',').map((t) => {
-              'trailerNumber': t.trim(),
-              'detects': extractDetects('TRAILER', trailerDefects),
-            }).toList()
+        ? trailerNumber
+              .split(',')
+              .map(
+                (t) => {
+                  'trailerNumber': t.trim(),
+                  'detects': extractDetects('TRAILER', trailerDefects),
+                },
+              )
+              .toList()
         : [],
     'trailerNumbers': trailerNumber != null && trailerNumber.isNotEmpty
         ? trailerNumber.split(',').map((t) => t.trim()).toList()

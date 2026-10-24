@@ -163,7 +163,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final res = await _apiClient.post<CertifyResponseDto>(
       EldEndpoints.certifyLog(request.dailyLogId),
       data: request.toJson(),
-      parser: (data) => CertifyResponseDto.fromJson(data as Map<String, dynamic>),
+      parser: (data) =>
+          CertifyResponseDto.fromJson(data as Map<String, dynamic>),
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return res.mapValue((r) => r.data!);
@@ -214,7 +215,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   Future<Result<RawJson>> getEvents(DailyLogId logId) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogEvents(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     // خادم لم يُحدَّث بعد إلى العقد الجديد → fallback للمسار القديم
     // `graph-grid` (نفس شكل الحمولة: data.events).
@@ -236,7 +238,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   ) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogEvent(logId.value, eventId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
@@ -251,7 +254,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     final res = await _apiClient.put<RawJson>(
       EldEndpoints.dailyLogEvent(logId.value, eventId.value),
       data: event,
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
@@ -261,7 +265,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   Future<Result<RawJson>> getEventsOptions(DailyLogId logId) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogEventsOptions(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
@@ -270,7 +275,8 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   Future<Result<RawJson>> getFormOptions(DailyLogId logId) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogFormOptions(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : <String, dynamic>{},
+      parser: (data) =>
+          data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }

@@ -66,11 +66,7 @@ void main() {
 
       final report = makeReport(id: '999', vehicleId: 'TRK-100');
 
-      final result = await repo.submitDvirReport(
-        report,
-        driverId: 101,
-        status: DvirConditionStatus.satisfactory,
-      );
+      final result = await repo.submitDvirReport(report, driverId: 101);
 
       expect(result.isRight(), isTrue);
       expect(result.getOrElse((_) => false), isTrue);
@@ -106,11 +102,7 @@ void main() {
       );
 
       final report = makeReport(id: '555', vehicleId: 'TRK-200');
-      await repo.submitDvirReport(
-        report,
-        driverId: 101,
-        status: DvirConditionStatus.satisfactory,
-      );
+      await repo.submitDvirReport(report, driverId: 101);
 
       final reviewResult = await repo.reviewDvir(
         dvirId: '555',
@@ -156,11 +148,7 @@ void main() {
 
       final report = makeReport(id: '777', vehicleId: 'TRK-300');
 
-      final result = await repo.submitDvirReport(
-        report,
-        driverId: 101,
-        status: DvirConditionStatus.satisfactory,
-      );
+      final result = await repo.submitDvirReport(report, driverId: 101);
 
       expect(result.isRight(), isTrue);
       final events = await queue.getReadyEvents(limit: 10);

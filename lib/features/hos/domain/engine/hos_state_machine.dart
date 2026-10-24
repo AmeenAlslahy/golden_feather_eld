@@ -26,27 +26,28 @@ class HosStateMachine {
   Timer? _drivingTimer;
   final TrustedTimeProvider _timeProvider;
 
-/// الحد الأدنى للاستراحة المؤهلة — من `HosConfiguration.breakDurationMinutes`.
-///
-/// ⚠️ كان **ثابتاً 30 دقيقة مكتوبة يدوياً** والتعليق يقول إنه من الإعدادات.
-/// فأي نظام بدّل مدتها (بعض ولايات أخرى) لبقي
-/// المحرك يحسب على 30 ويُصنّف استراحة مؤهلة لم تكن كذلك.
-///
-/// الافتراضي يبقى 30 دقيقة (49 CFR 395.3(a)(3)(ii)) فسلوك غير محدَّد
-/// لا يتغيّر.
-final Duration _breakDuration;
+  /// الحد الأدنى للاستراحة المؤهلة — من `HosConfiguration.breakDurationMinutes`.
+  ///
+  /// ⚠️ كان **ثابتاً 30 دقيقة مكتوبة يدوياً** والتعليق يقول إنه من الإعدادات.
+  /// فأي نظام بدّل مدتها (بعض ولايات أخرى) لبقي
+  /// المحرك يحسب على 30 ويُصنّف استراحة مؤهلة لم تكن كذلك.
+  ///
+  /// الافتراضي يبقى 30 دقيقة (49 CFR 395.3(a)(3)(ii)) فسلوك غير محدَّد
+  /// لا يتغيّر.
+  final Duration _breakDuration;
 
-HosStateMachine(this._timeProvider, {Duration? breakDuration})
+  HosStateMachine(this._timeProvider, {Duration? breakDuration})
     : _breakDuration = breakDuration ?? const Duration(minutes: 30) {
-  final trusted = _trustedNow();
-  if (trusted != null) _shiftStartTime = trusted;
-}
+    final trusted = _trustedNow();
+    if (trusted != null) _shiftStartTime = trusted;
+  }
 
   /// Legal timestamps only. Wall-clock time is never used as a duty stamp.
   DateTime? _trustedNow() {
     final timeResult = _timeProvider.currentTime;
     return timeResult is TrustedTimeAvailable ? timeResult.utc : null;
   }
+
   DateTime _effectiveNow() => _trustedNow() ?? DateTime.now().toUtc();
 
   // ========== Getters ==========
@@ -75,10 +76,12 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
   }
 
   double get totalDrivingHours {
-    if (_currentStatus == DutyStatus.driving && _drivingSessionStartTime != null) {
+    if (_currentStatus == DutyStatus.driving &&
+        _drivingSessionStartTime != null) {
       final now = _effectiveNow();
       if (now.isAfter(_drivingSessionStartTime!)) {
-        final session = now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
+        final session =
+            now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
         return _accumulatedDrivingHours + session;
       }
     }
@@ -86,16 +89,20 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
   }
 
   double get cycleHours {
-    if (_currentStatus == DutyStatus.driving && _drivingSessionStartTime != null) {
+    if (_currentStatus == DutyStatus.driving &&
+        _drivingSessionStartTime != null) {
       final now = _effectiveNow();
       if (now.isAfter(_drivingSessionStartTime!)) {
-        final session = now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
+        final session =
+            now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
         return _accumulatedCycleHours + session;
       }
-    } else if (_currentStatus == DutyStatus.onDutyNotDriving && _onDutySessionStartTime != null) {
+    } else if (_currentStatus == DutyStatus.onDutyNotDriving &&
+        _onDutySessionStartTime != null) {
       final now = _effectiveNow();
       if (now.isAfter(_onDutySessionStartTime!)) {
-        final session = now.difference(_onDutySessionStartTime!).inSeconds / 3600.0;
+        final session =
+            now.difference(_onDutySessionStartTime!).inSeconds / 3600.0;
         return _accumulatedCycleHours + session;
       }
     }
@@ -109,22 +116,25 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
     if (_currentStatus == newStatus) return;
     final now = _trustedNow();
     if (now == null) {
-      AppLogger.warning(
-          'Refusing duty transition: trusted time unavailable');
+      AppLogger.warning('Refusing duty transition: trusted time unavailable');
       return;
     }
 
-    if (_currentStatus == DutyStatus.driving && _drivingSessionStartTime != null) {
+    if (_currentStatus == DutyStatus.driving &&
+        _drivingSessionStartTime != null) {
       if (now.isAfter(_drivingSessionStartTime!)) {
-        final session = now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
+        final session =
+            now.difference(_drivingSessionStartTime!).inSeconds / 3600.0;
         _accumulatedDrivingHours += session;
         _accumulatedCycleHours += session;
       }
       _drivingSessionStartTime = null;
     }
-    if (_currentStatus == DutyStatus.onDutyNotDriving && _onDutySessionStartTime != null) {
+    if (_currentStatus == DutyStatus.onDutyNotDriving &&
+        _onDutySessionStartTime != null) {
       if (now.isAfter(_onDutySessionStartTime!)) {
-        final session = now.difference(_onDutySessionStartTime!).inSeconds / 3600.0;
+        final session =
+            now.difference(_onDutySessionStartTime!).inSeconds / 3600.0;
         _accumulatedCycleHours += session;
       }
       _onDutySessionStartTime = null;
@@ -151,15 +161,16 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
     final isDriving = newStatus == DutyStatus.driving;
     final isNonDriving =
         newStatus == DutyStatus.offDuty ||
-            newStatus == DutyStatus.sleeperBerth ||
-            newStatus == DutyStatus.onDutyNotDriving ||
-            newStatus == DutyStatus.personalUse;
+        newStatus == DutyStatus.sleeperBerth ||
+        newStatus == DutyStatus.onDutyNotDriving ||
+        newStatus == DutyStatus.personalUse;
 
     if (wasDriving && !isDriving) {
       _pendingBreakCandidateStart = now;
       if (_currentDrivingRunStart != null) {
         final run = now.difference(_currentDrivingRunStart!);
-        if (!run.isNegative) _accumulatedDrivingSinceBreak += run.inSeconds / 3600.0;
+        if (!run.isNegative)
+          _accumulatedDrivingSinceBreak += run.inSeconds / 3600.0;
         _currentDrivingRunStart = null;
       }
     } else if (!wasDriving && isDriving) {
@@ -195,7 +206,8 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
     }
 
     AppLogger.info(
-        'State transition: ${transition.from.name} → ${transition.to.name}');
+      'State transition: ${transition.from.name} → ${transition.to.name}',
+    );
   }
 
   /// بدء مؤقت القيادة للإشعار الدوري
@@ -224,9 +236,10 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
         ? _trustedNow()
         : null;
     _pendingBreakCandidateStart =
-        (_currentStatus == DutyStatus.offDuty || _currentStatus == DutyStatus.sleeperBerth)
-            ? _trustedNow()
-            : null;
+        (_currentStatus == DutyStatus.offDuty ||
+            _currentStatus == DutyStatus.sleeperBerth)
+        ? _trustedNow()
+        : null;
     final now = _trustedNow() ?? DateTime.utc(1970);
     _shiftStartTime = now;
     _lastWeeklyRestartAt = now;
@@ -256,7 +269,7 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
   //
   // شرط "العمل أوفلاين كالأونلاين": بعد إعادة تشغيل التطبيق (أو قيود بعد
   // إقلاع بلا شبكة) يجب أن يعرف المحرك:
-//  //   • حالة الخدمة الفعلية
+  //  //   • حالة الخدمة الفعلية
   //   • بداية نافذة الوردية
   //   • ساعات القيادة المتراكمة والدورة
   //
@@ -304,12 +317,14 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
       lastEventEnd = end;
 
       final isRest =
-          lastStatus == DutyStatus.offDuty || lastStatus == DutyStatus.sleeperBerth;
+          lastStatus == DutyStatus.offDuty ||
+          lastStatus == DutyStatus.sleeperBerth;
 
       // راحة مؤهلة تسبق فترة العمل => ابدأ نافذة جديدة من تلك الفترة.
       if (pendingRestGap >= const Duration(hours: 10)) firstDutyStart = null;
-      pendingRestGap =
-          isRest ? end.difference(start) + pendingRestGap : Duration.zero;
+      pendingRestGap = isRest
+          ? end.difference(start) + pendingRestGap
+          : Duration.zero;
 
       // نافذة الوردية تبدأ بأول فترة عمل بعد آخر راحة مؤهلة.
       if (firstDutyStart == null && !isRest) firstDutyStart = start;
@@ -353,14 +368,16 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
       final declared = _statusFromCode(resolved);
       if (declared != _currentStatus) {
         AppLogger.info(
-            '♻️ HOS hydrated status corrected: last-closed=${lastStatus.name} '
-            '→ declared=${declared.name}');
+          '♻️ HOS hydrated status corrected: last-closed=${lastStatus.name} '
+          '→ declared=${declared.name}',
+        );
       }
       _currentStatus = declared;
     } else if ((currentStatusWire ?? '').trim().isNotEmpty) {
       AppLogger.warning(
-          'HOS hydration: unusable currentDutyStatus '
-          '"$currentStatusWire" — keeping last closed period');
+        'HOS hydration: unusable currentDutyStatus '
+        '"$currentStatusWire" — keeping last closed period',
+      );
     }
 
     // بداية الوردية = أول عمل، أو الآن إن لم يوجد سجل (سائق جديد).
@@ -379,8 +396,8 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
 
     // ⚠️ لا تُصفَّر المناوبات إلا عبر إعادة التصفير الأسبوعية؛ هنا نعيد
     // بناء ما إذا كان قد حدثت فعلاً (٣٤ ساعة راحة داخل النافذة).
-    if (sawRestAfterCycleStart && _longestRestIn(ordered, cycleStart) >=
-        const Duration(hours: 34)) {
+    if (sawRestAfterCycleStart &&
+        _longestRestIn(ordered, cycleStart) >= const Duration(hours: 34)) {
       _accumulatedCycleHours = 0;
       _accumulatedDrivingHours = 0;
       _shiftStartTime = now;
@@ -392,33 +409,37 @@ HosStateMachine(this._timeProvider, {Duration? breakDuration})
       _pendingBreakCandidateStart = sinceBreakClear ? null : lastEventEnd;
       _currentDrivingRunStart =
           (_currentStatus == DutyStatus.driving && lastEventEnd != null)
-              ? lastEventEnd
-              : null;
+          ? lastEventEnd
+          : null;
     }
 
     if (_currentStatus == DutyStatus.driving && lastEventEnd != null) {
       _drivingSessionStartTime = lastEventEnd;
-    } else if (_currentStatus == DutyStatus.onDutyNotDriving && lastEventEnd != null) {
+    } else if (_currentStatus == DutyStatus.onDutyNotDriving &&
+        lastEventEnd != null) {
       _onDutySessionStartTime = lastEventEnd;
     }
 
     // إعادة بناء سجل الانتقالات (يلزم لفحص الإعادة الأسبوعية).
     _transitions.clear();
     for (final p in ordered) {
-      _transitions.add(StatusTransition(
-        from: _previousStatusOf(ordered, p),
-        to: _statusFromWire(p.status),
-        timestamp: p.startTime,
-        annotation: 'restored-from-disk',
-      ));
+      _transitions.add(
+        StatusTransition(
+          from: _previousStatusOf(ordered, p),
+          to: _statusFromWire(p.status),
+          timestamp: p.startTime,
+          annotation: 'restored-from-disk',
+        ),
+      );
     }
 
     AppLogger.info(
-        '♻️ HOS hydrated from ${periods.length} period(s): '
-        'status=${_currentStatus.name} '
-        'driving=${_accumulatedDrivingHours.toStringAsFixed(2)}h '
-        'cycle=${_accumulatedCycleHours.toStringAsFixed(2)}h '
-        'shiftStart=${_shiftStartTime.toIso8601String()}');
+      '♻️ HOS hydrated from ${periods.length} period(s): '
+      'status=${_currentStatus.name} '
+      'driving=${_accumulatedDrivingHours.toStringAsFixed(2)}h '
+      'cycle=${_accumulatedCycleHours.toStringAsFixed(2)}h '
+      'shiftStart=${_shiftStartTime.toIso8601String()}',
+    );
   }
 
   /// تحويل رمز معروف مسبقاً إلى حالة المحرك.

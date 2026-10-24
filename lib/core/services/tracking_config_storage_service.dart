@@ -93,13 +93,15 @@ class TrackingConfigStorageService {
     }
     if (params['preferPlatformProviders'] != null) {
       await setPreferPlatformProviders(
-          params['preferPlatformProviders'] == 'true');
+        params['preferPlatformProviders'] == 'true',
+      );
     }
   }
 }
 
-final trackingConfigStorageProvider =
-    Provider<TrackingConfigStorageService>((ref) {
+final trackingConfigStorageProvider = Provider<TrackingConfigStorageService>((
+  ref,
+) {
   // We temporarily read from the existing local storage provider to get the shared prefs instance.
   // In the future, this should depend on a dedicated SharedPreferences provider.
   final localStorage = ref.watch(localStorageProvider);

@@ -63,38 +63,46 @@ class HosCalculator {
         .clamp(0, config.shiftLimitMinutes);
 
     // 3. الدورة الأسبوعية (60 أو 70 ساعة) - Needs nothing
-    final remainingCycleHours = (config.cycleLimitHours - cycleHours)
-        .clamp(0.0, config.cycleLimitHours.toDouble());
+    final remainingCycleHours = (config.cycleLimitHours - cycleHours).clamp(
+      0.0,
+      config.cycleLimitHours.toDouble(),
+    );
 
     // 4. الاستراحة الإلزامية (30 دقيقة بعد 8 ساعات)
     //
     // تُقاس من آخر استراحة مؤهلة، لا من بداية الوردية.
     final breakDrivingHours = drivingHoursSinceBreak ?? drivingHours;
     final breakDrivenMinutes = (breakDrivingHours * 60).toInt();
-    final breakRequired =
-        breakDrivenMinutes >= config.driveBeforeBreakMinutes;
-    final breakRemainingMinutes =
-        breakRequired ? config.breakDurationMinutes : 0;
+    final breakRequired = breakDrivenMinutes >= config.driveBeforeBreakMinutes;
+    final breakRemainingMinutes = breakRequired
+        ? config.breakDurationMinutes
+        : 0;
     final timeUntilBreakMinutes =
-        (config.driveBeforeBreakMinutes - breakDrivenMinutes)
-            .clamp(0, config.driveBeforeBreakMinutes);
+        (config.driveBeforeBreakMinutes - breakDrivenMinutes).clamp(
+          0,
+          config.driveBeforeBreakMinutes,
+        );
 
-    return CalculationSuccess(HosLimits(
-      remainingDriveMinutes: remainingDriveMinutes,
-      remainingShiftMinutes: remainingShiftMinutes,
-      remainingCycleHours: remainingCycleHours,
-      breakRequired: breakRequired,
-      breakRemainingMinutes: breakRemainingMinutes,
-      timeUntilBreakMinutes: timeUntilBreakMinutes,
-    ));
+    return CalculationSuccess(
+      HosLimits(
+        remainingDriveMinutes: remainingDriveMinutes,
+        remainingShiftMinutes: remainingShiftMinutes,
+        remainingCycleHours: remainingCycleHours,
+        breakRequired: breakRequired,
+        breakRemainingMinutes: breakRemainingMinutes,
+        timeUntilBreakMinutes: timeUntilBreakMinutes,
+      ),
+    );
   }
 
   /// حساب حد القيادة فقط
   /// Needs: nothing (monotonic pure input)
   int calculateDriveLimit(double drivingHours) {
     final drivenMinutes = (drivingHours * 60).toInt();
-    return (config.drivingLimitMinutes - drivenMinutes)
-        .clamp(0, config.drivingLimitMinutes);
+    return (config.drivingLimitMinutes - drivenMinutes).clamp(
+      0,
+      config.drivingLimitMinutes,
+    );
   }
 
   /// حساب نافذة العمل فقط
@@ -106,8 +114,9 @@ class HosCalculator {
     }
     final now = (timeResult as TrustedTimeAvailable).utc;
     final elapsed = now.difference(shiftStartTime.toUtc()).inMinutes;
-    return ShiftLimitSuccess((config.shiftLimitMinutes - elapsed)
-        .clamp(0, config.shiftLimitMinutes));
+    return ShiftLimitSuccess(
+      (config.shiftLimitMinutes - elapsed).clamp(0, config.shiftLimitMinutes),
+    );
   }
 
   /// فحص الراحة الأسبوعية (34 ساعة)
@@ -124,4 +133,3 @@ class HosCalculator {
     return false;
   }
 }
-

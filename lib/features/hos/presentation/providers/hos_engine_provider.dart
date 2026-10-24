@@ -9,9 +9,8 @@ import '../../../../core/utils/logger.dart';
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../logs/data/datasources/log_local_data_source.dart';
-import '../../../logs/data/providers/log_repository_providers.dart';
 import '../../../sync/data/providers/sync_providers.dart';
+import '../../data/providers/duty_period_store_providers.dart';
 import '../../../../backend/providers/backend_providers.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/engine/hos_state_machine.dart';
@@ -38,12 +37,12 @@ final hosStoredPeriodsProvider = FutureProvider<List<DutyPeriod>>((ref) async {
   final now = trusted is TrustedTimeAvailable
       ? trusted.utc
       : DateTime.now().toUtc();
-  final dataSource = ref.read(logLocalDataSourceProvider);
+  final store = ref.watch(dutyPeriodStoreProvider);
   try {
     final periods = <DutyPeriod>[];
     for (var back = 0; back < 10; back++) {
       final day = now.subtract(Duration(days: back));
-      periods.addAll(await dataSource.getPeriods(day, day));
+      periods.addAll(await store.getPeriods(day));
     }
     return periods;
   } catch (e) {
@@ -137,14 +136,14 @@ final hosHydrationReadyProvider = FutureProvider<void>((ref) async {
 
 /// Duty Status Tracker Provider
 final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
-  final repo = ref.watch(logRepositoryProvider);
+  final periodStore = ref.watch(dutyPeriodStoreProvider);
   final localStorage = ref.watch(localStorageProvider);
   final syncEngine = ref.watch(syncEngineProvider);
   final dashboardBackend = ref.watch(statusDashboardBackendProvider);
   final timeProvider = ref.watch(trustedTimeProvider);
 
   final tracker = DutyStatusTracker(
-    logRepository: repo,
+    dutyPeriodStore: periodStore,
     localStorage: localStorage,
     syncEngine: syncEngine,
     dashboardBackend: dashboardBackend,

@@ -41,17 +41,17 @@ class AppColors {
 
   // ========== الحالات — نص على خلفية فاتحة ==========
 
-  static const Color successText = Color(0xFF157A33);  // 5.47:1
-  static const Color dangerText = Color(0xFFC5221F);   // 5.91:1
-  static const Color warningText = Color(0xFFB45309);  // 4.62:1
-  static const Color infoText = Color(0xFF0D47A1);     // 8.59:1
+  static const Color successText = Color(0xFF157A33); // 5.47:1
+  static const Color dangerText = Color(0xFFC5221F); // 5.91:1
+  static const Color warningText = Color(0xFFB45309); // 4.62:1
+  static const Color infoText = Color(0xFF0D47A1); // 8.59:1
 
   // ========== الحالات — نص على خلفية داكنة ==========
 
   static const Color successOnDark = Color(0xFF4ADE80); // 8.62:1
-  static const Color dangerOnDark = Color(0xFFFF6B6B);  // 6.15:1
+  static const Color dangerOnDark = Color(0xFFFF6B6B); // 6.15:1
   static const Color warningOnDark = Color(0xFFFFB020); // 9.87:1
-  static const Color infoOnDark = Color(0xFF64D2FF);    // 9.45:1
+  static const Color infoOnDark = Color(0xFF64D2FF); // 9.45:1
 
   // ========== الحالات — خلفيات خفيفة ==========
 
@@ -103,6 +103,10 @@ class AppColors {
   // ========== عناصر الصور البديلة (Placeholders) ==========
   static const Color placeholderGrey = Color(0xFF808080);
   static const Color placeholderDark = Color(0xFF424242);
+  static const Color placeholderSurfaceLight = Color(0xFFF2F2F7);
+  static const Color placeholderSurfaceDark = Color(0xFF2C2C2E);
+  static const Color placeholderBorderLight = Color(0xFFD1D1D6);
+  static const Color placeholderBorderDark = Color(0xFF3A3A3C);
   static const Color checkSquare = Color(0x8A000000); // black54 — مربع الصح
 
   // ========== طبقات التعتيم ==========
@@ -116,8 +120,8 @@ class AppColors {
   static const Color rodsHeaderSubtext = Color(0xFF333333);
 
   // ========== على الذهبي / على الأسود ==========
-  static const Color onGold = secondary;      // نص على خلفية ذهبية
-  static const Color onBlack = primaryGold;   // نص على خلفية سوداء
+  static const Color onGold = secondary; // نص على خلفية ذهبية
+  static const Color onBlack = primaryGold; // نص على خلفية سوداء
 
   // ========== عناصر خاصة ==========
 
@@ -157,4 +161,10 @@ class AppColors {
   /// النص الذهبي الآمن حسب الخلفية.
   static Color goldFor(Brightness b) =>
       b == Brightness.light ? goldDeep : primaryGold;
+
+  static Color placeholderSurfaceFor(Brightness b) =>
+      b == Brightness.light ? placeholderSurfaceLight : placeholderSurfaceDark;
+
+  static Color placeholderBorderFor(Brightness b) =>
+      b == Brightness.light ? placeholderBorderLight : placeholderBorderDark;
 }

@@ -2,7 +2,13 @@ import 'package:equatable/equatable.dart';
 import '../../../../domain/shared/value_objects.dart';
 
 enum FormStatus { completed, incomplete, unknown }
-enum CertificationStatus { certified, uncertified, reCertificationRequired, unknown }
+
+enum CertificationStatus {
+  certified,
+  uncertified,
+  reCertificationRequired,
+  unknown,
+}
 
 /// كيان السجل اليومي
 class DailyLog extends Equatable {
@@ -14,7 +20,8 @@ class DailyLog extends Equatable {
   final FormStatus formStatus;
   final CertificationStatus certificationStatus;
   final bool isFormComplete; // Computed from formStatus or kept for legacy
-  final bool isCertified; // Computed from certificationStatus or kept for legacy
+  final bool
+  isCertified; // Computed from certificationStatus or kept for legacy
   final bool requiresAction;
   final bool today;
   final List<LogEvent> events;
@@ -85,7 +92,8 @@ class DailyLog extends Equatable {
       id: id ?? this.id,
       uniqueId: uniqueId ?? this.uniqueId,
       date: date ?? this.date,
-      formattedTotalWorkTime: formattedTotalWorkTime ?? this.formattedTotalWorkTime,
+      formattedTotalWorkTime:
+          formattedTotalWorkTime ?? this.formattedTotalWorkTime,
       totalDrivingHours: totalDrivingHours ?? this.totalDrivingHours,
       formStatus: formStatus ?? this.formStatus,
       certificationStatus: certificationStatus ?? this.certificationStatus,
@@ -113,20 +121,7 @@ class DailyLog extends Equatable {
   }
 
   String get formattedDate {
-    return '$dayName - ${[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ][date.month - 1]} ${date.day}${_ordinal(date.day)}';
+    return '$dayName - ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1]} ${date.day}${_ordinal(date.day)}';
   }
 
   String _ordinal(int day) {
@@ -145,29 +140,29 @@ class DailyLog extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        uniqueId,
-        date,
-        formattedTotalWorkTime,
-        totalDrivingHours,
-        formStatus,
-        certificationStatus,
-        isFormComplete,
-        isCertified,
-        requiresAction,
-        today,
-        events,
-        driverName,
-        vehicleName,
-        vin,
-        licensePlate,
-        carrierName,
-        usdotNumber,
-        mainOfficeAddress,
-        homeTerminalAddress,
-        trailers,
-        shippingDocuments,
-      ];
+    id,
+    uniqueId,
+    date,
+    formattedTotalWorkTime,
+    totalDrivingHours,
+    formStatus,
+    certificationStatus,
+    isFormComplete,
+    isCertified,
+    requiresAction,
+    today,
+    events,
+    driverName,
+    vehicleName,
+    vin,
+    licensePlate,
+    carrierName,
+    usdotNumber,
+    mainOfficeAddress,
+    homeTerminalAddress,
+    trailers,
+    shippingDocuments,
+  ];
 }
 
 /// كيان حدث في السجل
@@ -242,16 +237,16 @@ class LogEvent extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        status,
-        startTime,
-        duration,
-        location,
-        odometer,
-        engineHours,
-        isExpanded,
-        automatedDriving,
-        editable,
-        startedOnPreviousDay,
-      ];
+    id,
+    status,
+    startTime,
+    duration,
+    location,
+    odometer,
+    engineHours,
+    isExpanded,
+    automatedDriving,
+    editable,
+    startedOnPreviousDay,
+  ];
 }

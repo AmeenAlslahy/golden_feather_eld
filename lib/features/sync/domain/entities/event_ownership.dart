@@ -29,16 +29,17 @@ class EventOwnership {
   const EventOwnership._(this.evidence, this.driverId);
 
   const EventOwnership.proven(int driverId)
-      : this._(OwnerEvidence.proven, driverId);
+    : this._(OwnerEvidence.proven, driverId);
 
   const EventOwnership.recoverable(int driverId)
-      : this._(OwnerEvidence.recoverable, driverId);
+    : this._(OwnerEvidence.recoverable, driverId);
 
-  static const unknown =
-      EventOwnership._(OwnerEvidence.unknown, null);
+  static const unknown = EventOwnership._(OwnerEvidence.unknown, null);
 
-  static const unidentified =
-      EventOwnership._(OwnerEvidence.unidentifiedByDesign, null);
+  static const unidentified = EventOwnership._(
+    OwnerEvidence.unidentifiedByDesign,
+    null,
+  );
 
   bool get isProven => evidence == OwnerEvidence.proven;
 }
@@ -101,8 +102,8 @@ abstract final class EventOwnershipResolver {
     final value = raw is int
         ? raw
         : raw is num
-            ? raw.toInt()
-            : int.tryParse('${raw ?? ''}');
+        ? raw.toInt()
+        : int.tryParse('${raw ?? ''}');
     if (value == null || value <= 0) return null;
     return value;
   }

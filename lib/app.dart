@@ -63,7 +63,7 @@ class GoldenFeatherApp extends ConsumerWidget {
     // P0 leak fix: تحديث مزودات HOS الخاصة بالسائق عند تأسيس هوية فقط —
     // لا أثناء الانتقال (وإلا أُعيد الإنشاء وأُطلقت قراءات محكومة بالفشل
     // أثناء logout). يشمل إعادة login نفس السائق (epoch مختلف).
-ref.listen<AuthState>(authStateProvider, (previous, next) {
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
       if (shouldRefreshSessionProviders(previous, next)) {
         ref.invalidate(statusDashboardProvider);
         ref.invalidate(recapProvider);
@@ -119,8 +119,9 @@ ref.listen<AuthState>(authStateProvider, (previous, next) {
     // Global listener for automatic tracking UI side-effects
     ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
       if (next is HosEngineReady) {
-        final prevStatus =
-            (previous is HosEngineReady) ? previous.update.currentStatus : null;
+        final prevStatus = (previous is HosEngineReady)
+            ? previous.update.currentStatus
+            : null;
         if (next.update.currentStatus == DutyStatus.driving &&
             prevStatus != DutyStatus.driving) {
           final feedbackContext = rootNavigatorKey.currentContext;
