@@ -235,14 +235,20 @@ Map<String, dynamic>? buildDvirCreateBody({
       ? status.trim()
       : requestedStatus.resolvedFor(hasDefects: defects.isNotEmpty).wire;
 
-  Map<String, dynamic>? locationMap;
-  if (location != null && location.isNotEmpty) {
-    final parts = location.split(',');
+  // الموقع نص كما كتبه السائق (عقد openapi: location string) — لا يُسقط
+  // أبدًا. الإحداثيات حقول عُليا منفصلة تُشتق فقط حين يُحلَّل النص كزوج
+  // "lat, lon" كامل؛ زوج ناقص يعني لا إحداثيات، ولا اختراع قيم.
+  final locationText = location?.trim() ?? '';
+  double? latitude;
+  double? longitude;
+  if (locationText.isNotEmpty) {
+    final parts = locationText.split(',');
     if (parts.length == 2) {
       final lat = double.tryParse(parts[0].trim());
       final lon = double.tryParse(parts[1].trim());
       if (lat != null && lon != null) {
-        locationMap = {'latitude': lat, 'longitude': lon};
+        latitude = lat;
+        longitude = lon;
       }
     }
   }
@@ -255,6 +261,7 @@ Map<String, dynamic>? buildDvirCreateBody({
         .where((d) => d['category'] == category)
         .map(
           (d) => {
+            if (d['itemCode'] != null) 'itemCode': d['itemCode'],
             'itemName': d['itemName'],
             if (d['severity'] != null) 'severity': d['severity'],
             if (d['stage'] != null) 'stage': d['stage'],
@@ -279,7 +286,11 @@ Map<String, dynamic>? buildDvirCreateBody({
     'vehicleName': vehicle,
     'inspectionType': inspectionType.toUpperCase().replaceAll('-', '_'),
     'inspectionTime': inspectionTime,
-    if (locationMap != null) 'location': locationMap,
+    if (locationText.isNotEmpty) 'location': locationText,
+    if (latitude != null && longitude != null) ...{
+      'latitude': latitude,
+      'longitude': longitude,
+    },
     'odometer': odometer,
     'trailerNumber': trailerNumber,
     'companyName': companyName,

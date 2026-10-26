@@ -8,11 +8,13 @@ import '../../../../l10n/app_localizations.dart';
 class TimePickerSheet extends StatefulWidget {
   final Function(String) onDone;
   final DateTime initialTime;
+  final String? dateLabel;
 
   const TimePickerSheet({
     super.key,
     required this.onDone,
     required this.initialTime,
+    this.dateLabel,
   });
 
   @override
@@ -28,6 +30,7 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
   late final FixedExtentScrollController _hourWheel;
   late final FixedExtentScrollController _minuteWheel;
   late final FixedExtentScrollController _secondWheel;
+  late final FixedExtentScrollController _periodWheel;
 
   @override
   void initState() {
@@ -42,6 +45,9 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
     _hourWheel = FixedExtentScrollController(initialItem: _selectedHour - 1);
     _minuteWheel = FixedExtentScrollController(initialItem: _selectedMinute);
     _secondWheel = FixedExtentScrollController(initialItem: _selectedSecond);
+    _periodWheel = FixedExtentScrollController(
+      initialItem: _selectedPeriod == 'AM' ? 0 : 1,
+    );
   }
 
   @override
@@ -49,14 +55,19 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
     _hourWheel.dispose();
     _minuteWheel.dispose();
     _secondWheel.dispose();
+    _periodWheel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final periodText = _selectedPeriod == 'AM' ? context.loc.am : context.loc.pm;
+    final timeDisplay =
+        '${_selectedHour.toString().padLeft(2, '0')}:${_selectedMinute.toString().padLeft(2, '0')}:${_selectedSecond.toString().padLeft(2, '0')} $periodText';
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
-      height: 300,
+      height: 330,
       child: Column(
         children: [
           Row(
@@ -68,6 +79,25 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
                   context.loc.cancelButton,
                   style: context.styles.error,
                 ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.dateLabel != null)
+                    Text(
+                      widget.dateLabel!,
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: AppTypography.captionSize,
+                      ),
+                    ),
+                  Text(
+                    timeDisplay,
+                    style: context.styles.gold.copyWith(
+                      fontWeight: AppTypography.bold,
+                      fontSize: AppTypography.subtitleSize,
+                    ),
+                  ),
+                ],
               ),
               TextButton(
                 onPressed: () {
@@ -81,6 +111,56 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
             ],
           ),
           const Divider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _capitalize(context.loc.hour),
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: AppTypography.captionSize,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _capitalize(context.loc.minute),
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: AppTypography.captionSize,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _capitalize(context.loc.second),
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: AppTypography.captionSize,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      _capitalize(context.loc.period),
+                      style: context.styles.subtitle.copyWith(
+                        fontSize: AppTypography.captionSize,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Row(
               children: [
@@ -152,6 +232,7 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
   Widget _buildPeriodWheel(AppLocalizations loc) {
     return Expanded(
       child: ListWheelScrollView.useDelegate(
+        controller: _periodWheel,
         itemExtent: 40,
         diameterRatio: 1.5,
         onSelectedItemChanged: (index) {
@@ -178,3 +259,6 @@ class _TimePickerSheetState extends State<TimePickerSheet> {
     );
   }
 }
+
+String _capitalize(String s) =>
+    s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';

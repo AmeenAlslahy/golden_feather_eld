@@ -1053,6 +1053,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minute => 'minute';
 
   @override
+  String get second => 'second';
+
+  @override
+  String get period => 'Period';
+
+  @override
   String get newInspectionReport => 'New Inspection Report';
 
   @override
@@ -1975,6 +1981,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get automaticDrivingTimeCannotBeShortened =>
       'Automatic driving time cannot be shortened or removed.';
+
+  @override
+  String get eventCannotBeInFuture =>
+      'Duty status event time cannot be in the future.';
 
   @override
   String get eventSavedSuccessfully => 'Event saved successfully';

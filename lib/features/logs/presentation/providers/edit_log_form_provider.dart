@@ -38,19 +38,102 @@ class EditLogFormState {
 }
 
 class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
-  EditLogFormNotifier(super.state);
+  final TimeAuthority? _timeAuthority;
+  final LogEvent? _editingEvent;
+  DailyLog? _selectedLog;
+
+  EditLogFormNotifier(
+    super.state, {
+    TimeAuthority? timeAuthority,
+    LogEvent? editingEvent,
+    DailyLog? selectedLog,
+  })  : _timeAuthority = timeAuthority,
+        _editingEvent = editingEvent,
+        _selectedLog = selectedLog;
 
   void setStatus(String status) =>
       state = state.copyWith(selectedStatus: status);
-  void setStartTime(String time) => state = state.copyWith(startTime: time);
+
+  void updateSelectedLog(DailyLog? log) {
+    _selectedLog = log;
+  }
+
+  void setStartTime(String time, [DailyLog? selectedLog]) {
+    final log = selectedLog ?? _selectedLog;
+    final computedDuration = _computeDuration(time, log);
+    state = state.copyWith(
+      startTime: time,
+      duration: computedDuration ?? state.duration,
+    );
+  }
+
   void setLocation(String location) =>
       state = state.copyWith(location: location);
+
   void setReason(String reason) => state = state.copyWith(reason: reason);
 
   /// حساب الوقت الابتدائي لاختيار الوقت استناداً إلى وقت السجل أو الوقت الحالي الموثوق
   DateTime getInitialTime(DateTime? logDate, TimeAuthority timeAuthority) {
     return parseEditFormTime(state.startTime, logDate) ??
         timeAuthority.nowUtc().toLocal();
+  }
+
+  String? _computeDuration(String timeStr, DailyLog? log) {
+    final now = _timeAuthority?.nowUtc().toLocal() ?? DateTime.now();
+    final baseDate = log?.date;
+    final parsedTime = parseEditFormTime(timeStr, baseDate, now);
+    if (parsedTime == null) return null;
+
+    final events = log?.events ?? [];
+    final otherEvents = _editingEvent == null
+        ? events
+        : events.where((e) => e.id != _editingEvent.id).toList();
+
+    // ابحث عن الحدث التالي زمنياً بعد وقت البدء
+    LogEvent? nextEvent;
+    for (final e in otherEvents) {
+      if (e.startTime.isAfter(parsedTime)) {
+        if (nextEvent == null || e.startTime.isBefore(nextEvent.startTime)) {
+          nextEvent = e;
+        }
+      }
+    }
+
+    Duration duration;
+    if (nextEvent != null) {
+      duration = nextEvent.startTime.difference(parsedTime);
+    } else {
+      final isToday = log?.today ??
+          (baseDate != null &&
+              baseDate.year == now.year &&
+              baseDate.month == now.month &&
+              baseDate.day == now.day);
+
+      if (isToday) {
+        if (now.isAfter(parsedTime)) {
+          duration = now.difference(parsedTime);
+        } else {
+          duration = Duration.zero;
+        }
+      } else {
+        // ليوم سابق ليس بعده أحداث، تمتد الحالة حتى نهاية اليوم
+        final day = baseDate ?? parsedTime;
+        final endOfDay = DateTime(day.year, day.month, day.day, 24, 0, 0);
+        if (endOfDay.isAfter(parsedTime)) {
+          duration = endOfDay.difference(parsedTime);
+        } else {
+          duration = Duration.zero;
+        }
+      }
+    }
+
+    if (duration.isNegative) {
+      duration = Duration.zero;
+    }
+
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
   }
 }
 
@@ -62,14 +145,16 @@ String _formatCurrentTime(TimeAuthority timeAuthority) {
 
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, LogEvent?>((ref, event) {
-      final timeAuthority = ref.watch(timeAuthorityProvider);
-      return EditLogFormNotifier(
-        EditLogFormState(
-          selectedStatus: event?.status ?? 'OFF',
-          startTime:
-              event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
-          duration: event?.formattedDuration ?? '00:00',
-          location: event?.location ?? '',
-        ),
-      );
-    });
+  final timeAuthority = ref.watch(timeAuthorityProvider);
+  return EditLogFormNotifier(
+    EditLogFormState(
+      selectedStatus: event?.status ?? 'OFF',
+      startTime:
+          event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
+      duration: event?.formattedDuration ?? '00:00',
+      location: event?.location ?? '',
+    ),
+    timeAuthority: timeAuthority,
+    editingEvent: event,
+  );
+});

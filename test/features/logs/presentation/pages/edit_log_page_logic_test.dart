@@ -226,5 +226,54 @@ void main() {
         await tester.pump(const Duration(seconds: 4));
       },
     );
+
+    testWidgets(
+      'Future time -> mutation is not called -> eventCannotBeInFuture error displayed',
+      (tester) async {
+        when(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => const Right(null));
+
+        await tester.pumpWidget(
+          createTestApp(EditLogPage(event: testEvent, isNewEvent: false)),
+        );
+        await tester.pumpAndSettle();
+
+        final BuildContext context = tester.element(find.byType(EditLogPage));
+        final container = ProviderScope.containerOf(context);
+
+        // mockTimeAuth.nowUtc().toLocal() is 13:00:00 (1:00 PM) on 2026-01-01
+        // Pick 03:00:00 PM (15:00:00, in the future)
+        container
+            .read(editLogFormProvider(testEvent).notifier)
+            .setStartTime('03:00:00 PM');
+
+        // Enter a valid reason
+        final reasonField = find.byType(TextField).last;
+        await tester.ensureVisible(reasonField);
+        await tester.enterText(reasonField, 'Future time test reason');
+        await tester.pump();
+
+        await tester.ensureVisible(find.byType(AppButton).first);
+        await tester.tap(find.byType(AppButton).first);
+        await tester.pump(const Duration(milliseconds: 100));
+
+        verifyNever(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        );
+        // AppFeedback shows localized future time error
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Text &&
+                (w.data?.toLowerCase().contains('future') ?? false),
+          ),
+          findsWidgets,
+        );
+
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }

@@ -15,6 +15,7 @@ import '../../data/providers/log_repository_providers.dart';
 
 enum EditLogErrorCode {
   invalidTime,
+  futureTime,
   autoDrivingRefused,
   saveFailed,
   auditFailed,
@@ -32,6 +33,8 @@ String editLogErrorUserMessage(Object? error, AppLocalizations loc) {
     switch (error.code) {
       case EditLogErrorCode.invalidTime:
         return loc.invalidValue;
+      case EditLogErrorCode.futureTime:
+        return loc.eventCannotBeInFuture;
       case EditLogErrorCode.autoDrivingRefused:
         return loc.automaticDrivingTimeCannotBeShortened;
       case EditLogErrorCode.saveFailed:
@@ -78,20 +81,24 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       final logsState = ref.read(logsProvider);
       final selectedLog = logsState.selectedLog;
       final status = selectedStatus;
-      final parsedTime = parseEditFormTime(startTimeStr, selectedLog?.date);
+      final timeAuthority = ref.read(timeAuthorityProvider);
+      final parsedTime = parseEditFormTime(
+        startTimeStr,
+        selectedLog?.date,
+        timeAuthority.nowUtc().toLocal(),
+      );
 
       if (parsedTime == null) {
         throw EditLogError(EditLogErrorCode.invalidTime);
       }
 
       final newStart = parsedTime;
-      final timeAuthority = ref.read(timeAuthorityProvider);
 
       // FMCSA § 395: Duty status events cannot be recorded in the future
       if (newStart.isAfter(
         timeAuthority.nowUtc().toLocal().add(const Duration(minutes: 1)),
       )) {
-        throw EditLogError(EditLogErrorCode.invalidTime);
+        throw EditLogError(EditLogErrorCode.futureTime);
       }
 
       if (existing != null) {

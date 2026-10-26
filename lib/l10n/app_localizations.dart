@@ -2170,6 +2170,18 @@ abstract class AppLocalizations {
   /// **'دقيقة'**
   String get minute;
 
+  /// No description provided for @second.
+  ///
+  /// In ar, this message translates to:
+  /// **'ثانية'**
+  String get second;
+
+  /// No description provided for @period.
+  ///
+  /// In ar, this message translates to:
+  /// **'الفترة'**
+  String get period;
+
   /// No description provided for @newInspectionReport.
   ///
   /// In ar, this message translates to:
@@ -3855,6 +3867,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'لا يمكن تقصير أو حذف وقت القيادة الآلي.'**
   String get automaticDrivingTimeCannotBeShortened;
+
+  /// No description provided for @eventCannotBeInFuture.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن تسجيل وقت حدث الحالة في المستقبل.'**
+  String get eventCannotBeInFuture;
 
   /// No description provided for @eventSavedSuccessfully.
   ///

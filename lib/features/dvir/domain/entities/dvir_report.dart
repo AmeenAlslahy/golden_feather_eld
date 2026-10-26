@@ -22,12 +22,22 @@ enum DvirConditionStatus {
   final String wire;
 
   /// حالة غير معروفة → unknown (تحفظ الأمان، لا تتحول بصمت إلى satisfactory).
+  ///
+  /// يُقبل شكلا السلك: النصي (`Has Defects`) والتعدادي (`HAS_DEFECTS`) —
+  /// التمريرة الثانية تطبّع الشرطات السفلية إلى مسافات قبل المقارنة؛
+  /// وما لا يطابق أياً منهما يبقى unknown.
   static DvirConditionStatus fromWire(String? value) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return DvirConditionStatus.unknown;
+    final text = v.toLowerCase();
     for (final status in DvirConditionStatus.values) {
       if (status == DvirConditionStatus.unknown) continue;
-      if (status.wire.toLowerCase() == v.toLowerCase()) return status;
+      if (status.wire.toLowerCase() == text) return status;
+    }
+    final enumForm = text.replaceAll('_', ' ');
+    for (final status in DvirConditionStatus.values) {
+      if (status == DvirConditionStatus.unknown) continue;
+      if (status.wire.toLowerCase() == enumForm) return status;
     }
     return DvirConditionStatus.unknown;
   }

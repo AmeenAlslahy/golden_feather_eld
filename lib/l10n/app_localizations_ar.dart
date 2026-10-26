@@ -1054,6 +1054,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get minute => 'دقيقة';
 
   @override
+  String get second => 'ثانية';
+
+  @override
+  String get period => 'الفترة';
+
+  @override
   String get newInspectionReport => 'تقرير فحص جديد';
 
   @override
@@ -1975,6 +1981,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get automaticDrivingTimeCannotBeShortened =>
       'لا يمكن تقصير أو حذف وقت القيادة الآلي.';
+
+  @override
+  String get eventCannotBeInFuture =>
+      'لا يمكن تسجيل وقت حدث الحالة في المستقبل.';
 
   @override
   String get eventSavedSuccessfully => 'تم حفظ الحدث بنجاح';

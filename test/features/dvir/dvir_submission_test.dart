@@ -92,4 +92,94 @@ void main() {
       isNull,
     );
   });
+
+  group('create body keeps the driver-typed location (openapi: string)', () {
+    test('free text is sent verbatim and invents no coordinates', () {
+      final body = buildDvirCreateBody(
+        driverId: 106,
+        deviceId: 7,
+        uniqueId: 'TRUCK-1',
+        status: 'Has Defects',
+        signatureData: 'AQID',
+        inspectionTime: '2026-09-23T00:00:00.000Z',
+        location: 'Riyadh, Exit 5 North',
+      );
+      expect(body?['location'], 'Riyadh, Exit 5 North');
+      expect(body?.containsKey('latitude'), isFalse);
+      expect(body?.containsKey('longitude'), isFalse);
+    });
+
+    test('a full coordinate pair adds latitude/longitude without losing text', () {
+      final body = buildDvirCreateBody(
+        driverId: 106,
+        deviceId: 7,
+        uniqueId: 'TRUCK-1',
+        status: 'Has Defects',
+        signatureData: 'AQID',
+        inspectionTime: '2026-09-23T00:00:00.000Z',
+        location: '24.7136, 46.6753',
+      );
+      expect(body?['location'], '24.7136, 46.6753');
+      expect(body?['latitude'], 24.7136);
+      expect(body?['longitude'], 46.6753);
+    });
+
+    test('a half-parsed pair keeps the text and sends no coordinates', () {
+      final body = buildDvirCreateBody(
+        driverId: 106,
+        deviceId: 7,
+        uniqueId: 'TRUCK-1',
+        status: 'Has Defects',
+        signatureData: 'AQID',
+        inspectionTime: '2026-09-23T00:00:00.000Z',
+        location: '24.7136, unknown',
+      );
+      expect(body?['location'], '24.7136, unknown');
+      expect(body?.containsKey('latitude'), isFalse);
+      expect(body?.containsKey('longitude'), isFalse);
+    });
+
+    test('blank location sends no location field at all', () {
+      final body = buildDvirCreateBody(
+        driverId: 106,
+        deviceId: 7,
+        uniqueId: 'TRUCK-1',
+        status: 'Has Defects',
+        signatureData: 'AQID',
+        inspectionTime: '2026-09-23T00:00:00.000Z',
+        location: '   ',
+      );
+      expect(body?.containsKey('location'), isFalse);
+      expect(body?.containsKey('latitude'), isFalse);
+      expect(body?.containsKey('longitude'), isFalse);
+    });
+  });
+
+  test('nested detects keep the catalog itemCode', () {
+    final body = buildDvirCreateBody(
+      driverId: 106,
+      deviceId: 7,
+      uniqueId: 'TRUCK-1',
+      status: 'Has Defects',
+      signatureData: 'AQID',
+      inspectionTime: '2026-09-23T00:00:00.000Z',
+      catalogDefects: [
+        {
+          'itemCode': 'BRAKES_SERVICE',
+          'itemName': 'Service brakes',
+          'category': 'VEHICLE',
+          'severity': 'HIGH',
+          'stage': 'OPEN',
+        },
+      ],
+    );
+    expect(body?['vehicle']['detects'], [
+      {
+        'itemCode': 'BRAKES_SERVICE',
+        'itemName': 'Service brakes',
+        'severity': 'HIGH',
+        'stage': 'OPEN',
+      },
+    ]);
+  });
 }

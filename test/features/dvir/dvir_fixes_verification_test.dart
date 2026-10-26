@@ -73,6 +73,40 @@ void main() {
         DvirConditionStatus.defectsNotCorrected,
       );
     });
+
+    test('enum-form wire values (SCREAMING_SNAKE) map to the same enum', () {
+      expect(
+        DvirConditionStatus.fromWire('HAS_DEFECTS'),
+        DvirConditionStatus.hasDefects,
+      );
+      expect(
+        DvirConditionStatus.fromWire('VEHICLE_CONDITION_SATISFACTORY'),
+        DvirConditionStatus.satisfactory,
+      );
+      expect(
+        DvirConditionStatus.fromWire('DEFECTS_CORRECTED'),
+        DvirConditionStatus.defectsCorrected,
+      );
+      expect(
+        DvirConditionStatus.fromWire('DEFECTS_NEED_NOT_BE_CORRECTED'),
+        DvirConditionStatus.defectsNotCorrected,
+      );
+    });
+
+    test('unknown enum-form values stay unknown (never satisfactory)', () {
+      expect(
+        DvirConditionStatus.fromWire('OUT_OF_SERVICE'),
+        DvirConditionStatus.unknown,
+      );
+      expect(
+        DvirConditionStatus.fromWire('IN_REPAIR'),
+        DvirConditionStatus.unknown,
+      );
+      expect(
+        DvirConditionStatus.fromWire('RANDOM_UNKNOWN_VALUE'),
+        DvirConditionStatus.unknown,
+      );
+    });
   });
 
   group('DvirConditionStatus.resolvedFor', () {

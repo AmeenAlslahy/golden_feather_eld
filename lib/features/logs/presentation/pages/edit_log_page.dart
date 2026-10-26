@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -33,9 +32,24 @@ class EditLogPage extends ConsumerStatefulWidget {
 class _EditLogPageState extends ConsumerState<EditLogPage> {
   final _formKey = GlobalKey<FormState>();
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final selectedLog = ref.read(logsProvider).selectedLog;
+      if (selectedLog != null) {
+        ref
+            .read(editLogFormProvider(widget.event).notifier)
+            .updateSelectedLog(selectedLog);
+      }
+    });
+  }
+
   void _showTimePicker(BuildContext context) {
     final formNotifier = ref.read(editLogFormProvider(widget.event).notifier);
-    final logDate = ref.read(logsProvider).selectedLog?.date;
+    final selectedLog = ref.read(logsProvider).selectedLog;
+    final logDate = selectedLog?.date;
     final initial = formNotifier.getInitialTime(
       logDate,
       ref.read(timeAuthorityProvider),
@@ -51,8 +65,9 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       ),
       builder: (context) => TimePickerSheet(
         initialTime: initial,
+        dateLabel: selectedLog?.formattedDate,
         onDone: (time) {
-          formNotifier.setStartTime(time);
+          formNotifier.setStartTime(time, selectedLog);
           Navigator.pop(context);
         },
       ),
@@ -75,7 +90,6 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       }
     });
 
-    final dashboard = ref.watch(dashboardDataProvider);
     final formState = ref.watch(editLogFormProvider(widget.event));
     final selectedLog = ref
         .watch(logsProvider)

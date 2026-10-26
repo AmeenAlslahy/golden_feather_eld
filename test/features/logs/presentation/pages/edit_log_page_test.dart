@@ -12,6 +12,8 @@ import 'package:golden_feather_eld/core/time/time_authority_provider.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/logs/presentation/widgets/time_picker_sheet.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
@@ -161,6 +163,92 @@ void main() {
 
       expect(state.selectedStatus, 'ON');
       expect(state.location, 'Dallas, TX');
+    });
+
+    test('editLogFormProvider recalculates duration based on next event and now', () {
+      final fakeTime = DateTime(2026, 1, 1, 14, 0, 0).toUtc();
+      final container = ProviderContainer(
+        overrides: [
+          timeAuthorityProvider.overrideWithValue(FakeTimeAuthority(initialTime: fakeTime)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(editLogFormProvider(null).notifier);
+
+      final dailyLog = DailyLog(
+        id: const DailyLogId(1),
+        uniqueId: 'L1',
+        date: DateTime(2026, 1, 1),
+        formattedTotalWorkTime: '8h',
+        totalDrivingHours: 4.0,
+        today: true,
+        isFormComplete: true,
+        isCertified: false,
+        events: [
+          LogEvent(
+            id: 'e1',
+            status: 'OFF',
+            startTime: DateTime(2026, 1, 1, 6, 0),
+            duration: const Duration(hours: 2),
+            location: 'Station A',
+          ),
+          LogEvent(
+            id: 'e2',
+            status: 'D',
+            startTime: DateTime(2026, 1, 1, 10, 0),
+            duration: const Duration(hours: 3),
+            location: 'Station B',
+          ),
+        ],
+      );
+
+      // Start time at 07:00 AM - next event is e2 at 10:00 AM -> difference is 3 hours
+      notifier.setStartTime('07:00:00 AM', dailyLog);
+      expect(container.read(editLogFormProvider(null)).duration, '03:00');
+
+      // Start time at 08:30 AM - next event is e2 at 10:00 AM -> difference is 1 hour 30 min
+      notifier.setStartTime('08:30:00 AM', dailyLog);
+      expect(container.read(editLogFormProvider(null)).duration, '01:30');
+
+      // Start time at 11:00 AM - no next event, today log, now is 14:00 (2:00 PM) -> difference is 3 hours
+      notifier.setStartTime('11:00:00 AM', dailyLog);
+      expect(container.read(editLogFormProvider(null)).duration, '03:00');
+    });
+
+    testWidgets('TimePickerSheet renders PM correctly and includes column headers', (tester) async {
+      final initialPmTime = DateTime(2026, 1, 1, 20, 15, 30); // 08:15:30 PM
+      String? pickedTime;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: TimePickerSheet(
+              initialTime: initialPmTime,
+              dateLabel: 'Today - Jan 1st',
+              onDone: (time) => pickedTime = time,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TimePickerSheet), findsOneWidget);
+      expect(find.text('Today - Jan 1st'), findsOneWidget);
+      expect(find.text('Hour'), findsOneWidget);
+      expect(find.text('Minute'), findsOneWidget);
+      expect(find.text('Second'), findsOneWidget);
+      expect(find.text('Period'), findsOneWidget);
+
+      // Tap Save button without scrolling: should preserve PM and initial time
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(pickedTime, '08:15:30 PM');
     });
   });
 }

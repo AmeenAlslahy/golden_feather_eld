@@ -126,11 +126,7 @@ class DvirDto {
       inspectionType: json['inspectionType']?.toString(),
       inspectionTime: json['inspectionTime']?.toString(),
       formattedTime: json['formattedTime']?.toString(),
-      location:
-          json['location']?.toString() ??
-          (json['location'] is Map
-              ? "${json['location']['latitude']}, ${json['location']['longitude']}"
-              : null),
+      location: _locationText(json['location']),
       odometer:
           (json['odometer'] as num?)?.toDouble() ??
           (vehicleObj?['odometer'] as num?)?.toDouble(),
@@ -206,6 +202,20 @@ List<DvirDefectDto> _defectsFrom(Object? raw) {
   ];
 }
 
+/// نص الموقع كما يعود من الخادم: نص مباشر، أو خريطة إحداثيات (شكل قديم
+/// محتمل) تُقلَّب إلى "lat, lon" — لا اختراع قيم لحقول غائبة.
+String? _locationText(Object? raw) {
+  if (raw == null) return null;
+  if (raw is Map) {
+    final lat = raw['latitude'];
+    final lon = raw['longitude'];
+    if (lat == null || lon == null) return null;
+    return '$lat, $lon';
+  }
+  final text = raw.toString().trim();
+  return text.isEmpty ? null : text;
+}
+
 String _defectIdentity(DvirDefectDto defect) {
   final code = defect.itemCode?.trim().toLowerCase() ?? '';
   if (code.isNotEmpty) return 'code:$code';
@@ -269,6 +279,9 @@ class DvirDriverDto {
 }
 
 class DvirDefectDto {
+  /// معرف صف العيب لدى الخادم — يُحفظ عندما يوفره الخادم (صفوف
+  /// defects/detects في القوائم والتفاصيل) ولا يُختبرع عند غيابه.
+  final int? id;
   final String? itemCode;
   final String? itemName;
   final String? category;
@@ -283,6 +296,7 @@ class DvirDefectDto {
   final String? stage;
 
   const DvirDefectDto({
+    this.id,
     this.itemCode,
     this.itemName,
     this.category,
@@ -299,6 +313,7 @@ class DvirDefectDto {
 
   factory DvirDefectDto.fromJson(Map<String, dynamic> json) {
     return DvirDefectDto(
+      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}'),
       itemCode: json['itemCode']?.toString(),
       itemName: json['itemName']?.toString(),
       category: json['category']?.toString(),
@@ -316,6 +331,7 @@ class DvirDefectDto {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'itemCode': itemCode,
       'itemName': itemName,
       'category': category,
