@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/entities/daily_log.dart';
@@ -125,7 +127,10 @@ class _StatusTotalsRow extends StatelessWidget {
     return Container(
       key: const Key('events_status_totals'),
       color: Theme.of(context).colorScheme.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.compact,
+        vertical: 6,
+      ),
       child: Row(
         children: [
           for (final s in _order)

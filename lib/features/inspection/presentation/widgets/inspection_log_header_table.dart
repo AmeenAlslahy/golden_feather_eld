@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 
 /// Dense striped header matching the Inspection Logs screenshot.
@@ -72,34 +73,57 @@ class InspectionLogHeaderTable extends StatelessWidget {
       _pick(log?.eldIdentifier, day?.eldIdentifier, screen?.eldIdentifier);
   String get _provider => _pick(log?.eldProvider, day?.eldProvider);
   String get _location => _pick(log?.displayLocation, day?.displayLocation);
+  static String _formatHeaderDate(DateTime? dt) {
+    if (dt == null) return '';
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+
+  static String _formatDisplayDate(String? direct, DateTime? fallbackDt) {
+    if (direct != null && direct.trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(direct.trim());
+      if (parsed != null) {
+        return _formatHeaderDate(parsed);
+      }
+      return direct.trim();
+    }
+    return _formatHeaderDate(fallbackDt);
+  }
+
   String get _logDate {
     final dt = log?.logDate ?? day?.logDate;
-    if (dt != null) {
-      final m = dt.month.toString().padLeft(2, '0');
-      final d = dt.day.toString().padLeft(2, '0');
-      return '${dt.year}-$m-$d';
-    }
-    return '';
+    return _formatHeaderDate(dt);
   }
 
   String get _displayDate {
     final direct = _pick(log?.displayDate, day?.displayDate);
-    if (direct.isNotEmpty) return direct;
-    final dt = log?.logDate ?? day?.logDate ?? screen?.inspectionDate;
-    if (dt != null) {
-      final m = dt.month.toString().padLeft(2, '0');
-      final d = dt.day.toString().padLeft(2, '0');
-      return '${dt.year}-$m-$d';
-    }
-    return '';
+    final fallbackDt = log?.logDate ?? day?.logDate ?? screen?.inspectionDate;
+    return _formatDisplayDate(direct, fallbackDt);
   }
 
   String get _periodStartTime {
     final raw = log?.period24HourStartTime;
     if (raw != null && raw.trim().isNotEmpty && raw != '—') {
-      return raw.trim();
+      final trimmed = raw.trim();
+      if (trimmed.length == 8 && trimmed.endsWith(':00')) {
+        return trimmed.substring(0, 5);
+      }
+      return trimmed;
     }
-    return '00:00:00';
+    return '00:00';
   }
 
   bool get _certified => log?.certified ?? day?.certified ?? false;
@@ -138,15 +162,15 @@ class InspectionLogHeaderTable extends StatelessWidget {
     final end = _num(log?.endOdometerKm, day?.endOdometerKm);
     if (start == 0 && end == 0) return '';
     if (start != end) {
-      return '${_mi(start)} - ${_mi(end)} mi';
+      return '${_mi(start)} - ${_mi(end)}';
     }
-    return '${_mi(end)} mi';
+    return _mi(end);
   }
 
   String get _distance {
     final d = _num(log?.totalDistanceKm, day?.totalDistanceKm);
     if (d == 0) return '';
-    return '${_mi(d)} mi';
+    return _mi(d);
   }
 
   String get _engine {
@@ -157,105 +181,145 @@ class InspectionLogHeaderTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const fourColFlex = [26, 24, 28, 22];
+    const threeColFlex = [1, 1, 1];
+    const vehicleColFlex = [14, 32, 24, 14, 16];
+    const carrierColFlex = [12, 18, 26, 22, 22];
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _headerRow(context, const [
           'Driver Name',
           'Driver ID',
           'Driver License',
           'Driver License State',
-        ]),
-        _valueRow(context, [
-          _driverName,
-          _driverId,
-          log?.driverLicenseNumber ?? driverLicense,
-          log?.driverLicenseState ?? driverLicenseState,
-        ]),
+        ], fourColFlex),
+        _valueRow(
+          context,
+          [
+            _driverName,
+            _driverId,
+            log?.driverLicenseNumber ?? driverLicense,
+            log?.driverLicenseState ?? driverLicenseState,
+          ],
+          fourColFlex,
+          fitScale: const [false, true, true, true],
+        ),
         _headerRow(context, const [
           'Exempt Driver Status',
           'Unidentified Driving Records',
           'Co-driver',
           'Co-driver ID',
-        ]),
-        _valueRow(context, [
-          _exempt ? 'Yes' : 'No',
-          _unidentified ? 'Yes' : 'No',
-          log?.coDriverName ?? coDriver,
-          log?.coDriverId?.toString() ?? coDriverId,
-        ]),
+        ], fourColFlex),
+        _valueRow(
+          context,
+          [
+            _exempt ? 'Yes' : 'No',
+            _unidentified ? 'Yes' : 'No',
+            log?.coDriverName ?? coDriver,
+            log?.coDriverId?.toString() ?? coDriverId,
+          ],
+          fourColFlex,
+          fitScale: const [true, true, false, true],
+        ),
         _headerRow(context, const [
           'Log Date',
           'Display Date',
           'Display Location',
           'Driver Certified',
-        ]),
-        _valueRow(context, [
-          _logDate,
-          _displayDate,
-          _location,
-          _certified ? 'Yes' : 'No',
-        ]),
+        ], fourColFlex),
+        _valueRow(
+          context,
+          [_logDate, _displayDate, _location, _certified ? 'Yes' : 'No'],
+          fourColFlex,
+          fitScale: const [true, true, false, true],
+        ),
         _headerRow(context, const [
           'ELD Registration ID',
           'ELD Identifier',
           'Provider',
-        ]),
-        _valueRow(context, [_reg, _eldId, _provider]),
+        ], threeColFlex),
+        _valueRow(
+          context,
+          [_reg, _eldId, _provider],
+          threeColFlex,
+          fitScale: const [true, true, false],
+        ),
         _headerRow(context, const [
           '24 Period Starting Time',
           'Data Diag. Indicators',
           'Device Malfn. Indicators',
-        ]),
-        _valueRow(context, [
-          _periodStartTime,
-          _diag ? _diagCodes : 'No',
-          _malf ? _malfCodes : 'No',
-        ]),
+        ], threeColFlex),
+        _valueRow(
+          context,
+          [
+            _periodStartTime,
+            _diag ? _diagCodes : 'No',
+            _malf ? _malfCodes : 'No',
+          ],
+          threeColFlex,
+          fitScale: const [true, false, false],
+        ),
         _headerRow(context, const [
           'Vehicle',
           'VIN',
           'Odometer',
           'Distance',
           'Engine Hours',
-        ]),
-        _valueRow(context, [_vehicle, _vin, _odometer, _distance, _engine]),
+        ], vehicleColFlex),
+        _valueRow(
+          context,
+          [_vehicle, _vin, _odometer, _distance, _engine],
+          vehicleColFlex,
+          fitScale: const [true, true, true, true, true],
+        ),
         _headerRow(context, const [
           'Trailers',
           'Shipping Docs',
           'Carrier',
           'Main Office',
           'Home Terminal',
-        ]),
-        _valueRow(context, [
-          _trailers,
-          _shipping,
-          _carrier,
-          _office,
-          _terminal,
-        ]),
+        ], carrierColFlex),
+        _valueRow(
+          context,
+          [_trailers, _shipping, _carrier, _office, _terminal],
+          carrierColFlex,
+          fitScale: const [true, true, false, false, false],
+        ),
       ],
     );
   }
 
-  Widget _headerRow(BuildContext context, List<String> labels) {
+  Widget _headerRow(
+    BuildContext context,
+    List<String> labels,
+    List<int> flexes,
+  ) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? cs.surfaceContainerHighest : context.rodsHeaderBg;
+    final headerTextColor = isDark ? cs.onSurface : context.rodsHeaderText;
+
+    final headerStyle = context.styles.caption.copyWith(
+      fontSize: AppTypography.smallSize,
+      fontWeight: AppTypography.bold,
+      color: headerTextColor,
+      height: 1.2,
+    );
+
     return Container(
-      color: cs.surfaceContainerHighest,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      color: headerBg,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final label in labels)
+          for (var i = 0; i < labels.length; i++)
             Expanded(
+              flex: flexes[i],
               child: Padding(
-                padding: const EdgeInsetsDirectional.only(end: 6),
-                child: Text(
-                  label,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: Text(labels[i], style: headerStyle),
               ),
             ),
         ],
@@ -263,22 +327,48 @@ class InspectionLogHeaderTable extends StatelessWidget {
     );
   }
 
-  Widget _valueRow(BuildContext context, List<String> values) {
+  Widget _valueRow(
+    BuildContext context,
+    List<String> values,
+    List<int> flexes, {
+    List<bool>? fitScale,
+  }) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final valueBg = cs.surface;
+    final valueTextColor = isDark ? cs.onSurface : context.textPrimary;
+
+    final valueStyle = context.styles.caption.copyWith(
+      fontSize: AppTypography.smallSize,
+      fontWeight: AppTypography.regular,
+      color: valueTextColor,
+      height: 1.25,
+    );
+
     return Container(
-      color: cs.surface,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+      color: valueBg,
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final value in values)
+          for (var i = 0; i < values.length; i++)
             Expanded(
+              flex: flexes[i],
               child: Padding(
-                padding: const EdgeInsetsDirectional.only(end: 6),
-                child: Text(
-                  value,
-                  style: context.styles.body.copyWith(color: cs.onSurface),
-                ),
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: (fitScale != null && i < fitScale.length && fitScale[i])
+                    ? FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          values[i].isEmpty ? ' ' : values[i],
+                          style: valueStyle,
+                        ),
+                      )
+                    : Text(
+                        values[i].isEmpty ? ' ' : values[i],
+                        style: valueStyle,
+                      ),
               ),
             ),
         ],

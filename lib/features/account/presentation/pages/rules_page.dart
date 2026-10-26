@@ -8,12 +8,12 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/eld_footer_notice.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/rules_form_provider.dart';
 import '../providers/rules_screen_provider.dart';
-import '../widgets/rules/rules_notice_banner.dart';
 import '../widgets/rules/rules_settings_section.dart';
 
 class RulesPage extends ConsumerWidget {
@@ -46,6 +46,7 @@ class RulesPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(loc.rules, style: context.styles.appBarTitle),
+        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -67,49 +68,34 @@ class RulesPage extends ConsumerWidget {
           },
         ),
         data: (model) {
+          final noticeText = model.notice.trim().isNotEmpty
+              ? model.notice
+              : loc.contactFleetManager;
+
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenPadding,
-              vertical: AppSpacing.sm,
-            ),
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (model.notice.trim().isNotEmpty) ...[
-                  RulesNoticeBanner(notice: model.notice),
-                  const SizedBox(height: AppSpacing.cardGap),
-                ],
-                RulesSettingsSection(model: model),
-                const SizedBox(height: AppSpacing.xl),
-                AppButton(
-                  label: loc.saveButton,
-                  type: EldButtonType.primary,
-                  isLoading: form.isSaving,
-                  onPressed: form.canSave
-                      ? () => ref.read(rulesFormProvider.notifier).saveRules()
-                      : null,
+                RulesSettingsSection(model: model, dense: true),
+                const SizedBox(height: AppSpacing.md),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenPadding,
+                  ),
+                  child: AppButton(
+                    label: loc.saveButton,
+                    type: EldButtonType.primary,
+                    isLoading: form.isSaving,
+                    onPressed: form.canSave
+                        ? () => ref.read(rulesFormProvider.notifier).saveRules()
+                        : null,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.info,
-                      color: context.textSecondary,
-                      size: AppSpacing.iconSmall,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Flexible(
-                      child: Text(
-                        loc.contactFleetManager,
-                        textAlign: TextAlign.center,
-                        style: context.styles.caption.copyWith(
-                          color: context.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: AppSpacing.compact),
+                EldFooterNotice(message: noticeText),
+                const SizedBox(height: AppSpacing.sm),
               ],
             ),
           );

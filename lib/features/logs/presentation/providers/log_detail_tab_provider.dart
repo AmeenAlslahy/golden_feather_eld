@@ -1,5 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Provider to manage the selected tab index in LogDetailPage
+/// Tabs for LogDetailPage:
 /// 0 = Events, 1 = Form, 2 = Certify
-final logDetailTabProvider = StateProvider<int>((ref) => 0);
+enum LogDetailTab { events, form, certify }
+
+/// Provider to manage the selected tab index in LogDetailPage
+final logDetailTabProvider = StateProvider<int>(
+  (ref) => LogDetailTab.events.index,
+);

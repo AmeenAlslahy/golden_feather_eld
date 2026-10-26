@@ -72,7 +72,8 @@ class AppStatusBadge extends StatelessWidget {
         spacing: 4,
         runSpacing: 2,
         children: [
-          if (icon != null) Icon(icon, size: 14, color: textColor),
+          if (icon != null)
+            Icon(icon, size: AppSpacing.iconSmallBadge, color: textColor),
           Text(
             label,
             style: context.styles.caption.copyWith(

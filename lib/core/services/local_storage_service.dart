@@ -45,48 +45,12 @@ class LocalStorageService implements ServerConfigProvider {
               backend: SharedPreferencesAndroidBackendLibrary.SharedPreferences,
             )
           : const SharedPreferencesOptions(),
-      cacheOptions: const SharedPreferencesWithCacheOptions(
-        allowList: {
-          'id',
-          'url',
-          'accuracy',
-          'distance',
-          'interval',
-          'angle',
-          'heartbeat',
-          'buffer',
-          'wakelock',
-          'stop_detection',
-          'prefer_platform_providers',
-          'language',
-          'theme',
-          'selected_vehicle',
-          'current_duty_status',
-          'stationary_since',
-          'backend_type',
-          'hos_configuration',
-          'onboarding_seen',
-          'trusted_time_anchor',
-
-          // ── كاش العمل أوفلاين ──────────────────────────────────
-          // لولا هذه المدخلات لـPreferencesFilter لكان SharedPreferences
-          // يرفض المفاتيح الجديدة بـArgumentError، فيت���ل الكاش بصمت
-          // وتعمل الشاشة بأوفلاين على قيم فارغة/مُختلَقة.
-          'hos_dashboard_snapshot', // آخر لوحة ناجحة (StatusDashboardRepository)
-          'hos_recap_snapshot', // آخر ملخص أسبوعي ناجح
-          'vehicle_list_cache', // آخر قائمة مركبات ناجحة
-          'vehicle_my_list_cache', // مركبات السائق
-          'vehicle_company_list_cache', // قائمة أسطول الشركة منفصلة
-          'codriver_list_cache', // قائمة السائقين المساعدين (CoDriverRepository)
-          'codriver_current_cache', // السائق المساعد الحالي
-          'inspection_screen_cache', // شاشة التفتيش (InspectionRepository)
-          'inspection_cycle_cache', // دورة التفتيش
-          'inspection_logs_cache', // سجلات التفتيش
-          'inspection_packet_cache', // حزمة معلومات التفتيش
-          'inspection_transfers_cache', // سجل نقل البيانات للمفتش
-          'rules_screen_cache', // شاشة القواعد HOS (RulesScreenProvider)
-        },
-      ),
+      // NET-001: عدم تقييد المفاتيح بـ allowList للسماح بتخزين واسترجاع
+      // المفاتيح الديناميكية المعزولة لكل سائق (مثل driver_account_cache_
+      // و rules_screen_cache_) دون رفض بـ ArgumentError.
+      // عند ترك allowList فارغاً (null)، يتم الاحتفاظ بكافة المفاتيح في الذاكرة
+      // المتزامنة مع الحفاظ على عزل البيانات بين السائقين.
+      cacheOptions: const SharedPreferencesWithCacheOptions(),
     );
 
     // إصلاح Android

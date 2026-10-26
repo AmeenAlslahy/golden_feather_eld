@@ -62,7 +62,7 @@ class PreviousDvirReviewModal extends StatelessWidget {
           onPressed: () => Navigator.pop(context, false),
           child: Text(loc.cancelAction),
         ),
-        FilledButton(
+        TextButton(
           onPressed: () => Navigator.pop(context, true),
           child: Text(loc.dvirReviewed),
         ),

@@ -1,24 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../domain/shared/value_objects.dart';
-import '../../../../core/theme/app_spacing.dart';
+
 import '../../../../core/error/user_facing_message.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../domain/entities/daily_log.dart';
-import '../providers/logs_provider.dart';
-import '../widgets/log_graph.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
-import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
-import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_date_paginator.dart';
 import '../../../../core/widgets/eld_events_table.dart';
+import '../../../../domain/inspection/dot_inspection.dart';
+import '../../../../domain/shared/value_objects.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../inspection/presentation/providers/dot_inspection_providers.dart';
+import '../../../codriver/presentation/providers/codriver_provider.dart';
+import '../../../account/presentation/providers/account_provider.dart';
+import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
+import '../../domain/entities/daily_log.dart';
+import '../mappers/inspection_preview_event_mapper.dart';
 import '../providers/log_detail_tab_provider.dart';
+import '../providers/logs_provider.dart';
 import '../widgets/inspection_audit_trail_section.dart';
 import '../widgets/inspection_filter_dialog.dart';
+import '../widgets/log_graph.dart';
 
-/// صفحة معاينة التفتيش الكاملة
+/// صفحة معاينة التفتيش الكاملة (Roadside DOT Inspection Preview).
+///
+/// تعرض كافة بيانات التفتيش المطلوبة نظاماً في مكان واحد:
+/// 1. شريط التنقل بين الأيام (EldDatePaginator).
+/// 2. جدول بيانات الهيدر والناقل والمركبة (InspectionLogHeaderTable).
+/// 3. الرسم البياني للحالات اليومية (LogGraph).
+/// 4. جدول أحداث اليوم الرسمي (EldEventsTable).
+/// 5. سجل التدقيق الميداني (InspectionAuditTrailSection).
 class InspectionPreviewPage extends ConsumerStatefulWidget {
   const InspectionPreviewPage({super.key});
 
@@ -99,9 +111,9 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
         logsState.selectedLog ??
         (logsState.logs.isNotEmpty ? logsState.logs.first : null);
     return DotInspectionScreen(
-      screenTitle: 'DOT Inspection Mode',
-      guidanceText: 'Present this screen to the safety official upon request.',
-      handOverDeviceNotice: 'Hand over device to safety official',
+      screenTitle: loc.inspectionMode,
+      guidanceText: loc.inspectionFallbackGuidance,
+      handOverDeviceNotice: loc.inspectionHandOverNotice,
       carrierComplianceStatement: loc.eldCertifies,
       carrierName: selectedLog?.carrierName ?? '',
       usdotNumber: selectedLog?.usdotNumber ?? '',
@@ -133,13 +145,19 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
     final currentDayIndex = selectedLog != null
         ? logs.indexWhere((l) => l.id == selectedLog.id)
         : -1;
-    final visibleEvents = _visibleEvents(selectedLog?.events ?? const []);
+    final visibleEvents = InspectionPreviewEventMapper.filterEvents(
+      selectedLog?.events ?? const [],
+      showActiveOnly: _showActiveEventsOnly,
+    );
+    final tableRows = visibleEvents
+        .map((e) => InspectionPreviewEventMapper.toTableRow(e, context))
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const BackButton(),
-        title: Text(loc.inspectionLogsTitle, style: context.styles.appBarTitle),
+        title: Text(loc.inspectionPreview, style: context.styles.appBarTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.tune),
@@ -202,7 +220,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                     const LinearProgressIndicator(),
                   LogGraph(events: visibleEvents, logDate: selectedLog.date),
                   const Divider(height: 1),
-                  EldEventsTable(rows: _buildEventRows(visibleEvents, context)),
+                  EldEventsTable(rows: tableRows),
                   const Divider(height: 1),
                   const InspectionAuditTrailSection(),
                   const SizedBox(height: AppSpacing.lg),
@@ -221,89 +239,95 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                   ),
                 ),
               ),
-              child: BottomNavigationBar(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                selectedItemColor: Theme.of(context).colorScheme.primary,
-                unselectedItemColor: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant,
-                currentIndex: 0,
-                type: BottomNavigationBarType.fixed,
-                items: [
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.access_time),
-                    label: context.loc.events,
+              child: SafeArea(
+                child: SizedBox(
+                  height: 56,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            ref.read(logDetailTabProvider.notifier).state =
+                                LogDetailTab.events.index;
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xs,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.small,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.access_time, size: 20),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  context.loc.events,
+                                  style: context.styles.bodyBold,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            ref.read(logDetailTabProvider.notifier).state =
+                                LogDetailTab.form.index;
+                            Navigator.pop(context);
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Badge(
+                                isLabelVisible: !selectedLog.isFormComplete,
+                                backgroundColor: context.colors.error,
+                                child: const Icon(Icons.assignment, size: 20),
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                context.loc.form,
+                                style: context.styles.subtitle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            ref.read(logDetailTabProvider.notifier).state =
+                                LogDetailTab.certify.index;
+                            Navigator.pop(context);
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_circle_outline, size: 20),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                context.loc.certify,
+                                style: context.styles.subtitle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  BottomNavigationBarItem(
-                    icon: Badge(
-                      isLabelVisible: !selectedLog.isFormComplete,
-                      backgroundColor: context.colors.error,
-                      child: const Icon(Icons.assignment),
-                    ),
-                    label: context.loc.form,
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: context.loc.certify,
-                  ),
-                ],
-                onTap: (index) {
-                  ref.read(logDetailTabProvider.notifier).state = index;
-                  Navigator.pop(context);
-                },
+                ),
               ),
             ),
     );
-  }
-
-  List<EldTableRow> _buildEventRows(
-    List<LogEvent> events,
-    BuildContext context,
-  ) {
-    return events
-        .map(
-          (e) => EldTableRow(
-            time: e.formattedStartTime,
-            status: context.translateStatus(e.status),
-            location: e.location,
-            odom: e.odometer != null ? e.odometer!.toStringAsFixed(0) : '-',
-            eng: e.engineHours != null
-                ? e.engineHours!.toStringAsFixed(1)
-                : '-',
-            src: e.automatedDriving == null
-                ? '—'
-                : e.automatedDriving!
-                ? 'Auto'
-                : 'Driver',
-            statusColor: _getStatusColor(context, e.status),
-          ),
-        )
-        .toList();
-  }
-
-  List<LogEvent> _visibleEvents(List<LogEvent> events) {
-    if (!_showActiveEventsOnly) return events;
-    return events
-        .where(
-          (event) =>
-              const {'ON', 'D', 'SB', 'OFF', 'PC', 'YM'}.contains(event.status),
-        )
-        .toList();
-  }
-
-  static Color _getStatusColor(BuildContext context, String? status) {
-    switch (status) {
-      case 'D':
-        return context.success;
-      case 'ON':
-        return context.warning;
-      case 'SB':
-        return context.info;
-      case 'OFF':
-        return context.textSecondary;
-      default:
-        return context.textPrimary;
-    }
   }
 }
 
@@ -320,6 +344,24 @@ class _InspectionSummary extends ConsumerWidget {
     final currentDay = ref.watch(
       matchingInspectionCycleDayProvider(selectedLog?.date),
     );
-    return InspectionLogHeaderTable(screen: screen, day: currentDay);
+    // المصدر الأغنى أولاً (log) + الرخصة والسائق المساعد — نفس مصادر
+    // شاشة التفتيش النشطة؛ كانت المعاينة تحرم الجدول منها فيفرغ أكثر
+    // حقول RODS (سبب اختفاء الترويسة).
+    final dayLog = ref
+        .watch(inspectionDayLogProvider(selectedLog?.date))
+        .valueOrNull;
+    final license = ref.watch(
+      accountProvider.select((s) => s.accountData?.license),
+    );
+    final co = ref.watch(codriverProvider.select((s) => s.currentCoDriver));
+    return InspectionLogHeaderTable(
+      screen: screen,
+      day: currentDay,
+      log: dayLog,
+      driverLicense: license?.number ?? '-',
+      driverLicenseState: license?.state ?? '-',
+      coDriver: co?.name ?? '',
+      coDriverId: co?.isLinked == true ? '${co?.coDriverId}' : '',
+    );
   }
 }

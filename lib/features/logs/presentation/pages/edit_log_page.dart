@@ -11,7 +11,6 @@ import '../providers/logs_provider.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../domain/entities/daily_log.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../domain/daily_form_rules.dart';
 import '../providers/edit_log_provider.dart';
 import '../providers/edit_log_form_provider.dart';
@@ -19,7 +18,6 @@ import '../../../../core/widgets/dashed_line_painter.dart';
 import '../widgets/time_picker_sheet.dart';
 import '../widgets/status_radio_group.dart';
 import '../widgets/time_field_widget.dart';
-import '../widgets/vehicle_picker_dialog.dart';
 
 /// شاشة تعديل الحدث
 class EditLogPage extends ConsumerStatefulWidget {
@@ -47,7 +45,9 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (context) => TimePickerSheet(
         initialTime: initial,
@@ -148,60 +148,63 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
               const SizedBox(height: AppSpacing.md),
 
               // 4. المركبة — قابلة للنقر: قائمة اختيار بحوار مستقل.
-              if (widget.isNewEvent)
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDialog<Vehicle>(
-                      context: context,
-                      builder: (_) => VehiclePickerDialog(
-                        currentVehicleId: dashboard.vehicleId,
-                      ),
-                    );
-                    if (picked != null && context.mounted) {
-                      if (selectedLog?.today ?? true) {
-                        ref
-                            .read(dashboardDataProvider.notifier)
-                            .updateVehicle(picked);
-                      }
-                    }
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              context.loc.vehicle,
-                              style: context.styles.bodyBold,
-                            ),
-                          ),
-                          Icon(
-                            Icons.edit,
-                            size: AppSpacing.iconMedium,
-                            color: context.styles.body.color,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(dashboard.vehicleId, style: context.styles.body),
-                      const SizedBox(height: AppSpacing.sm),
-                      Divider(
-                        color: Theme.of(
-                          context,
-                        ).dividerColor.withValues(alpha: 0.5),
-                        height: AppSpacing.dividerHeight,
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.md),
+              // if (widget.isNewEvent)
+              //   InkWell(
+              //     onTap: () async {
+              //       final picked = await showDialog<Vehicle>(
+              //         context: context,
+              //         builder: (_) => VehiclePickerDialog(
+              //           currentVehicleId: dashboard.vehicleId,
+              //         ),
+              //       );
+              //       if (picked != null && context.mounted) {
+              //         if (selectedLog?.today ?? true) {
+              //           ref
+              //               .read(dashboardDataProvider.notifier)
+              //               .updateVehicle(picked);
+              //         }
+              //       }
+              //     },
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Row(
+              //           children: [
+              //             Expanded(
+              //               child: Text(
+              //                 context.loc.vehicle,
+              //                 style: context.styles.sectionTitle,
+              //               ),
+              //             ),
+              //             Icon(
+              //               Icons.edit,
+              //               size: AppSpacing.iconMedium,
+              //               color: context.styles.body.color,
+              //             ),
+              //           ],
+              //         ),
+              //         const SizedBox(height: AppSpacing.xs),
+              //         Text(dashboard.vehicleId, style: context.styles.body),
+              //         const SizedBox(height: AppSpacing.sm),
+              //         Divider(
+              //           color: Theme.of(
+              //             context,
+              //           ).dividerColor.withValues(alpha: 0.5),
+              //           height: AppSpacing.dividerHeight,
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // const SizedBox(height: AppSpacing.md),
 
               // 5. الموقع (Location) - read only label
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(context.loc.location, style: context.styles.bodyBold),
+                  Text(
+                    context.loc.location,
+                    style: context.styles.sectionTitle,
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     formState.location.isEmpty

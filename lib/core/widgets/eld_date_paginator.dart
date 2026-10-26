@@ -36,7 +36,7 @@ class EldDatePaginator extends StatelessWidget {
     return Container(
       color: effectiveBgColor,
       padding: const EdgeInsets.symmetric(
-        vertical: 4,
+        vertical: AppSpacing.xs,
         horizontal: AppSpacing.sm,
       ),
       child: Row(
@@ -58,8 +58,8 @@ class EldDatePaginator extends StatelessWidget {
               if (isLoading) ...[
                 const SizedBox(width: AppSpacing.sm),
                 SizedBox(
-                  width: 14,
-                  height: 14,
+                  width: AppSpacing.iconSmallBadge,
+                  height: AppSpacing.iconSmallBadge,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(

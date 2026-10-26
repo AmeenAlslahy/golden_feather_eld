@@ -2,29 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/directional_chevron.dart';
+import '../../../../core/design_system.dart';
 import '../../../../routes.dart';
 import '../../domain/entities/daily_log.dart';
-import '../providers/logs_provider.dart';
 import '../providers/log_detail_tab_provider.dart';
+import '../providers/logs_provider.dart';
+import '../providers/suggested_events_provider.dart';
+import '../widgets/suggested_log_card.dart';
 
 /// SRS 6.6 / §395.30: Central review hub for carrier-proposed edits and pending actions.
 class SuggestedEventsPage extends ConsumerWidget {
   const SuggestedEventsPage({super.key});
 
+  void _onLogSelected(BuildContext context, WidgetRef ref, DailyLog log) {
+    ref.read(logsProvider.notifier).selectLog(log);
+    ref.read(logDetailTabProvider.notifier).state = LogDetailTab.certify.index;
+    context.push(AppRoutes.logDetailPath(log.id.value));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final logsState = ref.watch(logsProvider);
-    final pendingLogs = logsState.logs
-        .where(
-          (log) =>
-              log.requiresAction ||
-              log.certificationStatus ==
-                  CertificationStatus.reCertificationRequired,
-        )
-        .toList();
+    final pendingLogs = ref.watch(pendingSuggestedLogsProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -40,76 +38,88 @@ class SuggestedEventsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              context.loc.carrierProposedEdits39530Are,
-              key: const Key('suggested_events_carrier_hint'),
-              textAlign: TextAlign.center,
-              style: context.styles.body,
-            ),
-            const SizedBox(height: AppSpacing.md),
             if (pendingLogs.isNotEmpty) ...[
-              Text(
-                context.loc.reCertificationRequiredMsg,
-                style: context.styles.sectionTitle.copyWith(
-                  color: context.warning,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              ...pendingLogs.map(
-                (log) => Card(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  color: Theme.of(context).colorScheme.surface,
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.warning_amber_rounded,
-                      color: context.warning,
-                    ),
-                    title: Text(
-                      log.formattedDate,
-                      style: context.styles.bodyBold,
-                    ),
-                    subtitle: Text(
-                      log.certificationStatus ==
-                              CertificationStatus.reCertificationRequired
-                          ? context.loc.reCertificationRequiredMsg
-                          : context.loc.carrierProposedEdit,
-                      style: context.styles.subtitle,
-                    ),
-                    trailing: const DirectionalChevron(),
-                    onTap: () {
-                      ref.read(logsProvider.notifier).selectLog(log);
-                      ref.read(logDetailTabProvider.notifier).state =
-                          2; // Certify tab
-                      context.push(
-                        AppRoutes.logDetail.replaceAll(
-                          ':id',
-                          log.id.value.toString(),
-                        ),
-                      );
-                    },
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: context.warningContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: context.warning.withValues(alpha: 0.3),
                   ),
                 ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: context.warning,
+                      size: AppSpacing.iconMedium,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        context.loc.reCertificationRequiredMsg,
+                        style: context.styles.bodyBold.copyWith(
+                          color: context.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              for (final log in pendingLogs) ...[
+                SuggestedLogCard(
+                  log: log,
+                  onTap: () => _onLogSelected(context, ref, log),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ] else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: context.successContainer.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.verified_outlined,
+                        size: 40,
+                        color: context.success,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      context.loc.noRecords,
+                      style: context.styles.sectionTitle,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                      ),
+                      child: Text(
+                        context.loc.carrierProposedEdits39530Are,
+                        textAlign: TextAlign.center,
+                        style: context.styles.subtitle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
-            // Text(
-            //   context.loc.unidentifiedDrivingIsReviewedInUnidentified,
-            //   textAlign: TextAlign.center,
-            //   style: context.styles.body,
-            // ),
-            /// TODO: لا تقم بتفعيلها
-            // const SizedBox(height: AppSpacing.xl),
-            // AppButton(
-            //   label: context.loc.logsTitle,
-            //   type: EldButtonType.primary,
-            //   onPressed: () => context.go(AppRoutes.logs),
-            // ),
-            // const SizedBox(height: AppSpacing.md),
-            // AppButton(
-            //   label: context.loc.unidentifiedEvents,
-            //   type: EldButtonType.secondary,
-            //   onPressed: () => context.push(AppRoutes.unidentifiedEvents),
-            // ),
+            const SizedBox(height: AppSpacing.lg),
+            EldFooterNotice(
+              message: context.loc.unidentifiedDrivingIsReviewedInUnidentified,
+              icon: Icons.info_outline,
+            ),
           ],
         ),
       ),

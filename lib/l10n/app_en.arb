@@ -969,6 +969,7 @@
   "simulateMalfunctionDebug": "Simulate Malfunction (debug)",
   "simulatedMalfunctionRecorded": "Simulated malfunction recorded (debug only)",
   "inspectionLogsTitle": "Inspection Logs",
+  "inspectionPreview": "Inspection Preview",
   "dvirActiveDefectsTitle": "Active Defects",
   "dvirDefectDetailsTitle": "Defect Details",
   "dvirDefectSeverity": "Severity",
@@ -1137,5 +1138,7 @@
   "createdAt": "Created",
   "zoomIn": "Zoom In",
   "zoomOut": "Zoom Out",
-  "fitWidth": "Fit Width (100%)"
+  "fitWidth": "Fit Width (100%)",
+  "inspectionFallbackGuidance": "Present this screen to the safety official upon request.",
+  "inspectionHandOverNotice": "Hand over device to safety official"
 }

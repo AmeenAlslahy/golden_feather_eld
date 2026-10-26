@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
 
@@ -11,7 +12,6 @@ import '../../../domain/entities/daily_log.dart';
 import '../../../domain/entities/log_readiness.dart';
 import '../../pages/edit_log_page.dart';
 import '../../providers/certify_log_provider.dart';
-import '../../providers/log_detail_tab_provider.dart';
 import '../../providers/log_draft_signature_provider.dart';
 import 'pending_carrier_edits_section.dart';
 
@@ -251,9 +251,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
           AppButton(
             label: context.loc.notReady,
             type: EldButtonType.secondary,
-            onPressed: () {
-              ref.read(logDetailTabProvider.notifier).state = 0;
-            },
+            // "غير جاهز" يمسح التوقيع المرسوم فقط (كسلوك زر المسح في
+            // اللوحة) — لا يبدّل التبويب ولا يغادر الصفحة.
+            onPressed: () => _signatureController.clear(),
           ),
         ],
       ),
@@ -284,13 +284,13 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
-              readinessData.legalStatement.trim().isEmpty
-                  ? context.loc.certifyLegalStatement
-                  : readinessData.legalStatement,
+              // البيان القانوني بنسخته المعرّبة المحلية دائماً — الخادم
+              // يرسل نصاً إنجليزياً ثابتاً فكان يظهر بالإنجليزية دوماً.
+              context.loc.certifyLegalStatement,
               textAlign: TextAlign.center,
               style: context.styles.body.copyWith(
                 height: 1.5,
-                fontWeight: FontWeight.w500,
+                fontWeight: AppTypography.medium,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -315,9 +315,8 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             AppButton(
               label: context.loc.notReady,
               type: EldButtonType.secondary,
-              onPressed: () {
-                ref.read(logDetailTabProvider.notifier).state = 0;
-              },
+              // نفس السلوك: مسح التوقيع فقط، بلا تنقل.
+              onPressed: () => _signatureController.clear(),
             ),
             const SizedBox(height: AppSpacing.md),
             AppButton(

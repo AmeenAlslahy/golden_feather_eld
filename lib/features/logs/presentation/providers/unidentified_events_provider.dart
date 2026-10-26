@@ -309,54 +309,30 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     );
   }
 
+  /// تفويض للدالة العامة العامة النقية — نسخة مطابقة كانت مكررة هنا
+  /// (مراجعة 2026-10-25): مصدر واحد لمنطق تصفية التاريخ.
   List<UnidentifiedEventItem> _filterByDate(
     List<UnidentifiedEventItem> events,
     DateTime? day,
-  ) {
-    if (day == null) return events;
-    return events.where((item) {
-      final raw = item.startTime;
-      final when = raw.isEmpty ? null : DateTime.tryParse(raw)?.toLocal();
-      return when != null &&
-          when.year == day.year &&
-          when.month == day.month &&
-          when.day == day.day;
-    }).toList();
-  }
+  ) =>
+      filterUnidentifiedEventsByDate(events, day).cast<UnidentifiedEventItem>();
 
+  /// تفويض للدالة العامة النقية — كان المنطق (فلتر قيادة 24 ساعة +
+  /// unclaimed/rejected/total) منسوخاً حرفياً هنا (مراجعة 2026-10-25):
+  /// مصدر واحد للإحصاءات.
   UnidentifiedStats _computeStats({
     required List<UnidentifiedEventItem> items,
     required UnidentifiedTab tab,
     required DateTime now,
     int? unclaimedCount,
     int? rejectedCount,
-  }) {
-    final since = now.subtract(const Duration(hours: 24));
-    final driving = items.where((item) {
-      final status = item.dutyStatus.toUpperCase();
-      if (!status.contains('DRIV')) return false;
-      final raw = item.endTime.isNotEmpty ? item.endTime : item.startTime;
-      final when = raw.isEmpty ? null : DateTime.tryParse(raw);
-      return when == null || !when.toUtc().isBefore(since);
-    }).length;
-
-    final unclaimed = tab == UnidentifiedTab.unclaimed
-        ? items.length
-        : unclaimedCount;
-    final rejected = tab == UnidentifiedTab.rejected
-        ? items.length
-        : rejectedCount;
-    final total = (unclaimed == null || rejected == null)
-        ? items.length
-        : unclaimed + rejected;
-
-    return UnidentifiedStats(
-      total: total,
-      unclaimed: unclaimed != null ? '$unclaimed' : '—',
-      rejected: rejected != null ? '$rejected' : '—',
-      driving24h: driving,
-    );
-  }
+  }) => calculateUnidentifiedStats(
+    items: items,
+    tab: tab,
+    now: now,
+    unclaimedCount: unclaimedCount,
+    rejectedCount: rejectedCount,
+  );
 
   Future<void> setTab(UnidentifiedTab tab) async {
     if (state.tab == tab && !state.loading) return;

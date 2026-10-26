@@ -17,21 +17,26 @@ import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../../../helpers/fake_time_authority.dart';
 
-class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+class MockAuthNotifier extends StateNotifier<AuthState>
+    implements AuthNotifier {
   MockAuthNotifier(super.state);
-  
+
   @override
-  Future<bool> login({required String username, required String password, String? serverUrl}) async => true;
-  
+  Future<bool> login({
+    required String username,
+    required String password,
+    String? serverUrl,
+  }) async => true;
+
   @override
   void forceLogout() {}
-  
+
   @override
   Future<void> logout() async {}
-  
+
   @override
   Future<void> checkAuthStatus() async {}
-  
+
   @override
   void clearError() {}
 }
@@ -52,15 +57,24 @@ class MockLogRepository extends Mock implements LogRepository {}
 Widget createTestApp(Widget child) {
   final mockRepo = MockLogRepository();
   // We only mock what LogsNotifier might call during initialization or simple rendering
-  when(() => mockRepo.getDailyLogs(
-    driverId: any(named: 'driverId'),
-    page: any(named: 'page'),
-    size: any(named: 'size'),
-  )).thenAnswer((_) async => const Right(DailyLogPage.empty));
+  when(
+    () => mockRepo.getDailyLogs(
+      driverId: any(named: 'driverId'),
+      page: any(named: 'page'),
+      size: any(named: 'size'),
+    ),
+  ).thenAnswer((_) async => const Right(DailyLogPage.empty));
 
   final mockAuthState = AuthState(
     status: AuthStatus.authenticated,
-    user: User(id: 'd1', fullName: 'Test', email: 'test@demo.com', username: 'test', role: UserRole.fieldWorker, createdAt: DateTime.now()),
+    user: User(
+      id: 'd1',
+      fullName: 'Test',
+      email: 'test@demo.com',
+      username: 'test',
+      role: UserRole.fieldWorker,
+      createdAt: DateTime.now(),
+    ),
   );
 
   return ProviderScope(
@@ -82,15 +96,21 @@ Widget createTestApp(Widget child) {
 
 void main() {
   group('EditLogPage & editLogFormProvider', () {
-    testWidgets('EditLogPage(event: null) -> Insert Duty Status', (tester) async {
-      await tester.pumpWidget(createTestApp(const EditLogPage(event: null, isNewEvent: true)));
+    testWidgets('EditLogPage(event: null) -> Insert Duty Status', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestApp(const EditLogPage(event: null, isNewEvent: true)),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(EditLogPage), findsOneWidget);
       expect(find.byType(AppBar), findsOneWidget);
     });
 
-    testWidgets('EditLogPage(event: LogEvent(...)) -> Edit Duty Status', (tester) async {
+    testWidgets('EditLogPage(event: LogEvent(...)) -> Edit Duty Status', (
+      tester,
+    ) async {
       final fakeEvent = LogEvent(
         id: '123',
         status: 'D',

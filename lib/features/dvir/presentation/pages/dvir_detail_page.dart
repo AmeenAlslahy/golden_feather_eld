@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../../core/theme/app_typography.dart';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 
@@ -10,6 +11,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_info_row.dart';
+import '../../../../core/widgets/eld_card.dart';
 import '../../domain/defect_enums.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
@@ -283,13 +285,9 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      padding: const EdgeInsets.all(AppSpacing.md),
+    // بطاقة النظام القياسية — كانت حاوية محدّدة بإطار (عائلة بصرية
+    // ثالثة؛ توحيد الهوية 2026-10-26).
+    return EldCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -395,7 +393,7 @@ class _DefectCard extends StatelessWidget {
                 child: Text(
                   defect.item.label(context.loc),
                   style: context.styles.body.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppTypography.semiBold,
                   ),
                 ),
               ),
@@ -404,7 +402,7 @@ class _DefectCard extends StatelessWidget {
                   defect.severity!.wire,
                   style: context.styles.caption.copyWith(
                     color: sevColor,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
             ],
@@ -441,7 +439,9 @@ class _DefectCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             defect.stage.wire,
-            style: context.styles.caption.copyWith(fontWeight: FontWeight.w600),
+            style: context.styles.caption.copyWith(
+              fontWeight: AppTypography.semiBold,
+            ),
           ),
         ],
       ),
@@ -480,7 +480,7 @@ class _TrailerCard extends StatelessWidget {
               Text(
                 trailer.trailerNumber,
                 style: context.styles.body.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: AppTypography.bold,
                 ),
               ),
             ],

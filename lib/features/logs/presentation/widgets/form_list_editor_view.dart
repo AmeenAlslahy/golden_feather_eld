@@ -31,10 +31,7 @@ class FormListEditorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(title),
-      ),
+      appBar: AppBar(leading: const BackButton(), title: Text(title)),
       body: Column(
         children: [
           // ========== منطقة الإدخال ==========

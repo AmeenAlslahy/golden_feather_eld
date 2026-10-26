@@ -30,10 +30,7 @@ class PrefsRulesScreenLocalCache implements RulesScreenLocalCache {
   }) async {
     try {
       final key = _keyFor(driverId);
-      await _storage.prefs.setString(
-        key,
-        jsonEncode(model.toJson()),
-      );
+      await _storage.prefs.setString(key, jsonEncode(model.toJson()));
     } catch (e) {
       AppLogger.warning('RulesScreenLocalCache.saveRulesScreen failed: $e');
     }

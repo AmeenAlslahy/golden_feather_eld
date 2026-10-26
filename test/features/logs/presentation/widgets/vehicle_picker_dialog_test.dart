@@ -13,14 +13,21 @@ import 'package:mocktail/mocktail.dart';
 class _Repo extends Mock implements VehicleRepository {}
 
 void main() {
-  testWidgets('short VIN is shown whole instead of throwing RangeError',
-      (tester) async {
+  testWidgets('short VIN is shown whole instead of throwing RangeError', (
+    tester,
+  ) async {
     final repo = _Repo();
-    when(() => repo.getVehicles()).thenAnswer((_) async => const Right([
-          Vehicle(id: 'T-1', name: 'Truck 1', year: '2020', vin: 'ABC12'),
-          Vehicle(
-              id: 'T-2', name: 'Truck 2', year: '2021', vin: '1FTFW1E58MFA12345'),
-        ]));
+    when(() => repo.getVehicles()).thenAnswer(
+      (_) async => const Right([
+        Vehicle(id: 'T-1', name: 'Truck 1', year: '2020', vin: 'ABC12'),
+        Vehicle(
+          id: 'T-2',
+          name: 'Truck 2',
+          year: '2021',
+          vin: '1FTFW1E58MFA12345',
+        ),
+      ]),
+    );
 
     await tester.pumpWidget(
       ProviderScope(

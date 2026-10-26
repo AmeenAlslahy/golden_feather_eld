@@ -20,15 +20,22 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 
-class MockLogsNotifier extends StateNotifier<LogsState> with Mock implements LogsNotifier {
+class MockLogsNotifier extends StateNotifier<LogsState>
+    with Mock
+    implements LogsNotifier {
   MockLogsNotifier(super.state);
 }
 
-class MockAuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
+class MockAuthNotifier extends StateNotifier<AuthState>
+    implements AuthNotifier {
   MockAuthNotifier(super.state);
-  
+
   @override
-  Future<bool> login({required String username, required String password, String? serverUrl}) async => true;
+  Future<bool> login({
+    required String username,
+    required String password,
+    String? serverUrl,
+  }) async => true;
   @override
   void forceLogout() {}
   @override
@@ -58,33 +65,39 @@ void main() {
     );
 
     setUp(() {
-      logsNotifier = MockLogsNotifier(LogsState(
-        logs: [],
-        isLoading: false,
-        selectedLog: DailyLog(
-          id: const DailyLogId(1),
-          uniqueId: 'V1',
-          date: DateTime(2026, 1, 1),
-          formattedTotalWorkTime: '10h',
-          totalDrivingHours: 5.0,
-          isFormComplete: true,
-          isCertified: false,
+      logsNotifier = MockLogsNotifier(
+        LogsState(
+          logs: [],
+          isLoading: false,
+          selectedLog: DailyLog(
+            id: const DailyLogId(1),
+            uniqueId: 'V1',
+            date: DateTime(2026, 1, 1),
+            formattedTotalWorkTime: '10h',
+            totalDrivingHours: 5.0,
+            isFormComplete: true,
+            isCertified: false,
+          ),
         ),
-      ));
-      
+      );
+
       mockRepo = MockLogRepository();
 
       mockTimeAuth = MockTimeAuthority();
-      when(() => mockTimeAuth.nowUtc()).thenReturn(DateTime.utc(2026, 1, 1, 10, 0, 0));
+      when(
+        () => mockTimeAuth.nowUtc(),
+      ).thenReturn(DateTime.utc(2026, 1, 1, 10, 0, 0));
 
       registerFallbackValue(testEvent);
-      registerFallbackValue(AuditEntry(
-        id: '1',
-        timestamp: DateTime.now(),
-        driverId: 'd',
-        newStatus: 'ON',
-        reason: '',
-      ));
+      registerFallbackValue(
+        AuditEntry(
+          id: '1',
+          timestamp: DateTime.now(),
+          driverId: 'd',
+          newStatus: 'ON',
+          reason: '',
+        ),
+      );
     });
 
     Widget createTestApp(Widget child) {
@@ -117,73 +130,101 @@ void main() {
       );
     }
 
-    testWidgets('BUG B: invalid time -> mutation is not called -> localized error', (tester) async {
-      when(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')))
-          .thenAnswer((_) async => const Right(null));
-          
-      await tester.pumpWidget(createTestApp(
-        EditLogPage(event: testEvent, isNewEvent: false),
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'BUG B: invalid time -> mutation is not called -> localized error',
+      (tester) async {
+        when(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => const Right(null));
 
-      final BuildContext context = tester.element(find.byType(EditLogPage));
-      final container = ProviderScope.containerOf(context);
-      container.read(editLogFormProvider(testEvent).notifier).setStartTime('invalid-time');
+        await tester.pumpWidget(
+          createTestApp(EditLogPage(event: testEvent, isNewEvent: false)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.byType(AppButton).first);
-      await tester.tap(find.byType(AppButton).first);
-      await tester.pump(const Duration(milliseconds: 100)); // wait for snackbar animation
+        final BuildContext context = tester.element(find.byType(EditLogPage));
+        final container = ProviderScope.containerOf(context);
+        container
+            .read(editLogFormProvider(testEvent).notifier)
+            .setStartTime('invalid-time');
 
-      verifyNever(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')));
-      // AppFeedback shows an Overlay, not a SnackBar.
-      expect(find.byWidgetPredicate((w) => w is Text && (w.data?.toLowerCase().contains('invalid') ?? false)), findsWidgets);
+        await tester.ensureVisible(find.byType(AppButton).first);
+        await tester.tap(find.byType(AppButton).first);
+        await tester.pump(
+          const Duration(milliseconds: 100),
+        ); // wait for snackbar animation
 
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
-    });
+        verifyNever(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        );
+        // AppFeedback shows an Overlay, not a SnackBar.
+        expect(
+          find.byWidgetPredicate(
+            (w) =>
+                w is Text &&
+                (w.data?.toLowerCase().contains('invalid') ?? false),
+          ),
+          findsWidgets,
+        );
 
-    testWidgets('BUG C: user enters manual location -> saved LogEvent receives exactly that location', (tester) async {
-      when(() => logsNotifier.updateEvent(any(), reason: any(named: 'reason')))
-          .thenAnswer((_) async => const Right(null));
-      when(() => mockRepo.logAudit(any()))
-          .thenAnswer((_) async => const Right(true));
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pumpAndSettle();
+      },
+    );
 
-      await tester.pumpWidget(createTestApp(
-        EditLogPage(event: testEvent, isNewEvent: false),
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'BUG C: user enters manual location -> saved LogEvent receives exactly that location',
+      (tester) async {
+        when(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => const Right(null));
+        when(
+          () => mockRepo.logAudit(any()),
+        ).thenAnswer((_) async => const Right(true));
 
-      final locationField = find.ancestor(
-        of: find.byIcon(Icons.my_location),
-        matching: find.byType(TextField),
-      );
-      
-      expect(locationField, findsOneWidget);
+        await tester.pumpWidget(
+          createTestApp(EditLogPage(event: testEvent, isNewEvent: false)),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.enterText(locationField, 'New Manual Location');
-      await tester.pump();
+        final locationField = find.ancestor(
+          of: find.byIcon(Icons.my_location),
+          matching: find.byType(TextField),
+        );
 
-      final BuildContext context = tester.element(find.byType(EditLogPage));
-      final container = ProviderScope.containerOf(context);
-      final state = container.read(editLogFormProvider(testEvent));
-      expect(state.location, 'New Manual Location');
+        expect(locationField, findsOneWidget);
 
-      // Also enter a Reason so the form validates successfully
-      final reasonField = find.byType(TextField).last;
-      await tester.ensureVisible(reasonField);
-      await tester.enterText(reasonField, 'Bug C reason');
-      await tester.pump();
+        await tester.enterText(locationField, 'New Manual Location');
+        await tester.pump();
 
-      await tester.ensureVisible(find.byType(AppButton).first);
-      await tester.tap(find.byType(AppButton).first);
-      await tester.pumpAndSettle();
+        final BuildContext context = tester.element(find.byType(EditLogPage));
+        final container = ProviderScope.containerOf(context);
+        final state = container.read(editLogFormProvider(testEvent));
+        expect(state.location, 'New Manual Location');
 
-      verify(() => logsNotifier.updateEvent(
-        any(that: predicate<LogEvent>((e) => e.location == 'New Manual Location')),
-        reason: any(named: 'reason'),
-      )).called(1);
+        // Also enter a Reason so the form validates successfully
+        final reasonField = find.byType(TextField).last;
+        await tester.ensureVisible(reasonField);
+        await tester.enterText(reasonField, 'Bug C reason');
+        await tester.pump();
 
-      await tester.pump(const Duration(seconds: 4));
-    });
+        await tester.ensureVisible(find.byType(AppButton).first);
+        await tester.tap(find.byType(AppButton).first);
+        await tester.pumpAndSettle();
+
+        verify(
+          () => logsNotifier.updateEvent(
+            any(
+              that: predicate<LogEvent>(
+                (e) => e.location == 'New Manual Location',
+              ),
+            ),
+            reason: any(named: 'reason'),
+          ),
+        ).called(1);
+
+        await tester.pump(const Duration(seconds: 4));
+      },
+    );
   });
 }

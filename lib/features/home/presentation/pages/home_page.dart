@@ -197,7 +197,9 @@ class HomePage extends ConsumerWidget {
                     Container(
                       width: double.infinity,
                       color: Theme.of(context).colorScheme.inverseSurface,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xs,
+                      ),
                       child: Text(
                         context.loc.noInternetBanner,
                         textAlign: TextAlign.center,

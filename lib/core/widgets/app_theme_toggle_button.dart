@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme/app_theme_provider.dart';
@@ -33,7 +35,7 @@ class AppThemeToggleButton extends ConsumerWidget {
           child: Icon(
             effectiveDark ? Icons.wb_sunny : Icons.nightlight_round,
             color: theme.colorScheme.onPrimary,
-            size: 22,
+            size: AppSpacing.iconMedium,
           ),
         ),
       ),

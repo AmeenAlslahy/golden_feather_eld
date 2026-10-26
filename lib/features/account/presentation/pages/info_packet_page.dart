@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -111,16 +112,14 @@ class _PacketBlock extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: context.styles.sectionTitle.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: AppTypography.bold,
           ),
         ),
         const SizedBox(height: AppSpacing.compact),
         Text(
           body,
           textAlign: TextAlign.center,
-          style: context.styles.subtitle.copyWith(
-            color: context.textSecondary,
-          ),
+          style: context.styles.subtitle.copyWith(color: context.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
         AppButton(

@@ -123,6 +123,12 @@ extension AppSemanticColors on BuildContext {
   /// الذهبي الآمن للنص حسب الخلفية (goldDeep فاتح / primaryGold داكن).
   Color get gold => isDark ? AppColors.primaryGold : AppColors.goldDeep;
 
+  /// ألوان رأس RODS الورقي الرسمي (49 CFR 395.8) — سطح فاتح ثابت
+  /// للضابط بغض النظر عن سمة التطبيق؛ الوصول من الميزات عبر هنا فقط
+  /// (حارس نظام التصميم يمنع AppColors المباشرة في features).
+  Color get rodsHeaderBg => AppColors.rodsHeaderBg;
+  Color get rodsHeaderText => AppColors.rodsHeaderText;
+
   Color get onGold => colors.onPrimary;
 
   Color get success => styles.success.color!;
@@ -173,9 +179,11 @@ extension AppSemanticColors on BuildContext {
       isDark ? AppColors.darkBorder : AppColors.surfaceDark;
 
   /// أسطح العناصر البديلة للصور والوسائط المتوافقة مع الوضعين.
-  Color get placeholderSurface =>
-      isDark ? AppColors.placeholderSurfaceDark : AppColors.placeholderSurfaceLight;
+  Color get placeholderSurface => isDark
+      ? AppColors.placeholderSurfaceDark
+      : AppColors.placeholderSurfaceLight;
 
-  Color get placeholderBorder =>
-      isDark ? AppColors.placeholderBorderDark : AppColors.placeholderBorderLight;
+  Color get placeholderBorder => isDark
+      ? AppColors.placeholderBorderDark
+      : AppColors.placeholderBorderLight;
 }

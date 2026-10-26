@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../../core/theme/app_typography.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -38,7 +39,7 @@ class EventCard extends StatelessWidget {
               Text(
                 kind,
                 style: context.styles.caption.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: AppTypography.bold,
                   color: malfunction ? context.danger : context.warning,
                 ),
               ),
@@ -46,7 +47,7 @@ class EventCard extends StatelessWidget {
               Text(
                 'DETECTED',
                 style: context.styles.caption.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppTypography.semiBold,
                 ),
               ),
             ],

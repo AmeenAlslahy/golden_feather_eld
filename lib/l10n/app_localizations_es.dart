@@ -2764,6 +2764,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inspectionLogsTitle => 'Registros de inspección';
 
   @override
+  String get inspectionPreview => 'Vista previa de inspección';
+
+  @override
   String get dvirActiveDefectsTitle => 'Defectos activos';
 
   @override
@@ -3252,4 +3255,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get fitWidth => 'Ajustar al ancho (100%)';
+
+  @override
+  String get inspectionFallbackGuidance =>
+      'Presente esta pantalla al oficial de seguridad cuando se lo soliciten.';
+
+  @override
+  String get inspectionHandOverNotice =>
+      'Entregue el dispositivo al oficial de seguridad';
 }

@@ -72,7 +72,7 @@ class LogListItem extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: context.styles.success.copyWith(
-                            fontWeight: FontWeight.w500,
+                            fontWeight: AppTypography.medium,
                           ),
                         ),
                       ),

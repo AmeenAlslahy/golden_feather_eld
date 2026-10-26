@@ -105,8 +105,10 @@ class EldDrawer extends ConsumerWidget {
                   return Text(
                     'v$version',
                     textAlign: TextAlign.center,
+                    // لون التسمية القياسي (كان outline — أبيض صريح في
+                    // الداكن، وأثقل من كل تسميات التطبيق في الفاتح).
                     style: context.styles.caption.copyWith(
-                      color: context.colorScheme.outline,
+                      color: context.textSecondary,
                     ),
                   );
                 },

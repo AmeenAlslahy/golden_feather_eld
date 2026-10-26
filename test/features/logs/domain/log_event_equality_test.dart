@@ -3,12 +3,12 @@ import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart'
 
 void main() {
   LogEvent baseEvent() => LogEvent(
-        id: 'ev-1',
-        status: 'D',
-        startTime: DateTime(2026, 1, 5, 8, 30),
-        duration: const Duration(hours: 2),
-        location: 'Riyadh, SA',
-      );
+    id: 'ev-1',
+    status: 'D',
+    startTime: DateTime(2026, 1, 5, 8, 30),
+    duration: const Duration(hours: 2),
+    location: 'Riyadh, SA',
+  );
 
   group('LogEvent equality', () {
     test('identical values are equal', () {

@@ -847,6 +847,7 @@
   "simulateMalfunctionDebug": "Simular falla (depuración)",
   "simulatedMalfunctionRecorded": "Falla simulada registrada (solo depuración)",
   "inspectionLogsTitle": "Registros de inspección",
+  "inspectionPreview": "Vista previa de inspección",
   "dvirActiveDefectsTitle": "Defectos activos",
   "dvirDefectDetailsTitle": "Detalles del defecto",
   "dvirDefectSeverity": "Gravedad",
@@ -1137,5 +1138,7 @@
   "createdAt": "Creado",
   "zoomIn": "Acercar",
   "zoomOut": "Alejar",
-  "fitWidth": "Ajustar al ancho (100%)"
+  "fitWidth": "Ajustar al ancho (100%)",
+  "inspectionFallbackGuidance": "Presente esta pantalla al oficial de seguridad cuando se lo soliciten.",
+  "inspectionHandOverNotice": "Entregue el dispositivo al oficial de seguridad"
 }

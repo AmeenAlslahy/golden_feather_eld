@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_typography.dart';
 
 import '../extensions/context_extensions.dart';
 import '../theme/app_decorations.dart';
@@ -42,7 +43,7 @@ class AppStatusPill extends StatelessWidget {
             label,
             style: context.styles.caption.copyWith(
               color: color,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppTypography.semiBold,
             ),
           ),
         ],

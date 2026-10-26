@@ -19,9 +19,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          auditTrailProvider.overrideWith((ref) async => entries),
-        ],
+        overrides: [auditTrailProvider.overrideWith((ref) async => entries)],
         child: MaterialApp(
           theme: AppTheme.light,
           locale: const Locale('en'),
@@ -35,30 +33,34 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('renders the confirmatory note, actions, entities and users',
-      (tester) async {
-    await pump(tester, entries: [
-      AuditEntry(
-        id: 'a1',
-        timestamp: DateTime.utc(2026, 9, 28, 14),
-        driverId: '106',
-        newStatus: '',
-        reason: '',
-        action: 'sign_dvir',
-        entityType: 'dvir',
-        entityId: 'dvir-77',
-        userName: 'Naseem Adam',
-        userRole: 'driver',
-      ),
-      AuditEntry(
-        id: 'a2',
-        timestamp: DateTime.utc(2026, 9, 28, 15),
-        driverId: '106',
-        oldStatus: 'OFF',
-        newStatus: 'D',
-        reason: 'correction',
-      ),
-    ]);
+  testWidgets('renders the confirmatory note, actions, entities and users', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      entries: [
+        AuditEntry(
+          id: 'a1',
+          timestamp: DateTime.utc(2026, 9, 28, 14),
+          driverId: '106',
+          newStatus: '',
+          reason: '',
+          action: 'sign_dvir',
+          entityType: 'dvir',
+          entityId: 'dvir-77',
+          userName: 'Naseem Adam',
+          userRole: 'driver',
+        ),
+        AuditEntry(
+          id: 'a2',
+          timestamp: DateTime.utc(2026, 9, 28, 15),
+          driverId: '106',
+          oldStatus: 'OFF',
+          newStatus: 'D',
+          reason: 'correction',
+        ),
+      ],
+    );
 
     // The confirmatory note (SRS 7.16) is always shown.
     expect(find.textContaining('cannot be edited or deleted'), findsOneWidget);

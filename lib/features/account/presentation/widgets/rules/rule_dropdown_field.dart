@@ -7,6 +7,7 @@ class RuleDropdownField extends StatelessWidget {
   final String value;
   final List<String> options;
   final ValueChanged<String> onChanged;
+  final bool dense;
 
   const RuleDropdownField({
     super.key,
@@ -14,6 +15,7 @@ class RuleDropdownField extends StatelessWidget {
     required this.value,
     required this.options,
     required this.onChanged,
+    this.dense = true,
   });
 
   @override
@@ -22,6 +24,7 @@ class RuleDropdownField extends StatelessWidget {
       label: label,
       value: value,
       items: options,
+      dense: dense,
       onChanged: (newValue) {
         if (newValue != null) {
           onChanged(newValue);

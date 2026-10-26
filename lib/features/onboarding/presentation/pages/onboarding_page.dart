@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -119,7 +120,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                           slide.title(loc),
                           textAlign: TextAlign.center,
                           style: context.styles.pageTitle.copyWith(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: AppTypography.bold,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),

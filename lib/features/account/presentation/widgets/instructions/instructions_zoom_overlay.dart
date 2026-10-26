@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../../core/theme/app_typography.dart';
 
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_radius.dart';
@@ -46,8 +47,9 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
     curve: Curves.easeOutCubic,
   );
 
-  late final ValueNotifier<double> _scaleNotifier =
-      ValueNotifier<double>(_initialScale);
+  late final ValueNotifier<double> _scaleNotifier = ValueNotifier<double>(
+    _initialScale,
+  );
 
   Animation<Matrix4>? _anim;
   Size? _lastSize;
@@ -77,7 +79,8 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
       final totalScaledWidth =
           (contentWidth + AppSpacing.md * 2) * _initialScale;
       final dx = (screenWidth - totalScaledWidth) / 2;
-      _transformation.value = Matrix4.translationValues(dx, 0.0, 0.0) *
+      _transformation.value =
+          Matrix4.translationValues(dx, 0.0, 0.0) *
           Matrix4.diagonal3Values(_initialScale, _initialScale, 1.0);
     }
   }
@@ -121,7 +124,8 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
     } else {
       final totalScaledWidth = (contentWidth + AppSpacing.md * 2) * clamped;
       final dx = (screenWidth - totalScaledWidth) / 2;
-      target = Matrix4.translationValues(dx, 0.0, 0.0) *
+      target =
+          Matrix4.translationValues(dx, 0.0, 0.0) *
           Matrix4.diagonal3Values(clamped, clamped, 1.0);
     }
 
@@ -233,7 +237,9 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
                     color: theme.colorScheme.surface.withValues(alpha: 0.95),
                     child: Container(
                       height: 38,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
@@ -255,12 +261,15 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
                                 ),
                                 tooltip: context.loc.zoomOut,
                                 icon: const Icon(Icons.remove),
-                                onPressed: currentScale <= _minScale ? null : _zoomOut,
+                                onPressed: currentScale <= _minScale
+                                    ? null
+                                    : _zoomOut,
                               ),
                               InkWell(
                                 onTap: _toggleFitOrZoom,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.small),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.small,
+                                ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
@@ -269,7 +278,7 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
                                   child: Text(
                                     '${(currentScale * 100).round()}%',
                                     style: context.styles.caption.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: AppTypography.bold,
                                     ),
                                   ),
                                 ),
@@ -283,13 +292,19 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
                                 ),
                                 tooltip: context.loc.zoomIn,
                                 icon: const Icon(Icons.add),
-                                onPressed: currentScale >= _maxScale ? null : _zoomIn,
+                                onPressed: currentScale >= _maxScale
+                                    ? null
+                                    : _zoomIn,
                               ),
                               Container(
                                 height: 16,
                                 width: 1,
-                                color: theme.dividerColor.withValues(alpha: 0.3),
-                                margin: const EdgeInsets.symmetric(horizontal: 2),
+                                color: theme.dividerColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
                               ),
                               IconButton(
                                 iconSize: 18,
@@ -318,7 +333,11 @@ class _InstructionsZoomOverlayState extends State<InstructionsZoomOverlay>
                       key: const Key('instructions_zoom_close'),
                       tooltip: closeTooltip,
                       onPressed: widget.onDismiss,
-                      icon: Icon(Icons.close, color: context.textPrimary, size: 20),
+                      icon: Icon(
+                        Icons.close,
+                        color: context.textPrimary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],

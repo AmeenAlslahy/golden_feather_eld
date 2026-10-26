@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -84,7 +85,9 @@ class _NavSegment extends StatelessWidget {
                 label,
                 style: context.styles.subtitle.copyWith(
                   color: foreground,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isActive
+                      ? AppTypography.bold
+                      : AppTypography.regular,
                 ),
               ),
             ],

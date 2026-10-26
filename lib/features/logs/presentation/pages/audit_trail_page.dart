@@ -63,7 +63,7 @@ class AuditTrailPage extends ConsumerWidget {
                       leading: Icon(
                         Icons.history,
                         color: context.styles.subtitle.color,
-                        size: 20,
+                        size: AppSpacing.iconMedium,
                       ),
                       title: Text(
                         e.action.isNotEmpty

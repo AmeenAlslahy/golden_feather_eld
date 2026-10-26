@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -6,6 +8,7 @@ import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/localization/locale_provider.dart';
 import '../../../../core/events/app_events.dart';
 import '../../../../domain/shared/value_objects.dart';
@@ -65,24 +68,16 @@ class CertifyLogState {
         !readinessData!.carrierProposedEditsPending;
   }
 
-  /// نصوص الموانع للعرض: رموز `validationCodes` أولاً (مترجمة أينما
-  /// عُرفت)، وإلا قائمة الجاهزية القديمة.
+  /// رموز الموانع كما وردت من الخادم (validationCodes أولاً، وإلا قائمة
+  /// الجاهزية القديمة). ترجمة الرموز قرار العرض (loc) — لا نصوص
+  /// إنجليزية مشفرة في الحالة (كانت خريطة كاملة هنا).
   List<String> get missingRequirements {
     final cs = certifyState;
     if (cs != null && cs.validationCodes.isNotEmpty) {
-      return cs.validationCodes.map(_validationCodeText).toList();
+      return cs.validationCodes;
     }
     return readinessData?.missingRequirements ?? [];
   }
-
-  static const Map<String, String> _validationCodeTexts = {
-    'FORM_NOT_FINAL': 'The daily form is not complete for this day.',
-    'SIGNATURE_REQUIRED':
-        'A digital signature is required before certification.',
-  };
-
-  static String _validationCodeText(String code) =>
-      _validationCodeTexts[code.toUpperCase()] ?? code;
 
   CertifyLogState copyWith({
     bool? isLoading,
@@ -134,13 +129,7 @@ final class CertifyFailed extends CertifyOutcome {
 /// the state is released as soon as the certify tab is closed.
 final certifyLogProvider = StateNotifierProvider.autoDispose
     .family<CertifyLogNotifier, CertifyLogState, DailyLogId>((ref, logId) {
-      final notifier = CertifyLogNotifier(
-        ref,
-        logId,
-        ref.watch(logRepositoryProvider),
-      );
-      notifier._fetchReadiness();
-      return notifier;
+      return CertifyLogNotifier(ref, logId, ref.watch(logRepositoryProvider));
     });
 
 class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
@@ -149,7 +138,13 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
 
   CertifyLogNotifier(this._ref, this._logId, this._repository)
-    : super(const CertifyLogState(isLoading: true));
+    : super(const CertifyLogState(isLoading: true)) {
+    // الجلب الأولي أثر جانبي للمُنشئ (بعد اكتمال التهيئة) لا لجسم
+    // المزوّد — جسم المزوّد بناءٌ خالص (مراجعة 2026-10-25).
+    scheduleMicrotask(() {
+      if (mounted) _fetchReadiness();
+    });
+  }
 
   /// Read lazily so a locale switch translates the next message without
   /// rebuilding the notifier (which would drop the loaded readiness).
@@ -178,7 +173,9 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     try {
       final certifyResult = await _repository.getCertifyState(_logId);
       certifyState = certifyResult.fold((_) => null, (value) => value);
-    } catch (_) {
+    } catch (error) {
+      // حالة الاعتماد الجانبية اختيارية للعرض — فشلها يُسجَّل فقط.
+      AppLogger.warning('Certify state fetch failed: $error');
       certifyState = null;
     }
 

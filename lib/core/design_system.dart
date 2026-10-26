@@ -30,3 +30,4 @@ export 'widgets/eld_info_row.dart';
 export 'widgets/eld_dropdown_row.dart';
 export 'widgets/eld_retry_view.dart';
 export 'widgets/directional_chevron.dart';
+export 'widgets/eld_footer_notice.dart';

@@ -214,7 +214,7 @@ class _FormRow extends FormField<String> {
                            color: hasError ? errorColor : null,
                          ),
                        ),
-                       const SizedBox(height: 4),
+                       const SizedBox(height: AppSpacing.xs),
                        Text(
                          value,
                          style: context.styles.body.copyWith(
@@ -236,7 +236,7 @@ class _FormRow extends FormField<String> {
                    IconButton(
                      icon: Icon(
                        Icons.edit,
-                       size: 18,
+                       size: AppSpacing.iconMedium,
                        color: context.styles.body.color,
                      ),
                      onPressed: onEdit,

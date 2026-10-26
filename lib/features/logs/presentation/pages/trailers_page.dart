@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/form_list_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../providers/trailers_provider.dart';
@@ -25,20 +26,24 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<TrailersState>(trailersProvider, (previous, next) {
-      if (next.event == TrailerEvent.addedSuccessfully) {
+    ref.listen<FormListState>(trailersProvider, (previous, next) {
+      if (next.event == FormListEvent.addedSuccessfully) {
         _controller.clear();
-      } else if (next.event == TrailerEvent.failed) {
+      } else if (next.event == FormListEvent.failed) {
         switch (next.failure) {
-          case TrailerActionFailure.empty:
+          case FormListFailure.empty:
             break;
-          case TrailerActionFailure.limitReached:
+          case FormListFailure.limitReached:
             AppFeedback.error(context, context.loc.maxTrailersLimitReached);
             break;
-          case TrailerActionFailure.invalidFormat:
+          case FormListFailure.invalidFormat:
+          // غير ممكنين بقواعد المقطورات (بلا حد طول صريح ولا رفض فاصلة)
+          // — مجموعة مع الصيغة لأن EnumSwitch استنفادي على النوع المشترك.
+          case FormListFailure.tooLong:
+          case FormListFailure.containsComma:
             AppFeedback.error(context, context.loc.trailerNumberFormatError);
             break;
-          case TrailerActionFailure.alreadyExists:
+          case FormListFailure.alreadyExists:
             AppFeedback.error(context, context.loc.trailerAlreadyExists);
             _controller.clear();
             break;
@@ -48,7 +53,7 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
       }
     });
 
-    final trailers = ref.watch(trailersProvider).trailers;
+    final trailers = ref.watch(trailersProvider).items;
 
     return FormListEditorView(
       title: context.loc.trailers,
@@ -62,9 +67,9 @@ class _TrailersPageState extends ConsumerState<TrailersPage> {
         ),
       ],
       onAdd: () =>
-          ref.read(trailersProvider.notifier).addTrailer(_controller.text),
+          ref.read(trailersProvider.notifier).addItem(_controller.text),
       onRemove: (trailer) =>
-          ref.read(trailersProvider.notifier).removeTrailer(trailer),
+          ref.read(trailersProvider.notifier).removeItem(trailer),
     );
   }
 }

@@ -39,13 +39,10 @@ class RulesScreenRepository {
       update: request.toJson(),
     );
 
-    return result.fold(
-      (failure) => err(failure),
-      (model) async {
-        await _cache.saveRulesScreen(model, driverId: driverId);
-        return ok(model);
-      },
-    );
+    return result.fold((failure) => err(failure), (model) async {
+      await _cache.saveRulesScreen(model, driverId: driverId);
+      return ok(model);
+    });
   }
 
   static bool _isOfflineFailure(AppError failure) {

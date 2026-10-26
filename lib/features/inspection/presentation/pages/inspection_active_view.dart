@@ -53,9 +53,9 @@ class InspectionActiveView extends ConsumerWidget {
         EldDatePaginator(
           dateLabel: _dayLabel(state),
           isLoading: state.isDayLoading,
-          backgroundColor: context.gold.withValues(alpha: 0.05),
-          textColor: context.styles.bodyBold.color,
-          iconColor: context.theme.iconTheme.color ?? context.styles.body.color,
+          // بلا إعادة تلوين: هوية المكوّن (الشريط الداكن الدائم + أبيض)
+          // نفس معاينة التفتيش — الصبغة الذهبية الفاتحة كانت تجاوزاً
+          // من موضع الاستدعاء (بلاغ المالك 2026-10-26).
           // ترتيب cycle: index 0 = الأحدث. الأيسر = يوم أقدم (index+1)
           // والأيمن = يوم أحدث (index-1) — فهارس مطلقة لا دلتا نسبية.
           canGoOlder: state.selectedDayIndex < state.cycle.length - 1,
@@ -103,7 +103,9 @@ class InspectionActiveView extends ConsumerWidget {
                               .map(
                                 (e) => EldTableRow(
                                   time: e.timeEt,
-                                  status: e.eventCode,
+                                  status: e.description.isNotEmpty
+                                      ? e.description
+                                      : e.eventCode,
                                   location: e.location,
                                   odom: e.odometer <= 0
                                       ? '—'
@@ -112,6 +114,7 @@ class InspectionActiveView extends ConsumerWidget {
                                       ? '—'
                                       : e.engineHours.toStringAsFixed(1),
                                   src: e.origin,
+                                  notes: e.notes,
                                   statusColor: null,
                                 ),
                               )
@@ -120,7 +123,9 @@ class InspectionActiveView extends ConsumerWidget {
                       ],
                       const SizedBox(height: AppSpacing.lg),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
                         child: AppButton(
                           label: context.loc.driverExit,
                           type: EldButtonType.danger,

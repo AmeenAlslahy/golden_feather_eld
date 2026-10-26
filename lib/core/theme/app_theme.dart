@@ -39,13 +39,22 @@ class AppTheme {
       onError: AppColors.surface,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
+      // ---- تثبيت الأدوار المشغّلة (كانت تسقط على surface/onSurface عبر
+      // getters خاصة بنسخة Flutter — القيم هنا = الحالية حرفياً،
+      // والتثبيت يحصّنها ضد تغيّر آلية الاشتقاق في ترقيات قادمة).
+      surfaceContainerLow: AppColors.surface,
+      surfaceContainer: AppColors.surface,
+      surfaceContainerHigh: AppColors.surface,
+      surfaceContainerHighest: AppColors.surface,
+      outline: AppColors.textPrimary,
+      outlineVariant: AppColors.textPrimary,
     ),
     // خلفية واحدة لكل الصفحات؛ البطاقات والحاويات بيضاء فوقها بحدّ `border`.
     // لا تضع `backgroundColor` على Scaffold في الشاشات.
     scaffoldBackgroundColor: AppColors.background,
     splashFactory: PressFeedback.splashFactory,
     splashColor: PressFeedback.ink,
-    highlightColor: Colors.black.withValues(alpha: 0.06),
+    highlightColor: AppColors.inkOverlay.withValues(alpha: 0.06),
     textTheme: AppTypography.lightTextTheme,
     iconTheme: const IconThemeData(color: AppColors.textPrimary),
 
@@ -69,7 +78,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: AppColors.surface,
       elevation: 0.5,
-      shadowColor: Colors.black.withValues(alpha: 0.05),
+      shadowColor: AppColors.inkOverlay.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
@@ -289,7 +298,7 @@ class AppTheme {
         if (states.contains(WidgetState.selected)) {
           return AppColors.primaryGold;
         }
-        return const Color(0xFFC7C7CC);
+        return AppColors.radioInactive;
       }),
     ),
   );
@@ -307,6 +316,16 @@ class AppTheme {
       surface: AppColors.surfaceDark,
       onSurface: AppColors.darkTextPrimary,
       onSurfaceVariant: AppColors.darkTextSecondary,
+      // ---- تثبيت الأدوار: الحاويات = قيمها الحالية (surfaceDark)؛
+      // outline كان يسقط على onSurface (أبيض صريح) — يثبَّت على
+      // darkBorder الحدودي الصحيح (مواضع الحدود هجرت الدور أصلًا،
+      // وهذا يحمي أي استخدام مستقبلي).
+      surfaceContainerLow: AppColors.surfaceDark,
+      surfaceContainer: AppColors.surfaceDark,
+      surfaceContainerHigh: AppColors.surfaceDark,
+      surfaceContainerHighest: AppColors.surfaceDark,
+      outline: AppColors.darkBorder,
+      outlineVariant: AppColors.darkBorder,
     ),
     scaffoldBackgroundColor: AppColors.darkBackground,
     textTheme: AppTypography.darkTextTheme,
@@ -384,10 +403,15 @@ class AppTheme {
         return null;
       }),
     ),
-    dividerTheme: light.dividerTheme.copyWith(color: const Color(0xFF48484A)),
+    // فقاعة الرسائل: كانت بنفس هيكس الخلفية الداكنة (0D0D0D على 0D0D0D)
+    // فلا جسم مرئي لها — سطح البطاقات/الحوارات الداكن يفصلها كأقرانها.
+    snackBarTheme: light.snackBarTheme.copyWith(
+      backgroundColor: AppColors.surfaceDark,
+    ),
+    dividerTheme: light.dividerTheme.copyWith(color: AppColors.darkDivider),
     // بدونهما يرث الداكن قيم الفاتح (رمادي داكن على أسود) فتبدو
     // النصوص والأدوات المعتمدة عليهما باهتة — بلاغ الوضع الغامق.
     hintColor: AppColors.darkTextSecondary,
-    disabledColor: const Color(0xFF8E8E93),
+    disabledColor: AppColors.navBarInactive, // نفس القيمة الأصلية
   );
 }

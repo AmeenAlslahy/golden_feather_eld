@@ -437,7 +437,7 @@ void main() {
         expect(find.text('DASH-DOC'), findsNothing);
 
         // تعديل المقطورات من صفحتها يبقى على هذا السجل وحده.
-        container.read(trailersProvider.notifier).addTrailer('NEW-T');
+        container.read(trailersProvider.notifier).addItem('NEW-T');
         await tester.pumpAndSettle();
         expect(find.text('SRV-1, NEW-T'), findsOneWidget);
 

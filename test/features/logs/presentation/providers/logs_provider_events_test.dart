@@ -31,12 +31,12 @@ void main() {
   );
 
   LogEvent ev(String id, String status, int minutes) => LogEvent(
-        id: id,
-        status: status,
-        startTime: DateTime(2026, 9, 24, 8),
-        duration: Duration(minutes: minutes),
-        location: 'x',
-      );
+    id: id,
+    status: status,
+    startTime: DateTime(2026, 9, 24, 8),
+    duration: Duration(minutes: minutes),
+    location: 'x',
+  );
 
   setUpAll(() {
     registerFallbackValue(const DailyLogId(0));
@@ -46,23 +46,25 @@ void main() {
 
   setUp(() {
     repo = _MockLogRepository();
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => Right(DailyLogPage(logs: [day])));
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => Right(DailyLogPage(logs: [day])));
     // تفاصيل الخادم تُجلب الآن عند selectLog — هذه الاختبارات تخص الأحداث.
-    when(() => repo.getLogById(any())).thenAnswer(
-      (_) async => const Left(NetworkFailure()),
-    );
+    when(
+      () => repo.getLogById(any()),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
     // وكذلك نموذج اليوم — لا نموذج محفوظ في سياق هذه الاختبارات.
-    when(() => repo.getForm(any())).thenAnswer(
-      (_) async => const Right(null),
+    when(() => repo.getForm(any())).thenAnswer((_) async => const Right(null));
+    container = ProviderContainer(
+      overrides: [
+        logRepositoryProvider.overrideWithValue(repo),
+        currentDriverIdProvider.overrideWithValue(106),
+      ],
     );
-    container = ProviderContainer(overrides: [
-      logRepositoryProvider.overrideWithValue(repo),
-      currentDriverIdProvider.overrideWithValue(106),
-    ]);
     final sub = container.listen(logsProvider, (_, __) {});
     addTearDown(() {
       sub.close();
@@ -70,26 +72,29 @@ void main() {
     });
   });
 
-  test('selectLog fetches events for that log id and fills selectedLog',
-      () async {
-    when(() => repo.getEvents(any(), any())).thenAnswer(
-        (_) async => Right([ev('1', 'OFF', 480), ev('2', 'D', 120)]));
+  test(
+    'selectLog fetches events for that log id and fills selectedLog',
+    () async {
+      when(() => repo.getEvents(any(), any())).thenAnswer(
+        (_) async => Right([ev('1', 'OFF', 480), ev('2', 'D', 120)]),
+      );
 
-    final notifier = container.read(logsProvider.notifier);
-    await Future<void>.delayed(Duration.zero);
-    notifier.selectLog(day);
-    expect(container.read(logsProvider).isLoadingEvents, isTrue);
+      final notifier = container.read(logsProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      notifier.selectLog(day);
+      expect(container.read(logsProvider).isLoadingEvents, isTrue);
 
-    await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
 
-    final state = container.read(logsProvider);
-    expect(state.isLoadingEvents, isFalse);
-    expect(state.eventsError, isNull);
-    expect(state.selectedLog!.events.map((e) => e.status), ['OFF', 'D']);
-    // The list copy is kept in sync (single source of truth).
-    expect(state.logs.single.events.length, 2);
-    verify(() => repo.getEvents(const DailyLogId(42), day.date)).called(1);
-  });
+      final state = container.read(logsProvider);
+      expect(state.isLoadingEvents, isFalse);
+      expect(state.eventsError, isNull);
+      expect(state.selectedLog!.events.map((e) => e.status), ['OFF', 'D']);
+      // The list copy is kept in sync (single source of truth).
+      expect(state.logs.single.events.length, 2);
+      verify(() => repo.getEvents(const DailyLogId(42), day.date)).called(1);
+    },
+  );
 
   test('failure is exposed as eventsError and retry reloads', () async {
     var calls = 0;
@@ -116,31 +121,44 @@ void main() {
     expect(state.selectedLog!.events.single.status, 'ON');
   });
 
-  test('updateEvent forwards the mandatory reason and refreshes from server',
-      () async {
-    when(() => repo.getEvents(any(), any()))
-        .thenAnswer((_) async => Right([ev('7', 'OFF', 60)]));
-    // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
-    when(() => repo.updateEvent(any(),
-        reason: any(named: 'reason'),
-        logId: any(named: 'logId'),
-        ownerDriverId: any(named: 'ownerDriverId'))).thenAnswer((_) async => Right(ev('7', 'SB', 60)));
+  test(
+    'updateEvent forwards the mandatory reason and refreshes from server',
+    () async {
+      when(
+        () => repo.getEvents(any(), any()),
+      ).thenAnswer((_) async => Right([ev('7', 'OFF', 60)]));
+      // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
+      when(
+        () => repo.updateEvent(
+          any(),
+          reason: any(named: 'reason'),
+          logId: any(named: 'logId'),
+          ownerDriverId: any(named: 'ownerDriverId'),
+        ),
+      ).thenAnswer((_) async => Right(ev('7', 'SB', 60)));
 
-    final notifier = container.read(logsProvider.notifier);
-    await Future<void>.delayed(Duration.zero);
-    notifier.selectLog(day);
-    await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(logsProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      notifier.selectLog(day);
+      await Future<void>.delayed(Duration.zero);
 
-    final ok = await notifier.updateEvent(ev('7', 'SB', 60),
-        reason: 'Wrong status selected');
-    await Future<void>.delayed(Duration.zero);
-
-    expect(ok.isRight(), isTrue);
-    verify(() => repo.updateEvent(any(),
+      final ok = await notifier.updateEvent(
+        ev('7', 'SB', 60),
         reason: 'Wrong status selected',
-        logId: const DailyLogId(42),
-        ownerDriverId: any(named: 'ownerDriverId'))).called(1);
-    // Initial load + refresh after the edit.
-    verify(() => repo.getEvents(any(), any())).called(2);
-  });
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(ok.isRight(), isTrue);
+      verify(
+        () => repo.updateEvent(
+          any(),
+          reason: 'Wrong status selected',
+          logId: const DailyLogId(42),
+          ownerDriverId: any(named: 'ownerDriverId'),
+        ),
+      ).called(1);
+      // Initial load + refresh after the edit.
+      verify(() => repo.getEvents(any(), any())).called(2);
+    },
+  );
 }

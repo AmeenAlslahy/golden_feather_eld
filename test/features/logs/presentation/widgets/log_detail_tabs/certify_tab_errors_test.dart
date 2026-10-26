@@ -18,7 +18,8 @@ class _Repo extends Mock implements LogRepository {}
 class _Locale extends StateNotifier<Locale> implements LocaleNotifier {
   _Locale(super.state);
   @override
-  Future<void> setLocale(String languageCode) async => state = Locale(languageCode);
+  Future<void> setLocale(String languageCode) async =>
+      state = Locale(languageCode);
 }
 
 /// Certify tab failure copy: the driver sees a sentence in the app language,
@@ -57,30 +58,38 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('readiness failure in Arabic shows Arabic, not the English fixed text',
-      (tester) async {
-    final repo = _Repo();
-    when(() => repo.getReadiness(any())).thenAnswer((_) async =>
-        const Left(ServerFailure(message: 'Exception: An unexpected error occurred')));
+  testWidgets(
+    'readiness failure in Arabic shows Arabic, not the English fixed text',
+    (tester) async {
+      final repo = _Repo();
+      when(() => repo.getReadiness(any())).thenAnswer(
+        (_) async => const Left(
+          ServerFailure(message: 'Exception: An unexpected error occurred'),
+        ),
+      );
 
-    await pump(tester, repo, 'ar');
+      await pump(tester, repo, 'ar');
 
-    expect(find.text('An unexpected error occurred'), findsNothing);
-    expect(find.text('تعذر إكمال الطلب. أعد المحاولة.'), findsOneWidget);
-  });
+      expect(find.text('An unexpected error occurred'), findsNothing);
+      expect(find.text('تعذر إكمال الطلب. أعد المحاولة.'), findsOneWidget);
+    },
+  );
 
-  testWidgets('offline readiness shows the no-internet sentence, not "noInternet"',
-      (tester) async {
-    final repo = _Repo();
-    when(() => repo.getReadiness(any()))
-        .thenAnswer((_) async => const Left(NetworkFailure()));
+  testWidgets(
+    'offline readiness shows the no-internet sentence, not "noInternet"',
+    (tester) async {
+      final repo = _Repo();
+      when(
+        () => repo.getReadiness(any()),
+      ).thenAnswer((_) async => const Left(NetworkFailure()));
 
-    await pump(tester, repo, 'en');
+      await pump(tester, repo, 'en');
 
-    expect(find.text('noInternet'), findsNothing);
-    expect(
-      find.text('No internet connection. Check the network and try again.'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('noInternet'), findsNothing);
+      expect(
+        find.text('No internet connection. Check the network and try again.'),
+        findsOneWidget,
+      );
+    },
+  );
 }

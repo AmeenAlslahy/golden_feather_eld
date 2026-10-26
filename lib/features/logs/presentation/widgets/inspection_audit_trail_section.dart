@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../../core/error/user_facing_message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -38,8 +40,11 @@ class InspectionAuditTrailSection extends ConsumerWidget {
               );
             },
             loading: () => const CircularProgressIndicator(),
-            error: (error, _) =>
-                Text(context.loc.transferAuditNotLoaded(error.toString())),
+            error: (error, _) => Text(
+              context.loc.transferAuditNotLoaded(
+                anyErrorUserMessage(error, loc: context.loc),
+              ),
+            ),
           ),
         ],
       ),

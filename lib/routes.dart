@@ -23,6 +23,7 @@ class AppRoutes {
   static const String status = '/status';
   static const String logs = '/logs';
   static const String logDetail = '/logs/:id';
+  static String logDetailPath(Object id) => '/logs/$id';
   static const String editLog = '/logs/:id/edit';
   static const String dvir = '/dvir';
   static const String dvirForm = '/dvir/create';

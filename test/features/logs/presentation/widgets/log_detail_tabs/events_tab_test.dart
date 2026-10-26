@@ -16,8 +16,7 @@ class _Repo extends Mock implements LogRepository {}
 /// driver may edit (manual ON/OFF/SB); automatically recorded driving and
 /// server-locked events show no edit affordance at all.
 void main() {
-  LogEvent ev(String id, String status,
-          {bool? automated, bool? editable}) =>
+  LogEvent ev(String id, String status, {bool? automated, bool? editable}) =>
       LogEvent(
         id: id,
         status: status,
@@ -49,8 +48,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('automatic driving has no pencil; manual events do',
-      (tester) async {
+  testWidgets('automatic driving has no pencil; manual events do', (
+    tester,
+  ) async {
     final log = DailyLog(
       id: const DailyLogId(1),
       date: DateTime(2026, 9, 24),
@@ -69,8 +69,9 @@ void main() {
     expect(find.byIcon(Icons.edit), findsNWidgets(2));
   });
 
-  testWidgets('hour totals per status are shown under the graph (SRS 5.2)',
-      (tester) async {
+  testWidgets('hour totals per status are shown under the graph (SRS 5.2)', (
+    tester,
+  ) async {
     final log = DailyLog(
       id: const DailyLogId(1),
       date: DateTime(2026, 9, 24),
@@ -99,7 +100,8 @@ void main() {
     await pump(tester, log);
 
     final totals = find.byKey(const Key('events_status_totals'));
-    Finder inTotals(String t) => find.descendant(of: totals, matching: find.text(t));
+    Finder inTotals(String t) =>
+        find.descendant(of: totals, matching: find.text(t));
     expect(inTotals('8h 45m'), findsOneWidget); // OFF + PC
     expect(inTotals('0h 30m'), findsOneWidget); // D
     expect(inTotals('0h 00m'), findsNWidgets(2)); // SB, ON
@@ -108,8 +110,9 @@ void main() {
     expect(find.text('Started: 9/23/2026'), findsOneWidget);
   });
 
-  testWidgets('server-locked manual event has no pencil either',
-      (tester) async {
+  testWidgets('server-locked manual event has no pencil either', (
+    tester,
+  ) async {
     final log = DailyLog(
       id: const DailyLogId(1),
       date: DateTime(2026, 9, 24),

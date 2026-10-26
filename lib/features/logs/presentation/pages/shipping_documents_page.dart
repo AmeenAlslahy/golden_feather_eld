@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/form_list_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../providers/shipping_documents_provider.dart';
@@ -26,27 +27,26 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<ShippingDocumentsState>(shippingDocumentsProvider, (
-      previous,
-      next,
-    ) {
-      if (next.event == ShippingDocumentEvent.addedSuccessfully) {
+    ref.listen<FormListState>(shippingDocumentsProvider, (previous, next) {
+      if (next.event == FormListEvent.addedSuccessfully) {
         _controller.clear();
-      } else if (next.event == ShippingDocumentEvent.failed) {
+      } else if (next.event == FormListEvent.failed) {
         switch (next.failure) {
-          case ShippingDocumentActionFailure.empty:
+          case FormListFailure.empty:
             AppFeedback.error(context, context.loc.enterDocumentNumber);
             break;
-          case ShippingDocumentActionFailure.tooLong:
+          case FormListFailure.tooLong:
+          // حد العدد غير مفعل لوثائق الشحن — مُجمَّع هنا لاستنفاء النوع المشترك.
+          case FormListFailure.limitReached:
             AppFeedback.error(context, context.loc.documentNumberTooLong);
             break;
-          case ShippingDocumentActionFailure.containsComma:
+          case FormListFailure.containsComma:
             AppFeedback.error(context, context.loc.oneDocumentAtATime);
             break;
-          case ShippingDocumentActionFailure.invalidFormat:
+          case FormListFailure.invalidFormat:
             AppFeedback.error(context, context.loc.shippingDocumentFormatError);
             break;
-          case ShippingDocumentActionFailure.alreadyExists:
+          case FormListFailure.alreadyExists:
             _controller.clear();
             break;
           case null:
@@ -55,7 +55,7 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
       }
     });
 
-    final docs = ref.watch(shippingDocumentsProvider).documents;
+    final docs = ref.watch(shippingDocumentsProvider).items;
 
     return FormListEditorView(
       title: context.loc.shippingDocuments,
@@ -71,9 +71,9 @@ class _ShippingDocumentsPageState extends ConsumerState<ShippingDocumentsPage> {
       ],
       onAdd: () => ref
           .read(shippingDocumentsProvider.notifier)
-          .addDocument(_controller.text),
+          .addItem(_controller.text),
       onRemove: (doc) =>
-          ref.read(shippingDocumentsProvider.notifier).removeDocument(doc),
+          ref.read(shippingDocumentsProvider.notifier).removeItem(doc),
     );
   }
 }

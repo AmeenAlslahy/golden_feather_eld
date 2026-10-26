@@ -72,50 +72,64 @@ void main() {
       expect(entity.trailers, isEmpty);
     });
 
-    test('missing logDate throws FormatException, does not silently become now', () {
-      final json = {
-        'id': 1,
-        'uniqueId': 'T-1',
-        // 'logDate' is missing
-      };
+    test(
+      'missing logDate throws FormatException, does not silently become now',
+      () {
+        final json = {
+          'id': 1,
+          'uniqueId': 'T-1',
+          // 'logDate' is missing
+        };
 
-      expect(() => DailyLogDto.fromJson(json), throwsA(isA<FormatException>()));
-    });
+        expect(
+          () => DailyLogDto.fromJson(json),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
 
-    test('invalid logDate throws FormatException, does not silently become now', () {
-      final json = {
-        'id': 1,
-        'uniqueId': 'T-1',
-        'logDate': 'INVALID_DATE',
-      };
+    test(
+      'invalid logDate throws FormatException, does not silently become now',
+      () {
+        final json = {'id': 1, 'uniqueId': 'T-1', 'logDate': 'INVALID_DATE'};
 
-      final dto = DailyLogDto.fromJson(json);
-      expect(() => dto.toEntity(), throwsA(isA<FormatException>()));
-    });
+        final dto = DailyLogDto.fromJson(json);
+        expect(() => dto.toEntity(), throwsA(isA<FormatException>()));
+      },
+    );
 
-    test('COMPLETE and DRAFT formStatus are parsed correctly into entities', () {
-      final completeEntity = DailyLogDto.fromJson({
-        'id': 10,
-        'logDate': '2026-10-14',
-        'formStatus': 'COMPLETE',
-        'certificationStatus': 'CERTIFIED',
-      }).toEntity();
-      expect(completeEntity.formStatus, FormStatus.completed);
-      expect(completeEntity.isFormComplete, isTrue);
-      expect(completeEntity.certificationStatus, CertificationStatus.certified);
-      expect(completeEntity.isCertified, isTrue);
+    test(
+      'COMPLETE and DRAFT formStatus are parsed correctly into entities',
+      () {
+        final completeEntity = DailyLogDto.fromJson({
+          'id': 10,
+          'logDate': '2026-10-14',
+          'formStatus': 'COMPLETE',
+          'certificationStatus': 'CERTIFIED',
+        }).toEntity();
+        expect(completeEntity.formStatus, FormStatus.completed);
+        expect(completeEntity.isFormComplete, isTrue);
+        expect(
+          completeEntity.certificationStatus,
+          CertificationStatus.certified,
+        );
+        expect(completeEntity.isCertified, isTrue);
 
-      final draftEntity = DailyLogDto.fromJson({
-        'id': 11,
-        'logDate': '2026-10-14',
-        'formStatus': 'DRAFT',
-        'certificationStatus': 'NOT_READY',
-      }).toEntity();
-      expect(draftEntity.formStatus, FormStatus.incomplete);
-      expect(draftEntity.isFormComplete, isFalse);
-      expect(draftEntity.certificationStatus, CertificationStatus.uncertified);
-      expect(draftEntity.isCertified, isFalse);
-    });
+        final draftEntity = DailyLogDto.fromJson({
+          'id': 11,
+          'logDate': '2026-10-14',
+          'formStatus': 'DRAFT',
+          'certificationStatus': 'NOT_READY',
+        }).toEntity();
+        expect(draftEntity.formStatus, FormStatus.incomplete);
+        expect(draftEntity.isFormComplete, isFalse);
+        expect(
+          draftEntity.certificationStatus,
+          CertificationStatus.uncertified,
+        );
+        expect(draftEntity.isCertified, isFalse);
+      },
+    );
 
     test('formIndicator object with color GREEN resolves to completed', () {
       final entity = DailyLogDto.fromJson({
@@ -135,39 +149,38 @@ void main() {
       final entity = DailyLogDto.fromJson({
         'id': 13,
         'logDate': '2026-10-14',
-        'formIndicator': {
-          'status': 'DRAFT',
-          'color': 'RED',
-          'positive': false,
-        },
+        'formIndicator': {'status': 'DRAFT', 'color': 'RED', 'positive': false},
       }).toEntity();
       expect(entity.formStatus, FormStatus.incomplete);
       expect(entity.isFormComplete, isFalse);
     });
 
-    test('documented READY/REVOKED certificationStatus and INVALID formStatus map correctly', () {
-      final ready = DailyLogDto.fromJson({
-        'id': 20,
-        'logDate': '2026-10-16',
-        'formStatus': 'COMPLETE',
-        'certificationStatus': 'READY',
-      }).toEntity();
-      expect(ready.certificationStatus, CertificationStatus.uncertified);
-      expect(ready.isCertified, isFalse);
+    test(
+      'documented READY/REVOKED certificationStatus and INVALID formStatus map correctly',
+      () {
+        final ready = DailyLogDto.fromJson({
+          'id': 20,
+          'logDate': '2026-10-16',
+          'formStatus': 'COMPLETE',
+          'certificationStatus': 'READY',
+        }).toEntity();
+        expect(ready.certificationStatus, CertificationStatus.uncertified);
+        expect(ready.isCertified, isFalse);
 
-      final revoked = DailyLogDto.fromJson({
-        'id': 21,
-        'logDate': '2026-10-16',
-        'formStatus': 'INVALID',
-        'certificationStatus': 'REVOKED',
-      }).toEntity();
-      expect(revoked.formStatus, FormStatus.incomplete);
-      expect(revoked.isFormComplete, isFalse);
-      expect(
-        revoked.certificationStatus,
-        CertificationStatus.reCertificationRequired,
-      );
-      expect(revoked.isCertified, isFalse);
-    });
+        final revoked = DailyLogDto.fromJson({
+          'id': 21,
+          'logDate': '2026-10-16',
+          'formStatus': 'INVALID',
+          'certificationStatus': 'REVOKED',
+        }).toEntity();
+        expect(revoked.formStatus, FormStatus.incomplete);
+        expect(revoked.isFormComplete, isFalse);
+        expect(
+          revoked.certificationStatus,
+          CertificationStatus.reCertificationRequired,
+        );
+        expect(revoked.isCertified, isFalse);
+      },
+    );
   });
 }

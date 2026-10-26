@@ -5176,6 +5176,12 @@ abstract class AppLocalizations {
   /// **'سجلات التفتيش'**
   String get inspectionLogsTitle;
 
+  /// No description provided for @inspectionPreview.
+  ///
+  /// In ar, this message translates to:
+  /// **'معاينة التفتيش'**
+  String get inspectionPreview;
+
   /// No description provided for @dvirActiveDefectsTitle.
   ///
   /// In ar, this message translates to:
@@ -6063,6 +6069,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ملائمة العرض (100%)'**
   String get fitWidth;
+
+  /// No description provided for @inspectionFallbackGuidance.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعرض هذه الشاشة لمفتش السلامة عند الطلب.'**
+  String get inspectionFallbackGuidance;
+
+  /// No description provided for @inspectionHandOverNotice.
+  ///
+  /// In ar, this message translates to:
+  /// **'سلّم الجهاز لمفتش السلامة'**
+  String get inspectionHandOverNotice;
 }
 
 class _AppLocalizationsDelegate

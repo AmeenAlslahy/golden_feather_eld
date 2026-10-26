@@ -10,6 +10,7 @@ class EldTableRow {
   final String odom;
   final String eng;
   final String src;
+  final String? notes;
   final Color? statusColor;
 
   const EldTableRow({
@@ -19,10 +20,12 @@ class EldTableRow {
     required this.odom,
     required this.eng,
     required this.src,
+    this.notes,
     this.statusColor,
   });
 }
 
+/// Official dense RODS events table (FMCSA 49 CFR 395.8).
 class EldEventsTable extends StatelessWidget {
   const EldEventsTable({super.key, required this.rows});
 
@@ -39,107 +42,110 @@ class EldEventsTable extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        // Header
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+    final headerStyle = context.styles.caption.copyWith(
+      fontSize: 11.5,
+      fontWeight: AppTypography.bold,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      height: 1.25,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const minTableWidth = 620.0;
+        final tableWidth = constraints.maxWidth > minTableWidth
+            ? constraints.maxWidth
+            : minTableWidth;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: tableWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        child: Text('Time (ET)', style: headerStyle),
+                      ),
+                      SizedBox(
+                        width: 110,
+                        child: Text('Code', style: headerStyle),
+                      ),
+                      Expanded(child: Text('Location', style: headerStyle)),
+                      SizedBox(
+                        width: 80,
+                        child: Text('Odometer', style: headerStyle),
+                      ),
+                      SizedBox(
+                        width: 75,
+                        child: Text('Engine Hours', style: headerStyle),
+                      ),
+                      SizedBox(
+                        width: 65,
+                        child: Text('Origin', style: headerStyle),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text('Notes', style: headerStyle),
+                      ),
+                    ],
+                  ),
+                ),
+                // Rows
+                for (var i = 0; i < rows.length; i++)
+                  _EventRow(row: rows[i], isEven: i.isEven),
+              ],
+            ),
           ),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 60,
-                child: Text(
-                  context.loc.time,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  context.loc.status,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  context.loc.location,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 60,
-                child: Text(
-                  context.loc.odom,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 55,
-                child: Text(
-                  context.loc.eng,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 40,
-                child: Text(
-                  context.loc.src,
-                  style: context.styles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Rows
-        ...rows.map((row) => _EventRow(row: row)),
-      ],
+        );
+      },
     );
   }
 }
 
 class _EventRow extends StatelessWidget {
   final EldTableRow row;
-  const _EventRow({required this.row});
+  final bool isEven;
+  const _EventRow({required this.row, required this.isEven});
 
   @override
   Widget build(BuildContext context) {
-    final valueStyle = context.styles.caption.copyWith(height: 1.3);
+    final valueStyle = context.styles.caption.copyWith(
+      fontSize: 11.5,
+      fontWeight: AppTypography.regular,
+      color: Theme.of(context).colorScheme.onSurface,
+      height: 1.3,
+    );
+
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
+        color: isEven
+            ? cs.surface
+            : cs.surfaceContainerHighest.withValues(alpha: 0.35),
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.35),
           ),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 60, child: Text(row.time, style: valueStyle)),
-          Expanded(
-            flex: 2,
+          SizedBox(width: 100, child: Text(row.time, style: valueStyle)),
+          SizedBox(
+            width: 110,
             child: Text(
               row.status,
               style: valueStyle.copyWith(
@@ -149,7 +155,6 @@ class _EventRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 3,
             child: Text(
               row.location,
               style: valueStyle,
@@ -157,12 +162,21 @@ class _EventRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          SizedBox(width: 60, child: Text(row.odom, style: valueStyle)),
-          SizedBox(width: 55, child: Text(row.eng, style: valueStyle)),
+          SizedBox(width: 80, child: Text(row.odom, style: valueStyle)),
+          SizedBox(width: 75, child: Text(row.eng, style: valueStyle)),
           SizedBox(
-            width: 40,
+            width: 65,
             child: Text(
               row.src,
+              style: valueStyle.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(
+              row.notes ?? '',
               style: valueStyle.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

@@ -59,12 +59,12 @@ void main() {
         ),
       );
 
-      // Log Date should be formatted as yyyy-MM-dd from logDate
-      expect(find.text('2026-10-13'), findsOneWidget);
-      // Display Date should be the display date
-      expect(find.text('2026-10-14'), findsOneWidget);
+      // Log Date formatted as MMMM d, yyyy
+      expect(find.text('October 13, 2026'), findsOneWidget);
+      // Display Date formatted as MMMM d, yyyy
+      expect(find.text('October 14, 2026'), findsOneWidget);
       // Period 24 start time
-      expect(find.text('00:00:00'), findsOneWidget);
+      expect(find.text('00:00'), findsOneWidget);
     });
 
     testWidgets('extracts Log Date from DotInspectionCycleDay when log is absent', (tester) async {
@@ -109,8 +109,8 @@ void main() {
         ),
       );
 
-      expect(find.text('2026-10-12'), findsOneWidget);
-      expect(find.text('2026-10-14'), findsOneWidget);
+      expect(find.text('October 12, 2026'), findsOneWidget);
+      expect(find.text('October 14, 2026'), findsOneWidget);
     });
   });
 }

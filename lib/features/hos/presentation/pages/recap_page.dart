@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/duration_format.dart';
@@ -114,7 +115,7 @@ class RecapPage extends ConsumerWidget {
     final titleColor = isTotal
         ? context.styles.body.color
         : context.styles.subtitle.color;
-    final titleWeight = isTotal ? FontWeight.w600 : FontWeight.w500;
+    final titleWeight = isTotal ? AppTypography.semiBold : AppTypography.medium;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -159,7 +160,9 @@ class RecapPage extends ConsumerWidget {
               textAlign: TextAlign.end,
               style: context.styles.body.copyWith(
                 color: context.styles.body.color,
-                fontWeight: isTotal ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isTotal
+                    ? AppTypography.semiBold
+                    : AppTypography.regular,
               ),
             ),
           ),

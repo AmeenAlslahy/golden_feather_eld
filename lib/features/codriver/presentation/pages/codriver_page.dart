@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -90,7 +91,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         children: [
                           Text(
                             loc.coDriverSelectLabel,
-                            style: context.styles.bodyBold,
+                            style: context.styles.sectionTitle,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
@@ -113,10 +114,11 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                 vertical: AppSpacing.md,
                               ),
                               decoration: BoxDecoration(
+                                // حد سفلي = دور الفاصل الثيمي (كان دور
+                                // outline الأبيض في الداكن وحدًا أثقل من
+                                // كل فواصل التطبيق في الفاتح).
                                 border: Border(
-                                  bottom: BorderSide(
-                                    color: context.colorScheme.outline,
-                                  ),
+                                  bottom: BorderSide(color: context.divider),
                                 ),
                               ),
                               child: Row(
@@ -132,7 +134,9 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                         ),
                                         loc,
                                       ).toUpperCase(),
-                                      style: context.styles.pageTitle,
+                                      // عنوان اختيار لا عنوان صفحة —
+                                      // وزن الترويسات الموحد (كان 24).
+                                      style: context.styles.sectionTitle,
                                     ),
                                   ),
                                   Icon(
@@ -154,7 +158,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                         children: [
                           Text(
                             loc.coDriverSwitchDrivers,
-                            style: context.styles.bodyBold,
+                            style: context.styles.sectionTitle,
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
@@ -242,7 +246,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                               ).cancelButtonLabel,
                                             ),
                                           ),
-                                          FilledButton(
+                                          TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, true),
                                             child: Text(
@@ -290,7 +294,7 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                             style: context.styles.success,
                                           ),
                                           actions: [
-                                            FilledButton(
+                                            TextButton(
                                               onPressed: () =>
                                                   Navigator.pop(dialogContext),
                                               child: Text(
@@ -351,10 +355,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
               title: Text(
                 context.loc.coDriver,
                 style: context.styles.body.copyWith(
-                  fontWeight: FontWeight.normal,
+                  fontWeight: AppTypography.regular,
                 ),
               ),
-              contentPadding: const EdgeInsets.only(top: 16),
+              contentPadding: const EdgeInsets.only(top: AppSpacing.md),
               content: SizedBox(
                 width: double.maxFinite,
                 child: RadioGroup<String>(
@@ -483,7 +487,7 @@ class _LinkedCoDriver extends StatelessWidget {
         : null;
     return Column(
       children: [
-        Text(loc.coDriverLinkedTitle, style: context.styles.bodyBold),
+        Text(loc.coDriverLinkedTitle, style: context.styles.sectionTitle),
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,

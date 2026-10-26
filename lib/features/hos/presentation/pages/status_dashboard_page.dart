@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/user_facing_message.dart';
@@ -64,8 +66,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
   }
 
   Duration _computeElapsed() {
-    final snapshotTimestamp =
-        ref.read(statusDashboardSnapshotTimestampProvider);
+    final snapshotTimestamp = ref.read(
+      statusDashboardSnapshotTimestampProvider,
+    );
     return computeElapsedSinceSnapshot(
       trustedTime: ref.read(trustedTimeProvider).currentTime,
       snapshotTimestamp: snapshotTimestamp,
@@ -74,14 +77,14 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
   }
 
   bool get _isRestDuty => CircularTimerLogic.isRestDuty(
-        widget.dashboard.currentDutyStatus,
-        widget.dashboard.currentDutyStatus.wire,
-      );
+    widget.dashboard.currentDutyStatus,
+    widget.dashboard.currentDutyStatus.wire,
+  );
 
   bool get _isActiveDuty => CircularTimerLogic.isActiveDuty(
-        widget.dashboard.currentDutyStatus,
-        _isRestDuty,
-      );
+    widget.dashboard.currentDutyStatus,
+    _isRestDuty,
+  );
 
   void _startTickerIfNeeded() {
     _ticker?.cancel();
@@ -130,16 +133,15 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
     );
     final cycleHours =
         widget.dashboard.regulatoryConstraints.ruleSet.cycleHours;
-    final statusLabel =
-        widget.dashboard.currentDutyStatus.displayName(context);
+    final statusLabel = widget.dashboard.currentDutyStatus.displayName(context);
 
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
-        padding: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
         child: Column(
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Expanded(
               child: MainCircularTimer(
                 circle: widget.dashboard.remainingCircle,
@@ -158,7 +160,7 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             // Reference layout: full-width table, no card inset.
             //
             // نفس `snapshotTimestamp` ونفس `_elapsedNotifier`:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_decorations.dart';
@@ -49,8 +50,8 @@ class UserManualPage extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title, BuildContext context) {
-    final lineColor =
-        (context.styles.body.color ?? context.textPrimary).withValues(alpha: 0.3);
+    final lineColor = (context.styles.body.color ?? context.textPrimary)
+        .withValues(alpha: 0.3);
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -124,15 +125,19 @@ class UserManualPage extends StatelessWidget {
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Divider(
-                            color: (context.styles.body.color ??
-                                    context.textPrimary)
-                                .withValues(alpha: 0.3),
+                            color:
+                                (context.styles.body.color ??
+                                        context.textPrimary)
+                                    .withValues(alpha: 0.3),
                           ),
                         ),
                       ],
                     ),
                     const Spacer(),
-                    Text('Golden Feather ELD', style: context.styles.pageTitle),
+                    Text(
+                      'Golden Feather ELD',
+                      style: context.styles.sectionTitle,
+                    ),
                     const Spacer(),
                     Container(
                       width: double.infinity,
@@ -197,10 +202,7 @@ class UserManualPage extends StatelessWidget {
         desc: loc.accessTheFleetManagerPortalToM,
       ),
       (title: loc.gpsTracking, desc: loc.trackYourVehicleSLocationIn),
-      (
-        title: loc.iftaCalculations,
-        desc: loc.automaticallyCalculateIftaData,
-      ),
+      (title: loc.iftaCalculations, desc: loc.automaticallyCalculateIftaData),
     ];
 
     return Padding(
@@ -268,7 +270,7 @@ class UserManualPage extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: context.styles.bodyBold,
+              style: context.styles.sectionTitle,
             ),
           ),
           Container(
@@ -532,7 +534,7 @@ class UserManualPage extends StatelessWidget {
               child: Text(
                 title,
                 style: context.styles.subtitle.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppTypography.semiBold,
                 ),
               ),
             ),

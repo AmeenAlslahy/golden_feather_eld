@@ -2721,6 +2721,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get inspectionLogsTitle => 'سجلات التفتيش';
 
   @override
+  String get inspectionPreview => 'معاينة التفتيش';
+
+  @override
   String get dvirActiveDefectsTitle => 'العيوب النشطة لمركبتك';
 
   @override
@@ -3198,4 +3201,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fitWidth => 'ملائمة العرض (100%)';
+
+  @override
+  String get inspectionFallbackGuidance =>
+      'اعرض هذه الشاشة لمفتش السلامة عند الطلب.';
+
+  @override
+  String get inspectionHandOverNotice => 'سلّم الجهاز لمفتش السلامة';
 }

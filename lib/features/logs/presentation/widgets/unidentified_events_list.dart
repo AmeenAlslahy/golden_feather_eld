@@ -126,7 +126,9 @@ class _UnidentifiedEventCard extends StatelessWidget {
           if (item.overdue)
             Text(
               context.loc.overdue,
-              style: context.styles.error.copyWith(fontWeight: FontWeight.bold),
+              style: context.styles.error.copyWith(
+                fontWeight: AppTypography.bold,
+              ),
             ),
           if (item.rejectionReason.isNotEmpty)
             Text(item.rejectionReason, style: context.styles.error),

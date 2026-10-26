@@ -33,17 +33,16 @@ void main() {
     bool form = false,
     bool certified = false,
     String work = '',
-  }) =>
-      DailyLog(
-        id: DailyLogId(id),
-        date: date,
-        formattedTotalWorkTime: work,
-        totalDrivingHours: 0,
-        isFormComplete: form,
-        isCertified: certified,
-        today: today,
-        requiresAction: requiresAction,
-      );
+  }) => DailyLog(
+    id: DailyLogId(id),
+    date: date,
+    formattedTotalWorkTime: work,
+    totalDrivingHours: 0,
+    isFormComplete: form,
+    isCertified: certified,
+    today: today,
+    requiresAction: requiresAction,
+  );
 
   Future<void> pump(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2340);
@@ -70,27 +69,36 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('renders server rows with the Today marker and chips',
-      (tester) async {
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => Right(DailyLogPage(logs: [
-          log(
-            id: 2,
-            date: DateTime(2026, 9, 24),
-            today: true,
-            work: '3h 15m',
-          ),
-          log(
-            id: 1,
-            date: DateTime(2026, 9, 23),
-            requiresAction: true,
-            form: true,
-            certified: true,
-          ),
-        ])));
+  testWidgets('renders server rows with the Today marker and chips', (
+    tester,
+  ) async {
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        DailyLogPage(
+          logs: [
+            log(
+              id: 2,
+              date: DateTime(2026, 9, 24),
+              today: true,
+              work: '3h 15m',
+            ),
+            log(
+              id: 1,
+              date: DateTime(2026, 9, 23),
+              requiresAction: true,
+              form: true,
+              certified: true,
+            ),
+          ],
+        ),
+      ),
+    );
 
     await pump(tester);
 
@@ -104,17 +112,19 @@ void main() {
     expect(find.text('Certify'), findsNWidgets(2));
     expect(find.byIcon(Icons.chevron_right), findsNWidgets(2));
     // Only the first page is requested, with the signed-in driver.
-    verify(() => repo.getDailyLogs(driverId: 106, page: 0, size: 20))
-        .called(1);
+    verify(() => repo.getDailyLogs(driverId: 106, page: 0, size: 20)).called(1);
   });
 
-  testWidgets('empty list shows No Records with a retry affordance',
-      (tester) async {
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => const Right(DailyLogPage.empty));
+  testWidgets('empty list shows No Records with a retry affordance', (
+    tester,
+  ) async {
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => const Right(DailyLogPage.empty));
 
     await pump(tester);
 
@@ -122,25 +132,30 @@ void main() {
     expect(find.byType(EldRetryView), findsOneWidget);
   });
 
-  testWidgets('failure shows a sanitized message and retry reloads',
-      (tester) async {
+  testWidgets('failure shows a sanitized message and retry reloads', (
+    tester,
+  ) async {
     var calls = 0;
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async {
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async {
       calls++;
       if (calls == 1) {
-        return const Left(ServerFailure(
-          message:
-              'DioException [bad response]: Hibernate could not extract ResultSet extension',
-          statusCode: 500,
-        ));
+        return const Left(
+          ServerFailure(
+            message:
+                'DioException [bad response]: Hibernate could not extract ResultSet extension',
+            statusCode: 500,
+          ),
+        );
       }
-      return Right(DailyLogPage(
-        logs: [log(id: 1, date: DateTime(2026, 9, 23))],
-      ));
+      return Right(
+        DailyLogPage(logs: [log(id: 1, date: DateTime(2026, 9, 23))]),
+      );
     });
 
     await pump(tester);
@@ -150,14 +165,17 @@ void main() {
     expect(find.textContaining('Hibernate'), findsNothing);
     expect(
       find.text(
-          'The request could not be completed. Check the network and try again.'),
+        'The request could not be completed. Check the network and try again.',
+      ),
       findsOneWidget,
     );
 
-    await tester.tap(find.descendant(
-      of: find.byType(EldRetryView),
-      matching: find.byType(IconButton),
-    ));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(EldRetryView),
+        matching: find.byType(IconButton),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 

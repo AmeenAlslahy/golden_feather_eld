@@ -20,7 +20,9 @@ class DvirStatusModal extends StatelessWidget {
     final loc = context.loc;
     return AlertDialog(
       backgroundColor: context.colorScheme.surface,
-      title: Text(loc.status, style: context.styles.sectionTitle),
+      // العنوان بلا نمط صريح ⇒ افتراضي dialogTheme (20) — مثل كل حوارات
+      // التطبيق؛ كان هنا sectionTitle (16) فحده بين 15 حواراً.
+      title: Text(loc.status),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

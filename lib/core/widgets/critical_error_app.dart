@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 
 import '../theme/app_theme.dart';
 
@@ -34,7 +35,7 @@ class CriticalErrorApp extends StatelessWidget {
                 Text(
                   'عذراً، حدث خطأ حرج',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
                 const SizedBox(height: 12),

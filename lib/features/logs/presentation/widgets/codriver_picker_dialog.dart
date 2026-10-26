@@ -1,5 +1,10 @@
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_spacing.dart';
+
+import '../../../../../core/error/user_facing_message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../codriver/presentation/providers/codriver_provider.dart';
@@ -55,10 +60,15 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Error: ${codriverState.error}',
+                    codriverState.error == null
+                        ? context.loc.errRequestFailed
+                        : anyErrorUserMessage(
+                            codriverState.error!,
+                            loc: context.loc,
+                          ),
                     style: context.styles.error,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   TextButton(
                     onPressed: () =>
                         ref.read(codriverProvider.notifier).reload(),
@@ -79,8 +89,8 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
                           driver.name,
                           style: context.styles.body.copyWith(
                             fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                                ? AppTypography.bold
+                                : AppTypography.regular,
                           ),
                         ),
                         value: driver.id,
@@ -97,7 +107,7 @@ class _CoDriverPickerDialogState extends ConsumerState<CoDriverPickerDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(context.loc.cancelButton),
         ),
-        FilledButton(
+        TextButton(
           onPressed: () {
             final selected = codrivers.firstWhere(
               (d) => d.id == _selectedId,

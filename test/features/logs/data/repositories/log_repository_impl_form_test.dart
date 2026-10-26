@@ -21,9 +21,13 @@ class FakeIdGenerator implements IdGenerator {
 }
 
 class MockLogLocalDataSource extends Mock implements LogLocalDataSource {}
+
 class MockDailyLogsBackend extends Mock implements DailyLogsBackend {}
+
 class MockDutyStatusBackend extends Mock implements DutyStatusBackend {}
+
 class MockNetworkInfo extends Mock implements NetworkInfo {}
+
 class MockOfflineQueue extends Mock implements OfflineQueue {}
 
 void main() {
@@ -35,12 +39,14 @@ void main() {
   late MockOfflineQueue mockOfflineQueue;
 
   setUpAll(() {
-    registerFallbackValue(PendingEvent(
-      id: 'test',
-      type: 'test',
-      payload: const {},
-      createdAt: DateTime.now(),
-    ));
+    registerFallbackValue(
+      PendingEvent(
+        id: 'test',
+        type: 'test',
+        payload: const {},
+        createdAt: DateTime.now(),
+      ),
+    );
     registerFallbackValue(const DailyLogId(1));
   });
 
@@ -61,15 +67,19 @@ void main() {
       idGenerator: FakeIdGenerator(),
     );
 
-    when(() => mockLocalDataSource.cacheDailyForm(any(), any()))
-        .thenAnswer((_) async {});
-    when(() => mockLocalDataSource.getCachedDailyForm(any()))
-        .thenAnswer((_) async => null);
-    when(() => mockLocalDataSource.markCachedDailyLogFormComplete(
-          driverId: any(named: 'driverId'),
-          logId: any(named: 'logId'),
-          isComplete: any(named: 'isComplete'),
-        )).thenAnswer((_) async {});
+    when(
+      () => mockLocalDataSource.cacheDailyForm(any(), any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => mockLocalDataSource.getCachedDailyForm(any()),
+    ).thenAnswer((_) async => null);
+    when(
+      () => mockLocalDataSource.markCachedDailyLogFormComplete(
+        driverId: any(named: 'driverId'),
+        logId: any(named: 'logId'),
+        isComplete: any(named: 'isComplete'),
+      ),
+    ).thenAnswer((_) async {});
   });
 
   const tLogId = DailyLogId(123);
@@ -77,57 +87,58 @@ void main() {
   group('getForm', () {
     test('returns DailyFormData on successful fetch with data', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      
+
       final Map<String, dynamic> responseData = {
         'data': {
           'uniqueId': 'veh-1',
           'coDriverId': 42,
-          'trailers': [{'trailerNumber': 'T1'}, {'trailerNumber': 'T2'}],
-          'shippingDocuments': [{'documentNumber': 'D1'}]
-        }
+          'trailers': [
+            {'trailerNumber': 'T1'},
+            {'trailerNumber': 'T2'},
+          ],
+          'shippingDocuments': [
+            {'documentNumber': 'D1'},
+          ],
+        },
       };
 
-      when(() => mockDailyLogsBackend.getForm(tLogId))
-          .thenAnswer((_) async => Right(responseData));
+      when(
+        () => mockDailyLogsBackend.getForm(tLogId),
+      ).thenAnswer((_) async => Right(responseData));
 
       final result = await repository.getForm(tLogId);
 
       expect(result.isRight(), true);
-      result.fold(
-        (l) => fail('Should be right'),
-        (form) {
-          expect(form, isNotNull);
-          expect(form!.vehicleUniqueId, 'veh-1');
-          expect(form.coDriverId, 42);
-          expect(form.trailers, const ['T1', 'T2']);
-          expect(form.shippingDocuments, const ['D1']);
-        },
-      );
+      result.fold((l) => fail('Should be right'), (form) {
+        expect(form, isNotNull);
+        expect(form!.vehicleUniqueId, 'veh-1');
+        expect(form.coDriverId, 42);
+        expect(form.trailers, const ['T1', 'T2']);
+        expect(form.shippingDocuments, const ['D1']);
+      });
     });
 
-    test('returns DailyFormData with Swagger 05.3 format (strings and coDriver object)', () async {
-      when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      
-      final Map<String, dynamic> responseData = {
-        'uniqueId': '1001',
-        'vehicleName': 'Truck 1001',
-        'coDriver': {
-          'id': 102,
-          'name': 'Ali Ahmed',
-        },
-        'trailers': ['3888', '3889'],
-        'shippingDocuments': ['DOC-001', 'DOC-002'],
-      };
+    test(
+      'returns DailyFormData with Swagger 05.3 format (strings and coDriver object)',
+      () async {
+        when(() => mockNetworkInfo.isConnected).thenReturn(true);
 
-      when(() => mockDailyLogsBackend.getForm(tLogId))
-          .thenAnswer((_) async => Right(responseData));
+        final Map<String, dynamic> responseData = {
+          'uniqueId': '1001',
+          'vehicleName': 'Truck 1001',
+          'coDriver': {'id': 102, 'name': 'Ali Ahmed'},
+          'trailers': ['3888', '3889'],
+          'shippingDocuments': ['DOC-001', 'DOC-002'],
+        };
 
-      final result = await repository.getForm(tLogId);
+        when(
+          () => mockDailyLogsBackend.getForm(tLogId),
+        ).thenAnswer((_) async => Right(responseData));
 
-      expect(result.isRight(), true);
-      result.fold(
-        (l) => fail('Should be right'),
-        (form) {
+        final result = await repository.getForm(tLogId);
+
+        expect(result.isRight(), true);
+        result.fold((l) => fail('Should be right'), (form) {
           expect(form, isNotNull);
           expect(form!.vehicleUniqueId, '1001');
           expect(form.vehicleName, 'Truck 1001');
@@ -135,17 +146,18 @@ void main() {
           expect(form.coDriverName, 'Ali Ahmed');
           expect(form.trailers, const ['3888', '3889']);
           expect(form.shippingDocuments, const ['DOC-001', 'DOC-002']);
-        },
-      );
-    });
+        });
+      },
+    );
 
     test('returns null if form is empty', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      
+
       final Map<String, dynamic> responseData = {'data': {}};
 
-      when(() => mockDailyLogsBackend.getForm(tLogId))
-          .thenAnswer((_) async => Right(responseData));
+      when(
+        () => mockDailyLogsBackend.getForm(tLogId),
+      ).thenAnswer((_) async => Right(responseData));
 
       final result = await repository.getForm(tLogId);
 
@@ -158,9 +170,10 @@ void main() {
 
     test('returns failure on backend error', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      
-      when(() => mockDailyLogsBackend.getForm(tLogId))
-          .thenAnswer((_) async => const Left(ServerError(code: 'API_ERROR')));
+
+      when(
+        () => mockDailyLogsBackend.getForm(tLogId),
+      ).thenAnswer((_) async => const Left(ServerError(code: 'API_ERROR')));
 
       final result = await repository.getForm(tLogId);
 
@@ -183,71 +196,89 @@ void main() {
     final expectedPayload = {
       'uniqueId': 'veh-1',
       'coDriverId': 42,
-      'trailers': [{'trailerNumber': 'T1'}, {'trailerNumber': 'T2'}],
-      'shippingDocuments': [{'documentNumber': 'D1'}],
+      'trailers': [
+        {'trailerNumber': 'T1'},
+        {'trailerNumber': 'T2'},
+      ],
+      'shippingDocuments': [
+        {'documentNumber': 'D1'},
+      ],
     };
 
     test('online save maps correctly to backend payload', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(true);
-      
-      when(() => mockDailyLogsBackend.saveForm(
-        logId: tLogId,
-        form: expectedPayload,
-      )).thenAnswer((_) async => const Right({
-        'data': {
-          'formStatus': 'COMPLETED',
-          'message': 'Success'
-        }
-      }));
 
-      final result = await repository.saveForm(logId: tLogId, form: tFormUpdate);
+      when(
+        () =>
+            mockDailyLogsBackend.saveForm(logId: tLogId, form: expectedPayload),
+      ).thenAnswer(
+        (_) async => const Right({
+          'data': {'formStatus': 'COMPLETED', 'message': 'Success'},
+        }),
+      );
+
+      final result = await repository.saveForm(
+        logId: tLogId,
+        form: tFormUpdate,
+      );
 
       expect(result.isRight(), true);
-      verify(() => mockDailyLogsBackend.saveForm(
-        logId: tLogId,
-        form: expectedPayload,
-      )).called(1);
+      verify(
+        () =>
+            mockDailyLogsBackend.saveForm(logId: tLogId, form: expectedPayload),
+      ).called(1);
     });
 
-    test('save without a vehicle uniqueId is refused before any side effect',
-        () async {
-      const emptyVehicleForm = DailyFormUpdate(
-        vehicleUniqueId: '   ',
-        trailers: ['T1'],
-        shippingDocuments: ['D1'],
-      );
+    test(
+      'save without a vehicle uniqueId is refused before any side effect',
+      () async {
+        const emptyVehicleForm = DailyFormUpdate(
+          vehicleUniqueId: '   ',
+          trailers: ['T1'],
+          shippingDocuments: ['D1'],
+        );
 
-      final result =
-          await repository.saveForm(logId: tLogId, form: emptyVehicleForm);
+        final result = await repository.saveForm(
+          logId: tLogId,
+          form: emptyVehicleForm,
+        );
 
-      expect(
-        result.fold((failure) => failure, (_) => null),
-        isA<ValidationFailure>(),
-      );
-      verifyNever(() => mockLocalDataSource.cacheDailyForm(any(), any()));
-      verifyNever(() => mockDailyLogsBackend.saveForm(
+        expect(
+          result.fold((failure) => failure, (_) => null),
+          isA<ValidationFailure>(),
+        );
+        verifyNever(() => mockLocalDataSource.cacheDailyForm(any(), any()));
+        verifyNever(
+          () => mockDailyLogsBackend.saveForm(
             logId: any(named: 'logId'),
             form: any(named: 'form'),
-          ));
-      verifyNever(() => mockOfflineQueue.enqueue(any()));
-    });
+          ),
+        );
+        verifyNever(() => mockOfflineQueue.enqueue(any()));
+      },
+    );
 
     test('offline save enqueues identical payload to PendingEvent', () async {
       when(() => mockNetworkInfo.isConnected).thenReturn(false);
       when(() => mockOfflineQueue.enqueue(any())).thenAnswer((_) async {});
 
-      final result = await repository.saveForm(logId: tLogId, form: tFormUpdate);
+      final result = await repository.saveForm(
+        logId: tLogId,
+        form: tFormUpdate,
+      );
 
       expect(result.isRight(), true);
-      
-      final captured = verify(() => mockOfflineQueue.enqueue(captureAny())).captured;
+
+      final captured = verify(
+        () => mockOfflineQueue.enqueue(captureAny()),
+      ).captured;
       final pendingEvent = captured.first as PendingEvent;
-      
+
       expect(pendingEvent.type, 'daily_log_form');
-      
+
       final payload = pendingEvent.payload;
       expect(payload['logId'], tLogId.value);
-      
+
       // Ensure the exact same payload shape is queued offline
       final formPayload = payload['form'] as Map<String, dynamic>;
       expect(formPayload, expectedPayload);

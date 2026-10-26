@@ -7,7 +7,9 @@ import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../../../domain/account/driver_account.dart';
+import '../utils/account_display.dart';
 
 class AccountState {
   final DriverAccount? accountData;
@@ -109,6 +111,8 @@ class AccountNotifier extends StateNotifier<AccountState> {
     // بلا هوية مثبتة أو أثناء انتقال: لا طلب، ولا عرض قديم.
     if (authState.user == null || authState.transitioning) return;
     final owner = authState.user!.id;
+
+    ///
     final epoch = authState.sessionEpoch;
     // توحيد المالك قبل الطلب حتى لا يُنسب رد B لمالك قديم.
     bindOwner(owner, epoch);
@@ -235,6 +239,20 @@ class AccountNotifier extends StateNotifier<AccountState> {
       state = state.copyWith(isLoading: false, error: 'unexpected');
       return false;
     }
+  }
+
+  Future<void> changeLanguage(String newLanguage) async {
+    final code = languageCodeForDisplayName(newLanguage);
+    if (code != null) {
+      _ref.read(localeProvider.notifier).setLocale(code);
+    }
+    final currentOdo = state.accountData?.odometer ?? 'mi';
+    await updatePreferences(language: newLanguage, odometerUnit: currentOdo);
+  }
+
+  Future<void> changeOdometer(String newOdometer) async {
+    final currentLang = state.accountData?.language ?? 'English';
+    await updatePreferences(language: currentLang, odometerUnit: newOdometer);
   }
 }
 

@@ -396,7 +396,12 @@ class DvirSignatureSection extends StatelessWidget {
       controller: controller,
       centerClear: true,
       height: 230,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       validator: (hasSignature) {
         if (hasSignature != true) {
           return AppLocalizations.of(context)!.dvirSignatureRequired;

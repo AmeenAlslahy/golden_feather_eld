@@ -53,29 +53,35 @@ void main() {
   setUp(() {
     repo = _Repo();
     adapter = MockAdapter();
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => Right(DailyLogPage(logs: [newer, older])));
-    when(() => repo.getEvents(any(), any()))
-        .thenAnswer((_) async => const Right([]));
-    when(() => repo.getLogById(any()))
-        .thenAnswer((_) async => const Left(NetworkFailure()));
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => Right(DailyLogPage(logs: [newer, older])));
+    when(
+      () => repo.getEvents(any(), any()),
+    ).thenAnswer((_) async => const Right([]));
+    when(
+      () => repo.getLogById(any()),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
     when(() => repo.getForm(any())).thenAnswer((_) async => const Right(null));
-    when(() => repo.getReadiness(any())).thenAnswer((_) async => const Left(
-          ServerFailure(message: 'not used'),
-        ));
+    when(
+      () => repo.getReadiness(any()),
+    ).thenAnswer((_) async => const Left(ServerFailure(message: 'not used')));
     when(() => repo.getDraftSignature(any())).thenAnswer((_) async => null);
     when(() => repo.saveDraftSignature(any(), any())).thenAnswer((_) async {});
     when(() => repo.deleteDraftSignature(any())).thenAnswer((_) async {});
 
-    container = ProviderContainer(overrides: [
-      activeBackendProvider.overrideWithValue(adapter),
-      logRepositoryProvider.overrideWithValue(repo),
-      currentDriverIdProvider.overrideWithValue(106),
-      dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        activeBackendProvider.overrideWithValue(adapter),
+        logRepositoryProvider.overrideWithValue(repo),
+        currentDriverIdProvider.overrideWithValue(106),
+        dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
+      ],
+    );
     addTearDown(container.dispose);
   });
 
@@ -95,8 +101,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('selects the route day even before the list has loaded',
-      (tester) async {
+  testWidgets('selects the route day even before the list has loaded', (
+    tester,
+  ) async {
     await pumpPage(tester, '2');
 
     expect(container.read(logsProvider).selectedLog?.id, newer.id);
@@ -104,8 +111,9 @@ void main() {
     expect(find.text(older.formattedDate), findsNothing);
   });
 
-  testWidgets('re-asserts the route day over a stale shared selection',
-      (tester) async {
+  testWidgets('re-asserts the route day over a stale shared selection', (
+    tester,
+  ) async {
     await pumpPage(tester, '2');
     expect(container.read(logsProvider).selectedLog?.id, newer.id);
 
@@ -116,20 +124,25 @@ void main() {
     expect(find.text(newer.formattedDate), findsOneWidget);
   });
 
-  testWidgets('pages forward until a deeper-linked day is found',
-      (tester) async {
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: 0,
-          size: any(named: 'size'),
-        )).thenAnswer(
+  testWidgets('pages forward until a deeper-linked day is found', (
+    tester,
+  ) async {
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: 0,
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
       (_) async => Right(DailyLogPage(logs: [newer], hasNext: true)),
     );
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: 1,
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => Right(DailyLogPage(logs: [older])));
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: 1,
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => Right(DailyLogPage(logs: [older])));
 
     await pumpPage(tester, '1');
 
@@ -137,16 +150,19 @@ void main() {
     expect(find.text(older.formattedDate), findsOneWidget);
   });
 
-  testWidgets('an unknown day stops loading and offers a retry',
-      (tester) async {
+  testWidgets('an unknown day stops loading and offers a retry', (
+    tester,
+  ) async {
     await pumpPage(tester, '999');
 
     expect(container.read(logsProvider).selectedLog, isNull);
     expect(find.byType(EldRetryView), findsOneWidget);
-    verify(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).called(1);
+    verify(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).called(1);
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
@@ -280,7 +281,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
                         context.loc.reCertificationRequiredMsg,
                         style: context.styles.body.copyWith(
                           color: context.warning,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: AppTypography.bold,
                         ),
                       ),
                     ),

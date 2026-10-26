@@ -2739,6 +2739,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inspectionLogsTitle => 'Inspection Logs';
 
   @override
+  String get inspectionPreview => 'Inspection Preview';
+
+  @override
   String get dvirActiveDefectsTitle => 'Active Defects';
 
   @override
@@ -3221,4 +3224,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fitWidth => 'Fit Width (100%)';
+
+  @override
+  String get inspectionFallbackGuidance =>
+      'Present this screen to the safety official upon request.';
+
+  @override
+  String get inspectionHandOverNotice => 'Hand over device to safety official';
 }

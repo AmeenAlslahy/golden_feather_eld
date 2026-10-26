@@ -139,4 +139,10 @@ class _FakeAccountNotifier extends StateNotifier<AccountState>
     required String language,
     required String odometerUnit,
   }) async => true;
+
+  @override
+  Future<void> changeLanguage(String newLanguage) async {}
+
+  @override
+  Future<void> changeOdometer(String newOdometer) async {}
 }

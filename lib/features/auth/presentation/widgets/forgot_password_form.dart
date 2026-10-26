@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/providers/backend_providers.dart';
@@ -86,7 +87,7 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
           context.loc.resetPassword,
           style: Theme.of(
             context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ).textTheme.titleLarge?.copyWith(fontWeight: AppTypography.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.md),

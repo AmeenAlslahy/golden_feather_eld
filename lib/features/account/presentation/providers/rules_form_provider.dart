@@ -152,9 +152,8 @@ class RulesFormNotifier extends AutoDisposeNotifier<RulesFormState> {
       return outcome;
     }
 
-    final model = modelParam ??
-        _sourceModel ??
-        ref.read(rulesScreenProvider).valueOrNull;
+    final model =
+        modelParam ?? _sourceModel ?? ref.read(rulesScreenProvider).valueOrNull;
     if (model == null) {
       const outcome = SaveRulesError('No rules data loaded');
       state = state.copyWith(lastOutcome: () => outcome);

@@ -174,7 +174,11 @@ class _AppButtonState extends State<AppButton> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(widget.icon, size: 20, color: _foreground(theme)),
+            Icon(
+              widget.icon,
+              size: AppSpacing.iconMedium,
+              color: _foreground(theme),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Text(

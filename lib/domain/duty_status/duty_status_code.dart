@@ -4,7 +4,6 @@
 /// Short codes (e.g. `"D"`) are used in compact UI displays.
 library;
 
-import 'package:flutter/widgets.dart';
 import '../../../core/utils/logger.dart';
 
 enum DutyStatusCode {
@@ -102,21 +101,9 @@ enum DutyStatusCode {
     }
   }
 
-  /// UI Color representation mapping
-  Color get displayColor {
-    switch (this) {
-      case DutyStatusCode.onDutyNotDriving:
-      case DutyStatusCode.yardMove:
-      case DutyStatusCode.personalConveyance:
-        return const Color(0xFFFBBF24); // AppColors.primaryGold
-      case DutyStatusCode.offDuty:
-        return const Color(0xFF6B7280); // AppColors.textSecondary
-      case DutyStatusCode.driving:
-        return const Color(0xFF10B981); // AppColors.successGreen
-      case DutyStatusCode.sleeperBerth:
-        return const Color(0xFFF59E0B); // AppColors.warningYellow
-    }
-  }
+  /// لون العرض للحالة لا يعيش هنا — النطاق لا يعرف الألوان. الخريطة
+  /// اللونية الموحّدة مع الهوية في `core/utils/status_color_helper.dart`
+  /// (رموز AppColors الرسمية؛ كانت هنا نسخ hex متباعدة عنها).
 
   /// Whether this status counts as "on-duty" for HOS purposes.
   bool get countsAsOnDuty => switch (this) {

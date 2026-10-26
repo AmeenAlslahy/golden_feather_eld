@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/utils/logger.dart';
 import 'package:signature/signature.dart';
 
 import '../../../../domain/shared/value_objects.dart';
@@ -24,7 +26,10 @@ class LogDraftSignatureNotifier extends StateNotifier<List<Point>> {
           state = List.unmodifiable(points);
         }
       }
-    } catch (_) {}
+    } catch (error) {
+      // المسودة المحلية احتياطية — الفشل لا يكسر التوقيع، لكن يُسجَّل.
+      AppLogger.warning('Draft signature load failed: $error');
+    }
   }
 
   void updateDraft(List<Point> points) {

@@ -48,22 +48,27 @@ void main() {
     detail = Completer<Either<Failure, DailyLog>>();
     form = Completer<Either<Failure, DailyFormData?>>();
 
-    when(() => repo.getDailyLogs(
-          driverId: any(named: 'driverId'),
-          page: any(named: 'page'),
-          size: any(named: 'size'),
-        )).thenAnswer((_) async => Right(DailyLogPage(logs: [today])));
-    when(() => repo.getEvents(any(), any()))
-        .thenAnswer((_) async => const Right([]));
+    when(
+      () => repo.getDailyLogs(
+        driverId: any(named: 'driverId'),
+        page: any(named: 'page'),
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async => Right(DailyLogPage(logs: [today])));
+    when(
+      () => repo.getEvents(any(), any()),
+    ).thenAnswer((_) async => const Right([]));
     when(() => repo.getLogById(any())).thenAnswer((_) => detail.future);
     when(() => repo.getForm(any())).thenAnswer((_) => form.future);
 
-    container = ProviderContainer(overrides: [
-      logRepositoryProvider.overrideWithValue(repo),
-      currentDriverIdProvider.overrideWithValue(106),
-      dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
-      logsProvider.overrideWith((ref) => LogsNotifier(repo, 106, ref)),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        logRepositoryProvider.overrideWithValue(repo),
+        currentDriverIdProvider.overrideWithValue(106),
+        dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
+        logsProvider.overrideWith((ref) => LogsNotifier(repo, 106, ref)),
+      ],
+    );
     final sub = container.listen(logsProvider, (_, __) {});
     addTearDown(() {
       sub.close();
@@ -99,11 +104,19 @@ void main() {
       ),
     );
     await flush();
-    expect(container.read(dashboardDataProvider).trailerId, 'ROW-T',
-        reason: 'form is applied only after detail, in order');
+    expect(
+      container.read(dashboardDataProvider).trailerId,
+      'ROW-T',
+      reason: 'form is applied only after detail, in order',
+    );
 
     detail.complete(
-      Right(today.copyWith(trailers: ['DETAIL-T'], shippingDocuments: const ['DETAIL-D'])),
+      Right(
+        today.copyWith(
+          trailers: ['DETAIL-T'],
+          shippingDocuments: const ['DETAIL-D'],
+        ),
+      ),
     );
     await flush();
 
@@ -116,7 +129,12 @@ void main() {
     await selectToday();
 
     detail.complete(
-      Right(today.copyWith(trailers: ['DETAIL-T'], shippingDocuments: const ['DETAIL-D'])),
+      Right(
+        today.copyWith(
+          trailers: ['DETAIL-T'],
+          shippingDocuments: const ['DETAIL-D'],
+        ),
+      ),
     );
     await flush();
     expect(container.read(dashboardDataProvider).trailerId, 'DETAIL-T');

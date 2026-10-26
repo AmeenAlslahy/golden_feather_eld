@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_spacing.dart';
+
 class StatusOptionTile extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -50,7 +52,7 @@ class StatusOptionTile extends StatelessWidget {
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                   color: isSelected ? primaryColor : unselectedRadioColor,
-                  size: 24,
+                  size: AppSpacing.iconSize,
                 ),
               ],
             ),

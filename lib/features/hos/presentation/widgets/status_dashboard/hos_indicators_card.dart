@@ -222,7 +222,7 @@ class _IndicatorRow extends StatelessWidget {
                 Text(
                   indicator.label,
                   style: context.styles.sectionTitle.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                     color: context.styles.body.color,
                   ),
                 ),
@@ -237,7 +237,7 @@ class _IndicatorRow extends StatelessWidget {
               textAlign: TextAlign.end,
               style: context.styles.body.copyWith(
                 fontSize: AppTypography.headerSize,
-                fontWeight: FontWeight.w400,
+                fontWeight: AppTypography.regular,
                 color: isCritical ? context.styles.error.color : null,
               ),
             ),

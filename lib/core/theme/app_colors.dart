@@ -132,6 +132,18 @@ class AppColors {
   static const Color navBarActive = goldDeep;
   static const Color navBarInactive = Color(0xFF8E8E93);
 
+  /// ---- قيم كانت خامّة داخل app_theme (تُنقل هنا بقيمها الحرفية) ----
+
+  /// راديو غير مُحدد (رمادي iOS الأصلي).
+  static const Color radioInactive = Color(0xFFC7C7CC);
+
+  /// فاصل الوضع الداكن (القيمة التي كان عليها dividerTheme الداكن).
+  static const Color darkDivider = Color(0xFF48484A);
+
+  /// أسود حبر اللمس/الظل النقي (000000) — ليس أسود الهوية (0D0D0D):
+  /// يخدم تراكبات الضغط والظلال فقط.
+  static const Color inkOverlay = Color(0xFF000000);
+
   // ========== مساعدات متكررة ==========
 
   static const Color transparent = Colors.transparent;

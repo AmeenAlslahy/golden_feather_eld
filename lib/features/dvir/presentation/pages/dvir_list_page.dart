@@ -8,6 +8,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_status_pill.dart';
+import '../../../../core/widgets/eld_info_row.dart';
+import '../../../../core/widgets/eld_card.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/defect_enums.dart';
@@ -91,7 +93,7 @@ class DvirListPage extends ConsumerWidget {
                     )
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(AppSpacing.md),
+                      padding: const EdgeInsets.all(AppSpacing.screenPadding),
                       itemCount: dvirState.reports.length + 2,
                       itemBuilder: (context, index) {
                         if (index == 0) {
@@ -180,171 +182,160 @@ class _DvirCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
+    // البطاقة القياسية (EldCard) — نفس زاوية/ارتفاع هوية التطبيق، بلا
+    // margin افتراضي؛ فراغ القائمة عبر cardGap أسفلها كإعدادات النظام.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.cardGap),
+      child: EldCard(
         onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // العنوان والنوع
-              Row(
-                children: [
-                  Icon(
-                    report.type == InspectionType.preTrip
-                        ? Icons.play_circle
-                        : Icons.stop_circle,
-                    color: report.type == InspectionType.preTrip
-                        ? context.success
-                        : context.gold,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      context.translateInspectionType(report.type.name),
-                      style: context.styles.bodyBold,
-                    ),
-                  ),
-                  // حالة التقرير
-                  AppStatusPill(
-                    label: report.isSubmitted
-                        ? context.loc.submitted
-                        : context.loc.draft,
-                    color:
-                        (report.isSubmitted
-                                ? context.styles.success
-                                : context.styles.warning)
-                            .color!,
-                  ),
-                ],
-              ),
-              const Divider(height: AppSpacing.lg),
-              // معلومات التقرير
-              _infoRow(
-                context,
-                context.loc.dateLabel,
-                report.date != null
-                    ? DateFormat('yyyy-MM-dd').format(report.date!.toLocal())
-                    : '—',
-              ),
-              _infoRow(context, context.loc.vehicle, report.vehicleId),
-              if (report.trailerId != null)
-                _infoRow(context, context.loc.trailer, report.trailerId!),
-              _infoRow(
-                context,
-                context.loc.odometerReading,
-                '${report.odometer?.toStringAsFixed(0) ?? "-"} mi',
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: AppStatusPill(
-                    icon: Icons.circle,
-                    iconSize: 8,
-                    label: report.vehicleOperationalStatus.label(context.loc),
-                    color: report.vehicleOperationalStatus.color(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // العنوان والنوع
+            Row(
+              children: [
+                Icon(
+                  report.type == InspectionType.preTrip
+                      ? Icons.play_circle
+                      : Icons.stop_circle,
+                  color: report.type == InspectionType.preTrip
+                      ? context.success
+                      : context.gold,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    context.translateInspectionType(report.type.name),
+                    // ترويسة قسم بالوزن الموحد (كان bodyBold الأثقل وزنًا).
+                    style: context.styles.sectionTitle,
                   ),
                 ),
+                // حالة التقرير
+                AppStatusPill(
+                  label: report.isSubmitted
+                      ? context.loc.submitted
+                      : context.loc.draft,
+                  color:
+                      (report.isSubmitted
+                              ? context.styles.success
+                              : context.styles.warning)
+                          .color!,
+                ),
+              ],
+            ),
+            const Divider(height: AppSpacing.lg),
+            // معلومات التقرير
+            // صف المعلومات القانوني (dense داخل البطاقة) — نفس مكوّن
+            // الحساب/القواعد؛ كانت هنا نسخة محلية بمحاذاة قيمة معاكسة.
+            EldInfoRow(
+              dense: true,
+              label: context.loc.dateLabel,
+              value: report.date != null
+                  ? DateFormat('yyyy-MM-dd').format(report.date!.toLocal())
+                  : '—',
+            ),
+            EldInfoRow(
+              dense: true,
+              label: context.loc.vehicle,
+              value: report.vehicleId,
+            ),
+            if (report.trailerId != null)
+              EldInfoRow(
+                dense: true,
+                label: context.loc.trailer,
+                value: report.trailerId!,
               ),
-              // عدد الأعطال وحالة الإصلاح
-              if (report.hasDefects)
-                Container(
-                  margin: const EdgeInsets.only(top: AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: AppDecorations.tinted(
-                    context.styles.error.color!,
-                    alpha: 0.1,
-                    radius: AppRadius.input,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+            EldInfoRow(
+              dense: true,
+              label: context.loc.odometerReading,
+              value: '${report.odometer?.toStringAsFixed(0) ?? "-"} mi',
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppStatusPill(
+                  icon: Icons.circle,
+                  iconSize: 8,
+                  label: report.vehicleOperationalStatus.label(context.loc),
+                  color: report.vehicleOperationalStatus.color(context),
+                ),
+              ),
+            ),
+            // عدد الأعطال وحالة الإصلاح
+            if (report.hasDefects)
+              Container(
+                margin: const EdgeInsets.only(top: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: AppDecorations.tinted(
+                  context.styles.error.color!,
+                  alpha: 0.1,
+                  radius: AppRadius.input,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.warning,
+                          color: context.danger,
+                          size: AppSpacing.iconSmall,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          '${report.defectsCount} ${context.loc.defectsFound}',
+                          style: context.styles.error,
+                        ),
+                      ],
+                    ),
+                    if (report.repairStatus != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
                       Row(
                         children: [
                           Icon(
-                            Icons.warning,
-                            color: context.danger,
+                            Icons.build,
+                            color: context.styles.subtitle.color,
                             size: AppSpacing.iconSmall,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Text(
-                            '${report.defectsCount} ${context.loc.defectsFound}',
-                            style: context.styles.error,
+                            '${context.loc.dvirRepairCert} · ${report.repairStatus}',
+                            style: context.styles.caption,
                           ),
                         ],
                       ),
-                      if (report.repairStatus != null) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.build,
-                              color: context.styles.subtitle.color,
-                              size: AppSpacing.iconSmall,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text(
-                              '${context.loc.dvirRepairCert} · ${report.repairStatus}',
-                              style: context.styles.caption,
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-              // مراجعة السائق التالي
-              if (report.nextDriverReviewed)
-                Container(
-                  margin: const EdgeInsets.only(top: AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: AppDecorations.tinted(
-                    context.styles.success.color!,
-                    alpha: 0.1,
-                    radius: AppRadius.input,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: context.success,
-                        size: AppSpacing.iconSmall,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        context.loc.dvirReviewed39613,
-                        style: context.styles.success,
-                      ),
-                    ],
-                  ),
+              ),
+            // مراجعة السائق التالي
+            if (report.nextDriverReviewed)
+              Container(
+                margin: const EdgeInsets.only(top: AppSpacing.sm),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: AppDecorations.tinted(
+                  context.styles.success.color!,
+                  alpha: 0.1,
+                  radius: AppRadius.input,
                 ),
-            ],
-          ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: context.success,
+                      size: AppSpacing.iconSmall,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      context.loc.dvirReviewed39613,
+                      style: context.styles.success,
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _infoRow(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: context.styles.muted),
-          const SizedBox(width: AppSpacing.sm),
-          // Long values (defect summaries, locations) wrap instead of overflowing.
-          Expanded(
-            child: Text(
-              value,
-              style: context.styles.body,
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
       ),
     );
   }

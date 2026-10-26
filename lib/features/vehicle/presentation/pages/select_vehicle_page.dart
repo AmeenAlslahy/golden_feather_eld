@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -115,7 +116,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               TextSpan(
                 text: context.loc.contactFleetManager,
                 style: context.styles.error.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: AppTypography.semiBold,
                 ),
               ),
             ],

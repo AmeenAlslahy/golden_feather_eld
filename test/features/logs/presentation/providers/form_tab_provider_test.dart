@@ -65,10 +65,12 @@ void main() {
 
   Future<void> setUpContainer(DailyLog selected) async {
     repo = _Repo();
-    when(() => repo.getEvents(any(), any()))
-        .thenAnswer((_) async => const Right([]));
-    when(() => repo.getLogById(any()))
-        .thenAnswer((_) async => const Left(NetworkFailure()));
+    when(
+      () => repo.getEvents(any(), any()),
+    ).thenAnswer((_) async => const Right([]));
+    when(
+      () => repo.getLogById(any()),
+    ).thenAnswer((_) async => const Left(NetworkFailure()));
     when(() => repo.getForm(any())).thenAnswer((invocation) async {
       final id = invocation.positionalArguments.first as DailyLogId;
       return id == oldLog.id
@@ -76,11 +78,13 @@ void main() {
           : const Right<Failure, DailyFormData?>(null);
     });
 
-    container = ProviderContainer(overrides: [
-      logRepositoryProvider.overrideWithValue(repo),
-      logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
-      dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        logRepositoryProvider.overrideWithValue(repo),
+        logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
+        dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
+      ],
+    );
     final logsSub = container.listen(logsProvider, (_, __) {});
     final formSub = container.listen(formTabProvider(selected), (_, __) {});
     addTearDown(() {
@@ -115,8 +119,11 @@ void main() {
     expect(update.trailers, ['SRV-1']);
     expect(update.shippingDocuments, ['SRV-DOC']);
 
-    expect(container.read(dashboardDataProvider), dashboardBefore,
-        reason: 'editing a previous day must not touch the live dashboard');
+    expect(
+      container.read(dashboardDataProvider),
+      dashboardBefore,
+      reason: 'editing a previous day must not touch the live dashboard',
+    );
   });
 
   test('today still writes the live dashboard', () async {

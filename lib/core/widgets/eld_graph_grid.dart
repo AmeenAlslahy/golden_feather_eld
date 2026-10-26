@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_typography.dart';
 import 'dart:ui';
 import '../theme/app_colors.dart';
 
@@ -16,6 +17,20 @@ class EldGraphPoint {
     this.tag,
     this.isDashed = false,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EldGraphPoint &&
+          runtimeType == other.runtimeType &&
+          startHour == other.startHour &&
+          endHour == other.endHour &&
+          status == other.status &&
+          tag == other.tag &&
+          isDashed == other.isDashed;
+
+  @override
+  int get hashCode => Object.hash(startHour, endHour, status, tag, isDashed);
 }
 
 class EldGraphGrid extends StatelessWidget {
@@ -36,27 +51,43 @@ class EldGraphGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = theme.colorScheme.onSurface.withValues(alpha: 0.78);
-    final gridColor = theme.colorScheme.outline.withValues(alpha: 0.38);
+    // خطوط الشبكة: فاتح كما كان (textPrimary)؛ داكن رمادي-فاتح مقروء
+    // بدل الأبيض الصريح — النية رسمٌ لا حدّ.
+    final gridColor =
+        (theme.brightness == Brightness.dark
+                ? AppColors.darkTextSecondary
+                : AppColors.textPrimary)
+            .withValues(alpha: 0.38);
 
-    return CustomPaint(
-      size: const Size(double.infinity, 220),
-      painter: _EldGraphGridPainter(
-        points: points,
-        stats: rightSideStats,
-        liveMarkerHour: liveMarkerHour,
-        textColor: textColor,
-        gridColor: gridColor,
+    return RepaintBoundary(
+      child: CustomPaint(
+        size: const Size(double.infinity, 220),
+        painter: _EldGraphGridPainter(
+          points: points,
+          stats: rightSideStats,
+          liveMarkerHour: liveMarkerHour,
+          textColor: textColor,
+          gridColor: gridColor,
+          textScaler: MediaQuery.textScalerOf(context),
+        ),
       ),
     );
   }
 }
 
 class _EldGraphGridPainter extends CustomPainter {
+  static const List<String> _kHourLabels = [
+    'M', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+    'N', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 'M',
+  ];
+  static const List<String> _kStatusLabels = ['OFF', 'SB', 'D', 'ON'];
+
   final List<EldGraphPoint> points;
   final Map<String, double>? stats;
   final double? liveMarkerHour;
   final Color textColor;
   final Color gridColor;
+  final TextScaler textScaler;
 
   _EldGraphGridPainter({
     required this.points,
@@ -64,6 +95,7 @@ class _EldGraphGridPainter extends CustomPainter {
     this.liveMarkerHour,
     required this.textColor,
     required this.gridColor,
+    required this.textScaler,
   });
 
   @override
@@ -105,50 +137,28 @@ class _EldGraphGridPainter extends CustomPainter {
     double chartWidth,
     double height,
   ) {
-    final hours = [
-      'M',
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '10',
-      '11',
-      'N',
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '10',
-      '11',
-      'M',
-    ];
     final colWidth = chartWidth / 24;
+    final textStyle = TextStyle(
+      fontSize: 11,
+      color: textColor.withValues(alpha: 0.8),
+    );
+    final painter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+    );
 
     for (int i = 0; i <= 24; i++) {
-      final textSpan = TextSpan(
-        text: hours[i],
-        style: TextStyle(fontSize: 11, color: textColor.withValues(alpha: 0.8)),
+      painter.text = TextSpan(
+        text: _kHourLabels[i],
+        style: textStyle,
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
+      painter.layout();
 
-      final x = offsetX + i * colWidth - (textPainter.width / 2);
-      final y = height - textPainter.height - 4; // 4px padding above grid
-      textPainter.paint(canvas, Offset(x, y));
+      final x = offsetX + i * colWidth - (painter.width / 2);
+      final y = height - painter.height - 4; // 4px padding above grid
+      painter.paint(canvas, Offset(x, y));
     }
+    painter.dispose();
   }
 
   void _drawGridLines(
@@ -160,10 +170,6 @@ class _EldGraphGridPainter extends CustomPainter {
     double rowHeight,
   ) {
     final gridPaint = Paint()
-      ..color = gridColor.withValues(alpha: 0.4)
-      ..strokeWidth = 0.5;
-
-    final minorTickPaint = Paint()
       ..color = gridColor.withValues(alpha: 0.4)
       ..strokeWidth = 0.5;
 
@@ -191,7 +197,7 @@ class _EldGraphGridPainter extends CustomPainter {
             canvas.drawLine(
               Offset(tickX, y - tickHeight),
               Offset(tickX, y + tickHeight),
-              minorTickPaint,
+              gridPaint,
             );
           }
         }
@@ -200,29 +206,31 @@ class _EldGraphGridPainter extends CustomPainter {
   }
 
   void _drawYAxisLabels(Canvas canvas, double offsetX, double rowHeight) {
-    const labels = ['OFF', 'SB', 'D', 'ON'];
-    for (int i = 0; i < labels.length; i++) {
-      final textSpan = TextSpan(
-        text: labels[i],
-        style: TextStyle(
-          fontSize: 11,
-          color: textColor.withValues(alpha: 0.8),
-          fontWeight: FontWeight.w500,
-        ),
+    final textStyle = TextStyle(
+      fontSize: 11,
+      color: textColor.withValues(alpha: 0.8),
+      fontWeight: AppTypography.medium,
+    );
+    final painter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+    );
+
+    for (int i = 0; i < _kStatusLabels.length; i++) {
+      painter.text = TextSpan(
+        text: _kStatusLabels[i],
+        style: textStyle,
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
+      painter.layout();
+      painter.paint(
         canvas,
         Offset(
-          offsetX - textPainter.width - 6,
-          i * rowHeight + rowHeight / 2 - textPainter.height / 2,
+          offsetX - painter.width - 6,
+          i * rowHeight + rowHeight / 2 - painter.height / 2,
         ),
       );
     }
+    painter.dispose();
   }
 
   void _drawRightSideStats(
@@ -232,33 +240,34 @@ class _EldGraphGridPainter extends CustomPainter {
     double chartWidth,
     double rowHeight,
   ) {
-    const labels = ['OFF', 'SB', 'D', 'ON'];
+    final textStyle = TextStyle(
+      fontSize: 11,
+      color: textColor,
+      fontWeight: AppTypography.medium,
+    );
+    final painter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+    );
 
-    for (int i = 0; i < labels.length; i++) {
-      final String formattedStat = (stats![labels[i]] ?? 0.0)
+    for (int i = 0; i < _kStatusLabels.length; i++) {
+      final String formattedStat = (stats![_kStatusLabels[i]] ?? 0.0)
           .toStringAsFixed(2)
           .padLeft(5, '0');
-      final textSpan = TextSpan(
+      painter.text = TextSpan(
         text: formattedStat,
-        style: TextStyle(
-          fontSize: 11,
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
+        style: textStyle,
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
+      painter.layout();
+      painter.paint(
         canvas,
         Offset(
           offsetX + chartWidth + 6,
-          i * rowHeight + rowHeight / 2 - textPainter.height / 2,
+          i * rowHeight + rowHeight / 2 - painter.height / 2,
         ),
       );
     }
+    painter.dispose();
   }
 
   void _drawStepLine(
@@ -269,13 +278,7 @@ class _EldGraphGridPainter extends CustomPainter {
   ) {
     if (points.isEmpty) return;
 
-    final solidPaint = Paint()
-      ..color = AppColors.infoBlue
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke
-      ..strokeJoin = StrokeJoin.miter;
-
-    final dashedPaint = Paint()
+    final stepPaint = Paint()
       ..color = AppColors.infoBlue
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke
@@ -297,20 +300,20 @@ class _EldGraphGridPainter extends CustomPainter {
 
       // Draw vertical drop/rise if needed
       if (lastY != null && lastX != null && lastY != newY) {
-        canvas.drawLine(Offset(lastX, lastY), Offset(xStart, newY), solidPaint);
+        canvas.drawLine(Offset(lastX, lastY), Offset(xStart, newY), stepPaint);
       } else if (lastY == null && xStart > offsetX) {
         // Line from midnight to first event
         final initialY = _getYPosition('OFF', rowHeight);
         canvas.drawLine(
           Offset(offsetX, initialY),
           Offset(xStart, initialY),
-          solidPaint,
+          stepPaint,
         );
         if (initialY != newY) {
           canvas.drawLine(
             Offset(xStart, initialY),
             Offset(xStart, newY),
-            solidPaint,
+            stepPaint,
           );
         }
       }
@@ -321,10 +324,10 @@ class _EldGraphGridPainter extends CustomPainter {
           canvas,
           Offset(xStart, newY),
           Offset(xEnd, newY),
-          dashedPaint,
+          stepPaint,
         );
       } else {
-        canvas.drawLine(Offset(xStart, newY), Offset(xEnd, newY), solidPaint);
+        canvas.drawLine(Offset(xStart, newY), Offset(xEnd, newY), stepPaint);
       }
 
       // Draw Tag (e.g. PC, YM)
@@ -414,13 +417,14 @@ class _EldGraphGridPainter extends CustomPainter {
       style: TextStyle(
         fontSize: 11,
         color: AppColors.infoBlue,
-        fontWeight: FontWeight.bold,
+        fontWeight: AppTypography.bold,
         backgroundColor: textColor.withValues(alpha: 0.12),
       ),
     );
     final textPainter = TextPainter(
       text: textSpan,
       textDirection: TextDirection.ltr,
+      textScaler: textScaler,
     );
     textPainter.layout();
 
@@ -430,6 +434,7 @@ class _EldGraphGridPainter extends CustomPainter {
       canvas,
       Offset(midX - (textPainter.width / 2), y - textPainter.height - 2),
     );
+    textPainter.dispose();
   }
 
   double _getYPosition(String status, double rowHeight) {
@@ -449,10 +454,33 @@ class _EldGraphGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EldGraphGridPainter oldDelegate) {
-    return oldDelegate.points != points ||
-        oldDelegate.stats != stats ||
-        oldDelegate.liveMarkerHour != liveMarkerHour ||
+    if (oldDelegate.liveMarkerHour != liveMarkerHour ||
         oldDelegate.textColor != textColor ||
-        oldDelegate.gridColor != gridColor;
+        oldDelegate.gridColor != gridColor ||
+        oldDelegate.textScaler != textScaler) {
+      return true;
+    }
+    if (!_pointsEqual(oldDelegate.points, points)) return true;
+    if (!_statsEqual(oldDelegate.stats, stats)) return true;
+    return false;
+  }
+
+  static bool _pointsEqual(List<EldGraphPoint> a, List<EldGraphPoint> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static bool _statsEqual(Map<String, double>? a, Map<String, double>? b) {
+    if (identical(a, b)) return true;
+    if (a == null || b == null) return a == b;
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) return false;
+    }
+    return true;
   }
 }

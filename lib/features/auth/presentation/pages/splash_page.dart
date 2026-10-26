@@ -87,6 +87,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                   'assets/images/ic_launcher.png',
                   width: 120,
                   height: 120,
+                  cacheWidth: 360,
+                  cacheHeight: 360,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),

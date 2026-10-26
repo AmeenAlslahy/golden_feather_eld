@@ -12,35 +12,39 @@ void main() {
       expect((result as Right<Failure, int>).value, 42);
     });
 
-    test('401 ServerException maps to AuthFailure, not InvalidCredentialsFailure',
-        () async {
-      // A 401 on an existing session means the session expired; telling the
-      // driver the credentials are wrong sends them to re-login blindly.
-      final result = await executeWithHandling<int>(
-        () async => throw const ServerException(
-          statusCode: 401,
-          message: 'unauthorized',
-        ),
-      );
-      expect(result, isA<Left<Failure, int>>());
-      final failure = (result as Left<Failure, int>).value;
-      expect(failure, isA<AuthFailure>());
-      expect(failure, isNot(isA<InvalidCredentialsFailure>()));
-    });
+    test(
+      '401 ServerException maps to AuthFailure, not InvalidCredentialsFailure',
+      () async {
+        // A 401 on an existing session means the session expired; telling the
+        // driver the credentials are wrong sends them to re-login blindly.
+        final result = await executeWithHandling<int>(
+          () async => throw const ServerException(
+            statusCode: 401,
+            message: 'unauthorized',
+          ),
+        );
+        expect(result, isA<Left<Failure, int>>());
+        final failure = (result as Left<Failure, int>).value;
+        expect(failure, isA<AuthFailure>());
+        expect(failure, isNot(isA<InvalidCredentialsFailure>()));
+      },
+    );
 
-    test('500 ServerException maps to ServerFailure with the server message',
-        () async {
-      final result = await executeWithHandling<int>(
-        () async => throw const ServerException(
-          statusCode: 500,
-          message: 'backend down',
-        ),
-      );
-      final failure = (result as Left<Failure, int>).value;
-      expect(failure, isA<ServerFailure>());
-      expect(failure.message, 'backend down');
-      expect(failure.statusCode, 500);
-    });
+    test(
+      '500 ServerException maps to ServerFailure with the server message',
+      () async {
+        final result = await executeWithHandling<int>(
+          () async => throw const ServerException(
+            statusCode: 500,
+            message: 'backend down',
+          ),
+        );
+        final failure = (result as Left<Failure, int>).value;
+        expect(failure, isA<ServerFailure>());
+        expect(failure.message, 'backend down');
+        expect(failure.statusCode, 500);
+      },
+    );
 
     test('OfflineException maps to NetworkFailure', () async {
       final result = await executeWithHandling<int>(
@@ -50,17 +54,18 @@ void main() {
       expect(failure, isA<NetworkFailure>());
     });
 
-    test('UnauthorizedException maps to AuthFailure keeping its message',
-        () async {
-      final result = await executeWithHandling<int>(
-        () async => throw const UnauthorizedException(
-          message: 'انتهت صلاحية الجلسة',
-        ),
-      );
-      final failure = (result as Left<Failure, int>).value;
-      expect(failure, isA<AuthFailure>());
-      expect(failure.message, 'انتهت صلاحية الجلسة');
-    });
+    test(
+      'UnauthorizedException maps to AuthFailure keeping its message',
+      () async {
+        final result = await executeWithHandling<int>(
+          () async =>
+              throw const UnauthorizedException(message: 'انتهت صلاحية الجلسة'),
+        );
+        final failure = (result as Left<Failure, int>).value;
+        expect(failure, isA<AuthFailure>());
+        expect(failure.message, 'انتهت صلاحية الجلسة');
+      },
+    );
 
     test('CacheException maps to CacheFailure', () async {
       final result = await executeWithHandling<int>(
@@ -71,15 +76,17 @@ void main() {
       expect(failure.message, 'disk full');
     });
 
-    test('unknown exception maps to a generic message and leaks nothing',
-        () async {
-      final result = await executeWithHandling<int>(
-        () async => throw Exception('SECRET /internal/path xyz'),
-      );
-      final failure = (result as Left<Failure, int>).value;
-      expect(failure, isA<ServerFailure>());
-      expect(failure.message, 'An unexpected error occurred');
-      expect(failure.message, isNot(contains('SECRET')));
-    });
+    test(
+      'unknown exception maps to a generic message and leaks nothing',
+      () async {
+        final result = await executeWithHandling<int>(
+          () async => throw Exception('SECRET /internal/path xyz'),
+        );
+        final failure = (result as Left<Failure, int>).value;
+        expect(failure, isA<ServerFailure>());
+        expect(failure.message, 'An unexpected error occurred');
+        expect(failure.message, isNot(contains('SECRET')));
+      },
+    );
   });
 }

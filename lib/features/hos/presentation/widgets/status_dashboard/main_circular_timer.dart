@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../../../../core/theme/app_typography.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -255,7 +256,7 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                                 timeString,
                                 style: theme.textTheme.displayLarge?.copyWith(
                                   fontSize: circleSize * 0.23,
-                                  fontWeight: FontWeight.w300,
+                                  fontWeight: AppTypography.light,
                                   color: timeTextColor,
                                   letterSpacing: -1.0,
                                   height: 1.1,
@@ -266,7 +267,7 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                                 widget.statusLabel.toUpperCase(),
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w400,
+                                  fontWeight: AppTypography.regular,
                                   fontSize: circleSize * 0.075,
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.8,

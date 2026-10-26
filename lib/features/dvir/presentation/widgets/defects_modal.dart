@@ -126,7 +126,7 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
             // تفتيشاً بغياب قائمة العيوب كاملة.
             if (e is NetworkFailure) ...[
               Text(loc.offlineMode, style: context.styles.subtitle),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 loc.weakConnectionDelayedData,
                 style: context.styles.subtitle,

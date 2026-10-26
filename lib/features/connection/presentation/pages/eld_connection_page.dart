@@ -26,6 +26,7 @@ import '../../../../core/services/local_storage_service.dart';
 class EldConnectionState {
   final bool isConnecting;
   final bool hasFailed;
+  final bool wasCancelled;
 
   /// Marker (`bluetooth_failed`, `connect_failed`) — localized by the page.
   final String? errorMessage;
@@ -37,6 +38,7 @@ class EldConnectionState {
   EldConnectionState({
     this.isConnecting = false,
     this.hasFailed = false,
+    this.wasCancelled = false,
     this.errorMessage,
     this.error,
     this.infoMessage,
@@ -45,6 +47,7 @@ class EldConnectionState {
   EldConnectionState copyWith({
     bool? isConnecting,
     bool? hasFailed,
+    bool? wasCancelled,
     String? errorMessage,
     AppError? error,
     String? infoMessage,
@@ -52,6 +55,7 @@ class EldConnectionState {
     return EldConnectionState(
       isConnecting: isConnecting ?? this.isConnecting,
       hasFailed: hasFailed ?? this.hasFailed,
+      wasCancelled: wasCancelled ?? this.wasCancelled,
       errorMessage: errorMessage,
       error: error,
       infoMessage: infoMessage,
@@ -61,13 +65,16 @@ class EldConnectionState {
 
 class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
   final Ref _ref;
+  int _connectAttemptSeq = 0;
 
   EldConnectionNotifier(this._ref) : super(EldConnectionState());
 
   Future<void> attemptConnection(String macAddress) async {
+    final seq = ++_connectAttemptSeq;
     state = state.copyWith(
       isConnecting: true,
       hasFailed: false,
+      wasCancelled: false,
       errorMessage: null,
     );
 
@@ -78,15 +85,17 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
       try {
         await bluetoothService.connect(macAddress);
       } catch (e) {
-        if (mounted) {
-          state = state.copyWith(
-            isConnecting: false,
-            hasFailed: true,
-            errorMessage: 'bluetooth_failed',
-          );
-        }
+        if (!mounted || seq != _connectAttemptSeq) return;
+        state = state.copyWith(
+          isConnecting: false,
+          hasFailed: true,
+          wasCancelled: false,
+          errorMessage: 'bluetooth_failed',
+        );
         return;
       }
+
+      if (!mounted || seq != _connectAttemptSeq) return;
 
       // 2. التحقق من السيرفر وبدء الجلسة
       final hardwareBackend = _ref.read(hardwareBackendProvider);
@@ -99,47 +108,75 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
         uniqueId: selectedUniqueId,
       );
 
-      if (mounted) {
-        result.fold(
-          (error) {
-            state = state.copyWith(
-              isConnecting: false,
-              hasFailed: true,
-              error: error,
-            );
-          },
-          (data) async {
-            // تفعيل خدمة تتبع Traccar Client بالهاتف متزامنة مع المركبة
-            final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
-            final vUniqueId = selectedVehicle?.uniqueId;
-            final targetDeviceId =
-                selectedVehicle?.deviceId?.toString() ??
-                ((vUniqueId != null && vUniqueId.isNotEmpty)
-                    ? vUniqueId
-                    : null);
-            if (targetDeviceId != null) {
-              await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
-            }
-            try {
-              final config = await _ref
-                  .read(trackingRepositoryProvider)
-                  .getCurrentConfig();
-              await _ref.read(trackingRepositoryProvider).updateConfig(config);
-              await _ref.read(trackingStateProvider.notifier).startTracking();
-            } catch (_) {}
+      if (!mounted || seq != _connectAttemptSeq) return;
 
-            state = state.copyWith(isConnecting: false, hasFailed: false);
-          },
-        );
-      }
+      await result.fold<Future<void>>(
+        (error) async {
+          state = state.copyWith(
+            isConnecting: false,
+            hasFailed: true,
+            wasCancelled: false,
+            error: error,
+          );
+        },
+        (data) async {
+          if (!mounted || seq != _connectAttemptSeq) return;
+
+          // تفعيل خدمة تتبع Traccar Client بالهاتف متزامنة مع المركبة
+          final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+          final vUniqueId = selectedVehicle?.uniqueId;
+          final targetDeviceId =
+              selectedVehicle?.deviceId?.toString() ??
+              ((vUniqueId != null && vUniqueId.isNotEmpty)
+                  ? vUniqueId
+                  : null);
+          if (targetDeviceId != null) {
+            await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+          }
+          try {
+            final config = await _ref
+                .read(trackingRepositoryProvider)
+                .getCurrentConfig();
+            await _ref.read(trackingRepositoryProvider).updateConfig(config);
+            await _ref.read(trackingStateProvider.notifier).startTracking();
+          } catch (_) {}
+
+          if (!mounted || seq != _connectAttemptSeq) return;
+
+          state = state.copyWith(
+            isConnecting: false,
+            hasFailed: false,
+            wasCancelled: false,
+          );
+        },
+      );
     } catch (e) {
-      if (mounted) {
+      if (mounted && seq == _connectAttemptSeq) {
         state = state.copyWith(
           isConnecting: false,
           hasFailed: true,
+          wasCancelled: false,
           errorMessage: 'connect_failed',
         );
       }
+    }
+  }
+
+  /// UX-001: إلغاء محاولة الاتصال الجارية وفك حجب الواجهة بأمان
+  Future<void> cancelConnection() async {
+    _connectAttemptSeq++; // إبطال أي callbacks متأخرة للمحاولة السابقة
+    try {
+      final bluetoothService = _ref.read(bluetoothServiceProvider);
+      await bluetoothService.disconnect();
+    } catch (_) {}
+
+    if (mounted) {
+      state = state.copyWith(
+        isConnecting: false,
+        hasFailed: false,
+        wasCancelled: true,
+        errorMessage: null,
+      );
     }
   }
 
@@ -169,6 +206,12 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
 
   /// `POST /eld/hardware/connect?disconnected=true`. No reason form and no duty event.
   Future<void> continueDisconnected() async {
+    _connectAttemptSeq++; // إبطال أي محاولة جارية
+    try {
+      final bluetoothService = _ref.read(bluetoothServiceProvider);
+      await bluetoothService.disconnect();
+    } catch (_) {}
+
     final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
     final vUniqueId = selectedVehicle?.uniqueId;
     final targetDeviceId =
@@ -198,6 +241,7 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
       state = state.copyWith(
         isConnecting: false,
         hasFailed: false,
+        wasCancelled: false,
         errorMessage: null,
         infoMessage: 'disconnected_accepted',
       );
@@ -303,16 +347,25 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
       if (previous != null &&
           previous.isConnecting &&
           !current.isConnecting &&
-          !current.hasFailed) {
+          !current.hasFailed &&
+          !current.wasCancelled) {
         context.go(AppRoutes.home);
       } else if (previous != null &&
           previous.isConnecting &&
-          !current.isConnecting) {
+          !current.isConnecting &&
+          !current.wasCancelled) {
         ref.invalidate(hardwareStatusProvider);
       }
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: !connectionState.isConnecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && connectionState.isConnecting) {
+          ref.read(eldConnectionProvider.notifier).cancelConnection();
+        }
+      },
+      child: Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         // أيقونة الإجراء تفتح دائماً صفحة اختيار العربة (مع الحفاظ على
@@ -449,6 +502,8 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
             Container(
               color: context.colors.scrim.withValues(alpha: 0.38),
               alignment: Alignment.center,
+              // استثناء موثق: بطاقة عائمة فوق scrim أثناء التوصيل —
+              // تحتاج ظل حوار (8) لا ظل بطاقة النظام؛ ليست بطاقة محتوى.
               child: Card(
                 elevation: 8,
                 child: Padding(
@@ -456,14 +511,42 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                     horizontal: AppSpacing.xl,
                     vertical: AppSpacing.lg,
                   ),
-                  child: Row(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(width: AppSpacing.md),
-                      Text(
-                        context.loc.connecting,
-                        style: context.styles.bodyBold,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(width: AppSpacing.md),
+                          Text(
+                            context.loc.connecting,
+                            style: context.styles.bodyBold,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          TextButton(
+                            key: const Key('cancel_connection_button'),
+                            onPressed: () => ref
+                                .read(eldConnectionProvider.notifier)
+                                .cancelConnection(),
+                            child: Text(context.loc.cancelButton),
+                          ),
+                          TextButton(
+                            key: const Key('continue_disconnected_overlay_button'),
+                            onPressed: () => ref
+                                .read(eldConnectionProvider.notifier)
+                                .continueDisconnected(),
+                            child: Text(context.loc.continueDisconnected),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -472,6 +555,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
             ),
         ],
       ),
+    ), // PopScope child Scaffold
     );
   }
 

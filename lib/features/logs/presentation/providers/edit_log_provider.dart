@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/utils/logger.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/di/id_generator_provider.dart';
@@ -149,7 +151,13 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
         entry,
       )).fold((_) => false, (ok) => ok);
       if (!auditSaved) {
-        throw EditLogError(EditLogErrorCode.auditFailed);
+        // الحدث محفوظ فعلاً — فشل التدقيق لا يُكذب على السائق برسالة
+        // "فشل الحفظ" (تناقض بيانات مؤكد بالمراجعة). يُسجَّل للتشخيص
+        // وتنجح العملية.
+        AppLogger.warning(
+          'Edit-log audit trail not saved (event ${isNewEvent ? 'created' : 'updated'} '
+          'persisted): driverId=$driverId newStatus=$status',
+        );
       }
 
       state = const AsyncData(null);

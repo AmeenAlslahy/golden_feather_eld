@@ -15,8 +15,11 @@ class UnidentifiedStatsRow extends StatelessWidget {
       child: Row(
         children: [
           _StatCard(label: context.loc.total, value: '${stats.total}'),
+          const SizedBox(width: AppSpacing.sm),
           _StatCard(label: context.loc.unclaimed, value: stats.unclaimed),
+          const SizedBox(width: AppSpacing.sm),
           _StatCard(label: context.loc.rejected, value: stats.rejected),
+          const SizedBox(width: AppSpacing.sm),
           _StatCard(
             label: context.loc.driving24h,
             value: '${stats.driving24h}',
@@ -36,15 +39,14 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Card(
-        child: EldCard(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: Column(
-            children: [
-              Text(value, style: context.styles.bodyBold),
-              Text(label, style: context.styles.caption),
-            ],
-          ),
+      // كانت Card تلفّ EldCard (تداخل بطاقتين وظلّين) — بطاقة واحدة قياسية.
+      child: EldCard(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Column(
+          children: [
+            Text(value, style: context.styles.bodyBold),
+            Text(label, style: context.styles.caption),
+          ],
         ),
       ),
     );

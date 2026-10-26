@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/eld_card.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_radius.dart';
@@ -49,29 +51,33 @@ class ActiveDefectsSection extends ConsumerWidget {
             children: [
               Text(
                 context.loc.dvirActiveDefectsTitle,
-                style: context.styles.bodyBold,
+                style: context.styles.sectionTitle,
               ),
               const SizedBox(height: AppSpacing.xs),
               for (final defect in defects)
-                Card(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-                  child: ListTile(
-                    dense: true,
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  // بطاقة النظام القياسية — كانت Card خام بهامش افتراضي.
+                  child: EldCard(
+                    padding: EdgeInsets.zero,
                     onTap: () => _showDefectDetails(context, defect),
-                    title: Text(
-                      defect.itemName ?? defect.itemCode ?? '#${defect.id}',
-                      style: context.styles.body.copyWith(
-                        fontWeight: FontWeight.w600,
+                    child: ListTile(
+                      dense: true,
+                      title: Text(
+                        defect.itemName ?? defect.itemCode ?? '#${defect.id}',
+                        style: context.styles.body.copyWith(
+                          fontWeight: AppTypography.semiBold,
+                        ),
                       ),
+                      subtitle: defect.description == null
+                          ? null
+                          : Text(
+                              defect.description!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                      trailing: _severityPill(context, defect.severity),
                     ),
-                    subtitle: defect.description == null
-                        ? null
-                        : Text(
-                            defect.description!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                    trailing: _severityPill(context, defect.severity),
                   ),
                 ),
             ],
@@ -148,7 +154,7 @@ class _DefectDetailDialog extends ConsumerWidget {
                 Text(
                   loc.dvirDefectOutOfService,
                   style: context.styles.error.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
               ],
@@ -174,7 +180,7 @@ class _DefectDetailDialog extends ConsumerWidget {
                               .where((t) => t.isNotEmpty)
                               .join(' — '),
                           style: context.styles.body.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: AppTypography.semiBold,
                           ),
                         ),
                         if (repair.repairNotes != null)
@@ -214,7 +220,7 @@ class _DefectDetailDialog extends ConsumerWidget {
                               .where((t) => t.isNotEmpty)
                               .join(' — '),
                           style: context.styles.body.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: AppTypography.semiBold,
                           ),
                         ),
                         if (certification.certificationNotes != null)

@@ -12,10 +12,12 @@ import 'rule_switch_row.dart';
 
 class RulesSettingsSection extends ConsumerWidget {
   final RulesScreenModel model;
+  final bool dense;
 
   const RulesSettingsSection({
     super.key,
     required this.model,
+    this.dense = true,
   });
 
   List<String> _optionsFor(String field) {
@@ -36,10 +38,11 @@ class RulesSettingsSection extends ConsumerWidget {
         label: label,
         value: formValue ?? serverValue,
         options: options,
+        dense: dense,
         onChanged: onChanged,
       );
     }
-    return EldInfoRow(label: label, value: serverValue);
+    return EldInfoRow(label: label, value: serverValue, dense: dense);
   }
 
   @override
@@ -54,7 +57,11 @@ class RulesSettingsSection extends ConsumerWidget {
     return Column(
       children: [
         if (model.ruleSource.trim().isNotEmpty) ...[
-          EldInfoRow(label: loc.ruleSource, value: model.ruleSource),
+          EldInfoRow(
+            label: loc.ruleSource,
+            value: model.ruleSource,
+            dense: dense,
+          ),
           Divider(color: context.border, height: AppSpacing.dividerHeight),
         ],
         _buildRuleItem(
@@ -101,12 +108,14 @@ class RulesSettingsSection extends ConsumerWidget {
           RuleSwitchRow(
             label: loc.sixteenHourException,
             value: sixteenValue,
+            dense: dense,
             onChanged: (val) => notifier.setSixteenHourException(val),
           )
         else
           EldInfoRow(
             label: loc.sixteenHourException,
             value: model.sixteenHourException ? loc.yes : loc.no,
+            dense: dense,
           ),
         Divider(color: context.border, height: AppSpacing.dividerHeight),
         EldInfoRow(
@@ -115,6 +124,7 @@ class RulesSettingsSection extends ConsumerWidget {
             'personalConveyance',
             'personalConveyanceEnabled',
           ]),
+          dense: dense,
         ),
         Divider(color: context.border, height: AppSpacing.dividerHeight),
         EldInfoRow(
@@ -123,6 +133,7 @@ class RulesSettingsSection extends ConsumerWidget {
             'yardMoves',
             'yardMoveEnabled',
           ]),
+          dense: dense,
         ),
         Divider(color: context.border, height: AppSpacing.dividerHeight),
         EldInfoRow(
@@ -131,6 +142,7 @@ class RulesSettingsSection extends ConsumerWidget {
             'unlimitedTrailers',
             'unlimitedTrailerEnabled',
           ]),
+          dense: dense,
         ),
         Divider(color: context.border, height: AppSpacing.dividerHeight),
         EldInfoRow(
@@ -139,6 +151,7 @@ class RulesSettingsSection extends ConsumerWidget {
             'unlimitedShippingDocuments',
             'unlimitedShippingEnabled',
           ]),
+          dense: dense,
         ),
       ],
     );

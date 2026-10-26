@@ -3,8 +3,6 @@ import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart'
 import 'package:golden_feather_eld/features/logs/domain/log_edit.dart';
 
 void main() {
-
-
   group('parseEditFormTime', () {
     final day = DateTime(2026, 9, 23);
 
@@ -13,8 +11,10 @@ void main() {
     });
 
     test('parses 12h with seconds and AM/PM', () {
-      expect(parseEditFormTime('08:15:04 PM', day),
-          DateTime(2026, 9, 23, 20, 15, 4));
+      expect(
+        parseEditFormTime('08:15:04 PM', day),
+        DateTime(2026, 9, 23, 20, 15, 4),
+      );
       expect(parseEditFormTime('12:00 AM', day), DateTime(2026, 9, 23, 0, 0));
       expect(parseEditFormTime('12:00 PM', day), DateTime(2026, 9, 23, 12, 0));
     });

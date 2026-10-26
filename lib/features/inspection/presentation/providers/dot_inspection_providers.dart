@@ -85,6 +85,25 @@ DotInspectionCycleDay? findMatchingCycleDay(
   return null;
 }
 
+/// سجل RODS الكامل لليوم المحدد (`getLogs(driverId, date)`) — المصدر
+/// الأغنى لجدول الترويسة في معاينة التفتيش (المركبة/VIN/العداد/المسافة/
+/// المحرك/المقطورات/الشحن/المكتب/المحطة/مزوّد ELD/التشخيصات). كانت
+/// المعاينة تعتمد على `day` (لقطة دورة 8 أيام) وحده فتُفرغ نحو 15 حقلاً
+/// متى غاب اليوم المطابق — وهذا سبب "اختفاء الترويسة".
+///
+/// فشل/تحميل الجلب يعيد null بصمت: الجدول يبقى على احتياطياته
+/// (day ثم screen) كما كان.
+final inspectionDayLogProvider = FutureProvider.autoDispose
+    .family<DotInspectionLog?, DateTime?>((ref, date) async {
+      if (date == null) return null;
+      final driverId = ref.watch(currentDriverIdProvider);
+      if (driverId == null || driverId <= 0) return null;
+      final result = await ref
+          .watch(inspectionRepositoryProvider)
+          .getLogs(driverId: DriverId(driverId), date: date);
+      return result.fold((_) => null, (log) => log);
+    });
+
 /// يُرجع يوم دورة التفتيش المطابق لتاريخ السجل المحدد
 final matchingInspectionCycleDayProvider =
     Provider.family<DotInspectionCycleDay?, DateTime?>((ref, logDate) {

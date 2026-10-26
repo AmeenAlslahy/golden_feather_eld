@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -46,6 +47,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       'assets/images/ic_launcher.png',
                       width: 120,
                       height: 120,
+                      cacheWidth: 360,
+                      cacheHeight: 360,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -56,7 +59,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     textAlign: TextAlign.center,
                     style: context.textTheme.headlineLarge?.copyWith(
                       color: context.colors.primary,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: AppTypography.bold,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -88,7 +91,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           Icon(
                             Icons.error_outline,
                             color: context.colors.error,
-                            size: 20,
+                            size: AppSpacing.iconMedium,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           if (authState.errorMessage != null)

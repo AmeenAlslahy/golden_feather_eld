@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_typography.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -36,12 +37,14 @@ class AppFeedback {
   }
 
   static void info(BuildContext context, String message) {
-    final scheme = Theme.of(context).colorScheme;
+    // زوج AppColors المعياري مثل إخوته تماماً — كان يستهلك دوراً
+    // مقلوباً من الثيم (فقاعة بيضاء ساطعة في الداكن) — انحراف وحيد.
+    final dark = Theme.of(context).brightness == Brightness.dark;
     _show(
       context,
       message,
-      scheme.inverseSurface,
-      scheme.onInverseSurface,
+      dark ? AppColors.darkInfoBg : AppColors.infoBg,
+      dark ? AppColors.infoOnDark : AppColors.infoText,
       Icons.info_outline,
     );
   }
@@ -120,7 +123,7 @@ class AppFeedback {
                             style: Theme.of(overlayContext).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: foreground,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: AppTypography.semiBold,
                                 ),
                           ),
                         ),

@@ -12,7 +12,10 @@ void main() {
   });
 
   test('an incomplete status does not become complete', () {
-    expect(SavedFormDto.fromJson({'formStatus': 'INCOMPLETE'}).complete, isFalse);
+    expect(
+      SavedFormDto.fromJson({'formStatus': 'INCOMPLETE'}).complete,
+      isFalse,
+    );
   });
 
   test('a missing form status is not treated as complete', () {

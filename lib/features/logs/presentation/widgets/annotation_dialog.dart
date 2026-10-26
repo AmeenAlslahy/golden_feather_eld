@@ -42,7 +42,7 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
         ),
-        FilledButton(
+        TextButton(
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: Text(MaterialLocalizations.of(context).okButtonLabel),
         ),

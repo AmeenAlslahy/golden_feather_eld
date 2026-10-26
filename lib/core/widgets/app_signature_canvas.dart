@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
 import 'package:signature/signature.dart';
 import '../extensions/context_extensions.dart';
 import '../theme/app_radius.dart';
@@ -71,9 +73,14 @@ class AppSignatureCanvas extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               border: Border.all(
+                // فاتح كما كان حرفياً (textPrimary)؛ داكن darkBorder بدل
+                // الأبيض الصريح — النية حدٌّ لا نص.
                 color: errorText != null
                     ? colorScheme.error
-                    : colorScheme.outline.withValues(alpha: 0.5),
+                    : (colorScheme.brightness == Brightness.dark
+                              ? AppColors.darkBorder
+                              : AppColors.textPrimary)
+                          .withValues(alpha: 0.5),
                 width: errorText != null ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(AppRadius.input),
@@ -116,7 +123,7 @@ class AppSignatureCanvas extends StatelessWidget {
               if (errorText != null)
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 4.0),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                     child: Text(errorText!, style: context.styles.error),
                   ),
                 ),

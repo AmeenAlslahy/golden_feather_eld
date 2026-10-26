@@ -1,5 +1,7 @@
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import '../../../../core/theme/app_spacing.dart';
 // import '../../../../core/theme/app_typography.dart';
@@ -60,7 +62,7 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
         child: vehicleState.isLoading
             ? const Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(AppSpacing.md),
                   child: CircularProgressIndicator(),
                 ),
               )
@@ -71,13 +73,13 @@ class _VehiclePickerDialogState extends ConsumerState<VehiclePickerDialog> {
             : vehicles.isEmpty
             ? Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(context.loc.noVehiclesFound),
                       if (!_browsingCompany && widget.allowCompanyFleet) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.compact),
                         TextButton(
                           onPressed: () {
                             setState(() => _browsingCompany = true);

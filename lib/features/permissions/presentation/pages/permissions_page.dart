@@ -1,5 +1,6 @@
 import 'package:golden_feather_eld/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/eld_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -129,7 +130,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
               },
               child: Text(context.loc.continueWithout),
             ),
-          FilledButton(
+          TextButton(
             onPressed: () {
               Navigator.pop(context);
               if (isRequired) {
@@ -179,7 +180,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                       Text(
                         'صلاحيات التطبيق',
                         textAlign: TextAlign.center,
-                        style: context.styles.pageTitle,
+                        // عنوان الشريط هو العنوان — وزن الترويسات (كان 24).
+                        style: context.styles.sectionTitle,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
@@ -272,7 +274,8 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     required bool isGranted,
     required VoidCallback onRequest,
   }) {
-    return Card(
+    return EldCard(
+      padding: EdgeInsets.zero,
       child: ListTile(
         leading: Icon(
           icon,

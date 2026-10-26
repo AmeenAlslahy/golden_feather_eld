@@ -280,7 +280,8 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
             Text(
               isOffline ? loc.offlineEldGeneratedTitle : loc.transferAccepted,
               textAlign: TextAlign.center,
-              style: context.styles.pageTitle,
+              // ترويسة رسالة نتيجة — وزن الترويسات الموحد (كان 24).
+              style: context.styles.sectionTitle,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(

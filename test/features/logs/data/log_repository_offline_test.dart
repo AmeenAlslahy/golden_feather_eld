@@ -18,6 +18,7 @@ class FakeIdGenerator implements IdGenerator {
   @override
   String v4() => 'test-uuid';
 }
+
 class _Local extends Mock implements LogLocalDataSource {}
 
 class _DailyLogs extends Mock implements DailyLogsBackend {}
@@ -87,21 +88,25 @@ void main() {
   group('getDailyLogs', () {
     test('online: returns server page and caches the first page', () async {
       when(() => net.isConnected).thenReturn(true);
-      when(() => dailyLogs.list(
-            driverId: any(named: 'driverId'),
-            page: any(named: 'page'),
-            size: any(named: 'size'),
-          )).thenAnswer((_) async => Right({
-            'data': serverLogs,
-            'pagination': {
-              'page': 0,
-              'size': 20,
-              'totalElements': 1,
-              'totalPages': 1,
-              'hasNext': false,
-              'hasPrevious': false,
-            },
-          }));
+      when(
+        () => dailyLogs.list(
+          driverId: any(named: 'driverId'),
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer(
+        (_) async => Right({
+          'data': serverLogs,
+          'pagination': {
+            'page': 0,
+            'size': 20,
+            'totalElements': 1,
+            'totalPages': 1,
+            'hasNext': false,
+            'hasPrevious': false,
+          },
+        }),
+      );
 
       final result = await repo.getDailyLogs(driverId: 106);
 
@@ -114,13 +119,16 @@ void main() {
 
     test('online: a cache write failure does not fail the read', () async {
       when(() => net.isConnected).thenReturn(true);
-      when(() => local.cacheDailyLogs(any(), any()))
-          .thenAnswer((_) async => throw Exception('disk full'));
-      when(() => dailyLogs.list(
-            driverId: any(named: 'driverId'),
-            page: any(named: 'page'),
-            size: any(named: 'size'),
-          )).thenAnswer((_) async => Right({'data': serverLogs}));
+      when(
+        () => local.cacheDailyLogs(any(), any()),
+      ).thenAnswer((_) async => throw Exception('disk full'));
+      when(
+        () => dailyLogs.list(
+          driverId: any(named: 'driverId'),
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer((_) async => Right({'data': serverLogs}));
 
       final result = await repo.getDailyLogs(driverId: 106);
       expect(result.isRight(), isTrue);
@@ -128,36 +136,44 @@ void main() {
 
     test('offline: serves the cached snapshot for the same driver', () async {
       when(() => net.isConnected).thenReturn(false);
-      when(() => local.getCachedDailyLogs(106))
-          .thenAnswer((_) async => serverLogs);
+      when(
+        () => local.getCachedDailyLogs(106),
+      ).thenAnswer((_) async => serverLogs);
 
       final result = await repo.getDailyLogs(driverId: 106);
 
       expect(result.getOrElse((_) => DailyLogPage.empty).logs.single.id, logId);
-      verifyNever(() => dailyLogs.list(
-            driverId: any(named: 'driverId'),
-            page: any(named: 'page'),
-            size: any(named: 'size'),
-          ));
+      verifyNever(
+        () => dailyLogs.list(
+          driverId: any(named: 'driverId'),
+          page: any(named: 'page'),
+          size: any(named: 'size'),
+        ),
+      );
     });
 
-    test('offline without a snapshot: NetworkFailure (never an empty list)',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.getCachedDailyLogs(any())).thenAnswer((_) async => null);
+    test(
+      'offline without a snapshot: NetworkFailure (never an empty list)',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(
+          () => local.getCachedDailyLogs(any()),
+        ).thenAnswer((_) async => null);
 
-      final result = await repo.getDailyLogs(driverId: 106);
+        final result = await repo.getDailyLogs(driverId: 106);
 
-      expect(result.isLeft(), isTrue);
-      expect(result.getLeft().toNullable(), isA<NetworkFailure>());
-    });
+        expect(result.isLeft(), isTrue);
+        expect(result.getLeft().toNullable(), isA<NetworkFailure>());
+      },
+    );
   });
 
   group('getEvents', () {
     test('online: events are returned and cached by log id', () async {
       when(() => net.isConnected).thenReturn(true);
-      when(() => dailyLogs.getEvents(logId))
-          .thenAnswer((_) async => Right({'events': serverEvents}));
+      when(
+        () => dailyLogs.getEvents(logId),
+      ).thenAnswer((_) async => Right({'events': serverEvents}));
 
       final result = await repo.getEvents(logId, day);
 
@@ -165,12 +181,15 @@ void main() {
       verify(() => local.cacheLogEvents(logId, serverEvents)).called(1);
     });
 
-    test('offline: cached snapshot first, then locally recorded events',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.getCachedLogEvents(logId))
-          .thenAnswer((_) async => serverEvents);
-      when(() => local.getEvents(day)).thenAnswer((_) async => [
+    test(
+      'offline: cached snapshot first, then locally recorded events',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(
+          () => local.getCachedLogEvents(logId),
+        ).thenAnswer((_) async => serverEvents);
+        when(() => local.getEvents(day)).thenAnswer(
+          (_) async => [
             LogEvent(
               id: 'local-1',
               status: 'ON',
@@ -186,14 +205,16 @@ void main() {
               duration: const Duration(minutes: 60),
               location: '',
             ),
-          ]);
+          ],
+        );
 
-      final result = await repo.getEvents(logId, day);
+        final result = await repo.getEvents(logId, day);
 
-      final events = result.getOrElse((_) => []);
-      expect(events.map((e) => e.id), ['9001', 'local-1']);
-      verifyNever(() => dailyLogs.getEvents(any()));
-    });
+        final events = result.getOrElse((_) => []);
+        expect(events.map((e) => e.id), ['9001', 'local-1']);
+        verifyNever(() => dailyLogs.getEvents(any()));
+      },
+    );
 
     test('offline without a snapshot: only locally recorded events', () async {
       when(() => net.isConnected).thenReturn(false);
@@ -207,65 +228,83 @@ void main() {
   });
 
   group('getReadiness — honesty (P3)', () {
-    test('offline: READY is derived from the real cached log and its owner',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
-      when(() => local.getCachedDailyLogs(106))
-          .thenAnswer((_) async => [
-                {
-                  'id': 42,
-                  'uniqueId': 'u-42',
-                  'logDate': '2026-09-24',
-                  'formStatus': 'COMPLETED',
-                  'driver': {'id': 106, 'name': 'Ali Kareem'},
-                },
-              ]);
+    test(
+      'offline: READY is derived from the real cached log and its owner',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
+        when(() => local.getCachedDailyLogs(106)).thenAnswer(
+          (_) async => [
+            {
+              'id': 42,
+              'uniqueId': 'u-42',
+              'logDate': '2026-09-24',
+              'formStatus': 'COMPLETED',
+              'driver': {'id': 106, 'name': 'Ali Kareem'},
+            },
+          ],
+        );
 
-      final result = await repo.getReadiness(logId);
+        final result = await repo.getReadiness(logId);
 
-      final readiness = result.getOrElse((_) => throw StateError('expected Right'));
-      expect(readiness.driverId, 106, reason: 'the real owner, not 0');
-      expect(readiness.driverName, 'Ali Kareem');
-      expect(readiness.logDate, '2026-09-24');
-      expect(readiness.readinessStatus, 'READY');
-      expect(readiness.missingRequirements, isEmpty);
-      expect(readiness.legalStatement, isEmpty,
-          reason: 'the UI falls back to the localized approved statement');
-    });
+        final readiness = result.getOrElse(
+          (_) => throw StateError('expected Right'),
+        );
+        expect(readiness.driverId, 106, reason: 'the real owner, not 0');
+        expect(readiness.driverName, 'Ali Kareem');
+        expect(readiness.logDate, '2026-09-24');
+        expect(readiness.readinessStatus, 'READY');
+        expect(readiness.missingRequirements, isEmpty);
+        expect(
+          readiness.legalStatement,
+          isEmpty,
+          reason: 'the UI falls back to the localized approved statement',
+        );
+      },
+    );
 
-    test('offline incomplete form: NOT_READY with a real requirement',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
-      when(() => local.getCachedDailyLogs(106))
-          .thenAnswer((_) async => [
-                {
-                  'id': 42,
-                  'uniqueId': 'u-42',
-                  'logDate': '2026-09-24',
-                  'formStatus': 'DRAFT',
-                  'driver': {'id': 106, 'name': 'Ali Kareem'},
-                },
-              ]);
+    test(
+      'offline incomplete form: NOT_READY with a real requirement',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(() => local.ownerOfCachedLog(42)).thenAnswer((_) async => 106);
+        when(() => local.getCachedDailyLogs(106)).thenAnswer(
+          (_) async => [
+            {
+              'id': 42,
+              'uniqueId': 'u-42',
+              'logDate': '2026-09-24',
+              'formStatus': 'DRAFT',
+              'driver': {'id': 106, 'name': 'Ali Kareem'},
+            },
+          ],
+        );
 
-      final result = await repo.getReadiness(logId);
+        final result = await repo.getReadiness(logId);
 
-      final readiness = result.getOrElse((_) => throw StateError('expected Right'));
-      expect(readiness.readinessStatus, 'NOT_READY',
-          reason: 'a half-saved form must never claim READY offline');
-      expect(readiness.missingRequirements, isNotEmpty);
-    });
+        final readiness = result.getOrElse(
+          (_) => throw StateError('expected Right'),
+        );
+        expect(
+          readiness.readinessStatus,
+          'NOT_READY',
+          reason: 'a half-saved form must never claim READY offline',
+        );
+        expect(readiness.missingRequirements, isNotEmpty);
+      },
+    );
 
-    test('offline without any cached snapshot: failure, never a fabricated READY',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.ownerOfCachedLog(any())).thenAnswer((_) async => null);
+    test(
+      'offline without any cached snapshot: failure, never a fabricated READY',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(() => local.ownerOfCachedLog(any())).thenAnswer((_) async => null);
 
-      final result = await repo.getReadiness(logId);
+        final result = await repo.getReadiness(logId);
 
-      expect(result.isLeft(), isTrue);
-      expect(result.getLeft().toNullable(), isA<NetworkFailure>());
-    });
+        expect(result.isLeft(), isTrue);
+        expect(result.getLeft().toNullable(), isA<NetworkFailure>());
+      },
+    );
   });
 }

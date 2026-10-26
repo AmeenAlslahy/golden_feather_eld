@@ -962,6 +962,7 @@
   "simulateMalfunctionDebug": "محاكاة عطل (تصحيح)",
   "simulatedMalfunctionRecorded": "تم تسجيل عطل محاكى (تصحيح فقط)",
   "inspectionLogsTitle": "سجلات التفتيش",
+  "inspectionPreview": "معاينة التفتيش",
   "dvirActiveDefectsTitle": "العيوب النشطة لمركبتك",
   "dvirDefectDetailsTitle": "تفاصيل العيب",
   "dvirDefectSeverity": "الخطورة",
@@ -1130,5 +1131,7 @@
   "createdAt": "تاريخ الإنشاء",
   "zoomIn": "تكبير",
   "zoomOut": "تصغير",
-  "fitWidth": "ملائمة العرض (100%)"
+  "fitWidth": "ملائمة العرض (100%)",
+  "inspectionFallbackGuidance": "اعرض هذه الشاشة لمفتش السلامة عند الطلب.",
+  "inspectionHandOverNotice": "سلّم الجهاز لمفتش السلامة"
 }
