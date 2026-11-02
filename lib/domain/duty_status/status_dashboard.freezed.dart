@@ -881,7 +881,8 @@ mixin _$HosIndicator {
 /// Backend-supplied label (e.g. "DRIVE").
  String get label;/// Duration value.
  Duration get value;/// Whether this value is "used" or "remaining".
- IndicatorType get type;
+ IndicatorType get type;/// Optional subtitle from backend (e.g. "until break" or "left today").
+ String? get subtitle;
 /// Create a copy of HosIndicator
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -892,16 +893,16 @@ $HosIndicatorCopyWith<HosIndicator> get copyWith => _$HosIndicatorCopyWithImpl<H
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HosIndicator&&(identical(other.label, label) || other.label == label)&&(identical(other.value, value) || other.value == value)&&(identical(other.type, type) || other.type == type));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HosIndicator&&(identical(other.label, label) || other.label == label)&&(identical(other.value, value) || other.value == value)&&(identical(other.type, type) || other.type == type)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,value,type);
+int get hashCode => Object.hash(runtimeType,label,value,type,subtitle);
 
 @override
 String toString() {
-  return 'HosIndicator(label: $label, value: $value, type: $type)';
+  return 'HosIndicator(label: $label, value: $value, type: $type, subtitle: $subtitle)';
 }
 
 
@@ -912,7 +913,7 @@ abstract mixin class $HosIndicatorCopyWith<$Res>  {
   factory $HosIndicatorCopyWith(HosIndicator value, $Res Function(HosIndicator) _then) = _$HosIndicatorCopyWithImpl;
 @useResult
 $Res call({
- String label, Duration value, IndicatorType type
+ String label, Duration value, IndicatorType type, String? subtitle
 });
 
 
@@ -929,12 +930,13 @@ class _$HosIndicatorCopyWithImpl<$Res>
 
 /// Create a copy of HosIndicator
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? value = null,Object? type = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? value = null,Object? type = null,Object? subtitle = freezed,}) {
   return _then(_self.copyWith(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as Duration,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as IndicatorType,
+as IndicatorType,subtitle: freezed == subtitle ? _self.subtitle : subtitle // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -945,7 +947,7 @@ as IndicatorType,
 
 
 class _HosIndicator implements HosIndicator {
-  const _HosIndicator({required this.label, required this.value, required this.type});
+  const _HosIndicator({required this.label, required this.value, required this.type, this.subtitle});
   
 
 /// Backend-supplied label (e.g. "DRIVE").
@@ -954,6 +956,8 @@ class _HosIndicator implements HosIndicator {
 @override final  Duration value;
 /// Whether this value is "used" or "remaining".
 @override final  IndicatorType type;
+/// Optional subtitle from backend (e.g. "until break" or "left today").
+@override final  String? subtitle;
 
 /// Create a copy of HosIndicator
 /// with the given fields replaced by the non-null parameter values.
@@ -965,16 +969,16 @@ _$HosIndicatorCopyWith<_HosIndicator> get copyWith => __$HosIndicatorCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HosIndicator&&(identical(other.label, label) || other.label == label)&&(identical(other.value, value) || other.value == value)&&(identical(other.type, type) || other.type == type));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HosIndicator&&(identical(other.label, label) || other.label == label)&&(identical(other.value, value) || other.value == value)&&(identical(other.type, type) || other.type == type)&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,label,value,type);
+int get hashCode => Object.hash(runtimeType,label,value,type,subtitle);
 
 @override
 String toString() {
-  return 'HosIndicator(label: $label, value: $value, type: $type)';
+  return 'HosIndicator(label: $label, value: $value, type: $type, subtitle: $subtitle)';
 }
 
 
@@ -985,7 +989,7 @@ abstract mixin class _$HosIndicatorCopyWith<$Res> implements $HosIndicatorCopyWi
   factory _$HosIndicatorCopyWith(_HosIndicator value, $Res Function(_HosIndicator) _then) = __$HosIndicatorCopyWithImpl;
 @override @useResult
 $Res call({
- String label, Duration value, IndicatorType type
+ String label, Duration value, IndicatorType type, String? subtitle
 });
 
 
@@ -1002,12 +1006,13 @@ class __$HosIndicatorCopyWithImpl<$Res>
 
 /// Create a copy of HosIndicator
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? value = null,Object? type = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? value = null,Object? type = null,Object? subtitle = freezed,}) {
   return _then(_HosIndicator(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,value: null == value ? _self.value : value // ignore: cast_nullable_to_non_nullable
 as Duration,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
-as IndicatorType,
+as IndicatorType,subtitle: freezed == subtitle ? _self.subtitle : subtitle // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -12,15 +12,29 @@ class MockUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
   @override
   Future<Result<RawJson>> list({
     UnidentifiedTab tab = UnidentifiedTab.unclaimed,
-    String? uniqueId,
-    DriverId? driverId,
+    int page = 0,
+    int size = 20,
+    String sortBy = 'id',
+    String sortDirection = 'ASC',
+    List<UnidentifiedEventFilter> filters = const [],
   }) =>
       throw UnimplementedError('MockUnidentifiedEventsBackend.list — Phase 2');
 
   @override
+  Future<Result<RawJson>> getById({required DutyStatusId id}) =>
+      throw UnimplementedError(
+        'MockUnidentifiedEventsBackend.getById — Phase 2',
+      );
+
+  @override
+  Future<Result<RawJson>> summary() => throw UnimplementedError(
+    'MockUnidentifiedEventsBackend.summary — Phase 2',
+  );
+
+  @override
   Future<Result<void>> claim({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String annotation,
   }) =>
       throw UnimplementedError('MockUnidentifiedEventsBackend.claim — Phase 2');
@@ -28,7 +42,7 @@ class MockUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
   @override
   Future<Result<void>> reject({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String rejectionReason,
   }) => throw UnimplementedError(
     'MockUnidentifiedEventsBackend.reject — Phase 2',

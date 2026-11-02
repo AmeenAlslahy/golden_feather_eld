@@ -716,6 +716,9 @@ class _TestDashboardBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     final result = updateResult;
     if (result == null) throw UnimplementedError();

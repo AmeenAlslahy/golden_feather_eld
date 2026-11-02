@@ -54,6 +54,8 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   }) async {
     final filtered = _logs.where((log) {
       if (logDate != null) {
@@ -99,6 +101,8 @@ class MockDailyLogsBackend implements DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   }) async {
     return ok(<String, dynamic>{
       'totalLogs': _logs.length,

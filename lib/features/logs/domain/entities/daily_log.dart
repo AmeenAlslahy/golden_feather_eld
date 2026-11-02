@@ -1,12 +1,35 @@
 import 'package:equatable/equatable.dart';
 import '../../../../domain/shared/value_objects.dart';
 
-enum FormStatus { completed, incomplete, unknown }
+enum FormStatus {
+  completed,
+  incomplete,
+
+  /// محفوظ على الجهاز بانتظار المزامنة — ليس اكتمالاً مؤكداً من الخادم.
+  pendingSync,
+
+  /// قَبِل الخادم حفظ النموذج لكنه لم يؤكد حالة الاكتمال — لا ندّعي
+  /// الاكتمال ولا نعيده إلى «بانتظار المزامنة» (الطلب لم يعد في الطابور).
+  savedUnconfirmed,
+
+  /// رُفض الطلب نهائياً (أو استنفدت المحاولات) — البيانات المحلية محفوظة
+  /// لكن الخادم لم يقبلها. حالة مستقلة عن «بانتظار المزامنة» و«محفوظ».
+  syncFailed,
+
+  unknown,
+}
 
 enum CertificationStatus {
   certified,
   uncertified,
   reCertificationRequired,
+
+  /// طلب الاعتماد في الطابور ولم يؤكده الخادم بعد.
+  pendingSync,
+
+  /// رُفض طلب الاعتماد نهائياً أو استنفدت المحاولات — السجل غير معتمد.
+  syncFailed,
+
   unknown,
 }
 
@@ -113,29 +136,6 @@ class DailyLog extends Equatable {
       trailers: trailers ?? this.trailers,
       shippingDocuments: shippingDocuments ?? this.shippingDocuments,
     );
-  }
-
-  String get dayName {
-    if (today) return 'Today';
-    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
-  }
-
-  String get formattedDate {
-    return '$dayName - ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1]} ${date.day}${_ordinal(date.day)}';
-  }
-
-  String _ordinal(int day) {
-    if (day >= 11 && day <= 13) return 'th';
-    switch (day % 10) {
-      case 1:
-        return 'st';
-      case 2:
-        return 'nd';
-      case 3:
-        return 'rd';
-      default:
-        return 'th';
-    }
   }
 
   @override

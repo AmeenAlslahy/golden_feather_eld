@@ -45,7 +45,7 @@ class ApiFieldError {
 
   static ApiFieldError? tryParse(Object? raw) {
     if (raw is! Map) return null;
-    final field = raw['field'];
+    final field = raw['field'] ?? raw['name'];
     final message = raw['message'];
     if (field is! String || message is! String) return null;
     final code = raw['code'];

@@ -202,21 +202,20 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                   final isCritical =
                       liveRemaining <= const Duration(hours: 1) ||
                       progress >= 0.90;
-                  if (isRest) {
-                    arcColor = theme.disabledColor;
-                    timeTextColor = theme.hintColor;
-                  } else if (isCritical) {
+                  if (isCritical) {
                     arcColor = theme.colorScheme.error;
                     timeTextColor = theme.colorScheme.error;
+                  } else if (isRest) {
+                    arcColor = theme.disabledColor;
+                    timeTextColor = theme.colorScheme.onSurface;
                   } else {
                     // أخضر ناصع (Safe color)
                     arcColor = context.success;
                     timeTextColor = context.success;
                   }
 
-                  final timeString = isRest
-                      ? '00:00'
-                      : DurationFormat.hhMm(liveRemaining, signed: true);
+                  final timeString =
+                      DurationFormat.hhMm(liveRemaining, signed: true);
                   final remainingText =
                       AppLocalizations.of(context)?.remainingLabel ??
                       'Remaining';
@@ -327,8 +326,8 @@ class _OriginalEldCirclePainter extends CustomPainter {
     // رسم مسار الدائرة الأساسي
     canvas.drawCircle(center, radius, trackPaint);
 
-    // إذا كانت الحالة راحة (Off Duty / Sleeper)، المسار الرمادي الكامل كافٍ
-    if (isRest || progress <= 0.0) {
+    // إذا كانت النسبة صفرية، المسار الرمادي الأساسي كافٍ
+    if (progress <= 0.0) {
       return;
     }
 

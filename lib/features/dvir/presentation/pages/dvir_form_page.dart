@@ -26,6 +26,7 @@ import '../providers/dvir_provider.dart';
 import '../extensions/dvir_status_extensions.dart';
 import '../widgets/previous_dvir_review_modal.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 
 import '../../../logs/presentation/widgets/vehicle_picker_dialog.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
@@ -402,21 +403,19 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     final readOnly = formState.readOnly;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          context.loc.dvirInsertDvir,
-          style: context.styles.appBarTitle,
-        ),
+        titleText: context.loc.dvirInsertDvir,
+        variant: GoldenAppBarVariant.brand,
         centerTitle: true,
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           children: [
             DvirInspectionTypeSection(
               selectedType: formState.inspectionType,

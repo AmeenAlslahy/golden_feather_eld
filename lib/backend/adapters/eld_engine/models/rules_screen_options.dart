@@ -1,29 +1,93 @@
-/// Reads dropdown options from the rules-screen payload.
+/// Reads dropdown options from both old and new rules-screen APIs.
 ///
-/// Server keys are mapped to the field names the screen already uses.
-/// Missing or empty lists stay absent. No federal rule is invented here.
+/// Supports:
+/// - Old API keys: availableCycleRules, availableCargoTypes, etc.
+/// - New API keys: cycleRules, cargoTypes, restarts, restBreaks.
+/// - String options: ["USA_70HR_8DAY"]
+/// - Object options: [{"code": "USA_70HR_8DAY"}]
+///
+/// Maps server keys to existing Flutter screen field names.
+///
+/// Missing or empty lists stay absent.
+/// Duplicate values are removed.
+/// No default federal rules are invented.
 Map<String, List<String>> readRulesOptions(Object? raw) {
-  if (raw is! Map) return const {};
-  const aliases = {
+  if (raw is! Map) {
+    return <String, List<String>>{};
+  }
+
+  const aliases = <String, String>{
+    // Old Backend API
     'availableCycleRules': 'cycleRule',
     'availableCargoTypes': 'cargoType',
     'availableRestarts': 'restart',
     'availableRestBreaks': 'restBreak',
+
+    // New Backend API
+    'cycleRules': 'cycleRule',
+    'cargoTypes': 'cargoType',
+    'restarts': 'restart',
+    'restBreaks': 'restBreak',
+
+    // Existing Flutter field names
+    'cycleRule': 'cycleRule',
+    'cargoType': 'cargoType',
+    'restart': 'restart',
+    'restBreak': 'restBreak',
   };
+
   final result = <String, List<String>>{};
+
   raw.forEach((key, value) {
     if (value is! List) return;
-    final name = aliases[key.toString()] ?? key.toString();
-    final items = value
-        .map((item) => item.toString().trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-    if (items.isEmpty) return;
-    final existing = result[name] ?? <String>[];
-    for (final item in items) {
-      if (!existing.contains(item)) existing.add(item);
+
+    final fieldName = aliases[key.toString()] ?? key.toString();
+
+    final parsedOptions = <String>[];
+
+    for (final item in value) {
+      String? optionCode;
+
+      // Old API: String values
+      if (item is String) {
+        optionCode = item.trim();
+      }
+
+      // New API: Object containing "code"
+      else if (item is Map) {
+        final code = item['code'];
+
+        if (code is String) {
+          optionCode = code.trim();
+        }
+      }
+
+      // Ignore invalid or empty options
+      if (optionCode == null || optionCode.isEmpty) {
+        continue;
+      }
+
+      // Prevent duplicate options
+      if (!parsedOptions.contains(optionCode)) {
+        parsedOptions.add(optionCode);
+      }
     }
-    result[name] = existing;
+
+    // Do not add empty dropdown lists
+    if (parsedOptions.isEmpty) return;
+
+    // Merge options when old and new aliases coexist
+    final existingOptions = result.putIfAbsent(
+      fieldName,
+      () => <String>[],
+    );
+
+    for (final option in parsedOptions) {
+      if (!existingOptions.contains(option)) {
+        existingOptions.add(option);
+      }
+    }
   });
+
   return result;
 }

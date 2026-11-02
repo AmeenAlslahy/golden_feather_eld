@@ -13,6 +13,7 @@ import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sd
 import 'package:golden_feather_eld/features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart'; // ignore_architecture
 import '../../core/config/app_environment.dart';
 import '../../core/network/core_providers.dart';
+import '../../core/session/owner_identity.dart';
 
 /// P0 Stage 1: يحمل epoch الطلب المرفوض بـ 401 حتى يتجاهل المستمع
 /// الأحداث الأقدم من الجيل الحالي (late 401 من جلسة سابقة).
@@ -57,6 +58,12 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     AuthInterceptor(
       localDataSource: localDataSource,
       backendType: backendType,
+      // P0 2B-1 (مراجعة 2026-10-30) — هوية الإرسال من **نفس دالة الختم**
+      // (currentDriverIdProvider، فضاء معرّف سائق ELD) لحظة الإرسال.
+      // المقارنة القديمة بـ session.user.id (مستخدم Traccar) كانت ترفض
+      // كل طلب ملزم متى اختلف المعرفان. الإسناد يصل عبر الحاوية لأن
+      // الاستيراد المباشر لـ features/auth يصنع دائرة مزودات.
+      resolveCurrentOwnerDriverId: OwnerIdentityBinding.resolve,
       onUnauthenticated: (requestEpoch) {
         // Trigger event instead of directly depending on AuthStateProvider
         unauthController.add(requestEpoch);

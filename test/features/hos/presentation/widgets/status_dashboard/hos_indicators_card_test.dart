@@ -73,5 +73,41 @@ void main() {
       expect(find.textContaining('15-Hour On Duty Limit'), findsOneWidget);
       expect(find.textContaining('USA 60/7'), findsOneWidget);
     });
+
+    testWidgets('renders server subtitle directly when provided', (tester) async {
+      const indicatorsWithSubtitle = HosIndicators(
+        drive: HosIndicator(
+          label: 'DRIVE',
+          subtitle: '11-Hour Driving Limit',
+          value: Duration(hours: 11),
+          type: IndicatorType.remaining,
+        ),
+        shift: HosIndicator(
+          label: 'SHIFT',
+          subtitle: '14-Hour On Duty Limit',
+          value: Duration(hours: 8, minutes: 53),
+          type: IndicatorType.remaining,
+        ),
+        breakTime: HosIndicator(
+          label: 'BREAK',
+          subtitle: '30 Minute Rest Break',
+          value: Duration(hours: 8),
+          type: IndicatorType.remaining,
+        ),
+        cycle: HosIndicator(
+          label: 'CYCLE',
+          subtitle: 'USA 70/8',
+          value: Duration(hours: 69, minutes: 59),
+          type: IndicatorType.remaining,
+        ),
+      );
+
+      await pumpPage(tester, const HosIndicatorsCard(indicators: indicatorsWithSubtitle));
+
+      expect(find.text('11-Hour Driving Limit'), findsOneWidget);
+      expect(find.text('14-Hour On Duty Limit'), findsOneWidget);
+      expect(find.text('30 Minute Rest Break'), findsOneWidget);
+      expect(find.text('USA 70/8'), findsOneWidget);
+    });
   });
 }

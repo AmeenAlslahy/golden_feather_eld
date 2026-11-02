@@ -16,7 +16,7 @@ class EldDriverSessionBackend implements DriverSessionBackend {
   @override
   Future<Result<RawJson>> getActiveSession(DriverId driverId) async {
     final res = await _apiClient.get<RawJson>(
-      EldEndpoints.getSession(driverId.value),
+      EldEndpoints.eldSession(driverId.value),
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
@@ -51,12 +51,18 @@ class EldDriverSessionBackend implements DriverSessionBackend {
     String? uniqueId,
     bool disconnected = false,
   }) async {
+    final payload = <String, dynamic>{
+      if (uniqueId != null) 'deviceId': uniqueId,
+      'manualMode': disconnected,
+      'manualModeEnabled': disconnected,
+    };
     final res = await _apiClient.post<RawJson>(
       EldEndpoints.connectSession,
       queryParameters: {
         if (uniqueId != null) 'uniqueId': uniqueId,
         if (disconnected) 'disconnected': disconnected,
       },
+      data: payload,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});

@@ -123,15 +123,11 @@ void main() {
   });
 
   group('08 DOT Inspection — wire', () {
-    test('paths match Swagger', () {
-      expect(EldEndpoints.inspections, '/eld/dot-inspection');
-      expect('${EldEndpoints.inspections}/cycle', '/eld/dot-inspection/cycle');
-      expect('${EldEndpoints.inspections}/logs', '/eld/dot-inspection/logs');
-      expect(EldEndpoints.dotInspectionEmailLogs, '/eld/dot-inspection/email-logs');
-      expect(EldEndpoints.dotInspectionSendLogs, '/eld/dot-inspection/send-logs');
-      expect(EldEndpoints.dotInspectionStart, '/eld/dot-inspection/start');
-      expect(EldEndpoints.dotInspectionPacket, '/eld/dot-inspection/information-packet');
-      expect(EldEndpoints.dotInspectionTransfers, '/eld/dot-inspection/transfers');
+    test('confirmed Swagger paths match', () {
+      expect(EldEndpoints.inspections, '/eld/inspections');
+      expect(EldEndpoints.dotInspectionEmailLogs, '/eld/transfer/email-logs');
+      // cycle/logs/send/start/packet/transfers are not in the reviewed
+      // Swagger document; leave them out until the backend confirms them.
     });
 
     test('send-logs outputFileComment is validated to 4–60 chars client-side', () {

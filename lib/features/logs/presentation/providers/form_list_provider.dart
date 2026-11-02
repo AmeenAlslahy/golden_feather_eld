@@ -1,7 +1,43 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/daily_form_rules.dart';
+import '../../domain/entities/daily_form_data.dart';
+import '../../domain/entities/daily_log.dart';
 import 'logs_provider.dart';
+
+/// أسبقية قوائم النموذج اليومي (مقطورات/وثائق شحن) — مصدر واحد يمنع
+/// اختلاف تبويب النموذج عن شاشات القوائم:
+///
+/// سجل اليوم: القيمة الحية ← نموذج الخادم ← صف السجل.
+/// سجل سابق: نموذج الخادم ← صف السجل (اللوحة الحية تخص اليوم فقط).
+///
+/// «القيمة الحية» لا تُقرأ لسجل سابق حتى لا تتسرب قيم يوم إلى يوم آخر.
+List<String> resolveFormListItems({
+  required LogsState logsState,
+  required List<String> liveItems,
+  required List<String> Function(DailyFormData form) fromServerForm,
+  required List<String> Function(DailyLog log) fromLogRow,
+}) {
+  final selected = logsState.selectedLog;
+  final isToday = selected == null || selected.today;
+
+  if (isToday && liveItems.isNotEmpty) {
+    return List<String>.unmodifiable(liveItems);
+  }
+
+  final form = logsState.serverForm;
+  if (form != null) {
+    final values = fromServerForm(form);
+    if (values.isNotEmpty) return List<String>.unmodifiable(values);
+  }
+
+  if (selected != null) {
+    final values = fromLogRow(selected);
+    if (values.isNotEmpty) return List<String>.unmodifiable(values);
+  }
+
+  return const [];
+}
 
 /// فشل عملية إضافة عنصر إلى قائمة نموذج يومي (مقطورات/وثائق شحن —
 /// SRS 5.5–5.13). ميزة قد لا تُنتج كل الحالات (المقطورات لا تُنتج
@@ -82,8 +118,11 @@ class FormListRules {
 abstract class FormListNotifier extends AutoDisposeNotifier<FormListState> {
   FormListRules get rules;
 
-  /// عناصر سجل سابق (نموذج الخادم أولاً ثم صف السجل).
-  List<String> savedItems(LogsState logsState);
+  /// عناصر القائمة كما وردت في نموذج الخادم لسجل سابق.
+  List<String> savedFromServerForm(DailyFormData form);
+
+  /// عناصر القائمة كما وردت في صف السجل نفسه.
+  List<String> savedFromLogRow(DailyLog log);
 
   /// القيمة الحية من لوحة القيادة لسجل اليوم (تُقرأ بـ watch داخل build).
   String? liveDashboardRaw();
@@ -96,11 +135,20 @@ abstract class FormListNotifier extends AutoDisposeNotifier<FormListState> {
   FormListState build() {
     final logsState = ref.watch(logsProvider);
     final selected = logsState.selectedLog;
-    if (selected != null && !selected.today) {
-      // سجل سابق: المصدر قيمه المحفوظة الخاصة به، لا حالة اللوحة الحية.
-      return FormListState(items: List.of(savedItems(logsState)));
-    }
-    return FormListState(items: splitFormList(liveDashboardRaw()));
+    final liveItems = (selected == null || selected.today)
+        ? splitFormList(liveDashboardRaw())
+        : const <String>[];
+
+    return FormListState(
+      items: List.of(
+        resolveFormListItems(
+          logsState: logsState,
+          liveItems: liveItems,
+          fromServerForm: savedFromServerForm,
+          fromLogRow: savedFromLogRow,
+        ),
+      ),
+    );
   }
 
   /// يضيف عنصراً بعد التحقق وفق [rules] بترتيب معلن واحد.

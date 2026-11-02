@@ -1,5 +1,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/domain/duty_status/duty_status_code.dart';
 import 'package:golden_feather_eld/domain/duty_status/status_dashboard.dart';
 import 'package:golden_feather_eld/features/hos/presentation/widgets/status_dashboard/main_circular_timer.dart';
 
@@ -27,6 +28,19 @@ void main() {
       );
 
       expect(find.text('08:37'), findsOneWidget);
+    });
+
+    testWidgets('renders server remaining time in HH:MM even when Off Duty', (tester) async {
+      await pumpPage(
+        tester,
+        MainCircularTimer(
+          circle: circle(remaining: const Duration(hours: 8)),
+          dutyStatus: DutyStatusCode.offDuty,
+          statusLabel: 'Off Duty',
+        ),
+      );
+
+      expect(find.text('08:00'), findsOneWidget);
     });
 
     testWidgets('renders label', (tester) async {

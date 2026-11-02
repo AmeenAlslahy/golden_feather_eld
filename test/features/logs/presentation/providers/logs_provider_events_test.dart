@@ -7,6 +7,7 @@ import 'package:golden_feather_eld/features/auth/presentation/providers/auth_sta
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:mocktail/mocktail.dart';
@@ -76,7 +77,9 @@ void main() {
     'selectLog fetches events for that log id and fills selectedLog',
     () async {
       when(() => repo.getEvents(any(), any())).thenAnswer(
-        (_) async => Right([ev('1', 'OFF', 480), ev('2', 'D', 120)]),
+        (_) async => Right(
+          LogEventsSnapshot.server([ev('1', 'OFF', 480), ev('2', 'D', 120)]),
+        ),
       );
 
       final notifier = container.read(logsProvider.notifier);
@@ -103,7 +106,7 @@ void main() {
       if (calls == 1) {
         return const Left(ServerFailure(message: 'boom', statusCode: 500));
       }
-      return Right([ev('1', 'ON', 60)]);
+      return Right(LogEventsSnapshot.server([ev('1', 'ON', 60)]));
     });
 
     final notifier = container.read(logsProvider.notifier);
@@ -124,9 +127,9 @@ void main() {
   test(
     'updateEvent forwards the mandatory reason and refreshes from server',
     () async {
-      when(
-        () => repo.getEvents(any(), any()),
-      ).thenAnswer((_) async => Right([ev('7', 'OFF', 60)]));
+      when(() => repo.getEvents(any(), any())).thenAnswer(
+        (_) async => Right(LogEventsSnapshot.server([ev('7', 'OFF', 60)])),
+      );
       // الخادم يعيد DutyEventDto المعدّل (id يطابق الحدث المعدّل).
       when(
         () => repo.updateEvent(

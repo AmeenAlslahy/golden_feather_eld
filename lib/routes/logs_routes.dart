@@ -5,6 +5,7 @@ import '../features/logs/presentation/pages/log_detail_page.dart';
 import '../features/logs/presentation/pages/edit_log_page.dart';
 import '../features/logs/presentation/pages/suggested_events_page.dart';
 import '../features/logs/presentation/pages/unidentified_events_page.dart';
+import '../features/logs/presentation/pages/audit_trail_page.dart';
 import '../features/logs/domain/entities/daily_log.dart';
 
 class LogsRoutes {
@@ -25,6 +26,12 @@ class LogsRoutes {
       path: AppRoutes.unidentifiedEvents,
       name: 'unidentifiedEvents',
       builder: (context, state) => const UnidentifiedEventsPage(),
+    ),
+    // يجب أن يسبق `/logs/:id` وإلا ابتلعه معرّف المسار.
+    GoRoute(
+      path: AppRoutes.auditTrail,
+      name: 'auditTrail',
+      builder: (context, state) => const AuditTrailPage(),
     ),
     GoRoute(
       path: AppRoutes.logDetail,

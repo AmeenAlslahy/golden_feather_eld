@@ -57,5 +57,30 @@ void main() {
       expect(dto.options, {});
       expect(dto.sixteenHourException, false);
     });
+
+    test('fromJson populates editableFields from editPermissions when present', () {
+      final json = {
+        'driverId': 1,
+        'editable': true,
+        'rules': {
+          'cycleRule': 'USA_70HR_8DAY',
+          'shortHaul16HourException': true,
+        },
+        'editPermissions': {
+          'canEditCycleRule': true,
+          'canEditShortHaul16HourException': true,
+          'canEditCargoType': false,
+        },
+      };
+
+      final dto = RulesScreenDto.fromJson(json);
+
+      expect(dto.driverId, '1');
+      expect(dto.sixteenHourException, isTrue);
+      expect(dto.editableFields, contains('cycleRule'));
+      expect(dto.editableFields, contains('sixteenHourException'));
+      expect(dto.editableFields, contains('shortHaul16HourException'));
+      expect(dto.editableFields.contains('cargoType'), isFalse);
+    });
   });
 }

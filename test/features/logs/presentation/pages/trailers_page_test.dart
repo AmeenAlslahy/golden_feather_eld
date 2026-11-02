@@ -8,6 +8,7 @@ import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/features/logs/domain/daily_form_rules.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
 import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
@@ -263,7 +264,7 @@ void main() {
       // not need them, so answer with an empty list.
       when(
         () => repo.getEvents(any(), any()),
-      ).thenAnswer((_) async => const Right([]));
+      ).thenAnswer((_) async => const Right(LogEventsSnapshot.server([])));
       // وتفاصيل الخادم (GET /eld/daily-logs/{id}) — لا يخص هذه الاختبارات.
       when(
         () => repo.getLogById(any()),

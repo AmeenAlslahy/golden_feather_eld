@@ -11,6 +11,7 @@ import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/daily_form_rules.dart';
+import '../formatters/log_date_formatter.dart';
 import '../providers/edit_log_provider.dart';
 import '../providers/edit_log_form_provider.dart';
 import '../../../../core/widgets/dashed_line_painter.dart';

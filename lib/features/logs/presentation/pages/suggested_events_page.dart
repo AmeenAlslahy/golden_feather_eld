@@ -22,107 +22,173 @@ class SuggestedEventsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final logsState = ref.watch(logsProvider);
     final pendingLogs = ref.watch(pendingSuggestedLogsProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          context.loc.suggestedEvents,
-          style: context.styles.appBarTitle,
-        ),
+      appBar: GoldenAppBar(
+        titleText: context.loc.suggestedEvents,
+        variant: GoldenAppBarVariant.brand,
         leading: const BackButton(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (pendingLogs.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: context.warningContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(
-                    color: context.warning.withValues(alpha: 0.3),
+      body: logsState.isLoading && pendingLogs.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : logsState.error != null && pendingLogs.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                    child: EldRetryView(
+                      message: logsState.error!,
+                      onRetry: () => ref
+                          .read(logsProvider.notifier)
+                          .loadLogs(refresh: true),
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (pendingLogs.isNotEmpty) ...[
+                        // Contextual Page-Level Warning
+                        () {
+                          final hasRecertification = pendingLogs.any(
+                            (l) =>
+                                l.certificationStatus ==
+                                CertificationStatus.reCertificationRequired,
+                          );
+                          if (hasRecertification) {
+                            return EldCard(
+                              color: context.warningContainer,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.sm,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: context.warning,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Expanded(
+                                    child: Text(
+                                      context.loc.reCertificationRequiredMsg,
+                                      style: context.styles.bodyBold.copyWith(
+                                        color: context.warning,
+                                        fontSize: 13,
+                                        fontWeight: AppTypography.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          return EldCard(
+                            color: context.gold.withValues(alpha: 0.08),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: context.gold,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Text(
+                                    context.loc.carrierProposedEdits39530Are,
+                                    style: context.styles.caption.copyWith(
+                                      fontWeight: AppTypography.medium,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }(),
+                        const SizedBox(height: AppSpacing.sm),
+
+                        // Suggested Event Cards
+                        for (final log in pendingLogs) ...[
+                          SuggestedLogCard(
+                            log: log,
+                            onTap: () => _onLogSelected(context, ref, log),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                        const SizedBox(height: AppSpacing.xs),
+                        EldFooterNotice(
+                          message: context
+                              .loc.unidentifiedDrivingIsReviewedInUnidentified,
+                          icon: Icons.info_outline,
+                        ),
+                      ] else ...[
+                        // Empty State
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.xl,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: context.successContainer
+                                      .withValues(alpha: 0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.verified_outlined,
+                                  size: 36,
+                                  color: context.success,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Text(
+                                context.loc.noRecords,
+                                style: context.styles.cardTitle.copyWith(
+                                  fontWeight: AppTypography.bold,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                ),
+                                child: Text(
+                                  context.loc.carrierProposedEdits39530Are,
+                                  textAlign: TextAlign.center,
+                                  style: context.styles.caption.copyWith(
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        EldFooterNotice(
+                          message: context
+                              .loc.unidentifiedDrivingIsReviewedInUnidentified,
+                          icon: Icons.info_outline,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: context.warning,
-                      size: AppSpacing.iconMedium,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        context.loc.reCertificationRequiredMsg,
-                        style: context.styles.bodyBold.copyWith(
-                          color: context.warning,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              for (final log in pendingLogs) ...[
-                SuggestedLogCard(
-                  log: log,
-                  onTap: () => _onLogSelected(context, ref, log),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-            ] else ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: context.successContainer.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.verified_outlined,
-                        size: 40,
-                        color: context.success,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      context.loc.noRecords,
-                      style: context.styles.sectionTitle,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                      ),
-                      child: Text(
-                        context.loc.carrierProposedEdits39530Are,
-                        textAlign: TextAlign.center,
-                        style: context.styles.subtitle,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            EldFooterNotice(
-              message: context.loc.unidentifiedDrivingIsReviewedInUnidentified,
-              icon: Icons.info_outline,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
+

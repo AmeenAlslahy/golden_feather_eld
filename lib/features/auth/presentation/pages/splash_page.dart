@@ -6,6 +6,7 @@ import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/startup_profiler.dart';
 import '../providers/auth_state_provider.dart';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -21,6 +22,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
+    StartupProfiler.mark('splash:open');
     _checkFirstLaunch();
   }
 
@@ -29,11 +31,13 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     // شبكة أمان: أي فشل في فحص الإقلاع الأول لا يحق تعليق السبلاش للأبد —
     // نكمل المسار الطبيعي (صلاحيات/مصادقة) كسلوك بديل آمن.
+    StartupProfiler.mark('splash:onboarding-check:start');
     try {
       AppLogger.info('SplashPage: Checking onboarding status...');
       if (!ref.read(localStorageProvider).onboardingSeen) {
         if (!mounted) return;
         AppLogger.info('SplashPage: Redirecting to onboarding');
+        StartupProfiler.mark('splash:decision:onboarding');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) context.goNamed('onboarding');
         });
@@ -45,7 +49,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
         e,
       );
     }
+    StartupProfiler.mark('splash:onboarding-check:end');
 
+    StartupProfiler.mark('splash:permissions-check:start');
     AppLogger.info('SplashPage: Checking permissions...');
     try {
       final locationGranted = await Permission.location.isGranted;
@@ -54,6 +60,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
       if (!locationGranted || !bluetoothGranted) {
         AppLogger.info('SplashPage: Redirecting to permissions');
+        StartupProfiler.mark('splash:decision:permissions');
         context.goNamed('permissions');
         return;
       }
@@ -61,14 +68,20 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       AppLogger.error('SplashPage: Permission check failed', e);
       // We don't return here. We just proceed to check auth status.
     }
+    StartupProfiler.mark('splash:permissions-check:end');
 
+    StartupProfiler.mark('splash:auth-check:start (incl. GET /session when online)');
     AppLogger.info('SplashPage: Checking auth status...');
     await ref.read(authStateProvider.notifier).checkAuthStatus();
+    StartupProfiler.mark('splash:auth-check:end');
 
     if (!mounted) return;
     final isLoggedIn = ref.read(authStateProvider).isAuthenticated;
     AppLogger.info(
       'SplashPage: Auth status check complete. IsLoggedIn: $isLoggedIn',
+    );
+    StartupProfiler.mark(
+      'splash:decision:${isLoggedIn ? 'connection' : 'login'}',
     );
     context.goNamed(isLoggedIn ? 'connection' : 'login');
   }

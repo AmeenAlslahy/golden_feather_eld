@@ -4,6 +4,7 @@ import '../../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/entities/daily_log.dart';
+import '../../../domain/log_day_slice.dart';
 import '../../../../../../domain/duty_status/duty_status_code.dart';
 import '../../providers/logs_provider.dart';
 import '../../widgets/log_graph.dart';
@@ -42,22 +43,30 @@ class EventsTab extends ConsumerWidget {
               ref.read(logsProvider.notifier).loadSelectedLogEvents(),
         );
       }
-      return EldRetryView(
+      final empty = EldRetryView(
         message: selectedLog.today
             ? context.loc.noRecordsToday
             : context.loc.noRecords,
         isError: false,
         onRetry: () => ref.read(logsProvider.notifier).loadSelectedLogEvents(),
       );
+      if (!logsState.eventsFromSavedData) return empty;
+      return Column(
+        children: [
+          const _SavedDataBanner(),
+          Expanded(child: empty),
+        ],
+      );
     }
 
     return Column(
       children: [
+        if (logsState.eventsFromSavedData) const _SavedDataBanner(),
         Directionality(
           textDirection: TextDirection.ltr,
           child: LogGraph(events: events, logDate: selectedLog.date),
         ),
-        _StatusTotalsRow(events: events),
+        _StatusTotalsRow(events: events, logDate: selectedLog.date),
         Expanded(
           child: Container(
             color: Theme.of(context).colorScheme.surface,
@@ -103,10 +112,46 @@ class EventsTab extends ConsumerWidget {
 
 /// SRS 5.2 — hour totals per duty status under the Graph-Grid
 /// (the "Total" column of the paper grid).
+/// تنبيه أن الأحداث المعروضة محفوظة على الجهاز/الكاش وليست تأكيداً
+/// حديثاً من الخادم.
+class _SavedDataBanner extends StatelessWidget {
+  const _SavedDataBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('events_saved_data_banner'),
+      width: double.infinity,
+      color: context.warningContainer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.compact,
+        vertical: 6,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            size: AppSpacing.iconSmall,
+            color: context.warning,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              context.loc.eventsShowingSavedData,
+              style: context.styles.caption.copyWith(color: context.warning),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusTotalsRow extends StatelessWidget {
-  const _StatusTotalsRow({required this.events});
+  const _StatusTotalsRow({required this.events, required this.logDate});
 
   final List<LogEvent> events;
+  final DateTime logDate;
 
   static const _order = ['OFF', 'SB', 'D', 'ON'];
 
@@ -120,9 +165,15 @@ class _StatusTotalsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final totals = <String, Duration>{for (final s in _order) s: Duration.zero};
     for (final e in events) {
+      // نفس القصّ الذي يرسمه المخطط: حدث بدأ أمس لا يُجمع بكامله على
+      // يوم السجل. بلا ذلك يعرض الرسم 2h45 بينما يجمع الصف 8h45.
+      final slice = sliceLogEventToDay(e, logDate);
+      if (slice == null) continue;
       // PC counts as OFF and YM as ON for the daily totals (§395.28).
       final key = DutyStatusCode.normalizeToGridShortCode(e.status);
-      if (totals.containsKey(key)) totals[key] = totals[key]! + e.duration;
+      if (totals.containsKey(key)) {
+        totals[key] = totals[key]! + slice.visibleDuration;
+      }
     }
     return Container(
       key: const Key('events_status_totals'),

@@ -134,7 +134,7 @@ void main() {
       );
     }
 
-    testWidgets('NOT READY is tappable', (tester) async {
+    testWidgets('clear-signature action is tappable', (tester) async {
       final log = DailyLog(
         id: const DailyLogId(123),
         date: DateTime.now(),
@@ -148,7 +148,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final button = tester.widget<AppButton>(
-        find.widgetWithText(AppButton, 'NOT READY'),
+        find.widgetWithText(AppButton, 'Clear signature'),
       );
       expect(button.onPressed, isNotNull);
     });

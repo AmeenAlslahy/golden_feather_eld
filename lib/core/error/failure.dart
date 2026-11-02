@@ -182,4 +182,10 @@ class OwnerMismatchSignal {
     required this.expectedOwnerDriverId,
     this.actualOwnerDriverId,
   });
+
+  /// مقروء في سجل المُسجّل عند طباعة `err.error` — بلا أي أسرار (معرّفات فقط).
+  @override
+  String toString() =>
+      'OwnerMismatchSignal(expectedOwnerDriverId: $expectedOwnerDriverId, '
+      'actualOwnerDriverId: $actualOwnerDriverId)';
 }

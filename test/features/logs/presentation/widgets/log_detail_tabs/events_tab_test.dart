@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
+import 'package:golden_feather_eld/core/widgets/eld_graph_grid.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
@@ -102,7 +103,14 @@ void main() {
     final totals = find.byKey(const Key('events_status_totals'));
     Finder inTotals(String t) =>
         find.descendant(of: totals, matching: find.text(t));
-    expect(inTotals('8h 45m'), findsOneWidget); // OFF + PC
+    // OFF started 22:00 the previous day and ran 8h → only its 6h inside
+    // the log date count, matching the graph. PC adds 45m.
+    expect(inTotals('6h 45m'), findsOneWidget); // OFF (clipped) + PC
+
+    // The graph draws the same clipped slice the totals row sums:
+    // OFF 6h + PC 45m normalized to OFF = 6.75h = 6h 45m.
+    final grid = tester.widget<EldGraphGrid>(find.byType(EldGraphGrid));
+    expect(grid.rightSideStats!['OFF'], 6.75);
     expect(inTotals('0h 30m'), findsOneWidget); // D
     expect(inTotals('0h 00m'), findsNWidgets(2)); // SB, ON
     // The OFF event starts the evening before the log date — the tile

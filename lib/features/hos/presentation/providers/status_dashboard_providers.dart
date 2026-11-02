@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../../../core/network/core_providers.dart';
+import '../../../../core/session/session_epoch.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
@@ -175,6 +176,10 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
     }
 
     final dashboard = result.getRight().toNullable()!;
+    if (dashboard.driver.id.value > 0) {
+      ref.read(activeDriverIdProvider.notifier).state =
+          (SessionEpoch.current, dashboard.driver.id.value);
+    }
     if (mySeq != _requestSeq) {
       // وصل رد أقدم بعد أحدث — نُهمله ونعيد ما هو معروض حالياً.
       return state.valueOrNull ?? dashboard;
@@ -235,6 +240,10 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   /// تغذية اللوحة مباشرة من استجابة POST تغيير الحالة — بلا شبكة.
   /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
   void applyServerDashboard(StatusDashboard dashboard) {
+    if (dashboard.driver.id.value > 0) {
+      ref.read(activeDriverIdProvider.notifier).state =
+          (SessionEpoch.current, dashboard.driver.id.value);
+    }
     // POST هو الأحدث دائماً: أي GET جارٍ يجب أن يُتجاهل عند وصوله.
     ++_requestSeq;
     final stamp = _stampFor(ref, null);

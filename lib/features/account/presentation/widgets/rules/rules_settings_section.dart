@@ -104,7 +104,8 @@ class RulesSettingsSection extends ConsumerWidget {
           onChanged: (val) => notifier.updateRuleField('restBreak', val),
         ),
         Divider(color: context.border, height: AppSpacing.dividerHeight),
-        if (editable.contains('sixteenHourException'))
+        if (editable.contains('sixteenHourException') ||
+            editable.contains('shortHaul16HourException'))
           RuleSwitchRow(
             label: loc.sixteenHourException,
             value: sixteenValue,

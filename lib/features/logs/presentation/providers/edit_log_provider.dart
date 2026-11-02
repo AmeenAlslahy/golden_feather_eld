@@ -63,6 +63,7 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       existing: existing,
       selectedStatus: formState.selectedStatus,
       startTimeStr: formState.startTime,
+      durationStr: formState.duration,
       location: formState.location,
       reason: formState.reason,
     );
@@ -73,6 +74,7 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
     required LogEvent? existing,
     required String selectedStatus,
     required String startTimeStr,
+    required String durationStr,
     required String location,
     required String reason,
   }) async {
@@ -92,7 +94,17 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
         throw EditLogError(EditLogErrorCode.invalidTime);
       }
 
+      // المدة التي رآها السائق في النموذج هي ما يُرسل، لا المدة القديمة
+      // للحدث. تغيير البداية يغيّر المدة المحسوبة دون تعديل الحدث نفسه.
+      final parsedDuration = parseEditFormDuration(durationStr);
+      if (parsedDuration == null) {
+        throw EditLogError(EditLogErrorCode.invalidTime);
+      }
+
       final newStart = parsedTime;
+      final normalizedLocation = isPlaceholderLocation(location)
+          ? ''
+          : location.trim();
 
       // FMCSA § 395: Duty status events cannot be recorded in the future
       if (newStart.isAfter(
@@ -118,14 +130,15 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
           existing?.copyWith(
             status: status,
             startTime: newStart,
-            location: location,
+            duration: parsedDuration,
+            location: normalizedLocation,
           ) ??
           LogEvent(
             id: idGenerator.v4(),
             status: status,
             startTime: newStart,
-            duration: Duration.zero,
-            location: location,
+            duration: parsedDuration,
+            location: normalizedLocation,
           );
 
       final authState = ref.read(authStateProvider);

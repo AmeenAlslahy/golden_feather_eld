@@ -1,5 +1,4 @@
 import 'dart:convert';
-import '../../../../../core/theme/app_typography.dart';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 
@@ -10,8 +9,11 @@ import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/eld_info_row.dart';
 import '../../../../core/widgets/eld_card.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../domain/defect_enums.dart';
 import '../../domain/dvir_catalog.dart';
 import '../../domain/entities/dvir_report.dart';
@@ -53,8 +55,9 @@ class _DvirDetailPageState extends ConsumerState<DvirDetailPage> {
     final report = state.currentReport;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.loc.dvirTitle, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: context.loc.dvirTitle,
+        variant: GoldenAppBarVariant.standard,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -91,6 +94,7 @@ class _DetailBody extends StatelessWidget {
       children: [
         _Section(
           title: loc.dvirTitle,
+          icon: Icons.description_outlined,
           children: [
             EldInfoRow(label: loc.dvirReportId, value: report.id),
             EldInfoRow(
@@ -154,6 +158,7 @@ class _DetailBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _Section(
             title: loc.trailers,
+            icon: Icons.rv_hookup_outlined,
             children: report.trailers
                 .map((t) => _TrailerCard(trailer: t))
                 .toList(),
@@ -165,6 +170,7 @@ class _DetailBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _Section(
             title: loc.dvirPhotosAttached,
+            icon: Icons.photo_camera_back_outlined,
             children: [
               Wrap(
                 spacing: AppSpacing.sm,
@@ -181,6 +187,7 @@ class _DetailBody extends StatelessWidget {
         if (report.hasDefects) ...[
           _Section(
             title: loc.defectsFound,
+            icon: Icons.warning_amber_rounded,
             children: [
               for (final defect in report.selectedDefects)
                 _DefectCard(defect: defect),
@@ -198,6 +205,7 @@ class _DetailBody extends StatelessWidget {
           ),
         _Section(
           title: loc.dvirSign,
+          icon: Icons.draw_outlined,
           children: [
             if ((report.signature ?? '').isNotEmpty)
               _SignatureImage(dataUrl: report.signature!)
@@ -213,6 +221,7 @@ class _DetailBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _Section(
             title: loc.mechanicCertification,
+            icon: Icons.verified_outlined,
             children: [
               EldInfoRow(
                 label: loc.mechanicLabel,
@@ -238,6 +247,7 @@ class _DetailBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _Section(
             title: loc.dvirPrevReviewSection,
+            icon: Icons.verified_user_outlined,
             children: [
               EldInfoRow(
                 label: loc.reviewedBy,
@@ -262,39 +272,58 @@ class AppDetailEditButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      icon: const Icon(Icons.edit),
-      label: Text(context.loc.edit),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DvirFormPage(existingReport: report),
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: AppButton(
+        label: context.loc.edit,
+        type: EldButtonType.primary,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DvirFormPage(existingReport: report),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
 class _Section extends StatelessWidget {
   final String title;
+  final IconData? icon;
   final List<Widget> children;
 
-  const _Section({required this.title, required this.children});
+  const _Section({
+    required this.title,
+    this.icon,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // بطاقة النظام القياسية — كانت حاوية محدّدة بإطار (عائلة بصرية
-    // ثالثة؛ توحيد الهوية 2026-10-26).
-    return EldCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: context.styles.sectionTitle),
-          const SizedBox(height: AppSpacing.sm),
-          ...children,
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.cardGap),
+      child: EldCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: AppSpacing.iconMedium, color: context.gold),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Expanded(
+                  child: Text(title, style: context.styles.sectionTitle),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ...children,
+          ],
+        ),
       ),
     );
   }
@@ -310,8 +339,6 @@ class _SignatureImage extends StatefulWidget {
 }
 
 class _SignatureImageState extends State<_SignatureImage> {
-  /// P2 — تُفكّ مرة واحدة عند التغيير فقط؛ كان `base64Decode` يُعاد في كل
-  /// `build` (وكل إعادة بناء للأب) على صورة قد تكبر مع كل توقيع.
   Uint8List? _bytes;
 
   @override
@@ -348,9 +375,19 @@ class _SignatureImageState extends State<_SignatureImage> {
         style: context.styles.muted,
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.input),
-      child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(AppRadius.input),
+        border: Border.all(color: context.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+          child: Image.memory(bytes, height: 140, fit: BoxFit.contain),
+        ),
+      ),
     );
   }
 }
@@ -378,11 +415,9 @@ class _DefectCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: sevColor, width: 3)),
+        border: BorderDirectional(start: BorderSide(color: sevColor, width: 3.5)),
         borderRadius: BorderRadius.circular(AppRadius.input),
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,8 +463,8 @@ class _DefectCard extends StatelessWidget {
                   i < currentIdx
                       ? Icons.check_circle
                       : i == currentIdx
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
                   size: AppSpacing.iconSmall,
                   color: i <= currentIdx ? context.gold : context.divider,
                 ),

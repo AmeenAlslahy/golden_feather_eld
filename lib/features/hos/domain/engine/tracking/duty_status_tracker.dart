@@ -16,6 +16,7 @@ import 'package:golden_feather_eld/core/time/trusted_time_provider.dart';
 import '../../../../../backend/contracts/status_dashboard_backend.dart';
 import '../../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
+import '../../../../../domain/shared/value_objects.dart';
 
 abstract final class DutyStampRefusal {
   static const timeUnavailable = 'trusted_time_unavailable';
@@ -875,9 +876,19 @@ class DutyStatusTracker {
       return const ManualDutyChangeResult(refusal: DutyStampRefusal.unmapped);
     }
 
+    final driverIdInt = _readDriverId?.call();
+    final driverId = (driverIdInt != null && driverIdInt > 0)
+        ? DriverId(driverIdInt)
+        : null;
+
     final result = await _dashboardBackend.updateDutyStatus(
       status: code,
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
+      driverId: driverId,
+      // إحداثيات لحظة تأكيد التغيير تصل للطلب المباشر (المسار المحلي/الطابور
+      // كان يحملها أصلاً — أونلاين كانت تُسقَط هنا قبل هذا التعديل).
+      latitude: lat,
+      longitude: lon,
     );
     return result.fold(
       (error) async {

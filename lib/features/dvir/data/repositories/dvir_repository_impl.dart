@@ -556,11 +556,13 @@ class DvirRepositoryImpl implements DvirRepository {
       return const Left(ServerFailure(message: 'Invalid DVIR ID for review'));
     }
     final dto = ReviewDvirRequestDto(
+      previousDvirId: parsedId,
       reviewingDriverId: reviewingDriverId,
       reviewingDriverName: reviewingDriverName,
       signatureData: signatureData,
       driverAgreed: driverAgreed,
       reviewNotes: reviewNotes,
+      driverSatisfiedSafe: driverAgreed,
     );
     // SRS 6.8 / 7.9 — offline: enqueue §396.13 review for sync.
     if (!networkInfo.isConnected) {

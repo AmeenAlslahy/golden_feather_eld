@@ -16,6 +16,21 @@ class _Queue implements OfflineQueue {
   }
 
   @override
+  Future<bool> enqueueIfAbsent(PendingEvent event) async {
+    if (event.dedupeKey != null &&
+        events.any((e) => e.dedupeKey == event.dedupeKey)) {
+      return false;
+    }
+    events.add(event);
+    return true;
+  }
+
+  @override
+  Future<List<PendingEvent>> getPending({int limit = 1000}) async {
+    return events.take(limit).toList();
+  }
+
+  @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
     return events.take(limit).toList();
   }
@@ -97,12 +112,14 @@ void main() {
     late SyncEngine engine;
     final dispatcher = _Dispatcher((event) async {
       if (event.id == 'first') {
-        await engine.submitEvent(PendingEvent(
-          id: 'second',
-          type: 'duty_status',
-          payload: const {},
-          createdAt: DateTime.utc(2026, 9, 23),
-        ));
+        await engine.submitEvent(
+          PendingEvent(
+            id: 'second',
+            type: 'duty_status',
+            payload: const {},
+            createdAt: DateTime.utc(2026, 9, 23),
+          ),
+        );
       }
     });
     engine = SyncEngine(
@@ -111,12 +128,14 @@ void main() {
       timeAuthority: _Clock(),
     );
 
-    await engine.submitEvent(PendingEvent(
-      id: 'first',
-      type: 'duty_status',
-      payload: const {},
-      createdAt: DateTime.utc(2026, 9, 23),
-    ));
+    await engine.submitEvent(
+      PendingEvent(
+        id: 'first',
+        type: 'duty_status',
+        payload: const {},
+        createdAt: DateTime.utc(2026, 9, 23),
+      ),
+    );
 
     expect(dispatcher.sent, ['first', 'second']);
     expect(queue.events, isEmpty);

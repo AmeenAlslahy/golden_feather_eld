@@ -1,5 +1,6 @@
-/// POST /eld/daily-logs/{id}/certify — request body per the daily-log API
-/// specification (2026-10): `{ certified, signatureImage }`.
+/// POST /eld/daily-logs/{id}/certify — request body per the OAS 3.0 / Swagger spec:
+/// `{ statementAccepted: true, signature: { imageData: "..." }, device: { ... } }`
+/// Legacy fields (`certified`, `signatureImage`) are preserved for backward compatibility.
 class CertifyRequestDto {
   /// Log id — carried for the URL (`EldEndpoints.certifyLog`) only; the
   /// spec body does not include it.
@@ -10,18 +11,33 @@ class CertifyRequestDto {
   /// validates it against its own requirements).
   final String? signatureImage;
 
+  /// Device metadata per Swagger: `{ deviceId, eldIdentifier, platform, appVersion }`
+  final Map<String, dynamic>? device;
+
   const CertifyRequestDto({
     required this.dailyLogId,
     required this.certified,
     this.signatureImage,
+    this.device,
   });
 
   Map<String, dynamic> toJson() {
+    final rawSignature =
+        (signatureImage != null && signatureImage!.isNotEmpty)
+            ? signatureImage
+            : null;
     return {
       'certified': certified,
-      'signatureImage': (signatureImage != null && signatureImage!.isNotEmpty)
-          ? signatureImage
-          : null,
+      'statementAccepted': certified,
+      if (rawSignature != null) ...{
+        'signatureImage': rawSignature,
+        'signature': {
+          'imageData': rawSignature.startsWith('data:')
+              ? rawSignature
+              : 'data:image/png;base64,$rawSignature',
+        },
+      },
+      if (device != null) 'device': device,
     };
   }
 }

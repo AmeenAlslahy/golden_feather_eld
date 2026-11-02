@@ -32,6 +32,10 @@ class EldDatePaginator extends StatelessWidget {
     final effectiveBgColor = backgroundColor ?? context.previewBand;
     final effectiveTextColor = textColor ?? AppColors.white;
     final effectiveIconColor = iconColor ?? AppColors.white;
+    final disabledIconColor = effectiveIconColor.withValues(alpha: 0.38);
+
+    final isOlderEnabled = !isLoading && canGoOlder;
+    final isNewerEnabled = !isLoading && canGoNewer;
 
     return Container(
       color: effectiveBgColor,
@@ -43,39 +47,56 @@ class EldDatePaginator extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left, color: effectiveIconColor),
-            onPressed: (!isLoading && canGoOlder) ? onSelectOlder : null,
+            tooltip: MaterialLocalizations.of(context).previousPageTooltip,
+            icon: Icon(
+              Icons.chevron_left,
+              color: isOlderEnabled ? effectiveIconColor : disabledIconColor,
+            ),
+            onPressed: isOlderEnabled ? onSelectOlder : null,
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                dateLabel,
-                style: context.styles.appBarTitle.copyWith(
-                  color: effectiveTextColor,
-                ),
-              ),
-              if (isLoading) ...[
-                const SizedBox(width: AppSpacing.sm),
-                SizedBox(
-                  width: AppSpacing.iconSmallBadge,
-                  height: AppSpacing.iconSmallBadge,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      effectiveTextColor,
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    dateLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.styles.appBarTitle.copyWith(
+                      color: effectiveTextColor,
                     ),
                   ),
                 ),
+                if (isLoading) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  SizedBox(
+                    width: AppSpacing.iconSmallBadge,
+                    height: AppSpacing.iconSmallBadge,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        effectiveTextColor,
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, color: effectiveIconColor),
-            onPressed: (!isLoading && canGoNewer) ? onSelectNewer : null,
+            tooltip: MaterialLocalizations.of(context).nextPageTooltip,
+            icon: Icon(
+              Icons.chevron_right,
+              color: isNewerEnabled ? effectiveIconColor : disabledIconColor,
+            ),
+            onPressed: isNewerEnabled ? onSelectNewer : null,
           ),
         ],
       ),
     );
   }
 }
+

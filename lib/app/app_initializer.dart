@@ -10,6 +10,7 @@ import 'services/push_notification_service.dart';
 import '../core/services/utc_sync_service.dart';
 import '../core/config/app_environment.dart';
 import '../core/utils/logger.dart';
+import '../core/utils/startup_profiler.dart';
 import '../core/events/eld_events_provider.dart';
 import '../core/session/auth_session_provider.dart';
 import '../features/tracking/data/datasources/live_tracking_data_source.dart';
@@ -27,31 +28,33 @@ class AppInitializer {
 
   Future<void> initialize() async {
     // 1. تهيئة البيئة
-    await AppEnvironmentConfig.init();
+    await StartupProfiler.phase('init:env', () => AppEnvironmentConfig.init());
 
     // 2. تهيئة Firebase بشكل آمن (استيعاب الفشل للبيئات التي لا تملك Configuration)
-    try {
-      await Firebase.initializeApp();
-      AppLogger.info('Firebase initialized successfully');
-    } catch (e) {
-      AppLogger.warning(
-        'Firebase initialization failed (App will continue without Firebase services): $e',
-      );
-    }
+    await StartupProfiler.phase('init:firebase', () async {
+      try {
+        await Firebase.initializeApp();
+        AppLogger.info('Firebase initialized successfully');
+      } catch (e) {
+        AppLogger.warning(
+          'Firebase initialization failed (App will continue without Firebase services): $e',
+        );
+      }
+    });
 
     // 3. تهيئة الخدمات الأساسية (Hive يُفتح بالتوازي دون حجب الإقلاع)
-    await _initCoreServices();
+    await StartupProfiler.phase('init:local-storage', () => _initCoreServices());
 
     // 4. تهيئة الخدمات المعتمدة
-    await _initDependentServices();
+    await StartupProfiler.phase('init:tracking+push', () => _initDependentServices());
 
     // 5. انتظار اكتمال فتح Hive قبل runApp (المستودعات ستقرؤه بعد ذلك)
     if (_dbInitFuture != null) {
-      await _dbInitFuture;
+      await StartupProfiler.phase('init:await-hive', () => _dbInitFuture!);
     }
 
     // 6. تهيئة خدمات المزامنة
-    await _initSyncServices();
+    await StartupProfiler.phase('init:utc-sync', () => _initSyncServices());
   }
 
   Future<void> _initCoreServices() async {
@@ -63,7 +66,14 @@ class AppInitializer {
     // تنبيه: يُستدعى من initialize() مرة واحدة فقط — إسناد late final
     // مزدوج يرمي LateInitializationError (حدث فعلياً في 2026-09-30).
     localDatabaseService = LocalDatabaseService();
+    StartupProfiler.mark('init:hive:start (5 boxes + audit migration)');
     _dbInitFuture = localDatabaseService.init();
+    // قياس فقط — مستمع منفصل لا يغيّر المستقبل الأصلي ولا ترتيبه.
+    unawaited(
+      _dbInitFuture!.whenComplete(
+        () => StartupProfiler.mark('init:hive:boxes-open done'),
+      ),
+    );
   }
 
   Future<void> _initDependentServices() async {
@@ -71,16 +81,18 @@ class AppInitializer {
       storage: localStorageService,
       tracker: TraccarNativeClientImpl(),
     );
-    await trackingService.init();
+    await StartupProfiler.phase('init:tracking', () => trackingService.init());
 
-    try {
-      await PushNotificationService.init(
-        trackingService: trackingService,
-        storage: localStorageService,
-      );
-    } catch (e) {
-      AppLogger.error('PushNotificationService initialization failed', e);
-    }
+    await StartupProfiler.phase('init:push', () async {
+      try {
+        await PushNotificationService.init(
+          trackingService: trackingService,
+          storage: localStorageService,
+        );
+      } catch (e) {
+        AppLogger.error('PushNotificationService initialization failed', e);
+      }
+    });
   }
 
   Future<void> _initSyncServices() async {
@@ -139,5 +151,7 @@ class AppInitializer {
       // جدولتها بـ backoff — بلا فقدان بيانات (لا dead-letter أبداً).
       container.read(syncEngineProvider).triggerSync();
     });
+
+    StartupProfiler.mark('post-container: providers wired');
   }
 }

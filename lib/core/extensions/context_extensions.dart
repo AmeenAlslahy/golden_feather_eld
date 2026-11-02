@@ -3,18 +3,23 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_styles.dart';
+import '../theme/golden_colors.dart';
 
 /// امتدادات BuildContext
 extension ContextExtensions on BuildContext {
   // ========== السمات والترجمة ==========
   AppLocalizations get loc => AppLocalizations.of(this)!;
   ThemeData get theme => Theme.of(this);
+  ThemeData get goldenTheme => theme;
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
   ColorScheme get colors => theme.colorScheme;
   AppStyles get styles =>
       theme.extension<AppStyles>() ??
       AppStyles.fromBrightness(theme.brightness);
+  GoldenColors get goldenColors =>
+      theme.extension<GoldenColors>() ??
+      (isDark ? GoldenColors.dark : GoldenColors.light);
   MediaQueryData get mediaQuery => MediaQuery.of(this);
   Size get screenSize => mediaQuery.size;
   double get screenWidth => screenSize.width;
@@ -105,23 +110,40 @@ extension ContextExtensions on BuildContext {
 ///
 /// **القاعدة:** الصفحات لا تتفرع على `isDark` ولا تستدعي `xxxFor(brightness)` —
 /// كل اختيار وضع يحدث هنا مرة واحدة، والصفحة تطلب اللون الدلالي جاهزاً.
+/// في Phase 7B.1 تم تفويض الألوان الدلالية وحالات المكونات مركزياً إلى [GoldenColors].
 extension AppSemanticColors on BuildContext {
   /// النص الأساسي حسب الوضع.
-  Color get textPrimary =>
-      isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+  Color get textPrimary => goldenColors.textPrimary;
 
   /// النص الثانوي حسب الوضع.
-  Color get textSecondary =>
-      isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+  Color get textSecondary => goldenColors.textSecondary;
+
+  /// النص الخافت حسب الوضع.
+  Color get textMuted => goldenColors.textMuted;
 
   /// حد الفواصل حسب الوضع.
-  Color get border => isDark ? AppColors.darkBorder : AppColors.border;
+  Color get border => goldenColors.border;
+
+  /// الحدود القوية حسب الوضع.
+  Color get borderStrong => goldenColors.borderStrong;
 
   /// سطح الشاشة العام حسب الوضع.
-  Color get screenSurface => isDark ? AppColors.surfaceDark : AppColors.surface;
+  Color get screenSurface => goldenColors.screenSurface;
+
+  /// خلفية التطبيق العامة حسب الوضع.
+  Color get background => goldenColors.background;
+
+  /// سطح ثانوي مميز حسب الوضع.
+  Color get surfaceSecondary => goldenColors.surfaceSecondary;
+
+  /// سطح مرتفع للبطاقات حسب الوضع.
+  Color get surfaceElevated => goldenColors.surfaceElevated;
+
+  /// الذهبي الدلالي للنص حسب الوضع.
+  Color get primaryText => goldenColors.primaryText;
 
   /// الذهبي الآمن للنص حسب الخلفية (goldDeep فاتح / primaryGold داكن).
-  Color get gold => isDark ? AppColors.primaryGold : AppColors.goldDeep;
+  Color get gold => goldenColors.gold;
 
   /// ألوان رأس RODS الورقي الرسمي (49 CFR 395.8) — سطح فاتح ثابت
   /// للضابط بغض النظر عن سمة التطبيق؛ الوصول من الميزات عبر هنا فقط
@@ -131,26 +153,23 @@ extension AppSemanticColors on BuildContext {
 
   Color get onGold => colors.onPrimary;
 
-  Color get success => styles.success.color!;
+  Color get success => goldenColors.successText;
 
-  Color get danger => styles.error.color!;
+  Color get danger => goldenColors.errorText;
 
-  Color get warning => styles.warning.color!;
+  Color get warning => goldenColors.warningText;
 
-  Color get info => isDark ? AppColors.infoOnDark : AppColors.infoText;
+  Color get info => goldenColors.infoText;
 
-  Color get successContainer =>
-      isDark ? AppColors.darkSuccessBg : AppColors.successBg;
+  Color get successContainer => goldenColors.successBackground;
 
-  Color get dangerContainer =>
-      isDark ? AppColors.darkDangerBg : AppColors.dangerBg;
+  Color get dangerContainer => goldenColors.errorBackground;
 
-  Color get warningContainer =>
-      isDark ? AppColors.darkWarningBg : AppColors.warningBg;
+  Color get warningContainer => goldenColors.warningBackground;
 
-  Color get infoContainer => isDark ? AppColors.darkInfoBg : AppColors.infoBg;
+  Color get infoContainer => goldenColors.infoBackground;
 
-  Color get goldContainer => isDark ? AppColors.darkGoldBg : AppColors.goldBg;
+  Color get goldContainer => goldenColors.goldContainer;
 
   Color get divider => theme.dividerColor;
 
@@ -186,4 +205,26 @@ extension AppSemanticColors on BuildContext {
   Color get placeholderBorder => isDark
       ? AppColors.placeholderBorderDark
       : AppColors.placeholderBorderLight;
+
+  // =========================================================================
+  // حالات المكونات المركزية (Component-State Foundations — Phase 7B.1)
+  // =========================================================================
+
+  /// لون المقدمة للعناصر المعطلة
+  Color get disabledForeground => goldenColors.disabledForeground;
+
+  /// لون السطح للعناصر المعطلة
+  Color get disabledSurface => goldenColors.disabledSurface;
+
+  /// خلفية العنصر المحدد
+  Color get selectedContainer => goldenColors.selectedContainer;
+
+  /// لون حلقة التركيز للوحة المفاتيح والحقول النشطة
+  Color get focusRing => goldenColors.focusRing;
+
+  /// طبقة التعتيم عند الضغط
+  Color get pressedOverlay => goldenColors.pressedOverlay;
+
+  /// طبقة التعتيم عند التحويم
+  Color get hoverOverlay => goldenColors.hoverOverlay;
 }

@@ -48,44 +48,83 @@ class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
 class _Vehicles extends Mock implements VehicleRepository {}
 
 class _Backend implements UnidentifiedEventsBackend {
-  _Backend({required this.rows});
+  _Backend({required this.rows, List<Map<String, dynamic>>? rejectedRows})
+    : rejectedRows = rejectedRows ?? [];
+
   List<Map<String, dynamic>> rows;
+  List<Map<String, dynamic>> rejectedRows;
   final calls = <String>[];
   final tabsRequested = <UnidentifiedTab>[];
-  final uniqueIdsRequested = <String?>[];
+  final pagesRequested = <int>[];
+  final sizesRequested = <int>[];
+  int summaryCalls = 0;
   AppError? nextError;
 
   @override
   Future<Result<RawJson>> list({
     UnidentifiedTab tab = UnidentifiedTab.unclaimed,
-    String? uniqueId,
-    DriverId? driverId,
+    int page = 0,
+    int size = 20,
+    String sortBy = 'id',
+    String sortDirection = 'ASC',
+    List<UnidentifiedEventFilter> filters = const [],
   }) async {
     tabsRequested.add(tab);
-    uniqueIdsRequested.add(uniqueId);
-    return ok({'items': tab == UnidentifiedTab.unclaimed ? rows : const []});
+    pagesRequested.add(page);
+    sizesRequested.add(size);
+    return ok({
+      'items': tab == UnidentifiedTab.unclaimed ? rows : rejectedRows,
+    });
+  }
+
+  @override
+  Future<Result<RawJson>> getById({required DutyStatusId id}) async {
+    final row = [
+      ...rows,
+      ...rejectedRows,
+    ].firstWhere((row) => row['id'] == id.value);
+    return ok(row);
+  }
+
+  @override
+  Future<Result<RawJson>> summary() async {
+    summaryCalls++;
+    final all = [...rows, ...rejectedRows];
+    final pending = all.where((row) => row['pendingOver8Days'] == true).length;
+    return ok({
+      'totalUnclaimed': rows.length,
+      'totalRejected': rejectedRows.length,
+      'pendingOver8DaysCount': pending,
+      'complianceAlertActive': pending > 0,
+    });
   }
 
   @override
   Future<Result<void>> claim({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String annotation,
   }) async {
-    calls.add('claim:${id.value}:${driverId.value}:$annotation');
+    calls.add('claim:${id.value}:${driverId?.value}:$annotation');
     if (nextError != null) return err(nextError!);
-    rows = rows.where((r) => r['statusId'] != id.value).toList();
+    rows = rows.where((row) => row['id'] != id.value).toList();
     return ok(null);
   }
 
   @override
   Future<Result<void>> reject({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String rejectionReason,
   }) async {
-    calls.add('reject:${id.value}:${driverId.value}:$rejectionReason');
-    rows = rows.where((r) => r['statusId'] != id.value).toList();
+    calls.add('reject:${id.value}:${driverId?.value}:$rejectionReason');
+    if (nextError != null) return err(nextError!);
+    final row = rows.firstWhere((row) => row['id'] == id.value);
+    rows = rows.where((row) => row['id'] != id.value).toList();
+    rejectedRows = [
+      ...rejectedRows,
+      {...row, 'status': 'REJECTED', 'rejectionReason': rejectionReason},
+    ];
     return ok(null);
   }
 }
@@ -101,33 +140,65 @@ void main() {
 
   final rows = <Map<String, dynamic>>[
     {
-      'statusId': 501,
-      'status': 'DRIVING',
+      'id': 501,
+      'deviceId': 4,
+      'vehicleName': 'Truck 4',
+      'vehicleVin': 'VIN-4',
       'startTime': iso(const Duration(hours: 3)),
       'endTime': iso(const Duration(hours: 2, minutes: 20)),
-      'formattedDuration': '40m',
-      'locationText': 'I-80 mile 12',
-      'vehicleName': 'Truck 4',
-      'uniqueId': 'imei-4',
-      'allocationStatus': 'PENDING_REVIEW',
-      'daysPending': 1,
+      'durationMinutes': 40,
+      'durationFormatted': '40m',
+      'latitude': 34.0522,
+      'longitude': -118.2437,
+      'locationDescription': 'I-80 mile 12',
+      'odometerMiles': 125430.5,
+      'engineHours': 3450.2,
+      'status': 'UNCLAIMED',
+      'allocationType': 'UNASSIGNED',
+      'annotation': 'Yard move',
+      'pendingOver8Days': false,
     },
     {
-      'statusId': 502,
-      'status': 'ON_DUTY',
+      'id': 502,
+      'deviceId': 5,
+      'vehicleName': 'Truck 5',
+      'vehicleVin': 'VIN-5',
       'startTime': iso(const Duration(hours: 30)),
-      'formattedDuration': '15m',
-      'locationText': 'Yard',
-      'overdue': true,
+      'durationFormatted': '15m',
+      'locationDescription': 'Yard',
+      'status': 'UNCLAIMED',
+      'allocationType': 'UNASSIGNED',
+      'pendingOver8Days': true,
     },
     {
       // Driving, but older than the 24-hour window → not in DRIVING 24H.
-      'statusId': 503,
-      'status': 'DRIVING',
+      'id': 503,
+      'deviceId': 4,
+      'vehicleName': 'Truck 4',
+      'vehicleVin': 'VIN-4',
       'startTime': iso(const Duration(hours: 50)),
       'endTime': iso(const Duration(hours: 49)),
-      'formattedDuration': '60m',
-      'locationText': 'US-50 rest area',
+      'durationFormatted': '60m',
+      'locationDescription': 'US-50 rest area',
+      'status': 'UNCLAIMED',
+      'allocationType': 'UNASSIGNED',
+      'pendingOver8Days': false,
+    },
+  ];
+
+  final rejectedRows = <Map<String, dynamic>>[
+    {
+      'id': 601,
+      'deviceId': 6,
+      'vehicleName': 'Truck 6',
+      'vehicleVin': 'VIN-6',
+      'startTime': iso(const Duration(hours: 4)),
+      'durationFormatted': '20m',
+      'locationDescription': 'Depot',
+      'status': 'REJECTED',
+      'allocationType': 'UNASSIGNED',
+      'rejectionReason': 'Not my vehicle',
+      'pendingOver8Days': false,
     },
   ];
 
@@ -147,8 +218,10 @@ void main() {
     const truck = Vehicle(
       id: 'TRK-4',
       uniqueId: 'imei-4',
+      deviceId: 4,
       name: 'Truck 4',
       year: '2022',
+      vin: 'VIN-4',
       isAssigned: true,
       activeForCurrentDriver: true,
     );
@@ -199,39 +272,57 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('lists server rows with counters, and no device-local rows', (
+  Finder statValue(String key, String value) =>
+      find.descendant(of: find.byKey(Key(key)), matching: find.text(value));
+
+  testWidgets('lists server rows with summary counters, no tab double-fetch', (
     tester,
   ) async {
-    backend = _Backend(rows: List.of(rows));
+    backend = _Backend(
+      rows: List.of(rows),
+      rejectedRows: List.of(rejectedRows),
+    );
     await pump(tester);
 
     expect(find.text('Unidentified Events'), findsOneWidget);
     expect(find.text('Location: I-80 mile 12'), findsOneWidget);
     expect(find.text('Truck 4'), findsOneWidget);
-    expect(find.text('ELD Identifier: imei-4'), findsOneWidget);
-    expect(find.text('PENDING REVIEW'), findsOneWidget);
-    // Both tabs are fetched so the counters are real: 3 unclaimed, 0 rejected.
-    expect(
-      backend.tabsRequested,
-      containsAll([UnidentifiedTab.unclaimed, UnidentifiedTab.rejected]),
-    );
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('Pending 1 day(s)'), findsOneWidget);
+    expect(find.text('VIN: VIN-4'), findsOneWidget);
+    expect(find.text('ELD Identifier: 4'), findsOneWidget);
+    expect(find.text('UNASSIGNED'), findsWidgets);
+    expect(find.text('Odometer: 125430.5 miles'), findsOneWidget);
+    expect(find.text('Engine Hours: 3450.2'), findsOneWidget);
+    expect(find.text('Notes: Yard move'), findsOneWidget);
+
+    // The active tab is fetched once; counters come from the summary.
+    expect(backend.tabsRequested, [UnidentifiedTab.unclaimed]);
+    expect(backend.summaryCalls, 1);
+    expect(backend.pagesRequested, [0]);
+    expect(backend.sizesRequested, [100]);
+
+    expect(statValue('unidentified-stat-total', '4'), findsOneWidget);
+    expect(statValue('unidentified-stat-unclaimed', '3'), findsOneWidget);
+    expect(statValue('unidentified-stat-rejected', '1'), findsOneWidget);
+    expect(statValue('unidentified-stat-over-8-days', '1'), findsOneWidget);
+    expect(find.textContaining('8 days rule:'), findsOneWidget);
+
+    // Lazy list: the second card may be below the fold.
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
     expect(find.text('Overdue'), findsOneWidget);
-    // Lazy list: the third card may be below the fold.
-    expect(find.text('Original record preserved'), findsAtLeastNWidgets(2));
+    expect(find.text('Original record preserved'), findsAtLeastNWidgets(1));
     expect(find.textContaining('Recorded on this device'), findsNothing);
-    // Counters: TOTAL 3, DRIVING 24H 1 (the 50-hour-old driving row is out).
-    expect(find.text('3'), findsWidgets);
-    expect(find.text('1'), findsOneWidget);
-    expect(find.text('ASSUME'), findsAtLeastNWidgets(2));
-    expect(find.text('NOT MINE'), findsAtLeastNWidgets(2));
+    expect(find.text('ASSUME'), findsAtLeastNWidgets(1));
+    expect(find.text('NOT MINE'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('ASSUME without an annotation is refused; with one it claims', (
     tester,
   ) async {
-    backend = _Backend(rows: List.of(rows));
+    backend = _Backend(
+      rows: List.of(rows),
+      rejectedRows: List.of(rejectedRows),
+    );
     await pump(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(UnidentifiedEventsPage)),
@@ -252,7 +343,19 @@ void main() {
     expect(find.text('An annotation is required.'), findsOneWidget);
     expect(backend.calls, isEmpty);
 
-    // With text → claim with the server statusId and the signed-in driver.
+    // Too short → refused by the documented 4..500 rule, nothing sent.
+    await tester.tap(find.text('ASSUME').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'abc');
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Annotation must be between 4 and 500 characters.'),
+      findsOneWidget,
+    );
+    expect(backend.calls, isEmpty);
+
+    // With text → claim with the server id and the signed-in driver.
     await tester.tap(find.text('ASSUME').first);
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -292,7 +395,10 @@ void main() {
   testWidgets('NOT MINE sends the rejection reason through reject', (
     tester,
   ) async {
-    backend = _Backend(rows: List.of(rows));
+    backend = _Backend(
+      rows: List.of(rows),
+      rejectedRows: List.of(rejectedRows),
+    );
     await pump(tester);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(UnidentifiedEventsPage)),
@@ -322,7 +428,7 @@ void main() {
   testWidgets('a server refusal is shown as a plain message, row stays', (
     tester,
   ) async {
-    backend = _Backend(rows: List.of(rows))
+    backend = _Backend(rows: List.of(rows), rejectedRows: List.of(rejectedRows))
       ..nextError = const ConflictError(
         code: 'UNIDENTIFIED_CLAIM_FAILED',
         l10nKey: 'conflict',
@@ -349,29 +455,40 @@ void main() {
   });
 
   testWidgets(
-    'SRS 11.2 filters: current vehicle goes to the server, date is local',
+    'SRS 11.2 filters: current vehicle is matched on documented fields, date is local',
     (tester) async {
-      backend = _Backend(rows: List.of(rows));
+      backend = _Backend(
+        rows: List.of(rows),
+        rejectedRows: List.of(rejectedRows),
+      );
       await pump(tester);
       await tester.pumpAndSettle();
-      // Both tabs are fetched per load (counters); neither carries a vehicle.
-      expect(backend.uniqueIdsRequested, [null, null]);
+      // Only the active tab is fetched; no undocumented vehicle query param.
+      expect(backend.tabsRequested, [UnidentifiedTab.unclaimed]);
 
       await tester.tap(find.byIcon(Icons.filter_alt_outlined));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Current vehicle only'));
+      await tester.tap(
+        find.widgetWithText(
+          CheckedPopupMenuItem<String>,
+          'Current vehicle only',
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(backend.uniqueIdsRequested.last, 'imei-4');
       expect(find.text('Current vehicle'), findsOneWidget);
+      expect(find.text('Location: I-80 mile 12'), findsOneWidget);
+      expect(find.text('Location: Yard'), findsNothing);
 
       // Clear → reloads without the vehicle filter.
       await tester.tap(find.byIcon(Icons.filter_alt));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Clear filters'));
+      await tester.tap(
+        find.widgetWithText(PopupMenuItem<String>, 'Clear filters'),
+      );
       await tester.pumpAndSettle();
-      expect(backend.uniqueIdsRequested.last, isNull);
       expect(find.text('Current vehicle'), findsNothing);
+      expect(backend.tabsRequested.last, UnidentifiedTab.unclaimed);
     },
   );
 }

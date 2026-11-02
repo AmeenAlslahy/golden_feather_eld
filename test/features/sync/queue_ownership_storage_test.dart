@@ -13,13 +13,15 @@ import 'package:golden_feather_eld/features/sync/domain/entities/quarantine_reco
 PendingEvent _event(
   String id,
   String type,
-  Map<String, dynamic> payload,
-) =>
+  Map<String, dynamic> payload, {
+  String? dedupeKey,
+}) =>
     PendingEvent(
       id: id,
       type: type,
       payload: payload,
       createdAt: DateTime.utc(2026, 3, 1, 8),
+      dedupeKey: dedupeKey,
     );
 
 Future<Directory> _tempDir() =>
@@ -307,6 +309,140 @@ void main() {
       final q2 = SQLiteOfflineQueue(
           dbPathOverride: p.join(dir.path, 'q.db'));
       expect((await q2.getQuarantined()).single.event.id, 'old-cert');
+    });
+
+    test('enqueueIfAbsent is atomic: concurrent inserts produce one row',
+        () async {
+      final q = await _queue(dir.path);
+      const key = 'certification:55:101';
+      final attempts = List.generate(
+        8,
+        (i) => q.enqueueIfAbsent(
+          _event(
+            'cert-$i',
+            'certification',
+            {'logId': 55, 'signatureImage': 'sig-$i', 'ownerDriverId': 101},
+            dedupeKey: key,
+          ),
+        ),
+      );
+
+      final inserted = await Future.wait(attempts);
+      expect(inserted.where((ok) => ok), hasLength(1),
+          reason: 'the unique partial index + INSERT OR IGNORE must race safely');
+      expect(await q.count, 1);
+
+      final pending = (await q.getPending()).single;
+      expect(pending.dedupeKey, key);
+      expect(pending.payload, {
+        'logId': 55,
+        'signatureImage': 'sig-${pending.id.split('-').last}',
+        'ownerDriverId': 101,
+      });
+    });
+
+    test('dedupe survives restart and never replaces the original request',
+        () async {
+      final path = p.join(dir.path, 'dedupe.db');
+      final first = _event(
+        'original',
+        'certification',
+        {'logId': 42, 'signatureImage': 'first-signature', 'ownerDriverId': 7},
+        dedupeKey: 'certification:42:7',
+      );
+      var q = SQLiteOfflineQueue(dbPathOverride: path);
+      expect(await q.enqueueIfAbsent(first), isTrue);
+      await SQLiteOfflineQueue.resetForTests();
+
+      q = SQLiteOfflineQueue(dbPathOverride: path);
+      final duplicate = _event(
+        'new-attempt',
+        'certification',
+        {'logId': 42, 'signatureImage': 'new-signature', 'ownerDriverId': 7},
+        dedupeKey: 'certification:42:7',
+      );
+      expect(await q.enqueueIfAbsent(duplicate), isFalse);
+
+      final pending = (await q.getPending()).single;
+      expect(pending.id, 'original');
+      expect(pending.payload['signatureImage'], 'first-signature',
+          reason: 'a repeated tap must not replace the queued signature');
+      expect(await q.count, 1);
+    });
+
+    test('legacy rows without dedupeKey stay readable and dispatchable',
+        () async {
+      final q = await _queue(dir.path);
+      await q.enqueue(
+        _event('legacy-no-key', 'certification', {'logId': 9}),
+      );
+
+      final pending = (await q.getPending()).single;
+      expect(pending.id, 'legacy-no-key');
+      expect(pending.dedupeKey, isNull);
+      final ready = await q.getReadyEvents(limit: 10);
+      expect(ready.single.id, 'legacy-no-key');
+
+      // The same legacy row can still be retried/backed off without loss.
+      await q.updateEvent(
+        pending.copyWith(
+          retryCount: 1,
+          nextRetryAt: DateTime.now().add(const Duration(hours: 1)),
+        ),
+      );
+      expect(await q.getReadyEvents(limit: 10), isEmpty);
+      expect((await q.getPending()).single.retryCount, 1);
+    });
+
+    test('v5→v6 upgrade adds dedupe without touching existing rows', () async {
+      final path = p.join(dir.path, 'v5.db');
+      final v5 = await databaseFactoryFfi.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 5,
+          onCreate: (db, version) async {
+            await db.execute('''
+              CREATE TABLE pending_events (
+                id TEXT PRIMARY KEY, type TEXT NOT NULL,
+                payload TEXT NOT NULL, createdAt INTEGER NOT NULL,
+                priority INTEGER NOT NULL, retryCount INTEGER NOT NULL,
+                nextRetryAt INTEGER
+              )''');
+          },
+        ),
+      );
+      await v5.insert('pending_events', {
+        'id': 'old-v5',
+        'type': 'certification',
+        'payload': '{"logId": 11}',
+        'createdAt': 1000,
+        'priority': 1,
+        'retryCount': 0,
+        'nextRetryAt': null,
+      });
+      await v5.close();
+
+      final q = SQLiteOfflineQueue(dbPathOverride: path);
+      expect(await q.count, 1);
+      final legacy = (await q.getPending()).single;
+      expect(legacy.id, 'old-v5');
+      expect(legacy.dedupeKey, isNull);
+
+      expect(
+        await q.enqueueIfAbsent(
+          _event('fresh', 'certification', {'logId': 11},
+              dedupeKey: 'certification:11:101'),
+        ),
+        isTrue,
+      );
+      expect(
+        await q.enqueueIfAbsent(
+          _event('fresh-2', 'certification', {'logId': 11},
+              dedupeKey: 'certification:11:101'),
+        ),
+        isFalse,
+      );
+      expect(await q.count, 2);
     });
   });
 }

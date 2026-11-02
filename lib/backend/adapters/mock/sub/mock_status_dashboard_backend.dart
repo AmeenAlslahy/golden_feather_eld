@@ -34,6 +34,9 @@ class MockStatusDashboardBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     _currentStatus = status;
     return ok(_buildDashboard());

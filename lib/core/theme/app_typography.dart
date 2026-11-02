@@ -8,6 +8,31 @@ class AppTypography {
   static const String fontFamily = 'Roboto';
   static const String fontFamilyIOS = 'SF Pro Text';
 
+  /// دعم مستقبلي لعائلة الخط بحسب اللغة دون تحميل شبكي (مثل IBM Plex Sans Arabic)
+  static String fontFamilyFor(Locale? locale) => fontFamily;
+
+  // =========================================================================
+  // مقياس الخطوط المرجعي — Design System 2.0
+  // =========================================================================
+
+  static const double display = 32.0;
+  static const double pageTitle = 22.0;
+  static const double sectionTitle = 18.0;
+  static const double cardTitle = 16.0;
+  static const double body = 16.0;
+  static const double bodyMedium = 16.0;
+  static const double secondary = 14.0;
+  static const double caption = 12.0;
+  static const double button = 16.0;
+  static const double badge = 12.0;
+  static const double timerLarge = 52.0;
+  static const double timerMedium = 32.0;
+  static const double number = 20.0;
+
+  // =========================================================================
+  // ثوابت التوافق السابقة (Legacy Tokens)
+  // =========================================================================
+
   static const double headerSize = 28.0;
   static const double pageTitleSize = 24.0;
   static const double appBarTitleSize = 18.0;

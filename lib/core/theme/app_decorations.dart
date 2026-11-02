@@ -14,6 +14,13 @@ import 'app_shadows.dart';
 abstract final class AppDecorations {
   AppDecorations._();
 
+  /// تدرج الهوية الذهبي الرسمي لشريط التطبيق [GoldenAppBar] والعناصر البارزة.
+  static const LinearGradient goldenGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: AppColors.goldenGradientColors,
+  );
+
   /// بطاقة سطح — الخلفية من `colorScheme.surface` والظل في الفاتح فقط.
   static BoxDecoration card(
     BuildContext context, {

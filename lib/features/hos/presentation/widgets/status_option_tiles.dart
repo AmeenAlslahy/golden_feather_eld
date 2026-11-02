@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
 
 class StatusOptionTile extends StatelessWidget {
   final String label;
@@ -20,46 +22,66 @@ class StatusOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
-    final unselectedRadioColor = theme.disabledColor.withValues(alpha: 0.5);
-
     final isClickable = enabled && onTap != null;
 
+    final radioColor = isSelected
+        ? context.gold
+        : (!enabled
+            ? context.textSecondary.withValues(alpha: 0.25)
+            : context.textSecondary.withValues(alpha: 0.5));
+
+    final textColor = !enabled
+        ? context.textSecondary.withValues(alpha: 0.38)
+        : (isSelected ? context.goldenColors.primaryText : null);
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        InkWell(
-          onTap: isClickable ? onTap : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 14.0,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: !enabled
-                          ? theme.disabledColor
-                          : theme.colorScheme.onSurface,
+        Material(
+          color: isSelected
+              ? context.gold.withValues(alpha: 0.08)
+              : Colors.transparent,
+          child: InkWell(
+            onTap: isClickable ? onTap : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.compact + 2,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: context.styles.body.copyWith(
+                        fontWeight: isSelected
+                            ? AppTypography.bold
+                            : AppTypography.medium,
+                        color: textColor,
+                      ),
                     ),
                   ),
-                ),
-                Icon(
-                  isSelected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: isSelected ? primaryColor : unselectedRadioColor,
-                  size: AppSpacing.iconSize,
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.sm),
+                  Icon(
+                    isSelected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    color: radioColor,
+                    size: AppSpacing.iconMedium,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        if (!isLast) const Divider(height: 1, thickness: 1),
+        if (!isLast)
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: context.border.withValues(alpha: 0.5),
+          ),
       ],
     );
   }
 }
+

@@ -7,6 +7,8 @@ import '../../../../core/config/app_environment.dart';
 import '../../../../core/session/auth_session_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart'; // ignore_architecture
 import '../../../logs/data/datasources/log_local_data_source.dart'; // ignore_architecture
+import '../../../logs/data/sync/log_sync_outcome_handler.dart'; // ignore_architecture
+import '../../../../core/events/app_events.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/time/time_authority_provider.dart';
@@ -81,6 +83,15 @@ final dutyEventJournalProvider = Provider<DutyEventJournal>((ref) {
   return MemoryDutyEventJournal(queue: queue);
 });
 
+/// P0 — ترجمة نتيجة المزامنة إلى حالة مخزّنة + إشارة تحديث الواجهة.
+/// يعيش في طبقة البيانات لأنها تملك الكاش والحدث؛ لا منطق عرض فيه.
+final logSyncOutcomeHandlerProvider = Provider<LogSyncOutcomeHandler>((ref) {
+  return LogSyncOutcomeHandler(
+    local: ref.watch(logLocalDataSourceProvider),
+    events: ref.watch(appEventBusProvider),
+  );
+});
+
 final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   final env = AppEnvironmentConfig.current;
 
@@ -93,6 +104,7 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
   final dvirBackend = ref.watch(dvirBackendProvider);
   final localDataSource = ref.watch(authSessionReaderProvider);
   final inspectionBackend = ref.watch(inspectionBackendProvider);
+  final outcomeHandler = ref.watch(logSyncOutcomeHandlerProvider);
   return TraccarRemoteEventDispatcher(
     dutyStatusBackend,
     dailyLogsBackend,
@@ -108,13 +120,20 @@ final remoteEventDispatcherProvider = Provider<RemoteEventDispatcher>((ref) {
     observeAuth: () async {
       final auth = ref.read(authStateProvider);
       return DispatchAuthContext(
-        driverId: auth.user == null ? null : int.tryParse(auth.user!.id),
+        // P0 2B-1 (مراجعة 2026-10-30) — هوية الإرسال بنفس فضاء الختم
+        // (معرّف سائق ELD من currentDriverIdProvider). كان يُقرأ من
+        // auth.user.id (مستخدم Traccar — جدول آخر) فيُوقف كل حدث
+        // طابور مختوم بمعرّف ELD ولو كانت الجلسة صحيحة.
+        driverId: ref.read(currentDriverIdProvider),
         transitioning: auth.transitioning,
       );
     },
     // P0 2B-1 — إثبات RECOVERABLE عبر كاش السجلات (قراءة خالصة).
     cachedLogOwner: (logId) =>
         ref.read(logLocalDataSourceProvider).ownerOfCachedLog(logId),
+    // P0 — بعد كل استجابة فعلية: تؤكد الاعتماد فقط عند `isCertified`،
+    // وتحدّث النموذج من استجابة الخادم دون افتراض الاكتمال.
+    onSettled: outcomeHandler.onVerified,
   );
 });
 
@@ -122,16 +141,21 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   final queue = ref.watch(offlineQueueProvider);
   final dispatcher = ref.watch(remoteEventDispatcherProvider);
   final timeAuthority = ref.watch(timeAuthorityProvider);
+  final outcomeHandler = ref.watch(logSyncOutcomeHandlerProvider);
 
   final engine = SyncEngine(
     queue: queue,
     dispatcher: dispatcher,
     timeAuthority: timeAuthority,
+    // خروج الطلب نهائياً (رفض/استنفاد محاولات) → SYNC_FAILED بدل
+    // PENDING_SYNC، مع إبقاء بيانات المستخدم في الكاش.
+    onDeadLettered: outcomeHandler.onDeadLettered,
     // P0 2B-1 — مراجعة المؤجل المؤهل (T3) تحتاج الجلسة الحالية.
+    // نفس فضاء الختم: معرّف سائق ELD (مراجعة 2026-10-30).
     observeAuth: () async {
       final auth = ref.read(authStateProvider);
       return DispatchAuthContext(
-        driverId: auth.user == null ? null : int.tryParse(auth.user!.id),
+        driverId: ref.read(currentDriverIdProvider),
         transitioning: auth.transitioning,
       );
     },

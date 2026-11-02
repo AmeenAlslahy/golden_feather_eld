@@ -21,7 +21,11 @@ abstract interface class InspectionBackend {
     DateTime? date,
   });
 
-  /// POST /eld/dot-inspection/email-logs
+  /// POST /eld/transfer/email-logs
+  ///
+  /// Swagger's EmailLogsRequest documents only `driverId`, `recipientEmail`
+  /// and `comment`; the other parameters remain in the contract for callers
+  /// but are not sent by the live backend until the server confirms them.
   ///
   /// Kept as RawJson until Phase 4 (not legally critical).
   Future<Result<RawJson>> emailLogs({

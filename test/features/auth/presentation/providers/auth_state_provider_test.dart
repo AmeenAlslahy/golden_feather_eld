@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
+import 'package:golden_feather_eld/core/session/session_epoch.dart';
 import 'package:golden_feather_eld/features/auth/domain/repositories/auth_repository.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_providers.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
@@ -193,5 +194,97 @@ void main() {
       // We just ensure it doesn't crash for this characterization.
       expect(container.read(authStateProvider).status, isNotNull);
     });
+  });
+
+  group('CurrentDriverId epoch fencing (P0 2B-1 review 2026-10-30)', () {
+    late ProviderContainer container;
+
+    setUp(() async {
+      SessionEpoch.resetForTests();
+      await AppEnvironmentConfig.init(testEnv: {
+        'TRACCAR_ENVIRONMENT': 'mock',
+      });
+      // stubs مكتفية ذاتياً — لا تعتمد على حالة مجموعة AuthState أعلاه.
+      when(
+        () => mockAuthRepo.login(
+          identifier: any(named: 'identifier'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer(
+        (_) async => Right(
+          User(
+            id: '1',
+            fullName: 'Test User',
+            email: 'test@example.com',
+            username: 'admin',
+            role: UserRole.fieldWorker,
+            createdAt: DateTime.now(),
+          ),
+        ),
+      );
+      when(() => mockAuthRepo.logout()).thenAnswer(
+        (_) async => const Right(unit),
+      );
+      container = ProviderContainer(
+        overrides: [
+          traccarAuthRepositoryProvider.overrideWithValue(mockAuthRepo),
+        ],
+      );
+    });
+
+    tearDown(() {
+      container.dispose();
+      SessionEpoch.resetForTests();
+    });
+
+    Future<void> loginAsDriver() async {
+      final notifier = container.read(authStateProvider.notifier);
+      final ok = await notifier.login(
+        username: 'admin@demo.com',
+        password: 'admin123',
+      );
+      expect(ok, isTrue, reason: 'test setup: mocked session must succeed');
+    }
+
+    test(
+      'stamped driver id of the CURRENT epoch wins over the Traccar user id',
+      () async {
+        await loginAsDriver();
+        // بلا ختم: السقوط على مستخدم Traccar ('1' في الموك).
+        expect(container.read(currentDriverIdProvider), 1);
+
+        // الختم بمعرّف سائق ELD مختلف (جدول eld_drivers) في نفس الجيل.
+        container.read(activeDriverIdProvider.notifier).state =
+            (SessionEpoch.current, 101);
+
+        expect(
+          container.read(currentDriverIdProvider),
+          101,
+          reason: 'الختم الحالي الجيل هو فضاء الملكية الموحّد',
+        );
+      },
+    );
+
+    test(
+      'stamped driver id of an OLD epoch is dead — never inherited by the '
+      'next session (no cross-account leak through the fence)',
+      () async {
+        await loginAsDriver();
+        container.read(activeDriverIdProvider.notifier).state =
+            (SessionEpoch.current, 101);
+        expect(container.read(currentDriverIdProvider), 101);
+
+        // حدود هوية حقيقية (خروج ثم دخول جديد) — الجيل يتقدم عبر الـ
+        // notifier وحالة المصادقة تتغير فيُعاد بناء المزود ويُفحص الختم.
+        await container.read(authStateProvider.notifier).logout();
+        await loginAsDriver();
+
+        expect(
+          container.read(currentDriverIdProvider),
+          1,
+          reason: 'قيمة جيل قديم لا تُقرأ أبداً؛ السقوط لمستخدم Traccar',
+        );
+      },
+    );
   });
 }

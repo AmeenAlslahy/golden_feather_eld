@@ -31,6 +31,10 @@ class LogsState {
   /// message; sanitize before display).
   final String? eventsError;
 
+  /// الأحداث المعروضة من كاش/جهاز وليست استجابة خادم حديثة. الواجهة
+  /// تعرض تنبيهاً حتى لا يظن السائق أن اليوم مؤكد من الخادم.
+  final bool eventsFromSavedData;
+
   const LogsState({
     this.logs = const [],
     this.selectedLog,
@@ -41,6 +45,7 @@ class LogsState {
     this.loadMoreError,
     this.isLoadingEvents = false,
     this.eventsError,
+    this.eventsFromSavedData = false,
     this.serverForm,
   });
 
@@ -59,6 +64,7 @@ class LogsState {
     bool? isLoadingEvents,
     String? eventsError,
     bool clearEventsError = false,
+    bool? eventsFromSavedData,
     DailyFormData? serverForm,
     bool clearServerForm = false,
   }) {
@@ -74,6 +80,7 @@ class LogsState {
           : (loadMoreError ?? this.loadMoreError),
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
       eventsError: clearEventsError ? null : (eventsError ?? this.eventsError),
+      eventsFromSavedData: eventsFromSavedData ?? this.eventsFromSavedData,
       serverForm: clearServerForm ? null : (serverForm ?? this.serverForm),
     );
   }
@@ -183,6 +190,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
     state = state.copyWith(
       selectedLog: log,
       clearEventsError: true,
+      eventsFromSavedData: false,
       clearServerForm: true,
     );
     _applyRowToLiveDashboard(log);
@@ -282,16 +290,20 @@ class LogsNotifier extends StateNotifier<LogsState> {
   /// اختيار المركبة لسجل سابق يبقى على نموذج ذلك السجل ولا يمس الحالة
   /// الحية (لوحة القيادة تخص سجل اليوم حصراً).
   void updateSelectedFormVehicle({
-    required int? vehicleId,
     required String vehicleUniqueId,
     required String vehicleName,
   }) {
     final current = state.selectedLog;
     if (current == null || current.today) return;
     final base = _selectedFormBase(current);
+    final unchanged =
+        base.vehicleUniqueId?.trim() == vehicleUniqueId.trim() &&
+        vehicleUniqueId.trim().isNotEmpty;
     state = state.copyWith(
       serverForm: DailyFormData(
-        vehicleId: vehicleId,
+        // معرّف رقمي لا يُشتق من نص `uniqueId`؛ يُحفظ القديم فقط إذا لم
+        // تتغير المركبة فعلاً.
+        vehicleId: unchanged ? base.vehicleId : null,
         vehicleUniqueId: vehicleUniqueId.isEmpty ? null : vehicleUniqueId,
         vehicleName: vehicleName.isEmpty ? null : vehicleName,
         coDriverId: base.coDriverId,
@@ -362,21 +374,26 @@ class LogsNotifier extends StateNotifier<LogsState> {
         state = state.copyWith(
           isLoadingEvents: false,
           eventsError: failure.message,
+          eventsFromSavedData: false,
         );
       },
-      (events) {
+      (snapshot) {
         // نحافظ على حالة التوسيع الحالية للأحداث ذات المعرّف نفسه.
         final expanded = {
           for (final e in state.selectedLog!.events)
             if (e.isExpanded) e.id,
         };
-        final merged = events
+        final merged = snapshot.events
             .map(
               (e) => expanded.contains(e.id) ? e.copyWith(isExpanded: true) : e,
             )
             .toList();
         _replaceSelected(state.selectedLog!.copyWith(events: merged));
-        state = state.copyWith(isLoadingEvents: false, clearEventsError: true);
+        state = state.copyWith(
+          isLoadingEvents: false,
+          clearEventsError: true,
+          eventsFromSavedData: snapshot.isSavedData,
+        );
       },
     );
   }

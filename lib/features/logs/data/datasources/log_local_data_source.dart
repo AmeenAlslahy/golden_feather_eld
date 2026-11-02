@@ -49,6 +49,26 @@ abstract class LogLocalDataSource {
     required bool isComplete,
   });
 
+  /// يعلّم النموذج المخزّن أنه محفوظ محلياً بانتظار المزامنة، لا مكتملاً
+  /// من الخادم. يستخدمه مسار الأوفلاين بعد حفظ البيانات والطابور.
+  Future<void> markCachedDailyLogFormPendingSync({
+    required int driverId,
+    required DailyLogId logId,
+  });
+
+  /// تحديث حالة المزامنة المخزّنة لسجل واحد بشكل ذري.
+  ///
+  /// [formStatus] و/أو [certificationStatus] قيم wire صريحة
+  /// (`PENDING_SYNC`, `SYNC_FAILED`, `CERTIFIED`, `COMPLETED` ...).
+  /// تُستخدم من مسار المزامنة بعد استجابة الخادم الفعلية: لا اكتمال
+  /// مفترض، ولا حذف لبيانات المستخدم.
+  Future<void> markCachedDailyLogSyncStatus({
+    required int driverId,
+    required DailyLogId logId,
+    String? formStatus,
+    String? certificationStatus,
+  });
+
   /// P0 2B-1 — مالك سجل مخزن لـ logId عبر مفاتيح `logs:{driverId}` فقط.
   /// يُرجع المعرف عند انفراده، وإلا null (غياب/غموض/تعدد) — لا يُستنتج
   /// أي مالك من الجلسة الحالية هنا أبداً. قراءة خالصة بلا آثار.
@@ -78,11 +98,76 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     List<Map<String, dynamic>> logsJson,
   ) async {
     try {
-      await _cacheBox.put('logs:$driverId', jsonEncode(logsJson));
+      final key = 'logs:$driverId';
+      // لا تمسح حالة محلية لم يؤكدها الخادم بعد (PENDING_SYNC) أو رفضها
+      // نهائياً (SYNC_FAILED) عند كل تحديث للقائمة. الخادم لا يعرف حالة
+      // الطابور المحلي، فاستبدال الصف كان يمحوها فور إعادة فتح الشاشة.
+      final previous = _readCachedList(key);
+      final localById = <String, Map<String, String>>{};
+      if (previous != null) {
+        for (final row in previous) {
+          final id = row['id']?.toString();
+          if (id == null || id.isEmpty) continue;
+          final form = row['formStatus']?.toString().trim().toUpperCase();
+          final cert = row['certificationStatus']
+              ?.toString()
+              .trim()
+              .toUpperCase();
+          final keepForm = form != null && _localFormStates.contains(form);
+          final keepCert = cert != null && _localCertStates.contains(cert);
+          if (keepForm || keepCert) {
+            localById[id] = {
+              if (keepForm) 'form': form,
+              if (keepCert) 'cert': cert,
+            };
+          }
+        }
+      }
+
+      final merged = logsJson.map((log) {
+        final id = log['id']?.toString();
+        final local = id == null ? null : localById[id];
+        if (local == null) return Map<String, dynamic>.from(log);
+        final copy = Map<String, dynamic>.from(log);
+        final serverForm = copy['formStatus']?.toString().trim().toUpperCase();
+        if (local['form'] != null && !_serverConfirmsForm(serverForm)) {
+          copy['formStatus'] = local['form'];
+          copy['isFormComplete'] = false;
+        }
+        final serverCert = copy['certificationStatus']
+            ?.toString()
+            .trim()
+            .toUpperCase();
+        if (local['cert'] != null && !_serverConfirmsCert(serverCert)) {
+          copy['certificationStatus'] = local['cert'];
+          copy['isCertified'] = false;
+        }
+        return copy;
+      }).toList();
+
+      await _cacheBox.put(key, jsonEncode(merged));
     } catch (e) {
       AppLogger.warning('Daily-logs cache write skipped: $e');
     }
   }
+
+  static const Set<String> _localFormStates = {
+    'PENDING_SYNC',
+    'SAVED_UNCONFIRMED',
+    'SYNC_FAILED',
+    'SYNC_FAILED_PERMANENTLY',
+  };
+
+  static const Set<String> _localCertStates = {
+    'PENDING_SYNC',
+    'SYNC_FAILED',
+    'SYNC_FAILED_PERMANENTLY',
+  };
+
+  static bool _serverConfirmsForm(String? status) =>
+      status == 'COMPLETED' || status == 'COMPLETE';
+
+  static bool _serverConfirmsCert(String? status) => status == 'CERTIFIED';
 
   @override
   Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId) async =>
@@ -170,6 +255,32 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     required int driverId,
     required DailyLogId logId,
     required bool isComplete,
+  }) {
+    return markCachedDailyLogSyncStatus(
+      driverId: driverId,
+      logId: logId,
+      formStatus: isComplete ? 'COMPLETED' : 'INCOMPLETE',
+    );
+  }
+
+  @override
+  Future<void> markCachedDailyLogFormPendingSync({
+    required int driverId,
+    required DailyLogId logId,
+  }) {
+    return markCachedDailyLogSyncStatus(
+      driverId: driverId,
+      logId: logId,
+      formStatus: 'PENDING_SYNC',
+    );
+  }
+
+  @override
+  Future<void> markCachedDailyLogSyncStatus({
+    required int driverId,
+    required DailyLogId logId,
+    String? formStatus,
+    String? certificationStatus,
   }) async {
     try {
       final key = 'logs:$driverId';
@@ -181,21 +292,27 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
         final matches = id is num
             ? id.toInt() == logId.value
             : int.tryParse('$id') == logId.value;
-        if (matches) {
-          changed = true;
-          final copy = Map<String, dynamic>.from(log);
-          copy['formStatus'] = isComplete ? 'COMPLETED' : 'INCOMPLETE';
-          copy['isFormComplete'] = isComplete;
-          return copy;
+        if (!matches) return log;
+        changed = true;
+        final copy = Map<String, dynamic>.from(log);
+        if (formStatus != null) {
+          final upper = formStatus.trim().toUpperCase();
+          copy['formStatus'] = upper;
+          copy['isFormComplete'] = _serverConfirmsForm(upper);
         }
-        return log;
+        if (certificationStatus != null) {
+          final upper = certificationStatus.trim().toUpperCase();
+          copy['certificationStatus'] = upper;
+          copy['isCertified'] = _serverConfirmsCert(upper);
+        }
+        return copy;
       }).toList();
 
       if (changed) {
         await _cacheBox.put(key, jsonEncode(updated));
       }
     } catch (e) {
-      AppLogger.warning('markCachedDailyLogFormComplete skipped: $e');
+      AppLogger.warning('markCachedDailyLogSyncStatus skipped: $e');
     }
   }
 

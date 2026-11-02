@@ -163,6 +163,16 @@ class DailyLogDto {
       case 'INVALID':
         mappedFormStatus = FormStatus.incomplete;
         break;
+      case 'PENDING_SYNC':
+        mappedFormStatus = FormStatus.pendingSync;
+        break;
+      case 'SAVED_UNCONFIRMED':
+        mappedFormStatus = FormStatus.savedUnconfirmed;
+        break;
+      case 'SYNC_FAILED':
+      case 'SYNC_FAILED_PERMANENTLY':
+        mappedFormStatus = FormStatus.syncFailed;
+        break;
       default:
         mappedFormStatus = FormStatus.unknown;
     }
@@ -171,6 +181,13 @@ class DailyLogDto {
     switch (certificationStatus.trim().toUpperCase()) {
       case 'CERTIFIED':
         mappedCertStatus = CertificationStatus.certified;
+        break;
+      case 'PENDING_SYNC':
+        mappedCertStatus = CertificationStatus.pendingSync;
+        break;
+      case 'SYNC_FAILED':
+      case 'SYNC_FAILED_PERMANENTLY':
+        mappedCertStatus = CertificationStatus.syncFailed;
         break;
       case 'UNCERTIFIED':
       case 'NOT_READY':

@@ -59,7 +59,7 @@ class FormListEditorView extends StatelessWidget {
                 Flexible(
                   flex: 1,
                   child: AppButton(
-                    label: context.loc.addButton,
+                    label: '', //context.loc.addButton,
                     icon: Icons.add,
                     type: EldButtonType.primary,
                     isFullWidth: false,

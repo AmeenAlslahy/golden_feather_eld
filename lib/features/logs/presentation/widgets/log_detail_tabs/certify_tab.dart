@@ -30,6 +30,25 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
   bool _signatureControllerInitialized = false;
 
   @override
+  void initState() {
+    super.initState();
+    _requestInitialData();
+  }
+
+  /// الجلب الأولي قرار الشاشة لا أثر جانبي في مُنشئ الـ notifier.
+  void _requestInitialData() {
+    ref
+        .read(logDraftSignatureProvider(widget.selectedLog.id).notifier)
+        .ensureLoaded();
+    if (widget.selectedLog.isCertified) return;
+    final logId = widget.selectedLog.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(certifyLogProvider(logId).notifier).checkReadiness();
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_signatureControllerInitialized) return;
@@ -63,6 +82,11 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
         logDraftSignatureProvider(widget.selectedLog.id),
       );
       _signatureController.value = List<Point>.of(newDraft);
+      _requestInitialData();
+    } else if (oldWidget.selectedLog.isCertified &&
+        !widget.selectedLog.isCertified) {
+      // أُعيد فتح السجل بعد تعديل يستوجب إعادة الاعتماد.
+      _requestInitialData();
     }
   }
 
@@ -98,6 +122,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             if (isLogCertified) {
               Navigator.of(context).maybePop();
             }
+          case CertifyPending(:final message):
+            // محفوظ للمزامنة فقط — ليس اعتمادًا مؤكدًا، ولا نغلق الشاشة.
+            AppFeedback.warning(context, message);
           case CertifyFailed(:final message):
             AppFeedback.error(context, message);
         }
@@ -108,6 +135,10 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
       certifyLogProvider(widget.selectedLog.id).notifier,
     );
     final state = ref.watch(certifyLogProvider(widget.selectedLog.id));
+
+    if (widget.selectedLog.isCertified) {
+      return _buildCertifiedView(context);
+    }
 
     if (state.isLoading && state.readinessData == null) {
       return const Center(
@@ -144,28 +175,13 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
       );
     }
 
-    final readinessData =
-        state.readinessData ??
-        LogReadiness(
-          dailyLogId: widget.selectedLog.id.value,
-          driverId: 0,
-          driverName: widget.selectedLog.driverName ?? '',
-          logDate: widget.selectedLog.date.toIso8601String().split('T').first,
-          readinessStatus: widget.selectedLog.isFormComplete
-              ? 'READY'
-              : 'NOT_READY',
-          missingRequirements: widget.selectedLog.isFormComplete
-              ? const []
-              : [context.loc.fillFormFirst],
-          legalStatement: context.loc.certifyLegalStatement,
-          availableActions: const ['CERTIFY'],
-        );
+    // لا نختلق LogReadiness محلياً: غيابها يعني أن الخادم لم يؤكد الجاهزية.
+    final readinessData = state.readinessData;
+    if (readinessData == null) {
+      return _buildUnavailableView(context, notifier);
+    }
 
-    final isReady =
-        state.isReady ||
-        (state.readinessData == null && widget.selectedLog.isFormComplete);
-
-    if (!isReady) {
+    if (!state.isReady) {
       return _buildNotReadyView(
         context,
         notifier,
@@ -175,6 +191,62 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
     }
 
     return _buildReadyView(context, notifier, readinessData, state.isLoading);
+  }
+
+  Widget _buildCertifiedView(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.verified_user_outlined,
+              size: AppSpacing.iconHero,
+              color: context.success,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              context.loc.certified,
+              textAlign: TextAlign.center,
+              style: context.styles.pageTitle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnavailableView(
+    BuildContext context,
+    CertifyLogNotifier notifier,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: AppSpacing.iconHero,
+              color: context.colors.error,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              context.loc.notReadyForCertification,
+              textAlign: TextAlign.center,
+              style: context.styles.pageTitle,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppButton(
+              label: context.loc.retryButton,
+              onPressed: notifier.checkReadiness,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildNotReadyView(
@@ -249,10 +321,9 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             showWarningHeader: false,
           ),
           AppButton(
-            label: context.loc.notReady,
+            label: context.loc.clearSignature,
             type: EldButtonType.secondary,
-            // "غير جاهز" يمسح التوقيع المرسوم فقط (كسلوك زر المسح في
-            // اللوحة) — لا يبدّل التبويب ولا يغادر الصفحة.
+            // زر مسح التوقيع — لا يغيّر الجاهزية ولا يبدّل التبويب.
             onPressed: () => _signatureController.clear(),
           ),
         ],
@@ -313,7 +384,7 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
                 ),
               ),
             AppButton(
-              label: context.loc.notReady,
+              label: context.loc.clearSignature,
               type: EldButtonType.secondary,
               // نفس السلوك: مسح التوقيع فقط، بلا تنقل.
               onPressed: () => _signatureController.clear(),

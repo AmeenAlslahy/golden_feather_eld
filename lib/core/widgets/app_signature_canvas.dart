@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-import '../theme/app_colors.dart';
 import 'package:signature/signature.dart';
 import '../extensions/context_extensions.dart';
 import '../theme/app_radius.dart';
@@ -58,30 +56,30 @@ class AppSignatureCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final goldenColors = context.goldenColors;
     final loc = context.loc;
+
+    final borderColor = errorText != null
+        ? goldenColors.errorText
+        : goldenColors.border;
+    final borderWidth = errorText != null ? 2.0 : 1.0;
 
     return Padding(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── Drawing area ───────────────────────────────────────────
+          // ─── Drawing area (Display Theme adapts to Light & Dark) ──────
           Container(
             height: height,
             width: double.infinity,
             decoration: BoxDecoration(
               color: colorScheme.surface,
               border: Border.all(
-                // فاتح كما كان حرفياً (textPrimary)؛ داكن darkBorder بدل
-                // الأبيض الصريح — النية حدٌّ لا نص.
-                color: errorText != null
-                    ? colorScheme.error
-                    : (colorScheme.brightness == Brightness.dark
-                              ? AppColors.darkBorder
-                              : AppColors.textPrimary)
-                          .withValues(alpha: 0.5),
-                width: errorText != null ? 2 : 1,
+                color: borderColor,
+                width: borderWidth,
               ),
               borderRadius: BorderRadius.circular(AppRadius.input),
             ),
@@ -98,14 +96,17 @@ class AppSignatureCanvas extends StatelessWidget {
                         child: Text(
                           placeholder ?? loc.drawYourSignatureHere,
                           textAlign: TextAlign.center,
-                          style:
-                              placeholderStyle ??
-                              context.styles.subtitle.copyWith(fontSize: 16),
+                          style: placeholderStyle ??
+                              context.styles.secondary.copyWith(
+                                fontSize: 16,
+                                color: goldenColors.textMuted,
+                              ),
                         ),
                       );
                     },
                   ),
-                  // Signature pad — always on top so it captures all touches.
+                  // Signature pad — draws over transparent canvas so UI follows theme.
+                  // Note: Export format (PNG bytes) is governed by controller.exportBackgroundColor.
                   Signature(
                     controller: controller,
                     height: height,
@@ -124,7 +125,12 @@ class AppSignatureCanvas extends StatelessWidget {
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    child: Text(errorText!, style: context.styles.error),
+                    child: Text(
+                      errorText!,
+                      style: context.styles.error.copyWith(
+                        color: goldenColors.errorText,
+                      ),
+                    ),
                   ),
                 ),
               if (showClear)
@@ -140,6 +146,7 @@ class AppSignatureCanvas extends StatelessWidget {
                       child: Text(
                         loc.clearSignature,
                         style: context.styles.body.copyWith(
+                          color: goldenColors.primaryText,
                           decoration: TextDecoration.underline,
                           decorationStyle: TextDecorationStyle.dotted,
                         ),
@@ -162,7 +169,9 @@ class AppSignatureCanvas extends StatelessWidget {
                             ),
                             child: Text(
                               errorText!,
-                              style: context.styles.error,
+                              style: context.styles.error.copyWith(
+                                color: goldenColors.errorText,
+                              ),
                             ),
                           )
                         : const SizedBox.shrink(),
@@ -178,7 +187,8 @@ class AppSignatureCanvas extends StatelessWidget {
                         ),
                         child: Text(
                           loc.clearSignature,
-                          style: context.styles.subtitle.copyWith(
+                          style: context.styles.body.copyWith(
+                            color: goldenColors.primaryText,
                             decoration: TextDecoration.underline,
                             decorationStyle: TextDecorationStyle.dotted,
                           ),

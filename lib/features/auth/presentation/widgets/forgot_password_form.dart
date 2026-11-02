@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../backend/providers/backend_providers.dart';
@@ -7,12 +6,14 @@ import '../../../../core/error/app_error.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../providers/auth_mode_provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../providers/auth_mode_provider.dart';
 
+/// نموذج استعادة كلمة المرور — Golden Feather Design System 2.0
 class ForgotPasswordForm extends ConsumerStatefulWidget {
   const ForgotPasswordForm({super.key});
 
@@ -83,22 +84,25 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // عنوان النموذج
         Text(
           context.loc.resetPassword,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: AppTypography.bold),
+          style: context.styles.cardTitle,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
+
+        // إرشادات الاستعادة
         Text(
           _arabic
               ? 'أدخل بريد الحساب. إن لم يصلك شيء فتواصل مع مدير الأسطول.'
               : 'Enter the account email. If nothing arrives, contact your fleet manager.',
           textAlign: TextAlign.center,
-          style: context.styles.muted,
+          style: context.styles.secondary,
         ),
         const SizedBox(height: AppSpacing.lg),
+
+        // حقل إدخال البريد الإلكتروني
         AppTextField(
           controller: _email,
           label: context.loc.email,
@@ -108,25 +112,63 @@ class _ForgotPasswordFormState extends ConsumerState<ForgotPasswordForm> {
           onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: AppSpacing.md),
-        AppButton(
+
+        // زر إرسال الطلب
+        AppButton.primary(
           label: _arabic ? 'إرسال' : 'Send',
           isLoading: _sending,
           onPressed: _sending ? null : _submit,
         ),
+
+        // رسالة التغذية الراجعة
         if (_feedback != null) ...[
           const SizedBox(height: AppSpacing.md),
-          Text(
-            _feedback!,
-            textAlign: TextAlign.center,
-            style: _ok ? context.styles.success : context.styles.error,
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.compact,
+            ),
+            decoration: BoxDecoration(
+              color: _ok
+                  ? context.goldenColors.successBackground
+                  : context.goldenColors.errorBackground,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(
+                color: _ok
+                    ? context.goldenColors.successText.withValues(alpha: 0.25)
+                    : context.goldenColors.errorText.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  _ok ? Icons.check_circle_outline : Icons.error_outline,
+                  color: _ok
+                      ? context.goldenColors.successText
+                      : context.goldenColors.errorText,
+                  size: AppSpacing.iconMedium,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    _feedback!,
+                    style: _ok ? context.styles.success : context.styles.error,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
-        const SizedBox(height: AppSpacing.lg),
-        TextButton(
+
+        const SizedBox(height: AppSpacing.md),
+
+        // زر العودة لتسجيل الدخول
+        AppButton.secondary(
+          label: context.loc.backToLogin,
           onPressed: () {
             ref.read(authModeProvider.notifier).state = AuthMode.login;
           },
-          child: Text(context.loc.backToLogin),
         ),
       ],
     );

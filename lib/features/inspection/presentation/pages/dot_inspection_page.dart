@@ -76,6 +76,7 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
     if (!mounted) return;
     if (ref.read(inspectionProvider).isInspectionMode) {
       ref.read(accountProvider.notifier).fetchMyAccount();
+      ref.invalidate(dotInspectionScreenProvider);
     }
   }
 

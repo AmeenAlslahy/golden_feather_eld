@@ -10,6 +10,7 @@ import 'package:golden_feather_eld/features/home/presentation/providers/dashboar
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
@@ -57,7 +58,7 @@ void main() {
     ).thenAnswer((_) async => Right(DailyLogPage(logs: [today])));
     when(
       () => repo.getEvents(any(), any()),
-    ).thenAnswer((_) async => const Right([]));
+    ).thenAnswer((_) async => const Right(LogEventsSnapshot.server([])));
     when(() => repo.getLogById(any())).thenAnswer((_) => detail.future);
     when(() => repo.getForm(any())).thenAnswer((_) => form.future);
 

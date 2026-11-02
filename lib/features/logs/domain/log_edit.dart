@@ -19,6 +19,52 @@ String? refuseAutomaticDrivingEdit({
   return null;
 }
 
+/// هل النص قيمة عرض بديلة لا تمثل موقعاً حقيقياً؟
+///
+/// نماذج الخادم/الكاش تضع `Unknown Location` أو `Unknown` عند غياب الموقع.
+/// هذه ليست مواقع تُرسل في طلب تعديل، وإرسالها يستبدل `null` بقيمة كاذبة.
+bool isPlaceholderLocation(String? value) {
+  final text = value?.trim().toLowerCase() ?? '';
+  if (text.isEmpty) return true;
+  return const {
+    'unknown location',
+    'unknown',
+    '-',
+    'n/a',
+    'none',
+  }.contains(text);
+}
+
+/// يحول مدة نموذج التعديل إلى [Duration].
+///
+/// يقبل تنسيق المحرر `HH:mm` (مثل `02:30`) وتنسيق العرض `2h 30m` الذي
+/// يبدأ به النموذج من الحدث الحالي. يرجع null إذا تعذر التحليل.
+Duration? parseEditFormDuration(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return null;
+
+  final clock = RegExp(r'^(\d{1,3}):(\d{2})$').firstMatch(trimmed);
+  if (clock != null) {
+    final hours = int.tryParse(clock.group(1)!);
+    final minutes = int.tryParse(clock.group(2)!);
+    if (hours == null || minutes == null || minutes > 59) return null;
+    return Duration(hours: hours, minutes: minutes);
+  }
+
+  final short = RegExp(
+    r'^(\d{1,3})\s*h(?:\s*(\d{1,2})\s*m)?$',
+    caseSensitive: false,
+  ).firstMatch(trimmed);
+  if (short != null) {
+    final hours = int.tryParse(short.group(1)!);
+    final minutes = short.group(2) == null ? 0 : int.tryParse(short.group(2)!);
+    if (hours == null || minutes == null || minutes > 59) return null;
+    return Duration(hours: hours, minutes: minutes);
+  }
+
+  return null;
+}
+
 /// يحول وقت نموذج التعديل إلى [DateTime] على يوم السجل.
 ///
 /// يدعم: `HH:mm`، `h:mm[:ss] AM/PM`. يرجع null إذا تعذر التحليل

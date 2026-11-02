@@ -10,6 +10,8 @@ import '../entities/log_readiness.dart';
 import '../entities/log_certify_state.dart';
 import '../entities/daily_form_data.dart';
 import '../entities/daily_form_update.dart';
+import '../entities/certify_submission.dart';
+import '../entities/log_events_snapshot.dart';
 
 abstract class LogRepository {
   /// قائمة السجلات اليومية (`GET /eld/daily-logs` الموحّد): ترقيم
@@ -43,9 +45,12 @@ abstract class LogRepository {
   /// Duty-status events of one daily log.
   ///
   /// Online: the official `GET /eld/daily-logs/{id}/events` (server is the
-  /// source of truth). Offline / on failure: the locally recorded events of
-  /// [date] so the driver still sees what was captured on the device.
-  Future<Either<Failure, List<LogEvent>>> getEvents(
+  /// source of truth). Offline / on failure: the last valid server snapshot,
+  /// then locally recorded events of [date]. The returned snapshot names its
+  /// source so the UI can distinguish a confirmed empty day from saved data,
+  /// and a failed load with no valid data is returned as `Left` — never as an
+  /// empty success.
+  Future<Either<Failure, LogEventsSnapshot>> getEvents(
     DailyLogId logId,
     DateTime date,
   );
@@ -92,14 +97,35 @@ abstract class LogRepository {
   });
 
   /// يعتمد السجل قانونياً (`POST /eld/daily-logs/{id}/certify`).
-  /// [signatureImageBase64] = صورة التوقيع المرسوم (PNG base64) — تُرسل في
-  /// جسم الوثيقة (`signatureImage`)، والمسار يحمل هوية السجل.
-  Future<Either<Failure, bool>> certifyLog({
+  /// [signatureImageBase64] = صورة التوقيع المرسوم (PNG base64).
+  ///
+  /// يعيد [CertifySubmission.confirmed] فقط عندما تؤكد استجابة الخادم أن
+  /// السجل أصبح معتمدًا، و[CertifySubmission.pendingSync] عندما يُحفظ الطلب
+  /// في طابور الأوفلاين. استجابة غير حاسمة أو `certified=false` تعود
+  /// `Left` كي تعرض الواجهة فشلاً قابلًا لإعادة المحاولة.
+  Future<Either<Failure, CertifySubmission>> certifyLog({
     required DailyLogId logId,
     required int driverId,
     bool certified = true,
     String? signatureImageBase64,
+    Map<String, dynamic>? device,
   });
+
+  /// تفاصيل حدث خدمة محدد ضمن السجل اليومي والقيود التحريرية (`GET /eld/daily-logs/{id}/events/{eventId}`).
+  Future<Either<Failure, Map<String, dynamic>?>> getEventDetails(
+    DailyLogId logId,
+    DutyStatusId eventId,
+  );
+
+  /// خيارات شاشة تعديل الأحداث والحالات المعتمدة (`GET /eld/daily-logs/{id}/events/options`).
+  Future<Either<Failure, Map<String, dynamic>?>> getEventsOptions(
+    DailyLogId logId,
+  );
+
+  /// مراجع وخيارات النموذج اليومي: مركبات وسائقون مساعدون (`GET /eld/daily-logs/{id}/form/options`).
+  Future<Either<Failure, Map<String, dynamic>?>> getFormOptions(
+    DailyLogId logId,
+  );
   Future<Either<Failure, List<DutyPeriod>>> getPeriods(DateTime date);
   Future<Either<Failure, bool>> savePeriod(DutyPeriod period);
   Future<Either<Failure, bool>> logAudit(AuditEntry entry);

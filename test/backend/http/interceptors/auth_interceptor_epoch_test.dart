@@ -26,6 +26,7 @@ void main() {
       AuthInterceptor(
         localDataSource: localDataSource,
         backendType: 'traccar',
+        resolveCurrentOwnerDriverId: () async => null,
         onUnauthenticated: firedEpochs.add,
       ),
     );

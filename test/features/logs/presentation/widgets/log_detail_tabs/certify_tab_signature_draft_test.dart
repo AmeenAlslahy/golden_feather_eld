@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
+import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
@@ -241,7 +242,7 @@ void main() {
     );
 
     testWidgets(
-      'NOT READY button clears signature and stays on Certify tab (owner 2026-10-26)',
+      'Clear signature clears the draft and stays on Certify tab (owner 2026-10-26)',
       (tester) async {
         final container = ProviderContainer(
           overrides: [
@@ -280,13 +281,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Tap NOT READY button
-        final notReadyBtn = find.text('NOT READY');
-        expect(notReadyBtn, findsOneWidget);
-        await tester.tap(notReadyBtn);
+        // Tap the clear-signature button in the not-ready view.
+        final clearBtn = find.widgetWithText(AppButton, 'Clear signature');
+        expect(clearBtn, findsOneWidget);
+        await tester.tap(clearBtn);
         await tester.pumpAndSettle();
 
-        // Must STAY on Certify tab (owner: no navigation on NOT READY)
+        // Must STAY on Certify tab (owner: no navigation on clear signature)
         expect(container.read(logDetailTabProvider), 2);
 
         // Draft signature MUST be cleared (owner: wipe like the clear button)

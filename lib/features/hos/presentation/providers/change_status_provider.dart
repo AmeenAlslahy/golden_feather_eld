@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/entities/hos_models.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/network/core_providers.dart';
+import '../../../../core/session/session_epoch.dart';
 import '../../../../domain/account/driver_rules.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart';
@@ -469,6 +470,15 @@ final changeStatusProvider =
       ref,
     ) {
       final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
+      if (dashboard != null && dashboard.driver.id.value > 0) {
+        final stamped = ref.read(activeDriverIdProvider);
+        if (stamped?.$2 != dashboard.driver.id.value) {
+          Future.microtask(() {
+            ref.read(activeDriverIdProvider.notifier).state =
+                (SessionEpoch.current, dashboard.driver.id.value);
+          });
+        }
+      }
       final currentCode = dashboard?.currentDutyStatus;
 
       final engineState = ref.read(hosStatusProvider);

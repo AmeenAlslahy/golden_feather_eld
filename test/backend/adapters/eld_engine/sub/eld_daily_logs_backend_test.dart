@@ -7,6 +7,8 @@ import 'package:golden_feather_eld/core/network/api_client.dart';
 import 'package:golden_feather_eld/core/network/api_response.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/backend/adapters/eld_engine/models/certify_dto.dart';
+import 'package:golden_feather_eld/backend/adapters/eld_engine/models/readiness_dto.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
@@ -180,6 +182,88 @@ void main() {
           {'id': 1, 'logDate': '2026-10-16'},
         ],
       });
+    });
+  });
+
+  group('EldDailyLogsBackend.getReadiness', () {
+    late MockApiClient api;
+    late EldDailyLogsBackend backend;
+
+    const logId = DailyLogId(102);
+
+    setUp(() {
+      api = MockApiClient();
+      backend = EldDailyLogsBackend(api);
+    });
+
+    test('prioritizes GET /certify and maps CertifyStateDto to ReadinessDto', () async {
+      when(() => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          )).thenAnswer(
+        (_) async => ok(const ApiResponse<CertifyStateDto>(
+          statusCode: 200,
+          isSuccess: true,
+          data: CertifyStateDto(
+            dailyLogId: 102,
+            logDate: '2026-10-22',
+            statementText: 'I hereby certify...',
+            canCertify: true,
+            certified: false,
+            validationCodes: ['SIGNATURE_REQUIRED'],
+          ),
+        )),
+      );
+
+      final result = await backend.getReadiness(logId);
+
+      expect(result.isSuccess, isTrue);
+      final readiness = result.valueOrNull!;
+      expect(readiness.dailyLogId, 102);
+      expect(readiness.logDate, '2026-10-22');
+      expect(readiness.readinessStatus, 'READY');
+      expect(readiness.missingRequirements, ['SIGNATURE_REQUIRED']);
+      expect(readiness.availableActions, ['CERTIFY']);
+      verifyNever(() => api.get<ReadinessDto>(
+            EldEndpoints.checkReadiness(logId.value),
+            parser: any(named: 'parser'),
+          ));
+    });
+
+    test('falls back to checkReadiness if GET /certify fails', () async {
+      when(() => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          )).thenAnswer((_) async => err(const NotFoundError()));
+
+      when(() => api.get<ReadinessDto>(
+            EldEndpoints.checkReadiness(logId.value),
+            parser: any(named: 'parser'),
+          )).thenAnswer(
+        (_) async => ok(const ApiResponse<ReadinessDto>(
+          statusCode: 200,
+          isSuccess: true,
+          data: ReadinessDto(
+            dailyLogId: 102,
+            driverId: 1,
+            driverName: 'John',
+            logDate: '2026-10-22',
+            readinessStatus: 'READY',
+            missingRequirements: [],
+            legalStatement: 'Statement',
+            availableActions: ['CERTIFY'],
+          ),
+        )),
+      );
+
+      final result = await backend.getReadiness(logId);
+
+      expect(result.isSuccess, isTrue);
+      expect(result.valueOrNull?.driverName, 'John');
+      verify(() => api.get<ReadinessDto>(
+            EldEndpoints.checkReadiness(logId.value),
+            parser: any(named: 'parser'),
+          )).called(1);
     });
   });
 }

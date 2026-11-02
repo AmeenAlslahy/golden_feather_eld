@@ -38,49 +38,48 @@ String _violationRow({
   String date = '2026-10-07',
   String type = 'dailyDrivingExceeded',
   String level = 'critical',
-}) =>
-    jsonEncode({
-      'type': type,
-      'level': level,
-      'message': 'Daily driving limit exceeded',
-      'timestamp': '${date}T14:30:00.000Z',
-      'details': {'limit': '11h00m'},
-    });
+}) => jsonEncode({
+  'type': type,
+  'level': level,
+  'message': 'Daily driving limit exceeded',
+  'timestamp': '${date}T14:30:00.000Z',
+  'details': {'limit': '11h00m'},
+});
 
 /// صف سجل يومي — **قائمة** JSON (ما يكتبه LogLocalDataSource).
 ///
 /// هذا هو الصف الذي كان يُسقط سجل المخالفات: `jsonDecode` يُرجع List،
 /// ثم `map['type']` يفهرس ListBase بمفتاح نصي.
 String _logRow({String date = '2026-10-07'}) => jsonEncode([
-      {
-        'id': 'evt-1',
-        'timestamp': '${date}T09:15:00.000Z',
-        'driverId': '2',
-        'oldStatus': 'offDuty',
-        'newStatus': 'onDuty',
-        'action': 'update',
-        'entityType': 'daily_log',
-        'entityId': '20',
-      },
-      {
-        'id': 'evt-2',
-        'timestamp': '${date}T10:00:00.000Z',
-        'driverId': '2',
-        'oldStatus': 'onDuty',
-        'newStatus': 'driving',
-        'action': 'update',
-        'entityType': 'daily_log',
-        'entityId': '20',
-      },
-    ]);
+  {
+    'id': 'evt-1',
+    'timestamp': '${date}T09:15:00.000Z',
+    'driverId': '2',
+    'oldStatus': 'offDuty',
+    'newStatus': 'onDuty',
+    'action': 'update',
+    'entityType': 'daily_log',
+    'entityId': '20',
+  },
+  {
+    'id': 'evt-2',
+    'timestamp': '${date}T10:00:00.000Z',
+    'driverId': '2',
+    'oldStatus': 'onDuty',
+    'newStatus': 'driving',
+    'action': 'update',
+    'entityType': 'daily_log',
+    'entityId': '20',
+  },
+]);
 
 HosViolation _violation() => HosViolation(
-      type: HosViolationType.dailyDrivingExceeded,
-      level: ViolationLevel.critical,
-      message: 'Daily driving limit exceeded',
-      timestamp: DateTime.utc(2026, 10, 7, 14, 30),
-      details: const {'limit': '11h00m'},
-    );
+  type: HosViolationType.dailyDrivingExceeded,
+  level: ViolationLevel.critical,
+  message: 'Daily driving limit exceeded',
+  timestamp: DateTime.utc(2026, 10, 7, 14, 30),
+  details: const {'limit': '11h00m'},
+);
 
 // ─── Part 1: تصادم الصندوق + الترحيل ─────────────────────────────────────
 
@@ -115,11 +114,15 @@ void main() {
       expect(result.first.details, {'limit': '11h00m'});
     });
 
-    test('العطل المُبلَّغ: صفوف السجلات لا تُسقط قراءة المخالفات',
-        () async {
+    test('العطل المُبلَّغ: صفوف السجلات لا تُسقط قراءة المخالفات', () async {
       final box = await Hive.openBox<String>(nextBox());
       // نفس الصفوف التي ظهرت في سجل الجهاز: مفاتيح تواريخ + قوائم JSON.
-      for (final d in ['2026-10-02', '2026-10-03', '2026-10-07', '2026-10-12']) {
+      for (final d in [
+        '2026-10-02',
+        '2026-10-03',
+        '2026-10-07',
+        '2026-10-12',
+      ]) {
         await box.put(d, _logRow(date: d));
       }
       await box.put('2026-10-07_dailyDrivingExceeded', _violationRow());
@@ -140,23 +143,25 @@ void main() {
       await box.put('2026-10-10', jsonEncode({'type': 'x'})); // ناقص
       await box.put('2026-10-11', ''); // فارغ
       await box.put(
-          '2026-10-13_dailyDrivingExceeded',
-          jsonEncode({
-            'type': 'noSuchType',
-            'level': 'critical',
-            'timestamp': '2026-10-13T00:00:00Z',
-          })); // تعداد مجهول
+        '2026-10-13_dailyDrivingExceeded',
+        jsonEncode({
+          'type': 'noSuchType',
+          'level': 'critical',
+          'timestamp': '2026-10-13T00:00:00Z',
+        }),
+      ); // تعداد مجهول
       await box.put(
-          '2026-10-14_dailyDrivingExceeded',
-          jsonEncode({
-            'type': 'dailyDrivingExceeded',
-            'level': 'critical',
-            'timestamp': 'not-a-date',
-          })); // تاريخ غير قابل للتحليل
-      await box.put('2026-10-15_no30MinBreakAfter8h', _violationRow(
-        type: 'no30MinBreakAfter8h',
-        level: 'medium',
-      ));
+        '2026-10-14_dailyDrivingExceeded',
+        jsonEncode({
+          'type': 'dailyDrivingExceeded',
+          'level': 'critical',
+          'timestamp': 'not-a-date',
+        }),
+      ); // تاريخ غير قابل للتحليل
+      await box.put(
+        '2026-10-15_no30MinBreakAfter8h',
+        _violationRow(type: 'no30MinBreakAfter8h', level: 'medium'),
+      );
 
       final result = await HosAuditRepositoryImpl(box).getViolations();
 
@@ -181,12 +186,14 @@ void main() {
       final repo = HosAuditRepositoryImpl(box);
 
       await repo.logViolation(_violation());
-      await repo.logViolation(HosViolation(
-        type: HosViolationType.dailyDrivingExceeded,
-        level: ViolationLevel.critical,
-        message: 'x',
-        timestamp: DateTime.utc(2026, 10, 8, 14, 30),
-      ));
+      await repo.logViolation(
+        HosViolation(
+          type: HosViolationType.dailyDrivingExceeded,
+          level: ViolationLevel.critical,
+          message: 'x',
+          timestamp: DateTime.utc(2026, 10, 8, 14, 30),
+        ),
+      );
 
       expect(box.length, 2);
       expect(await repo.getViolations(), hasLength(2));
@@ -201,11 +208,14 @@ void main() {
       await legacy.put('2026-10-02', _logRow(date: '2026-10-02'));
       await legacy.put('2026-10-07', _logRow(date: '2026-10-07'));
       await legacy.put('2026-10-07_dailyDrivingExceeded', _violationRow());
-      await legacy.put('2026-10-08_shift8Hour', _violationRow(
-            date: '2026-10-08',
-            type: 'dailyWorkExceeded',
-            level: 'medium',
-          ));
+      await legacy.put(
+        '2026-10-08_shift8Hour',
+        _violationRow(
+          date: '2026-10-08',
+          type: 'dailyWorkExceeded',
+          level: 'medium',
+        ),
+      );
 
       final report = await HosAuditBoxMigration(
         legacyBox: legacy,
@@ -227,9 +237,13 @@ void main() {
       // والمخالفات تُقرأ فعلياً من الصندوق الجديد.
       final result = await HosAuditRepositoryImpl(target).getViolations();
       expect(result, hasLength(2));
-      expect(result.map((v) => v.type),
-          containsAll([HosViolationType.dailyDrivingExceeded,
-              HosViolationType.dailyWorkExceeded]));
+      expect(
+        result.map((v) => v.type),
+        containsAll([
+          HosViolationType.dailyDrivingExceeded,
+          HosViolationType.dailyWorkExceeded,
+        ]),
+      );
     });
 
     test('الترحيل آمن التكرار (idempotent)', () async {
@@ -266,26 +280,37 @@ void main() {
       expect(legacy.containsKey('2026-10-07_dailyDrivingExceeded'), isTrue);
     });
 
-    test('تمييز الصفوف لا يعتمد على arbitrariness — كائن بالمفاتيح الثلاثة',
-        () {
-      // مخالفة: مفتاح فيه "_" + كائن بالمفاتيح الثلاثة.
-      expect(HosAuditBoxMigration.isHosViolationRow(
-        '2026-10-07_dailyDrivingExceeded',
-        _violationRow(),
-      ), isTrue);
-      // سجل يومي: مفتاح تاريخ بلا "_" + قائمة.
-      expect(HosAuditBoxMigration.isHosViolationRow('2026-10-07', _logRow()),
-          isFalse);
-      // حتى لو أُعطي مفتاحاً بالشكل الصحيح، القيمة قائمة ⇒ لا مخالفة.
-      expect(
+    test(
+      'تمييز الصفوف لا يعتمد على arbitrariness — كائن بالمفاتيح الثلاثة',
+      () {
+        // مخالفة: مفتاح فيه "_" + كائن بالمفاتيح الثلاثة.
+        expect(
           HosAuditBoxMigration.isHosViolationRow(
-              '2026-10-07_dailyDrivingExceeded', _logRow()),
-          isFalse);
-      // JSON تالف.
-      expect(HosAuditBoxMigration.isHosViolationRow(
-          '2026-10-07_x', '{{{'),
-          isFalse);
-    });
+            '2026-10-07_dailyDrivingExceeded',
+            _violationRow(),
+          ),
+          isTrue,
+        );
+        // سجل يومي: مفتاح تاريخ بلا "_" + قائمة.
+        expect(
+          HosAuditBoxMigration.isHosViolationRow('2026-10-07', _logRow()),
+          isFalse,
+        );
+        // حتى لو أُعطي مفتاحاً بالشكل الصحيح، القيمة قائمة ⇒ لا مخالفة.
+        expect(
+          HosAuditBoxMigration.isHosViolationRow(
+            '2026-10-07_dailyDrivingExceeded',
+            _logRow(),
+          ),
+          isFalse,
+        );
+        // JSON تالف.
+        expect(
+          HosAuditBoxMigration.isHosViolationRow('2026-10-07_x', '{{{'),
+          isFalse,
+        );
+      },
+    );
   });
 
   // ─── Part 2: الرفض النهائي 409 ─────────────────────────────────────────
@@ -294,17 +319,21 @@ void main() {
     test('تصنيف الأخطاء: النهائي مقابل العابر', () {
       // ✅ نهائي — الخادم لن يقبلها مهما أعدنا الإرسال.
       expect(
-        isTerminalDispatchRejection(const ConflictError(
-          code: 'BUSINESS_RULE_VIOLATION',
-          l10nKey: 'logAlreadyCertified',
-        )),
+        isTerminalDispatchRejection(
+          const ConflictError(
+            code: 'BUSINESS_RULE_VIOLATION',
+            l10nKey: 'logAlreadyCertified',
+          ),
+        ),
         isTrue,
       );
       expect(
-        isTerminalDispatchRejection(const ValidationError(
-          code: 'invalid_payload',
-          l10nKey: 'validationError',
-        )),
+        isTerminalDispatchRejection(
+          const ValidationError(
+            code: 'invalid_payload',
+            l10nKey: 'validationError',
+          ),
+        ),
         isTrue,
       );
       expect(isTerminalDispatchRejection(const NotFoundError()), isTrue);
@@ -312,54 +341,54 @@ void main() {
 
       // ❌ عابر — حماية FMCSA كاملة (لا تُفقد بيانات HOS).
       expect(
-        isTerminalDispatchRejection(const NetworkError(
-          code: 'network.timeout',
-          l10nKey: 'timeout',
-        )),
+        isTerminalDispatchRejection(
+          const NetworkError(code: 'network.timeout', l10nKey: 'timeout'),
+        ),
         isFalse,
       );
       expect(
-        isTerminalDispatchRejection(const ServerError(
-          code: 'server.500',
-          statusCode: 500,
-        )),
+        isTerminalDispatchRejection(
+          const ServerError(code: 'server.500', statusCode: 500),
+        ),
         isFalse,
       );
       expect(isTerminalDispatchRejection(const SessionExpiredError()), isFalse);
       expect(
-        isTerminalDispatchRejection(const SyncError(
-          code: 'sync.overflow',
-          l10nKey: 'syncError',
-        )),
+        isTerminalDispatchRejection(
+          const SyncError(code: 'sync.overflow', l10nKey: 'syncError'),
+        ),
         isFalse,
       );
     });
 
-    test('المحرك ينقل المرفوض نهائياً إلى dead-letter بلا إعادة محاولة',
-        () async {
-      final queue = _RecordingQueue();
-      final dispatcher = _ConstantDispatcher(
-        const Left(RejectedFailure(code: 'BUSINESS_RULE_VIOLATION')),
-      );
-      final engine = SyncEngine(
-        queue: queue,
-        dispatcher: dispatcher,
-        timeAuthority: _Clock(),
-      );
-      await queue.enqueue(_event('evt-409'));
+    test(
+      'المحرك ينقل المرفوض نهائياً إلى dead-letter بلا إعادة محاولة',
+      () async {
+        final queue = _RecordingQueue();
+        final dispatcher = _ConstantDispatcher(
+          const Left(RejectedFailure(code: 'BUSINESS_RULE_VIOLATION')),
+        );
+        final engine = SyncEngine(
+          queue: queue,
+          dispatcher: dispatcher,
+          timeAuthority: _Clock(),
+        );
+        await queue.enqueue(_event('evt-409'));
 
-      // ثلاث دورات مزامنة متتالية — يجب ألا يُعاد الإرسال بعد الأولى.
-      await engine.triggerSync();
-      await engine.triggerSync();
-      await engine.triggerSync();
+        // ثلاث دورات مزامنة متتالية — يجب ألا يُعاد الإرسال بعد الأولى.
+        await engine.triggerSync();
+        await engine.triggerSync();
+        await engine.triggerSync();
 
-      expect(dispatcher.dispatched, hasLength(1), reason: 'إرسال واحد فقط');
-      expect(dispatcher.dispatched, ['evt-409']);
-      expect(queue.deadLettered, hasLength(1));
-      expect(queue.deadLettered.single.id, 'evt-409');
-      // وبلا تأجيل مفتوح.
-      expect(await queue.count, 0);
-    }, timeout: const Timeout(Duration(seconds: 30)));
+        expect(dispatcher.dispatched, hasLength(1), reason: 'إرسال واحد فقط');
+        expect(dispatcher.dispatched, ['evt-409']);
+        expect(queue.deadLettered, hasLength(1));
+        expect(queue.deadLettered.single.id, 'evt-409');
+        // وبلا تأجيل مفتوح.
+        expect(await queue.count, 0);
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
 
     test('الأخطاء العابرة تحتفظ بإعادة المحاولة (FMCSA)', () async {
       final clock = _Clock();
@@ -409,11 +438,11 @@ void main() {
 // ─── Harness ──────────────────────────────────────────────────────────────
 
 PendingEvent _event(String id) => PendingEvent(
-      id: id,
-      type: 'daily_log_form',
-      createdAt: DateTime.utc(2026, 10, 7, 12),
-      payload: const {'logId': 20, 'form': <String, dynamic>{}},
-    );
+  id: id,
+  type: 'daily_log_form',
+  createdAt: DateTime.utc(2026, 10, 7, 12),
+  payload: const {'logId': 20, 'form': <String, dynamic>{}},
+);
 
 class _ConstantDispatcher implements RemoteEventDispatcher {
   _ConstantDispatcher(this.result);
@@ -440,10 +469,25 @@ class _RecordingQueue implements OfflineQueue {
   final DateTime Function() now;
 
   _RecordingQueue({DateTime Function()? now})
-      : now = now ?? (() => DateTime.utc(2026, 10, 7, 12));
+    : now = now ?? (() => DateTime.utc(2026, 10, 7, 12));
 
   @override
   Future<void> enqueue(PendingEvent event) async => events.add(event);
+
+  @override
+  Future<bool> enqueueIfAbsent(PendingEvent event) async {
+    if (event.dedupeKey != null &&
+        events.any((e) => e.dedupeKey == event.dedupeKey)) {
+      return false;
+    }
+    events.add(event);
+    return true;
+  }
+
+  @override
+  Future<List<PendingEvent>> getPending({int limit = 1000}) async {
+    return events.take(limit).toList();
+  }
 
   @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {

@@ -1,155 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../backend/contracts/contract_enums.dart';
-import '../../../../backend/providers/backend_providers.dart';
-import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/events/app_events.dart';
-import '../../../../core/time/time_authority_provider.dart';
+import '../../../../core/localization/locale_provider.dart';
 import '../../../../domain/shared/value_objects.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
-import '../../../home/presentation/providers/dashboard_provider.dart';
-import '../../../vehicle/domain/vehicle_selection.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
+import '../../data/providers/unidentified_events_repository_provider.dart';
+import '../../domain/entities/unidentified_event.dart';
+import '../../domain/services/unidentified_events.dart';
 
-/// Reads the live list shape: a raw array, or an object containing that array.
-/// Server rows are keyed by `statusId`, not a local id.
-List<Map<String, dynamic>> parseUnidentifiedList(Map<String, dynamic> json) {
-  final raw =
-      json['items'] ?? json['events'] ?? json['content'] ?? json['data'];
-  if (raw is! List) return const [];
-  return raw.whereType<Map>().map(normalizeUnidentifiedItem).toList();
-}
-
-Map<String, dynamic> normalizeUnidentifiedItem(Map<dynamic, dynamic> raw) {
-  final item = Map<String, dynamic>.from(raw);
-  final statusId = item['statusId'];
-  final parsedId = statusId is int
-      ? statusId
-      : int.tryParse('${statusId ?? ''}');
-  return {
-    'statusId': parsedId,
-    'dutyStatus': '${item['status'] ?? item['dutyStatus'] ?? 'DRIVING'}',
-    'startTime': item['startTime'],
-    'endTime': item['endTime'],
-    'durationMinutes': item['durationMinutes'],
-    'formattedDuration': item['formattedDuration'],
-    'startOdometerKm': item['startOdometerKm'],
-    'endOdometerKm': item['endOdometerKm'],
-    'totalDistanceKm': item['totalDistanceKm'],
-    'createdAt': item['createdAt'],
-    'location':
-        item['locationText'] ??
-        item['location'] ??
-        item['locationDescription'] ??
-        '',
-    'vehicleName': item['vehicleName'],
-    'uniqueId': item['uniqueId'],
-    'allocationStatus': item['allocationStatus'],
-    'rejectionReason': item['rejectionReason'],
-    'daysPending': item['daysPending'],
-    'overdue': item['overdue'] == true,
-  };
-}
-
-/// نموذج بيانات موثوق ومفصل للحدث غير المحدد
-class UnidentifiedEventItem {
-  final int? statusId;
-  final String dutyStatus;
-  final String startTime;
-  final String endTime;
-  final int? durationMinutes;
-  final String formattedDuration;
-  final num? startOdometerKm;
-  final num? endOdometerKm;
-  final num? totalDistanceKm;
-  final String createdAt;
-  final String location;
-  final String vehicleName;
-  final String uniqueId;
-  final String allocationStatus;
-  final String rejectionReason;
-  final int? daysPending;
-  final bool overdue;
-
-  const UnidentifiedEventItem({
-    this.statusId,
-    this.dutyStatus = 'DRIVING',
-    this.startTime = '',
-    this.endTime = '',
-    this.durationMinutes,
-    this.formattedDuration = '',
-    this.startOdometerKm,
-    this.endOdometerKm,
-    this.totalDistanceKm,
-    this.createdAt = '',
-    this.location = '',
-    this.vehicleName = '',
-    this.uniqueId = '',
-    this.allocationStatus = '',
-    this.rejectionReason = '',
-    this.daysPending,
-    this.overdue = false,
-  });
-
-  factory UnidentifiedEventItem.fromMap(Map<String, dynamic> item) {
-    return UnidentifiedEventItem(
-      statusId: item['statusId'] is int ? item['statusId'] as int : null,
-      dutyStatus: '${item['dutyStatus'] ?? 'DRIVING'}',
-      startTime: '${item['startTime'] ?? ''}',
-      endTime: '${item['endTime'] ?? ''}',
-      durationMinutes: _asInt(item['durationMinutes']),
-      formattedDuration: '${item['formattedDuration'] ?? ''}',
-      startOdometerKm: _asNum(item['startOdometerKm']),
-      endOdometerKm: _asNum(item['endOdometerKm']),
-      totalDistanceKm: _asNum(item['totalDistanceKm']),
-      createdAt: '${item['createdAt'] ?? ''}',
-      location: '${item['location'] ?? ''}',
-      vehicleName: '${item['vehicleName'] ?? ''}',
-      uniqueId: '${item['uniqueId'] ?? ''}',
-      allocationStatus: '${item['allocationStatus'] ?? ''}',
-      rejectionReason: '${item['rejectionReason'] ?? ''}',
-      daysPending: item['daysPending'] is int
-          ? item['daysPending'] as int
-          : null,
-      overdue: item['overdue'] == true,
-    );
-  }
-}
-
-int? _asInt(Object? value) => value is int ? value : int.tryParse('$value');
-
-num? _asNum(Object? value) {
-  if (value is num) return value;
-  return num.tryParse('$value');
-}
-
-/// نتائج إحصائيات الأحداث غير المحددة (SRS 11.2 & SRS 11.6)
-class UnidentifiedStats {
-  final int total;
-  final String unclaimed;
-  final String rejected;
-  final int driving24h;
-
-  const UnidentifiedStats({
-    required this.total,
-    required this.unclaimed,
-    required this.rejected,
-    required this.driving24h,
-  });
-}
+export '../../domain/entities/unidentified_event.dart';
 
 class UnidentifiedListState {
   final bool loading;
   final String? error;
-  final List<UnidentifiedEventItem> allEvents;
-  final List<UnidentifiedEventItem> items;
+  final List<UnidentifiedEvent> allEvents;
+  final List<UnidentifiedEvent> items;
   final UnidentifiedTab tab;
   final bool currentVehicleOnly;
-  final String? vehicleUniqueId;
+  final int? vehicleDeviceId;
+  final String? vehicleVin;
+  final String? vehicleName;
   final DateTime? dateFilter;
-  final int? unclaimedCount;
-  final int? rejectedCount;
   final UnidentifiedStats stats;
 
   const UnidentifiedListState({
@@ -159,16 +34,11 @@ class UnidentifiedListState {
     this.items = const [],
     this.tab = UnidentifiedTab.unclaimed,
     this.currentVehicleOnly = false,
-    this.vehicleUniqueId,
+    this.vehicleDeviceId,
+    this.vehicleVin,
+    this.vehicleName,
     this.dateFilter,
-    this.unclaimedCount,
-    this.rejectedCount,
-    this.stats = const UnidentifiedStats(
-      total: 0,
-      unclaimed: '0',
-      rejected: '0',
-      driving24h: 0,
-    ),
+    this.stats = UnidentifiedStats.unavailable,
   });
 
   bool get hasFilters => currentVehicleOnly || dateFilter != null;
@@ -177,16 +47,16 @@ class UnidentifiedListState {
     bool? loading,
     String? error,
     bool clearError = false,
-    List<UnidentifiedEventItem>? allEvents,
-    List<UnidentifiedEventItem>? items,
+    List<UnidentifiedEvent>? allEvents,
+    List<UnidentifiedEvent>? items,
     UnidentifiedTab? tab,
     bool? currentVehicleOnly,
-    String? vehicleUniqueId,
+    int? vehicleDeviceId,
+    String? vehicleVin,
+    String? vehicleName,
     bool clearVehicle = false,
     DateTime? dateFilter,
     bool clearDateFilter = false,
-    int? unclaimedCount,
-    int? rejectedCount,
     UnidentifiedStats? stats,
   }) {
     return UnidentifiedListState(
@@ -196,12 +66,12 @@ class UnidentifiedListState {
       items: items ?? this.items,
       tab: tab ?? this.tab,
       currentVehicleOnly: currentVehicleOnly ?? this.currentVehicleOnly,
-      vehicleUniqueId: clearVehicle
+      vehicleDeviceId: clearVehicle
           ? null
-          : (vehicleUniqueId ?? this.vehicleUniqueId),
+          : (vehicleDeviceId ?? this.vehicleDeviceId),
+      vehicleVin: clearVehicle ? null : (vehicleVin ?? this.vehicleVin),
+      vehicleName: clearVehicle ? null : (vehicleName ?? this.vehicleName),
       dateFilter: clearDateFilter ? null : (dateFilter ?? this.dateFilter),
-      unclaimedCount: unclaimedCount ?? this.unclaimedCount,
-      rejectedCount: rejectedCount ?? this.rejectedCount,
       stats: stats ?? this.stats,
     );
   }
@@ -210,129 +80,80 @@ class UnidentifiedListState {
 class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
   UnidentifiedEventsNotifier(this.ref) : super(const UnidentifiedListState());
 
+  /// The documented maximum for `size`; the list has no paging UI yet.
+  static const int _pageSize = 100;
+
   final Ref ref;
 
-  List<Map<String, dynamic>> _parse(Map<String, dynamic> json) =>
-      parseUnidentifiedList(json);
+  String _message(Failure failure) => anyErrorUserMessage(
+    failure,
+    loc: lookupAppLocalizations(ref.read(localeProvider)),
+  );
 
-  String _message(AppError error) {
-    final message = error.context?['message'];
-    if (message is String && message.trim().isNotEmpty) return message.trim();
-    return 'The server did not accept this request.';
-  }
-
-  Future<String?> _resolveVehicleUniqueId() async {
+  Future<_VehicleFilter?> _resolveVehicleFilter() async {
     var vehicleState = ref.read(vehicleProvider);
     if (vehicleState.selectedVehicle == null && !vehicleState.isInitialized) {
       await ref.read(vehicleProvider.notifier).loadVehicles();
       vehicleState = ref.read(vehicleProvider);
     }
     final vehicle = vehicleState.selectedVehicle;
-    // Vehicle selection already accepts `vehicle.id` when the API omits
-    // `uniqueId`; the unidentified-events endpoint accepts the device/vehicle
-    // identifier in the same query field. Use that selected identifier before
-    // falling back to the dashboard's owner-scoped current selection.
-    return readOperableUniqueId(vehicle?.uniqueId) ??
-        readOperableUniqueId(vehicle?.id) ??
-        readOperableUniqueId(ref.read(dashboardDataProvider).vehicleId);
+    if (vehicle == null) return null;
+
+    final deviceId = vehicle.deviceId;
+    final vin = vehicle.vin?.trim();
+    final name = vehicle.name.trim();
+    if (deviceId == null && (vin == null || vin.isEmpty) && name.isEmpty) {
+      return null;
+    }
+    return _VehicleFilter(deviceId: deviceId, vin: vin, vehicleName: name);
   }
 
-  /// [uniqueId] — SRS 11.2 vehicle filter, passed through to the server
-  /// (`GET /eld/unidentified-events?uniqueId=`); null = all vehicles.
-  Future<void> load({UnidentifiedTab? tab, String? uniqueId}) async {
+  /// Loads the active tab and the server summary.
+  ///
+  /// The summary endpoint has no filters, so the counters are the
+  /// driver-scoped server totals. The vehicle and date filters narrow the
+  /// visible list only.
+  Future<void> load({UnidentifiedTab? tab}) async {
     final activeTab = tab ?? state.tab;
-    final vehicleFilter =
-        uniqueId ?? (state.currentVehicleOnly ? state.vehicleUniqueId : null);
-
     state = state.copyWith(loading: true, clearError: true, tab: activeTab);
-    final driverId = ref.read(currentDriverIdProvider);
-    final backend = ref.read(unidentifiedEventsBackendProvider);
-    final driver = driverId == null ? null : DriverId(driverId);
-    final other = activeTab == UnidentifiedTab.unclaimed
-        ? UnidentifiedTab.rejected
-        : UnidentifiedTab.unclaimed;
 
-    final results = await Future.wait([
-      backend.list(tab: activeTab, uniqueId: vehicleFilter, driverId: driver),
-      backend.list(tab: other, uniqueId: vehicleFilter, driverId: driver),
-    ]);
+    final repository = ref.read(unidentifiedEventsRepositoryProvider);
+    final eventsFuture = repository.getEvents(
+      tab: activeTab,
+      page: 0,
+      size: _pageSize,
+    );
+    final summaryFuture = repository.getSummary();
 
-    final otherCount = results[1].fold<int?>(
+    final eventsResult = await eventsFuture;
+    final summaryResult = await summaryFuture;
+    if (!mounted) return;
+
+    final summary = summaryResult.fold<UnidentifiedSummary?>(
       (_) => null,
-      (json) => _parse(json).length,
+      (value) => value,
     );
 
-    results[0].fold(
-      (error) {
+    eventsResult.fold(
+      (failure) {
         state = state.copyWith(
           loading: false,
-          error: _message(error),
+          error: _message(failure),
           allEvents: const [],
           items: const [],
-          stats: const UnidentifiedStats(
-            total: 0,
-            unclaimed: '0',
-            rejected: '0',
-            driving24h: 0,
-          ),
+          stats: statsFromSummary(summary),
         );
       },
-      (json) {
-        final rawMaps = _parse(json);
-        final events = rawMaps.map(UnidentifiedEventItem.fromMap).toList();
-        final unclaimed = activeTab == UnidentifiedTab.unclaimed
-            ? events.length
-            : otherCount;
-        final rejected = activeTab == UnidentifiedTab.rejected
-            ? events.length
-            : otherCount;
-
-        final filtered = _filterByDate(events, state.dateFilter);
-        final now = ref.read(timeAuthorityProvider).nowUtc();
-        final stats = _computeStats(
-          items: filtered,
-          tab: activeTab,
-          now: now,
-          unclaimedCount: unclaimed,
-          rejectedCount: rejected,
-        );
-
+      (events) {
         state = state.copyWith(
           loading: false,
           allEvents: events,
-          items: filtered,
-          unclaimedCount: unclaimed,
-          rejectedCount: rejected,
-          stats: stats,
+          items: _applyFilters(events),
+          stats: statsFromSummary(summary),
         );
       },
     );
   }
-
-  /// تفويض للدالة العامة العامة النقية — نسخة مطابقة كانت مكررة هنا
-  /// (مراجعة 2026-10-25): مصدر واحد لمنطق تصفية التاريخ.
-  List<UnidentifiedEventItem> _filterByDate(
-    List<UnidentifiedEventItem> events,
-    DateTime? day,
-  ) =>
-      filterUnidentifiedEventsByDate(events, day).cast<UnidentifiedEventItem>();
-
-  /// تفويض للدالة العامة النقية — كان المنطق (فلتر قيادة 24 ساعة +
-  /// unclaimed/rejected/total) منسوخاً حرفياً هنا (مراجعة 2026-10-25):
-  /// مصدر واحد للإحصاءات.
-  UnidentifiedStats _computeStats({
-    required List<UnidentifiedEventItem> items,
-    required UnidentifiedTab tab,
-    required DateTime now,
-    int? unclaimedCount,
-    int? rejectedCount,
-  }) => calculateUnidentifiedStats(
-    items: items,
-    tab: tab,
-    now: now,
-    unclaimedCount: unclaimedCount,
-    rejectedCount: rejectedCount,
-  );
 
   Future<void> setTab(UnidentifiedTab tab) async {
     if (state.tab == tab && !state.loading) return;
@@ -342,11 +163,14 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
   Future<bool> toggleVehicleFilter() async {
     final turningOn = !state.currentVehicleOnly;
     if (turningOn) {
-      final uid = await _resolveVehicleUniqueId();
-      if (uid == null) {
-        return false;
-      }
-      state = state.copyWith(currentVehicleOnly: true, vehicleUniqueId: uid);
+      final filter = await _resolveVehicleFilter();
+      if (filter == null) return false;
+      state = state.copyWith(currentVehicleOnly: true, clearVehicle: true);
+      state = state.copyWith(
+        vehicleDeviceId: filter.deviceId,
+        vehicleVin: filter.vin,
+        vehicleName: filter.vehicleName,
+      );
     } else {
       state = state.copyWith(currentVehicleOnly: false, clearVehicle: true);
     }
@@ -356,16 +180,7 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
 
   void setDateFilter(DateTime? date) {
     state = state.copyWith(dateFilter: date, clearDateFilter: date == null);
-    final filtered = _filterByDate(state.allEvents, state.dateFilter);
-    final now = ref.read(timeAuthorityProvider).nowUtc();
-    final stats = _computeStats(
-      items: filtered,
-      tab: state.tab,
-      now: now,
-      unclaimedCount: state.unclaimedCount,
-      rejectedCount: state.rejectedCount,
-    );
-    state = state.copyWith(items: filtered, stats: stats);
+    state = state.copyWith(items: _applyFilters(state.allEvents));
   }
 
   void clearFilters() {
@@ -386,24 +201,24 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     if (driverId == null) {
       return const ServerFailure(message: 'Driver session is missing.');
     }
-    if (annotation.trim().isEmpty) {
-      return const ServerFailure(message: 'An annotation is required.');
+    final normalized = annotation.trim();
+    if (normalized.length < 4 || normalized.length > 500) {
+      return const ServerFailure(
+        message: 'Annotation must be between 4 and 500 characters.',
+      );
     }
     final result = await ref
-        .read(unidentifiedEventsBackendProvider)
+        .read(unidentifiedEventsRepositoryProvider)
         .claim(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
-          annotation: annotation.trim(),
+          annotation: normalized,
         );
-    return await result.fold<Future<Failure?>>(
-      (e) async => ServerFailure(message: _message(e)),
-      (_) async {
-        _refreshDependencies();
-        await load();
-        return null;
-      },
-    );
+    return result.fold<Future<Failure?>>((failure) async => failure, (_) async {
+      _refreshDependencies();
+      await load();
+      return null;
+    });
   }
 
   Future<Failure?> reject(int id, String reason) async {
@@ -411,24 +226,34 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
     if (driverId == null) {
       return const ServerFailure(message: 'Driver session is missing.');
     }
-    if (reason.trim().isEmpty) {
-      return const ServerFailure(message: 'A rejection reason is required.');
+    final normalized = reason.trim();
+    if (normalized.length < 4 || normalized.length > 500) {
+      return const ServerFailure(
+        message: 'Rejection reason must be between 4 and 500 characters.',
+      );
     }
     final result = await ref
-        .read(unidentifiedEventsBackendProvider)
+        .read(unidentifiedEventsRepositoryProvider)
         .reject(
           id: DutyStatusId(id),
           driverId: DriverId(driverId),
-          rejectionReason: reason.trim(),
+          rejectionReason: normalized,
         );
-    return await result.fold<Future<Failure?>>(
-      (e) async => ServerFailure(message: _message(e)),
-      (_) async {
-        _refreshDependencies();
-        await load();
-        return null;
-      },
+    return result.fold<Future<Failure?>>((failure) async => failure, (_) async {
+      _refreshDependencies();
+      await load();
+      return null;
+    });
+  }
+
+  List<UnidentifiedEvent> _applyFilters(List<UnidentifiedEvent> events) {
+    final byVehicle = filterUnidentifiedEventsByVehicle(
+      events,
+      deviceId: state.vehicleDeviceId,
+      vin: state.vehicleVin,
+      vehicleName: state.vehicleName,
     );
+    return filterUnidentifiedEventsByDate(byVehicle, state.dateFilter);
   }
 
   void _refreshDependencies() {
@@ -436,72 +261,18 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
   }
 }
 
+class _VehicleFilter {
+  final int? deviceId;
+  final String? vin;
+  final String? vehicleName;
+
+  const _VehicleFilter({this.deviceId, this.vin, this.vehicleName});
+}
+
 final unidentifiedEventsProvider =
-    StateNotifierProvider<UnidentifiedEventsNotifier, UnidentifiedListState>((
-      ref,
-    ) {
+    StateNotifierProvider.autoDispose<
+      UnidentifiedEventsNotifier,
+      UnidentifiedListState
+    >((ref) {
       return UnidentifiedEventsNotifier(ref);
     });
-
-/// حساب إحصائيات الأحداث غير المحددة (دالة مساعدة للتوافقية)
-UnidentifiedStats calculateUnidentifiedStats({
-  required List<dynamic> items,
-  required UnidentifiedTab tab,
-  required DateTime now,
-  int? unclaimedCount,
-  int? rejectedCount,
-}) {
-  final eventItems = items.map((e) {
-    if (e is UnidentifiedEventItem) return e;
-    if (e is Map) {
-      return UnidentifiedEventItem.fromMap(Map<String, dynamic>.from(e));
-    }
-    return const UnidentifiedEventItem();
-  }).toList();
-
-  final since = now.subtract(const Duration(hours: 24));
-  final driving = eventItems.where((item) {
-    final status = item.dutyStatus.toUpperCase();
-    if (!status.contains('DRIV')) return false;
-    final raw = item.endTime.isNotEmpty ? item.endTime : item.startTime;
-    final when = raw.isEmpty ? null : DateTime.tryParse(raw);
-    return when == null || !when.toUtc().isBefore(since);
-  }).length;
-
-  final unclaimed = tab == UnidentifiedTab.unclaimed
-      ? eventItems.length
-      : unclaimedCount;
-  final rejected = tab == UnidentifiedTab.rejected
-      ? eventItems.length
-      : rejectedCount;
-  final total = (unclaimed == null || rejected == null)
-      ? eventItems.length
-      : unclaimed + rejected;
-
-  return UnidentifiedStats(
-    total: total,
-    unclaimed: unclaimed != null ? '$unclaimed' : '—',
-    rejected: rejected != null ? '$rejected' : '—',
-    driving24h: driving,
-  );
-}
-
-/// تصفية الأحداث بالتاريخ محلياً (دالة مساعدة للتوافقية)
-List<T> filterUnidentifiedEventsByDate<T>(List<T> items, DateTime? day) {
-  if (day == null) return items;
-  return items.where((item) {
-    final String raw;
-    if (item is UnidentifiedEventItem) {
-      raw = item.startTime;
-    } else if (item is Map) {
-      raw = '${item['startTime'] ?? ''}';
-    } else {
-      return false;
-    }
-    final when = raw.isEmpty ? null : DateTime.tryParse(raw)?.toLocal();
-    return when != null &&
-        when.year == day.year &&
-        when.month == day.month &&
-        when.day == day.day;
-  }).toList();
-}

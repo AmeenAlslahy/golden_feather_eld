@@ -44,9 +44,19 @@ class AuthInterceptor extends Interceptor {
   /// الطلب قبل مغادرة أي بايت — فلا ترث عملية قديمة جلسة جديدة أبداً.
   static const expectedOwnerKey = 'gf_expected_owner';
 
+  /// هوية المالك الحالية **بنفس فضاء الختم** — معرّف سائق ELD كما يُشتق
+  /// في `currentDriverIdProvider` (لوحة HOS/ربط الجلسة، بسقوط على مستخدم
+  /// Traccar قبل الاكتشاف). كان السياج يقارن الختم بـ `session.user.id`
+  /// (معرّف مستخدم Traccar — جدول مختلف عن `eld_drivers`)، فيُرفض كل طلب
+  /// ملزم بمالك بمجرد اشتقاق معرّف السائق من الخادم (مراجعة 2026-10-30).
+  /// يُحقن من تركيب التطبيق (نمط observeAuth) وتُقرأ لحظة الإرسال لا
+  /// لحظة البناء — فلا يمر الختم إلا إذا بقيت الهوية نفسها.
+  final Future<int?> Function() resolveCurrentOwnerDriverId;
+
   AuthInterceptor({
     required this.localDataSource,
     required this.backendType,
+    required this.resolveCurrentOwnerDriverId,
     this.onUnauthenticated,
   });
 
@@ -63,7 +73,7 @@ class AuthInterceptor extends Interceptor {
     // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
     // (حُذف استثناء POST /users — لم يعد له مستدعٍ وكان يسمح بمرور
     // طلبات إنشاء مستخدمين بلا جلسة، توسيعاً غير مبرر لسطح الهجوم.)
-    if (options.path == EldEndpoints.session) {
+    if (options.path == EldEndpoints.authSession) {
       return super.onRequest(options, handler);
     }
 
@@ -83,9 +93,25 @@ class AuthInterceptor extends Interceptor {
     // بلا جلسة حاضرة (logout أثناء الطيران) يُرفض أيضاً — لا إرسال مجهول.
     final expectedOwner = options.extra[expectedOwnerKey];
     if (expectedOwner is int) {
-      final actualOwner = session == null
-          ? null
-          : int.tryParse(session.user.id);
+      // المقارنة صاحبة-الفضاء: الختم يأتي من currentDriverIdProvider
+      // (معرّف سائق ELD) فيجب أن تُقرأ هوية الإرسال من المصدر نفسه لحظة
+      // الإرسال — لا من session.user.id (معرّف مستخدم Traccar، جدول آخر).
+      // غياب الهوية (null) أمام ختم موجب = رفض فاشل-مغلق.
+      //
+      // 🔴 المُحلّل محميّ: أي استثناء من مصدر الهوية يُسجَّل بكامله (سبب
+      // الجذر والـ stack) ثم يُعامل كـ null — رفض نظيف فاشل-مغلق بدل
+      // DioException(unknown) يفقد التشخيص (حادثة 2026-10-31: PUT events
+      // خرج (unknown) بلا أي دليل في السجل).
+      int? actualOwner;
+      try {
+        actualOwner = await resolveCurrentOwnerDriverId();
+      } catch (e, st) {
+        AppLogger.error(
+          'Owner-resolver threw — treating as null (fail-closed refusal)',
+          e,
+          st,
+        );
+      }
       if (actualOwner != expectedOwner) {
         AppLogger.warning('Refusing queue dispatch under a different session');
         handler.reject(

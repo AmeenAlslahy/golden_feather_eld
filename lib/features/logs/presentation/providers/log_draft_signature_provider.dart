@@ -12,9 +12,15 @@ import '../../domain/repositories/log_repository.dart';
 class LogDraftSignatureNotifier extends StateNotifier<List<Point>> {
   final DailyLogId _logId;
   final LogRepository _repository;
+  bool _loaded = false;
 
-  LogDraftSignatureNotifier(this._logId, this._repository) : super(const []) {
-    _loadDraft();
+  LogDraftSignatureNotifier(this._logId, this._repository) : super(const []);
+
+  /// تحميل المسودة صراحةً من الشاشة التي تحتاجها — لا من المُنشئ.
+  Future<void> ensureLoaded() async {
+    if (_loaded) return;
+    _loaded = true;
+    await _loadDraft();
   }
 
   Future<void> _loadDraft() async {

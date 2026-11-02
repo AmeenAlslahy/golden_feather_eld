@@ -63,6 +63,9 @@ enum ConnectionStatus {
 
   static ConnectionStatus fromWire(String? value) {
     final upper = value?.toUpperCase() ?? '';
+    if (upper == 'CONNECTED' || upper == 'OK') {
+      return ConnectionStatus.ok;
+    }
     return ConnectionStatus.values.firstWhere(
       (s) => s.wire == upper,
       orElse: () => ConnectionStatus.unknown,
@@ -124,6 +127,9 @@ abstract class HosIndicator with _$HosIndicator {
 
     /// Whether this value is "used" or "remaining".
     required IndicatorType type,
+
+    /// Optional subtitle from backend (e.g. "until break" or "left today").
+    String? subtitle,
   }) = _HosIndicator;
 }
 

@@ -5,10 +5,12 @@ import 'package:equatable/equatable.dart';
 /// يمثل رغبة المستخدم في الحفظ، ويجب أن يحتوي على البيانات الكاملة
 /// والصالحة للنموذج المطلوب حفظه.
 class DailyFormUpdate extends Equatable {
-  /// معرّف المركبة النصي (uniqueId) — الحقل الوحيد المقبول في العقد
-  /// الحالي للخادم؛ المعرّف الرقمي `vehicleId` مرفوض دائماً (400) حتى
-  /// عندما يكون صحيحاً، فلا يُرسل ولا يُشتق.
+  /// معرّف المركبة النصي (uniqueId)
   final String vehicleUniqueId;
+
+  /// معرّف المركبة الرقمي (vehicleId) وفق OAS 3.0 / Swagger PUT /form
+  final int? vehicleId;
+
   final int? coDriverId;
   final List<String> trailers;
   final List<String> shippingDocuments;
@@ -18,6 +20,7 @@ class DailyFormUpdate extends Equatable {
 
   const DailyFormUpdate({
     required this.vehicleUniqueId,
+    this.vehicleId,
     this.coDriverId,
     required this.trailers,
     required this.shippingDocuments,
@@ -27,6 +30,7 @@ class DailyFormUpdate extends Equatable {
   @override
   List<Object?> get props => [
     vehicleUniqueId,
+    vehicleId,
     coDriverId,
     trailers,
     shippingDocuments,

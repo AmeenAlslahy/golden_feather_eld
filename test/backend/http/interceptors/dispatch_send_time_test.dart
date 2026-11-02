@@ -70,12 +70,14 @@ final List<String?> sentCookies = [];
 Future<ApiClient> _client(
   _FakeAuthLocalDataSource sessions,
   List<int> unauthEpochs,
+  Future<int?> Function() resolveCurrentOwnerDriverId,
 ) async {
   final dio = Dio(BaseOptions(baseUrl: 'https://api.example.com'));
   dio.interceptors.add(
     AuthInterceptor(
       localDataSource: sessions,
       backendType: 'traccar',
+      resolveCurrentOwnerDriverId: resolveCurrentOwnerDriverId,
       onUnauthenticated: unauthEpochs.add,
     ),
   );
@@ -102,12 +104,13 @@ void main() {
   setUp(sentCookies.clear);
 
   test(
-    'S1: matching owner sends with the owner session cookie, no logout',
+    'S1: matching owner (same id space as the stamp) sends with the owner '
+    'session cookie, no logout',
     () async {
       final sessions = _FakeAuthLocalDataSource();
       final unauth = <int>[];
       await sessions.saveSession(_session('101'));
-      final client = await _client(sessions, unauth);
+      final client = await _client(sessions, unauth, () async => 101);
 
       final result = await client.post<dynamic>(
         '/eld/duty-status',
@@ -124,16 +127,24 @@ void main() {
   );
 
   test(
-    'S2: session changed after fencing → rejected before HTTP, no logout',
+    'S2: owner identity changed after fencing → rejected before HTTP, '
+    'no logout',
     () async {
       final sessions = _FakeAuthLocalDataSource();
       final unauth = <int>[];
       await sessions.saveSession(_session('101'));
-      final client = await _client(sessions, unauth);
+      // هوية الإرسال لحظة البناء = 101؛ ثم جلسة/سائق آخر لحظة الإرسال.
+      var currentOwnerDriverId = 101;
+      final client = await _client(
+        sessions,
+        unauth,
+        () async => currentOwnerDriverId,
+      );
 
       // Logout A + login B AFTER the fence passed owner=101.
       await sessions.clearSession();
       await sessions.saveSession(_session('202'));
+      currentOwnerDriverId = 202;
 
       final result = await client.post<dynamic>(
         '/eld/duty-status',
@@ -161,11 +172,11 @@ void main() {
     },
   );
 
-  test('S3: no session at send time → rejected, never anonymous', () async {
+  test('S3: no resolvable owner at send time → rejected, never anonymous', () async {
     final sessions = _FakeAuthLocalDataSource();
     final unauth = <int>[];
     await sessions.saveSession(_session('101'));
-    final client = await _client(sessions, unauth);
+    final client = await _client(sessions, unauth, () async => null);
     await sessions.clearSession();
 
     final result = await client.post<dynamic>(
@@ -189,6 +200,7 @@ void main() {
       AuthInterceptor(
         localDataSource: sessions,
         backendType: 'traccar',
+        resolveCurrentOwnerDriverId: () async => 202,
         onUnauthenticated: unauth.add,
       ),
     );

@@ -163,9 +163,9 @@ class RulesFormNotifier extends AutoDisposeNotifier<RulesFormState> {
     state = state.copyWith(isSaving: true, lastOutcome: () => null);
     SaveRulesOutcome outcome = const SaveRulesError('Unknown save error');
     try {
-      final sixteenEligible = model.editableFields.contains(
-        'sixteenHourException',
-      );
+      final sixteenEligible =
+          model.editableFields.contains('sixteenHourException') ||
+              model.editableFields.contains('shortHaul16HourException');
       final sixteenValue =
           state.sixteenHourException ?? model.sixteenHourException;
       if (state.sixteenHourException != null &&

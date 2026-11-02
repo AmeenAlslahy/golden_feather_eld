@@ -202,11 +202,13 @@ class _IndicatorRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = context.loc;
     final isCritical = indicator.isCritical;
-    // The reference shows remaining time; a "used" value is marked so the
-    // driver never reads a consumed figure as time left.
+    final baseDesc =
+        (indicator.subtitle != null && indicator.subtitle!.trim().isNotEmpty)
+            ? indicator.subtitle!.trim()
+            : description;
     final detail = indicator.type == IndicatorType.used
-        ? loc.usedFormat(description)
-        : description;
+        ? loc.usedFormat(baseDesc)
+        : baseDesc;
 
     return Padding(
       padding: const EdgeInsets.symmetric(

@@ -9,6 +9,7 @@ import 'core/localization/locale_provider.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/local_storage_service.dart';
 import 'core/utils/logger.dart';
+import 'core/utils/startup_profiler.dart';
 import 'app/services/quick_actions_initializer.dart';
 import 'routes.dart';
 import 'core/widgets/app_feedback.dart';
@@ -18,6 +19,9 @@ import 'features/hos/presentation/providers/dashboard_reconciler.dart';
 import 'features/hos/presentation/providers/hos_engine_provider.dart';
 import 'features/hos/data/providers/status_dashboard_repository_providers.dart';
 import 'features/logs/data/datasources/log_local_data_source.dart';
+import 'features/logs/presentation/providers/log_detail_tab_provider.dart';
+import 'features/logs/presentation/providers/log_draft_signature_provider.dart';
+import 'features/logs/presentation/providers/unidentified_events_provider.dart';
 import 'features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'features/account/data/providers/rules_screen_providers.dart';
 import 'features/codriver/data/providers/codriver_repository_providers.dart';
@@ -60,6 +64,8 @@ class GoldenFeatherApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // M0 — قياس أول إطار (حارس داخلي: الاستدعاءات المتكررة بلا أثر).
+    StartupProfiler.scheduleFirstFrameMark();
     // P0 leak fix: تحديث مزودات HOS الخاصة بالسائق عند تأسيس هوية فقط —
     // لا أثناء الانتقال (وإلا أُعيد الإنشاء وأُطلقت قراءات محكومة بالفشل
     // أثناء logout). يشمل إعادة login نفس السائق (epoch مختلف).
@@ -87,6 +93,12 @@ class GoldenFeatherApp extends ConsumerWidget {
         // (provider غير autoDispose) وحالته تُقرأ من تفضيلات **عامة**
         // بلا مالك: السائق التالي يبدأ من حالة السائق السابق المعلنة.
         ref.invalidate(dutyStatusTrackerProvider);
+
+        // 🧷 عزل حالة شاشات السجلات: الأحداث غير المحددة (غير autoDispose
+        // سابقاً)، مسودات التوقيع العابرة للشاشات، وتبويب التفاصيل العالمي.
+        ref.invalidate(unidentifiedEventsProvider);
+        ref.invalidate(logDraftSignatureProvider);
+        ref.invalidate(logDetailTabProvider);
 
         // 🧹 مسح الكاش المحلي عند تبديل هوية السائق.
         //

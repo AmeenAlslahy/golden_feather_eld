@@ -8,6 +8,19 @@ class RulesScreenDto {
   final String restart;
   final String restBreak;
   final bool sixteenHourException;
+
+  // New rule settings
+  final bool personalConveyance;
+  final bool yardMoves;
+  final bool unlimitedTrailers;
+  final bool unlimitedShippingDocuments;
+
+  // Permissions
+  final bool editable;
+  final String editableBy;
+  final Map<String, bool> editPermissions;
+
+  // Existing fields
   final Map<String, List<String>> options;
   final RulesScreenLimitsDto limits;
   final List<String> editableFields;
@@ -29,34 +42,142 @@ class RulesScreenDto {
     required this.readOnlyFields,
     required this.fixedSettings,
     required this.notice,
+    this.personalConveyance = false,
+    this.yardMoves = false,
+    this.unlimitedTrailers = false,
+    this.unlimitedShippingDocuments = false,
+    this.editable = false,
+    this.editableBy = '',
+    this.editPermissions = const {},
   });
 
   factory RulesScreenDto.fromJson(Map<String, dynamic> json) {
+    // Support both wrapped API responses and direct data objects.
+    final data = json['data'] is Map
+        ? Map<String, dynamic>.from(json['data'] as Map)
+        : json;
+
+    // New API nests settings inside "rules".
+    final rules = data['rules'] is Map
+        ? Map<String, dynamic>.from(data['rules'] as Map)
+        : data;
+
+    final permissions = data['editPermissions'] is Map
+        ? Map<String, dynamic>.from(data['editPermissions'] as Map)
+        : <String, dynamic>{};
+
+    final parsedPermissions = <String, bool>{};
+
+    for (final entry in permissions.entries) {
+      if (entry.value is bool) {
+        parsedPermissions[entry.key] = entry.value as bool;
+      }
+    }
+
+    final editableList = _parseStringList(data['editableFields']);
+    final editableSet = <String>{...editableList};
+
+    const permissionFieldMap = <String, List<String>>{
+      'canEditCycleRule': ['cycleRule'],
+      'canEditCargoType': ['cargoType'],
+      'canEditRestart': ['restart'],
+      'canEditRestBreak': ['restBreak'],
+      'canEditShortHaul16HourException': [
+        'sixteenHourException',
+        'shortHaul16HourException',
+      ],
+      'canEditSixteenHourException': [
+        'sixteenHourException',
+        'shortHaul16HourException',
+      ],
+      'canEditPersonalConveyance': ['personalConveyance'],
+      'canEditYardMoves': ['yardMoves'],
+      'canEditUnlimitedTrailers': ['unlimitedTrailers'],
+      'canEditUnlimitedShippingDocuments': ['unlimitedShippingDocuments'],
+    };
+
+    for (final entry in parsedPermissions.entries) {
+      if (entry.value == true) {
+        final mapped = permissionFieldMap[entry.key];
+        if (mapped != null) {
+          editableSet.addAll(mapped);
+        } else {
+          editableSet.add(entry.key);
+        }
+      }
+    }
+
     return RulesScreenDto(
-      driverId: json['driver']?.toString() ?? '',
-      ruleSource: json['ruleSource'] as String? ?? '',
-      cycleRule: json['cycleRule'] as String? ?? '',
-      cargoType: json['cargoType'] as String? ?? '',
-      restart: json['restart'] as String? ?? '',
-      restBreak: json['restBreak'] as String? ?? '',
-      sixteenHourException: json['sixteenHourException'] as bool? ?? false,
-      options: readRulesOptions(json['options']),
+      driverId:
+          (data['driverId'] ?? data['driver'])?.toString() ?? '',
+
+      ruleSource: data['ruleSource']?.toString() ?? '',
+
+      cycleRule: rules['cycleRule']?.toString() ?? '',
+
+      cargoType: rules['cargoType']?.toString() ?? '',
+
+      restart: rules['restart']?.toString() ?? '',
+
+      restBreak: rules['restBreak']?.toString() ?? '',
+
+      sixteenHourException:
+          (rules['shortHaul16HourException'] ??
+              rules['sixteenHourException']) == true,
+
+      personalConveyance:
+          rules['personalConveyance'] == true,
+
+      yardMoves:
+          rules['yardMoves'] == true,
+
+      unlimitedTrailers:
+          rules['unlimitedTrailers'] == true,
+
+      unlimitedShippingDocuments:
+          rules['unlimitedShippingDocuments'] == true,
+
+      editable: data['editable'] == true,
+
+      editableBy: data['editableBy']?.toString() ?? '',
+
+      editPermissions: parsedPermissions,
+
+      options: readRulesOptions(data['options']),
+
       limits: RulesScreenLimitsDto.fromJson(
-        json['limits'] as Map<String, dynamic>? ?? {},
+        data['limits'] is Map
+            ? Map<String, dynamic>.from(data['limits'] as Map)
+            : <String, dynamic>{},
       ),
-      editableFields:
-          (json['editableFields'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      readOnlyFields:
-          (json['readOnlyFields'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      fixedSettings: json['fixedSettings'] as Map<String, dynamic>? ?? {},
-      notice: json['notice'] as String? ?? '',
+
+      editableFields: editableSet.toList(),
+
+      readOnlyFields: _parseStringList(data['readOnlyFields']),
+
+      fixedSettings: data['fixedSettings'] is Map
+          ? Map<String, dynamic>.from(data['fixedSettings'] as Map)
+          : <String, dynamic>{},
+
+      notice: data['notice']?.toString() ?? '',
     );
+  }
+
+ 
+
+  static List<String> _parseStringList(dynamic raw) {
+    if (raw is! List) return <String>[];
+
+    return raw.map((item) => item.toString()).toList();
+  }
+
+  /// Check whether a specific field is editable.
+  ///
+  /// Note: Backend authorization must still be enforced.
+  bool canEditField(String permissionName) {
+    if (!editable) return false;
+
+    return editPermissions[permissionName] == true;
   }
 }
 
@@ -75,13 +196,25 @@ class RulesScreenLimitsDto {
     required this.mandatoryRestHours,
   });
 
-  factory RulesScreenLimitsDto.fromJson(Map<String, dynamic> json) {
+  factory RulesScreenLimitsDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return RulesScreenLimitsDto(
-      cycleHours: (json['cycleHours'] as num?)?.toInt() ?? 0,
-      cycleDays: (json['cycleDays'] as num?)?.toInt() ?? 0,
-      maxShiftHours: (json['maxShiftHours'] as num?)?.toInt() ?? 0,
-      maxDrivingHours: (json['maxDrivingHours'] as num?)?.toInt() ?? 0,
-      mandatoryRestHours: (json['mandatoryRestHours'] as num?)?.toInt() ?? 0,
+      cycleHours: _parseInt(json['cycleHours']),
+      cycleDays: _parseInt(json['cycleDays']),
+      maxShiftHours: _parseInt(json['maxShiftHours']),
+      maxDrivingHours: _parseInt(json['maxDrivingHours']),
+      mandatoryRestHours: _parseInt(json['mandatoryRestHours']),
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is num) return value.toInt();
+
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+
+    return 0;
   }
 }

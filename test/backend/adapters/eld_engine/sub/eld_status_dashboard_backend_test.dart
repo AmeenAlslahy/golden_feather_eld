@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/backend/http/eld_endpoints.dart';
 import 'package:golden_feather_eld/core/network/api_config.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_status_dashboard_backend.dart';
@@ -15,9 +16,21 @@ void main() {
   late DioAdapter adapter;
   late EldStatusDashboardBackend backend;
 
+  final List<dynamic> capturedBodies = <dynamic>[];
+
   setUp(() {
     dio = Dio();
     adapter = DioAdapter(dio: dio);
+    capturedBodies.clear();
+    // التقاط الجسم الصادر فعلياً — تأكيد أقوى من مطابقة الـ stub.
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          capturedBodies.add(options.data);
+          handler.next(options);
+        },
+      ),
+    );
     backend = EldStatusDashboardBackend(
       ApiClient(
         config: const ApiConfig(baseUrl: 'https://api.example.com/api'),
@@ -29,7 +42,7 @@ void main() {
   group('EldStatusDashboardBackend.getDashboard', () {
     test('returns dashboard data typed as StatusDashboard', () async {
       adapter.onGet(
-        '/eld/status',
+        EldEndpoints.statusDashboard,
         (server) => server.reply(200, {
           'currentDutyStatus': 'ON_DUTY',
           'driver': {'id': 101, 'name': 'Ahmed', 'displayText': 'A.'},
@@ -73,7 +86,7 @@ void main() {
     test('sends POST with dutyStatus wire value and notes, parses a full '
         'dashboard body', () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, fullDashboard()),
         data: {'dutyStatus': 'DRIVING', 'notes': 'Trip started'},
       );
@@ -100,7 +113,7 @@ void main() {
     test('unwraps a {success, data} envelope and maps the inner dashboard',
         () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, {
           'success': true,
           'data': fullDashboard(),
@@ -129,7 +142,7 @@ void main() {
 
     test('works without notes (default note is sent)', () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, {
           ...fullDashboard(),
           'currentDutyStatus': 'OFF_DUTY',
@@ -150,11 +163,102 @@ void main() {
       expect(result.isSuccess, isTrue);
     });
 
+    test('sends captured coordinates inside a nested location object',
+        () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: Matchers.any,
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.driving,
+        notes: 'Trip started',
+        driverId: const DriverId(106),
+        latitude: 35.4714,
+        longitude: -93.4668,
+      );
+
+      expect(result.isSuccess, isTrue);
+      final body = capturedBodies.last as Map<String, dynamic>;
+      expect(body['dutyStatus'], 'DRIVING');
+      expect(body['notes'], 'Trip started');
+      expect(body['driverId'], 106);
+      expect(body['location'], {
+        'latitude': 35.4714,
+        'longitude': -93.4668,
+      });
+    });
+
+    test('omits location entirely when coordinates are missing '
+        '(no fabricated location)', () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: Matchers.any,
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.driving,
+        notes: 'Trip started',
+      );
+
+      expect(result.isSuccess, isTrue);
+      final body = capturedBodies.last as Map<String, dynamic>;
+      expect(body.containsKey('location'), isFalse);
+      expect(body['dutyStatus'], 'DRIVING');
+      expect(body['notes'], 'Trip started');
+    });
+
+    test('omits location when coordinates are 0,0 (no-fix sentinel)',
+        () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: Matchers.any,
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.driving,
+        notes: 'Trip started',
+        latitude: 0,
+        longitude: 0,
+      );
+
+      expect(result.isSuccess, isTrue);
+      final body = capturedBodies.last as Map<String, dynamic>;
+      expect(body.containsKey('location'), isFalse);
+    });
+
+    test('keeps dutyStatus/notes/driverId behavior unchanged '
+        '(one-sided coordinate is not sent)', () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: Matchers.any,
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.sleeperBerth,
+        driverId: const DriverId(106),
+        latitude: 35.4714,
+      );
+
+      expect(result.isSuccess, isTrue);
+      final body = capturedBodies.last as Map<String, dynamic>;
+      expect(body['dutyStatus'], 'SLEEPER');
+      // الملاحظة الافتراضية لحالة SLEEPER (سلوك قائم لا يتغير).
+      expect(body['notes'], 'Sleeper Berth');
+      expect(body['driverId'], 106);
+      // إحداثي واحد فقط ⇒ لا location (الإرسال يتطلب الاثنين معاً).
+      expect(body.containsKey('location'), isFalse);
+    });
+
     test(
         'a record inside the envelope is accepted WITHOUT a snapshot '
         '(regression: used to fabricate an all-zero dashboard)', () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, {
           'success': true,
           'data': {
@@ -181,7 +285,7 @@ void main() {
         'a bare status-only body is not a snapshot — returns null instead of '
         'zeros with the new status injected', () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, {'currentDutyStatus': 'DRIVING'}),
         data: {'dutyStatus': 'DRIVING', 'notes': 'Trip started'},
       );
@@ -197,7 +301,7 @@ void main() {
 
     test('a non-JSON 200 body is accepted without a snapshot', () async {
       adapter.onPost(
-        '/eld/status/duty-status',
+        EldEndpoints.updateDutyStatus,
         (server) => server.reply(200, 'OK'),
         data: {'dutyStatus': 'DRIVING', 'notes': 'Trip started'},
       );
@@ -210,12 +314,31 @@ void main() {
       expect(result.isSuccess, isTrue);
       result.tap(onSuccess: (StatusDashboard? data) => expect(data, isNull));
     });
+
+    test('includes driverId in payload when provided', () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: {'dutyStatus': 'ON_DUTY', 'notes': 'Shift started', 'driverId': 121},
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.onDutyNotDriving,
+        notes: 'Shift started',
+        driverId: const DriverId(121),
+      );
+
+      expect(result.isSuccess, isTrue);
+      result.tap(onSuccess: (StatusDashboard? data) {
+        expect(data, isNotNull);
+      });
+    });
   });
 
   group('EldStatusDashboardBackend.getWeeklyRecap', () {
     test('returns recap data typed as WeeklyRecap', () async {
       adapter.onGet(
-        '/eld/status/recap',
+        EldEndpoints.statusRecap,
         (server) => server.reply(200, {
           'cycleUsed': '61:23',
           'cycleRemaining': '08:37',

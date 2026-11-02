@@ -14,7 +14,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
   @override
   Future<Result<RawJson>> record(RawJson event) async {
     final res = await _apiClient.post<RawJson>(
-      EldEndpoints.recordDutyStatus,
+      EldEndpoints.recordDutyStatusEvent,
       data: event,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
@@ -27,7 +27,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
     required RawJson update,
   }) async {
     final res = await _apiClient.put<RawJson>(
-      EldEndpoints.editDutyStatus(statusId.value),
+      EldEndpoints.legacyEditDutyStatus(statusId.value),
       data: update,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
@@ -40,7 +40,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
     required DateTime logDate,
   }) async {
     final res = await _apiClient.get<RawJson>(
-      EldEndpoints.graphGridTimeline,
+      EldEndpoints.legacyGraphGridTimeline,
       queryParameters: {
         if (driverId != null) 'driverId': driverId.value,
         'logDate': logDate.toIso8601String().split('T').first,
@@ -57,7 +57,7 @@ class EldDutyStatusBackend implements DutyStatusBackend {
     int? expectedOwnerDriverId,
   }) async {
     final response = await _apiClient.post<dynamic>(
-      EldEndpoints.recordDutyStatus,
+      EldEndpoints.recordDutyStatusEvent,
       data: payload,
       expectedOwnerDriverId: expectedOwnerDriverId,
     );

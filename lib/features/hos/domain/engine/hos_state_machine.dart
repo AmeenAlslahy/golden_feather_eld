@@ -169,8 +169,9 @@ class HosStateMachine {
       _pendingBreakCandidateStart = now;
       if (_currentDrivingRunStart != null) {
         final run = now.difference(_currentDrivingRunStart!);
-        if (!run.isNegative)
+        if (!run.isNegative) {
           _accumulatedDrivingSinceBreak += run.inSeconds / 3600.0;
+        }
         _currentDrivingRunStart = null;
       }
     } else if (!wasDriving && isDriving) {

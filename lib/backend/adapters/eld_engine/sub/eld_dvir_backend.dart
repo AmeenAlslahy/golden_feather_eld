@@ -21,6 +21,7 @@ class EldDvirBackend implements DvirBackend {
     int limit = 50,
     int offset = 0,
   }) async {
+    final page = limit > 0 ? offset ~/ limit : 0;
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dvir,
       queryParameters: {
@@ -28,6 +29,8 @@ class EldDvirBackend implements DvirBackend {
         if (uniqueId != null) 'uniqueId': uniqueId,
         if (date != null) 'date': date.toIso8601String().split('T').first,
         if (status != null) 'status': status,
+        'page': page,
+        'size': limit,
         'limit': limit,
         'offset': offset,
       },
@@ -89,14 +92,38 @@ class EldDvirBackend implements DvirBackend {
     required RawJson review,
     int? expectedOwnerDriverId,
   }) async {
+    final payload = Map<String, dynamic>.from(review);
+    payload.putIfAbsent('previousDvirId', () => dvirId.value);
+    payload.putIfAbsent(
+      'driverSatisfiedSafe',
+      () => review['driverAgreed'] ?? true,
+    );
+
     final res = await _apiClient.post<RawJson>(
-      EldEndpoints.dvirNextDriverReview(dvirId.value),
-      data: review,
+      EldEndpoints.dvirPreviousReview,
+      data: payload,
       parser: (data) =>
           data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
-    return _accepted(res);
+
+    return res.fold(
+      (error) async {
+        if (error is ServerError &&
+            (error.code == 'http_404' || error.code.contains('404'))) {
+          final fallbackRes = await _apiClient.post<RawJson>(
+            EldEndpoints.dvirNextDriverReview(dvirId.value),
+            data: payload,
+            parser: (data) =>
+                data is Map<String, dynamic> ? data : <String, dynamic>{},
+            expectedOwnerDriverId: expectedOwnerDriverId,
+          );
+          return _accepted(fallbackRes);
+        }
+        return err(error);
+      },
+      (success) => _accepted(res),
+    );
   }
 
   RawJson _asMap(dynamic data) {
@@ -118,10 +145,27 @@ class EldDvirBackend implements DvirBackend {
   @override
   Future<Result<RawJson>> getPreviousDvir(String uniqueId) async {
     final res = await _apiClient.get<RawJson>(
-      EldEndpoints.dvirPrevious(uniqueId),
+      EldEndpoints.dvirPreviousReport,
+      queryParameters: {
+        'uniqueId': uniqueId,
+        'deviceId': uniqueId,
+      },
       parser: _asMap,
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.fold(
+      (error) async {
+        if (error is ServerError &&
+            (error.code == 'http_404' || error.code.contains('404'))) {
+          final fallback = await _apiClient.get<RawJson>(
+            EldEndpoints.dvirPrevious(uniqueId),
+            parser: _asMap,
+          );
+          return fallback.mapValue((r) => r.data ?? <String, dynamic>{});
+        }
+        return err(error);
+      },
+      (success) => ok(success.data ?? <String, dynamic>{}),
+    );
   }
 
   @override

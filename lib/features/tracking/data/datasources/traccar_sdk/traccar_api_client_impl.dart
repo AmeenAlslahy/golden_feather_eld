@@ -16,7 +16,7 @@ class TraccarApiClientImpl implements TraccarApiClient {
   ) async {
     try {
       final response = await _apiClient.post<dynamic>(
-        EldEndpoints.session,
+        EldEndpoints.authSession,
         data: {'email': email, 'password': password},
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       );

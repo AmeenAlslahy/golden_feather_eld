@@ -4,6 +4,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../domain/entities/daily_log.dart';
+import '../../domain/log_day_slice.dart';
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/widgets/eld_graph_grid.dart';
 
@@ -37,18 +38,14 @@ class LogGraph extends ConsumerWidget {
     final stats = <String, double>{'OFF': 0.0, 'SB': 0.0, 'D': 0.0, 'ON': 0.0};
 
     for (final event in sortedEvents) {
-      final startTime = event.startTime.toLocal();
-      final duration = event.duration;
+      // نفس القصّ المستخدم في صف الإجماليات: حدث بدأ أمس يُرسم ويُجمع
+      // بالجزء الواقع داخل يوم السجل فقط.
+      final slice = sliceLogEventToDay(event, referenceDate);
+      if (slice == null) continue;
+
+      final startHour = slice.startHour;
+      final endHour = slice.endHour;
       final status = event.status;
-
-      double startHour = startTime.difference(midnight).inMinutes / 60.0;
-      double endHour = startHour + (duration.inMinutes / 60.0);
-
-      if (endHour <= 0.0) continue;
-      if (startHour >= 24.0) continue;
-
-      startHour = startHour.clamp(0.0, 24.0);
-      endHour = endHour.clamp(0.0, 24.0);
 
       final parsedCode = DutyStatusCode.fromAny(status);
       final normalized = parsedCode.canonicalGridShortCode;

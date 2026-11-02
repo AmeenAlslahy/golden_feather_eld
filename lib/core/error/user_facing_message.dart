@@ -126,6 +126,12 @@ String? _mapTechnicalCode(String code, AppLocalizations loc) {
   if (lower == 'business_rule_violation' || flat == 'businessruleviolation') {
     return loc.errBusinessRuleViolation;
   }
+  if (flat == 'certificationnotconfirmed') {
+    return loc.certifyNotConfirmed;
+  }
+  if (flat == 'eventsunavailable') {
+    return loc.eventsUnavailable;
+  }
 
   // ── 2) الشبكة ────────────────────────────────────────────────────────
   if (lower == 'nointernet' ||

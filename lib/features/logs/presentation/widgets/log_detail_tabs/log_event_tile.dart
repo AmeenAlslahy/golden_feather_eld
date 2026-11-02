@@ -43,6 +43,8 @@ class LogEventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = StatusColorHelper.getStatusColor(event.status);
+    // الرمز الخام (D/OFF/...) يُستخدم للألوان فقط؛ المعروض للسائق مترجم.
+    final statusLabel = context.translateStatus(event.status);
     final isExpanded = event.isExpanded;
 
     return InkWell(
@@ -87,10 +89,15 @@ class LogEventTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           SizedBox(
-                            width: 36,
-                            child: Text(
-                              event.status,
-                              style: context.styles.sectionTitle,
+                            width: 52,
+                            child: Tooltip(
+                              message: statusLabel,
+                              child: Text(
+                                statusLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.styles.sectionTitle,
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -101,24 +108,20 @@ class LogEventTile extends StatelessWidget {
                             ),
                           ),
                           Expanded(
-                            child: Row(
+                            child: Wrap(
+                              spacing: AppSpacing.sm,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   event.formattedDuration,
                                   style: context.styles.body,
                                 ),
-                                const SizedBox(width: AppSpacing.sm),
                                 if (_startedOnAnotherDay)
-                                  Flexible(
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.startedOnDate(
-                                        '${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
-                                      ),
-                                      style: context.styles.caption,
-                                      overflow: TextOverflow.ellipsis,
+                                  Text(
+                                    AppLocalizations.of(context)!.startedOnDate(
+                                      '${event.startTime.month}/${event.startTime.day}/${event.startTime.year}',
                                     ),
+                                    style: context.styles.caption,
                                   ),
                               ],
                             ),

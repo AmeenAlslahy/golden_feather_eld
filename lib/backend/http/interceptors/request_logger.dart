@@ -89,6 +89,11 @@ class RequestLogger extends Interceptor {
       AppLogger.error('Message: Response was not JSON');
     } else if (err.message != null && err.message!.isNotEmpty) {
       AppLogger.error('Message: ${err.message}');
+    } else if (err.error != null) {
+      // الخطأ الأصلي (مثل OwnerMismatchSignal من سياج الجلسة أو استثناء
+      // اعتراض) هو السبب الحقيقي — طباعته تمنع اختفاء التشخيص خلف رسالة
+      // «Connection failed» الاحتياطية المضللة.
+      AppLogger.error('Cause: ${err.error}');
     } else {
       AppLogger.error('Message: Connection failed or server unreachable');
     }

@@ -42,9 +42,12 @@ enum DutyStatusCode {
     }
 
     // Aliases for loosely typed systems
-    if (upper == 'SLEEPER') return DutyStatusCode.sleeperBerth;
-    if (lower == 'personal_conveyance')
+    if (upper == 'SLEEPER') {
+      return DutyStatusCode.sleeperBerth;
+    }
+    if (lower == 'personal_conveyance') {
       return DutyStatusCode.personalConveyance;
+    }
 
     AppLogger.warning(
       'DutyStatusCode.fromAny: unknown value "$value" — falling back to offDuty',
@@ -68,9 +71,12 @@ enum DutyStatusCode {
         return c;
       }
     }
-    if (upper == 'SLEEPER') return DutyStatusCode.sleeperBerth;
-    if (lower == 'personal_conveyance')
+    if (upper == 'SLEEPER') {
+      return DutyStatusCode.sleeperBerth;
+    }
+    if (lower == 'personal_conveyance') {
       return DutyStatusCode.personalConveyance;
+    }
     return null;
   }
 

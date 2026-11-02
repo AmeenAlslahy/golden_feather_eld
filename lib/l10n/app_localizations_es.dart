@@ -2082,6 +2082,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get logSuccessfullyCertified => 'Certificación exitosa.';
 
   @override
+  String get certifyPendingSync =>
+      'La solicitud de certificación se guardó en este dispositivo y está pendiente de sincronización. El registro aún no está certificado.';
+
+  @override
+  String get certifyNotConfirmed =>
+      'El servidor no confirmó la certificación. Inténtelo de nuevo.';
+
+  @override
+  String get eventsShowingSavedData =>
+      'Se muestran eventos guardados en este dispositivo o la última copia; el servidor no los confirmó ahora.';
+
+  @override
+  String get eventsUnavailable =>
+      'No se pudieron cargar los eventos y no hay una copia guardada. Inténtelo de nuevo.';
+
+  @override
   String get notReadyForCertification => 'No está listo para la certificación';
 
   @override
@@ -2863,6 +2879,34 @@ class AppLocalizationsEs extends AppLocalizations {
       'El servidor aceptó el modo desconectado. No se creó ningún evento de servicio local.';
 
   @override
+  String get sessionConnectRejected =>
+      'El servidor rechazó la solicitud de conexión. No se confirmó ninguna sesión.';
+
+  @override
+  String get sessionStatusUnconfirmed =>
+      'El servidor no confirmó el estado de la sesión.';
+
+  @override
+  String get sessionStatusUnconfirmedHint =>
+      'Es posible que la solicitud haya llegado al servidor. No reintente automáticamente; verifique la sesión antes de volver a intentarlo.';
+
+  @override
+  String get continueDisconnectedOffline =>
+      'No hay conexión de red. No se envió la solicitud de modo desconectado; sigue en la pantalla de conexión.';
+
+  @override
+  String get continueDisconnectedFailed =>
+      'No se pudo confirmar el modo desconectado. El seguimiento no se inició y no se le llevó al inicio.';
+
+  @override
+  String get continueDisconnectedRejected =>
+      'El servidor rechazó la solicitud de modo desconectado. El seguimiento no se inició.';
+
+  @override
+  String get continueDisconnectedInProgress =>
+      'Registrando el modo desconectado...';
+
+  @override
   String get macAddressRequired => 'Se requiere dirección MAC.';
 
   @override
@@ -3273,4 +3317,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get inspectionHandOverNotice =>
       'Entregue el dispositivo al oficial de seguridad';
+
+  @override
+  String get statusPendingSync => 'Pendiente de sincronización';
+
+  @override
+  String get statusSavedUnconfirmed => 'Guardado — sin confirmar';
+
+  @override
+  String get statusSyncFailed => 'Error de sincronización';
 }

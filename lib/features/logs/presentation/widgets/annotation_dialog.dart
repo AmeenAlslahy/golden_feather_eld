@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_text_field.dart';
 
-/// حوار إدخال الملاحظات أو أسباب الرفض للأحداث غير المحددة
+/// حوار إدخال الملاحظات أو أسباب الرفض للأحداث غير المحددة وفق Design System 2.0
 class AnnotationDialog extends StatefulWidget {
   final String title;
   final String hint;
+  final int maxLength;
 
-  const AnnotationDialog({super.key, required this.title, required this.hint});
+  const AnnotationDialog({
+    super.key,
+    required this.title,
+    required this.hint,
+    this.maxLength = 500,
+  });
 
   @override
   State<AnnotationDialog> createState() => _AnnotationDialogState();
@@ -29,24 +36,24 @@ class _AnnotationDialogState extends State<AnnotationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: AppTextField(
-        controller: _controller,
-        maxLines: 3,
-        hint: widget.hint,
-        keyboardType: TextInputType.text,
+    final matLoc = MaterialLocalizations.of(context);
+    return AppDialog(
+      title: widget.title,
+      icon: Icons.edit_note_rounded,
+      type: AppDialogType.confirmation,
+      primaryActionLabel: matLoc.okButtonLabel,
+      onPrimaryAction: () => Navigator.pop(context, _controller.text.trim()),
+      secondaryActionLabel: matLoc.cancelButtonLabel,
+      onSecondaryAction: () => Navigator.pop(context),
+      contentWidget: SingleChildScrollView(
+        child: AppTextField(
+          controller: _controller,
+          maxLines: 3,
+          maxLength: widget.maxLength,
+          hint: widget.hint,
+          keyboardType: TextInputType.text,
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _controller.text.trim()),
-          child: Text(MaterialLocalizations.of(context).okButtonLabel),
-        ),
-      ],
     );
   }
 }

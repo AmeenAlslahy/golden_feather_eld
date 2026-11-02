@@ -24,6 +24,7 @@ void main() {
       AuthInterceptor(
         localDataSource: localDataSource,
         backendType: 'traccar',
+        resolveCurrentOwnerDriverId: () async => null,
         onUnauthenticated: (_) => unauthenticatedFired = true,
       ),
     );

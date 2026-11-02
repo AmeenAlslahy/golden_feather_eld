@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/session/session_epoch.dart';
+import '../../../../core/utils/startup_profiler.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/eld_card.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
@@ -22,13 +28,29 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../tracking/data/providers/tracking_providers.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/services/local_storage_service.dart';
+import '../../../auth/presentation/providers/auth_state_provider.dart';
+
+const Object _unsetConnectionField = Object();
 
 class EldConnectionState {
   final bool isConnecting;
+  final bool isContinuingDisconnected;
   final bool hasFailed;
   final bool wasCancelled;
 
-  /// Marker (`bluetooth_failed`, `connect_failed`) — localized by the page.
+  /// A connect/continue write has been dispatched and its server outcome is
+  /// not known yet — either it is still in flight, or the user cancelled
+  /// after dispatch. No second write may start while this is true.
+  final bool serverRequestPending;
+
+  /// The last terminal outcome did not prove the server session state.
+  final bool sessionUnconfirmed;
+
+  /// The last operation received a confirmed server success.
+  final bool connectionConfirmed;
+
+  /// Marker (`bluetooth_failed`, `connect_failed`, `disconnected_offline`,
+  /// `disconnected_failed`, `disconnected_rejected`) — localized by the page.
   final String? errorMessage;
 
   /// Server-side failure, localized by the page in the *current* locale.
@@ -37,45 +59,125 @@ class EldConnectionState {
 
   EldConnectionState({
     this.isConnecting = false,
+    this.isContinuingDisconnected = false,
     this.hasFailed = false,
     this.wasCancelled = false,
+    this.serverRequestPending = false,
+    this.sessionUnconfirmed = false,
+    this.connectionConfirmed = false,
     this.errorMessage,
     this.error,
     this.infoMessage,
   });
 
+  bool get isBusy => isConnecting || isContinuingDisconnected;
+
   EldConnectionState copyWith({
     bool? isConnecting,
+    bool? isContinuingDisconnected,
     bool? hasFailed,
     bool? wasCancelled,
-    String? errorMessage,
-    AppError? error,
-    String? infoMessage,
+    bool? serverRequestPending,
+    bool? sessionUnconfirmed,
+    bool? connectionConfirmed,
+    Object? errorMessage = _unsetConnectionField,
+    Object? error = _unsetConnectionField,
+    Object? infoMessage = _unsetConnectionField,
   }) {
     return EldConnectionState(
       isConnecting: isConnecting ?? this.isConnecting,
+      isContinuingDisconnected:
+          isContinuingDisconnected ?? this.isContinuingDisconnected,
       hasFailed: hasFailed ?? this.hasFailed,
       wasCancelled: wasCancelled ?? this.wasCancelled,
-      errorMessage: errorMessage,
-      error: error,
-      infoMessage: infoMessage,
+      serverRequestPending: serverRequestPending ?? this.serverRequestPending,
+      sessionUnconfirmed: sessionUnconfirmed ?? this.sessionUnconfirmed,
+      connectionConfirmed: connectionConfirmed ?? this.connectionConfirmed,
+      errorMessage: identical(errorMessage, _unsetConnectionField)
+          ? this.errorMessage
+          : errorMessage as String?,
+      error: identical(error, _unsetConnectionField)
+          ? this.error
+          : error as AppError?,
+      infoMessage: identical(infoMessage, _unsetConnectionField)
+          ? this.infoMessage
+          : infoMessage as String?,
     );
   }
 }
 
 class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
+  static const String _connectRejectedCode = 'eld.session.connectRejected';
+  static const String _connectUnconfirmedCode =
+      'eld.session.connectUnconfirmed';
+
   final Ref _ref;
-  int _connectAttemptSeq = 0;
+
+  /// Sequence covers both connect and continue-disconnected. A cancel or a
+  /// switch from BLE connect to continue mode invalidates older callbacks.
+  int _operationSeq = 0;
+
+  /// Local single-flight latch. It prevents a second write while the first
+  /// request is still awaiting a response. It is **not** server idempotency.
+  bool _serverWriteInFlight = false;
 
   EldConnectionNotifier(this._ref) : super(EldConnectionState());
 
+  bool get _serverWriteLocked =>
+      _serverWriteInFlight || state.serverRequestPending;
+
+  void _setServerPending(bool pending) {
+    if (!mounted) return;
+    state = state.copyWith(serverRequestPending: pending);
+  }
+
+  AppError _unconfirmedError() {
+    return const ServerError(
+      code: _connectUnconfirmedCode,
+      l10nKey: 'sessionStatusUnconfirmed',
+      context: {'reason': 'empty_success_payload'},
+    );
+  }
+
+  /// Applies the locally selected vehicle identifier and starts phone
+  /// tracking. This is called **only after** a confirmed server result.
+  Future<void> _activateLocalSessionTracking() async {
+    final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+    final vUniqueId = selectedVehicle?.uniqueId;
+    final targetDeviceId =
+        selectedVehicle?.deviceId?.toString() ??
+        ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
+    if (targetDeviceId != null) {
+      try {
+        await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+      } catch (_) {}
+    }
+    try {
+      final config = await _ref
+          .read(trackingRepositoryProvider)
+          .getCurrentConfig();
+      await _ref.read(trackingRepositoryProvider).updateConfig(config);
+      await _ref.read(trackingStateProvider.notifier).startTracking();
+    } catch (_) {}
+  }
+
   Future<void> attemptConnection(String macAddress) async {
-    final seq = ++_connectAttemptSeq;
+    // State-layer guard (not only a disabled button): no overlapping connect,
+    // continue, or second server write while one is pending.
+    if (state.isBusy || _serverWriteLocked) return;
+
+    final seq = ++_operationSeq;
     state = state.copyWith(
       isConnecting: true,
+      isContinuingDisconnected: false,
       hasFailed: false,
       wasCancelled: false,
+      serverRequestPending: false,
+      sessionUnconfirmed: false,
+      connectionConfirmed: false,
       errorMessage: null,
+      error: null,
+      infoMessage: null,
     );
 
     try {
@@ -85,17 +187,22 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
       try {
         await bluetoothService.connect(macAddress);
       } catch (e) {
-        if (!mounted || seq != _connectAttemptSeq) return;
+        if (!mounted || seq != _operationSeq) return;
         state = state.copyWith(
           isConnecting: false,
           hasFailed: true,
           wasCancelled: false,
+          serverRequestPending: false,
+          sessionUnconfirmed: false,
+          connectionConfirmed: false,
           errorMessage: 'bluetooth_failed',
+          error: null,
+          infoMessage: null,
         );
         return;
       }
 
-      if (!mounted || seq != _connectAttemptSeq) return;
+      if (!mounted || seq != _operationSeq) return;
 
       // 2. التحقق من السيرفر وبدء الجلسة
       final hardwareBackend = _ref.read(hardwareBackendProvider);
@@ -104,80 +211,134 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
           .read(vehicleProvider)
           .selectedVehicle
           ?.uniqueId;
-      final result = await hardwareBackend.connectSession(
-        uniqueId: selectedUniqueId,
-      );
+      final result = await () async {
+        _serverWriteInFlight = true;
+        _setServerPending(true);
+        try {
+          return await hardwareBackend.connectSession(
+            uniqueId: selectedUniqueId,
+          );
+        } finally {
+          _serverWriteInFlight = false;
+          _setServerPending(false);
+        }
+      }();
 
-      if (!mounted || seq != _connectAttemptSeq) return;
+      if (!mounted || seq != _operationSeq) return;
 
       await result.fold<Future<void>>(
         (error) async {
+          if (!mounted || seq != _operationSeq) return;
+
+          final unconfirmed = error.code == _connectUnconfirmedCode;
           state = state.copyWith(
             isConnecting: false,
-            hasFailed: true,
+            hasFailed: !unconfirmed,
             wasCancelled: false,
+            serverRequestPending: false,
+            sessionUnconfirmed: unconfirmed,
+            connectionConfirmed: false,
+            errorMessage: null,
             error: error,
+            infoMessage: null,
           );
         },
         (data) async {
-          if (!mounted || seq != _connectAttemptSeq) return;
+          if (!mounted || seq != _operationSeq) return;
 
-          // تفعيل خدمة تتبع Traccar Client بالهاتف متزامنة مع المركبة
-          final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
-          final vUniqueId = selectedVehicle?.uniqueId;
-          final targetDeviceId =
-              selectedVehicle?.deviceId?.toString() ??
-              ((vUniqueId != null && vUniqueId.isNotEmpty)
-                  ? vUniqueId
-                  : null);
-          if (targetDeviceId != null) {
-            await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
+          if (data.isEmpty) {
+            state = state.copyWith(
+              isConnecting: false,
+              hasFailed: false,
+              wasCancelled: false,
+              serverRequestPending: false,
+              sessionUnconfirmed: true,
+              connectionConfirmed: false,
+              errorMessage: null,
+              error: _unconfirmedError(),
+              infoMessage: null,
+            );
+            return;
           }
-          try {
-            final config = await _ref
-                .read(trackingRepositoryProvider)
-                .getCurrentConfig();
-            await _ref.read(trackingRepositoryProvider).updateConfig(config);
-            await _ref.read(trackingStateProvider.notifier).startTracking();
-          } catch (_) {}
 
-          if (!mounted || seq != _connectAttemptSeq) return;
+          final driverObj = data['driver'];
+          if (driverObj is Map) {
+            final rawDriverId = driverObj['id'];
+            final driverId = rawDriverId is int
+                ? rawDriverId
+                : (rawDriverId is num
+                      ? rawDriverId.toInt()
+                      : int.tryParse(rawDriverId?.toString() ?? ''));
+            if (driverId != null && driverId > 0) {
+              _ref.read(activeDriverIdProvider.notifier).state = (
+                SessionEpoch.current,
+                driverId,
+              );
+            }
+          }
+
+          await _activateLocalSessionTracking();
+
+          if (!mounted || seq != _operationSeq) return;
 
           state = state.copyWith(
             isConnecting: false,
             hasFailed: false,
             wasCancelled: false,
+            serverRequestPending: false,
+            sessionUnconfirmed: false,
+            connectionConfirmed: true,
+            errorMessage: null,
+            error: null,
+            infoMessage: null,
           );
         },
       );
     } catch (e) {
-      if (mounted && seq == _connectAttemptSeq) {
+      _serverWriteInFlight = false;
+      if (mounted && seq == _operationSeq) {
         state = state.copyWith(
           isConnecting: false,
           hasFailed: true,
           wasCancelled: false,
+          serverRequestPending: false,
+          sessionUnconfirmed: false,
+          connectionConfirmed: false,
           errorMessage: 'connect_failed',
+          error: null,
+          infoMessage: null,
         );
       }
     }
   }
 
-  /// UX-001: إلغاء محاولة الاتصال الجارية وفك حجب الواجهة بأمان
+  /// UX-001: إلغاء محاولة الاتصال الجارية وفك حجب الواجهة بأمان.
+  ///
+  /// Cancelling only cancels local waiters and the BLE link. Once HTTP has
+  /// been dispatched, the server cannot be assumed to have cancelled its
+  /// work; the state becomes explicitly unconfirmed instead.
   Future<void> cancelConnection() async {
-    _connectAttemptSeq++; // إبطال أي callbacks متأخرة للمحاولة السابقة
+    final wasDispatched = _serverWriteInFlight || state.serverRequestPending;
+    _operationSeq++; // إبطال أي callbacks متأخرة للمحاولة السابقة
     try {
       final bluetoothService = _ref.read(bluetoothServiceProvider);
       await bluetoothService.disconnect();
     } catch (_) {}
 
-    if (mounted) {
-      state = state.copyWith(
-        isConnecting: false,
-        hasFailed: false,
-        wasCancelled: true,
-        errorMessage: null,
-      );
-    }
+    if (!mounted) return;
+
+    state = state.copyWith(
+      isConnecting: false,
+      isContinuingDisconnected: false,
+      hasFailed: false,
+      wasCancelled: true,
+      serverRequestPending: wasDispatched,
+      sessionUnconfirmed: wasDispatched || state.sessionUnconfirmed,
+      connectionConfirmed: false,
+      errorMessage: null,
+      error: null,
+      infoMessage: null,
+    );
   }
 
   /// `POST /eld/hardware/manual-mode` (§395.34 paper-log fallback).
@@ -204,47 +365,145 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
     }
   }
 
-  /// `POST /eld/hardware/connect?disconnected=true`. No reason form and no duty event.
+  /// `POST /eld/hardware/connect?disconnected=true`. No reason form and no
+  /// duty event. Local tracking is started only after a confirmed server
+  /// result; offline, failure, and unconfirmed outcomes stay on this screen.
   Future<void> continueDisconnected() async {
-    _connectAttemptSeq++; // إبطال أي محاولة جارية
-    try {
-      final bluetoothService = _ref.read(bluetoothServiceProvider);
-      await bluetoothService.disconnect();
-    } catch (_) {}
+    // A server write is already pending: never send a second one. If only the
+    // BLE stage of a connect is running, switch modes and invalidate it before
+    // any HTTP dispatch.
+    if (state.serverRequestPending || state.isContinuingDisconnected) return;
 
-    final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
-    final vUniqueId = selectedVehicle?.uniqueId;
-    final targetDeviceId =
-        selectedVehicle?.deviceId?.toString() ??
-        ((vUniqueId != null && vUniqueId.isNotEmpty) ? vUniqueId : null);
-    if (targetDeviceId != null) {
-      await _ref.read(localStorageProvider).setDeviceId(targetDeviceId);
-    }
-    try {
-      final config = await _ref
-          .read(trackingRepositoryProvider)
-          .getCurrentConfig();
-      await _ref.read(trackingRepositoryProvider).updateConfig(config);
-      await _ref.read(trackingStateProvider.notifier).startTracking();
-    } catch (_) {}
+    final seq = ++_operationSeq;
+    state = state.copyWith(
+      isConnecting: false,
+      isContinuingDisconnected: true,
+      hasFailed: false,
+      wasCancelled: false,
+      serverRequestPending: false,
+      sessionUnconfirmed: false,
+      connectionConfirmed: false,
+      errorMessage: null,
+      error: null,
+      infoMessage: null,
+    );
 
-    final online = _ref.read(isConnectedProvider).value ?? true;
-    if (online) {
+    try {
       try {
-        await _ref
-            .read(hardwareBackendProvider)
-            .connectSession(uniqueId: vUniqueId, disconnected: true);
+        final bluetoothService = _ref.read(bluetoothServiceProvider);
+        await bluetoothService.disconnect();
       } catch (_) {}
-    }
 
-    if (mounted) {
-      state = state.copyWith(
-        isConnecting: false,
-        hasFailed: false,
-        wasCancelled: false,
-        errorMessage: null,
-        infoMessage: 'disconnected_accepted',
+      if (!mounted || seq != _operationSeq) return;
+
+      final selectedVehicle = _ref.read(vehicleProvider).selectedVehicle;
+      final vUniqueId = selectedVehicle?.uniqueId;
+
+      // Only a confirmed offline state skips the request. Unknown connectivity
+      // is not treated as proof of success or failure; the request result
+      // remains the deciding evidence.
+      if (_ref.read(isConnectedProvider).valueOrNull == false) {
+        state = state.copyWith(
+          isContinuingDisconnected: false,
+          hasFailed: true,
+          wasCancelled: false,
+          serverRequestPending: false,
+          sessionUnconfirmed: false,
+          connectionConfirmed: false,
+          errorMessage: 'disconnected_offline',
+          error: null,
+          infoMessage: null,
+        );
+        return;
+      }
+
+      final result = await () async {
+        _serverWriteInFlight = true;
+        _setServerPending(true);
+        try {
+          return await _ref
+              .read(hardwareBackendProvider)
+              .connectSession(uniqueId: vUniqueId, disconnected: true);
+        } finally {
+          _serverWriteInFlight = false;
+          _setServerPending(false);
+        }
+      }();
+
+      if (!mounted || seq != _operationSeq) return;
+
+      await result.fold<Future<void>>(
+        (error) async {
+          if (!mounted || seq != _operationSeq) return;
+
+          final unconfirmed = error.code == _connectUnconfirmedCode;
+          final rejected = error.code == _connectRejectedCode;
+          state = state.copyWith(
+            isContinuingDisconnected: false,
+            hasFailed: !unconfirmed,
+            wasCancelled: false,
+            serverRequestPending: false,
+            sessionUnconfirmed: unconfirmed,
+            connectionConfirmed: false,
+            errorMessage: unconfirmed
+                ? null
+                : (rejected ? 'disconnected_rejected' : 'disconnected_failed'),
+            error: error,
+            infoMessage: null,
+          );
+        },
+        (data) async {
+          if (!mounted || seq != _operationSeq) return;
+
+          if (data.isEmpty) {
+            state = state.copyWith(
+              isContinuingDisconnected: false,
+              hasFailed: false,
+              wasCancelled: false,
+              serverRequestPending: false,
+              sessionUnconfirmed: true,
+              connectionConfirmed: false,
+              errorMessage: null,
+              error: _unconfirmedError(),
+              infoMessage: null,
+            );
+            return;
+          }
+
+          // Local activation happens only after the server result above was
+          // strong enough to be confirmed.
+          await _activateLocalSessionTracking();
+
+          if (!mounted || seq != _operationSeq) return;
+
+          state = state.copyWith(
+            isContinuingDisconnected: false,
+            hasFailed: false,
+            wasCancelled: false,
+            serverRequestPending: false,
+            sessionUnconfirmed: false,
+            connectionConfirmed: true,
+            errorMessage: null,
+            error: null,
+            infoMessage: 'disconnected_accepted',
+          );
+        },
       );
+    } catch (e) {
+      _serverWriteInFlight = false;
+      if (mounted && seq == _operationSeq) {
+        state = state.copyWith(
+          isContinuingDisconnected: false,
+          hasFailed: true,
+          wasCancelled: false,
+          serverRequestPending: false,
+          sessionUnconfirmed: false,
+          connectionConfirmed: false,
+          errorMessage: 'disconnected_failed',
+          error: null,
+          infoMessage: null,
+        );
+      }
     }
   }
 }
@@ -275,15 +534,15 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
   @override
   void initState() {
     super.initState();
+    StartupProfiler.markOnce('first-interactive-page:connection');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // Prefill only. An explicit user action is the only thing that may start
+      // Bluetooth or a server write.
       _fillMacFromVehicle(
         ref.read(vehicleProvider).selectedVehicle,
         force: true,
       );
-      if (_macController.text.trim().isNotEmpty) {
-        _attemptConnection();
-      }
     });
   }
 
@@ -336,226 +595,410 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
       }
     });
 
-    // الانتقال للرئيسية عند النجاح
+    // الانتقال للرئيسية فقط عند نتيجة خادم مؤكدة. أي فشل أو انقطاع أو نتيجة
+    // غير مؤكدة يبقي المستخدم في هذه الشاشة.
     ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
-      if (current.infoMessage == 'disconnected_accepted' &&
-          previous?.infoMessage != 'disconnected_accepted') {
-        AppFeedback.info(context, context.loc.serverAcceptedDisconnected);
+      final confirmedNow =
+          current.connectionConfirmed && previous?.connectionConfirmed != true;
+      if (confirmedNow) {
+        if (current.infoMessage == 'disconnected_accepted') {
+          AppFeedback.info(context, context.loc.serverAcceptedDisconnected);
+        }
         context.go(AppRoutes.home);
         return;
       }
       if (previous != null &&
-          previous.isConnecting &&
-          !current.isConnecting &&
-          !current.hasFailed &&
-          !current.wasCancelled) {
-        context.go(AppRoutes.home);
-      } else if (previous != null &&
-          previous.isConnecting &&
-          !current.isConnecting &&
+          previous.isBusy &&
+          !current.isBusy &&
+          !current.connectionConfirmed &&
           !current.wasCancelled) {
         ref.invalidate(hardwareStatusProvider);
       }
     });
 
+    final vehicleState = ref.watch(vehicleProvider);
+    final selectedVehicle = vehicleState.selectedVehicle;
+
+    String vehicleTitle;
+    if (selectedVehicle != null && selectedVehicle.name.trim().isNotEmpty) {
+      vehicleTitle = selectedVehicle.name.trim();
+    } else if (selectedVehicle != null &&
+        selectedVehicle.id.trim().isNotEmpty) {
+      vehicleTitle = selectedVehicle.id.trim();
+    } else if (dashboard.vehicleDisplayName.isNotEmpty &&
+        dashboard.vehicleDisplayName != 'Select a vehicle' &&
+        dashboard.vehicleDisplayName != 'No Vehicle') {
+      vehicleTitle = dashboard.vehicleDisplayName;
+    } else if (dashboard.vehicleId.isNotEmpty &&
+        dashboard.vehicleId != 'No Vehicle' &&
+        dashboard.vehicleId != 'Select a vehicle') {
+      vehicleTitle = dashboard.vehicleId;
+    } else {
+      vehicleTitle = context.loc.selectVehicle;
+    }
+
     return PopScope(
-      canPop: !connectionState.isConnecting,
+      canPop: !connectionState.isBusy,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && connectionState.isConnecting) {
+        if (!didPop && connectionState.isBusy) {
           ref.read(eldConnectionProvider.notifier).cancelConnection();
         }
       },
       child: Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        // أيقونة الإجراء تفتح دائماً صفحة اختيار العربة (مع الحفاظ على
-        // الرجوع) — لا تخرج لصفحة أخرى أبداً.
-        leading: IconButton(
-          tooltip: context.loc.selectVehicle,
-          icon: Icon(
-            Icons.compare_arrows,
-            color: context.onGold,
-            size: AppSpacing.iconSize,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: GoldenAppBar(
+          variant: GoldenAppBarVariant.brand,
+          titleText: vehicleTitle,
+          leading: IconButton(
+            tooltip: context.loc.selectVehicle,
+            icon: Icon(
+              Icons.compare_arrows,
+              color: context.onGold,
+              size: AppSpacing.iconSize,
+            ),
+            onPressed: () {
+              context.push(AppRoutes.selectVehicle);
+            },
           ),
-          onPressed: () {
-            context.push(AppRoutes.selectVehicle);
-          },
         ),
-        title: Text(
-          dashboard.vehicleDisplayName.isNotEmpty &&
-                  dashboard.vehicleDisplayName != 'No Vehicle'
-              ? dashboard.vehicleDisplayName
-              : dashboard.vehicleId,
-          style: context.styles.appBarTitle,
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // شريط التنبيه الأحمر
-                if (connectionState.hasFailed)
-                  Container(
-                    color: context.colors.error,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.md,
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: Text(
-                      _friendlyConnectionError(
-                        context,
-                        connectionState.errorMessage,
-                        connectionState.error,
-                        _macController.text,
-                      ),
-                      style: context.styles.button,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // SRS 9.3 step 5: the five-item checklist is part of the
-                      // connection screen itself, not only of the failure state.
-                      Text(
-                        context.loc.verifyFollowingItems,
-                        key: const Key('connection_checklist_title'),
-                        style: context.styles.body,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _buildChecklistItem(context.loc.macEnteredCorrectly),
-                      _buildChecklistItem(
-                        context.loc.hardwareProperlyInstalled,
-                      ),
-                      _buildChecklistItem(context.loc.vehiclePowerOn),
-                      _buildChecklistItem(context.loc.bluetoothEnabled),
-                      _buildChecklistItem(context.loc.gpsEnabled),
-                      const SizedBox(height: AppSpacing.lg),
-                      Divider(color: Theme.of(context).dividerColor, height: 1),
-                      const SizedBox(height: AppSpacing.lg),
-
-                      // عنوان حقل MAC
-                      Text(
-                        context.loc.enterMacAddress,
-                        style: context.styles.body,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // ✅ حقل إدخال موحد
-                      Form(
-                        key: _macFormKey,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        child: AppTextField(
-                          controller: _macController,
-                          hint: 'AA:BB:CC:DD:EE:FF',
-                          keyboardType: TextInputType.text,
-                          textInputAction: TextInputAction.done,
-                          maxLength: 17,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[0-9a-zA-Z:-]'),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPadding,
+                vertical: AppSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // نتيجة غير مؤكدة — ليست نجاحاً وليست فشلاً مؤكداً.
+                  if (connectionState.sessionUnconfirmed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: context.warningContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(
+                            color: context.warning.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: context.warning,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    context.loc.sessionStatusUnconfirmed,
+                                    key: const Key(
+                                      'session_unconfirmed_banner',
+                                    ),
+                                    style: context.styles.body.copyWith(
+                                      color: context.warning,
+                                      fontWeight: AppTypography.semiBold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  Text(
+                                    context.loc.sessionStatusUnconfirmedHint,
+                                    style: context.styles.body.copyWith(
+                                      color: context.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                          onSubmitted: (_) => _attemptConnection(),
-                          validator: (v) =>
-                              macAddressError(v, loc: context.loc),
                         ),
                       ),
+                    ),
 
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // ✅ زر اتصال
-                      AppButton(
-                        label: context.loc.connect,
-                        type: EldButtonType.connect,
-                        isLoading: connectionState.isConnecting,
-                        onPressed: connectionState.isConnecting
-                            ? null
-                            : _attemptConnection,
+                  // شريط التنبيه عند فشل الاتصال
+                  if (connectionState.hasFailed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: context.colors.errorContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(
+                            color: context.colors.error.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: context.colors.error,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                _connectionErrorMessage(
+                                  context,
+                                  connectionState,
+                                ),
+                                style: context.styles.body.copyWith(
+                                  color: context.colors.onErrorContainer,
+                                  fontWeight: AppTypography.semiBold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                    ),
 
-                      // ✅ زر متابعة بدون اتصال
-                      AppButton(
-                        label: context.loc.continueDisconnected,
-                        type: EldButtonType.continueDisconnected,
-                        onPressed: connectionState.isConnecting
-                            ? null
-                            : () => ref
-                                  .read(eldConnectionProvider.notifier)
-                                  .continueDisconnected(),
-                      ),
-                    ],
+                  // ─── 1. Checklist Card ───
+                  EldCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: context.gold.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.checklist_rtl_rounded,
+                                color: context.gold,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                context.loc.verifyFollowingItems,
+                                key: const Key('connection_checklist_title'),
+                                style: context.styles.cardTitle.copyWith(
+                                  fontWeight: AppTypography.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.compact),
+                        _buildChecklistItem(context.loc.macEnteredCorrectly),
+                        _buildChecklistItem(
+                          context.loc.hardwareProperlyInstalled,
+                        ),
+                        _buildChecklistItem(context.loc.vehiclePowerOn),
+                        _buildChecklistItem(context.loc.bluetoothEnabled),
+                        _buildChecklistItem(context.loc.gpsEnabled),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: AppSpacing.md),
+
+                  // ─── 2. MAC Address Input & Connect Actions Card ───
+                  EldCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: context.gold.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.bluetooth_searching_rounded,
+                                color: context.gold,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                context.loc.enterMacAddress,
+                                style: context.styles.cardTitle.copyWith(
+                                  fontWeight: AppTypography.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+
+                        Form(
+                          key: _macFormKey,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: AppTextField(
+                              controller: _macController,
+                              hint: 'AA:BB:CC:DD:EE:FF',
+                              keyboardType: TextInputType.text,
+                              textInputAction: TextInputAction.done,
+                              maxLength: 17,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9a-zA-Z:-]'),
+                                ),
+                              ],
+                              onSubmitted: (_) => _attemptConnection(),
+                              validator: (v) =>
+                                  macAddressError(v, loc: context.loc),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // ✅ زر اتصال بلون الهوية الذهبي الأساسي
+                        AppButton(
+                          label: context.loc.connect,
+                          type: EldButtonType.primary,
+                          isLoading: connectionState.isConnecting,
+                          onPressed:
+                              connectionState.isBusy ||
+                                  connectionState.serverRequestPending
+                              ? null
+                              : _attemptConnection,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+
+                        // ✅ زر متابعة بدون اتصال بالدور الثانوي.
+                        // يُقبل أثناء مرحلة BLE فقط، لا أثناء طلب خادم معلّق.
+                        AppButton(
+                          label: context.loc.continueDisconnected,
+                          type: EldButtonType.secondary,
+                          isLoading: connectionState.isContinuingDisconnected,
+                          onPressed:
+                              connectionState.isContinuingDisconnected ||
+                                  connectionState.serverRequestPending
+                              ? null
+                              : () => ref
+                                    .read(eldConnectionProvider.notifier)
+                                    .continueDisconnected(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (connectionState.isConnecting)
-            Container(
-              color: context.colors.scrim.withValues(alpha: 0.38),
-              alignment: Alignment.center,
-              // استثناء موثق: بطاقة عائمة فوق scrim أثناء التوصيل —
-              // تحتاج ظل حوار (8) لا ظل بطاقة النظام؛ ليست بطاقة محتوى.
-              child: Card(
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.lg,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(),
-                          const SizedBox(width: AppSpacing.md),
-                          Text(
-                            context.loc.connecting,
-                            style: context.styles.bodyBold,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: AppSpacing.sm,
-                        runSpacing: AppSpacing.xs,
-                        children: [
-                          TextButton(
-                            key: const Key('cancel_connection_button'),
-                            onPressed: () => ref
-                                .read(eldConnectionProvider.notifier)
-                                .cancelConnection(),
-                            child: Text(context.loc.cancelButton),
-                          ),
-                          TextButton(
-                            key: const Key('continue_disconnected_overlay_button'),
-                            onPressed: () => ref
-                                .read(eldConnectionProvider.notifier)
-                                .continueDisconnected(),
-                            child: Text(context.loc.continueDisconnected),
-                          ),
-                        ],
-                      ),
-                    ],
+            if (connectionState.isBusy)
+              Container(
+                color: context.colors.scrim.withValues(alpha: 0.38),
+                alignment: Alignment.center,
+                // استثناء موثق: بطاقة عائمة فوق scrim أثناء التوصيل —
+                // تحتاج ظل حوار (8) لا ظل بطاقة النظام؛ ليست بطاقة محتوى.
+                child: Card(
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.lg,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(width: AppSpacing.md),
+                            Flexible(
+                              child: Text(
+                                connectionState.isContinuingDisconnected
+                                    ? context.loc.continueDisconnectedInProgress
+                                    : context.loc.connecting,
+                                style: context.styles.bodyBold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.xs,
+                          children: [
+                            TextButton(
+                              key: const Key('cancel_connection_button'),
+                              onPressed: () => ref
+                                  .read(eldConnectionProvider.notifier)
+                                  .cancelConnection(),
+                              child: Text(context.loc.cancelButton),
+                            ),
+                            if (connectionState.isConnecting)
+                              TextButton(
+                                key: const Key(
+                                  'continue_disconnected_overlay_button',
+                                ),
+                                // لا كتابة خادم ثانية أثناء طلب معلّق.
+                                onPressed: connectionState.serverRequestPending
+                                    ? null
+                                    : () => ref
+                                          .read(eldConnectionProvider.notifier)
+                                          .continueDisconnected(),
+                                child: Text(context.loc.continueDisconnected),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
-    ), // PopScope child Scaffold
+          ],
+        ),
+      ), // PopScope child Scaffold
+    );
+  }
+
+  String _connectionErrorMessage(
+    BuildContext context,
+    EldConnectionState state,
+  ) {
+    final loc = AppLocalizations.of(context)!;
+    switch (state.errorMessage) {
+      case 'disconnected_offline':
+        return loc.continueDisconnectedOffline;
+      case 'disconnected_rejected':
+        return loc.continueDisconnectedRejected;
+      case 'disconnected_failed':
+        final detail = state.error == null
+            ? null
+            : anyErrorUserMessage(state.error!, loc: loc);
+        return detail == null || detail.isEmpty
+            ? loc.continueDisconnectedFailed
+            : '${loc.continueDisconnectedFailed} $detail';
+    }
+    return _friendlyConnectionError(
+      context,
+      state.errorMessage,
+      state.error,
+      _macController.text,
     );
   }
 
@@ -573,6 +1016,12 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
         ? loc.unableToConnectToEld
         : '${context.loc.unableToConnect} $target.';
     if (error != null) {
+      if (error.code == 'eld.session.connectRejected') {
+        return '$head ${loc.sessionConnectRejected}';
+      }
+      if (error.code == 'eld.session.connectUnconfirmed') {
+        return loc.sessionStatusUnconfirmed;
+      }
       return '$head ${anyErrorUserMessage(error, loc: loc)}';
     }
     if (raw == 'bluetooth_failed') {
@@ -583,22 +1032,23 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
 
   Widget _buildChecklistItem(String text) {
     return Padding(
-      padding: const EdgeInsetsDirectional.only(
-        bottom: AppSpacing.sm,
-        start: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.compact),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ نقطة بسيطة بدلاً من CircleAvatar
-          const Padding(
-            padding: EdgeInsetsDirectional.only(
-              top: AppSpacing.sm,
-              end: AppSpacing.sm,
+          Container(
+            margin: const EdgeInsetsDirectional.only(
+              top: 7,
+              end: AppSpacing.sm + 2,
             ),
-            child: Icon(Icons.circle, size: AppSpacing.iconBullet),
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: context.gold,
+              shape: BoxShape.circle,
+            ),
           ),
-          Expanded(child: Text(text, style: context.styles.subtitle)),
+          Expanded(child: Text(text, style: context.styles.body)),
         ],
       ),
     );

@@ -17,6 +17,22 @@ class _Queue implements OfflineQueue {
   }
 
   @override
+  Future<bool> enqueueIfAbsent(PendingEvent event) async {
+    if (event.dedupeKey != null &&
+        events.any((e) => e.dedupeKey == event.dedupeKey)) {
+      return false;
+    }
+    events.removeWhere((item) => item.id == event.id);
+    events.add(event);
+    return true;
+  }
+
+  @override
+  Future<List<PendingEvent>> getPending({int limit = 1000}) async {
+    return events.take(limit).toList();
+  }
+
+  @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
     final ready = events.where((event) => event.nextRetryAt == null).toList();
     return ready.take(limit).toList();
@@ -110,21 +126,24 @@ PendingEvent _event() {
 }
 
 void main() {
-  test('sync reports server acceptance and removes the stamped event', () async {
-    final queue = _Queue();
-    final dispatcher = _Dispatcher(const Right(true));
-    final engine = SyncEngine(
-      queue: queue,
-      dispatcher: dispatcher,
-      timeAuthority: _Clock(),
-    );
+  test(
+    'sync reports server acceptance and removes the stamped event',
+    () async {
+      final queue = _Queue();
+      final dispatcher = _Dispatcher(const Right(true));
+      final engine = SyncEngine(
+        queue: queue,
+        dispatcher: dispatcher,
+        timeAuthority: _Clock(),
+      );
 
-    final result = await engine.submitEventAndReport(_event());
+      final result = await engine.submitEventAndReport(_event());
 
-    expect(result.isRight(), isTrue);
-    expect(dispatcher.calls, 1);
-    expect(queue.events, isEmpty);
-  });
+      expect(result.isRight(), isTrue);
+      expect(dispatcher.calls, 1);
+      expect(queue.events, isEmpty);
+    },
+  );
 
   test('sync reports server rejection and keeps the event for retry', () async {
     final queue = _Queue();
@@ -139,7 +158,10 @@ void main() {
 
     final result = await engine.submitEventAndReport(_event());
 
-    expect(result.fold((failure) => failure.message, (_) => ''), 'rejected by server');
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'rejected by server',
+    );
     expect(dispatcher.calls, 1);
     expect(queue.events, isEmpty);
   });

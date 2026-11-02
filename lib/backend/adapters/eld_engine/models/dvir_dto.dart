@@ -109,7 +109,12 @@ class DvirDto {
     return DvirDto(
       id: (json['id'] as num).toInt(),
       driver: json['driver'] == null
-          ? null
+          ? (json['driverId'] != null || json['driverName'] != null
+              ? DvirDriverDto(
+                  id: (json['driverId'] as num?)?.toInt() ?? 0,
+                  name: json['driverName']?.toString(),
+                )
+              : null)
           : DvirDriverDto.fromJson(json['driver'] as Map<String, dynamic>),
       uniqueId:
           json['uniqueId']?.toString() ?? vehicleObj?['uniqueId']?.toString(),
@@ -124,34 +129,48 @@ class DvirDto {
           json['companyName']?.toString() ??
           json['company']?['name']?.toString(),
       inspectionType: json['inspectionType']?.toString(),
-      inspectionTime: json['inspectionTime']?.toString(),
+      inspectionTime:
+          json['inspectionTime']?.toString() ?? json['startTime']?.toString(),
       formattedTime: json['formattedTime']?.toString(),
-      location: _locationText(json['location']),
+      location: _locationText(json['location'] ?? json['locationText']),
       odometer:
           (json['odometer'] as num?)?.toDouble() ??
           (vehicleObj?['odometer'] as num?)?.toDouble(),
-      status: json['status']?.toString(),
+      status: json['status']?.toString() ??
+          json['vehicleCondition']?.toString() ??
+          json['operatingStatus']?.toString(),
       hasDefects: json['hasDefects'] == true || defects.isNotEmpty,
       // A summary may carry only the server count and no defect rows.
       defectsCount: defects.isEmpty && (explicitCount ?? 0) > 0
           ? explicitCount!
-          : defects.length,
+          : (json['totalDefects'] is num
+              ? (json['totalDefects'] as num).toInt()
+              : defects.length),
       defectsSummary: json['defectsSummary']?.toString(),
       outOfService: json['outOfService'] == true,
       photos: photos,
       vehicleDefects: vehicleDefects,
       trailers: trailers,
       defects: defects,
-      remarks: json['remarks']?.toString(),
+      remarks: json['remarks']?.toString() ?? json['notes']?.toString(),
       certified: json['certified'] == true,
-      signatureData: json['signatureData']?.toString(),
-      mechanicName: json['mechanicName']?.toString(),
-      repairStatus: json['repairStatus']?.toString(),
-      repairNotes: json['repairNotes']?.toString(),
-      reviewingDriverName: json['reviewingDriverName']?.toString(),
-      nextDriverReviewed: json['nextDriverReviewed'] == true,
+      signatureData: json['signatureData']?.toString() ?? json['signature']?.toString(),
+      mechanicName: json['mechanicName']?.toString() ??
+          json['repairAction']?['performedByName']?.toString() ??
+          json['certification']?['certifiedByName']?.toString(),
+      repairStatus: json['repairStatus']?.toString() ??
+          json['repairAction']?['actionPerformed']?.toString() ??
+          json['certification']?['certificationType']?.toString(),
+      repairNotes: json['repairNotes']?.toString() ??
+          json['repairAction']?['repairNotes']?.toString(),
+      reviewingDriverName: json['reviewingDriverName']?.toString() ??
+          json['previousReview']?['reviewedByName']?.toString() ??
+          json['reviewedByDriverName']?.toString(),
+      nextDriverReviewed: json['nextDriverReviewed'] == true ||
+          json['previousReview'] != null ||
+          json['reviewedByDriverId'] != null,
       retentionDaysRemaining: (json['retentionDaysRemaining'] as num?)?.toInt(),
-      createdAt: json['createdAt']?.toString(),
+      createdAt: json['createdAt']?.toString() ?? json['startTime']?.toString(),
     );
   }
 
@@ -441,37 +460,50 @@ class CreateDvirRequestDto {
 }
 
 class ReviewDvirRequestDto {
+  final int? currentInspectionId;
+  final int? previousDvirId;
   final int reviewingDriverId;
   final String reviewingDriverName;
   final String signatureData;
   final bool driverAgreed;
   final String? reviewNotes;
+  final bool driverSatisfiedSafe;
 
   const ReviewDvirRequestDto({
+    this.currentInspectionId,
+    this.previousDvirId,
     required this.reviewingDriverId,
     required this.reviewingDriverName,
     required this.signatureData,
     required this.driverAgreed,
     this.reviewNotes,
-  });
+    bool? driverSatisfiedSafe,
+  }) : driverSatisfiedSafe = driverSatisfiedSafe ?? driverAgreed;
 
   factory ReviewDvirRequestDto.fromJson(Map<String, dynamic> json) {
     return ReviewDvirRequestDto(
+      currentInspectionId: (json['currentInspectionId'] as num?)?.toInt(),
+      previousDvirId: (json['previousDvirId'] as num?)?.toInt(),
       reviewingDriverId: (json['reviewingDriverId'] as num).toInt(),
       reviewingDriverName: json['reviewingDriverName'].toString(),
       signatureData: json['signatureData'].toString(),
       driverAgreed: json['driverAgreed'] == true,
       reviewNotes: json['reviewNotes']?.toString(),
+      driverSatisfiedSafe: json['driverSatisfiedSafe'] == true ||
+          json['driverAgreed'] == true,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      if (currentInspectionId != null) 'currentInspectionId': currentInspectionId,
+      if (previousDvirId != null) 'previousDvirId': previousDvirId,
       'reviewingDriverId': reviewingDriverId,
       'reviewingDriverName': reviewingDriverName,
       'signatureData': signatureData,
       'driverAgreed': driverAgreed,
       'reviewNotes': reviewNotes,
+      'driverSatisfiedSafe': driverSatisfiedSafe,
     };
   }
 }

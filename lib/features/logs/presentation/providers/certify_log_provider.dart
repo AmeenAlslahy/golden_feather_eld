@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -14,7 +12,6 @@ import '../../../../core/events/app_events.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
-import 'logs_provider.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/log_readiness.dart';
 import '../../domain/entities/log_certify_state.dart';
@@ -125,6 +122,12 @@ final class CertifyFailed extends CertifyOutcome {
   const CertifyFailed(super.message);
 }
 
+/// الطلب محفوظ في طابور المزامنة فقط؛ السجل ليس معتمدًا بعد.
+/// الواجهة تعرضه تحذيرًا ولا تغلق الشاشة ولا تمسح التوقيع.
+final class CertifyPending extends CertifyOutcome {
+  const CertifyPending(super.message);
+}
+
 /// One notifier per log: readiness of log A can never leak into log B, and
 /// the state is released as soon as the certify tab is closed.
 final certifyLogProvider = StateNotifierProvider.autoDispose
@@ -138,13 +141,7 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   final LogRepository _repository;
 
   CertifyLogNotifier(this._ref, this._logId, this._repository)
-    : super(const CertifyLogState(isLoading: true)) {
-    // الجلب الأولي أثر جانبي للمُنشئ (بعد اكتمال التهيئة) لا لجسم
-    // المزوّد — جسم المزوّد بناءٌ خالص (مراجعة 2026-10-25).
-    scheduleMicrotask(() {
-      if (mounted) _fetchReadiness();
-    });
-  }
+    : super(const CertifyLogState(isLoading: true));
 
   /// Read lazily so a locale switch translates the next message without
   /// rebuilding the notifier (which would drop the loaded readiness).
@@ -153,6 +150,16 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
 
   /// Driver-facing text only — never the failure code or exception text.
   String _message(Failure failure) => anyErrorUserMessage(failure, loc: _loc);
+
+  /// `200` باستجابة غير حاسمة ليس فشلاً تقنيًا: الخادم لم يؤكد الاعتماد.
+  /// نعرض نصًا صريحًا بدل الرسالة العامة «تعذّر الطلب».
+  String _certifyFailureMessage(Failure failure) {
+    if (failure is ServerFailure &&
+        failure.message == 'certificationNotConfirmed') {
+      return _loc.certifyNotConfirmed;
+    }
+    return _message(failure);
+  }
 
   /// Re-fetch readiness (retry button, or after answering a carrier edit).
   Future<void> checkReadiness() async {
@@ -181,11 +188,39 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
 
     if (!mounted) return;
     state = readinessResult.match(
-      (failure) => state.copyWith(
-        isLoading: false,
-        error: _message(failure),
-        certifyState: certifyState,
-      ),
+      (failure) {
+        if (certifyState != null) {
+          final fallbackReadiness = LogReadiness(
+            dailyLogId: certifyState.dailyLogId != 0
+                ? certifyState.dailyLogId
+                : _logId.value,
+            driverId: 0,
+            driverName: '',
+            logDate: certifyState.logDate,
+            readinessStatus: certifyState.canCertify
+                ? 'READY'
+                : (certifyState.certified ? 'CERTIFIED' : 'NOT_READY'),
+            missingRequirements: certifyState.validationCodes,
+            legalStatement: certifyState.statementText,
+            availableActions: certifyState.canCertify
+                ? const ['CERTIFY']
+                : const [],
+            carrierProposedEditsPending: certifyState.validationCodes.contains(
+              'UNCERTIFIED_EDITS_PENDING',
+            ),
+          );
+          return state.copyWith(
+            isLoading: false,
+            readinessData: fallbackReadiness,
+            certifyState: certifyState,
+          );
+        }
+        return state.copyWith(
+          isLoading: false,
+          error: _message(failure),
+          certifyState: certifyState,
+        );
+      },
       (data) => state.copyWith(
         isLoading: false,
         readinessData: data,
@@ -246,6 +281,12 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
   }) async {
     if (state.isLoading) return null;
 
+    if (log.isCertified) {
+      final failOutcome = CertifyFailed(_loc.errBusinessRuleViolation);
+      state = state.copyWith(outcome: failOutcome);
+      return failOutcome;
+    }
+
     if (!log.isFormComplete) {
       final failOutcome = CertifyFailed(_loc.fillFormFirst);
       state = state.copyWith(outcome: failOutcome);
@@ -285,10 +326,17 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
     if (!mounted) return null;
 
     final outcome = result.match(
-      (failure) => CertifyFailed(_message(failure)),
-      (_) {
+      (failure) => CertifyFailed(_certifyFailureMessage(failure)),
+      (submission) {
+        if (submission.isPendingSync) {
+          // الأوفلاين: الطلب والتوقيع محفوظان في الطابور. لا نحذف المسودة
+          // ولا نعلن الاعتماد؛ الشاشة تبقى مفتوحة لإعادة المحاولة. نطلق
+          // تحديث القائمة كي يظهر السجل «بانتظار المزامنة» فوراً وبعد
+          // إعادة فتح الشاشة (الحالة محفوظة في الكاش لا في الذاكرة).
+          _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
+          return CertifyPending(_loc.certifyPendingSync);
+        }
         _ref.read(logDraftSignatureProvider(_logId).notifier).clearDraft();
-        _ref.invalidate(logsProvider);
         _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
         return CertifySucceeded(
           _loc.logSuccessfullyCertified,

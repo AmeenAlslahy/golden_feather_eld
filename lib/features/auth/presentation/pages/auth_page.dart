@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_typography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_animations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
-import '../providers/auth_state_provider.dart';
+import '../../../../core/utils/startup_profiler.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../providers/auth_mode_provider.dart';
-import '../widgets/login_form.dart';
+import '../providers/auth_state_provider.dart';
 import '../widgets/forgot_password_form.dart';
+import '../widgets/login_form.dart';
 
-/// صفحة المصادقة الموحدة
+/// صفحة المصادقة الموحدة — Golden Feather Design System 2.0
 class AuthPage extends ConsumerStatefulWidget {
   const AuthPage({super.key});
 
@@ -20,117 +23,103 @@ class AuthPage extends ConsumerStatefulWidget {
 
 class _AuthPageState extends ConsumerState<AuthPage> {
   @override
+  void initState() {
+    super.initState();
+    StartupProfiler.markOnce('first-interactive-page:login');
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final authMode = ref.watch(authModeProvider);
     final isError = authState.status == AuthStatus.error;
     final isLoading = authState.status == AuthStatus.loading;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenPadding,
-              vertical: AppSpacing.sectionGap,
+              horizontal: AppSpacing.screenHorizontal,
+              vertical: AppSpacing.lg,
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
+              constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // شعار التطبيق
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.round),
-                    child: Image.asset(
-                      'assets/images/ic_launcher.png',
-                      width: 120,
-                      height: 120,
+                  const Center(
+                    child: AppLogo(
+                      customSize: 120,
                       cacheWidth: 360,
                       cacheHeight: 360,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-
-                  // اسم التطبيق
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     context.loc.appName,
                     textAlign: TextAlign.center,
-                    style: context.textTheme.headlineLarge?.copyWith(
-                      color: context.colors.primary,
-                      fontWeight: AppTypography.bold,
-                    ),
+                    style: context.styles.display,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // شعار التطبيق (الوصف)
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     context.loc.appSlogan,
                     textAlign: TextAlign.center,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: context.colors.onSurfaceVariant,
-                    ),
+                    style: context.styles.secondary,
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  const SizedBox(height: AppSpacing.lg),
 
-                  // رسالة الخطأ (إن وجدت) في الأعلى لرؤية أفضل
-                  if (isError && !isLoading)
+                  // Authentication Error Banner
+                  if (isError && !isLoading && authState.errorMessage != null) ...[
                     Container(
-                      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                      padding: const EdgeInsets.all(AppSpacing.md),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.compact,
+                      ),
                       decoration: BoxDecoration(
-                        color: context.colors.error.withValues(alpha: 0.1),
+                        color: context.goldenColors.errorBackground,
                         borderRadius: BorderRadius.circular(AppRadius.card),
                         border: Border.all(
-                          color: context.colors.error.withValues(alpha: 0.3),
+                          color: context.goldenColors.errorText.withValues(alpha: 0.25),
                         ),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
                             Icons.error_outline,
-                            color: context.colors.error,
+                            color: context.goldenColors.errorText,
                             size: AppSpacing.iconMedium,
                           ),
                           const SizedBox(width: AppSpacing.sm),
-                          if (authState.errorMessage != null)
-                            Expanded(
-                              child: Text(
-                                context.translateErrorKey(
-                                  authState.errorMessage!,
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                      height: 1.3,
-                                    ),
-                              ),
+                          Expanded(
+                            child: Text(
+                              context.translateErrorKey(authState.errorMessage!),
+                              style: context.styles.error,
                             ),
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
 
-                  // مؤشر التحميل أثناء معالجة الطلب
-                  if (isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-
-                  // التبديل بين النماذج مع انتقال سلس
+                  // Authentication Content with Smooth Transition
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeInOut,
-                    switchOutCurve: Curves.easeInOut,
+                    duration: reduceMotion ? Duration.zero : AppAnimations.normal,
+                    switchInCurve: AppAnimations.enterCurve,
+                    switchOutCurve: AppAnimations.exitCurve,
                     transitionBuilder: (child, animation) {
                       return FadeTransition(
                         opacity: animation,
                         child: SlideTransition(
                           position: Tween<Offset>(
-                            begin: const Offset(0.05, 0),
+                            begin: const Offset(0.04, 0),
                             end: Offset.zero,
                           ).animate(animation),
                           child: child,

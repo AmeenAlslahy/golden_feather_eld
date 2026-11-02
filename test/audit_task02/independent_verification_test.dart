@@ -150,6 +150,9 @@ class _Backend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     if (onlineFails) return err(const NetworkError(code: 'net', l10nKey: 'n'));
     return ok(build(status: status));
@@ -209,6 +212,8 @@ class _SyncEngine implements SyncEngine {
   Future<DispatchAuthContext> Function()? get observeAuth => null;
   @override
   Future<int> releaseEligible({int limit = 50}) async => 0;
+  @override
+  Future<void> Function(PendingEvent event)? get onDeadLettered => null;
 }
 
 class _PeriodStore implements DutyPeriodStore {

@@ -75,6 +75,15 @@ class SQLiteOfflineQueue implements OfflineQueue {
     );
   }
 
+  /// P0 — يمنع طلبين نشطين لنفس المفتاح المنطقي (مثل اعتماد نفس السجل
+  /// لنفس السائق). فهرس جزئي: الصفوف القديمة بلا مفتاح (`NULL`) لا تتأثر.
+  static Future<void> _createDedupeIndex(DatabaseExecutor db) async {
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_pending_dedupe '
+      'ON $_tableName(dedupeKey) WHERE dedupeKey IS NOT NULL',
+    );
+  }
+
   /// P1.1 — durable duty-event journal (evidence layer).
   ///
   /// `event_id` is the logical transition identity (also the queue `id` /
@@ -117,7 +126,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
@@ -127,7 +136,8 @@ class SQLiteOfflineQueue implements OfflineQueue {
             createdAt INTEGER NOT NULL,
             priority INTEGER NOT NULL,
             retryCount INTEGER NOT NULL,
-            nextRetryAt INTEGER
+            nextRetryAt INTEGER,
+            dedupeKey TEXT
           )
         ''');
         await db.execute('''
@@ -142,6 +152,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
         await _createQuarantineTable(db);
         await _createJournalTable(db);
         await _createIndexes(db);
+        await _createDedupeIndex(db);
       },
       // ترقية إضافية فقط: لا ALTER على الجداول القديمة، لا backfill،
       // لا مساس بالصفوف. IF NOT EXISTS يجعلها قابلة للاستئناف بعد crash.
@@ -166,6 +177,11 @@ class SQLiteOfflineQueue implements OfflineQueue {
         if (oldVersion < 5) {
           await _createJournalTable(db);
         }
+        if (oldVersion < 6) {
+          // عمود اختياري: الصفوف القديمة تبقى `NULL` وتُرسل كما هي.
+          await db.execute('ALTER TABLE $_tableName ADD COLUMN dedupeKey TEXT');
+          await _createDedupeIndex(db);
+        }
       },
     );
   }
@@ -180,6 +196,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
     'priority': event.priority.index,
     'retryCount': event.retryCount,
     'nextRetryAt': event.nextRetryAt?.millisecondsSinceEpoch,
+    'dedupeKey': event.dedupeKey,
   };
 
   /// Insert/REPLACE a queue row inside an existing transaction or database.
@@ -204,6 +221,34 @@ class SQLiteOfflineQueue implements OfflineQueue {
   }
 
   @override
+  Future<bool> enqueueIfAbsent(PendingEvent event) async {
+    final db = await database;
+    // INSERT OR IGNORE + فهرس فريد على dedupeKey: الفحص والكتابة عملية
+    // SQLite واحدة، فلا يوجد سباق بين قراءة ثم إدراج.
+    final rowId = await db.insert(
+      _tableName,
+      pendingRow(event),
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    return rowId != -1;
+  }
+
+  PendingEvent _toEvent(Map<String, dynamic> map) {
+    return PendingEvent(
+      id: map['id'] as String,
+      type: map['type'] as String,
+      payload: jsonDecode(map['payload'] as String) as Map<String, dynamic>,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      priority: SyncPriority.values[map['priority'] as int],
+      retryCount: map['retryCount'] as int,
+      nextRetryAt: map['nextRetryAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['nextRetryAt'] as int)
+          : null,
+      dedupeKey: map['dedupeKey'] as String?,
+    );
+  }
+
+  @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
     final db = await database;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -218,19 +263,18 @@ class SQLiteOfflineQueue implements OfflineQueue {
       limit: limit,
     );
 
-    return maps.map((map) {
-      return PendingEvent(
-        id: map['id'] as String,
-        type: map['type'] as String,
-        payload: jsonDecode(map['payload'] as String) as Map<String, dynamic>,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-        priority: SyncPriority.values[map['priority'] as int],
-        retryCount: map['retryCount'] as int,
-        nextRetryAt: map['nextRetryAt'] != null
-            ? DateTime.fromMillisecondsSinceEpoch(map['nextRetryAt'] as int)
-            : null,
-      );
-    }).toList();
+    return maps.map(_toEvent).toList();
+  }
+
+  @override
+  Future<List<PendingEvent>> getPending({int limit = 1000}) async {
+    final db = await database;
+    final maps = await db.query(
+      _tableName,
+      orderBy: 'createdAt ASC',
+      limit: limit,
+    );
+    return maps.map(_toEvent).toList();
   }
 
   @override
@@ -447,6 +491,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
         'priority': record.event.priority.index,
         'retryCount': record.event.retryCount,
         'nextRetryAt': null,
+        'dedupeKey': record.event.dedupeKey,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       await txn.delete(_quarantineTable, where: 'id = ?', whereArgs: [eventId]);
     });

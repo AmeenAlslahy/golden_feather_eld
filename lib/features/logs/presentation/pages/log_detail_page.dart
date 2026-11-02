@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../providers/logs_provider.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../../domain/entities/daily_log.dart';
+import '../formatters/log_date_formatter.dart';
 import 'edit_log_page.dart';
 import 'inspection_preview_page.dart';
 import '../widgets/log_detail_tabs/events_tab.dart';
@@ -331,7 +332,8 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
   }
 
   Widget _buildBodyContent(int currentIndex, DailyLog selectedLog) {
-    return IndexedStack(
+    return _LazyTabStack(
+      key: ValueKey('tabs_${selectedLog.id.value}'),
       index: currentIndex.clamp(0, 2),
       children: [
         EventsTab(
@@ -343,6 +345,51 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
           key: ValueKey('certify_${selectedLog.id.value}'),
           selectedLog: selectedLog,
         ),
+      ],
+    );
+  }
+}
+
+/// [IndexedStack] كسول: لا يبني تبويباً قبل أول زيارة له، ثم يحافظ على
+/// حالته بعد ذلك. يُعاد ضبطه عند تبديل السجل عبر الـ key الخارجي، فلا
+/// تُبنى تبويبات يوم جديد لم يزرها السائق بعد.
+class _LazyTabStack extends StatefulWidget {
+  final int index;
+  final List<Widget> children;
+
+  const _LazyTabStack({super.key, required this.index, required this.children});
+
+  @override
+  State<_LazyTabStack> createState() => _LazyTabStackState();
+}
+
+class _LazyTabStackState extends State<_LazyTabStack> {
+  late final List<bool> _visited = List<bool>.filled(
+    widget.children.length,
+    false,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _visited[widget.index] = true;
+  }
+
+  @override
+  void didUpdateWidget(covariant _LazyTabStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.index != oldWidget.index) {
+      _visited[widget.index] = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IndexedStack(
+      index: widget.index,
+      children: [
+        for (var i = 0; i < widget.children.length; i++)
+          _visited[i] ? widget.children[i] : const SizedBox.shrink(),
       ],
     );
   }

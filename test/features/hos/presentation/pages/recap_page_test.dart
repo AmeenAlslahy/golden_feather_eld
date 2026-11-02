@@ -180,4 +180,28 @@ void main() {
     await pump(tester);
     expect(find.text('No data'), findsOneWidget);
   });
+
+  testWidgets('renders onDuty hours when totalWork is zero (server only sends onDuty)', (tester) async {
+    final today = DateTime.now();
+    final r = WeeklyRecap(
+      cycleRule: CycleRule.usa70_8,
+      cycleUsed: const Duration(hours: 10),
+      cycleRemaining: const Duration(hours: 60),
+      availableTomorrow: const Duration(hours: 10),
+      days: [
+        RecapDay(
+          date: today,
+          dayOfWeek: 'Today',
+          onDuty: const Duration(hours: 6),
+          totalWork: Duration.zero,
+        ),
+      ],
+    );
+
+    when(() => repo.getWeeklyRecap(driverId: any(named: 'driverId')))
+        .thenAnswer((_) async => Right(r));
+    await pump(tester);
+
+    expect(find.text('06.00'), findsNWidgets(2)); // in table row and in "Hours Worked Today"
+  });
 }

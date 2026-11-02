@@ -16,6 +16,7 @@ import '../../../codriver/presentation/providers/codriver_provider.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../inspection/presentation/widgets/inspection_log_header_table.dart';
 import '../../domain/entities/daily_log.dart';
+import '../formatters/log_date_formatter.dart';
 import '../mappers/inspection_preview_event_mapper.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../providers/logs_provider.dart';

@@ -5,6 +5,7 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entities/dispatch_auth.dart';
 import '../../domain/entities/event_ownership.dart';
 import '../../domain/entities/pending_event.dart';
+import '../../domain/entities/sync_verification.dart';
 import '../../domain/usecases/sync_engine.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
 import '../../../../backend/adapters/eld_engine/models/certify_dto.dart';
@@ -47,6 +48,10 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   /// تُحقن من طبقة providers — الـ dispatcher لا يعرف مصادر السجلات.
   final Future<int?> Function(int logId)? cachedLogOwner;
 
+  /// P0 — إبلاغ طبقة السجلات بنتيجة التحقق الفعلية (اعتماد/نموذج) كي
+  /// يتحدث الكاش والواجهة، ويُميَّز الفشل النهائي عن «بانتظار المزامنة».
+  final SyncResultCallback? onSettled;
+
   TraccarRemoteEventDispatcher(
     this._dutyStatusBackend,
     this._dailyLogsBackend,
@@ -56,6 +61,7 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     DriverSessionBackend? Function()? readDriverSessionBackend,
     required this.observeAuth,
     this.cachedLogOwner,
+    this.onSettled,
   }) : _inspectionBackend = inspectionBackend,
        _readDriverSessionBackend = readDriverSessionBackend;
 
@@ -112,37 +118,75 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
   /// رفض وقت-الإرسال (OwnerMismatchError من الـ interceptor) يُحوَّل لحجر
   /// بلا retry؛ أي خطأ آخر يسلك المسار القديم حرفياً (سلوك retry بلا تغيير).
   Either<Failure, bool> _mapResult<T>(Either<AppError, T> result, int owner) {
-    return result.fold((error) {
-      if (error is OwnerMismatchError) {
-        AppLogger.warning('Dispatch fenced at HTTP boundary for owner $owner');
-        return Left(
-          QuarantinedFailure(
-            reason: 'send-time-owner-mismatch',
-            ownerDriverId: owner,
-            parkState: 'deferredOwnerMismatch',
-          ),
-        );
-      }
-      // 🔴 رفض نهائي: الخادم لن يقبل هذه البيانات أبداً.
-      //
-      // المثال المُبلَّغ: حفظ نموذج يوم معتمد ⇒ 409
-      // "السجل اليومي معتمد مسبقاً، لا يمكن تعديل بيانات النموذج
-      // قبل إلغاء الاعتماد". كان أي خطأ يصبح ServerFailure قابلاً
-      // لإعادة المحاولة، وبما أن RetryPolicy تعيد المحاولة إلى ما لا
-      // نهاية (FMCSA: لا تُفقد بيانات HOS) كان هذا الحدث يُعاد إرساله
-      // كل ~50 ثانية إلى الأبد، ويغرق السجلات بلا فائدة.
-      //
-      // 409 / 400 / 422 / 404 / 403 رفض نهائي ⇒ dead-letter فوراً.
-      // العابرة (شبكة، 5xx، 408، 429) تبقى على مسار إعادة المحاولة.
-      if (isTerminalDispatchRejection(error)) {
-        AppLogger.warning(
-          'Dispatch rejected permanently for owner $owner: '
-          '${error.code} — dead-lettering without retry',
-        );
-        return Left(RejectedFailure(code: error.code, l10nKey: error.l10nKey));
-      }
-      return Left(ServerFailure(message: error.code));
-    }, (_) => const Right(true));
+    return result.fold(
+      (error) => _mapError(error, owner),
+      (_) => const Right(true),
+    );
+  }
+
+  Either<Failure, bool> _mapError(AppError error, int owner) {
+    if (error is OwnerMismatchError) {
+      AppLogger.warning('Dispatch fenced at HTTP boundary for owner $owner');
+      return Left(
+        QuarantinedFailure(
+          reason: 'send-time-owner-mismatch',
+          ownerDriverId: owner,
+          parkState: 'deferredOwnerMismatch',
+        ),
+      );
+    }
+    // 🔴 رفض نهائي: الخادم لن يقبل هذه البيانات أبداً.
+    //
+    // المثال المُبلَّغ: حفظ نموذج يوم معتمد ⇒ 409
+    // "السجل اليومي معتمد مسبقاً، لا يمكن تعديل بيانات النموذج
+    // قبل إلغاء الاعتماد". كان أي خطأ يصبح ServerFailure قابلاً
+    // لإعادة المحاولة، وبما أن RetryPolicy تعيد المحاولة إلى ما لا
+    // نهاية (FMCSA: لا تُفقد بيانات HOS) كان هذا الحدث يُعاد إرساله
+    // كل ~50 ثانية إلى الأبد، ويغرق السجلات بلا فائدة.
+    //
+    // 409 / 400 / 422 / 404 / 403 رفض نهائي ⇒ dead-letter فوراً.
+    // العابرة (شبكة، 5xx، 408، 429) تبقى على مسار إعادة المحاولة.
+    if (isTerminalDispatchRejection(error)) {
+      AppLogger.warning(
+        'Dispatch rejected permanently for owner $owner: '
+        '${error.code} — dead-lettering without retry',
+      );
+      return Left(RejectedFailure(code: error.code, l10nKey: error.l10nKey));
+    }
+    return Left(ServerFailure(message: error.code));
+  }
+
+  /// إبلاغ نتيجة التحقق بعد استجابة فعلية. أي فشل في تحديث الكاش/الواجهة
+  /// لا يغيّر حكم الإرسال ولا يعيد الطلب إلى الطابور.
+  Future<void> _reportSettled(
+    PendingEvent event,
+    int owner,
+    Either<Failure, bool> result, {
+    Map<String, dynamic>? serverData,
+  }) async {
+    final callback = onSettled;
+    if (callback == null) return;
+    final verification = result.fold(
+      (failure) => failure is RejectedFailure
+          ? SyncVerification.rejected
+          : SyncVerification.retryable,
+      (accepted) =>
+          accepted ? SyncVerification.confirmed : SyncVerification.retryable,
+    );
+    try {
+      await callback(
+        VerifiedSyncResult(
+          event: event,
+          ownerDriverId: owner,
+          verification: verification,
+          serverData: serverData,
+        ),
+      );
+    } catch (e) {
+      AppLogger.warning(
+        'Sync result callback failed for ${event.id} (${event.type}): $e',
+      );
+    }
   }
 
   /// هل هذا الخطأ نهائي بنيوياً (لا يصلحه الانتظار ولا إعادة الإرسال)؟
@@ -311,16 +355,49 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     // (status/specialCategory/startTime/notes + location{description}) —
     // نفس جسم المسار الأونلاين في LogRepositoryImpl حرفياً.
     if (statusId != null && statusId > 0 && logId != null && logId > 0) {
+      final startTimeIso = payload['startTime']?.toString();
+      final reasonText = (payload['reason'] ?? payload['notes'])?.toString();
+      final locationText = (payload['locationText'] ?? payload['location'])
+          ?.toString();
+
+      // المدة جزء من جسم التعديل: بلا `endTime` يعيد الخادم حساب مدة
+      // مختلفة عن التي رآها السائق. العناصر القديمة في الطابور (بلا
+      // `durationSeconds`) تحتفظ بسلوكها السابق.
+      final rawDuration = payload['durationSeconds'];
+      final durationSeconds = rawDuration is int
+          ? rawDuration
+          : int.tryParse('${rawDuration ?? ''}');
+      String? endTimeIso;
+      if (startTimeIso != null && durationSeconds != null) {
+        final start = DateTime.tryParse(startTimeIso);
+        if (start != null) {
+          endTimeIso = start
+              .toUtc()
+              .add(Duration(seconds: durationSeconds))
+              .toIso8601String();
+        }
+      }
+
       final result = await _dailyLogsBackend.updateEvent(
         logId: DailyLogId(logId),
         eventId: DutyStatusId(statusId),
         event: {
           'status': payload['status'],
           'specialCategory': null,
-          'startTime': payload['startTime'],
-          if (payload['notes'] != null) 'notes': payload['notes'],
-          if (payload['locationText'] != null)
-            'location': {'description': payload['locationText']},
+          if (startTimeIso != null) 'startTime': startTimeIso,
+          if (startTimeIso != null)
+            'timeRange': {
+              'startTime': startTimeIso,
+              if (endTimeIso != null) 'endTime': endTimeIso,
+            },
+          if (reasonText != null) 'reason': reasonText,
+          if (reasonText != null) 'notes': reasonText,
+          if (reasonText != null) 'editReason': reasonText,
+          if (locationText != null) ...{
+            'location': {'description': locationText},
+            'manualLocation': locationText,
+            'locationText': locationText,
+          },
         },
         expectedOwnerDriverId: owner,
       );
@@ -365,7 +442,20 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
       form: form,
       expectedOwnerDriverId: owner,
     );
-    return _mapResult(result, owner);
+    final mapped = result.fold<Either<Failure, bool>>(
+      (error) => _mapError(error, owner),
+      (json) => const Right(true),
+    );
+    await _reportSettled(
+      event,
+      owner,
+      mapped,
+      serverData: result.fold<Map<String, dynamic>?>(
+        (_) => null,
+        (json) => json,
+      ),
+    );
+    return mapped;
   }
 
   Future<Either<Failure, bool>> _dispatchCertification(
@@ -376,25 +466,47 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
     if (logId == null || logId <= 0) {
       return const Left(ServerFailure(message: 'daily log id is missing'));
     }
-    // P0 2B-1 — هوية التصديق = مالك الحدث المثبت حصراً. انتهى حقن
-    // جلسة الإرسال الحالية (كانت ترسل certify-A باسم B).
-    // الوثيقة: جسم POST /certify = `{ certified, signatureImage }`؛
-    // نقرأ المخطط الجديد ونتسامح مع حدث قديم ما زال في الطابور
-    // (certifiedTrue بلا صورة توقيع).
+    // P0 2B-1 — هوية التصديق = مالك الحدث المثبت حصراً.
+    // الوثيقة: جسم POST /certify يدعم `{ statementAccepted, signature, device }` و `{ certified, signatureImage }`
     final certified =
         event.payload['certified'] as bool? ??
+        event.payload['statementAccepted'] as bool? ??
         event.payload['certifiedTrue'] as bool? ??
         true;
-    final signatureImage = event.payload['signatureImage'] as String?;
+    final signatureImage =
+        event.payload['signatureImage'] as String? ??
+        (event.payload['signature'] is Map
+            ? (event.payload['signature'] as Map)['imageData']?.toString()
+            : null);
+    final device = event.payload['device'] is Map
+        ? Map<String, dynamic>.from(event.payload['device'] as Map)
+        : null;
+
     final result = await _dailyLogsBackend.certify(
       CertifyRequestDto(
         dailyLogId: logId,
         certified: certified,
         signatureImage: signatureImage,
+        device: device,
       ),
       expectedOwnerDriverId: owner,
     );
-    return _mapResult(result, owner);
+    final mapped = result.fold<Either<Failure, bool>>(
+      (error) => _mapError(error, owner),
+      (data) {
+        // 2xx وحده ليس اعتماداً (نفس قاعدة المسار الأونلاين): الخادم قد
+        // يرد بنجاح مع `isCertified=false` أو بحالة غير حاسمة. نترك الطلب
+        // في الطابور لسياسة retry/dead-letter بدل حذفه كنجاح.
+        if (!data.isCertified) {
+          return const Left(
+            ServerFailure(message: 'certificationNotConfirmed'),
+          );
+        }
+        return const Right(true);
+      },
+    );
+    await _reportSettled(event, owner, mapped);
+    return mapped;
   }
 
   Future<Either<Failure, bool>> _dispatchDvirCreate(

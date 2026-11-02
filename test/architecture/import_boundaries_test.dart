@@ -16,9 +16,6 @@ const Set<String> _allowedViolations = {
   'PRESENTATION->BACKEND|features/connection/presentation/providers/hardware_alerts_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/connection/presentation/providers/hardware_status_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/hos/presentation/providers/hos_engine_provider.dart|backend/providers/backend_providers.dart',
-  'PRESENTATION->BACKEND|features/logs/presentation/pages/unidentified_events_page.dart|backend/contracts/contract_enums.dart',
-  'PRESENTATION->BACKEND|features/logs/presentation/providers/unidentified_events_provider.dart|backend/contracts/contract_enums.dart',
-  'PRESENTATION->BACKEND|features/logs/presentation/providers/unidentified_events_provider.dart|backend/providers/backend_providers.dart',
 };
 
 final RegExp _importPattern = RegExp(r'''import\s+['"]([^'"]+)['"]''');

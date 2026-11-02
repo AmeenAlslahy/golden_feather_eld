@@ -38,6 +38,14 @@ class AppStyles extends ThemeExtension<AppStyles> {
     required this.gold,
     required this.number,
     required this.timer,
+    // أنماط Design System 2.0 الجديدة
+    required this.display,
+    required this.cardTitle,
+    required this.bodyMedium,
+    required this.secondary,
+    required this.badge,
+    required this.timerLarge,
+    required this.timerMedium,
   });
 
   final TextStyle appBarTitle;
@@ -68,13 +76,21 @@ class AppStyles extends ThemeExtension<AppStyles> {
   final TextStyle number;
   final TextStyle timer;
 
+  // ========== أنماط Design System 2.0 الإضافية ==========
+  final TextStyle display;
+  final TextStyle cardTitle;
+  final TextStyle bodyMedium;
+  final TextStyle secondary;
+  final TextStyle badge;
+  final TextStyle timerLarge;
+  final TextStyle timerMedium;
+
   /// المصدر الوحيد لبناء الأنماط (SRS — خطة التصميم، اليوم 2):
-  /// كان سابقاً `dark()` يعيد نسخ `light()` بأكملها (14 copyWith لكل بناء)
-  /// — الآن كل نمط يُشتق من الرموز مباشرة حسب الإضاءة.
+  /// كل نمط يُشتق من الرموز مباشرة حسب الإضاءة.
   factory AppStyles.fromBrightness(Brightness brightness) {
     final isLight = brightness == Brightness.light;
     final primary = isLight ? AppColors.textPrimary : AppColors.darkTextPrimary;
-    final secondary = isLight
+    final secondaryColor = isLight
         ? AppColors.textSecondary
         : AppColors.darkTextSecondary;
     final danger = isLight ? AppColors.dangerText : AppColors.dangerOnDark;
@@ -122,13 +138,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
       subtitle: TextStyle(
         fontSize: AppTypography.subtitleSize,
         fontWeight: AppTypography.regular,
-        color: secondary,
+        color: secondaryColor,
         height: 1.4,
       ),
       caption: TextStyle(
         fontSize: AppTypography.captionSize,
         fontWeight: AppTypography.regular,
-        color: secondary,
+        color: secondaryColor,
         letterSpacing: 0.2,
         height: 1.33,
       ),
@@ -159,19 +175,19 @@ class AppStyles extends ThemeExtension<AppStyles> {
       sheetItem: TextStyle(
         fontSize: AppTypography.sheetItemSize,
         fontWeight: AppTypography.regular,
-        color: secondary,
+        color: secondaryColor,
         height: 1.4,
       ),
       sheetItemStrong: TextStyle(
         fontSize: AppTypography.sheetItemSize,
         fontWeight: AppTypography.bold,
-        color: secondary,
+        color: secondaryColor,
         height: 1.4,
       ),
       sheetCaption: TextStyle(
         fontSize: AppTypography.sheetCaptionSize,
         fontWeight: AppTypography.regular,
-        color: secondary,
+        color: secondaryColor,
         letterSpacing: 0.2,
         height: 1.3,
       ),
@@ -183,46 +199,105 @@ class AppStyles extends ThemeExtension<AppStyles> {
         height: 1.25,
       ),
       error: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
         color: danger,
         height: 1.4,
       ),
       success: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
         color: success,
         height: 1.4,
       ),
       warning: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.subtitleSize,
         fontWeight: FontWeight.w500,
         color: warning,
         height: 1.4,
       ),
       muted: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.regular,
-        color: secondary,
+        color: secondaryColor,
         height: 1.5,
       ),
       gold: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.bodySize,
         fontWeight: AppTypography.regular,
         color: gold,
         height: 1.5,
       ),
       number: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.numberSize,
         fontWeight: AppTypography.bold,
         color: primary,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
       timer: TextStyle(
+        fontFamily: AppTypography.fontFamily,
         fontSize: AppTypography.timerSize,
         fontWeight: AppTypography.bold,
         color: gold,
         letterSpacing: 1,
+        height: 1.1,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+      // تنفيذ أنماط 2.0 الجديدة
+      display: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontSize: AppTypography.display,
+        fontWeight: AppTypography.bold,
+        color: primary,
+        letterSpacing: -0.5,
+        height: 1.25,
+      ),
+      cardTitle: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontSize: AppTypography.cardTitle,
+        fontWeight: AppTypography.semiBold,
+        color: primary,
+        height: 1.35,
+      ),
+      bodyMedium: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontSize: AppTypography.bodyMedium,
+        fontWeight: AppTypography.medium,
+        color: primary,
+        height: 1.5,
+      ),
+      secondary: TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontSize: AppTypography.secondary,
+        fontWeight: AppTypography.regular,
+        color: secondaryColor,
+        height: 1.4,
+      ),
+      badge: const TextStyle(
+        fontFamily: AppTypography.fontFamily,
+        fontSize: AppTypography.badge,
+        fontWeight: AppTypography.semiBold,
+        height: 1.2,
+      ),
+      timerLarge: TextStyle(
+        fontSize: AppTypography.timerLarge,
+        fontWeight: AppTypography.bold,
+        color: gold,
+        letterSpacing: 1.0,
+        height: 1.1,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+      timerMedium: TextStyle(
+        fontSize: AppTypography.timerMedium,
+        fontWeight: AppTypography.bold,
+        color: gold,
+        letterSpacing: 0.5,
         height: 1.1,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
@@ -261,6 +336,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
     TextStyle? gold,
     TextStyle? number,
     TextStyle? timer,
+    TextStyle? display,
+    TextStyle? cardTitle,
+    TextStyle? bodyMedium,
+    TextStyle? secondary,
+    TextStyle? badge,
+    TextStyle? timerLarge,
+    TextStyle? timerMedium,
   }) {
     return AppStyles(
       appBarTitle: appBarTitle ?? this.appBarTitle,
@@ -286,6 +368,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
       gold: gold ?? this.gold,
       number: number ?? this.number,
       timer: timer ?? this.timer,
+      display: display ?? this.display,
+      cardTitle: cardTitle ?? this.cardTitle,
+      bodyMedium: bodyMedium ?? this.bodyMedium,
+      secondary: secondary ?? this.secondary,
+      badge: badge ?? this.badge,
+      timerLarge: timerLarge ?? this.timerLarge,
+      timerMedium: timerMedium ?? this.timerMedium,
     );
   }
 
@@ -317,6 +406,13 @@ class AppStyles extends ThemeExtension<AppStyles> {
       gold: mix(gold, other.gold),
       number: mix(number, other.number),
       timer: mix(timer, other.timer),
+      display: mix(display, other.display),
+      cardTitle: mix(cardTitle, other.cardTitle),
+      bodyMedium: mix(bodyMedium, other.bodyMedium),
+      secondary: mix(secondary, other.secondary),
+      badge: mix(badge, other.badge),
+      timerLarge: mix(timerLarge, other.timerLarge),
+      timerMedium: mix(timerMedium, other.timerMedium),
     );
   }
 }

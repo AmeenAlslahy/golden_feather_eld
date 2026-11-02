@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
+import 'form_list_provider.dart';
 import 'logs_provider.dart';
 import '../../domain/daily_form_rules.dart';
 import '../mappers/form_validation_mapper.dart';
@@ -83,7 +85,10 @@ class FormTabData {
   }
 
   /// تحويل البيانات المعروضة إلى كائن التحديث المطلوب إرساله إلى الخادم
-  DailyFormUpdate toDailyFormUpdate({required String fallbackLogUniqueId}) {
+  DailyFormUpdate toDailyFormUpdate({
+    required String fallbackLogUniqueId,
+    int? vehicleId,
+  }) {
     final uniqueId =
         readOperableUniqueId(vehicleUniqueId) ??
         readOperableUniqueId(fallbackLogUniqueId) ??
@@ -102,6 +107,7 @@ class FormTabData {
 
     return DailyFormUpdate(
       vehicleUniqueId: uniqueId,
+      vehicleId: vehicleId,
       coDriverId: parsedCoDriverId,
       trailers: parsedTrailers,
       shippingDocuments: parsedDocs,
@@ -175,32 +181,25 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
         ], fallback: dashboard.vehicleId)
       : _firstOf([serverForm?.vehicleUniqueId, selectedLog.uniqueId]);
 
-  // 3. المقطورات: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
-  // الخادم، ثم صف السجل
-  final liveTrailers = _meaningful(dashboard.trailerId, exclude: _noneSentinel);
-  final trailers = liveDashboard && liveTrailers != null
-      ? liveTrailers
-      : _firstOf([
-          if (serverForm?.trailers.isNotEmpty == true)
-            joinFormList(serverForm!.trailers),
-          if (selectedLog?.trailers.isNotEmpty == true)
-            joinFormList(selectedLog!.trailers),
-        ], fallback: '-');
-
-  // 4. وثائق الشحن: الأولوية للقيمة المعدلة الحية (سجل اليوم)، ثم نموذج
-  // الخادم، ثم صف السجل
-  final liveDocs = _meaningful(
-    dashboard.shippingDocuments,
-    exclude: _noneSentinel,
+  // 3. المقطورات: القيمة الحية (سجل اليوم) ← نموذج الخادم ← صف السجل.
+  // نفس دالة الأسبقية التي تستخدمها شاشة المقطورات، فلا تختلف القيمة
+  // المعروضة عن مصدر الحفظ.
+  final trailerItems = resolveFormListItems(
+    logsState: logsState,
+    liveItems: splitFormList(dashboard.trailerId),
+    fromServerForm: (form) => form.trailers,
+    fromLogRow: (log) => log.trailers,
   );
-  final docs = liveDashboard && liveDocs != null
-      ? liveDocs
-      : _firstOf([
-          if (serverForm?.shippingDocuments.isNotEmpty == true)
-            joinFormList(serverForm!.shippingDocuments),
-          if (selectedLog?.shippingDocuments.isNotEmpty == true)
-            joinFormList(selectedLog!.shippingDocuments),
-        ], fallback: '-');
+  final trailers = trailerItems.isEmpty ? '-' : joinFormList(trailerItems);
+
+  // 4. وثائق الشحن: نفس أسبقية المقطورات حرفياً.
+  final documentItems = resolveFormListItems(
+    logsState: logsState,
+    liveItems: splitFormList(dashboard.shippingDocuments),
+    fromServerForm: (form) => form.shippingDocuments,
+    fromLogRow: (log) => log.shippingDocuments,
+  );
+  final docs = documentItems.isEmpty ? '-' : joinFormList(documentItems);
 
   // 5. السائق المساعد
   final coDriverName = liveDashboard
@@ -231,24 +230,36 @@ final formTabDataProvider = Provider.autoDispose<FormTabData>((ref) {
 
 class FormTabNotifier extends StateNotifier<FormTabState> {
   final Ref _ref;
-  final DailyLog _log;
+  final DailyLogId _logId;
 
-  FormTabNotifier(this._ref, this._log) : super(const FormTabState());
+  FormTabNotifier(this._ref, this._logId) : super(const FormTabState());
+
+  /// السجل المحفوظ لمعرّف التبويب، يُقرأ طازجاً من المزود حتى لا تتجمد
+  /// نسخة قديمة بعد حفظ/تحديث السجل. المفتاح معرّف فقط كي لا يُعاد بناء
+  /// الـ notifier مع كل تغيير في حقول السجل.
+  DailyLog? _currentLog() {
+    final state = _ref.read(logsProvider);
+    final selected = state.selectedLog;
+    if (selected != null && selected.id == _logId) return selected;
+    for (final log in state.logs) {
+      if (log.id == _logId) return log;
+    }
+    return null;
+  }
 
   /// الحالة الحية (لوحة القيادة) تخص سجل اليوم حصراً؛ أي سجل سابق يكتب
   /// اختياره على نموذج السجل نفسه كي لا تتسرب قيم يوم إلى يوم آخر.
-  bool get _isLiveDashboard {
-    final selected = _ref.read(logsProvider).selectedLog;
-    return selected == null || selected.today;
-  }
+  bool get _isLiveDashboard => _currentLog()?.today ?? true;
 
   /// تحديث المركبة المختارة: الحالة الحية لسجل اليوم، أو نموذج السجل.
   void updateVehicle(Vehicle vehicle) {
     if (!_isLiveDashboard) {
+      // `Vehicle.id` قد يكون `uniqueId` نصياً وليس معرّف قائمة رقمياً؛
+      // تحويله إلى int كان يخترع `vehicleId`. نرسل `uniqueId` فقط،
+      // و`submitForm` يحذف `vehicleId` القديم عند تغيّر المركبة.
       _ref
           .read(logsProvider.notifier)
           .updateSelectedFormVehicle(
-            vehicleId: int.tryParse(vehicle.id),
             vehicleUniqueId: vehicle.uniqueId ?? vehicle.id,
             vehicleName: vehicle.displayName,
           );
@@ -278,11 +289,9 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     required void Function(String) onOffline,
   }) async {
     final formData = _ref.read(formTabDataProvider);
+    final logUniqueId = _currentLog()?.uniqueId;
 
-    final vehicleErr = formData.validateVehicle(
-      loc,
-      logUniqueId: _log.uniqueId,
-    );
+    final vehicleErr = formData.validateVehicle(loc, logUniqueId: logUniqueId);
     if (vehicleErr != null) return vehicleErr;
 
     final trailerErr = formData.validateTrailers(loc);
@@ -294,8 +303,15 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     final coDriverErr = formData.validateCoDriver(loc);
     if (coDriverErr != null) return coDriverErr;
 
+    final serverForm = _ref.read(logsProvider).serverForm;
+    // `vehicleId` الرقمي يخص المركبة القديمة في نموذج الخادم. عند تغيير
+    // المركبة لا يجوز إرساله مع `uniqueId` الجديد؛ نحتفظ به فقط إذا كانت
+    // المركبة المختارة هي نفسها.
+    final selectedUniqueId = formData.vehicleUniqueId.trim();
+    final sameVehicle = serverForm?.vehicleUniqueId?.trim() == selectedUniqueId;
     final update = formData.toDailyFormUpdate(
-      fallbackLogUniqueId: _log.uniqueId,
+      fallbackLogUniqueId: logUniqueId ?? '',
+      vehicleId: sameVehicle ? serverForm?.vehicleId : null,
     );
     return saveForm(
       update: update,
@@ -311,13 +327,16 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     required void Function(String) onSuccess,
     required void Function(String) onOffline,
   }) async {
+    final log = _currentLog();
+    if (log == null) return loc.noData;
+
     state = const FormTabState(isLoading: true);
 
     // P0 2B-1 — ربط المالك المثبت من الجلسة
     final result = await _ref
         .read(logRepositoryProvider)
         .saveForm(
-          logId: _log.id,
+          logId: _logId,
           form: update,
           ownerDriverId: _ref.read(currentDriverIdProvider),
         );
@@ -328,22 +347,17 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
     return result.fold((error) => anyErrorUserMessage(error, loc: loc), (
       saveResult,
     ) {
-      final hasVehicle = update.vehicleUniqueId.isNotEmpty;
-      final hasDocs = update.shippingDocuments.isNotEmpty;
-      final isLocallyComplete = hasVehicle && hasDocs;
-
       if (saveResult.isOffline) {
+        // البيانات محفوظة والطلب في الطابور، لكن الخادم لم يؤكد الاكتمال.
         _ref
             .read(logsProvider.notifier)
             .updateLog(
-              _log.copyWith(
+              log.copyWith(
                 uniqueId: update.vehicleUniqueId,
                 trailers: update.trailers,
                 shippingDocuments: update.shippingDocuments,
-                isFormComplete: isLocallyComplete,
-                formStatus: isLocallyComplete
-                    ? FormStatus.completed
-                    : FormStatus.incomplete,
+                isFormComplete: false,
+                formStatus: FormStatus.pendingSync,
               ),
             );
         onOffline(loc.formSavedOffline);
@@ -351,32 +365,39 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
       }
 
       final read = saveResult.syncedData!;
-      final complete = read.complete ?? isLocallyComplete;
+      // `null` يعني أن الخادم لم يرسل حالة اكتمال. لا نستبدلها بحساب
+      // محلي كأنه تأكيد؛ نحتفظ بالحالة السابقة ونعرض نجاح الحفظ فقط.
+      final complete = read.complete;
+      final isComplete = complete ?? log.isFormComplete;
+      final status = complete == null
+          ? log.formStatus
+          : (complete ? FormStatus.completed : FormStatus.incomplete);
       _ref
           .read(logsProvider.notifier)
           .updateLog(
-            _log.copyWith(
+            log.copyWith(
               uniqueId: update.vehicleUniqueId,
               trailers: update.trailers,
               shippingDocuments: update.shippingDocuments,
-              isFormComplete: complete,
-              formStatus: complete
-                  ? FormStatus.completed
-                  : FormStatus.incomplete,
+              isFormComplete: isComplete,
+              formStatus: status,
             ),
           );
 
-      final msg = complete ? loc.successMessage : loc.serverSavedFormIncomplete;
+      final msg = complete == false
+          ? loc.serverSavedFormIncomplete
+          : loc.successMessage;
       onSuccess(msg);
       return null;
     });
   }
 }
 
-/// موفر تبويب النموذج اليومي
+/// موفر تبويب النموذج اليومي — المفتاح معرّف السجل فقط، لا نسخة
+/// [DailyLog] كاملة، كي لا يُعاد بناء/تصفير التبويب عند كل تحديث للحقول.
 final formTabProvider = StateNotifierProvider.autoDispose
-    .family<FormTabNotifier, FormTabState, DailyLog>((ref, log) {
-      return FormTabNotifier(ref, log);
+    .family<FormTabNotifier, FormTabState, DailyLogId>((ref, logId) {
+      return FormTabNotifier(ref, logId);
     });
 
 /// اسم بديل للتوافق البرمجي الكامل مع الكود القائم

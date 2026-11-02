@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/session/owner_identity.dart';
 import '../../../../core/session/session_epoch.dart';
+import '../../../../core/utils/startup_profiler.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/error/failure.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
@@ -110,8 +112,21 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
     subscription.cancel();
   });
 
+  // P0 2B-1 (مراجعة 2026-10-30) — تركيب هوية المالك للسياج من مصدرها
+  // الموحّد. الإسناد هنا لا في backend_network_providers لكسر دائرة
+  // الاستيراد (backend لا يستطيع استيراد features/auth لأن هذا الملف
+  // يستورده). القراءة كسولة لحظة الإرسال عبر دالة top-level — لا إحالة
+  // للمزود داخل المُهيّئ نفسه كي لا يرى المحلل دائرة إعلانية.
+  OwnerIdentityBinding.install(() => _readCurrentOwnerDriverId(ref));
+
   return notifier;
 });
+
+/// قراءة هوية المالك لحظة الإرسال — معرفة كدالة top-level (لا داخل
+/// مُهيّئ [authStateProvider]) لكسر الدائرة الإعلانية مع
+/// [currentDriverIdProvider] الذي يراقب حالة المصادقة.
+Future<int?> _readCurrentOwnerDriverId(Ref ref) async =>
+    ref.read(currentDriverIdProvider);
 
 /// جيل الجلسة الحالي — يُبطل العمليات غير المتزامنة القديمة.
 /// يزيد فقط عند حدود الهوية (بدء logout، طرد إجباري، إبطال الجلسة
@@ -125,13 +140,42 @@ final sessionTransitionProvider = Provider<bool>((ref) {
   return ref.watch(authStateProvider).transitioning;
 });
 
-/// مزود للوصول السريع إلى معرف السائق الحالي أو null إذا لم يكن مسجلاً
+/// معرف السائق الفعلي في نظام ELD (المسجل في جدول eld_drivers) **مختوماً
+/// بجيل الجلسة الذي اكتُشف فيه**. قد يختلف عن معرف مستخدم Traccar (جدول
+/// users) — ومقارنة الفضاءين كانت تُسقط كل طلب ملزم بمالك في سياج
+/// الإرسال (P0 2B-1 مراجعة 2026-10-30).
+///
+/// الختم بالجيل يجعل القيمة تموت مع الجلسة تلقائياً بلا مستمعات: قيمة
+/// جيل قديم لا تُقرأ أبداً — كانت تبقى حية عبر تسجيل الخروج وتُورَّث
+/// للحساب التالي حتى تحميل لوحته (تسريب هوية عبر السياج).
+///
+/// يُحدَّث عند بدء الجلسة (ربط الجهاز) أو استلام لوحة HOS أو اختيار السائق.
+final activeDriverIdProvider = StateProvider<(int, int)?>((ref) => null);
+
+/// مزود للوصول السريع إلى معرف السائق الحالي أو null إذا لم يكن مسجلاً.
+///
+/// **هذا هو فضاء الختم الموحّد للملكية**: ما يُختَم به الطلب عند بنائه
+/// هو ما يُقارن به عند الإرسال (سياج AuthInterceptor وسياق الموزّع) —
+/// لا يجوز أن يقرأ السياج فضاءً آخر (كان يقرأ مستخدم Traccar).
 final currentDriverIdProvider = Provider<int?>((ref) {
   final authState = ref.watch(authStateProvider);
-  if (authState.isAuthenticated && authState.user != null) {
-    return int.tryParse(authState.user!.id);
+  if (!authState.isAuthenticated || authState.user == null) {
+    return null;
   }
-  return null;
+  final stamped = ref.watch(activeDriverIdProvider);
+  final activeId =
+      (stamped != null &&
+          stamped.$1 == SessionEpoch.current &&
+          stamped.$2 > 0)
+      ? stamped.$2
+      : null;
+  if (activeId != null) {
+    return activeId;
+  }
+  if (authState.user!.isAdmin) {
+    return null;
+  }
+  return int.tryParse(authState.user!.id);
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -186,7 +230,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
 
     try {
+      // M0 — قياس إجمالي فحص المصادقة (قراءة محلية + تحقق شبكي عند الاتصال).
+      StartupProfiler.mark('auth:check:start');
       final sessionResult = await _checkAuthStatusUseCase();
+      StartupProfiler.mark('auth:check:end');
       if (currentOpId != _operationId) return;
 
       sessionResult.match(

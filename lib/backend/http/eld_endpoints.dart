@@ -1,22 +1,31 @@
-library;
-
 /// Paths relative to `ApiClient.baseUrl` (the live contract server is `/api`).
 ///
 /// Values match the live OAS 3.0.1 document in `openapi.yaml`
 /// (`https://snsoft.cloud/api/eld/openapi.yaml`, fetched 2026-09-23) plus
-/// the daily-log API specification (`daily_log_api_specification`, 2026-10):
+/// the daily-log API specification (`daily_log_api_specification`, 2026-10)
+/// and the HOS Management contract (2026-10):
 ///   - `GET /eld/daily-logs` (page/size + filters), `GET /eld/daily-logs/summary`
 ///   - `GET/PUT /eld/daily-logs/{id}/events/{eventId}`, `.../events/options`
 ///   - `GET /eld/daily-logs/{id}/form/options`, `GET /eld/daily-logs/{id}/certify`
+///   - `GET /eld/hos/dashboard`, `GET /eld/hos/recap`
+///   - `POST /eld/hos` (AUTO event), `POST /eld/hos/status` (Flutter UI)
 /// Do not add a path that is absent from those documents.
+library;
+
 class EldEndpoints {
   const EldEndpoints._();
 
   // ==========================================================================
+  // Shared Prefixes
+  // ==========================================================================
+  static const String _eld = '/eld';
+
+  // ==========================================================================
   // Authentication & Standard Traccar Entities
   // ==========================================================================
-  /// جلسة
-  static const String session = '/session';
+
+  /// جلسة مصادقة Traccar (login)
+  static const String authSession = '/session';
 
   /// طلب إعادة تعيين كلمة المرور
   static const String password = '/password';
@@ -35,197 +44,261 @@ class EldEndpoints {
 
   /// اتصال مقبس الويب المباشر
   static const String socket = '/socket';
+
   // ==========================================================================
   // ELD Module APIs (as per openapi.yaml)
   // ==========================================================================
 
   // 1. Account
   /// الحساب
-  static const String account = '/eld/account';
+  static const String account = '$_eld/account';
 
   /// تفضيلات الحساب
-  static const String accountPreferences = '/eld/account/preferences';
+  static const String accountPreferences = '$_eld/account/preferences';
 
-  // 2. Status Dashboard
-  /// لوحة التحكم
-  static const String status = '/eld/status';
+  // 2. HOS — Driver Status Screen (Flutter dashboard)
+  //    Reference: HOS Management contract (2026-10)
+  /// لوحة الحالة الحية — الساعات الأربع + الحالة النشطة + المركبة
+  /// `GET /eld/hos/dashboard`
+  static const String statusDashboard = '$_eld/hos/dashboard';
 
-  /// تحديث حالة العمل
-  static const String updateDutyStatus =
-      '/eld/status/duty-status'; // (POST) Update duty status
-  /// ملخص حالة العمل
-  static const String statusRecap = '/eld/status/recap';
+  /// ملخص حالة العمل — 8 أيام + availableTomorrow
+  /// `GET /eld/hos/recap`
+  static const String statusRecap = '$_eld/hos/recap';
+
+  /// تحديد الحالة من واجهة Flutter — الحمولة: { dutyStatus, notes }
+  /// `POST /eld/hos/status`
+  static const String updateDutyStatus = '$_eld/hos/status';
+
+  /// تسجيل حدث حالة خدمة كامل (AUTO/MANUAL) — الحمولة: driverId, vehicleId,
+  /// status, startTime, ... (§395.26 unidentified driving)
+  /// `POST /eld/hos`
+  static const String recordDutyStatusEvent = '$_eld/hos';
 
   // 3. Driver Rules Screen
-  static const String rulesScreen = '/eld/rules-screen';
+  static const String rulesScreen = '$_eld/driver-rules';
 
   // 4. Daily Logs
-  /// السجلات اليومية
-  static const String dailyLogs = '/eld/daily-logs';
+  /// السجلات اليومية — `GET` list / summary
+  static const String dailyLogs = '$_eld/daily-logs';
 
   /// ملخص السجلات اليومية (إحصاءات مع نفس مرشحات القائمة)
-  static const String dailyLogSummary = '/eld/daily-logs/summary';
+  static const String dailyLogSummary = '$_eld/daily-logs/summary';
 
-  /// تفاصيل السجلات اليومية
-  static String dailyLogDetails(int logId) => '/eld/daily-logs/$logId';
+  /// تفاصيل سجل يومي محدد
+  static String dailyLogDetails(int logId) => '$_eld/daily-logs/$logId';
 
   /// الرد على تعديلات الناقل
   static String respondCarrierEdit(int logId, String editId) =>
-      '/eld/daily-logs/$logId/carrier-edits/$editId/respond';
+      '$_eld/daily-logs/$logId/carrier-edits/$editId/respond';
 
   /// المصادقة على السجل
-  static String certifyLog(int logId) => '/eld/daily-logs/$logId/certify';
+  static String certifyLog(int logId) => '$_eld/daily-logs/$logId/certify';
 
   /// إعادة تعيين القيادة
   static String reassignDriving(int logId, int statusId) =>
-      '/eld/daily-logs/$logId/events/$statusId/reassign-driving';
+      '$_eld/daily-logs/$logId/events/$statusId/reassign-driving';
 
-  /// نموذج السجلات اليومية
-  static String dailyLogForm(int logId) => '/eld/daily-logs/$logId/form';
+  /// نموذج السجل اليومي
+  static String dailyLogForm(int logId) => '$_eld/daily-logs/$logId/form';
 
   /// خيارات النموذج (مركبات مسموحة + سائقون مساعدون — للقوائم المنسدلة)
   static String dailyLogFormOptions(int logId) =>
-      '/eld/daily-logs/$logId/form/options';
+      '$_eld/daily-logs/$logId/form/options';
 
   /// أحداث السجل اليومي (GraphGrid + الأحداث القابلة للتعديل)
-  static String dailyLogEvents(int logId) => '/eld/daily-logs/$logId/events';
-
-  /// مسار قديم (غير موجود في المواصفة الجديدة) — احتياط فقط عندما يعيد
-  /// `GET /events` خطأ 404 لأن الخادم لم يُحدَّث بعد. نفس الحمولة: `data.events`.
-  static String dailyLogGraphGrid(int logId) =>
-      '/eld/daily-logs/$logId/graph-grid';
+  static String dailyLogEvents(int logId) => '$_eld/daily-logs/$logId/events';
 
   /// حدث واحد داخل سجل يومي (تفاصيل/تعديل)
   static String dailyLogEvent(int logId, int eventId) =>
-      '/eld/daily-logs/$logId/events/$eventId';
+      '$_eld/daily-logs/$logId/events/$eventId';
 
   /// الخيارات المسموحة لتعديل الأحداث (حالات + تصنيفات خاصة)
   static String dailyLogEventsOptions(int logId) =>
-      '/eld/daily-logs/$logId/events/options';
+      '$_eld/daily-logs/$logId/events/options';
 
-  /// قفل السجلات اليومية
-  static String lockLog(int logId) => '/eld/daily-logs/$logId/lock';
+  /// قفل السجل اليومي
+  static String lockLog(int logId) => '$_eld/daily-logs/$logId/lock';
 
-  /// التحقق من جاهزية السجلات اليومية
-  static String checkReadiness(int logId) => '/eld/daily-logs/$logId/readiness';
+  /// التحقق من جاهزية السجل اليومي
+  static String checkReadiness(int logId) =>
+      '$_eld/daily-logs/$logId/readiness';
 
   /// حالة الفريق
-  static String teamStatus(int logId) => '/eld/daily-logs/$logId/team';
+  static String teamStatus(int logId) => '$_eld/daily-logs/$logId/team';
+
+  /// مسار قديم (غير موجود في المواصفة الجديدة) — احتياط فقط عندما يعيد
+  /// `GET /events` خطأ 404 لأن الخادم لم يُحدَّث بعد. نفس الحمولة: `data.events`.
+  @Deprecated('Use dailyLogEvents(logId); legacy fallback only for 404')
+  static String dailyLogGraphGrid(int logId) =>
+      '$_eld/daily-logs/$logId/graph-grid';
 
   // 5. Sessions & Connections
-  /// الحصول على الجلسة
-  static String getSession(int driverId) => '/eld/sessions/$driverId';
+  /// جلسة ELD للسائق
+  static String eldSession(int driverId) => '$_eld/sessions/$driverId';
 
   /// أعضاء الجلسة
   static String sessionMembers(int sessionId) =>
-      '/eld/sessions/$sessionId/members';
+      '$_eld/sessions/$sessionId/members';
 
-  /// Live contract: `POST /eld/hardware/connect`. `/eld/sessions/connect` does not exist.
-  /// ربط الجهاز بالجلسة
-  static const String connectSession = '/eld/hardware/connect';
+  /// ربط الجهاز بالجلسة (Live contract: `POST /eld/sessions/connect`)
+  static const String connectSession = '$_eld/sessions/connect';
+
+  /// إنهاء الجلسة وفك الارتباط (Live contract: `POST /eld/sessions/disconnect`)
+  static const String disconnectSession = '$_eld/sessions/disconnect';
 
   /// إدارة السائق المساعد
-  static const String manageCoDriver = '/eld/sessions/co-driver';
+  static const String manageCoDriver = '$_eld/sessions/co-driver';
 
   /// تبديل السائق الأساسي
   static const String switchPrimaryDriver =
-      '/eld/sessions/primary-driver/switch';
+      '$_eld/sessions/primary-driver/switch';
 
-  // 6. Duty Status Events
-  /// حالات العمل
-  static const String recordDutyStatus = '/eld/duty-status';
+  // 6. Duty Status Events (legacy duty-status controller — prefer HOS above)
+  /// ⚠️ Legacy — يُستبدل بـ `recordDutyStatusEvent` عند تحديث الخادم.
+  /// التوجيه الكنسي الجديد: `POST /eld/hos`
+  @Deprecated('Use recordDutyStatusEvent (/eld/hos) instead')
+  static const String legacyRecordDutyStatus = '$_eld/duty-status';
 
-  /// تحديث حالة العمل
-  static String editDutyStatus(int statusId) => '/eld/duty-status/$statusId';
+  /// تحديث حالة عمل (legacy)
+  @Deprecated('Use updateDutyStatus (/eld/hos/status) instead')
+  static String legacyEditDutyStatus(int statusId) =>
+      '$_eld/duty-status/$statusId';
 
-  /// نموذج تعديل حالة العمل
-  static String editDutyStatusForm(int statusId) =>
-      '/eld/duty-status/$statusId/edit-form';
+  /// نموذج تعديل حالة العمل (legacy)
+  @Deprecated('Superseded by dailyLogEventsOptions / HOS contract')
+  static String legacyEditDutyStatusForm(int statusId) =>
+      '$_eld/duty-status/$statusId/edit-form';
 
-  /// مخطط زمني لحالات العمل
-  static const String graphGridTimeline = '/eld/duty-status/graph-grid';
+  /// مخطط زمني لحالات العمل (legacy)
+  @Deprecated('Use dailyLogEvents or statusDashboard')
+  static const String legacyGraphGridTimeline = '$_eld/duty-status/graph-grid';
 
   // 7. DVIR Management
-  /// إدارة فحص المركبات
-  static const String dvir = '/eld/dvir';
+  /// إدارة فحص المركبات — GET (list) / POST (create)
+  static const String dvir = '$_eld/dvir';
 
   /// تفاصيل فحص المركبات
-  static String dvirDetails(int id) => '/eld/dvir/$id';
+  static String dvirDetails(int id) => '$_eld/dvir/$id';
 
-  /// مراجعة فحص المركبات
-  static String dvirNextDriverReview(int id) => '/eld/dvir/$id/review';
+  /// مراجعة وتوقيع تقرير الفحص السابق (§396.13)
+  static const String dvirPreviousReview = '$_eld/dvir/previous/review';
 
-  /// كتالوج فحص المركبات
-  static const String dvirCatalog = '/eld/dvir/catalog';
+  /// مراجعة فحص المركبات حسب المعرف (Legacy / Specific)
+  @Deprecated('Use dvirPreviousReview for §396.13 flow')
+  static String dvirNextDriverReview(int id) => '$_eld/dvir/$id/review';
 
-  /// فحص المركبات السابق
-  static String dvirPrevious(String uniqueId) => '/eld/dvir/pre-trip/$uniqueId';
+  /// دليل بنود الفحص الإلزامية الـ 11 (§396.11)
+  static const String dvirCatalog = '$_eld/dvir/catalog';
+
+  /// استرجاع تقرير الفحص السابق للمركبة (§396.13)
+  static const String dvirPreviousReport = '$_eld/dvir/previous';
+
+  /// فحص المركبات السابق حسب المعرف الفرعي (Legacy route)
+  @Deprecated('Use dvirPreviousReport for §396.13')
+  static String dvirPrevious(String uniqueId) =>
+      '$_eld/dvir/pre-trip/$uniqueId';
+
+  /// مزامنة فحوصات وضع عدم الاتصال
+  static const String dvirSync = '$_eld/dvir/sync';
 
   /// تفاصيل عيب DVIR (سجل الإصلاحات والاعتمادات)
-  static String dvirDefectDetails(int id) => '/eld/dvir/defects/$id';
+  static String dvirDefectDetails(int id) => '$_eld/dvir/defects/$id';
 
   /// العيوب النشطة لمركبة محددة
   static String dvirVehicleDefects(String uniqueId) =>
-      '/eld/dvir/defects/device/$uniqueId';
+      '$_eld/dvir/defects/device/$uniqueId';
 
   // 14. Roadside Inspection
-  /// Live contract screen is `GET /eld/dot-inspection`, not `/eld/inspections`.
+  //     Live contract screen is `GET /eld/dot-inspection`.
   /// تفتيش الطرق
-  static const String inspections = '/eld/dot-inspection';
+  static const String inspections = '$_eld/inspections';
 
   /// سجلات الدورة (8 أيام أو نطاق التدقيق)
-  static const String dotInspectionCycle = '/eld/dot-inspection/cycle';
+  static const String dotInspectionCycle = '$inspections/cycle';
 
   /// عرض سجل التفتيش ليوم محدد
-  static const String dotInspectionLogs = '/eld/dot-inspection/logs';
-
-  // 17. Hardware
-  /// تنبيةات الجهاز
-  static const String hardwareAlerts = '/eld/hardware/alerts';
-
-  /// الوضع اليدوي
-  static const String hardwareManualMode = '/eld/hardware/manual-mode';
-
-  /// جاهزية الجهاز
-  static const String hardwareReadiness = '/eld/hardware/readiness';
-
-  /// حالة الجهاز
-  static const String hardwareStatus = '/eld/hardware/status';
-
-  /// بث قراءات المحرك اللحظية
-  static const String hardwareTelemetry = '/eld/hardware/telemetry';
-
-  // Driver-scope contract paths (SRS §7.13, §7.15, §9.1, §11).
-  /// الاحداث الغير معرفة
-  static const String unidentifiedEvents = '/eld/unidentified-events';
-
-  /// المطالبة بالاحداث الغير معرفة
-  static String claimUnidentified(int id) =>
-      '/eld/unidentified-events/$id/claim';
-
-  /// رفض الاحداث الغير معرفة
-  static String rejectUnidentified(int id) =>
-      '/eld/unidentified-events/$id/reject';
-
-  /// مركبات الشركة
-  static const String companyVehicles = '/eld/company-vehicles';
-
-  /// مركباتي
-  static const String myVehicles = '/eld/company-vehicles/my-vehicles';
-
-  /// البريد الإلكتروني لتفتيش الطرق
-  static const String dotInspectionEmailLogs = '/eld/dot-inspection/email-logs';
-
-  /// ارسال السجلات عبر البريد الإلكتروني
-  static const String dotInspectionSendLogs = '/eld/dot-inspection/send-logs';
+  static const String dotInspectionLogs = '$inspections/logs';
 
   /// بدء تفتيش الطرق
-  static const String dotInspectionStart = '/eld/dot-inspection/start';
+  static const String dotInspectionStart = '$inspections/start';
 
   /// حزمة المعلومات لتفتيش الطرق
-  static const String dotInspectionPacket =
-      '/eld/dot-inspection/information-packet';
+  static const String dotInspectionPacket = '$inspections/information-packet';
 
   /// تحويلات تفتيش الطرق
-  static const String dotInspectionTransfers = '/eld/dot-inspection/transfers';
+  static const String dotInspectionTransfers = '$inspections/transfers';
+
+  /// إرسال السجلات عبر بريد التفتيش
+  static const String dotInspectionSendLogs = '$inspections/send-logs';
+
+  /// البريد الإلكتروني لتفتيش الطرق — `POST /eld/transfer/email-logs`
+  static const String dotInspectionEmailLogs = '$_eld/transfer/email-logs';
+
+  // 17. Hardware
+  /// تنبيهات الجهاز
+  static const String hardwareAlerts = '$_eld/hardware/alerts';
+
+  /// الوضع اليدوي
+  static const String hardwareManualMode = '$_eld/hardware/manual-mode';
+
+  /// جاهزية الجهاز
+  static const String hardwareReadiness = '$_eld/hardware/readiness';
+
+  /// حالة الجهاز
+  static const String hardwareStatus = '$_eld/hardware/status';
+
+  /// بث قراءات المحرك اللحظية
+  static const String hardwareTelemetry = '$_eld/hardware/telemetry';
+
+  // ==========================================================================
+  // Driver-scope contract paths (SRS §7.13, §7.15, §9.1, §11)
+  // ==========================================================================
+
+  /// قائمة الأحداث غير المحددة
+  static const String unidentifiedEvents = '$_eld/unidentified';
+
+  /// تفاصيل حدث غير محدد
+  static String unidentifiedEvent(int id) => '$_eld/unidentified/$id';
+
+  /// ملخص الأحداث غير المحددة وتنبيه الـ 8 أيام
+  static const String unidentifiedSummary = '$_eld/unidentified/summary';
+
+  /// المطالبة بالأحداث غير المعرفة
+  static String claimUnidentified(int id) => '$_eld/unidentified/$id/claim';
+
+  /// رفض الأحداث غير المعرفة
+  static String rejectUnidentified(int id) => '$_eld/unidentified/$id/reject';
+
+  /// مركبات الشركة
+  static const String companyVehicles = '$_eld/vehicles';
+
+  /// مركباتي
+  static const String myVehicles = '$_eld/vehicles/my-vehicles';
+
+  // ==========================================================================
+  // Deprecated Aliases (for backward compatibility)
+  // ==========================================================================
+
+  @Deprecated('Use authSession instead')
+  static const String session = authSession;
+
+  @Deprecated('Use statusDashboard instead')
+  static const String status = statusDashboard;
+
+  @Deprecated('Use recordDutyStatusEvent instead')
+  static const String recordDutyStatus = recordDutyStatusEvent;
+
+  @Deprecated('Use legacyGraphGridTimeline instead')
+  static const String graphGridTimeline = legacyGraphGridTimeline;
+
+  @Deprecated('Use eldSession instead')
+  static String getSession(int driverId) => eldSession(driverId);
+
+  @Deprecated('Use legacyEditDutyStatus instead')
+  static String editDutyStatus(int statusId) => legacyEditDutyStatus(statusId);
+
+  @Deprecated('Use legacyEditDutyStatusForm instead')
+  static String editDutyStatusForm(int statusId) =>
+      legacyEditDutyStatusForm(statusId);
 }

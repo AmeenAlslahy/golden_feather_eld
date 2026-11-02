@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/models/certify_dto.dart';
 import 'package:golden_feather_eld/backend/contracts/daily_logs_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/dvir_backend.dart';
@@ -22,6 +23,7 @@ import 'package:golden_feather_eld/features/sync/domain/entities/dispatch_auth.d
 import 'package:golden_feather_eld/features/sync/domain/entities/event_ownership.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/quarantine_record.dart';
+import 'package:golden_feather_eld/features/sync/domain/entities/sync_verification.dart';
 import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dart';
 
 // ─── Fakes ────────────────────────────────────────────────────────────────
@@ -106,8 +108,15 @@ class _DutyBackend implements DutyStatusBackend {
 class _LogsBackend implements DailyLogsBackend {
   int certifyCalls = 0;
   int formCalls = 0;
+  int updateEventCalls = 0;
   int lastCertifyDriverId = -1;
+  Map<String, dynamic>? lastUpdateEventBody;
   Completer<void>? certifyGate;
+
+  /// 200 مع `isCertified=false` ليست اعتماداً.
+  bool certifyConfirmed = true;
+  AppError? certifyError;
+  Result<RawJson>? saveFormResult;
 
   @override
   Future<Result<CertifyResponseDto>> certify(
@@ -120,11 +129,13 @@ class _LogsBackend implements DailyLogsBackend {
     lastCertifyDriverId = expectedOwnerDriverId ?? -1;
     final gate = certifyGate;
     if (gate != null) await gate.future;
+    final error = certifyError;
+    if (error != null) return Left(error);
     return ok(
       CertifyResponseDto(
         dailyLogId: request.dailyLogId,
-        certificationStatus: 'CERTIFIED',
-        isCertified: true,
+        certificationStatus: certifyConfirmed ? 'CERTIFIED' : 'UNCERTIFIED',
+        isCertified: certifyConfirmed,
       ),
     );
   }
@@ -136,6 +147,18 @@ class _LogsBackend implements DailyLogsBackend {
     int? expectedOwnerDriverId,
   }) async {
     formCalls++;
+    return saveFormResult ?? ok(<String, dynamic>{});
+  }
+
+  @override
+  Future<Result<RawJson>> updateEvent({
+    required DailyLogId logId,
+    required DutyStatusId eventId,
+    required RawJson event,
+    int? expectedOwnerDriverId,
+  }) async {
+    updateEventCalls++;
+    lastUpdateEventBody = Map<String, dynamic>.from(event);
     return ok(<String, dynamic>{});
   }
 
@@ -205,6 +228,8 @@ class _Harness {
   int? authDriverId;
   bool transitioning = false;
   final Map<int, int> cacheOwners = {};
+  final List<VerifiedSyncResult> settled = [];
+  final List<String> deadLettered = [];
 
   late final TraccarRemoteEventDispatcher dispatcher =
       TraccarRemoteEventDispatcher(
@@ -217,6 +242,7 @@ class _Harness {
           transitioning: transitioning,
         ),
         cachedLogOwner: (logId) async => cacheOwners[logId],
+        onSettled: (result) async => settled.add(result),
       );
 
   late final SyncEngine engine = SyncEngine(
@@ -227,6 +253,7 @@ class _Harness {
       driverId: authDriverId,
       transitioning: transitioning,
     ),
+    onDeadLettered: (event) async => deadLettered.add(event.id),
   );
 
   Future<void> authAs(String driverId) async {
@@ -354,6 +381,57 @@ void main() {
       expect(await h.parkedTotal(), 0);
     });
 
+    test('T6: replayed edit sends endTime from the queued duration', () async {
+      final h = _Harness();
+      await h.queue.enqueue(
+        _event('d1', 'duty_status', {
+          'statusId': 321,
+          'logId': 55,
+          'status': 'ON',
+          'startTime': '2026-09-24T22:30:00Z',
+          'durationSeconds': 9000,
+          'reason': 'Corrected start',
+          'ownerDriverId': 101,
+        }),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(h.logs.updateEventCalls, 1);
+      final body = h.logs.lastUpdateEventBody!;
+      final range = body['timeRange'] as Map<String, dynamic>;
+      final start = DateTime.parse(range['startTime'] as String);
+      final end = DateTime.parse(range['endTime'] as String);
+      expect(
+        end.difference(start),
+        const Duration(hours: 2, minutes: 30),
+        reason: 'the driver-approved 2h30m must survive the offline replay',
+      );
+    });
+
+    test('T7: legacy queued edit without duration still dispatches', () async {
+      final h = _Harness();
+      await h.queue.enqueue(
+        _event('d2', 'duty_status', {
+          'statusId': 322,
+          'logId': 55,
+          'status': 'ON',
+          'startTime': '2026-09-24T08:00:00Z',
+          'reason': 'Legacy edit',
+          'ownerDriverId': 101,
+        }),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(h.logs.updateEventCalls, 1);
+      final range =
+          h.logs.lastUpdateEventBody!['timeRange'] as Map<String, dynamic>;
+      expect(range.containsKey('endTime'), isFalse);
+    });
+
     test('T7+T8: parked rows never retry, never deleted', () async {
       final h = _Harness();
       await h.queue.enqueue(
@@ -370,6 +448,92 @@ void main() {
       final total = await h.queue.count + await h.parkedTotal();
       expect(total, before, reason: 'T8: no deletion');
       expect(await h.queue.getQuarantined(), hasLength(1));
+    });
+
+    test('T10: certified=false keeps the request for retry, never success',
+        () async {
+      final h = _Harness();
+      h.logs.certifyConfirmed = false;
+      await h.queue.enqueue(
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(h.logs.certifyCalls, 1);
+      expect(await h.queue.count, 1, reason: 'not deleted as a success');
+      expect(await h.parkedTotal(), 0);
+      expect(h.deadLettered, isEmpty);
+      expect(h.settled.single.verification, SyncVerification.retryable);
+      expect(h.settled.single.serverData, isNull);
+    });
+
+    test('T11: transient server failure keeps the request for retry', () async {
+      final h = _Harness();
+      h.logs.certifyError = const ServerError(
+        code: 'server.unavailable',
+        l10nKey: 'serverError',
+      );
+      await h.queue.enqueue(
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(await h.queue.count, 1);
+      expect(h.deadLettered, isEmpty);
+      expect(h.settled.single.verification, SyncVerification.retryable);
+      expect((await h.queue.getPending()).single.retryCount, 1);
+    });
+
+    test('T12: permanent rejection dead-letters and reports rejected',
+        () async {
+      final h = _Harness();
+      h.logs.certifyError = const ConflictError(
+        code: 'certification.alreadyCertified',
+        l10nKey: 'errBusinessRuleViolation',
+      );
+      await h.queue.enqueue(
+        _event('c1', 'certification', _certPayload(owner: 101)),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(await h.queue.count, 0);
+      expect(h.deadLettered, ['c1']);
+      expect(h.settled.single.verification, SyncVerification.rejected);
+    });
+
+    test('T13: form 200 response is passed to the handler unchanged',
+        () async {
+      final h = _Harness();
+      h.logs.saveFormResult = ok(<String, dynamic>{
+        'data': {'formStatus': 'INCOMPLETE'},
+      });
+      await h.queue.enqueue(
+        _event('f1', 'daily_log_form', {
+          'logId': 55,
+          'form': {'uniqueId': 'veh-1'},
+          'ownerDriverId': 101,
+        }),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(h.logs.formCalls, 1);
+      expect(await h.queue.count, 0);
+      expect(h.settled.single.verification, SyncVerification.confirmed);
+      expect(
+        h.settled.single.serverData,
+        {
+          'data': {'formStatus': 'INCOMPLETE'},
+        },
+        reason: 'the handler—not the dispatcher—decides completeness',
+      );
     });
 
     test('T9: owner field and resolver agree (incl. canonical key)', () async {

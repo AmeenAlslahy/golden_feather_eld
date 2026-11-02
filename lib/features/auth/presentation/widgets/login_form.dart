@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../providers/auth_state_provider.dart';
-import '../providers/login_form_provider.dart';
-import '../providers/auth_mode_provider.dart';
-import '../../../../core/utils/localization_helper.dart';
 import '../../domain/entities/value_objects/login_identifier.dart';
 import '../../domain/entities/value_objects/password.dart';
+import '../providers/auth_mode_provider.dart';
+import '../providers/auth_state_provider.dart';
+import '../providers/login_form_provider.dart';
 
-/// نموذج تسجيل الدخول
+/// نموذج تسجيل الدخول — Golden Feather Design System 2.0
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
 
@@ -73,7 +75,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               return null;
             },
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.fieldGap),
 
           // كلمة المرور
           AppTextField(
@@ -106,10 +108,21 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             onSubmitted: (_) => _handleLogin(),
           ),
 
-          // نسيت كلمة المرور؟ (إرشاد فقط: الاستعادة تتم عبر المنصة المركزية)
+          // رابط استعادة كلمة المرور
           Align(
             alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: context.goldenColors.primaryText,
+                textStyle: context.styles.secondary.copyWith(
+                  fontWeight: AppTypography.medium,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xs,
+                ),
+                minimumSize: const Size(0, AppSpacing.minTouchTarget),
+              ),
               onPressed: () {
                 ref.read(authModeProvider.notifier).state =
                     AuthMode.forgotPassword;
@@ -117,13 +130,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               child: Text(context.loc.forgotPassword),
             ),
           ),
-
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
 
           // زر تسجيل الدخول
-          AppButton(
+          AppButton.primary(
             label: context.loc.login,
-            type: EldButtonType.primary,
             isLoading: isLoading,
             onPressed: isLoading ? null : _handleLogin,
           ),

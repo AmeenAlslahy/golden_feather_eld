@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/entities/daily_form_data.dart';
+import '../../domain/entities/daily_log.dart';
 import 'form_list_provider.dart';
 import 'logs_provider.dart';
 
@@ -12,11 +14,10 @@ class TrailersNotifier extends FormListNotifier {
       const FormListRules(maxCount: 5, labelMaxLength: 50);
 
   @override
-  List<String> savedItems(LogsState logsState) {
-    final selected = logsState.selectedLog;
-    final form = logsState.serverForm;
-    return form?.trailers ?? selected?.trailers ?? const [];
-  }
+  List<String> savedFromServerForm(DailyFormData form) => form.trailers;
+
+  @override
+  List<String> savedFromLogRow(DailyLog log) => log.trailers;
 
   @override
   String? liveDashboardRaw() =>

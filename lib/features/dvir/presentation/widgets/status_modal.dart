@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../domain/entities/dvir_report.dart';
 import '../extensions/dvir_status_extensions.dart';
 
@@ -19,10 +21,17 @@ class DvirStatusModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = context.loc;
     return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.dialog),
+      ),
       backgroundColor: context.colorScheme.surface,
-      // العنوان بلا نمط صريح ⇒ افتراضي dialogTheme (20) — مثل كل حوارات
-      // التطبيق؛ كان هنا sectionTitle (16) فحده بين 15 حواراً.
-      title: Text(loc.status),
+      title: Row(
+        children: [
+          Icon(Icons.health_and_safety_outlined, color: context.gold, size: AppSpacing.iconMedium),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(loc.status, style: context.styles.cardTitle)),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -98,11 +107,17 @@ class DvirStatusModal extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(loc.cancelAction),
+          child: Text(
+            loc.cancelAction,
+            style: context.styles.button.copyWith(color: context.colorScheme.onSurfaceVariant),
+          ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, selectedStatus),
-          child: Text(loc.okButton),
+          child: Text(
+            loc.okButton,
+            style: context.styles.button.copyWith(color: context.gold, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );

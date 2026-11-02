@@ -33,11 +33,12 @@ class DrivingLockScreen extends ConsumerWidget {
               GestureDetector(
                 onDoubleTap: () {
                   // UI Bypass: Just hide the screen locally so we can test other pages
-                  if (kDebugMode)
+                  if (kDebugMode) {
                     ref
                             .read(developerBypassDrivingScreenProvider.notifier)
                             .state =
                         true;
+                  }
                 },
                 child: Icon(
                   Icons.directions_car,

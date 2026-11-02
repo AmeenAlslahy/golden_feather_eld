@@ -141,4 +141,143 @@ void main() {
     // Check navigation succeeded
     expect(find.text('Log Detail 10'), findsOneWidget);
   });
+
+  testWidgets('SuggestedEventsPage renders loading state when isLoading is true', (
+    tester,
+  ) async {
+    final notifier = _FakeLogsNotifier(
+      const LogsState(isLoading: true, logs: []),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [logsProvider.overrideWith((ref) => notifier)],
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: SuggestedEventsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('SuggestedEventsPage renders error state and triggers retry', (
+    tester,
+  ) async {
+    final notifier = _FakeLogsNotifier(
+      const LogsState(error: 'Failed to load logs from server', logs: []),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [logsProvider.overrideWith((ref) => notifier)],
+        child: const MaterialApp(
+          locale: Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: SuggestedEventsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Failed to load logs from server'), findsOneWidget);
+    expect(find.byIcon(Icons.refresh), findsOneWidget);
+  });
+
+  testWidgets('SuggestedEventsPage renders Arabic localized dates in Arabic UI', (
+    tester,
+  ) async {
+    final recertLog = _makeLog(
+      id: 10,
+      date: DateTime(2026, 10, 24),
+      certificationStatus: CertificationStatus.reCertificationRequired,
+    );
+    final notifier = _FakeLogsNotifier(LogsState(logs: [recertLog]));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [logsProvider.overrideWith((ref) => notifier)],
+        child: const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: SuggestedEventsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('الأحداث المقترحة'), findsOneWidget);
+    expect(find.textContaining('يلزم إعادة الاعتماد'), findsWidgets);
+    expect(find.byType(SuggestedLogCard), findsOneWidget);
+  });
+
+  testWidgets('SuggestedEventsPage renders Spanish localized dates in Spanish UI', (
+    tester,
+  ) async {
+    final carrierLog = _makeLog(
+      id: 20,
+      date: DateTime(2026, 10, 24),
+      requiresAction: true,
+      certificationStatus: CertificationStatus.certified,
+    );
+    final notifier = _FakeLogsNotifier(LogsState(logs: [carrierLog]));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [logsProvider.overrideWith((ref) => notifier)],
+        child: const MaterialApp(
+          locale: Locale('es'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: SuggestedEventsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eventos sugeridos'), findsOneWidget);
+    expect(find.text('Carrier propuso la edición'), findsOneWidget);
+    expect(find.byType(SuggestedLogCard), findsOneWidget);
+  });
+
+  testWidgets('SuggestedEventsPage responsive layouts 320dp and 2.0x scale', (
+    tester,
+  ) async {
+    final recertLog = _makeLog(
+      id: 10,
+      date: DateTime(2026, 10, 24),
+      certificationStatus: CertificationStatus.reCertificationRequired,
+    );
+    final notifier = _FakeLogsNotifier(LogsState(logs: [recertLog]));
+
+    tester.view.physicalSize = const Size(640, 1400); // 320 x 700 at 2.0 DPR
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [logsProvider.overrideWith((ref) => notifier)],
+        child: const MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(2.0)),
+          child: MaterialApp(
+            locale: Locale('ar'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: SuggestedEventsPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SuggestedLogCard), findsOneWidget);
+  });
 }
+

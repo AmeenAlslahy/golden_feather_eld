@@ -32,6 +32,9 @@ class _Backend implements StatusDashboardBackend {
   Future<Result<StatusDashboard?>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     throw UnimplementedError();
   }

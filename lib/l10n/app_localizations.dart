@@ -4018,6 +4018,30 @@ abstract class AppLocalizations {
   /// **'تم اعتماد السجل.'**
   String get logSuccessfullyCertified;
 
+  /// No description provided for @certifyPendingSync.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ طلب الاعتماد على الجهاز بانتظار المزامنة. السجل غير معتمد بعد.'**
+  String get certifyPendingSync;
+
+  /// No description provided for @certifyNotConfirmed.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يؤكد الخادم اعتماد السجل. أعد المحاولة.'**
+  String get certifyNotConfirmed;
+
+  /// No description provided for @eventsShowingSavedData.
+  ///
+  /// In ar, this message translates to:
+  /// **'تُعرض أحداث محفوظة على الجهاز أو من آخر نسخة — لم يؤكدها الخادم الآن.'**
+  String get eventsShowingSavedData;
+
+  /// No description provided for @eventsUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل الأحداث ولا توجد نسخة محفوظة. أعد المحاولة.'**
+  String get eventsUnavailable;
+
   /// No description provided for @notReadyForCertification.
   ///
   /// In ar, this message translates to:
@@ -5356,6 +5380,48 @@ abstract class AppLocalizations {
   /// **'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.'**
   String get serverAcceptedDisconnected;
 
+  /// No description provided for @sessionConnectRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم طلب الاتصال. لم يتم تأكيد جلسة.'**
+  String get sessionConnectRejected;
+
+  /// No description provided for @sessionStatusUnconfirmed.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتأكد وضع الجلسة على الخادم.'**
+  String get sessionStatusUnconfirmed;
+
+  /// No description provided for @sessionStatusUnconfirmedHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'قد يكون الطلب قد وصل إلى الخادم. لا تُعد المحاولة تلقائياً؛ تحقق من الحالة قبل إعادة المحاولة.'**
+  String get sessionStatusUnconfirmedHint;
+
+  /// No description provided for @continueDisconnectedOffline.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالشبكة. لم يُرسل طلب المتابعة دون اتصال، وما زلت في شاشة الاتصال.'**
+  String get continueDisconnectedOffline;
+
+  /// No description provided for @continueDisconnectedFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تأكيد المتابعة دون اتصال. لم يبدأ التتبع ولم يتم الانتقال للرئيسية.'**
+  String get continueDisconnectedFailed;
+
+  /// No description provided for @continueDisconnectedRejected.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم طلب المتابعة دون اتصال. لم يبدأ التتبع.'**
+  String get continueDisconnectedRejected;
+
+  /// No description provided for @continueDisconnectedInProgress.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تسجيل المتابعة دون اتصال...'**
+  String get continueDisconnectedInProgress;
+
   /// No description provided for @macAddressRequired.
   ///
   /// In ar, this message translates to:
@@ -6099,6 +6165,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'سلّم الجهاز لمفتش السلامة'**
   String get inspectionHandOverNotice;
+
+  /// No description provided for @statusPendingSync.
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار المزامنة'**
+  String get statusPendingSync;
+
+  /// No description provided for @statusSavedUnconfirmed.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ — غير مؤكد'**
+  String get statusSavedUnconfirmed;
+
+  /// No description provided for @statusSyncFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل المزامنة'**
+  String get statusSyncFailed;
 }
 
 class _AppLocalizationsDelegate

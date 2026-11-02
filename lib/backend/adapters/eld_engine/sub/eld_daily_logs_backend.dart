@@ -26,12 +26,16 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   }) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogs,
       queryParameters: {
         'page': page,
         'size': size,
+        if (sortBy != null) 'sortBy': sortBy,
+        if (sortDirection != null) 'sortDirection': sortDirection,
         if (driverId != null) 'driverId': driverId.value,
         if (deviceId != null) 'deviceId': deviceId,
         if (status != null) 'status': status,
@@ -77,12 +81,16 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   }) async {
     final res = await _apiClient.get<RawJson>(
       EldEndpoints.dailyLogSummary,
       queryParameters: {
         'page': page,
         'size': size,
+        if (sortBy != null) 'sortBy': sortBy,
+        if (sortDirection != null) 'sortDirection': sortDirection,
         if (driverId != null) 'driverId': driverId.value,
         if (deviceId != null) 'deviceId': deviceId,
         if (status != null) 'status': status,
@@ -291,6 +299,29 @@ class EldDailyLogsBackend implements DailyLogsBackend {
 
   @override
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId) async {
+    // في مواصفة السواجر (القسم 05: Daily Logs & Certification)، النقطة المعتمدة لفحص
+    // حالة شاشة الاعتماد والجاهزية وموانع التحقق هي `GET /eld/daily-logs/{id}/certify`.
+    final certifyRes = await getCertifyState(logId);
+    if (certifyRes.isSuccess && certifyRes.valueOrNull != null) {
+      return certifyRes.mapValue(
+        (c) => ReadinessDto(
+          dailyLogId: c.dailyLogId != 0 ? c.dailyLogId : logId.value,
+          driverId: 0,
+          driverName: '',
+          logDate: c.logDate,
+          readinessStatus: c.canCertify
+              ? 'READY'
+              : (c.certified ? 'CERTIFIED' : 'NOT_READY'),
+          missingRequirements: c.validationCodes,
+          legalStatement: c.statementText,
+          availableActions: c.canCertify ? const ['CERTIFY'] : const [],
+          carrierProposedEditsPending:
+              c.validationCodes.contains('UNCERTIFIED_EDITS_PENDING'),
+          pendingCarrierEdits: const [],
+        ),
+      );
+    }
+
     final res = await _apiClient.get<ReadinessDto>(
       EldEndpoints.checkReadiness(logId.value),
       parser: (data) => ReadinessDto.fromJson(data as Map<String, dynamic>),

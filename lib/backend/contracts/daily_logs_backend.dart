@@ -19,6 +19,8 @@ abstract interface class DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   });
 
   /// GET /eld/daily-logs/summary — same filters as [list] + `page`/`size`;
@@ -35,6 +37,8 @@ abstract interface class DailyLogsBackend {
     DateTime? logDate,
     int page = 0,
     int size = 20,
+    String? sortBy = 'id',
+    String? sortDirection = 'ASC',
   });
 
   /// GET /eld/daily-logs/{id}

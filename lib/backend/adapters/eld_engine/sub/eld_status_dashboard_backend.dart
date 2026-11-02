@@ -19,7 +19,7 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) {
     return _apiClient
         .get<Map<String, dynamic>>(
-          EldEndpoints.status,
+          EldEndpoints.statusDashboard,
           queryParameters: driverId != null
               ? {'driverId': driverId.value}
               : null,
@@ -38,15 +38,35 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard?>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) {
     final effectiveNote = (notes != null && notes.trim().isNotEmpty)
         ? notes.trim()
         : _defaultNoteFor(status);
 
+    final payload = <String, dynamic>{
+      'dutyStatus': status.wire,
+      'notes': effectiveNote,
+    };
+    if (driverId != null && driverId.value > 0) {
+      payload['driverId'] = driverId.value;
+    }
+    // إحداثيات لحظة التغيير داخل location متداخل — تُرسل فقط عند توفرهما
+    // معًا وقيمتهما ليست 0,0 (0,0 = لا إصلاح GPS حسب أسبقية التطبيق).
+    // غيابهما ⇒ حذف الحقل كليًا، لا إحداثيات مُختلَقة.
+    final hasValidLocation = latitude != null &&
+        longitude != null &&
+        !(latitude == 0 && longitude == 0);
+    if (hasValidLocation) {
+      payload['location'] = {'latitude': latitude, 'longitude': longitude};
+    }
+
     return _apiClient
         .post<Map<String, dynamic>>(
           EldEndpoints.updateDutyStatus,
-          data: {'dutyStatus': status.wire, 'notes': effectiveNote},
+          data: payload,
           // بلا ResponseType.plain: نفس مسار GET — يفكّ ApiResponse غلاف
           // `{success, data}` تلقائياً، فلا يصل للمحوّل غلافٌ كامل يُقرأ
           // ككائن بلا مفاتيح لوحة (السبب الجذري لعرض أصفار بعد التغيير).

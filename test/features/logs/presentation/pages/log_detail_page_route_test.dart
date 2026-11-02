@@ -12,9 +12,11 @@ import 'package:golden_feather_eld/features/auth/presentation/providers/auth_sta
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/log_detail_page.dart';
+import 'package:golden_feather_eld/features/logs/presentation/formatters/log_date_formatter.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
@@ -62,7 +64,7 @@ void main() {
     ).thenAnswer((_) async => Right(DailyLogPage(logs: [newer, older])));
     when(
       () => repo.getEvents(any(), any()),
-    ).thenAnswer((_) async => const Right([]));
+    ).thenAnswer((_) async => const Right(LogEventsSnapshot.server([])));
     when(
       () => repo.getLogById(any()),
     ).thenAnswer((_) async => const Left(NetworkFailure()));

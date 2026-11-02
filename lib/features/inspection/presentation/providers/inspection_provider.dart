@@ -222,6 +222,22 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
     }
 
     final driver = DriverId(_driverId);
+
+    // تسجيل وبدء التفتيش على الخادم لتجميد سجلات الـ 8 أيام (GET /eld/inspections/start).
+    // الاستدعاء غير معيق: في حال انقطاع الشبكة يكتمل العمل عبر الكاش المحلي (SRS 6.8).
+    try {
+      final startResult = await _repository.registerInspectionStart(driverId: driver);
+      if (!mounted) return;
+      startResult.fold(
+        (failure) => AppLogger.warning(
+          'DOT inspection start not registered on server: ${failure.message}',
+        ),
+        (_) => AppLogger.info('DOT inspection start registered on server'),
+      );
+    } catch (e) {
+      AppLogger.warning('DOT inspection start registration skipped: $e');
+    }
+
     final cycleResult = await _repository.getCycle(driverId: driver, days: 8);
     if (!mounted) return;
     // P3: لا تصنيع في طبقة العرض — الدورة والسجل يأتيان من المستودع
@@ -253,21 +269,6 @@ class InspectionNotifier extends StateNotifier<InspectionState> {
 
     _inspectionPin = pin.trim().isNotEmpty ? pin.trim() : null;
     state = _active(cycle: cycle, log: log);
-    // تسجيل القفل مركزياً (POST /eld/dot-inspection/start) — غير معيق:
-    // التفتيش الميداني يجب أن يعمل بلا شبكة (SRS 6.8)، وفشل التسجيل
-    // يُسجَّل ليبقى مرئياً بدل منع تسليم الجهاز للمفتش.
-    unawaited(_registerServerStart(driver));
-  }
-
-  Future<void> _registerServerStart(DriverId driver) async {
-    final result = await _repository.registerInspectionStart(driverId: driver);
-    if (!mounted) return;
-    result.fold(
-      (failure) => AppLogger.warning(
-        'DOT inspection start not registered on server: ${failure.message}',
-      ),
-      (_) => AppLogger.info('DOT inspection start registered on server'),
-    );
   }
 
   /// الخروج من وضع التفتيش — إما مباشرة أو بالرمز إن وُجد

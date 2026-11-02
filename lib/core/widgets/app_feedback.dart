@@ -1,71 +1,59 @@
 import 'package:flutter/material.dart';
-import '../theme/app_typography.dart';
 
-import '../theme/app_colors.dart';
+import '../extensions/context_extensions.dart';
 import '../theme/app_radius.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_sizing.dart';
 import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import '../theme/golden_colors.dart';
 
-/// Unified feedback surface for the application.
+/// الأنواع الدلالية لرسائل التنبيهات الفورية (AppFeedback)
+enum AppFeedbackType {
+  success,
+  error,
+  warning,
+  info,
+}
+
+/// سطح التنبيهات الموحد للتطبيق (Design System 2.0).
 ///
-/// Every state owns a background/foreground pair so bright semantic colors
-/// are never rendered with an unreadable white label.
+/// يستمد جميع درجات الخلفيات والنصوص والأيقونات من [GoldenColors]،
+/// والظلال العائمة المتكيفة من [AppShadows]، مما يضمن تباينًا تاماً في Light وDark.
 class AppFeedback {
   AppFeedback._();
 
   static OverlayEntry? _activeEntry;
 
+  /// إظهار تنبيه نجاح الإجراء
   static void success(BuildContext context, String message) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    _show(
-      context,
-      message,
-      dark ? AppColors.darkSuccessBg : AppColors.successBg,
-      dark ? AppColors.successOnDark : AppColors.successText,
-      Icons.check_circle_outline,
-    );
+    _show(context, message, AppFeedbackType.success);
   }
 
+  /// إظهار تنبيه خطأ
   static void error(BuildContext context, String message) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    _show(
-      context,
-      message,
-      dark ? AppColors.darkDangerBg : AppColors.dangerBg,
-      dark ? AppColors.dangerOnDark : AppColors.dangerText,
-      Icons.error_outline,
-    );
+    _show(context, message, AppFeedbackType.error);
   }
 
+  /// إظهار تنبيه معلوماتي
   static void info(BuildContext context, String message) {
-    // زوج AppColors المعياري مثل إخوته تماماً — كان يستهلك دوراً
-    // مقلوباً من الثيم (فقاعة بيضاء ساطعة في الداكن) — انحراف وحيد.
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    _show(
-      context,
-      message,
-      dark ? AppColors.darkInfoBg : AppColors.infoBg,
-      dark ? AppColors.infoOnDark : AppColors.infoText,
-      Icons.info_outline,
-    );
+    _show(context, message, AppFeedbackType.info);
   }
 
+  /// إظهار تنبيه تحذيري
   static void warn(BuildContext context, String message) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    _show(
-      context,
-      message,
-      dark ? AppColors.darkWarningBg : AppColors.warningBg,
-      dark ? AppColors.warningOnDark : AppColors.warningText,
-      Icons.warning_amber_rounded,
-    );
+    _show(context, message, AppFeedbackType.warning);
+  }
+
+  /// اسم بديل متوافق لـ [warn]
+  static void warning(BuildContext context, String message) {
+    _show(context, message, AppFeedbackType.warning);
   }
 
   static void _show(
     BuildContext context,
     String message,
-    Color background,
-    Color foreground,
-    IconData icon,
+    AppFeedbackType type,
   ) {
     final overlay = Overlay.maybeOf(context);
     if (overlay == null) return;
@@ -75,6 +63,37 @@ class AppFeedback {
       _activeEntry = null;
     }
 
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final goldenColors =
+        theme.extension<GoldenColors>() ??
+        (brightness == Brightness.dark
+            ? GoldenColors.dark
+            : GoldenColors.light);
+
+    final (Color background, Color foreground, IconData icon) = switch (type) {
+      AppFeedbackType.success => (
+        goldenColors.successBackground,
+        goldenColors.successText,
+        Icons.check_circle_outline,
+      ),
+      AppFeedbackType.error => (
+        goldenColors.errorBackground,
+        goldenColors.errorText,
+        Icons.error_outline,
+      ),
+      AppFeedbackType.warning => (
+        goldenColors.warningBackground,
+        goldenColors.warningText,
+        Icons.warning_amber_rounded,
+      ),
+      AppFeedbackType.info => (
+        goldenColors.infoBackground,
+        goldenColors.infoText,
+        Icons.info_outline,
+      ),
+    };
+
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (overlayContext) => Positioned(
@@ -83,7 +102,7 @@ class AppFeedback {
         right: 0,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.feedbackPadding),
             child: Material(
               color: Colors.transparent,
               child: Dismissible(
@@ -99,14 +118,12 @@ class AppFeedback {
                     ),
                     decoration: BoxDecoration(
                       color: background,
-                      borderRadius: BorderRadius.circular(AppRadius.dialog),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.black.withValues(alpha: 0.18),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(AppRadius.feedback),
+                      border: Border.all(
+                        color: foreground.withValues(alpha: 0.25),
+                        width: 1.0,
+                      ),
+                      boxShadow: AppShadows.floatingFor(brightness),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -114,17 +131,16 @@ class AppFeedback {
                         Icon(
                           icon,
                           color: foreground,
-                          size: AppSpacing.iconMedium,
+                          size: AppSizing.iconStandard,
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             message,
-                            style: Theme.of(overlayContext).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: foreground,
-                                  fontWeight: AppTypography.semiBold,
-                                ),
+                            style: (overlayContext.styles.bodyMedium).copyWith(
+                              color: foreground,
+                              fontWeight: AppTypography.semiBold,
+                            ),
                           ),
                         ),
                       ],

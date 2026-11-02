@@ -101,6 +101,9 @@ class _ScriptedDashboardBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     return ok(build(status: status));
   }
@@ -1218,6 +1221,9 @@ class _FailingBackend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async =>
       err(const NetworkError(code: 'server.500', l10nKey: 'e'));
 

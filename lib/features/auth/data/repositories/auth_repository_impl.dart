@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/network_guard.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/startup_profiler.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/config/server_config_provider.dart';
 
@@ -84,7 +85,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(MissingConfigurationFailure());
     }
 
+    // M0 — قياس قراءة الجلسة المحلية (SecureStorage + كاش) منفصلة عن الشبكة.
+    StartupProfiler.mark('auth:local-session-read:start');
     final savedSession = await _localDataSource.getSession();
+    StartupProfiler.mark('auth:local-session-read:end');
     if (savedSession == null) return const Left(SessionMissingFailure());
 
     if (!_isValidOrigin(serverUrl, savedSession)) {
@@ -125,11 +129,15 @@ class AuthRepositoryImpl implements AuthRepository {
     final backendType = _configProvider.backendType;
     final sessionDto = AuthSessionDto.fromEntity(savedSession);
 
+    // M0 — قياس التحقق الشبكي (GET /api/session) منفصلًا — يظهر بوضوح في
+    // سيناريو Slow Network حتى مهلة الاتصال كاملة.
+    StartupProfiler.mark('auth:remote-validate:start (GET /session)');
     final result = await _authBackend.validateSession(
       serverOrigin: sessionDto.serverOrigin,
       sessionCredential: sessionDto.sessionCredential,
       backendType: backendType,
     );
+    StartupProfiler.mark('auth:remote-validate:end');
 
     return result.fold(
       (error) async {

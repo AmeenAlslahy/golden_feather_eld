@@ -11,6 +11,13 @@ class PendingEvent extends Equatable {
   final int retryCount;
   final DateTime? nextRetryAt;
 
+  /// مفتاح منطقي اختياري يمنع إدخال طلبين نشطين لنفس العملية.
+  ///
+  /// يُخزَّن في الطابور الدائم (عمود `dedupeKey` مع فهرس فريد جزئي)، لذا
+  /// يبقى مانع التكرار فعالاً بعد إعادة تشغيل التطبيق. العناصر القديمة
+  /// التي لا تحمل المفتاح تبقى كما هي وتُرسل كالمعتاد.
+  final String? dedupeKey;
+
   const PendingEvent({
     required this.id,
     required this.type,
@@ -19,9 +26,14 @@ class PendingEvent extends Equatable {
     this.priority = SyncPriority.normal,
     this.retryCount = 0,
     this.nextRetryAt,
+    this.dedupeKey,
   });
 
-  PendingEvent copyWith({int? retryCount, DateTime? nextRetryAt}) {
+  PendingEvent copyWith({
+    int? retryCount,
+    DateTime? nextRetryAt,
+    String? dedupeKey,
+  }) {
     return PendingEvent(
       id: id,
       type: type,
@@ -30,6 +42,7 @@ class PendingEvent extends Equatable {
       priority: priority,
       retryCount: retryCount ?? this.retryCount,
       nextRetryAt: nextRetryAt ?? this.nextRetryAt,
+      dedupeKey: dedupeKey ?? this.dedupeKey,
     );
   }
 
@@ -41,6 +54,7 @@ class PendingEvent extends Equatable {
     priority,
     retryCount,
     nextRetryAt,
+    dedupeKey,
   ];
 }
 

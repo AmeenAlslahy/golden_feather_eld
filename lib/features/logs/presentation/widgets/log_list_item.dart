@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system.dart';
 import '../../domain/entities/daily_log.dart';
+import '../formatters/log_date_formatter.dart';
 import 'status_chip.dart';
 
 /// عنصر السجل في القائمة
@@ -10,6 +11,50 @@ class LogListItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const LogListItem({super.key, required this.log, required this.onTap});
+
+  /// الحالات المحلية (قبل تأكيد الخادم أو بعد رفضه) تحتاج
+  /// نصًا صريحًا كي لا يقرأها المستخدم كحالة خادم نهائية.
+  String _formLabel(BuildContext context) {
+    final loc = context.loc;
+    return switch (log.formStatus) {
+      FormStatus.pendingSync => '${loc.formLabel}: ${loc.statusPendingSync}',
+      FormStatus.savedUnconfirmed =>
+        '${loc.formLabel}: ${loc.statusSavedUnconfirmed}',
+      FormStatus.syncFailed => '${loc.formLabel}: ${loc.statusSyncFailed}',
+      _ => loc.formLabel,
+    };
+  }
+
+  String _certificationLabel(BuildContext context) {
+    final loc = context.loc;
+    return switch (log.certificationStatus) {
+      CertificationStatus.pendingSync =>
+        '${loc.certifyLabel}: ${loc.statusPendingSync}',
+      CertificationStatus.syncFailed =>
+        '${loc.certifyLabel}: ${loc.statusSyncFailed}',
+      _ => loc.certifyLabel,
+    };
+  }
+
+  StatusChipTone _formTone() => switch (log.formStatus) {
+    FormStatus.completed => StatusChipTone.success,
+    FormStatus.incomplete => StatusChipTone.error,
+    FormStatus.pendingSync => StatusChipTone.pending,
+    FormStatus.savedUnconfirmed => StatusChipTone.warning,
+    FormStatus.syncFailed => StatusChipTone.error,
+    FormStatus.unknown =>
+      log.isFormComplete ? StatusChipTone.success : StatusChipTone.error,
+  };
+
+  StatusChipTone _certificationTone() => switch (log.certificationStatus) {
+    CertificationStatus.certified => StatusChipTone.success,
+    CertificationStatus.pendingSync => StatusChipTone.pending,
+    CertificationStatus.syncFailed => StatusChipTone.error,
+    CertificationStatus.uncertified ||
+    CertificationStatus.reCertificationRequired ||
+    CertificationStatus.unknown =>
+      log.isCertified ? StatusChipTone.success : StatusChipTone.error,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -83,19 +128,21 @@ class LogListItem extends StatelessWidget {
                 // مسافة تفصل بين الوقت والحالة الأولى (تنكمش عند الضيق)
                 const Flexible(child: SizedBox(width: AppSpacing.xl)),
 
-                // 2. حالة النموذج (Form)
+                // 2. حالة النموذج (Form) — مع تمييز pending/failed/unconfirmed
                 StatusChip(
-                  label: context.loc.formLabel,
+                  label: _formLabel(context),
                   isComplete: log.isFormComplete,
+                  tone: _formTone(),
                 ),
 
                 // مسافة تفصل بين الحالتين (تنكمش عند الضيق)
                 const Flexible(child: SizedBox(width: AppSpacing.lg)),
 
-                // 3. حالة التوثيق (Certify)
+                // 3. حالة التوثيق (Certify) — مع تمييز pending/failed
                 StatusChip(
-                  label: context.loc.certifyLabel,
+                  label: _certificationLabel(context),
                   isComplete: log.isCertified,
+                  tone: _certificationTone(),
                 ),
               ],
             ),

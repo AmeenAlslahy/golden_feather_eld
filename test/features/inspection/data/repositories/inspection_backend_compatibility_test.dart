@@ -183,7 +183,7 @@ void main() {
         )).thenAnswer((inv) async {
       if (backendDown) return err(const NetworkError(code: 'offline', l10nKey: 'offline'));
       final p = inv.positionalArguments[0] as String;
-      if (p == '/eld/dot-inspection') {
+      if (p == '/eld/inspections') {
         return ok(ApiResponse<Map<String, dynamic>>(
             statusCode: 200, isSuccess: true, data: screenBody ?? const {}));
       }

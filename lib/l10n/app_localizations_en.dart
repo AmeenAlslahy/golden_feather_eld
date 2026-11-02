@@ -2064,6 +2064,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logSuccessfullyCertified => 'Log successfully certified.';
 
   @override
+  String get certifyPendingSync =>
+      'Certification request saved on this device and pending sync. The log is not certified yet.';
+
+  @override
+  String get certifyNotConfirmed =>
+      'The server did not confirm the certification. Please try again.';
+
+  @override
+  String get eventsShowingSavedData =>
+      'Showing events saved on this device or from the last copy — not confirmed by the server right now.';
+
+  @override
+  String get eventsUnavailable =>
+      'Could not load events and no saved copy is available. Please try again.';
+
+  @override
   String get notReadyForCertification => 'Not Ready for Certification';
 
   @override
@@ -2836,6 +2852,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'The server accepted disconnected mode. No local duty event was created.';
 
   @override
+  String get sessionConnectRejected =>
+      'The server rejected the connection request. No session was confirmed.';
+
+  @override
+  String get sessionStatusUnconfirmed =>
+      'The session status was not confirmed by the server.';
+
+  @override
+  String get sessionStatusUnconfirmedHint =>
+      'The request may have reached the server. Do not retry automatically; verify the session before trying again.';
+
+  @override
+  String get continueDisconnectedOffline =>
+      'No network connection. The disconnected-mode request was not sent; you are still on the connection screen.';
+
+  @override
+  String get continueDisconnectedFailed =>
+      'Disconnected mode could not be confirmed. Tracking did not start and you were not taken to Home.';
+
+  @override
+  String get continueDisconnectedRejected =>
+      'The server rejected the disconnected-mode request. Tracking did not start.';
+
+  @override
+  String get continueDisconnectedInProgress =>
+      'Submitting disconnected mode...';
+
+  @override
   String get macAddressRequired => 'MAC address is required.';
 
   @override
@@ -3241,4 +3285,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inspectionHandOverNotice => 'Hand over device to safety official';
+
+  @override
+  String get statusPendingSync => 'Pending sync';
+
+  @override
+  String get statusSavedUnconfirmed => 'Saved — unconfirmed';
+
+  @override
+  String get statusSyncFailed => 'Sync failed';
 }

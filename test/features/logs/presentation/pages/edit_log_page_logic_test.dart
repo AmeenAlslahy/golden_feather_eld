@@ -64,6 +64,14 @@ void main() {
       location: 'Old Location',
     );
 
+    final nextEvent = LogEvent(
+      id: 'e2',
+      status: 'OFF',
+      startTime: DateTime(2026, 1, 1, 12, 0, 0),
+      duration: const Duration(hours: 1),
+      location: '',
+    );
+
     setUp(() {
       logsNotifier = MockLogsNotifier(
         LogsState(
@@ -77,6 +85,7 @@ void main() {
             totalDrivingHours: 5.0,
             isFormComplete: true,
             isCertified: false,
+            events: [testEvent, nextEvent],
           ),
         ),
       );
@@ -217,6 +226,61 @@ void main() {
             any(
               that: predicate<LogEvent>(
                 (e) => e.location == 'New Manual Location',
+              ),
+            ),
+            reason: any(named: 'reason'),
+          ),
+        ).called(1);
+
+        await tester.pump(const Duration(seconds: 4));
+      },
+    );
+
+    testWidgets(
+      'changing the start time sends the recomputed duration, not the old one',
+      (tester) async {
+        when(
+          () => logsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => const Right(null));
+        when(
+          () => mockRepo.logAudit(any()),
+        ).thenAnswer((_) async => const Right(true));
+
+        await tester.pumpWidget(
+          createTestApp(EditLogPage(event: testEvent, isNewEvent: false)),
+        );
+        await tester.pumpAndSettle();
+
+        final BuildContext context = tester.element(find.byType(EditLogPage));
+        final container = ProviderScope.containerOf(context);
+        final notifier = container.read(
+          editLogFormProvider(testEvent).notifier,
+        );
+
+        // Moving the start to 09:00 with the next event at 12:00 makes the
+        // form show three hours — that is what the driver approves.
+        notifier.setStartTime('09:00:00 AM');
+        expect(
+          container.read(editLogFormProvider(testEvent)).duration,
+          '03:00',
+        );
+
+        final reasonField = find.byType(TextField).last;
+        await tester.ensureVisible(reasonField);
+        await tester.enterText(reasonField, 'Corrected start');
+        await tester.pump();
+
+        await tester.ensureVisible(find.byType(AppButton).first);
+        await tester.tap(find.byType(AppButton).first);
+        await tester.pumpAndSettle();
+
+        verify(
+          () => logsNotifier.updateEvent(
+            any(
+              that: predicate<LogEvent>(
+                (e) =>
+                    e.startTime == DateTime(2026, 1, 1, 9) &&
+                    e.duration == const Duration(hours: 3),
               ),
             ),
             reason: any(named: 'reason'),

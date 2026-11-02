@@ -153,6 +153,9 @@ class _Backend implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async =>
       ok(dashboard);
 
@@ -373,7 +376,7 @@ void main() {
           reason: 'الخادم هو المرجع — لا اشتقاق محلي من مؤشر القيادة');
     });
 
-    test('OFF_DUTY: المتبقي صفر ودائرة فارغة', () {
+    test('OFF_DUTY: المتبقي مطابق للخادم ولا يُصفَّر قسراً', () {
       final d = _serverDashboard();
       final ui = CircularTimerLogic.calculateUiState(
         circle: d.remainingCircle,
@@ -382,7 +385,7 @@ void main() {
         statusLabel: 'OFF_DUTY',
         elapsedSinceSnapshot: Duration.zero,
       );
-      expect(ui.liveRemaining, Duration.zero);
+      expect(ui.liveRemaining, d.remainingCircle.remaining);
       expect(ui.isRest, isTrue);
     });
 

@@ -1,14 +1,21 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/codriver/domain/entities/codriver.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
 import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_data.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/daily_form_update.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
+import 'package:golden_feather_eld/features/logs/domain/saved_form_status.dart';
+import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/form_tab_provider.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/logs_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
@@ -22,6 +29,13 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const DailyLogId(0));
     registerFallbackValue(DateTime(2026));
+    registerFallbackValue(
+      const DailyFormUpdate(
+        vehicleUniqueId: '',
+        trailers: [],
+        shippingDocuments: [],
+      ),
+    );
   });
 
   late _Repo repo;
@@ -47,6 +61,7 @@ void main() {
   );
 
   const savedForm = DailyFormData(
+    vehicleId: 777,
     vehicleUniqueId: 'TRK-OLD',
     vehicleName: 'Old Truck',
     coDriverId: 7,
@@ -67,7 +82,7 @@ void main() {
     repo = _Repo();
     when(
       () => repo.getEvents(any(), any()),
-    ).thenAnswer((_) async => const Right([]));
+    ).thenAnswer((_) async => const Right(LogEventsSnapshot.server([])));
     when(
       () => repo.getLogById(any()),
     ).thenAnswer((_) async => const Left(NetworkFailure()));
@@ -83,10 +98,11 @@ void main() {
         logRepositoryProvider.overrideWithValue(repo),
         logsProvider.overrideWith((ref) => LogsNotifier(repo, null)),
         dashboardDataProvider.overrideWith((ref) => DashboardNotifier()),
+        currentDriverIdProvider.overrideWithValue(101),
       ],
     );
     final logsSub = container.listen(logsProvider, (_, __) {});
-    final formSub = container.listen(formTabProvider(selected), (_, __) {});
+    final formSub = container.listen(formTabProvider(selected.id), (_, __) {});
     addTearDown(() {
       formSub.close();
       logsSub.close();
@@ -101,7 +117,7 @@ void main() {
     await setUpContainer(oldLog);
     final dashboardBefore = container.read(dashboardDataProvider);
 
-    final notifier = container.read(formTabProvider(oldLog).notifier);
+    final notifier = container.read(formTabProvider(oldLog.id).notifier);
     notifier.updateVehicle(pickedVehicle);
     notifier.updateCoDriver(pickedCoDriver);
 
@@ -126,10 +142,48 @@ void main() {
     );
   });
 
+  test('same vehicle keeps its numeric id; a new vehicle drops it', () async {
+    await setUpContainer(oldLog);
+    DailyFormUpdate? captured;
+    when(
+      () => repo.saveForm(
+        logId: any(named: 'logId'),
+        form: any(named: 'form'),
+        ownerDriverId: any(named: 'ownerDriverId'),
+      ),
+    ).thenAnswer((invocation) async {
+      captured = invocation.namedArguments[#form] as DailyFormUpdate;
+      return const Right(
+        FormSaveResult.online(
+          SavedFormRead(formStatus: 'COMPLETED', complete: true),
+        ),
+      );
+    });
+
+    final loc = lookupAppLocalizations(const Locale('en'));
+    final notifier = container.read(formTabProvider(oldLog.id).notifier);
+    Future<void> submit() =>
+        notifier.submitForm(loc: loc, onSuccess: (_) {}, onOffline: (_) {});
+
+    // The saved form's vehicle is still selected → its server id is valid.
+    await submit();
+    expect(captured!.vehicleUniqueId, 'TRK-OLD');
+    expect(captured!.vehicleId, 777);
+
+    notifier.updateVehicle(pickedVehicle);
+    await submit();
+    expect(captured!.vehicleUniqueId, '666');
+    expect(
+      captured!.vehicleId,
+      isNull,
+      reason: 'the old numeric id must not be sent with a different uniqueId',
+    );
+  });
+
   test('today still writes the live dashboard', () async {
     await setUpContainer(todayLog);
 
-    final notifier = container.read(formTabProvider(todayLog).notifier);
+    final notifier = container.read(formTabProvider(todayLog.id).notifier);
     notifier.updateVehicle(pickedVehicle);
     notifier.updateCoDriver(pickedCoDriver);
 

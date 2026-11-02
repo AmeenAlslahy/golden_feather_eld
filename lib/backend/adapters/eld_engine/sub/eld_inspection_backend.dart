@@ -1,3 +1,4 @@
+import '../../../../core/error/app_error.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../domain/shared/value_objects.dart';
@@ -36,46 +37,79 @@ class EldInspectionBackend implements InspectionBackend {
     DriverId? driverId,
     int days = 8,
     DateTime? endDate,
-  }) {
-    return _apiClient
-        .get<List<dynamic>>(
-          EldEndpoints.dotInspectionCycle,
-          queryParameters: {
-            if (driverId != null) 'driverId': driverId.value,
-            'days': days,
-            if (endDate != null)
-              'endDate': endDate.toIso8601String().split('T').first,
-          },
-          parser: (data) => data is List ? data : <dynamic>[],
-        )
-        .then(
-          (r) => r.mapValue(
-            (response) =>
-                DotInspectionMapper.fromCycleJson(response.data ?? const []),
-          ),
-        );
+  }) async {
+    final result = await _apiClient.get<List<dynamic>>(
+      EldEndpoints.dotInspectionCycle,
+      queryParameters: {
+        if (driverId != null) 'driverId': driverId.value,
+        'days': days,
+        if (endDate != null)
+          'endDate': endDate.toIso8601String().split('T').first,
+      },
+      parser: (data) => data is List ? data : <dynamic>[],
+    );
+    if (result.isSuccess) {
+      return result.mapValue(
+        (response) =>
+            DotInspectionMapper.fromCycleJson(response.data ?? const []),
+      );
+    }
+    // Fallback: If separate /cycle endpoint is absent (404), fetch root inspection session
+    final sessionRes = await _apiClient.get<Map<String, dynamic>>(
+      EldEndpoints.inspections,
+      queryParameters: {
+        'page': 0,
+        'size': days,
+        'sortBy': 'id',
+        'sortDirection': 'ASC',
+        if (driverId != null) 'driverId': driverId.value,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return sessionRes.mapValue(
+      (response) =>
+          DotInspectionMapper.cycleFromSessionJson(response.data ?? const {}),
+    );
   }
 
   @override
   Future<Result<DotInspectionLog>> getLogs({
     DriverId? driverId,
     DateTime? date,
-  }) {
-    return _apiClient
-        .get<Map<String, dynamic>>(
-          EldEndpoints.dotInspectionLogs,
-          queryParameters: {
-            if (driverId != null) 'driverId': driverId.value,
-            if (date != null) 'date': date.toIso8601String().split('T').first,
-          },
-          parser: (data) => data is Map<String, dynamic> ? data : {},
-        )
-        .then(
-          (r) => r.mapValue(
-            (response) =>
-                DotInspectionMapper.fromLogJson(response.data ?? const {}),
-          ),
-        );
+  }) async {
+    final result = await _apiClient.get<Map<String, dynamic>>(
+      EldEndpoints.dotInspectionLogs,
+      queryParameters: {
+        if (driverId != null) 'driverId': driverId.value,
+        if (date != null) 'date': date.toIso8601String().split('T').first,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    if (result.isSuccess) {
+      final data = result.valueOrNull?.data ?? const <String, dynamic>{};
+      if (data.containsKey('inspectionLogs')) {
+        return ok(DotInspectionMapper.logFromSessionJson(data, targetDate: date));
+      }
+      return ok(DotInspectionMapper.fromLogJson(data));
+    }
+    // Fallback: If separate /logs endpoint is absent (404), fetch root inspection session
+    final sessionRes = await _apiClient.get<Map<String, dynamic>>(
+      EldEndpoints.inspections,
+      queryParameters: {
+        'page': 0,
+        'size': 20,
+        'sortBy': 'id',
+        'sortDirection': 'ASC',
+        if (driverId != null) 'driverId': driverId.value,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return sessionRes.mapValue(
+      (response) => DotInspectionMapper.logFromSessionJson(
+        response.data ?? const {},
+        targetDate: date,
+      ),
+    );
   }
 
   RawJson _asMap(dynamic data) {
@@ -99,6 +133,52 @@ class EldInspectionBackend implements InspectionBackend {
     return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
+  /// Posts to a Swagger-documented transfer endpoint and rejects a failed
+  /// unified envelope **before** its body can be mistaken for an accepted
+  /// transfer. A missing `data` is not proof of success.
+  Future<Result<RawJson>> _postTransferJson(
+    String path,
+    Map<String, dynamic> data, {
+    int? expectedOwnerDriverId,
+  }) async {
+    final res = await _apiClient.post<RawJson>(
+      path,
+      data: data,
+      parser: _asMap,
+      expectedOwnerDriverId: expectedOwnerDriverId,
+    );
+    return res.flatMap((response) {
+      if (response.isSuccess) {
+        return ok(response.data ?? <String, dynamic>{});
+      }
+
+      final message = response.message?.trim();
+      final context = <String, dynamic>{
+        'endpoint': path,
+        if (message != null && message.isNotEmpty) 'message': message,
+        if (response.errors.isNotEmpty)
+          'errors': response.errors.map((error) => error.toString()).toList(),
+        if (response.requestId != null) 'requestId': response.requestId,
+      };
+
+      // Field errors are a permanent rejection; an envelope failure without
+      // field errors is treated as a retryable server-side failure.
+      return err(
+        response.errors.isNotEmpty
+            ? ValidationError(
+                code: 'inspection.transfer.rejected',
+                l10nKey: 'validation.badRequest',
+                context: context,
+              )
+            : ServerError(
+                code: 'inspection.transfer.rejected',
+                statusCode: response.statusCode,
+                context: context,
+              ),
+      );
+    });
+  }
+
   @override
   Future<Result<RawJson>> emailLogs({
     required DriverId driverId,
@@ -109,14 +189,15 @@ class EldInspectionBackend implements InspectionBackend {
     DateTime? endDate,
     int? expectedOwnerDriverId,
   }) {
-    return _postJson(EldEndpoints.dotInspectionEmailLogs, {
+    // Swagger's EmailLogsRequest documents only driverId, recipientEmail and
+    // comment. routingCode/daysCount/endDate stay in the contract for callers
+    // but are not sent until the backend confirms them.
+    final normalizedComment = comment?.trim();
+    return _postTransferJson(EldEndpoints.dotInspectionEmailLogs, {
       'driverId': driverId.value,
-      'recipientEmail': recipientEmail,
-      if (routingCode != null) 'routingCode': routingCode,
-      if (comment != null) 'comment': comment,
-      if (daysCount != null) 'daysCount': daysCount,
-      if (endDate != null)
-        'endDate': endDate.toIso8601String().split('T').first,
+      'recipientEmail': recipientEmail.trim(),
+      if (normalizedComment != null && normalizedComment.isNotEmpty)
+        'comment': normalizedComment,
     }, expectedOwnerDriverId: expectedOwnerDriverId);
   }
 
@@ -161,15 +242,24 @@ class EldInspectionBackend implements InspectionBackend {
     String? inspectorAgency,
     String? location,
     String? notes,
-  }) {
-    return _postJson(EldEndpoints.dotInspectionStart, {
-      'driverId': driverId.value,
-      if (inspectorName != null) 'inspectorName': inspectorName,
-      if (inspectorBadge != null) 'inspectorBadge': inspectorBadge,
-      if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
-      if (location != null) 'location': location,
-      if (notes != null) 'notes': notes,
-    });
+  }) async {
+    final res = await _apiClient.get<RawJson>(
+      EldEndpoints.dotInspectionStart,
+      queryParameters: {
+        'page': 0,
+        'size': 20,
+        'sortBy': 'id',
+        'sortDirection': 'ASC',
+        if (driverId.value > 0) 'driverId': driverId.value,
+        if (inspectorName != null) 'inspectorName': inspectorName,
+        if (inspectorBadge != null) 'inspectorBadge': inspectorBadge,
+        if (inspectorAgency != null) 'inspectorAgency': inspectorAgency,
+        if (location != null) 'location': location,
+        if (notes != null) 'notes': notes,
+      },
+      parser: _asMap,
+    );
+    return res.mapValue((response) => response.data ?? <String, dynamic>{});
   }
 
   @override

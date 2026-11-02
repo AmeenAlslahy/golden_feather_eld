@@ -2,17 +2,19 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/extensions/context_extensions.dart';
-import '../../../../core/widgets/app_signature_canvas.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../domain/dvir_vehicle.dart';
-import '../../domain/entities/dvir_report.dart';
 import 'package:signature/signature.dart';
 
+import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_signature_canvas.dart';
+import '../../../../core/widgets/eld_card.dart';
+import '../../domain/dvir_vehicle.dart';
+import '../../domain/entities/dvir_report.dart';
 import 'dvir_form_components.dart';
 
+/// تنبيه مراجعة فحص سابق §396.13 إن وجد
 class DvirNoticeSection extends StatelessWidget {
   final bool hasExistingReport;
   final bool hasPreviousToReview;
@@ -26,17 +28,49 @@ class DvirNoticeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!hasExistingReport && hasPreviousToReview) {
-      return Container(
-        width: double.infinity,
-        color: context.warning.withValues(alpha: 0.2),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Text(AppLocalizations.of(context)!.dvirPreviousReviewNotice),
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+          vertical: AppSpacing.xs,
+        ),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: context.warning.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppRadius.input),
+            border: Border.all(
+              color: context.warning.withValues(alpha: 0.6),
+            ),
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: context.warning,
+                size: AppSpacing.iconMedium,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.dvirPreviousReviewNotice,
+                  style: context.styles.body.copyWith(
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
     return const SizedBox.shrink();
   }
 }
 
+/// قسم اختيار نوع الفحص (Pre-Trip / Post-Trip)
 class DvirInspectionTypeSection extends StatelessWidget {
   final InspectionType selectedType;
   final ValueChanged<InspectionType>? onTypeChanged;
@@ -52,38 +86,76 @@ class DvirInspectionTypeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirFieldGroup(
-      title: loc.inspectionType,
-      child: SegmentedButton<InspectionType>(
-        segments: [
-          ButtonSegment<InspectionType>(
-            value: InspectionType.preTrip,
-            label: Text(
-              context.translateInspectionType(InspectionType.preTrip.name),
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.inspectionType,
+        icon: Icons.fact_check_outlined,
+        child: SegmentedButton<InspectionType>(
+          style: ButtonStyle(
+            shape: WidgetStateProperty.all(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.input),
+              ),
             ),
-            icon: const Icon(Icons.play_circle_outline),
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return context.gold.withValues(alpha: 0.2);
+              }
+              return context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35);
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return context.gold;
+              }
+              return context.colorScheme.onSurface;
+            }),
+            side: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return BorderSide(color: context.gold, width: 1.5);
+              }
+              return BorderSide(
+                color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              );
+            }),
           ),
-          ButtonSegment<InspectionType>(
-            value: InspectionType.postTrip,
-            label: Text(
-              context.translateInspectionType(InspectionType.postTrip.name),
+          segments: [
+            ButtonSegment<InspectionType>(
+              value: InspectionType.preTrip,
+              label: Text(
+                context.translateInspectionType(InspectionType.preTrip.name),
+                style: context.styles.bodyBold,
+              ),
+              icon: const Icon(Icons.play_circle_outline),
             ),
-            icon: const Icon(Icons.stop_circle_outlined),
-          ),
-        ],
-        selected: {selectedType},
-        onSelectionChanged: readOnly
-            ? null
-            : (newSelection) {
-                if (newSelection.isNotEmpty) {
-                  onTypeChanged?.call(newSelection.first);
-                }
-              },
+            ButtonSegment<InspectionType>(
+              value: InspectionType.postTrip,
+              label: Text(
+                context.translateInspectionType(InspectionType.postTrip.name),
+                style: context.styles.bodyBold,
+              ),
+              icon: const Icon(Icons.stop_circle_outlined),
+            ),
+          ],
+          selected: {selectedType},
+          onSelectionChanged: readOnly
+              ? null
+              : (newSelection) {
+                  if (newSelection.isNotEmpty) {
+                    onTypeChanged?.call(newSelection.first);
+                  }
+                },
+        ),
       ),
     );
   }
 }
 
+/// قسم وقت الفحص
 class DvirTimeSection extends StatelessWidget {
   final String currentTime;
   final VoidCallback? onTap;
@@ -99,14 +171,71 @@ class DvirTimeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirFieldGroup(
-      title: loc.dvirTimeET,
-      child: GestureDetector(
-        onTap: readOnly ? null : onTap,
-        child: Text(
-          currentTime,
-          style: context.styles.body.copyWith(
-            color: readOnly ? null : context.colorScheme.primary,
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.dvirTimeET,
+        icon: Icons.access_time_rounded,
+        trailing: !readOnly
+            ? InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_calendar_outlined, size: 14, color: context.gold),
+                      const SizedBox(width: 4),
+                      Text(
+                        loc.edit,
+                        style: context.styles.caption.copyWith(
+                          color: context.gold,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : null,
+        child: GestureDetector(
+          onTap: readOnly ? null : onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(AppRadius.input),
+              border: Border.all(
+                color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: AppSpacing.iconSmall,
+                  color: context.gold,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    currentTime,
+                    style: context.styles.bodyBold.copyWith(
+                      color: readOnly ? null : context.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -114,6 +243,7 @@ class DvirTimeSection extends StatelessWidget {
   }
 }
 
+/// قسم الموقع
 class DvirLocationSection extends StatelessWidget {
   final TextEditingController controller;
   final bool readOnly;
@@ -127,17 +257,31 @@ class DvirLocationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirFieldGroup(
-      title: loc.location,
-      child: DvirFlatTextField(
-        controller: controller,
-        hint: loc.location,
-        readOnly: readOnly,
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.location,
+        icon: Icons.location_on_outlined,
+        child: DvirFlatTextField(
+          controller: controller,
+          hint: loc.location,
+          readOnly: readOnly,
+          prefixIcon: Icon(
+            Icons.place_outlined,
+            color: context.colorScheme.onSurfaceVariant,
+            size: AppSpacing.iconSmall,
+          ),
+        ),
       ),
     );
   }
 }
 
+/// قسم قراءة العداد
 class DvirOdometerSection extends StatelessWidget {
   final TextEditingController controller;
   final bool readOnly;
@@ -151,31 +295,54 @@ class DvirOdometerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirFieldGroup(
-      title: loc.dvirOdometerMi,
-      child: DvirFlatTextField(
-        controller: controller,
-        hint: loc.dvirOdometerHint,
-        readOnly: readOnly,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return null;
-          // نفس قاعدة النطاق التي تُطبَّق عند الإرسال — لا منطق مزدوج.
-          return parseDvirOdometer(value) == null
-              ? loc.invalidOdometerReading
-              : null;
-        },
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.dvirOdometerMi,
+        icon: Icons.speed_outlined,
+        child: DvirFlatTextField(
+          controller: controller,
+          hint: loc.dvirOdometerHint,
+          readOnly: readOnly,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          ],
+          prefixIcon: Icon(
+            Icons.speed,
+            color: context.colorScheme.onSurfaceVariant,
+            size: AppSpacing.iconSmall,
+          ),
+          suffixIcon: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+            child: Text(
+              'mi',
+              style: context.styles.caption.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return null;
+            return parseDvirOdometer(value) == null
+                ? loc.invalidOdometerReading
+                : null;
+          },
+        ),
       ),
     );
   }
 }
 
+/// قسم المركبة والعيوب الخاصة بها
 class DvirVehicleSection extends StatelessWidget {
   final String vehicleId;
   final String vehicleDisplayName;
-
-  /// نص العيوب قيمة مشتقة من الاختيارات — لا متحكم هنا.
   final String defectsText;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
@@ -194,64 +361,87 @@ class DvirVehicleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirTwoColumn(
-      left: FormField<String>(
-        key: ValueKey(vehicleId),
-        initialValue: vehicleId,
-        validator: (value) {
-          if (isUnassignedVehicleId(value)) {
-            return loc.dvirVehicleIdMissing;
-          }
-          return null;
-        },
-        builder: (field) {
-          final hasError = field.hasError;
-          final errorColor = context.colorScheme.error;
-          return GestureDetector(
-            onTap: readOnly ? null : onSelectVehicle,
-            child: DvirCell(
-              title: loc.vehicle,
-              borderColor: hasError ? errorColor : null,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    vehicleDisplayName,
-                    style: context.styles.body.copyWith(
-                      color: hasError ? errorColor : null,
-                    ),
-                  ),
-                  if (hasError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: Text(
-                        field.errorText!,
-                        style: context.styles.error,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
       ),
-      right: DvirCell(
-        title: loc.defectsTitle,
-        child: DvirDropdownField(
-          text: defectsText,
-          hint: loc.defectsTitle,
-          onTap: onSelectDefects,
-          readOnly: readOnly,
+      child: DvirTwoColumn(
+        left: FormField<String>(
+          key: ValueKey(vehicleId),
+          initialValue: vehicleId,
+          validator: (value) {
+            if (isUnassignedVehicleId(value)) {
+              return loc.dvirVehicleIdMissing;
+            }
+            return null;
+          },
+          builder: (field) {
+            final hasError = field.hasError;
+            final errorColor = context.colorScheme.error;
+
+            return GestureDetector(
+              onTap: readOnly ? null : onSelectVehicle,
+              child: DvirCell(
+                title: loc.vehicle,
+                borderColor: hasError ? errorColor : null,
+                icon: Icons.directions_car_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            vehicleDisplayName,
+                            style: context.styles.bodyBold.copyWith(
+                              color: hasError ? errorColor : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (!readOnly)
+                          Icon(
+                            Icons.arrow_drop_down,
+                            color: context.colorScheme.onSurfaceVariant,
+                            size: AppSpacing.iconMedium,
+                          ),
+                      ],
+                    ),
+                    if (hasError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Text(
+                          field.errorText!,
+                          style: context.styles.error,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        right: DvirCell(
+          title: loc.defectsTitle,
+          icon: Icons.report_problem_outlined,
+          child: DvirDropdownField(
+            text: defectsText,
+            hint: loc.defectsTitle,
+            onTap: onSelectDefects,
+            readOnly: readOnly,
+          ),
         ),
       ),
     );
   }
 }
 
+/// قسم المقطورة والعيوب الخاصة بها
 class DvirTrailerSection extends StatelessWidget {
   final TextEditingController controller;
-
-  /// نص عيوب المقطورة قيمة مشتقة من الاختيارات — لا متحكم هنا.
   final String defectsText;
   final bool readOnly;
   final VoidCallback? onSelectDefects;
@@ -267,31 +457,38 @@ class DvirTrailerSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirTwoColumn(
-      left: DvirCell(
-        title: loc.trailers,
-        // DVIR-local field: the report may inspect a trailer that is not the
-        // current daily-form trailer, and editing it here must never rewrite
-        // the daily form's list.
-        child: DvirFlatTextField(
-          controller: controller,
-          hint: loc.trailer,
-          readOnly: readOnly,
-        ),
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
       ),
-      right: DvirCell(
-        title: loc.defectsTitle,
-        child: DvirDropdownField(
-          text: defectsText,
-          hint: loc.defectsTitle,
-          onTap: onSelectDefects,
-          readOnly: readOnly,
+      child: DvirTwoColumn(
+        left: DvirCell(
+          title: loc.trailers,
+          icon: Icons.rv_hookup_outlined,
+          child: DvirFlatTextField(
+            controller: controller,
+            hint: loc.trailer,
+            readOnly: readOnly,
+          ),
+        ),
+        right: DvirCell(
+          title: loc.defectsTitle,
+          icon: Icons.report_problem_outlined,
+          child: DvirDropdownField(
+            text: defectsText,
+            hint: loc.defectsTitle,
+            onTap: onSelectDefects,
+            readOnly: readOnly,
+          ),
         ),
       ),
     );
   }
 }
 
+/// قسم اسم الشركة
 class DvirCompanySection extends StatelessWidget {
   final TextEditingController controller;
   final bool readOnly;
@@ -304,17 +501,32 @@ class DvirCompanySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DvirFieldGroup(
-      title: AppLocalizations.of(context)!.company,
-      child: DvirFlatTextField(
-        controller: controller,
-        hint: AppLocalizations.of(context)!.company,
-        readOnly: readOnly,
+    final loc = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.company,
+        icon: Icons.business_outlined,
+        child: DvirFlatTextField(
+          controller: controller,
+          hint: loc.company,
+          readOnly: readOnly,
+          prefixIcon: Icon(
+            Icons.domain_outlined,
+            color: context.colorScheme.onSurfaceVariant,
+            size: AppSpacing.iconSmall,
+          ),
+        ),
       ),
     );
   }
 }
 
+/// قسم الملاحظات
 class DvirRemarksSection extends StatelessWidget {
   final TextEditingController controller;
   final bool readOnly;
@@ -328,17 +540,27 @@ class DvirRemarksSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    return DvirFieldGroup(
-      title: loc.remarks,
-      child: DvirFlatTextField(
-        controller: controller,
-        hint: '',
-        readOnly: readOnly,
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.remarks,
+        icon: Icons.notes_outlined,
+        child: DvirFlatTextField(
+          controller: controller,
+          hint: loc.remarks,
+          readOnly: readOnly,
+          maxLines: 3,
+        ),
       ),
     );
   }
 }
 
+/// قسم اختيار حالة المركبة
 class DvirStatusSection extends StatelessWidget {
   final String selectedStatusLabel;
   final VoidCallback? onOpenStatusModal;
@@ -353,21 +575,84 @@ class DvirStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DvirFieldGroup(
-      title: AppLocalizations.of(context)!.status,
-      child: readOnly
-          ? Text(selectedStatusLabel, style: context.styles.body)
-          : InkWell(
-              onTap: onOpenStatusModal,
-              child: SizedBox(
-                width: double.infinity,
-                child: Text(selectedStatusLabel, style: context.styles.body),
+    final loc = AppLocalizations.of(context)!;
+    final isSatisfactory = selectedStatusLabel.toLowerCase().contains('satisfactory') ||
+        selectedStatusLabel.contains('مرضي') ||
+        selectedStatusLabel.contains('سليم');
+
+    final statusColor = isSatisfactory ? context.success : context.danger;
+    final statusIcon = isSatisfactory ? Icons.check_circle_outline : Icons.warning_amber_rounded;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
+      ),
+      child: DvirFieldGroup(
+        title: loc.status,
+        icon: Icons.health_and_safety_outlined,
+        child: readOnly
+            ? Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: AppSpacing.iconSmall),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        selectedStatusLabel,
+                        style: context.styles.bodyBold.copyWith(color: statusColor),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : InkWell(
+                onTap: onOpenStatusModal,
+                borderRadius: BorderRadius.circular(AppRadius.input),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.input),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(statusIcon, color: statusColor, size: AppSpacing.iconSmall),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          selectedStatusLabel,
+                          style: context.styles.bodyBold.copyWith(color: statusColor),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+      ),
     );
   }
 }
 
+/// قسم التوقيع الرقمي
 class DvirSignatureSection extends StatelessWidget {
   final SignatureController controller;
   final bool readOnly;
@@ -382,38 +667,90 @@ class DvirSignatureSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     if (readOnly) {
-      final loc = AppLocalizations.of(context)!;
       final sig = signatureData?.trim();
-      return DvirFieldGroup(
-        title: loc.dvirSign,
-        child: (sig != null && sig.isNotEmpty)
-            ? _ReadOnlySignature(dataUrl: sig)
-            : Text(loc.dvirSign, style: context.styles.muted),
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+          vertical: AppSpacing.xs,
+        ),
+        child: EldCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.draw_outlined,
+                    size: AppSpacing.iconMedium,
+                    color: context.gold,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(loc.dvirSign, style: context.styles.sectionTitle),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              (sig != null && sig.isNotEmpty)
+                  ? _ReadOnlySignature(dataUrl: sig)
+                  : Text(loc.dvirSign, style: context.styles.muted),
+            ],
+          ),
+        ),
       );
     }
-    return AppSignatureFormField(
-      controller: controller,
-      centerClear: true,
-      height: 230,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.sm,
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.xs,
       ),
-      validator: (hasSignature) {
-        if (hasSignature != true) {
-          return AppLocalizations.of(context)!.dvirSignatureRequired;
-        }
-        return null;
-      },
+      child: EldCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.draw_outlined,
+                  size: AppSpacing.iconMedium,
+                  color: context.gold,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(loc.dvirSign, style: context.styles.sectionTitle),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              loc.dvirSignatureRequired,
+              style: context.styles.caption.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppSignatureFormField(
+              controller: controller,
+              centerClear: true,
+              height: 180,
+              padding: EdgeInsets.zero,
+              validator: (hasSignature) {
+                if (hasSignature != true) {
+                  return loc.dvirSignatureRequired;
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 /// توقيع القراءة فقط — يُفكّ base64 مرة واحدة عند تغيّر القيمة فقط
-/// (نفس إصلاح P2 المطبق في شاشة التفاصيل)، لا في كل build.
 class _ReadOnlySignature extends StatefulWidget {
   final String dataUrl;
 
@@ -467,6 +804,7 @@ class _ReadOnlySignatureState extends State<_ReadOnlySignature> {
   }
 }
 
+/// زر الإرسال النهائي
 class DvirSubmitButtonSection extends StatelessWidget {
   final bool isSigned;
   final bool isSubmitting;
@@ -484,13 +822,18 @@ class DvirSubmitButtonSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenPadding,
+        vertical: AppSpacing.md,
+      ),
       child: AppButton(
         label: AppLocalizations.of(context)!.dvirSign,
-        type: EldButtonType.agree,
+        type: EldButtonType.primary,
         isLoading: isSubmitting,
         onPressed: !timeAvailable ? null : onSubmit,
       ),
     );
   }
 }
+
+

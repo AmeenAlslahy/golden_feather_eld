@@ -2064,6 +2064,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logSuccessfullyCertified => 'تم اعتماد السجل.';
 
   @override
+  String get certifyPendingSync =>
+      'حُفظ طلب الاعتماد على الجهاز بانتظار المزامنة. السجل غير معتمد بعد.';
+
+  @override
+  String get certifyNotConfirmed =>
+      'لم يؤكد الخادم اعتماد السجل. أعد المحاولة.';
+
+  @override
+  String get eventsShowingSavedData =>
+      'تُعرض أحداث محفوظة على الجهاز أو من آخر نسخة — لم يؤكدها الخادم الآن.';
+
+  @override
+  String get eventsUnavailable =>
+      'تعذّر تحميل الأحداث ولا توجد نسخة محفوظة. أعد المحاولة.';
+
+  @override
   String get notReadyForCertification => 'غير جاهز للاعتماد';
 
   @override
@@ -2818,6 +2834,33 @@ class AppLocalizationsAr extends AppLocalizations {
       'قبل الخادم المتابعة دون اتصال. لم يُنشأ حدث واجب محلي.';
 
   @override
+  String get sessionConnectRejected =>
+      'رفض الخادم طلب الاتصال. لم يتم تأكيد جلسة.';
+
+  @override
+  String get sessionStatusUnconfirmed => 'لم يتأكد وضع الجلسة على الخادم.';
+
+  @override
+  String get sessionStatusUnconfirmedHint =>
+      'قد يكون الطلب قد وصل إلى الخادم. لا تُعد المحاولة تلقائياً؛ تحقق من الحالة قبل إعادة المحاولة.';
+
+  @override
+  String get continueDisconnectedOffline =>
+      'لا يوجد اتصال بالشبكة. لم يُرسل طلب المتابعة دون اتصال، وما زلت في شاشة الاتصال.';
+
+  @override
+  String get continueDisconnectedFailed =>
+      'تعذر تأكيد المتابعة دون اتصال. لم يبدأ التتبع ولم يتم الانتقال للرئيسية.';
+
+  @override
+  String get continueDisconnectedRejected =>
+      'رفض الخادم طلب المتابعة دون اتصال. لم يبدأ التتبع.';
+
+  @override
+  String get continueDisconnectedInProgress =>
+      'جارٍ تسجيل المتابعة دون اتصال...';
+
+  @override
   String get macAddressRequired => 'عنوان MAC مطلوب.';
 
   @override
@@ -3218,4 +3261,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get inspectionHandOverNotice => 'سلّم الجهاز لمفتش السلامة';
+
+  @override
+  String get statusPendingSync => 'بانتظار المزامنة';
+
+  @override
+  String get statusSavedUnconfirmed => 'محفوظ — غير مؤكد';
+
+  @override
+  String get statusSyncFailed => 'فشل المزامنة';
 }

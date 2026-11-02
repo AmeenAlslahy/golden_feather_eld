@@ -10,7 +10,6 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../backend/contracts/inspection_backend.dart';
 import '../../../../backend/contracts/contract_enums.dart';
-import '../../../../core/result/result.dart';
 import '../../../sync/domain/entities/pending_event.dart';
 import '../../../sync/domain/usecases/sync_engine.dart';
 import '../../domain/repositories/inspection_repository.dart';
@@ -18,6 +17,7 @@ import '../../domain/inspection_transfer.dart';
 import '../../domain/transfer_audit.dart';
 import '../mappers/inspection_mappers.dart';
 import '../services/fmcsa_eld_output_generator.dart';
+import '../../../../backend/adapters/eld_engine/mappers/dot_inspection_mapper.dart';
 import '../../../../core/session/session_epoch.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../datasources/inspection_local_cache.dart';
@@ -152,8 +152,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
   /// - لا يعلن شيئاً (0/مفقود) ⇒ يُخزَّن بوسم الطلب، لكن **لا يُعدّ
   ///   مُتحقَّقاً**، فلا يصل إلى مسار FMCSA.
   bool _acceptsDataFrom(DriverId? declared, DriverId? requested) {
-    if (declared == null || declared.value <= 0)
+    if (declared == null || declared.value <= 0) {
       return true; // غير معروف — لا رفض
+    }
     if (requested == null) return true; // لا يوجد طالب محدَّد للمقارنة
     return declared.value == requested.value;
   }
@@ -180,11 +181,19 @@ class InspectionRepositoryImpl implements InspectionRepository {
     AppLogger.error(
       'InspectionRepository backend error: ${error.code} (${error.l10nKey})',
     );
-    return ServerFailure(message: error.l10nKey);
-  }
-
-  Either<Failure, T> _done<T>(Result<T> result) {
-    return result.fold((error) => Left(_failure(error)), Right.new);
+    final context = error.context;
+    final primaryMessage = context?['message'];
+    final serverMessage =
+        primaryMessage is String && primaryMessage.trim().isNotEmpty
+        ? primaryMessage
+        : context?['serverMessage'];
+    return ServerFailure(
+      message: error.l10nKey,
+      statusCode: error is ServerError ? error.statusCode : null,
+      serverMessage: serverMessage is String && serverMessage.trim().isNotEmpty
+          ? serverMessage
+          : null,
+    );
   }
 
   @override
@@ -198,8 +207,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
       _networkInfo,
       () async {
         final result = await _backend.getCycle(driverId: driverId, days: days);
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
         return result.fold(
           (error) => _cycleFallback(_failure(error), driverId),
           (cycleDays) {
@@ -253,8 +263,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
       _networkInfo,
       () async {
         final result = await _backend.getLogs(driverId: driverId, date: date);
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
         return result.fold(
           (error) => _logsFallback(_failure(error), key, driverId),
           (log) {
@@ -389,12 +400,39 @@ class InspectionRepositoryImpl implements InspectionRepository {
                 routingCode: route == null || route.isEmpty ? null : route,
                 recipientEmail: (recipient.isEmpty) ? null : recipient,
               );
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
 
         return result.fold(
           (error) => Left(_failure(error)),
-          (json) => Right(readTransferOutcome(json)),
+          (json) {
+            final outcome = readTransferOutcome(json);
+            if (outcome.accepted) {
+              final trusted = _trustedTime?.currentTime;
+              final now = trusted is TrustedTimeAvailable
+                  ? trusted.utc.toIso8601String()
+                  : DateTime.now().toUtc().toIso8601String();
+              final newAudit = TransferAuditRow(
+                channel: method.name.toUpperCase(),
+                recipient: recipient.isNotEmpty ? recipient : (route ?? ''),
+                status: 'ACCEPTED',
+                transferredAt: now,
+                message: outcome.text,
+                period: '',
+                recordCount: '',
+              );
+              final currentList = List<TransferAuditRow>.from(
+                _cachedTransfers ??
+                    _disk?.loadTransfers(ownerId: driverId.value) ??
+                    const <TransferAuditRow>[],
+              );
+              currentList.insert(0, newAudit);
+              _cachedTransfers = currentList;
+              _disk?.saveTransfers(currentList, ownerId: driverId.value);
+            }
+            return Right(outcome);
+          },
         );
       },
       offline: () async {
@@ -409,8 +447,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
         //     يُعلنان `driver -> DriverResponse`  ⇒ قابلة للتحقق.
         //   • استجابة الدورة **لا تعلن** `driver` ⇒ التحقق يعتمد على القيمة
         //     المُشاهَدة وقت التشغيل فقط؛ إن كانت `0` تُستبعد ولا تُعدّ مُتحقَّقة.
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
 
         final ownedLogs = _logsOwnedBy(driverId);
         final screen = _cachedScreen;
@@ -567,8 +606,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
       _networkInfo,
       () async {
         final result = await _backend.getInformationPacket(driverId: driverId);
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
         return result.fold(
           (error) => _packetFallback(_failure(error), driverId),
           (json) {
@@ -619,8 +659,9 @@ class InspectionRepositoryImpl implements InspectionRepository {
       _networkInfo,
       () async {
         final result = await _backend.getScreen(driverId: driverId);
-        if (_isStale(operationEpoch))
+        if (_isStale(operationEpoch)) {
           return Left(_staleFailure(operationEpoch));
+        }
         return result.fold(
           (error) => _screenFallback(_failure(error), driverId),
           (screen) {
@@ -669,28 +710,43 @@ class InspectionRepositoryImpl implements InspectionRepository {
       _networkInfo,
       () async {
         final result = await _backend.getTransfers(driverId: driverId);
-        return result.fold((error) => Left(_failure(error)), (json) {
-          try {
-            // A body that is not a list is an error, never an empty record.
-            final rows = parseTransferAudit(json);
-            if (rows != null) {
-              _cachedTransfers = rows;
-              _disk?.saveTransfers(rows, ownerId: driverId?.value);
+        return result.fold(
+          (error) {
+            // Live server contract: if /eld/inspections/transfers returns 404
+            // (endpoint absent on server, or driver has no transfer records),
+            // gracefully fallback to locally cached transfers or empty list.
+            if (error is NotFoundError ||
+                error.code == 'resource.notFound' ||
+                (error is ServerError && error.statusCode == 404)) {
+              final cached = _cachedTransfers ??
+                  _disk?.loadTransfers(ownerId: driverId?.value);
+              return Right(cached ?? const <TransferAuditRow>[]);
             }
-            return rows == null
-                ? const Left(ServerFailure(message: 'transferAuditNotList'))
-                : Right(rows);
-          } catch (e, stackTrace) {
-            AppLogger.error(
-              'InspectionRepository: transfer audit body unreadable',
-              e,
-              stackTrace,
-            );
-            return const Left(
-              ServerFailure(message: 'transferAuditUnreadable'),
-            );
-          }
-        });
+            return Left(_failure(error));
+          },
+          (json) {
+            try {
+              // A body that is not a list is an error, never an empty record.
+              final rows = parseTransferAudit(json);
+              if (rows != null) {
+                _cachedTransfers = rows;
+                _disk?.saveTransfers(rows, ownerId: driverId?.value);
+              }
+              return rows == null
+                  ? const Left(ServerFailure(message: 'transferAuditNotList'))
+                  : Right(rows);
+            } catch (e, stackTrace) {
+              AppLogger.error(
+                'InspectionRepository: transfer audit body unreadable',
+                e,
+                stackTrace,
+              );
+              return const Left(
+                ServerFailure(message: 'transferAuditUnreadable'),
+              );
+            }
+          },
+        );
       },
       offline: () async {
         final cached =
@@ -705,9 +761,47 @@ class InspectionRepositoryImpl implements InspectionRepository {
   Future<Either<Failure, Unit>> registerInspectionStart({
     required DriverId driverId,
   }) {
+    _adoptSessionIfChanged();
+    final operationEpoch = _captureEpoch();
     return guardedNetwork(_networkInfo, () async {
       final result = await _backend.startInspection(driverId: driverId);
-      return _done(result).map((_) => unit);
+      if (_isStale(operationEpoch)) return Left(_staleFailure(operationEpoch));
+      return result.fold(
+        (error) => Left(_failure(error)),
+        (json) {
+          try {
+            if (json.isNotEmpty) {
+              final screen = DotInspectionMapper.fromScreenJson(json);
+              if (_acceptsDataFrom(screen.driverId, driverId)) {
+                _cachedScreen = screen;
+                _ownerScreen = driverId.value;
+                _disk?.saveScreen(screen, ownerId: driverId.value);
+              }
+              final cycle = DotInspectionMapper.cycleFromSessionJson(json);
+              if (cycle.isNotEmpty) {
+                _cachedCycle = cycle;
+                _ownerCycle = driverId.value;
+                _disk?.saveCycle(cycle, ownerId: driverId.value);
+              }
+              final logs = DotInspectionMapper.allLogsFromSessionJson(json);
+              for (final log in logs) {
+                if (_acceptsDataFrom(log.driverId, driverId)) {
+                  final key = _logKey(driverId, log.logDate);
+                  _cachedLogs[key] = log;
+                  _disk?.saveLog(key, log);
+                }
+              }
+            }
+          } catch (e, st) {
+            AppLogger.warning(
+              'Failed to cache session after startInspection: $e',
+              e,
+              st,
+            );
+          }
+          return const Right(unit);
+        },
+      );
     });
   }
 }

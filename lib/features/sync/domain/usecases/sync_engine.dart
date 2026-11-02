@@ -27,6 +27,11 @@ class SyncEngine {
   /// الإنتاج يحقنه دائماً (لا إفراج أعمى بدونه).
   final Future<DispatchAuthContext> Function()? observeAuth;
 
+  /// P0 — إبلاغ طبقة السجلات بأن الطلب خرج نهائياً من الطابور (رفض خادم
+  /// أو استنفاد محاولات) كي تُميَّز حالته عن «بانتظار المزامنة».
+  /// فشل الإبلاغ لا يغيّر نتيجة المزامنة.
+  final Future<void> Function(PendingEvent event)? onDeadLettered;
+
   bool _isSyncing = false;
   bool _syncAgain = false;
   final Map<String, Completer<Either<Failure, bool>>> _reports = {};
@@ -38,6 +43,7 @@ class SyncEngine {
     required TimeAuthority timeAuthority,
     RetryPolicy? retryPolicy,
     this.observeAuth,
+    this.onDeadLettered,
   }) : _queue = queue,
        _dispatcher = dispatcher,
        _timeAuthority = timeAuthority,
@@ -186,6 +192,7 @@ class SyncEngine {
         // يحتفظ بحماية FMCSA كاملة.
         if (failure is RejectedFailure) {
           await _queue.moveToDeadLetter(event);
+          await _notifyDeadLettered(event);
           AppLogger.warning(
             'SyncEngine: event ${event.id} permanently rejected by server '
             '(${failure.code}) — dead-lettered without retry',
@@ -231,12 +238,25 @@ class SyncEngine {
             'SyncEngine: Event ${event.id} exhausted retries. Moving to dead-letter.',
           );
           await _queue.moveToDeadLetter(event);
+          await _notifyDeadLettered(event);
         }
       },
       (_) async {
         await _queue.removeEvent(event.id);
       },
     );
+  }
+
+  Future<void> _notifyDeadLettered(PendingEvent event) async {
+    final notify = onDeadLettered;
+    if (notify == null) return;
+    try {
+      await notify(event);
+    } catch (e) {
+      AppLogger.warning(
+        'SyncEngine: dead-letter callback failed for ${event.id}: $e',
+      );
+    }
   }
 
   void _completeReport(String id, Either<Failure, bool> result) {

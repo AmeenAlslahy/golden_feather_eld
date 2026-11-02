@@ -289,6 +289,9 @@ class _FailingStatusDashboard implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     return err(
       const NetworkError(code: 'test.failure', l10nKey: 'testFailure'),
@@ -339,6 +342,9 @@ class _ScriptedStatusDashboard implements StatusDashboardBackend {
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async => ok(dashboard);
 
   @override

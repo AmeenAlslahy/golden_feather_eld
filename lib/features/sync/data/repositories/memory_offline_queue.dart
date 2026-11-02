@@ -18,6 +18,26 @@ class MemoryOfflineQueue implements OfflineQueue {
   }
 
   @override
+  Future<bool> enqueueIfAbsent(PendingEvent event) async {
+    // لا `await` قبل الإدراج: الفحص والإضافة كتلة واحدة داخل الـisolate،
+    // فلا يمكن لاستدعاءين متزامنين أن يمرّا معاً من الفحص.
+    final key = event.dedupeKey;
+    if (key != null && _queue.any((e) => e.dedupeKey == key)) {
+      return false;
+    }
+    if (_queue.any((e) => e.id == event.id)) return false;
+    _queue.add(event);
+    return true;
+  }
+
+  @override
+  Future<List<PendingEvent>> getPending({int limit = 1000}) async {
+    final events = List<PendingEvent>.of(_queue)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return events.take(limit).toList();
+  }
+
+  @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
     final now = DateTime.now();
 

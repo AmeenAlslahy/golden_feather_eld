@@ -26,6 +26,36 @@ void main() {
     });
   });
 
+  group('parseEditFormDuration', () {
+    test('parses the editor clock and the display format', () {
+      expect(
+        parseEditFormDuration('02:30'),
+        const Duration(hours: 2, minutes: 30),
+      );
+      expect(
+        parseEditFormDuration('2h 30m'),
+        const Duration(hours: 2, minutes: 30),
+      );
+      expect(parseEditFormDuration('8h'), const Duration(hours: 8));
+      expect(parseEditFormDuration('00:00'), Duration.zero);
+    });
+
+    test('rejects malformed or out-of-range minutes', () {
+      expect(parseEditFormDuration(''), isNull);
+      expect(parseEditFormDuration('2:75'), isNull);
+      expect(parseEditFormDuration('abc'), isNull);
+      expect(parseEditFormDuration('2h 75m'), isNull);
+    });
+  });
+
+  test('placeholder locations are not real locations', () {
+    expect(isPlaceholderLocation('Unknown Location'), isTrue);
+    expect(isPlaceholderLocation('unknown'), isTrue);
+    expect(isPlaceholderLocation('  '), isTrue);
+    expect(isPlaceholderLocation('Dock 4'), isFalse);
+    expect(isPlaceholderLocation('Reno, NV'), isFalse);
+  });
+
   test('automatic driving cannot change status or start time', () {
     final event = LogEvent(
       id: '1',

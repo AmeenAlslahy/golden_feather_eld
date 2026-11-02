@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/features/logs/data/datasources/log_local_data
 import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
 import '../../../helpers/fake_time_authority.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
+import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
@@ -177,7 +178,11 @@ void main() {
 
       final result = await repo.getEvents(logId, day);
 
-      expect(result.getOrElse((_) => []).single.status, 'D');
+      final snapshot = result.getOrElse(
+        (_) => const LogEventsSnapshot.server([]),
+      );
+      expect(snapshot.source, LogEventsSource.server);
+      expect(snapshot.events.single.status, 'D');
       verify(() => local.cacheLogEvents(logId, serverEvents)).called(1);
     });
 
@@ -210,21 +215,59 @@ void main() {
 
         final result = await repo.getEvents(logId, day);
 
-        final events = result.getOrElse((_) => []);
-        expect(events.map((e) => e.id), ['9001', 'local-1']);
+        final snapshot = result.getOrElse(
+          (_) => const LogEventsSnapshot.server([]),
+        );
+        expect(snapshot.source, LogEventsSource.cache);
+        expect(snapshot.events.map((e) => e.id), ['9001', 'local-1']);
         verifyNever(() => dailyLogs.getEvents(any()));
       },
     );
 
-    test('offline without a snapshot: only locally recorded events', () async {
-      when(() => net.isConnected).thenReturn(false);
-      when(() => local.getCachedLogEvents(any())).thenAnswer((_) async => null);
+    test(
+      'offline without a snapshot: locally recorded events are local source',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(
+          () => local.getCachedLogEvents(any()),
+        ).thenAnswer((_) async => null);
+        when(() => local.getEvents(day)).thenAnswer(
+          (_) async => [
+            LogEvent(
+              id: 'local-1',
+              status: 'ON',
+              startTime: DateTime(2026, 9, 24, 10),
+              duration: const Duration(minutes: 30),
+              location: 'Yard',
+            ),
+          ],
+        );
 
-      final result = await repo.getEvents(logId, day);
+        final result = await repo.getEvents(logId, day);
 
-      expect(result.isRight(), isTrue);
-      expect(result.getOrElse((_) => []), isEmpty);
-    });
+        expect(result.isRight(), isTrue);
+        final snapshot = result.getOrElse(
+          (_) => const LogEventsSnapshot.server([]),
+        );
+        expect(snapshot.source, LogEventsSource.local);
+        expect(snapshot.events.single.id, 'local-1');
+      },
+    );
+
+    test(
+      'offline with no cache and no local events: failure, not empty success',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        when(
+          () => local.getCachedLogEvents(any()),
+        ).thenAnswer((_) async => null);
+
+        final result = await repo.getEvents(logId, day);
+
+        expect(result.isLeft(), isTrue);
+        expect(result.getLeft().toNullable(), isA<NetworkFailure>());
+      },
+    );
   });
 
   group('getReadiness — honesty (P3)', () {

@@ -45,7 +45,7 @@ class RecapPage extends ConsumerWidget {
                       subtitle: DateFormat.MMMd(
                         Localizations.localeOf(context).languageCode,
                       ).format(dayData.date),
-                      value: DurationFormat.decimalHours(dayData.totalWork),
+                      value: DurationFormat.decimalHours(dayData.displayWork),
                     ),
                   ),
                 _buildRow(

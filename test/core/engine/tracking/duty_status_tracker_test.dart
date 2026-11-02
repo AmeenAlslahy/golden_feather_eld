@@ -42,20 +42,32 @@ class MockSyncEngine implements SyncEngine {
 
   @override
   Future<int> releaseEligible({int limit = 50}) async => 0;
+
+  @override
+  Future<void> Function(PendingEvent event)? get onDeadLettered => null;
 }
 
 class MockDashboardBackend implements StatusDashboardBackend {
   Either<AppError, StatusDashboard> updateResult = Right(_sampleDashboard());
   DutyStatusCode? lastStatus;
   String? lastNotes;
+  DriverId? lastDriverId;
+  double? lastLatitude;
+  double? lastLongitude;
 
   @override
   Future<Result<StatusDashboard>> updateDutyStatus({
     required DutyStatusCode status,
     String? notes,
+    DriverId? driverId,
+    double? latitude,
+    double? longitude,
   }) async {
     lastStatus = status;
     lastNotes = notes;
+    lastDriverId = driverId;
+    lastLatitude = latitude;
+    lastLongitude = longitude;
     return updateResult;
   }
 
@@ -625,6 +637,30 @@ void main() {
         // المسار اليدوي لم يعد يمر بطابور الأحداث (دلالة 02.3 لا 05.2)
         expect(sync.submitted, isEmpty);
         expect(sync.reported, isEmpty);
+        tracker.dispose();
+      },
+    );
+
+    test(
+      'manual change forwards captured GPS coordinates to the direct request',
+      () async {
+        final trusted = DateTime.utc(2026, 9, 23, 8, 15);
+        final clock = FakeTrustedTimeProvider(initialUtcTime: trusted);
+        final tracker = build(time: clock, readDriverId: () => 106);
+
+        final outcome = await tracker.submitManualChange(
+          'on_duty',
+          annotation: 'Available',
+          lat: 35.4714,
+          lon: -93.4668,
+        );
+
+        expect(outcome.refusal, isNull);
+        // الإحداثيات تصل لواجهة الباك-إند (تُرسل داخل location متداخل).
+        expect(dashboard.lastLatitude, 35.4714);
+        expect(dashboard.lastLongitude, -93.4668);
+        // لا تغيير في سلوك الأوفلاين/الطابور للمسار المباشر.
+        expect(sync.submitted, isEmpty);
         tracker.dispose();
       },
     );

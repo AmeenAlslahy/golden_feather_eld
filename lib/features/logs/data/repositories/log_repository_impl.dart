@@ -13,8 +13,14 @@ import '../../../../core/network/network_info.dart';
 
 import '../../../../backend/contracts/daily_logs_backend.dart';
 import '../../../../backend/contracts/duty_status_backend.dart';
+import '../../../../backend/contracts/raw_json.dart';
+import '../../../../core/result/result.dart';
+import '../../../../core/utils/app_date_utils.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../domain/repositories/log_repository.dart';
+import '../../domain/entities/certify_submission.dart';
+import '../../domain/entities/log_events_snapshot.dart';
+import '../../domain/log_edit.dart';
 import '../datasources/log_local_data_source.dart';
 import '../models/log_model.dart';
 import '../../domain/entities/daily_log.dart';
@@ -157,37 +163,66 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, List<LogEvent>>> getEvents(
+  Future<Either<Failure, LogEventsSnapshot>> getEvents(
     DailyLogId logId,
     DateTime date,
   ) async {
+    String? serverErrorKey;
     if (_networkInfo.isConnected) {
       // العقد الموحّد: GET /eld/daily-logs/{id}/events (events[] + graphGrid).
       final result = await _dailyLogsBackend.getEvents(logId);
-      final remoteJson = result.fold(
-        (_) => null,
-        (data) => (data['events'] as List<dynamic>? ?? const [])
-            .whereType<Map<String, dynamic>>()
-            .toList(),
-      );
-      // الخادم هو مصدر الحقيقة؛ المحلي احتياطي عند غياب الرد فقط.
-      if (remoteJson != null) {
-        _cacheQuietly(_localDataSource.cacheLogEvents(logId, remoteJson));
-        return Right(LogEventModel.parseList(remoteJson, source: 'events'));
+      final raw = result.fold((error) {
+        serverErrorKey = error.l10nKey;
+        return null;
+      }, (data) => data);
+
+      if (raw != null) {
+        final rawEvents = raw['events'];
+        // غياب `events` أو كونها غير قائمة استجابة غير قابلة للتفسير — لا
+        // نعتبرها "يومًا فارغًا" ولا نكتبها فوق الكاش.
+        if (rawEvents is List) {
+          final eventsJson = rawEvents
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+          final parsed = LogEventModel.parseList(eventsJson, source: 'events');
+          // قائمة فارغة مؤكدة نجاح؛ أما وجود عناصر كلها تالفة فاستجابة
+          // غير قابلة للتفسير، ولا تمس اللقطة السليمة.
+          if (eventsJson.isEmpty || parsed.isNotEmpty) {
+            _cacheQuietly(_localDataSource.cacheLogEvents(logId, eventsJson));
+            return Right(LogEventsSnapshot.server(parsed));
+          }
+        }
       }
     }
 
-    // SRS 6.8 — offline / no answer: last server snapshot for this day,
-    // then any events recorded locally while disconnected.
+    // SRS 6.8 — offline / no answer / invalid answer: last valid server
+    // snapshot for this day, then any events recorded locally while
+    // disconnected. Both are returned with their source so the UI can say
+    // they are saved data instead of presenting them as fresh server truth.
     return executeWithHandling(() async {
       final cached = await _localDataSource.getCachedLogEvents(logId);
       final local = await _localDataSource.getEvents(date);
-      if (cached == null) return local;
-      final cachedIds = cached.map((e) => '${e['id']}').toSet();
-      return [
-        ...LogEventModel.parseList(cached, source: 'events cache'),
-        ...local.where((e) => !cachedIds.contains(e.id)),
-      ];
+      if (cached != null) {
+        final cachedIds = cached.map((e) => '${e['id']}').toSet();
+        return LogEventsSnapshot.cache([
+          ...LogEventModel.parseList(cached, source: 'events cache'),
+          ...local.where((e) => !cachedIds.contains(e.id)),
+        ]);
+      }
+      if (local.isNotEmpty) {
+        return LogEventsSnapshot.local(local);
+      }
+
+      // لا بيانات محلية صالحة: فشل صريح كي تعرض الواجهة خطأً وزر إعادة
+      // محاولة، بدل حالة فراغ مضللة.
+      if (!_networkInfo.isConnected) {
+        throw const OfflineException();
+      }
+      if (serverErrorKey != null) {
+        throw ServerException(message: serverErrorKey);
+      }
+      throw const ServerException(message: 'eventsUnavailable');
     }, tag: 'LogRepositoryImpl.getEvents');
   }
 
@@ -256,10 +291,17 @@ class LogRepositoryImpl implements LogRepository {
         DutyStatusCode.fromShortCode(event.status)?.wire ??
         DutyStatusCode.offDuty.wire;
 
+    // قيمة عرض بديلة ليست موقعاً: لا تُرسل كأن السائق اختارها. الموقع
+    // الحقيقي يبقى كما هو.
+    final location = isPlaceholderLocation(event.location)
+        ? null
+        : event.location.trim();
+
     final base = {
       'status': wire,
       'startTime': event.startTime.toUtc().toIso8601String(),
-      if (event.location.isNotEmpty) 'locationText': event.location,
+      'durationSeconds': event.duration.inSeconds,
+      if (location != null) 'locationText': location,
     };
 
     // If offline, always go local and enqueue for background sync.
@@ -295,24 +337,73 @@ class LogRepositoryImpl implements LogRepository {
       return Right(event);
     }
 
-    // Local UUIDs are created through POST /eld/duty-status.
-    // Persisted events use PUT /eld/duty-status/{id}; the unified
-    // PUT /eld/daily-logs/{logId}/events/{eventId} returned 404 on the live API.
-    // Keep the failing call commented until that route is available:
-    // final unifiedResult = await _dailyLogsBackend.updateEvent(...);
-    // Correct path: this endpoint requires `editReason` and accepts
-    // `locationText` (already included in `base`).
-    final result = statusId == null
-        ? await _dutyStatusBackend.record({
-            ...base,
-            'notes': reason.trim(),
-            'origin': 'MANUAL',
-            'clientId': event.id,
-          })
-        : await _dutyStatusBackend.update(
-            statusId: DutyStatusId(statusId),
-            update: {...base, 'editReason': reason.trim()},
-          );
+    // Try to resolve effectiveLogId if logId was not explicitly passed
+    DailyLogId? effectiveLogId = logId;
+    if (effectiveLogId == null && ownerDriverId != null) {
+      final cached = await _localDataSource.getCachedDailyLogs(ownerDriverId);
+      if (cached != null) {
+        final eventDateStr = AppDateUtils.formatDate(event.startTime);
+        for (final item in cached) {
+          final logDateStr = item['logDate']?.toString();
+          if (logDateStr == eventDateStr) {
+            final rawId = item['id'];
+            if (rawId is int) {
+              effectiveLogId = DailyLogId(rawId);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    final startTimeUtc = event.startTime.toUtc();
+    final startTimeIso = startTimeUtc.toIso8601String();
+
+    // Canonical OAS 3.0 / Swagger PUT /eld/daily-logs/{id}/events/{eventId} body
+    final updatePayload = <String, dynamic>{
+      'status': wire,
+      'specialCategory': null,
+      'startTime': startTimeIso,
+      'timeRange': {
+        'startTime': startTimeIso,
+        // نهاية صريحة دائماً — حتى للمدة صفر — كي تُطابق المدة التي
+        // اعتمدها المستخدم في النموذج بدل ترك الخادم يستنتجها.
+        'endTime': startTimeUtc.add(event.duration).toIso8601String(),
+      },
+      'reason': reason.trim(),
+      'notes': reason.trim(),
+      'editReason': reason.trim(),
+      if (location != null) ...{
+        'location': {'description': location},
+        'manualLocation': location,
+        'locationText': location,
+      },
+    };
+
+    final Result<RawJson> result;
+    if (statusId != null && effectiveLogId != null) {
+      result = await _dailyLogsBackend.updateEvent(
+        logId: effectiveLogId,
+        eventId: DutyStatusId(statusId),
+        event: updatePayload,
+        expectedOwnerDriverId: ownerDriverId,
+      );
+    } else if (statusId != null) {
+      // Fallback if logId could not be determined
+      result = await _dutyStatusBackend.update(
+        statusId: DutyStatusId(statusId),
+        update: updatePayload,
+      );
+    } else {
+      // Local UUID event
+      result = await _dutyStatusBackend.record({
+        ...base,
+        'notes': reason.trim(),
+        'reason': reason.trim(),
+        'origin': 'MANUAL',
+        'clientId': event.id,
+      });
+    }
 
     return result.fold((error) => Left(ServerFailure(message: error.l10nKey)), (
       raw,
@@ -348,16 +439,20 @@ class LogRepositoryImpl implements LogRepository {
   /// جسم PUT /eld/daily-logs/{id}/form وفق مواصفة الخادم الحالية:
   /// `uniqueId` (نصي) + `coDriverId` + `trailers` + `shippingDocuments`
   /// + `notes`. لا يُشتق معرّف رقمي من نص `uniqueId` (كان يُنتج معرّفاً
-  /// غير موجود)، و`vehicleId` الرقمي مرفوض دائماً من الخادم فلا يُرسل
-  /// إطلاقاً — [saveForm] يمنع أي حفظ بلا `uniqueId` قبل الوصول إلى هنا.
+  /// غير موجود). `vehicleId` يُرسل فقط حين يقدمه الداعي وهو يطابق نفس
+  /// المركبة المختارة؛ عند تغيير المركبة يمرره `submitForm` كـ null.
   Map<String, dynamic> _mapFormUpdateToJson(DailyFormUpdate form) {
     return {
       'uniqueId': form.vehicleUniqueId.trim(),
+      if (form.vehicleId != null && form.vehicleId! > 0)
+        'vehicleId': form.vehicleId,
       'coDriverId': form.coDriverId,
       'trailers': form.trailers.map((t) => {'trailerNumber': t}).toList(),
       'shippingDocuments': form.shippingDocuments
           .map((d) => {'documentNumber': d})
           .toList(),
+      'trailerNumbers': form.trailers,
+      'documentNumbers': form.shippingDocuments,
       if (form.notes != null && form.notes!.trim().isNotEmpty)
         'notes': form.notes!.trim(),
     };
@@ -470,18 +565,17 @@ class LogRepositoryImpl implements LogRepository {
     }
 
     final payload = _mapFormUpdateToJson(form);
-    await _localDataSource.cacheDailyForm(logId, payload);
-    final hasVehicle = form.vehicleUniqueId.trim().isNotEmpty;
-    final hasDocs = form.shippingDocuments.isNotEmpty;
-    if (ownerDriverId != null) {
-      await _localDataSource.markCachedDailyLogFormComplete(
-        driverId: ownerDriverId,
-        logId: logId,
-        isComplete: hasVehicle && hasDocs,
-      );
-    }
 
     if (!_networkInfo.isConnected) {
+      // أوفلاين: البيانات محفوظة والطلب في الطابور، لكن الخادم لم يؤكد
+      // شيئاً. الحالة المخزّنة تبقى «بانتظار المزامنة» لا «مكتملة».
+      await _localDataSource.cacheDailyForm(logId, payload);
+      if (ownerDriverId != null) {
+        await _localDataSource.markCachedDailyLogFormPendingSync(
+          driverId: ownerDriverId,
+          logId: logId,
+        );
+      }
       await _offlineQueue.enqueue(
         PendingEvent(
           id: _idGenerator.v4(),
@@ -514,11 +608,16 @@ class LogRepositoryImpl implements LogRepository {
         ),
         (json) {
           final read = SavedFormDto.fromJson(json);
+          // لا نكتب الكاش ولا نعلّم الاكتمال إلا بعد نجاح الخادم. الفشل
+          // الأونلاين كان يترك النموذج «مكتملاً» رغم أن الطلب رُفض.
+          _cacheQuietly(_localDataSource.cacheDailyForm(logId, payload));
           if (ownerDriverId != null && read.complete != null) {
-            _localDataSource.markCachedDailyLogFormComplete(
-              driverId: ownerDriverId,
-              logId: logId,
-              isComplete: read.complete!,
+            _cacheQuietly(
+              _localDataSource.markCachedDailyLogFormComplete(
+                driverId: ownerDriverId,
+                logId: logId,
+                isComplete: read.complete!,
+              ),
             );
           }
           return FormSaveResult.online(read);
@@ -637,34 +736,71 @@ class LogRepositoryImpl implements LogRepository {
       (error is UnknownError && error.code == 'network.http.405');
 
   @override
-  Future<Either<Failure, bool>> certifyLog({
+  Future<Either<Failure, CertifySubmission>> certifyLog({
     required DailyLogId logId,
     required int driverId,
     bool certified = true,
     String? signatureImageBase64,
+    Map<String, dynamic>? device,
   }) async {
     if (driverId <= 0) {
       return const Left(ServerFailure(message: 'Driver session is missing'));
     }
     if (!_networkInfo.isConnected) {
       // SRS 6.8 — offline: enqueue for sync, never lose the driver's certification.
-      await _offlineQueue.enqueue(
-        PendingEvent(
-          id: _idGenerator.v4(),
-          type: 'certification',
-          // P0 2B-1 — canonical owner slot (driverId param already
-          // validated >0 above). Legal certify semantics unchanged.
-          payload: {
-            'logId': logId.value,
-            'certified': certified,
-            if (signatureImageBase64 != null && signatureImageBase64.isNotEmpty)
-              'signatureImage': signatureImageBase64,
-            'ownerDriverId': driverId,
-          },
-          createdAt: _timeAuthority.nowUtc(),
-        ),
+      final dedupeKey = 'certification:${logId.value}:$driverId';
+      // فحص إضافي للصفوف القديمة التي أُنشئت قبل إضافة dedupeKey. الفحص
+      // وحده غير كافٍ للسباق؛ الإدراج أدناه ذري في الطابور.
+      final pending = await _offlineQueue.getPending(limit: 1000);
+      final alreadyQueued = pending.any((event) {
+        if (event.type != 'certification') return false;
+        final rawLogId = event.payload['logId'];
+        final queuedLogId = rawLogId is int
+            ? rawLogId
+            : int.tryParse('${rawLogId ?? ''}');
+        final rawOwner = event.payload['ownerDriverId'];
+        final queuedOwner = rawOwner is int
+            ? rawOwner
+            : int.tryParse('${rawOwner ?? ''}');
+        return queuedLogId == logId.value && queuedOwner == driverId;
+      });
+      if (!alreadyQueued) {
+        await _offlineQueue.enqueueIfAbsent(
+          PendingEvent(
+            id: _idGenerator.v4(),
+            type: 'certification',
+            dedupeKey: dedupeKey,
+            // P0 2B-1 — canonical owner slot (driverId param already
+            // validated >0 above). Legal certify semantics unchanged.
+            payload: {
+              'logId': logId.value,
+              'certified': certified,
+              'statementAccepted': certified,
+              if (signatureImageBase64 != null &&
+                  signatureImageBase64.isNotEmpty) ...{
+                'signatureImage': signatureImageBase64,
+                'signature': {
+                  'imageData': signatureImageBase64.startsWith('data:')
+                      ? signatureImageBase64
+                      : 'data:image/png;base64,$signatureImageBase64',
+                },
+              },
+              if (device != null) 'device': device,
+              'ownerDriverId': driverId,
+            },
+            createdAt: _timeAuthority.nowUtc(),
+          ),
+        );
+      }
+      // الطلب محفوظ (أو كان محفوظاً سابقاً بنفس السجل/السائق)، لكن السجل
+      // ليس معتمداً بعد. الحالة المخزّنة تبقى «بانتظار المزامنة» حتى يؤكد
+      // الخادم `isCertified`، أو تصبح `SYNC_FAILED` عند الرفض النهائي.
+      await _localDataSource.markCachedDailyLogSyncStatus(
+        driverId: driverId,
+        logId: logId,
+        certificationStatus: 'PENDING_SYNC',
       );
-      return const Right(true);
+      return const Right(CertifySubmission.pendingSync());
     }
     return executeWithHandling(() async {
       final result = await _dailyLogsBackend.certify(
@@ -672,11 +808,27 @@ class LogRepositoryImpl implements LogRepository {
           dailyLogId: logId.value,
           certified: certified,
           signatureImage: signatureImageBase64,
+          device: device,
         ),
       );
       return result.match(
         (failure) => throw ServerException(message: failure.l10nKey),
-        (data) => data.isCertified,
+        (data) {
+          // 200 وحده ليس اعتمادًا: الخادم قد يرد بنجاح مع `certified=false`
+          // أو بحالة غير حاسمة. لا نُغلق الشاشة ولا نمسح المسودة إلا
+          // بتأكيد صريح.
+          if (!data.isCertified) {
+            throw const ServerException(message: 'certificationNotConfirmed');
+          }
+          _cacheQuietly(
+            _localDataSource.markCachedDailyLogSyncStatus(
+              driverId: driverId,
+              logId: logId,
+              certificationStatus: 'CERTIFIED',
+            ),
+          );
+          return const CertifySubmission.confirmed();
+        },
       );
     }, tag: 'LogRepositoryImpl.certifyLog');
   }
@@ -779,5 +931,45 @@ class LogRepositoryImpl implements LogRepository {
   @override
   Future<void> deleteDraftSignature(DailyLogId logId) {
     return _localDataSource.deleteDraftSignature(logId);
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>?>> getEventDetails(
+    DailyLogId logId,
+    DutyStatusId eventId,
+  ) {
+    return executeWithHandling(() async {
+      final res = await _dailyLogsBackend.getEventDetails(logId, eventId);
+      return res.match(
+        (f) => throw ServerException(message: f.l10nKey),
+        (data) => data,
+      );
+    }, tag: 'LogRepositoryImpl.getEventDetails');
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>?>> getEventsOptions(
+    DailyLogId logId,
+  ) {
+    return executeWithHandling(() async {
+      final res = await _dailyLogsBackend.getEventsOptions(logId);
+      return res.match(
+        (f) => throw ServerException(message: f.l10nKey),
+        (data) => data,
+      );
+    }, tag: 'LogRepositoryImpl.getEventsOptions');
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>?>> getFormOptions(
+    DailyLogId logId,
+  ) {
+    return executeWithHandling(() async {
+      final res = await _dailyLogsBackend.getFormOptions(logId);
+      return res.match(
+        (f) => throw ServerException(message: f.l10nKey),
+        (data) => data,
+      );
+    }, tag: 'LogRepositoryImpl.getFormOptions');
   }
 }

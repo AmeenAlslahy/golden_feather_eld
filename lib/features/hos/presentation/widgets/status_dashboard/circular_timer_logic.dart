@@ -86,7 +86,10 @@ class CircularTimerLogic {
 
     final Duration liveRemaining;
     if (isRest) {
-      liveRemaining = Duration.zero;
+      // 🔴 الخادم هو المرجع: قيمة الخادم المرساة لا تُصفَّر عند الراحة.
+      // بما أن السائق في راحة (لا قيادة ولا عمل)، لا يُستهلك رصيد العمل بالمنقضي،
+      // فتُعرض قيمة الخادم المتبقية مباشرة كما أرسلها السيرفر.
+      liveRemaining = circle.remaining;
     } else {
       // 🔴 العدّاد التنازلي **لا ينزل تحت الصفر بسبب مرور الوقت**.
       // أما السالب القادم من الخادم فحالة أخرى: السائق تجاوز الحدّ
@@ -111,7 +114,8 @@ class CircularTimerLogic {
     // إجمالاً؛ وإذا بلغ العدّاد الصفر قبل النبضة التالية فالقوس يكتمل.
     final double progress;
     if (isRest) {
-      progress = 0.0;
+      // في حالة الراحة، تُعرض نسبة تقدم الخادم مباشرة.
+      progress = circle.progress.clamp(0.0, 1.0);
     } else {
       final governing = _matchingLimit(
         circleRemaining: circle.remaining,

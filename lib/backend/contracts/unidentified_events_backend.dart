@@ -3,25 +3,58 @@ import '../../domain/shared/value_objects.dart';
 import 'contract_enums.dart';
 import 'raw_json.dart';
 
-abstract interface class UnidentifiedEventsBackend {
-  /// GET /eld/unidentified-events
-  Future<Result<RawJson>> list({
-    UnidentifiedTab tab = UnidentifiedTab.unclaimed,
-    String? uniqueId,
-    DriverId? driverId,
+/// One entry in the documented `filters` JSON array
+/// (`{key, operator, value}`).
+class UnidentifiedEventFilter {
+  final String key;
+  final String operator;
+  final Object? value;
+
+  const UnidentifiedEventFilter({
+    required this.key,
+    required this.value,
+    this.operator = 'EQ',
   });
 
-  /// POST /eld/unidentified-events/{id}/claim
+  Map<String, dynamic> toJson() => {
+    'key': key,
+    'operator': operator,
+    'value': value,
+  };
+}
+
+abstract interface class UnidentifiedEventsBackend {
+  /// GET /eld/unidentified
+  ///
+  /// The active tab is always sent as the documented `status` filter
+  /// (`UNCLAIMED` / `REJECTED`) inside `filters`; `page`, `size`, `sortBy`,
+  /// `sortDirection` and `filters` are the only query parameters.
+  Future<Result<RawJson>> list({
+    UnidentifiedTab tab = UnidentifiedTab.unclaimed,
+    int page = 0,
+    int size = 20,
+    String sortBy = 'id',
+    String sortDirection = 'ASC',
+    List<UnidentifiedEventFilter> filters = const [],
+  });
+
+  /// GET /eld/unidentified/{id}
+  Future<Result<RawJson>> getById({required DutyStatusId id});
+
+  /// GET /eld/unidentified/summary
+  Future<Result<RawJson>> summary();
+
+  /// POST /eld/unidentified/{id}/claim
   Future<Result<void>> claim({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String annotation,
   });
 
-  /// POST /eld/unidentified-events/{id}/reject
+  /// POST /eld/unidentified/{id}/reject
   Future<Result<void>> reject({
     required DutyStatusId id,
-    required DriverId driverId,
+    DriverId? driverId,
     required String rejectionReason,
   });
 }

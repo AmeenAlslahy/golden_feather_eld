@@ -203,6 +203,8 @@ void main() {
       'shippingDocuments': [
         {'documentNumber': 'D1'},
       ],
+      'trailerNumbers': ['T1', 'T2'],
+      'documentNumbers': ['D1'],
     };
 
     test('online save maps correctly to backend payload', () async {

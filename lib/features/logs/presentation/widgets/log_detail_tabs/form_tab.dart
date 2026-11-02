@@ -32,7 +32,7 @@ class _FormTabState extends ConsumerState<FormTab> {
     final selectedLog = ref.watch(logsProvider).selectedLog;
     final formData = ref.watch(formTabDataProvider);
     final formState = selectedLog != null
-        ? ref.watch(formTabProvider(selectedLog))
+        ? ref.watch(formTabProvider(selectedLog.id))
         : null;
 
     final divider = Divider(color: context.border, height: 1);
@@ -127,7 +127,7 @@ class _FormTabState extends ConsumerState<FormTab> {
       ),
     );
     if (vehicle != null && selectedLog != null && context.mounted) {
-      ref.read(formTabProvider(selectedLog).notifier).updateVehicle(vehicle);
+      ref.read(formTabProvider(selectedLog.id).notifier).updateVehicle(vehicle);
     }
   }
 
@@ -156,7 +156,9 @@ class _FormTabState extends ConsumerState<FormTab> {
           CoDriverPickerDialog(currentCoDriverId: currentCoDriverId),
     );
     if (coDriver != null && selectedLog != null && context.mounted) {
-      ref.read(formTabProvider(selectedLog).notifier).updateCoDriver(coDriver);
+      ref
+          .read(formTabProvider(selectedLog.id).notifier)
+          .updateCoDriver(coDriver);
     }
   }
 
@@ -167,7 +169,7 @@ class _FormTabState extends ConsumerState<FormTab> {
     if (selectedLog == null) return;
 
     final error = await ref
-        .read(formTabProvider(selectedLog).notifier)
+        .read(formTabProvider(selectedLog.id).notifier)
         .submitForm(
           loc: context.loc,
           onSuccess: (msg) {

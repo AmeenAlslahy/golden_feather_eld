@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/utils/logger.dart';
+import 'core/utils/startup_profiler.dart';
 import 'app/app_initializer.dart';
 import 'core/widgets/critical_error_app.dart';
 
 void main() async {
+  // M0 — قياس الإقلاع (تشخيص فقط): نقطة الصفر + طوابع حول الخطوات القائمة
+  // بلا إعادة ترتيب ولا أثر وظيفي.
+  StartupProfiler.start();
   WidgetsFlutterBinding.ensureInitialized();
 
   // تثبيت اتجاه التطبيق عمودي
@@ -16,12 +20,11 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // إعداد شريط الحالة — شريط التطبيق ذهبي ثابت في الوضعين،
-  // فالأيقونات تكون فاتحة دائماً.
+  // إعداد شريط الحالة المبدئي — يتناسق مع شريط التطبيق الذهبي والخلفية الفاتحة
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -46,6 +49,7 @@ void main() async {
     await initializer.initializePostContainer(container);
 
     // 4. تشغيل التطبيق
+    StartupProfiler.mark('pre-runApp: all initializers done');
     runApp(
       UncontrolledProviderScope(
         container: container,

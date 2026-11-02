@@ -27,7 +27,7 @@ class EldAuthBackend implements AuthBackend {
       // POST /api/session is Traccar SessionResource. JSON is HTTP 415 on the
       // live host. The stored backend label does not select a second login.
       final response = await _apiClient.dio.post(
-        '$baseUrl/api${EldEndpoints.session}',
+        '$baseUrl/api${EldEndpoints.authSession}',
         data: {'email': identifier, 'password': password},
         options: Options(
           contentType: 'application/x-www-form-urlencoded',
@@ -123,7 +123,7 @@ class EldAuthBackend implements AuthBackend {
   }) async {
     try {
       final response = await _apiClient.dio.get(
-        '$serverOrigin/api${EldEndpoints.session}',
+        '$serverOrigin/api${EldEndpoints.authSession}',
         options: Options(
           headers: {'Cookie': 'JSESSIONID=$sessionCredential'},
           followRedirects: false,
@@ -190,7 +190,7 @@ class EldAuthBackend implements AuthBackend {
 
       // Defaulting to DELETE for logout
       await _apiClient.dio.delete(
-        '$serverOrigin/api${EldEndpoints.session}',
+        '$serverOrigin/api${EldEndpoints.authSession}',
         options: options,
       );
       return ok(null);

@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 import '../../../../backend/adapters/eld_engine/models/dvir_dto.dart';
 import '../../domain/defect_enums.dart';
 import '../../domain/dvir_catalog.dart';
@@ -18,13 +19,13 @@ List<DvirCatalogItem>? parseDvirCatalog(Object? body) {
   for (final raw in list) {
     if (raw is! Map) continue;
     final code = _text(raw['code'] ?? raw['itemCode']);
-    final name = _text(raw['name'] ?? raw['itemName']);
+    final name = _text(raw['nameEnglish'] ?? raw['name'] ?? raw['itemName']);
     if (code == null || name == null) continue;
     items.add(
       DvirCatalogItem(
         code: code,
         name: name,
-        nameAr: _text(raw['nameAr']),
+        nameAr: _text(raw['nameArabic'] ?? raw['nameAr']),
         category: _text(raw['category']) ?? '',
         mandatory:
             raw['statutoryMandatory'] == true || raw['mandatory'] == true,
@@ -207,6 +208,7 @@ Map<String, dynamic>? buildDvirCreateBody({
   String? remarks,
   String? vehicleDefects,
   String? trailerDefects,
+  String? clientUuid,
   List<Map<String, dynamic>> catalogDefects = const [],
 }) {
   final vehicle = uniqueId.trim();
@@ -296,9 +298,29 @@ Map<String, dynamic>? buildDvirCreateBody({
     'companyName': companyName,
     'remarks': remarks,
     'status': wireStatus,
-    'defects': defects, // Legacy flat defects
+    'signature': signature,
     'signatureData': signature,
+    'clientUuid': clientUuid ?? const Uuid().v4(),
     'syncStatus': 'SYNCED',
+    'defects': defects, // Legacy flat defects
+
+    // Swagger root defect arrays
+    'vehicleDefects': [
+      if (vehicleDefects != null && vehicleDefects.trim().isNotEmpty)
+        vehicleDefects.trim(),
+      ...catalogDefects
+          .where((d) => d['category'] == 'VEHICLE')
+          .map((d) => d['itemName']?.toString() ?? '')
+          .where((s) => s.isNotEmpty),
+    ],
+    'trailerDefects': [
+      if (trailerDefects != null && trailerDefects.trim().isNotEmpty)
+        trailerDefects.trim(),
+      ...catalogDefects
+          .where((d) => d['category'] == 'TRAILER')
+          .map((d) => d['itemName']?.toString() ?? '')
+          .where((s) => s.isNotEmpty),
+    ],
 
     // New nested fields as per Swagger
     'vehicle': {

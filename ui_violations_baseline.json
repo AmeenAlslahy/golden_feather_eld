@@ -1,0 +1,373 @@
+﻿{
+    "violations":  [
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/about/presentation/pages/about_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/account/presentation/pages/account_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/account/presentation/pages/info_packet_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/account/presentation/pages/instructions_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/account/presentation/pages/rules_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/account/presentation/pages/user_manual_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "TextButton(",
+                           "file":  "lib/features/auth/presentation/widgets/login_form.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AppBar(",
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/codriver/presentation/pages/codriver_page.dart",
+                           "count":  9
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AppBar(",
+                                                "OutlinedButton("
+                                            ],
+                           "file":  "lib/features/connection/presentation/pages/diagnostics_page.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "TextButton(",
+                           "file":  "lib/features/connection/presentation/pages/eld_connection_page.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/connection/presentation/widgets/dialogs/manual_mode_reason_dialog.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/dvir/presentation/widgets/active_defects_section.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "TextButton(",
+                                                "AlertDialog("
+                                            ],
+                           "file":  "lib/features/dvir/presentation/widgets/defects_modal.dart",
+                           "count":  4
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/dvir/presentation/widgets/status_modal.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AppBar(",
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/home/presentation/pages/home_page.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/home/presentation/widgets/eld_drawer.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/inspection/presentation/pages/dot_inspection_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "TextButton(",
+                           "file":  "lib/features/inspection/presentation/pages/inspection_start_view.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/inspection/presentation/pages/send_logs_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/logs/presentation/pages/audit_trail_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/logs/presentation/pages/edit_log_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AppBar(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/logs/presentation/pages/inspection_preview_page.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/logs/presentation/pages/logs_list_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/logs/presentation/pages/log_detail_page.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Inline font size awaiting typography token adoption in Phase 7C.",
+                           "rule":  "inline_numeric_font_size",
+                           "fingerprints":  "fontSize: 13",
+                           "file":  "lib/features/logs/presentation/pages/suggested_events_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Direct AppColors usage in feature screen awaiting theme context migration.",
+                           "rule":  "direct_app_colors_semantic",
+                           "fingerprints":  [
+                                                "labelColor: AppColors.brandBlack,",
+                                                "unselectedLabelColor: AppColors.brandBlack.withValues(alpha: 0.60),",
+                                                "indicatorColor: AppColors.brandBlack,"
+                                            ],
+                           "file":  "lib/features/logs/presentation/pages/unidentified_events_page.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/codriver_picker_dialog.dart",
+                           "count":  4
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/logs/presentation/widgets/form_list_editor_view.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/inspection_filter_dialog.dart",
+                           "count":  3
+                       },
+                       {
+                           "rationale":  "Inline font size awaiting typography token adoption in Phase 7C.",
+                           "rule":  "inline_numeric_font_size",
+                           "fingerprints":  [
+                                                "fontSize: 15",
+                                                "fontSize: 11"
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/suggested_log_card.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "TextButton(",
+                           "file":  "lib/features/logs/presentation/widgets/time_picker_sheet.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Legacy custom hex literal awaiting token migration in Phase 7C.",
+                           "rule":  "hardcoded_hex_color",
+                           "fingerprints":  "Color(0xFF7A5C00)",
+                           "file":  "lib/features/logs/presentation/widgets/unidentified_events_list.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Inline font size awaiting typography token adoption in Phase 7C.",
+                           "rule":  "inline_numeric_font_size",
+                           "fingerprints":  [
+                                                "fontSize: 11",
+                                                "fontSize: 15",
+                                                "fontSize: 13",
+                                                "fontSize: 10",
+                                                "fontSize: 10.5"
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/unidentified_events_list.dart",
+                           "count":  6
+                       },
+                       {
+                           "rationale":  "Inline font size awaiting typography token adoption in Phase 7C.",
+                           "rule":  "inline_numeric_font_size",
+                           "fingerprints":  [
+                                                "fontSize: 16",
+                                                "fontSize: 11.5"
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
+                           "count":  2
+                       },
+                       {
+                           "rationale":  "Direct AppColors usage in feature screen awaiting theme context migration.",
+                           "rule":  "direct_app_colors_semantic",
+                           "fingerprints":  "? AppColors.darkTextSecondary",
+                           "file":  "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Legacy custom hex literal awaiting token migration in Phase 7C.",
+                           "rule":  "hardcoded_hex_color",
+                           "fingerprints":  "Color(0xFF4A4A4A)",
+                           "file":  "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/logs/presentation/widgets/vehicle_picker_dialog.dart",
+                           "count":  5
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "TextButton(",
+                           "file":  "lib/features/onboarding/presentation/pages/onboarding_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton("
+                                            ],
+                           "file":  "lib/features/permissions/presentation/pages/permissions_page.dart",
+                           "count":  4
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  "AppBar(",
+                           "file":  "lib/features/settings/presentation/pages/settings_page.dart",
+                           "count":  1
+                       },
+                       {
+                           "rationale":  "Raw Material screen-level component awaiting shared component migration in Phase 7C.",
+                           "rule":  "raw_material_button_or_dialog",
+                           "fingerprints":  [
+                                                "AlertDialog(",
+                                                "TextButton(",
+                                                "AppBar("
+                                            ],
+                           "file":  "lib/features/vehicle/presentation/pages/select_vehicle_page.dart",
+                           "count":  4
+                       }
+                   ],
+    "version":  "1.0.0",
+    "generated_at":  "2026-11-01T21:55:00Z",
+    "total_violations":  94,
+    "description":  "UI architecture violations baseline for Golden Feather ELD Phase 7B.3",
+    "rules":  {
+                  "direct_app_colors_semantic":  "Direct AppColors reference in feature presentation instead of context tokens",
+                  "inline_numeric_font_size":  "Inline numeric fontSize declarations instead of context.styles",
+                  "raw_material_button_or_dialog":  "Raw AppBar, AlertDialog, TextButton, or OutlinedButton where shared component applies",
+                  "direct_material_semantic_color":  "Direct Material Colors (e.g. Colors.red) instead of GoldenColors",
+                  "hardcoded_hex_color":  "Hardcoded hex color literals in feature presentation code"
+              }
+}

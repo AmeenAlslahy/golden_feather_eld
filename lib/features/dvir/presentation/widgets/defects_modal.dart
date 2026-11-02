@@ -1,5 +1,6 @@
 import '../providers/dvir_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import 'package:flutter/material.dart';
@@ -146,16 +147,32 @@ class DefectCatalogDialogState extends ConsumerState<DefectCatalogDialog> {
     }
 
     return AlertDialog(
-      title: Text(dialogTitle),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.dialog),
+      ),
+      backgroundColor: context.colorScheme.surface,
+      title: Row(
+        children: [
+          Icon(Icons.report_problem_outlined, color: context.gold, size: AppSpacing.iconMedium),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(dialogTitle, style: context.styles.cardTitle)),
+        ],
+      ),
       content: SizedBox(width: double.maxFinite, child: contentWidget),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(loc.cancelAction),
+          child: Text(
+            loc.cancelAction,
+            style: context.styles.button.copyWith(color: context.colorScheme.onSurfaceVariant),
+          ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, _picked.values.toList()),
-          child: Text(loc.okButton),
+          child: Text(
+            loc.okButton,
+            style: context.styles.button.copyWith(color: context.gold, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );

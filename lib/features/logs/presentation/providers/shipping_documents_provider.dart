@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../home/presentation/providers/dashboard_provider.dart';
+import '../../domain/entities/daily_form_data.dart';
+import '../../domain/entities/daily_log.dart';
 import 'form_list_provider.dart';
 import 'logs_provider.dart';
 
@@ -16,11 +18,11 @@ class ShippingDocumentsNotifier extends FormListNotifier {
   );
 
   @override
-  List<String> savedItems(LogsState logsState) {
-    final selected = logsState.selectedLog;
-    final form = logsState.serverForm;
-    return form?.shippingDocuments ?? selected?.shippingDocuments ?? const [];
-  }
+  List<String> savedFromServerForm(DailyFormData form) =>
+      form.shippingDocuments;
+
+  @override
+  List<String> savedFromLogRow(DailyLog log) => log.shippingDocuments;
 
   @override
   String? liveDashboardRaw() =>
