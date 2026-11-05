@@ -5,6 +5,7 @@ import 'package:golden_feather_eld/features/auth/presentation/providers/auth_sta
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/edit_log_page.dart';
 import 'package:golden_feather_eld/features/logs/presentation/providers/edit_log_form_provider.dart';
+import 'package:golden_feather_eld/features/logs/presentation/providers/edit_log_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';
@@ -249,6 +250,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(pickedTime, '08:15:30 PM');
+    });
+
+    test('editLogErrorUserMessage maps overlapConflict to eventTimeOverlap', () {
+      final loc = lookupAppLocalizations(const Locale('ar'));
+      final msg = editLogErrorUserMessage(
+        EditLogError(EditLogErrorCode.overlapConflict),
+        loc,
+      );
+      expect(msg, 'تتعارض أوقات هذه الحالة مع حدث آخر مسجل في نفس اليوم.');
+    });
+
+    test('editLogErrorUserMessage maps overlapConflict to English translation', () {
+      final loc = lookupAppLocalizations(const Locale('en'));
+      final msg = editLogErrorUserMessage(
+        EditLogError(EditLogErrorCode.overlapConflict),
+        loc,
+      );
+      expect(
+        msg,
+        'The selected time range conflicts with another event on this day.',
+      );
     });
   });
 }

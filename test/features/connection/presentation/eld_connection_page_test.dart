@@ -11,6 +11,7 @@ import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
 import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/network/core_providers.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/core/services/bluetooth_service.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
@@ -38,6 +39,8 @@ class _ServerRefusesHardware extends MockHardwareBackend {
   Future<Result<RawJson>> connectSession({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) async => err(
     const ServerError(
       code: 'server',
@@ -60,6 +63,8 @@ class _ServerReplyHardware extends MockHardwareBackend {
   Future<Result<RawJson>> connectSession({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) async {
     calls++;
     return result;

@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/eld_card.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../server_url_validation.dart';
 
@@ -59,7 +60,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     // final fleet = ref.watch(fleetSettingsProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         title: Text(
           context.loc.settingsTitle,
           style: context.styles.appBarTitle,

@@ -67,10 +67,12 @@ class FailClosedRemoteEventDispatcher implements RemoteEventDispatcher {
 }
 
 final offlineQueueProvider = Provider<OfflineQueue>((ref) {
+  // ساعة واحدة لكل قرار "جاهز الآن": نفس ساعة `RetryPolicy` في SyncEngine.
+  final authority = ref.watch(timeAuthorityProvider);
   if (AppEnvironmentConfig.current == AppEnvironment.mock) {
-    return MemoryOfflineQueue();
+    return MemoryOfflineQueue(now: authority.nowUtc);
   }
-  return SQLiteOfflineQueue();
+  return SQLiteOfflineQueue(now: authority.nowUtc);
 });
 
 /// P1.1 — durable duty-event evidence. Sharing the queue's `Database` is what
@@ -89,6 +91,9 @@ final logSyncOutcomeHandlerProvider = Provider<LogSyncOutcomeHandler>((ref) {
   return LogSyncOutcomeHandler(
     local: ref.watch(logLocalDataSourceProvider),
     events: ref.watch(appEventBusProvider),
+    // تعديلات متعددة لنفس الحدث قد تنتظر؛ التأكيد لا يمسح الشارة إلا بعد
+    // مغادرة آخر طلب للطابور.
+    queue: ref.watch(offlineQueueProvider),
   );
 });
 

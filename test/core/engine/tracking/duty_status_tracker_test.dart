@@ -52,6 +52,7 @@ class MockDashboardBackend implements StatusDashboardBackend {
   DutyStatusCode? lastStatus;
   String? lastNotes;
   DriverId? lastDriverId;
+  VehicleId? lastVehicleId;
   double? lastLatitude;
   double? lastLongitude;
 
@@ -60,12 +61,14 @@ class MockDashboardBackend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async {
     lastStatus = status;
     lastNotes = notes;
     lastDriverId = driverId;
+    lastVehicleId = vehicleId;
     lastLatitude = latitude;
     lastLongitude = longitude;
     return updateResult;
@@ -158,6 +161,9 @@ class FakeLocalStorage implements LocalStorageService {
   Future<void> setCurrentDutyStatus(String value) async {
     data['current_duty_status'] = value;
   }
+
+  @override
+  String? get selectedVehicleId => data['selected_vehicle_id'];
 
   @override
   String? get stationarySince => data['stationary_since'];
@@ -422,7 +428,7 @@ void main() {
     });
 
     test(
-      'above threshold (> 5.0) but only 1 event (spike) does not transition',
+      'above threshold (> 5.0) transitions immediately to driving without debounce (Decision 3 P0)',
       () {
         expect(tracker.currentStatus, 'off_duty');
         tracker.processEldEvent(
@@ -434,16 +440,16 @@ void main() {
             timestamp: getClockTime(),
           ),
         );
-        expect(tracker.currentStatus, 'off_duty');
+        expect(tracker.currentStatus, 'driving');
       },
     );
 
     test(
-      'above threshold (> 5.0) for 3 consecutive events across 3 seconds transitions to driving',
+      'above threshold (> 5.0) transitions immediately and remains driving across subsequent events',
       () {
         expect(tracker.currentStatus, 'off_duty');
 
-        // Event 1 (0s)
+        // Event 1 (0s) - Immediate transition
         tracker.processEldEvent(
           EldEvent(
             fromEcm: true,
@@ -453,7 +459,7 @@ void main() {
             timestamp: getClockTime(),
           ),
         );
-        expect(tracker.currentStatus, 'off_duty');
+        expect(tracker.currentStatus, 'driving');
 
         // Event 2 (1s)
         clock.advance(const Duration(seconds: 1));
@@ -466,7 +472,7 @@ void main() {
             timestamp: getClockTime(),
           ),
         );
-        expect(tracker.currentStatus, 'off_duty');
+        expect(tracker.currentStatus, 'driving');
 
         // Event 3 (3s)
         clock.advance(const Duration(seconds: 2));
@@ -483,10 +489,10 @@ void main() {
       },
     );
 
-    test('interrupted spike resets consecutive counter', () {
+    test('movement transitions to driving immediately upon exceeding 5 mph', () {
       expect(tracker.currentStatus, 'off_duty');
 
-      // Event 1 (> 5)
+      // Event 1 (> 5) - Immediate transition to driving (Decision 3 P0)
       tracker.processEldEvent(
         EldEvent(
           fromEcm: true,
@@ -496,8 +502,9 @@ void main() {
           timestamp: getClockTime(),
         ),
       );
+      expect(tracker.currentStatus, 'driving');
 
-      // Event 2 (<= 5) - interrupts the streak
+      // Event 2 (<= 5) - Initiates stationary evaluation
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(
         EldEvent(
@@ -508,8 +515,9 @@ void main() {
           timestamp: getClockTime(),
         ),
       );
+      expect(tracker.currentStatus, 'driving');
 
-      // Event 3 (> 5)
+      // Event 3 (> 5) - Clears stationary marker, stays driving
       clock.advance(const Duration(seconds: 1));
       tracker.processEldEvent(
         EldEvent(
@@ -520,21 +528,7 @@ void main() {
           timestamp: getClockTime(),
         ),
       );
-
-      // Event 4 (> 5)
-      clock.advance(const Duration(seconds: 2));
-      tracker.processEldEvent(
-        EldEvent(
-          fromEcm: true,
-          speedMph: 5.1,
-          odometerMiles: 10,
-          engineHours: 1,
-          timestamp: getClockTime(),
-        ),
-      );
-
-      // Still off_duty because the streak was broken and the new streak is only 2 events
-      expect(tracker.currentStatus, 'off_duty');
+      expect(tracker.currentStatus, 'driving');
     });
 
     test('phone or simulated speed does not create a driving record', () {
@@ -661,6 +655,28 @@ void main() {
         expect(dashboard.lastLongitude, -93.4668);
         // لا تغيير في سلوك الأوفلاين/الطابور للمسار المباشر.
         expect(sync.submitted, isEmpty);
+        tracker.dispose();
+      },
+    );
+
+    test(
+      'manual change forwards selectedVehicleId to the direct request',
+      () async {
+        final trusted = DateTime.utc(2026, 9, 23, 8, 15);
+        final clock = FakeTrustedTimeProvider(initialUtcTime: trusted);
+        db.data['selected_vehicle_id'] = '42';
+        final tracker = build(
+          time: clock,
+          readDriverId: () => 106,
+        );
+
+        final outcome = await tracker.submitManualChange(
+          'on_duty',
+          annotation: 'Available',
+        );
+
+        expect(outcome.refusal, isNull);
+        expect(dashboard.lastVehicleId, equals(const VehicleId(42)));
         tracker.dispose();
       },
     );

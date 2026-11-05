@@ -65,7 +65,7 @@ class GoldenAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.title,
     this.titleText,
-    this.variant = GoldenAppBarVariant.standard,
+    this.variant = GoldenAppBarVariant.brand,
     this.leading,
     this.automaticallyImplyLeading = true,
     this.actions,
@@ -74,10 +74,7 @@ class GoldenAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.elevation = 0,
     this.systemOverlayStyle,
-  }) : assert(
-         title != null || titleText != null,
-         'Either title or titleText must be provided',
-       );
+  });
 
   /// مُنشئ سريع لشريط التطبيق بنمط الهوية الذهبي
   const GoldenAppBar.brand({
@@ -233,7 +230,10 @@ class GoldenAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
-    final text = titleText ?? '';
+    final text = titleText;
+    if (text == null || text.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Tooltip(
       message: text,
       child: Semantics(

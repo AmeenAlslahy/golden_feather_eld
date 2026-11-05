@@ -5,6 +5,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -22,8 +23,8 @@ class LogsListPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: const EldDrawer(),
-      appBar: AppBar(
-        title: Text(context.loc.logsTitle, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: context.loc.logsTitle,
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(

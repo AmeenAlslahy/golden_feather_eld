@@ -3874,6 +3874,12 @@ abstract class AppLocalizations {
   /// **'لا يمكن تسجيل وقت حدث الحالة في المستقبل.'**
   String get eventCannotBeInFuture;
 
+  /// No description provided for @eventTimeOverlap.
+  ///
+  /// In ar, this message translates to:
+  /// **'تتعارض أوقات هذه الحالة مع حدث آخر مسجل في نفس اليوم.'**
+  String get eventTimeOverlap;
+
   /// No description provided for @eventSavedSuccessfully.
   ///
   /// In ar, this message translates to:

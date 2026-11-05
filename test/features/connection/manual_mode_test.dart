@@ -11,7 +11,7 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(overrides: [
-      hardwareBackendProvider.overrideWithValue(MockHardwareBackend()),
+      hardwareBackendProvider.overrideWithValue(const MockHardwareBackend()),
     ]);
   });
 

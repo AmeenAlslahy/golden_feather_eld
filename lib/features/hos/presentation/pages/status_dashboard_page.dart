@@ -150,7 +150,9 @@ class _DashboardViewState extends ConsumerState<_DashboardView> {
                 hosIndicators: widget.dashboard.hosIndicators,
                 snapshotTimestamp: snapshotTimestamp,
                 elapsedNotifier: _elapsedNotifier,
-                cycleLimit: Duration(hours: cycleHours > 0 ? cycleHours : 70),
+                cycleLimit: Duration(
+                  hours: cycleHours > 0 ? cycleHours : 70,
+                ),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(

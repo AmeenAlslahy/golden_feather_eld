@@ -1987,6 +1987,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا يمكن تسجيل وقت حدث الحالة في المستقبل.';
 
   @override
+  String get eventTimeOverlap =>
+      'تتعارض أوقات هذه الحالة مع حدث آخر مسجل في نفس اليوم.';
+
+  @override
   String get eventSavedSuccessfully => 'تم حفظ الحدث بنجاح';
 
   @override

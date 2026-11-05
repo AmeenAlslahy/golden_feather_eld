@@ -181,10 +181,16 @@ class LogRepositoryImpl implements LogRepository {
         // غياب `events` أو كونها غير قائمة استجابة غير قابلة للتفسير — لا
         // نعتبرها "يومًا فارغًا" ولا نكتبها فوق الكاش.
         if (rawEvents is List) {
-          final eventsJson = rawEvents
+          final serverJson = rawEvents
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
+          // الخادم لا يعرف تعديلاً محلياً لم يُزامَن بعد. بلا هذه الدمج
+          // كان نجاح `GET` يمحو التعديل الأوفلاين فور إعادة فتح اليوم.
+          final eventsJson = _mergePendingEvents(
+            serverJson,
+            await _pendingCachedEvents(logId),
+          );
           final parsed = LogEventModel.parseList(eventsJson, source: 'events');
           // قائمة فارغة مؤكدة نجاح؛ أما وجود عناصر كلها تالفة فاستجابة
           // غير قابلة للتفسير، ولا تمس اللقطة السليمة.
@@ -224,6 +230,60 @@ class LogRepositoryImpl implements LogRepository {
       }
       throw const ServerException(message: 'eventsUnavailable');
     }, tag: 'LogRepositoryImpl.getEvents');
+  }
+
+  /// تعديلات محلية لم يؤكدها الخادم ([EventSyncStatus.pendingSync] أو
+  /// [EventSyncStatus.syncFailed]) من لقطة اليوم.
+  Future<List<Map<String, dynamic>>> _pendingCachedEvents(
+    DailyLogId logId,
+  ) async {
+    try {
+      final cached = await _localDataSource.getCachedLogEvents(logId);
+      if (cached == null) return const [];
+      return cached.where((row) {
+        final id = row['id']?.toString();
+        if (id == null || id.isEmpty) return false;
+        return LogEventModel.parseSyncStatus(row['syncStatus']) !=
+            EventSyncStatus.none;
+      }).toList();
+    } catch (e) {
+      // فشل قراءة الكاش لا يحوّل استجابة خادم سليمة إلى فشل، ولا يمنع
+      // عرض الأحداث؛ يعني فقط ألا نستطيع دمج تعديل محلي هذه المرة.
+      AppLogger.warning('pendingCachedEvents skipped: $e');
+      return const [];
+    }
+  }
+
+  /// يضع التعديلات المحلية فوق لقطة الخادم بنفس المعرّف، ويضيف ما لم
+  /// يعرفه الخادم بعد. الحدث المؤكد لا يُستبدل.
+  List<Map<String, dynamic>> _mergePendingEvents(
+    List<Map<String, dynamic>> server,
+    List<Map<String, dynamic>> pending,
+  ) {
+    if (pending.isEmpty) return server;
+    final byId = <String, Map<String, dynamic>>{};
+    for (final row in pending) {
+      final id = row['id']?.toString();
+      if (id != null && id.isNotEmpty) byId[id] = row;
+    }
+    if (byId.isEmpty) return server;
+
+    final merged = <Map<String, dynamic>>[];
+    final seen = <String>{};
+    for (final row in server) {
+      final id = row['id']?.toString();
+      final local = id == null ? null : byId[id];
+      if (local == null) {
+        merged.add(row);
+        continue;
+      }
+      merged.add(LogEventModel.mergeJson(row, local));
+      seen.add(id!);
+    }
+    for (final entry in byId.entries) {
+      if (!seen.contains(entry.key)) merged.add(entry.value);
+    }
+    return merged;
   }
 
   @override
@@ -270,7 +330,8 @@ class LogRepositoryImpl implements LogRepository {
       if (event.location.isNotEmpty) 'locationText': event.location,
       if (reason != null && reason.trim().isNotEmpty) 'notes': reason.trim(),
       'origin': 'MANUAL',
-      'clientId': event.id,
+      'clientEventId': event.id,
+      if (ownerDriverId != null && ownerDriverId > 0) 'driverId': ownerDriverId,
     });
     return result.fold(
       (error) => Left(ServerFailure(message: error.l10nKey)),
@@ -304,40 +365,8 @@ class LogRepositoryImpl implements LogRepository {
       if (location != null) 'locationText': location,
     };
 
-    // If offline, always go local and enqueue for background sync.
-    if (!_networkInfo.isConnected) {
-      final localResult = await executeWithHandling(
-        () => _localDataSource.updateEvent(event),
-        tag: 'LogRepositoryImpl.updateEvent(local)',
-      );
-      if (localResult.isLeft()) {
-        return localResult.fold(
-          (failure) => Left(failure),
-          (_) => Right(event),
-        );
-      }
-
-      await _offlineQueue.enqueue(
-        PendingEvent(
-          id: _idGenerator.v4(),
-          type: 'duty_status',
-          payload: {
-            ...base,
-            if (statusId != null) 'statusId': statusId,
-            if (logId != null) 'logId': logId.value,
-            'notes': reason.trim(),
-            'origin': 'MANUAL',
-            'clientId': event.id,
-            if (ownerDriverId != null) 'driverId': ownerDriverId,
-            if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
-          },
-          createdAt: _timeAuthority.nowUtc(),
-        ),
-      );
-      return Right(event);
-    }
-
-    // Try to resolve effectiveLogId if logId was not explicitly passed
+    // نحسم معرّف السجل قبل مسار الأوفلاين أيضاً، حتى يُحدَّث كاش
+    // `events:<logId>` ويستمر التعديل بعد إعادة فتح الشاشة/التطبيق.
     DailyLogId? effectiveLogId = logId;
     if (effectiveLogId == null && ownerDriverId != null) {
       final cached = await _localDataSource.getCachedDailyLogs(ownerDriverId);
@@ -354,6 +383,52 @@ class LogRepositoryImpl implements LogRepository {
           }
         }
       }
+    }
+
+    // If offline, always go local and enqueue for background sync.
+    if (!_networkInfo.isConnected) {
+      // التعديل لم يصل الخادم بعد: نعلّمه PENDING_SYNC في الكاش والكيان
+      // المعروض كي لا يبدو كأنه مؤكد، ويستمر بعد إعادة فتح الشاشة.
+      final pendingEvent = event.copyWith(
+        syncStatus: EventSyncStatus.pendingSync,
+      );
+      final localResult = await executeWithHandling(() async {
+        if (effectiveLogId != null) {
+          // يحدّث لقطة الخادم المحلية وصندوق الأحداث معاً؛ النسخة
+          // المحلية هي التي يراها المستخدم بعد إعادة الفتح.
+          await _localDataSource.upsertCachedLogEvent(
+            effectiveLogId,
+            LogEventModel.fromEntity(pendingEvent).toJson(),
+          );
+          return true;
+        }
+        return _localDataSource.updateEvent(pendingEvent);
+      }, tag: 'LogRepositoryImpl.updateEvent(local)');
+      if (localResult.isLeft()) {
+        return localResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(pendingEvent),
+        );
+      }
+
+      await _offlineQueue.enqueue(
+        PendingEvent(
+          id: _idGenerator.v4(),
+          type: 'duty_status',
+          payload: {
+            ...base,
+            if (statusId != null) 'statusId': statusId,
+            if (effectiveLogId != null) 'logId': effectiveLogId.value,
+            'notes': reason.trim(),
+            'origin': 'MANUAL',
+            'clientId': event.id,
+            if (ownerDriverId != null) 'driverId': ownerDriverId,
+            if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
+          },
+          createdAt: _timeAuthority.nowUtc(),
+        ),
+      );
+      return Right(pendingEvent);
     }
 
     final startTimeUtc = event.startTime.toUtc();
@@ -401,34 +476,97 @@ class LogRepositoryImpl implements LogRepository {
         'notes': reason.trim(),
         'reason': reason.trim(),
         'origin': 'MANUAL',
-        'clientId': event.id,
+        'clientEventId': event.id,
+        if (ownerDriverId != null && ownerDriverId > 0)
+          'driverId': ownerDriverId,
       });
     }
 
-    return result.fold((error) => Left(ServerFailure(message: error.l10nKey)), (
-      raw,
-    ) {
-      // العقد: 200 يعيد الحدث المعدّل — نعتمده مرجعاً للواجهة
-      // بدل إعادة الجلب عبر /events (كان يرمي الاستجابة فيرتد
-      // التعديل عند أي تأخير/فشل في الجلب التالي).
-      try {
-        final payload = raw['event'] is Map
-            ? Map<String, dynamic>.from(raw['event'] as Map)
-            : raw;
-        final confirmed = LogEventModel.fromJson(payload);
-        return Right(confirmed);
-      } catch (e, st) {
-        // الخادم طبّق التعديل فعلاً (200) — لا نحوّلها لفشل كاذب، لكن انحراف
-        // العقد (echo غير قابل للتحليل) يجب أن يبقى مرئياً في السجلات.
-        AppLogger.error(
-          'LogRepositoryImpl.updateEvent: 200 body was not a parseable '
-          'event DTO — UI keeps optimistic state without confirmation',
-          e,
-          st,
+    if (result.isFailure) {
+      final error = result.errorOrNull!;
+      return Left(
+        ServerFailure(
+          message: error.code.contains('overlap') ? error.code : error.l10nKey,
+        ),
+      );
+    }
+
+    final raw = result.valueOrNull ?? <String, dynamic>{};
+    final rawEvent = raw['event'];
+    final candidate = rawEvent is Map
+        ? Map<String, dynamic>.from(rawEvent)
+        : _looksLikeEventJson(raw)
+        ? Map<String, dynamic>.from(raw)
+        : null;
+
+    // 200 مع `success:true` بلا echo قابل للتحليل: الطلب قُبل لكن الحدث
+    // غير مؤكد. نحفظ نسخة المستخدم المحلية ولا ندّعي تأكيداً كاملاً.
+    if (candidate == null) {
+      if (effectiveLogId != null) {
+        await _localDataSource.upsertCachedLogEvent(
+          effectiveLogId,
+          LogEventModel.fromEntity(event).toJson(),
         );
-        return const Right(null);
       }
-    });
+      AppLogger.warning(
+        'LogRepositoryImpl.updateEvent: server accepted the edit without a '
+        'parseable event DTO — keeping local state as unconfirmed',
+      );
+      return const Right(null);
+    }
+
+    try {
+      final existing = effectiveLogId == null
+          ? null
+          : await _findCachedEvent(effectiveLogId, event.id);
+      final merged = LogEventModel.mergeJson(existing ?? const {}, candidate);
+      // التعديل عبر الشبكة مؤكد من الخادم: لا نرث علامة PENDING_SYNC
+      // المحلية القديمة إلى النسخة المؤكدة.
+      merged.remove('syncStatus');
+      final confirmed = LogEventModel.fromJson(merged);
+      if (effectiveLogId != null) {
+        await _localDataSource.upsertCachedLogEvent(
+          effectiveLogId,
+          LogEventModel.fromEntity(confirmed).toJson(),
+        );
+      }
+      return Right(confirmed);
+    } catch (e, st) {
+      // الخادم طبّق التعديل فعلاً (200) — لا نحوّلها لفشل كاذب، لكن انحراف
+      // العقد (echo غير قابل للتحليل) يجب أن يبقى مرئياً في السجلات.
+      AppLogger.error(
+        'LogRepositoryImpl.updateEvent: 200 body was not a parseable '
+        'event DTO — UI keeps optimistic state without confirmation',
+        e,
+        st,
+      );
+      if (effectiveLogId != null) {
+        await _localDataSource.upsertCachedLogEvent(
+          effectiveLogId,
+          LogEventModel.fromEntity(event).toJson(),
+        );
+      }
+      return const Right(null);
+    }
+  }
+
+  bool _looksLikeEventJson(Map<String, dynamic> raw) {
+    return raw['id'] != null &&
+        (raw['timeRange'] != null ||
+            raw['startTime'] != null ||
+            raw['time'] != null);
+  }
+
+  Future<Map<String, dynamic>?> _findCachedEvent(
+    DailyLogId logId,
+    String eventId,
+  ) async {
+    final cached = await _localDataSource.getCachedLogEvents(logId);
+    if (cached == null) return null;
+    for (final row in cached) {
+      if (row['id']?.toString() == eventId) return row;
+    }
+    return null;
   }
 
   /// جسم تعديل الحدث وفق الوثيقة: `status` + `specialCategory` + `notes`
@@ -831,48 +969,6 @@ class LogRepositoryImpl implements LogRepository {
         },
       );
     }, tag: 'LogRepositoryImpl.certifyLog');
-  }
-
-  @override
-  Future<Either<Failure, bool>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required String editId,
-    required String action,
-    String? driverNotes,
-  }) {
-    return executeWithHandling(() async {
-      final result = await _dailyLogsBackend.respondToCarrierEdit(
-        logId: logId,
-        editId: EditId(editId),
-        action: action,
-        driverNotes: driverNotes,
-      );
-      return result.match(
-        (failure) => throw ServerException(message: failure.l10nKey),
-        (_) => true,
-      );
-    }, tag: 'LogRepositoryImpl.respondToCarrierEdit');
-  }
-
-  @override
-  Future<Either<Failure, bool>> reassignDriving({
-    required DailyLogId logId,
-    required int statusId,
-    required int targetCoDriverId,
-    required String annotation,
-  }) {
-    return executeWithHandling(() async {
-      final result = await _dailyLogsBackend.reassignDriving(
-        logId: logId,
-        statusId: DutyStatusId(statusId),
-        targetCoDriverId: DriverId(targetCoDriverId),
-        annotation: annotation,
-      );
-      return result.match(
-        (failure) => throw ServerException(message: failure.l10nKey),
-        (_) => true,
-      );
-    }, tag: 'LogRepositoryImpl.reassignDriving');
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
@@ -45,12 +46,9 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: GoldenAppBar(
           automaticallyImplyLeading: !state.locked,
-          title: Text(
-            context.loc.dotInspection,
-            style: context.styles.appBarTitle,
-          ),
+          titleText: context.loc.dotInspection,
           leading: state.locked
               ? BackButton(onPressed: _exitDirectly)
               : Builder(

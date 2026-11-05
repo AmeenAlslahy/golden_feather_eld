@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 // وصفحات تستورد من هنا) حتى يتم توجيه الجميع مباشرة.
 export '../../data/providers/tracking_providers.dart';
 
-/// مزود حالة خدمة الـ GPS
+/// مزود حالة خدمة الـ GPS — يستمع للبث المباشر لحالة الموقع من النظام
 final gpsStatusProvider = StreamProvider.autoDispose<ServiceStatus>((
   ref,
 ) async* {

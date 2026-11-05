@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../domain/repositories/tracking_repository.dart';
@@ -19,11 +18,15 @@ final trackingLocalDataSourceProvider = Provider<TrackingLocalDataSource>((
   return TrackingLocalDataSourceImpl(storage);
 });
 
-/// مزود خدمة التتبع
+/// مزود خدمة التتبع الكامل.
+///
+/// يعيد استخدام [trackingServiceProvider] نفسه بدل إنشاء نسخة ثانية.
+/// كانت النسختان تعنيان: خدمة يهيّئها `AppInitializer` عند الإقلاع
+/// (وتستخدمها الإشعارات والإجراءات السريعة)، وخدمة أخرى ينشئها المستودع
+/// وتهيّئ الـ SDK الأصلي مرة أخرى عند أول `startTracking` — أي `configure`
+/// مزدوج وتهيئة مزدوجة بلا داعٍ.
 final trackingServiceFullProvider = Provider<TrackingService>((ref) {
-  final storage = ref.watch(localStorageProvider);
-  final tracker = ref.watch(traccarNativeClientProvider);
-  return TrackingService(storage: storage, tracker: tracker);
+  return ref.watch(trackingServiceProvider);
 });
 
 /// مزود العميل الأصلي

@@ -73,7 +73,7 @@ void main() {
     when(() => bt.disconnect()).thenAnswer((_) async {});
     when(
       () => tracking.locationStream,
-    ).thenAnswer((_) => Stream<LocationEntity>.empty());
+    ).thenAnswer((_) => const Stream<LocationEntity>.empty());
     when(
       () => tracking.getCurrentConfig(),
     ).thenAnswer((_) async => _trackingConfig);

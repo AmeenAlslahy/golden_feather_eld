@@ -73,6 +73,7 @@ class _Backend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async {
@@ -191,6 +192,9 @@ class _Storage implements LocalStorageService {
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
   Map<String, String> d = {};
+  @override
+  @override
+  String? get selectedVehicleId => null;
   @override
   String get currentDutyStatus => d['c'] ?? 'off_duty';
   @override

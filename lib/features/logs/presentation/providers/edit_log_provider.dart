@@ -20,6 +20,7 @@ enum EditLogErrorCode {
   saveFailed,
   auditFailed,
   authMissing,
+  overlapConflict,
 }
 
 class EditLogError implements Exception {
@@ -43,6 +44,8 @@ String editLogErrorUserMessage(Object? error, AppLocalizations loc) {
         return loc.theEventWasSavedButThe;
       case EditLogErrorCode.authMissing:
         return loc.sessionMissing;
+      case EditLogErrorCode.overlapConflict:
+        return loc.eventTimeOverlap;
     }
   }
   return loc.theEventCouldNotBeSaved;
@@ -124,6 +127,22 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
         }
       }
 
+      // التحقق من عدم التداخل مع أحداث أخرى مسجلة في نفس اليوم
+      if (selectedLog != null && parsedDuration > Duration.zero) {
+        final otherEvents = existing == null
+            ? selectedLog.events
+            : selectedLog.events.where((e) => e.id != existing.id).toList();
+        final newEnd = newStart.add(parsedDuration);
+        for (final other in otherEvents) {
+          if (other.duration > Duration.zero) {
+            final otherEnd = other.startTime.add(other.duration);
+            if (newStart.isBefore(otherEnd) && other.startTime.isBefore(newEnd)) {
+              throw EditLogError(EditLogErrorCode.overlapConflict);
+            }
+          }
+        }
+      }
+
       final idGenerator = ref.read(idGeneratorProvider);
 
       final updatedEvent =
@@ -152,8 +171,12 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
           ? await notifier.addEvent(updatedEvent, reason: reason)
           : await notifier.updateEvent(updatedEvent, reason: reason);
 
-      final saveFailed = result.fold((_) => true, (_) => false);
-      if (saveFailed) {
+      final failure = result.fold((f) => f, (_) => null);
+      if (failure != null) {
+        final msg = failure.message.toLowerCase();
+        if (msg.contains('overlap') || msg.contains('no_overlap')) {
+          throw EditLogError(EditLogErrorCode.overlapConflict);
+        }
         throw EditLogError(EditLogErrorCode.saveFailed);
       }
 

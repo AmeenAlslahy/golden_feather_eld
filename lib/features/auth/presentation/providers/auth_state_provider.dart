@@ -117,7 +117,11 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   // الاستيراد (backend لا يستطيع استيراد features/auth لأن هذا الملف
   // يستورده). القراءة كسولة لحظة الإرسال عبر دالة top-level — لا إحالة
   // للمزود داخل المُهيّئ نفسه كي لا يرى المحلل دائرة إعلانية.
-  OwnerIdentityBinding.install(() => _readCurrentOwnerDriverId(ref));
+  final ownerToken = OwnerIdentityBinding.install(
+    () => _readCurrentOwnerDriverId(ref),
+  );
+  // فكّ الإسناد عند موت الحاوية، وإلا بقي `ref` ميتاً في الحاوية الساكنة.
+  ref.onDispose(() => OwnerIdentityBinding.uninstall(ownerToken));
 
   return notifier;
 });
@@ -125,8 +129,15 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 /// قراءة هوية المالك لحظة الإرسال — معرفة كدالة top-level (لا داخل
 /// مُهيّئ [authStateProvider]) لكسر الدائرة الإعلانية مع
 /// [currentDriverIdProvider] الذي يراقب حالة المصادقة.
+///
+/// نقرأ عبر [Ref.container] لا عبر `ref.read`: الأخير يمرّ بفحص
+/// `_debugAssertCanDependOn` الذي يرفع `CircularDependencyError` في Debug
+/// (لأن [currentDriverIdProvider] يشاهد [authStateProvider]). قراءة
+/// الحاوية تتخطى فحص الاعتماد فقط، لكنها تُنعش العنصر قبل القراءة
+/// (`readSelf`/`flush`) فتُرجع الهوية **الحية** لحظة الإرسال — بلا لقطة
+/// ثابتة وبلا اعتماد دائم.
 Future<int?> _readCurrentOwnerDriverId(Ref ref) async =>
-    ref.read(currentDriverIdProvider);
+    ref.container.read(currentDriverIdProvider);
 
 /// جيل الجلسة الحالي — يُبطل العمليات غير المتزامنة القديمة.
 /// يزيد فقط عند حدود الهوية (بدء logout، طرد إجباري، إبطال الجلسة

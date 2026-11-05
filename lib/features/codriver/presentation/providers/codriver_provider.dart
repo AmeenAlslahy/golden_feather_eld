@@ -72,16 +72,40 @@ final codriverProvider = StateNotifierProvider<CoDriverNotifier, CoDriverState>(
         notifier.reset();
         return;
       }
-      final id = int.tryParse(next.user!.id);
+      final activeDriverId = ref.read(currentDriverIdProvider);
+      final id = activeDriverId ?? int.tryParse(next.user!.id);
       if (id != notifier.ownerDriverId ||
           next.sessionEpoch != notifier.ownerEpoch) {
         notifier.bindOwner(id, next.sessionEpoch);
         notifier.reload();
       }
     });
+    ref.listen<int?>(currentDriverIdProvider, (previous, nextDriverId) {
+      if (nextDriverId == null || nextDriverId <= 0) return;
+
+      // 🔴 لا نعدّل حالة هذا المزوّد داخل نداء المستمع مباشرة.
+      //
+      // `currentDriverIdProvider` قد يكون متسخاً (تغيّرت المصادقة للتو)،
+      // فقراءته/الاستماع إليه من مزوّد آخر أثناء بنائه تُنعشه وتُطلق هذا
+      // المستمع **داخل بناء المزوّد الآخر**. تعديل `CoDriverNotifier.state`
+      // حينها يرفع في Riverpod:
+      //   «Providers are not allowed to modify other providers during
+      //    their initialization.»
+      // التأجيل إلى microtask يضمن أن البناء انتهى قبل أي كتابة حالة.
+      Future<void>.microtask(() {
+        if (!notifier.mounted) return;
+        if (nextDriverId == notifier.ownerDriverId) return;
+        final auth = ref.read(authStateProvider);
+        if (auth.user == null || auth.transitioning) return;
+        notifier.bindOwner(nextDriverId, auth.sessionEpoch);
+        notifier.reload();
+      });
+    });
     final auth = ref.read(authStateProvider);
     if (auth.user != null && !auth.transitioning) {
-      notifier.bindOwner(int.tryParse(auth.user!.id), auth.sessionEpoch);
+      final activeDriverId = ref.read(currentDriverIdProvider);
+      final id = activeDriverId ?? int.tryParse(auth.user!.id);
+      notifier.bindOwner(id, auth.sessionEpoch);
       notifier.reload();
     }
     return notifier;

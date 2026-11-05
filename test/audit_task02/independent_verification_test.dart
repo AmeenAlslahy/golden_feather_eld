@@ -151,6 +151,7 @@ class _Backend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async {
@@ -185,6 +186,9 @@ class _FakeStorage implements LocalStorageService {
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
   @override
   HosConfiguration get hosConfiguration => HosConfiguration.usa70_8();
+  @override
+  @override
+  String? get selectedVehicleId => null;
   @override
   String get currentDutyStatus => _dutyStatus;
   @override

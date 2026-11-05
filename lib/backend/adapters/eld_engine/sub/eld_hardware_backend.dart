@@ -7,9 +7,12 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../domain/hardware/diagnostic_alert.dart';
 import '../../../../core/network/api_response.dart';
 import '../../../http/eld_endpoints.dart';
 import '../mappers/hardware_mapper.dart';
+import '../session_connect.dart';
 
 /// ELD Engine implementation of [HardwareBackend].
 /// **Status:** Skeleton — implemented in Phase 2.
@@ -17,7 +20,10 @@ class EldHardwareBackend implements HardwareBackend {
   final ApiClient _apiClient;
   final Map<String, Future<Result<RawJson>>> _inFlightStatus = {};
 
-  EldHardwareBackend(this._apiClient);
+  // Decision 2 (P1): Reconnect Loop. Callback for offline queue fallback without upward feature imports.
+  final Future<void> Function(DiagnosticAlertRequest request)? onOfflineEnqueue;
+
+  EldHardwareBackend(this._apiClient, {this.onOfflineEnqueue});
 
   @override
   Future<Result<RawJson>> getAlerts({DriverId? driverId}) async {
@@ -95,32 +101,26 @@ class EldHardwareBackend implements HardwareBackend {
   Future<Result<RawJson>> connectSession({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) async {
-    final Map<String, dynamic> query = {};
-    if (uniqueId != null) query['uniqueId'] = uniqueId;
-    if (disconnected) query['disconnected'] = true;
+    final payload = EldSessionConnect.payload(
+      uniqueId: uniqueId,
+      disconnected: disconnected,
+      driverId: driverId,
+      coDriverId: coDriverId,
+    );
 
-    final payload = <String, dynamic>{
-      if (uniqueId != null) 'deviceId': uniqueId,
-      'manualMode': disconnected,
-      'manualModeEnabled': disconnected,
-    };
-
-    final res = await _apiClient.post<RawJson>(
-      EldEndpoints.connectSession,
-      queryParameters: query.isNotEmpty ? query : null,
-      data: payload,
-      parser: (data) {
-        if (data is Map<String, dynamic>) return data;
-        if (data is Map) return Map<String, dynamic>.from(data);
-        return <String, dynamic>{};
-      },
+    final res = await EldSessionConnect.post(
+      apiClient: _apiClient,
+      payload: payload,
+      parser: EldSessionConnect.parsePermissiveBody,
     );
 
     return res.flatMap((response) {
-      final requestId = _requestIdOf(response.rawBody) ?? response.requestId;
+      final requestId = EldSessionConnect.requestIdOf(response);
       final statusCode = response.statusCode;
-      final failureMarker = _explicitFailureMarker(response.rawBody);
+      final failureMarker = EldSessionConnect.failureMarkerOf(response.rawBody);
 
       if (!response.isSuccess || failureMarker != null) {
         return err<RawJson>(
@@ -137,7 +137,7 @@ class EldHardwareBackend implements HardwareBackend {
         );
       }
 
-      final data = _confirmedPayload(response);
+      final data = EldSessionConnect.confirmedPayload(response);
       if (data == null) {
         return err<RawJson>(
           ServerError(
@@ -157,57 +157,18 @@ class EldHardwareBackend implements HardwareBackend {
     });
   }
 
+  @override
+  Future<Result<RawJson>> disconnectSession() async {
+    final res = await _apiClient.post<RawJson>(
+      EldEndpoints.disconnectSession,
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+  }
+
   /// `success`/`status` false at the top level is an explicit server refusal,
   /// even when the response is a bare `{"success": false}` body that
   /// [ApiResponse] cannot recognise as an envelope.
-  String? _explicitFailureMarker(Object? rawBody) {
-    if (rawBody is! Map) return null;
-    if (_isFalse(rawBody['success'])) return 'success_false';
-    if (_isFalse(rawBody['status'])) return 'status_false';
-    return null;
-  }
-
-  bool _isFalse(Object? value) {
-    if (value == false) return true;
-    return value is String && value.trim().toLowerCase() == 'false';
-  }
-
-  /// Returns only the payload that is strong enough to call the session
-  /// confirmed. Envelope-shaped bodies must carry a non-empty object `data`;
-  /// direct bodies must themselves be a non-empty object.
-  Map<String, dynamic>? _confirmedPayload(ApiResponse<RawJson> response) {
-    final body = _asStringMap(response.rawBody);
-    if (body != null) {
-      final isEnvelope =
-          body.containsKey('success') ||
-          body.containsKey('data') ||
-          (body.containsKey('code') && body.containsKey('status'));
-      if (isEnvelope) {
-        final data = _asStringMap(body['data']);
-        if (data == null || data.isEmpty) return null;
-        return data;
-      }
-    }
-
-    final data = response.data;
-    if (data == null || data.isEmpty) return null;
-    return data;
-  }
-
-  Map<String, dynamic>? _asStringMap(Object? value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value);
-    return null;
-  }
-
-  String? _requestIdOf(Object? rawBody) {
-    if (rawBody is! Map) return null;
-    final value = rawBody['requestId'];
-    if (value is! String) return null;
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
-
   @override
   Future<Result<RawJson>> getStatus({
     String? uniqueId,
@@ -270,4 +231,43 @@ class EldHardwareBackend implements HardwareBackend {
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
+
+  // Decision 2 (P1): Reconnect Loop. Report alert with offline queue fallback.
+  @override
+  Future<AlertResponse> reportAlert(DiagnosticAlertRequest request) async {
+    try {
+      final res = await _apiClient.post<RawJson>(
+        EldEndpoints.hardwareAlerts,
+        data: request.toJson(),
+        parser: (data) => data is Map<String, dynamic> ? data : {},
+      );
+      if (res.isFailure) {
+        AppLogger.warning(
+          'Decision 2 (P1): reportAlert network failure (${res.errorOrNull}), fallback to offline queue',
+        );
+        if (onOfflineEnqueue != null) {
+          await onOfflineEnqueue!(request);
+        }
+        return const AlertResponse(
+          success: false,
+          message: 'Enqueued offline due to network failure',
+        );
+      }
+      return AlertResponse.fromJson(res.valueOrNull?.data ?? {});
+    } catch (e, st) {
+      AppLogger.warning(
+        'Decision 2 (P1): reportAlert exception ($e), fallback to offline queue',
+        e,
+        st,
+      );
+      if (onOfflineEnqueue != null) {
+        await onOfflineEnqueue!(request);
+      }
+      return const AlertResponse(
+        success: false,
+        message: 'Enqueued offline due to exception',
+      );
+    }
+  }
 }
+

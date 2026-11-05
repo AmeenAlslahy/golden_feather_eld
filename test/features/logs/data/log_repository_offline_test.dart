@@ -84,6 +84,7 @@ void main() {
     when(() => local.cacheDailyLogs(any(), any())).thenAnswer((_) async {});
     when(() => local.cacheLogEvents(any(), any())).thenAnswer((_) async {});
     when(() => local.getEvents(any())).thenAnswer((_) async => const []);
+    when(() => local.getCachedLogEvents(any())).thenAnswer((_) async => null);
   });
 
   group('getDailyLogs', () {

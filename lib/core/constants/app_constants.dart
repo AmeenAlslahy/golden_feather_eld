@@ -8,6 +8,16 @@ class AppConstants {
   static const String appPackageName = 'com.goldenfeather.eld';
   static const bool isDevelopmentMode = false;
 
+  /// Feature flag for BLE ECM packet ingestion.
+  // Set to true ONLY after hardware verification. Do not enable in production.
+  static const bool enableBleEcmIngestion = false;
+
+  /// Decision 3 (P0) Sub-decision: Active window threshold for ECM telemetry freshness (in seconds).
+  /// Raised to 60s (2 x FmcsaConstants.telemetryIntervalSeconds) according to the 2T freshness sampling margin,
+  /// completely eliminating the flickering window race condition during 30s periodic streaming.
+  /// Sub-decision approved/adjusted per owner directive.
+  static const int ecmActiveWindowSeconds = 60;
+
   // إعدادات التتبع الافتراضية
   static const double defaultDistanceMeters = 75.0;
   static const int defaultIntervalSeconds = 300;

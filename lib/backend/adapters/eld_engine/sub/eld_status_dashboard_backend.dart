@@ -39,6 +39,7 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) {
@@ -52,6 +53,9 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
     };
     if (driverId != null && driverId.value > 0) {
       payload['driverId'] = driverId.value;
+    }
+    if (vehicleId != null && vehicleId.value > 0) {
+      payload['vehicleId'] = vehicleId.value;
     }
     // إحداثيات لحظة التغيير داخل location متداخل — تُرسل فقط عند توفرهما
     // معًا وقيمتهما ليست 0,0 (0,0 = لا إصلاح GPS حسب أسبقية التطبيق).

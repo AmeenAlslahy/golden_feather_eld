@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_typography.dart';
+import '../../../../core/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_text_field.dart';
-import '../../../../core/widgets/eld_retry_view.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/vehicle.dart';
@@ -13,7 +9,6 @@ import '../../domain/vehicle_selection.dart';
 import '../providers/vehicle_provider.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
-import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../widget/vehicle_card.dart';
 
@@ -96,6 +91,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       } else if (uid != null && uid.isNotEmpty) {
         ref.read(localStorageProvider).setDeviceId(uid);
       }
+      ref.read(localStorageProvider).saveSelectedVehicleId(v.id);
       AppFeedback.success(
         context,
         context.loc.vehicleSelectedConnect(v.displayName),
@@ -107,12 +103,17 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
   void _showUnassignedDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.loc.noVehiclesAssigned),
-        content: Text.rich(
+      builder: (dialogContext) => AppDialog(
+        title: context.loc.noVehiclesAssigned,
+        type: AppDialogType.informational,
+        contentWidget: Text.rich(
           TextSpan(
             children: [
-              TextSpan(text: context.loc.vehiclesAssignedViaPortal),
+              TextSpan(
+                text: context.loc.vehiclesAssignedViaPortal,
+                style: context.styles.body,
+              ),
+              const TextSpan(text: ' '),
               TextSpan(
                 text: context.loc.contactFleetManager,
                 style: context.styles.error.copyWith(
@@ -121,37 +122,20 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
               ),
             ],
           ),
+          textAlign: TextAlign.center,
         ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  ref
-                      .read(vehicleProvider.notifier)
-                      .loadVehicles(forceRefresh: true);
-                },
-                child: Text(
-                  context.loc.viewMyVehicles,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  ref.read(vehicleProvider.notifier).loadCompanyVehicles();
-                },
-                child: Text(
-                  context.loc.viewAllVehicles,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ],
+        primaryActionLabel: context.loc.viewAllVehicles,
+        onPrimaryAction: () {
+          Navigator.pop(dialogContext);
+          ref.read(vehicleProvider.notifier).loadCompanyVehicles();
+        },
+        secondaryActionLabel: context.loc.viewMyVehicles,
+        onSecondaryAction: () {
+          Navigator.pop(dialogContext);
+          ref
+              .read(vehicleProvider.notifier)
+              .loadVehicles(forceRefresh: true);
+        },
       ),
     );
   }
@@ -190,9 +174,14 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: GoldenAppBar(
+        variant: GoldenAppBarVariant.brand,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(
+            Icons.close,
+            color: context.onGold,
+            size: AppSpacing.iconSize,
+          ),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -201,15 +190,13 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
             }
           },
         ),
-        title: Text(
-          context.loc.selectVehicle,
-          style: context.styles.appBarTitle,
-        ),
-        centerTitle: true,
+        titleText: context.loc.selectVehicle,
         actions: [
           IconButton(
             icon: Icon(
               browsingCompany ? Icons.directions_car : Icons.filter_list,
+              color: context.onGold,
+              size: AppSpacing.iconSize,
             ),
             tooltip: browsingCompany
                 ? context.loc.viewMyVehicles

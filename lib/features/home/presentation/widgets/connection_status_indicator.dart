@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/domain/entities/connection_status.dart' as entity;
 import '../../../../core/widgets/connection_status_indicator.dart' as core;
 import '../../../../routes.dart';
 
@@ -8,11 +9,13 @@ import '../../../../routes.dart';
 class ConnectionStatusIndicator extends StatelessWidget {
   final bool showWarningTriangle;
   final VoidCallback? onTap;
+  final entity.ConnectionStatus? statusOverride;
 
   const ConnectionStatusIndicator({
     super.key,
     this.showWarningTriangle = true,
     this.onTap,
+    this.statusOverride,
   });
 
   @override
@@ -20,6 +23,7 @@ class ConnectionStatusIndicator extends StatelessWidget {
     return core.ConnectionStatusIndicator(
       showWarningTriangle: showWarningTriangle,
       onTap: onTap ?? () => context.push(AppRoutes.connection),
+      statusOverride: statusOverride,
     );
   }
 }

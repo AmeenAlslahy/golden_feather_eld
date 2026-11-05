@@ -96,7 +96,7 @@ class MockAdapter implements BackendAdapter {
   late final VehicleBackend vehicle = const MockVehicleBackend();
 
   @override
-  late final HardwareBackend hardware = MockHardwareBackend();
+  late final HardwareBackend hardware = const MockHardwareBackend();
 
   @override
   // ==========================================================================

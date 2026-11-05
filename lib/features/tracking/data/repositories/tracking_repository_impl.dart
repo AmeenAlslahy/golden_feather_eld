@@ -175,6 +175,37 @@ class TrackingRepositoryImpl implements TrackingRepository {
   }
 
   @override
+  Future<Either<Failure, LocationEntity?>> getLastKnownPosition() async {
+    try {
+      final data = await _service.getLastKnownPosition();
+      if (data == null) return const Right(null);
+
+      final latitude = (data['latitude'] as num?)?.toDouble();
+      final longitude = (data['longitude'] as num?)?.toDouble();
+      if (latitude == null || longitude == null) return const Right(null);
+
+      final timestampMs = (data['timestamp'] as num?)?.toInt();
+      return Right(
+        LocationModel(
+          latitude: latitude,
+          longitude: longitude,
+          speed: (data['speed'] as num?)?.toDouble(),
+          altitude: (data['altitude'] as num?)?.toDouble(),
+          bearing: (data['bearing'] as num?)?.toDouble(),
+          accuracy: (data['accuracy'] as num?)?.toDouble(),
+          timestamp: timestampMs != null
+              ? DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true)
+              : DateTime.now().toUtc(),
+          provider: data['provider'] as String?,
+        ),
+      );
+    } catch (e) {
+      AppLogger.warning('Failed to read last known position', e);
+      return const Left(TrackingFailure(message: 'فشل قراءة آخر موقع معروف'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<TrackingLogEntity>>> getLogs() async {
     try {
       final logsData = await _service.getLogs();
@@ -205,8 +236,11 @@ class TrackingRepositoryImpl implements TrackingRepository {
     TrackingConfigEntity config,
   ) async {
     try {
+      // التخزين المحلي هو المصدر الوحيد لبناء إعدادات الـ SDK (يراعي بيئة
+      // temporaryTraccar وتطبيع منفذ OsmAnd). `config` هنا لقطة قراءة فقط
+      // للتوافق مع العقد، والخدمة تتكفّل بإسقاط التطبيق المكرر وتسجيل سطر
+      // واحد عند التطبيق الفعلي — لا سطر ثانٍ هنا.
       await _service.updateConfig();
-      AppLogger.info('Tracking config updated');
       return const Right(true);
     } catch (e) {
       return const Left(TrackingFailure(message: 'فشل تحديث الإعدادات'));

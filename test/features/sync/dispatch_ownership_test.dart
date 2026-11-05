@@ -117,6 +117,7 @@ class _LogsBackend implements DailyLogsBackend {
   bool certifyConfirmed = true;
   AppError? certifyError;
   Result<RawJson>? saveFormResult;
+  Result<RawJson>? updateEventResult;
 
   @override
   Future<Result<CertifyResponseDto>> certify(
@@ -159,7 +160,7 @@ class _LogsBackend implements DailyLogsBackend {
   }) async {
     updateEventCalls++;
     lastUpdateEventBody = Map<String, dynamic>.from(event);
-    return ok(<String, dynamic>{});
+    return updateEventResult ?? ok(<String, dynamic>{});
   }
 
   @override
@@ -223,7 +224,8 @@ class _Harness {
   final duty = _DutyBackend();
   final logs = _LogsBackend();
   final dvir = _DvirBackend();
-  final queue = MemoryOfflineQueue();
+  final clock = _Clock();
+  late final queue = MemoryOfflineQueue(now: clock.nowUtc);
 
   int? authDriverId;
   bool transitioning = false;
@@ -248,7 +250,7 @@ class _Harness {
   late final SyncEngine engine = SyncEngine(
     queue: queue,
     dispatcher: dispatcher,
-    timeAuthority: _Clock(),
+    timeAuthority: clock,
     observeAuth: () async => DispatchAuthContext(
       driverId: authDriverId,
       transitioning: transitioning,
@@ -410,6 +412,36 @@ void main() {
       );
     });
 
+    test('T6b: the confirmed PUT event reaches the outcome handler', () async {
+      final h = _Harness();
+      h.logs.updateEventResult = ok(<String, dynamic>{
+        'event': {'id': 321, 'status': 'ON_DUTY'},
+      });
+      await h.queue.enqueue(
+        _event('d3', 'duty_status', {
+          'statusId': 321,
+          'logId': 55,
+          'clientId': '321',
+          'status': 'ON',
+          'startTime': '2026-09-24T22:30:00Z',
+          'durationSeconds': 9000,
+          'reason': 'Corrected start',
+          'ownerDriverId': 101,
+        }),
+      );
+      await h.authAs('101');
+
+      await h.engine.triggerSync();
+
+      expect(h.settled, hasLength(1));
+      expect(h.settled.single.verification, SyncVerification.confirmed);
+      expect(
+        h.settled.single.serverData?['event'],
+        isNotNull,
+        reason: 'the handler needs the server echo to clear PENDING_SYNC',
+      );
+    });
+
     test('T7: legacy queued edit without duration still dispatches', () async {
       final h = _Harness();
       await h.queue.enqueue(
@@ -450,24 +482,26 @@ void main() {
       expect(await h.queue.getQuarantined(), hasLength(1));
     });
 
-    test('T10: certified=false keeps the request for retry, never success',
-        () async {
-      final h = _Harness();
-      h.logs.certifyConfirmed = false;
-      await h.queue.enqueue(
-        _event('c1', 'certification', _certPayload(owner: 101)),
-      );
-      await h.authAs('101');
+    test(
+      'T10: certified=false keeps the request for retry, never success',
+      () async {
+        final h = _Harness();
+        h.logs.certifyConfirmed = false;
+        await h.queue.enqueue(
+          _event('c1', 'certification', _certPayload(owner: 101)),
+        );
+        await h.authAs('101');
 
-      await h.engine.triggerSync();
+        await h.engine.triggerSync();
 
-      expect(h.logs.certifyCalls, 1);
-      expect(await h.queue.count, 1, reason: 'not deleted as a success');
-      expect(await h.parkedTotal(), 0);
-      expect(h.deadLettered, isEmpty);
-      expect(h.settled.single.verification, SyncVerification.retryable);
-      expect(h.settled.single.serverData, isNull);
-    });
+        expect(h.logs.certifyCalls, 1);
+        expect(await h.queue.count, 1, reason: 'not deleted as a success');
+        expect(await h.parkedTotal(), 0);
+        expect(h.deadLettered, isEmpty);
+        expect(h.settled.single.verification, SyncVerification.retryable);
+        expect(h.settled.single.serverData, isNull);
+      },
+    );
 
     test('T11: transient server failure keeps the request for retry', () async {
       final h = _Harness();
@@ -488,27 +522,28 @@ void main() {
       expect((await h.queue.getPending()).single.retryCount, 1);
     });
 
-    test('T12: permanent rejection dead-letters and reports rejected',
-        () async {
-      final h = _Harness();
-      h.logs.certifyError = const ConflictError(
-        code: 'certification.alreadyCertified',
-        l10nKey: 'errBusinessRuleViolation',
-      );
-      await h.queue.enqueue(
-        _event('c1', 'certification', _certPayload(owner: 101)),
-      );
-      await h.authAs('101');
+    test(
+      'T12: permanent rejection dead-letters and reports rejected',
+      () async {
+        final h = _Harness();
+        h.logs.certifyError = const ConflictError(
+          code: 'certification.alreadyCertified',
+          l10nKey: 'errBusinessRuleViolation',
+        );
+        await h.queue.enqueue(
+          _event('c1', 'certification', _certPayload(owner: 101)),
+        );
+        await h.authAs('101');
 
-      await h.engine.triggerSync();
+        await h.engine.triggerSync();
 
-      expect(await h.queue.count, 0);
-      expect(h.deadLettered, ['c1']);
-      expect(h.settled.single.verification, SyncVerification.rejected);
-    });
+        expect(await h.queue.count, 0);
+        expect(h.deadLettered, ['c1']);
+        expect(h.settled.single.verification, SyncVerification.rejected);
+      },
+    );
 
-    test('T13: form 200 response is passed to the handler unchanged',
-        () async {
+    test('T13: form 200 response is passed to the handler unchanged', () async {
       final h = _Harness();
       h.logs.saveFormResult = ok(<String, dynamic>{
         'data': {'formStatus': 'INCOMPLETE'},
@@ -527,13 +562,9 @@ void main() {
       expect(h.logs.formCalls, 1);
       expect(await h.queue.count, 0);
       expect(h.settled.single.verification, SyncVerification.confirmed);
-      expect(
-        h.settled.single.serverData,
-        {
-          'data': {'formStatus': 'INCOMPLETE'},
-        },
-        reason: 'the handler—not the dispatcher—decides completeness',
-      );
+      expect(h.settled.single.serverData, {
+        'data': {'formStatus': 'INCOMPLETE'},
+      }, reason: 'the handler—not the dispatcher—decides completeness');
     });
 
     test('T9: owner field and resolver agree (incl. canonical key)', () async {

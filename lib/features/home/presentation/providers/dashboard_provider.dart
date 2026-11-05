@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../logs/domain/daily_form_rules.dart';
 import '../../../logs/domain/entities/daily_form_data.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../core/session/session_epoch.dart';
 import '../../../codriver/domain/entities/codriver.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../../vehicle/presentation/providers/vehicle_provider.dart';
@@ -245,3 +246,49 @@ final dashboardDataProvider =
 
       return notifier;
     });
+
+/// Single Source of Truth for the Top Bar Driver/Vehicle Session Title.
+///
+/// Top Compliance ELD Standard:
+/// 1. If vehicle is selected: "$driverName - $vehicleIdentifier"
+/// 2. If vehicle is not selected: "$driverName - $driverId" or "$driverName"
+///
+/// The authenticated driver's name is the immutable anchor;
+/// contextual HOS dashboard responses cannot override or leak another driver's name.
+final driverSessionHeaderProvider = Provider<String>((ref) {
+  final authGate = ref.watch(authStateProvider);
+  if (!authGate.isAuthenticated || authGate.transitioning || authGate.user == null) {
+    return '';
+  }
+
+  final dashboard = ref.watch(dashboardDataProvider);
+  final rawDriverName =
+      (dashboard.driverName != 'Unknown' && dashboard.driverName.isNotEmpty)
+          ? dashboard.driverName
+          : authGate.user!.fullName;
+
+  final vehicleIdentifier =
+      (dashboard.vehicleDisplayName.isNotEmpty &&
+          dashboard.vehicleDisplayName != 'Select a vehicle' &&
+          dashboard.vehicleDisplayName != 'No Vehicle')
+      ? dashboard.vehicleDisplayName
+      : (dashboard.vehicleId.isNotEmpty && dashboard.vehicleId != 'None' && dashboard.vehicleId != 'No Vehicle'
+            ? dashboard.vehicleId
+            : null);
+
+  if (vehicleIdentifier != null) {
+    return '$rawDriverName - $vehicleIdentifier';
+  }
+
+  final stamped = ref.watch(activeDriverIdProvider);
+  final isDriverIdVerified = stamped != null &&
+      stamped.$1 == SessionEpoch.current &&
+      stamped.$2 > 0;
+  final verifiedDriverId = isDriverIdVerified ? stamped.$2 : null;
+
+  if (verifiedDriverId != null) {
+    return '$rawDriverName - $verifiedDriverId';
+  }
+
+  return rawDriverName;
+});

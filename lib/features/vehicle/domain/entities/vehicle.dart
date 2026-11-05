@@ -19,6 +19,7 @@ class Vehicle extends Equatable {
   final bool? inUseByOther;
   final bool? selectedByServer;
   final bool? activeForCurrentDriver;
+  final int? activeDriverId;
 
   const Vehicle({
     required this.id,
@@ -35,6 +36,7 @@ class Vehicle extends Equatable {
     this.inUseByOther,
     this.selectedByServer,
     this.activeForCurrentDriver,
+    this.activeDriverId,
   });
 
   String get displayName {
@@ -63,6 +65,7 @@ class Vehicle extends Equatable {
     bool? inUseByOther,
     bool? selectedByServer,
     bool? activeForCurrentDriver,
+    int? activeDriverId,
   }) {
     return Vehicle(
       id: id ?? this.id,
@@ -80,6 +83,7 @@ class Vehicle extends Equatable {
       selectedByServer: selectedByServer ?? this.selectedByServer,
       activeForCurrentDriver:
           activeForCurrentDriver ?? this.activeForCurrentDriver,
+      activeDriverId: activeDriverId ?? this.activeDriverId,
     );
   }
 
@@ -99,5 +103,6 @@ class Vehicle extends Equatable {
     inUseByOther,
     selectedByServer,
     activeForCurrentDriver,
+    activeDriverId,
   ];
 }

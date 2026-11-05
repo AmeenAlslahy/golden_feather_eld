@@ -136,8 +136,12 @@ class SyncEngine {
       while (true) {
         _syncAgain = false;
         var hasMore = true;
+        final attemptedThisPass = <String>{};
         while (hasMore) {
-          final readyEvents = await _queue.getReadyEvents(limit: 10);
+          final rawReady = await _queue.getReadyEvents(limit: 10);
+          final readyEvents = rawReady
+              .where((e) => !attemptedThisPass.contains(e.id))
+              .toList();
 
           if (readyEvents.isEmpty) {
             hasMore = false;
@@ -145,6 +149,7 @@ class SyncEngine {
           }
 
           for (final event in readyEvents) {
+            attemptedThisPass.add(event.id);
             Either<Failure, bool> result;
             try {
               result = await _dispatcher.dispatch(event);

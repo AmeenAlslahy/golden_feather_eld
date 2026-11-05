@@ -8,6 +8,7 @@ import '../../../../core/constants/storage_constants.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
+import '../models/log_model.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 
 abstract class LogLocalDataSource {
@@ -34,6 +35,22 @@ abstract class LogLocalDataSource {
     List<Map<String, dynamic>> eventsJson,
   );
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId);
+
+  /// يحدّث حدثاً واحداً في كاش الخادم `events:<logId>` وفي صندوق الأحداث
+  /// المحلي، مع إزالة نسخته القديمة من أي يوم سابق إذا تغيّر وقت البدء.
+  /// يُستخدم بعد تأكيد `PUT` حتى لا يمحو `GET` فاشل التعديل المؤكد.
+  Future<void> upsertCachedLogEvent(
+    DailyLogId logId,
+    Map<String, dynamic> eventJson,
+  );
+
+  /// يحدّث حالة مزامنة حدث واحد في لقطة `events:<logId>` وفي صندوق
+  /// الأحداث المحلي معاً. [status] = `none` يمسح العلامة بعد تأكيد الخادم.
+  Future<void> setCachedEventSyncStatus({
+    required DailyLogId logId,
+    required String eventId,
+    required EventSyncStatus status,
+  });
   Future<void> saveSignature(DailyLogId logId, String base64Signature);
   Future<String?> getSignature(DailyLogId logId);
   Future<void> saveDraftSignature(DailyLogId logId, String pointsJson);
@@ -189,6 +206,113 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   Future<List<Map<String, dynamic>>?> getCachedLogEvents(
     DailyLogId logId,
   ) async => _readCachedList('events:${logId.value}');
+
+  @override
+  Future<void> upsertCachedLogEvent(
+    DailyLogId logId,
+    Map<String, dynamic> eventJson,
+  ) async {
+    final id = eventJson['id']?.toString();
+    if (id == null || id.isEmpty) return;
+    // المعرّف يُخزّن نصياً في الصندوق المحلي؛ نوحّده حتى لو جاء رقمياً من
+    // استجابة الخادم، فلا يفشل القارئ بعد إعادة فتح التطبيق.
+    final normalized = <String, dynamic>{...eventJson, 'id': id};
+
+    try {
+      // 1) لقطة الخادم: استبدال/إضافة الحدث نفسه فقط، بلا مسح بقية اليوم.
+      final key = 'events:${logId.value}';
+      final cached = _readCachedList(key) ?? <Map<String, dynamic>>[];
+      final cachedIndex = cached.indexWhere((e) => e['id']?.toString() == id);
+      if (cachedIndex >= 0) {
+        cached[cachedIndex] = normalized;
+      } else {
+        cached.add(normalized);
+      }
+      await _cacheBox.put(key, jsonEncode(cached));
+
+      // 2) صندوق الأحداث المحلي: قد يكون الحدث في يوم سابق بعد تعديل
+      // وقت البدء؛ نزيله من كل الأيام ثم نضيفه ليومه الجديد.
+      await _removeLocalEventById(id);
+
+      final startRaw = normalized['startTime']?.toString();
+      final start = startRaw == null ? null : DateTime.tryParse(startRaw);
+      if (start != null) {
+        final dateStr = AppDateUtils.formatDate(start);
+        final list = _getListFromBox(_eventsBox, dateStr);
+        list.add(normalized);
+        await _eventsBox.put(dateStr, jsonEncode(list));
+      }
+    } catch (e) {
+      // فشل الكاش لا يحوّل تعديلاً مؤكداً إلى فشل. يُسجّل ويُترك للـGET
+      // التالي؛ لكن لا نمحو شيئاً من بيانات المستخدم.
+      AppLogger.warning('Event cache upsert skipped: $e');
+    }
+  }
+
+  Future<void> _removeLocalEventById(String id) async {
+    for (final rawKey in _eventsBox.keys.toList()) {
+      final dateKey = rawKey.toString();
+      final list = _getListFromBox(_eventsBox, dateKey);
+      final before = list.length;
+      list.removeWhere((e) => e['id']?.toString() == id);
+      if (list.length != before) {
+        await _eventsBox.put(dateKey, jsonEncode(list));
+      }
+    }
+  }
+
+  @override
+  Future<void> setCachedEventSyncStatus({
+    required DailyLogId logId,
+    required String eventId,
+    required EventSyncStatus status,
+  }) async {
+    final wire = LogEventModel.syncStatusToWire(status);
+    try {
+      final key = 'events:${logId.value}';
+      final cached = _readCachedList(key);
+      if (cached != null) {
+        var changed = false;
+        final updated = cached.map((row) {
+          if (row['id']?.toString() != eventId) return row;
+          changed = true;
+          return _withSyncStatus(row, wire);
+        }).toList();
+        if (changed) await _cacheBox.put(key, jsonEncode(updated));
+      }
+
+      // صندوق الأحداث قد يحمل الحدث تحت يوم آخر إذا تغيّر وقت البدء؛
+      // نحدّث كل النسخ المطابقة بدل الافتراض أن اليوم الحالي فقط.
+      for (final rawKey in _eventsBox.keys.toList()) {
+        final dateKey = rawKey.toString();
+        final list = _getListFromBox(_eventsBox, dateKey);
+        var changed = false;
+        final updated = list.map((row) {
+          if (row['id']?.toString() != eventId) return row;
+          changed = true;
+          return _withSyncStatus(row, wire);
+        }).toList();
+        if (changed) {
+          await _eventsBox.put(dateKey, jsonEncode(updated));
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('setCachedEventSyncStatus skipped: $e');
+    }
+  }
+
+  static Map<String, dynamic> _withSyncStatus(
+    Map<String, dynamic> row,
+    String? wire,
+  ) {
+    final copy = Map<String, dynamic>.from(row);
+    if (wire == null) {
+      copy.remove('syncStatus');
+    } else {
+      copy['syncStatus'] = wire;
+    }
+    return copy;
+  }
 
   @override
   Future<void> saveSignature(DailyLogId logId, String base64Signature) async {
@@ -409,32 +533,14 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     final data = await _getFromBox(_eventsBox, date, 'events');
     final events = <LogEvent>[];
     for (final e in data) {
-      final id = e['id'] as String?;
-      final startTimeStr = e['startTime'] as String?;
-      if (id == null ||
-          id.isEmpty ||
-          startTimeStr == null ||
-          startTimeStr.isEmpty) {
-        AppLogger.warning(
-          'LogLocalDataSource.getEvents: skipped malformed event',
-        );
-        continue;
-      }
       try {
-        events.add(
-          LogEvent(
-            id: id,
-            status: e['status'] as String,
-            startTime: DateTime.parse(startTimeStr),
-            duration: Duration(seconds: _readDurationSeconds(e)),
-            location: e['location'] as String? ?? 'Unknown',
-            odometer: (e['odometer'] as num?)?.toDouble(),
-            engineHours: (e['engineHours'] as num?)?.toDouble(),
-          ),
-        );
+        // نفس محلّل الواجهة: يقبل الصيغة المحلية وصيغة الخادم
+        // (`timeRange`) ويوحّد الحالة والتوقيت و`syncStatus`.
+        events.add(LogEventModel.fromJson(e));
       } catch (ex, st) {
         AppLogger.warning(
-          'LogLocalDataSource.getEvents: failed to parse event $id',
+          'LogLocalDataSource.getEvents: failed to parse event '
+          '${e['id']}',
           ex,
           st,
         );
@@ -443,13 +549,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     return events;
   }
 
-  /// يقبل 'durationSeconds' (الصيغة المحلية) أو 'duration' (صيغة الخادم).
-  int _readDurationSeconds(Map<String, dynamic> e) {
-    final v = (e['durationSeconds'] as num?) ?? (e['duration'] as num?);
-    return v?.toInt() ?? 0;
-  }
-
   Map<String, dynamic> _eventMap(LogEvent event) {
+    final syncStatus = LogEventModel.syncStatusToWire(event.syncStatus);
     return {
       'id': event.id,
       'status': event.status,
@@ -459,6 +560,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'odometer': event.odometer,
       'engineHours': event.engineHours,
       'timestamp': event.startTime.toIso8601String(),
+      if (syncStatus != null) 'syncStatus': syncStatus,
     };
   }
 
@@ -471,14 +573,12 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   Future<bool> updateEvent(LogEvent event) async {
     final map = _eventMap(event);
     try {
+      // وقت البدء قد انتقل إلى يوم آخر: إزالة النسخة القديمة أولاً تمنع
+      // ظهور الحدث مرتين في يومين مختلفين بعد إعادة فتح التطبيق.
+      await _removeLocalEventById(event.id);
       final dateStr = AppDateUtils.formatDate(event.startTime);
       final currentList = _getListFromBox(_eventsBox, dateStr);
-      final idx = currentList.indexWhere((e) => e['id'] == event.id);
-      if (idx >= 0) {
-        currentList[idx] = map;
-      } else {
-        currentList.add(map);
-      }
+      currentList.add(map);
       await _eventsBox.put(dateStr, jsonEncode(currentList));
       return true;
     } catch (e) {

@@ -24,6 +24,7 @@ import 'features/logs/presentation/providers/log_draft_signature_provider.dart';
 import 'features/logs/presentation/providers/unidentified_events_provider.dart';
 import 'features/vehicle/data/providers/vehicle_repository_providers.dart';
 import 'features/account/data/providers/rules_screen_providers.dart';
+import 'features/account/presentation/providers/account_provider.dart';
 import 'features/codriver/data/providers/codriver_repository_providers.dart';
 import 'features/inspection/data/providers/inspection_repository_providers.dart';
 import 'features/hos/presentation/providers/recap_provider.dart';
@@ -41,6 +42,7 @@ final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 Future<void> _clearDriverScopedTracking(WidgetRef ref) async {
   try {
     await ref.read(localStorageProvider).clearDutyTrackingState();
+    await ref.read(localStorageProvider).clearSelectedVehicle();
     await ref.read(logLocalDataSourceProvider).clearPeriods();
     ref.invalidate(dutyStatusTrackerProvider);
   } catch (e) {
@@ -124,6 +126,10 @@ class GoldenFeatherApp extends ConsumerWidget {
           // غير منتظر عمداً: لا نُجمّد الواجهة على كتابة تفضيلات، والـ
           // إبطال يقع **بعد** اكتمال المسح داخل الدالة.
           unawaited(_clearDriverScopedTracking(ref));
+        }
+
+        if (next.isAuthenticated && next.user != null) {
+          unawaited(ref.read(accountProvider.notifier).fetchMyAccount());
         }
       }
     });

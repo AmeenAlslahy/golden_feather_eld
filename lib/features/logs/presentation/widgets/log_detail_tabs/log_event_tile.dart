@@ -116,6 +116,8 @@ class LogEventTile extends StatelessWidget {
                                   event.formattedDuration,
                                   style: context.styles.body,
                                 ),
+                                if (event.syncStatus != EventSyncStatus.none)
+                                  _SyncStatusChip(status: event.syncStatus),
                                 if (_startedOnAnotherDay)
                                   Text(
                                     AppLocalizations.of(context)!.startedOnDate(
@@ -172,6 +174,52 @@ class LogEventTile extends StatelessWidget {
             height: 1,
             thickness: 1,
             color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// شارة صغيرة لحالة مزامنة تعديل الحدث: معلّق أو فشل نهائي.
+class _SyncStatusChip extends StatelessWidget {
+  final EventSyncStatus status;
+
+  const _SyncStatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = status == EventSyncStatus.syncFailed;
+    final background = failed
+        ? context.dangerContainer
+        : context.warningContainer;
+    final foreground = failed ? context.danger : context.warning;
+    final label = failed
+        ? context.loc.statusSyncFailed
+        : context.loc.statusPendingSync;
+
+    return Container(
+      key: ValueKey('event_sync_${status.name}'),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.badge),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            failed ? Icons.error_outline : Icons.cloud_upload_outlined,
+            size: AppSpacing.iconSmall,
+            color: foreground,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            label,
+            style: context.styles.caption.copyWith(color: foreground),
           ),
         ],
       ),

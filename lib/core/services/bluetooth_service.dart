@@ -84,6 +84,41 @@ class BluetoothService {
     }
   }
 
+  // Decision 2 (P1): Reconnect Loop.
+  /// Synchronize driver session active state and manual mode toggle with native service.
+  Future<void> setSessionState({
+    required bool isActive,
+    required bool isManualMode,
+    bool clearMac = false,
+  }) async {
+    try {
+      await _methodChannel.invokeMethod('setSessionState', {
+        'isActive': isActive,
+        'isManualMode': isManualMode,
+        'clearMac': clearMac,
+      });
+    } on PlatformException catch (e) {
+      AppLogger.error('Error synchronizing BLE session state', e);
+    }
+  }
+
+  // Decision 2 (P1): Reconnect Loop.
+  /// Pure executor for BLE connection without timers or retry loops.
+  Future<bool> executeConnect(String macAddress) async {
+    try {
+      final result = await _methodChannel.invokeMethod<bool>(
+        'executeConnect',
+        {'macAddress': macAddress},
+      );
+      return result ?? false;
+    } on PlatformException catch (e) {
+      throw BluetoothException(
+        e.code,
+        e.message ?? 'Unknown error in executeConnect',
+      );
+    }
+  }
+
   /// Disconnect from the currently connected ELD device.
   Future<void> disconnect() async {
     try {

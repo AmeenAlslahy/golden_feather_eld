@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 
 import '../providers/audit_trail_provider.dart';
 
@@ -16,7 +17,7 @@ class AuditTrailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         title: Text(context.loc.auditTrail, style: context.styles.appBarTitle),
         centerTitle: true,
       ),

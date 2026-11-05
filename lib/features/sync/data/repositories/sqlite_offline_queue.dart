@@ -23,7 +23,21 @@ class SQLiteOfflineQueue implements OfflineQueue {
   /// مسار ملف اختياري (للاختبارات بملف مؤقت). الافتراضي سلوك الإنتاج.
   final String? dbPathOverride;
 
-  SQLiteOfflineQueue({this.dbPathOverride});
+  /// مصدر "الآن" الموحّد.
+  ///
+  /// كان `DateTime.now()` يُقارَن هنا بـ `nextRetryAt` الذي يُحسب من
+  /// `TimeAuthority` في [SyncEngine]. تغيير ساعة الجهاز بين الحساب
+  /// والقراءة كان يجعل الصف جاهزاً/غير جاهز في الوقت الخطأ. الافتراضي
+  /// يحافظ على سلوك الاختبارات القائمة؛ الإنتاج يمرّر `nowUtc`.
+  final DateTime Function()? _now;
+
+  DateTime _currentTime() {
+    final fn = _now;
+    return fn != null ? fn() : DateTime.now();
+  }
+
+  SQLiteOfflineQueue({this.dbPathOverride, DateTime Function()? now})
+    : _now = now;
 
   /// للاختبارات فقط: إغلاق الاتصال المشترك حتى يعيد مثيل جديد فتح
   /// نفس الملف (محاكاة restart) دون تسرب حالة بين الاختبارات.
@@ -96,7 +110,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
         seq INTEGER PRIMARY KEY AUTOINCREMENT,
         event_id TEXT NOT NULL UNIQUE,
         owner_driver_id INTEGER,
-        source TEXT NOT NULL,
+        source TEXT DEFAULT 'unknown',
         status TEXT NOT NULL,
         event_time_utc INTEGER,
         received_at_utc INTEGER NOT NULL,
@@ -115,6 +129,31 @@ class SQLiteOfflineQueue implements OfflineQueue {
     );
   }
 
+  /// Decision 3 (P0): Explicit database migration from version 6 to 7.
+  /// Adds column `source` with DEFAULT 'unknown' to `duty_event_journal` if not already present,
+  /// and updates existing rows with NULL or 'unknown' to 'manual'.
+  /// Relies on sqflite's automatic transaction wrapping around onUpgrade (no nested transaction).
+  static Future<void> _migrateToV7(DatabaseExecutor db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+      [journalTable],
+    );
+    if (tables.isEmpty) {
+      await _createJournalTable(db);
+    }
+    final tableInfo =
+        await db.rawQuery('PRAGMA table_info($journalTable)');
+    final hasSourceColumn = tableInfo.any((col) => col['name'] == 'source');
+    if (!hasSourceColumn) {
+      await db.execute(
+        "ALTER TABLE $journalTable ADD COLUMN source TEXT DEFAULT 'unknown'",
+      );
+    }
+    await db.execute(
+      "UPDATE $journalTable SET source = 'manual' WHERE source IS NULL OR source = 'unknown'",
+    );
+  }
+
   Future<Database> _initDB() async {
     final String path;
     if (dbPathOverride != null) {
@@ -126,7 +165,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
@@ -182,6 +221,9 @@ class SQLiteOfflineQueue implements OfflineQueue {
           await db.execute('ALTER TABLE $_tableName ADD COLUMN dedupeKey TEXT');
           await _createDedupeIndex(db);
         }
+        if (oldVersion < 7) {
+          await _migrateToV7(db);
+        }
       },
     );
   }
@@ -230,7 +272,10 @@ class SQLiteOfflineQueue implements OfflineQueue {
       pendingRow(event),
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
-    return rowId != -1;
+    // 🔴 `rowid` الناجح يبدأ من 1 دائماً (الجدول ليس WITHOUT ROWID).
+    // عند التجاهل: أندرويد يعيد -1، لكن `sqflite_common_ffi` يعيد 0.
+    // فحص `!= -1` كان يعدّ 0 نجاحاً → `true` كاذبة للصف المكرر.
+    return rowId > 0;
   }
 
   PendingEvent _toEvent(Map<String, dynamic> map) {
@@ -251,7 +296,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
   @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
     final db = await database;
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = _currentTime().millisecondsSinceEpoch;
 
     // استخراج الأحداث الجاهزة (nextRetryAt <= now) أو (nextRetryAt IS NULL)
     // مرتبة بالأولوية (تصاعدياً: 0=high) ثم بالأقدمية
@@ -299,7 +344,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
         'type': event.type,
         'payload': jsonEncode(event.payload),
         'createdAt': event.createdAt.millisecondsSinceEpoch,
-        'failedAt': DateTime.now().millisecondsSinceEpoch,
+        'failedAt': _currentTime().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // 🧹 حصر سجلات الرفض النهائي.
@@ -372,7 +417,7 @@ class SQLiteOfflineQueue implements OfflineQueue {
           reason,
           ownerDriverId,
           proof,
-          DateTime.now().millisecondsSinceEpoch,
+          _currentTime().millisecondsSinceEpoch,
         ),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );

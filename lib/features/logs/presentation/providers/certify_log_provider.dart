@@ -95,17 +95,6 @@ class CertifyLogState {
   }
 }
 
-/// The driver's answer to a carrier-proposed edit (SRS 6).
-enum CarrierEditResponse {
-  accept('ACCEPT'),
-  reject('REJECT');
-
-  const CarrierEditResponse(this.apiValue);
-
-  /// Wire value expected by POST /eld/daily-logs/{id}/carrier-edits/respond.
-  final String apiValue;
-}
-
 /// Result of a driver action on the certify tab. The UI only renders
 /// [message]; every decision has already been made by the notifier.
 sealed class CertifyOutcome {
@@ -227,50 +216,6 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
         certifyState: certifyState,
       ),
     );
-  }
-
-  /// Accept / reject one carrier-proposed edit through the existing respond API.
-  Future<CertifyOutcome> respondToCarrierEdit({
-    required String editId,
-    required CarrierEditResponse response,
-    String? driverNotes,
-  }) async {
-    state = state.copyWith(
-      isLoading: true,
-      clearError: true,
-      clearOutcome: true,
-    );
-    final result = await _repository.respondToCarrierEdit(
-      logId: _logId,
-      editId: editId,
-      action: response.apiValue,
-      driverNotes: driverNotes,
-    );
-    if (!mounted) {
-      return CertifyFailed(_loc.responseInterrupted);
-    }
-
-    final failure = result.fold((f) => f, (_) => null);
-    if (failure != null) {
-      final failOutcome = CertifyFailed(_message(failure));
-      state = state.copyWith(isLoading: false, outcome: failOutcome);
-      return failOutcome;
-    }
-
-    await checkReadiness();
-    if (state.error != null) {
-      final failOutcome = CertifyFailed(state.error!);
-      state = state.copyWith(outcome: failOutcome);
-      return failOutcome;
-    }
-
-    final successOutcome = CertifySucceeded(
-      response == CarrierEditResponse.accept
-          ? _loc.carrierEditAcceptedReCertifyThe
-          : _loc.carrierEditRejected,
-    );
-    state = state.copyWith(outcome: successOutcome);
-    return successOutcome;
   }
 
   /// Certify [log] with the drawn signature. Returns `null` when a request is

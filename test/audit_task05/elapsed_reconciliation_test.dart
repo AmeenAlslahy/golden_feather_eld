@@ -154,6 +154,7 @@ class _Backend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async =>

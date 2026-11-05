@@ -1,5 +1,4 @@
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import 'dart:async';
 
 import '../../../../core/utils/logger.dart';
 import '../../../../core/time/trusted_time_provider.dart';
@@ -23,7 +22,6 @@ class HosStateMachine {
   double _accumulatedDrivingSinceBreak = 0.0;
 
   final List<StatusTransition> _transitions = [];
-  Timer? _drivingTimer;
   final TrustedTimeProvider _timeProvider;
 
   /// الحد الأدنى للاستراحة المؤهلة — من `HosConfiguration.breakDurationMinutes`.
@@ -192,12 +190,8 @@ class HosStateMachine {
     // بدء/إيقاف مؤقت القيادة
     if (newStatus == DutyStatus.driving) {
       _drivingSessionStartTime = now;
-      _startDrivingTimer();
-    } else {
-      _stopDrivingTimer();
-      if (newStatus == DutyStatus.onDutyNotDriving) {
-        _onDutySessionStartTime = now;
-      }
+    } else if (newStatus == DutyStatus.onDutyNotDriving) {
+      _onDutySessionStartTime = now;
     }
 
     // إعادة تعيين نافذة العمل إذا كانت خارج الخدمة
@@ -209,20 +203,6 @@ class HosStateMachine {
     AppLogger.info(
       'State transition: ${transition.from.name} → ${transition.to.name}',
     );
-  }
-
-  /// بدء مؤقت القيادة للإشعار الدوري
-  void _startDrivingTimer() {
-    _drivingTimer?.cancel();
-    _drivingTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      // Timer acts as a periodic heartbeat for external readers
-    });
-  }
-
-  /// إيقاف مؤقت القيادة
-  void _stopDrivingTimer() {
-    _drivingTimer?.cancel();
-    _drivingTimer = null;
   }
 
   /// الحصول على سجل التحويلات
@@ -252,7 +232,6 @@ class HosStateMachine {
   }
 
   void reset() {
-    _stopDrivingTimer();
     _currentStatus = DutyStatus.offDuty;
     _shiftStartTime = _trustedNow() ?? DateTime.utc(1970);
     _accumulatedDrivingHours = 0.0;
@@ -510,7 +489,7 @@ class HosStateMachine {
   }
 
   void dispose() {
-    _stopDrivingTimer();
+    // لا مؤقتات داخلية: كانت هناك نبضة كل دقيقة بلا مستمع ولا أثر.
   }
 }
 

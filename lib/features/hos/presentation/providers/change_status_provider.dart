@@ -317,6 +317,13 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
     state = state.copyWith(location: location, clearError: true);
   }
 
+  /// يبذر الموقع من آخر قفل نظام حديث عند فتح الشاشة (قراءة فقط).
+  ///
+  /// لا يغيّر التتبع ولا يرسل طلباً حياً؛ فقط يملأ العرض إن كان فارغاً.
+  void ensureLocation() {
+    unawaited(_ref.read(trackingStateProvider.notifier).ensureLocation());
+  }
+
   /// إرسال التغيير مع التحقق المنطقي وتحديث اللوحة تفاعلياً
   Future<DutyChangeResult> submit() async {
     if (state.isSaving) {

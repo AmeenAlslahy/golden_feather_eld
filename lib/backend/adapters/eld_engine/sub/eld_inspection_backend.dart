@@ -77,6 +77,31 @@ class EldInspectionBackend implements InspectionBackend {
     DriverId? driverId,
     DateTime? date,
   }) async {
+    // 1. Primary: The canonical OAS 3.0 / snsoft route is GET /eld/inspections,
+    // which returns the complete 8-day inspection bundle (inspectionLogs[], driver, vehicle, eld, carrier).
+    final sessionRes = await _apiClient.get<Map<String, dynamic>>(
+      EldEndpoints.inspections,
+      queryParameters: {
+        'page': 0,
+        'size': 20,
+        'sortBy': 'id',
+        'sortDirection': 'ASC',
+        if (driverId != null) 'driverId': driverId.value,
+      },
+      parser: (data) => data is Map<String, dynamic> ? data : {},
+    );
+    if (sessionRes.isSuccess && sessionRes.valueOrNull?.data != null) {
+      final data = sessionRes.valueOrNull!.data!;
+      if (data.containsKey('inspectionLogs')) {
+        return ok(
+          DotInspectionMapper.logFromSessionJson(data, targetDate: date),
+        );
+      }
+      // If the root inspection endpoint returned only screen metadata without
+      // the inspectionLogs array, fall through to query the dedicated log endpoint.
+    }
+
+    // 2. Fallback: Legacy /logs endpoint only if the root endpoint is absent or fails
     final result = await _apiClient.get<Map<String, dynamic>>(
       EldEndpoints.dotInspectionLogs,
       queryParameters: {
@@ -92,18 +117,7 @@ class EldInspectionBackend implements InspectionBackend {
       }
       return ok(DotInspectionMapper.fromLogJson(data));
     }
-    // Fallback: If separate /logs endpoint is absent (404), fetch root inspection session
-    final sessionRes = await _apiClient.get<Map<String, dynamic>>(
-      EldEndpoints.inspections,
-      queryParameters: {
-        'page': 0,
-        'size': 20,
-        'sortBy': 'id',
-        'sortDirection': 'ASC',
-        if (driverId != null) 'driverId': driverId.value,
-      },
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
+
     return sessionRes.mapValue(
       (response) => DotInspectionMapper.logFromSessionJson(
         response.data ?? const {},

@@ -333,6 +333,31 @@ void main() {
         expect(data, isNotNull);
       });
     });
+
+    test('includes vehicleId in payload when provided', () async {
+      adapter.onPost(
+        EldEndpoints.updateDutyStatus,
+        (server) => server.reply(200, fullDashboard()),
+        data: {
+          'dutyStatus': 'ON_DUTY',
+          'notes': 'Shift started',
+          'driverId': 121,
+          'vehicleId': 45,
+        },
+      );
+
+      final result = await backend.updateDutyStatus(
+        status: DutyStatusCode.onDutyNotDriving,
+        notes: 'Shift started',
+        driverId: const DriverId(121),
+        vehicleId: const VehicleId(45),
+      );
+
+      expect(result.isSuccess, isTrue);
+      result.tap(onSuccess: (StatusDashboard? data) {
+        expect(data, isNotNull);
+      });
+    });
   });
 
   group('EldStatusDashboardBackend.getWeeklyRecap', () {

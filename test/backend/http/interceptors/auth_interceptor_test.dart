@@ -82,6 +82,20 @@ void main() {
 
     expect(response.statusCode, 200);
   });
+
+  test('does NOT attach stored JSESSIONID cookie to authSession requests', () async {
+    localDataSource.session = _session();
+    adapter.onPost(
+      'https://api.example.com/api/session',
+      (server) => server.reply(200, {'id': 2}),
+    );
+
+    final response = await dio.post<Map<String, dynamic>>(
+      'https://api.example.com/api/session',
+    );
+
+    expect(response.statusCode, 200);
+  });
 }
 
 AuthSession _session() {

@@ -154,7 +154,9 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
 
     final useCase = ref.watch(getStatusDashboardUseCaseProvider);
     final mySeq = ++_requestSeq;
-    final result = await useCase.execute();
+    final activeId = ref.read(currentDriverIdProvider);
+    final targetDriverId = (activeId != null && activeId > 0) ? DriverId(activeId) : null;
+    final result = await useCase.execute(driverId: targetDriverId);
 
     // ⚠️ فرع الفشل خارج `fold`: بناء اللوحة المحلية `async` (ينتظر
     // الترطيب)، و`fold` لا يقبل closures غير متزامنة.
@@ -177,8 +179,11 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
 
     final dashboard = result.getRight().toNullable()!;
     if (dashboard.driver.id.value > 0) {
-      ref.read(activeDriverIdProvider.notifier).state =
-          (SessionEpoch.current, dashboard.driver.id.value);
+      final currentDriverId = ref.read(currentDriverIdProvider);
+      if (currentDriverId == null || currentDriverId == dashboard.driver.id.value) {
+        ref.read(activeDriverIdProvider.notifier).state =
+            (SessionEpoch.current, dashboard.driver.id.value);
+      }
     }
     if (mySeq != _requestSeq) {
       // وصل رد أقدم بعد أحدث — نُهمله ونعيد ما هو معروض حالياً.
@@ -241,8 +246,11 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
   /// تُستخدم بعد قبول الخادم لتظهر الدائرة الجديدة فوراً.
   void applyServerDashboard(StatusDashboard dashboard) {
     if (dashboard.driver.id.value > 0) {
-      ref.read(activeDriverIdProvider.notifier).state =
-          (SessionEpoch.current, dashboard.driver.id.value);
+      final currentDriverId = ref.read(currentDriverIdProvider);
+      if (currentDriverId == null || currentDriverId == dashboard.driver.id.value) {
+        ref.read(activeDriverIdProvider.notifier).state =
+            (SessionEpoch.current, dashboard.driver.id.value);
+      }
     }
     // POST هو الأحدث دائماً: أي GET جارٍ يجب أن يُتجاهل عند وصوله.
     ++_requestSeq;
@@ -270,7 +278,9 @@ class StatusDashboardNotifier extends AsyncNotifier<StatusDashboard> {
 
     final mySeq = ++_requestSeq;
     final useCase = ref.read(getStatusDashboardUseCaseProvider);
-    final result = await useCase.execute();
+    final activeId = ref.read(currentDriverIdProvider);
+    final targetDriverId = (activeId != null && activeId > 0) ? DriverId(activeId) : null;
+    final result = await useCase.execute(driverId: targetDriverId);
 
     // كما في `build`: فرع الفشل خارج `fold` لأن بناء اللوحة `async`.
     final failure = result.getLeft().toNullable();

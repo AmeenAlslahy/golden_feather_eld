@@ -70,6 +70,7 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   bool Function()? isDrivingChecker;
   StreamSubscription<LocationEntity>? _locationSubscription;
   Timer? _gpsTimeoutTimer;
+  bool _isHydratingLocation = false;
 
   TrackingNotifier(this._repository, this.ref) : super(const TrackingState());
 
@@ -91,6 +92,15 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
   /// Battery-optimisation exemption is requested on the Permissions page
   /// (permission_handler); no second dialog path lives here.
   Future<void> startTracking() async {
+    // بدء مكرر (اختيار مركبة + حالة قيادة + شاشة الاتصال في نفس النافذة)
+    // كان يعيد الاشتراك في تدفق المواقع ويستدعي الخدمة الأصلية مرة أخرى.
+    // الجلسة النشطة أو الجاري بدؤها لا تحتاج بدءاً ثانياً.
+    //
+    // لا نستخدم `state.isTracking` وحده: قد تبقى `true` بعد فشل إيقاف
+    // (الحالة `error`)، ومنعناها حينها يمنع الاسترداد. الحالة وحدها هي
+    // مصدر القرار، بنفس دلالة [isActiveOrLoading] لدى المنسّق.
+    if (isActiveOrLoading) return;
+
     state = state.copyWith(status: TrackingStatus.loading);
 
     // بدء الاستماع لتدفق المواقع قبل بدء الخدمة لتجنب فقدان أول موقع (Race Condition)
@@ -217,6 +227,48 @@ class TrackingNotifier extends StateNotifier<TrackingState> {
         state = state.copyWith(currentLocation: location, errorMessage: null);
       },
     );
+  }
+
+  /// يبذر [currentLocation] من آخر قفل حديث في النظام مرة واحدة.
+  ///
+  /// قراءة فقط: لا يبدأ التتبع، ولا يطلب موقعاً حياً، ولا يخزّن أو يرفع.
+  /// لا يغيّر [TrackingState.isTracking] ولا يستبدل موقعاً صالحاً وصل من
+  /// البث الحي أثناء القراءة. فشل البذر عرضي ولا يُظهر خطأ للمستخدم.
+  Future<void> ensureLocation() async {
+    if (_isHydratingLocation || _hasUsableLocation(state.currentLocation)) {
+      return;
+    }
+
+    _isHydratingLocation = true;
+    try {
+      final result = await _repository.getLastKnownPosition();
+      if (!mounted) return;
+
+      result.match(
+        (failure) {
+          AppLogger.warning(
+            'Last known location unavailable: ${failure.message}',
+          );
+        },
+        (location) {
+          if (location == null || !_hasUsableLocation(location)) return;
+          // قد يكون البث الحي وصل أثناء القراءة؛ لا نستبدله بقفل أقدم.
+          if (_hasUsableLocation(state.currentLocation)) return;
+
+          state = state.copyWith(currentLocation: location);
+          ref.read(currentVehicleSpeedProvider.notifier).state = location.speed;
+        },
+      );
+    } finally {
+      _isHydratingLocation = false;
+    }
+  }
+
+  bool _hasUsableLocation(LocationEntity? location) {
+    return location != null &&
+        !location.latitude.isNaN &&
+        !location.longitude.isNaN &&
+        (location.latitude != 0 || location.longitude != 0);
   }
 
   /// تحميل السجلات

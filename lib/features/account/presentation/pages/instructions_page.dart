@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../widgets/instructions/instructions_zoom_overlay.dart';
 import '../widgets/instructions/inspection_mode_section.dart';
@@ -66,9 +67,9 @@ class _InstructionsPageState extends State<InstructionsPage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: GoldenAppBar(
           leading: const BackButton(),
-          title: Text(_title(context.loc), style: context.styles.appBarTitle),
+          titleText: _title(context.loc),
         ),
         body: Stack(
           children: [

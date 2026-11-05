@@ -73,7 +73,9 @@ class AuthInterceptor extends Interceptor {
     // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
     // (حُذف استثناء POST /users — لم يعد له مستدعٍ وكان يسمح بمرور
     // طلبات إنشاء مستخدمين بلا جلسة، توسيعاً غير مبرر لسطح الهجوم.)
-    if (options.path == EldEndpoints.authSession) {
+    if (options.path == EldEndpoints.authSession ||
+        options.uri.path == EldEndpoints.authSession ||
+        options.uri.path == '/api\${EldEndpoints.authSession}') {
       return super.onRequest(options, handler);
     }
 

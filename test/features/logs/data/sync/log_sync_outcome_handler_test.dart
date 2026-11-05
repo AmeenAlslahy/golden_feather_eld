@@ -9,6 +9,7 @@ import 'package:golden_feather_eld/core/events/app_events.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/logs/data/datasources/log_local_data_source.dart';
 import 'package:golden_feather_eld/features/logs/data/sync/log_sync_outcome_handler.dart';
+import 'package:golden_feather_eld/features/sync/data/repositories/memory_offline_queue.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/pending_event.dart';
 import 'package:golden_feather_eld/features/sync/domain/entities/sync_verification.dart';
 
@@ -39,10 +40,41 @@ void main() {
     payload: {
       'logId': logId.value,
       'ownerDriverId': driverId,
-      'form': {'uniqueId': 'veh-1', 'trailers': ['T1']},
+      'form': const {
+        'uniqueId': 'veh-1',
+        'trailers': ['T1'],
+      },
     },
     createdAt: DateTime.utc(2026, 10, 1, 8),
   );
+
+  PendingEvent dutyEdit({String id = 'edit-1'}) => PendingEvent(
+    id: id,
+    type: 'duty_status',
+    payload: {
+      'logId': logId.value,
+      'statusId': 7,
+      'clientId': '7',
+      'ownerDriverId': driverId,
+    },
+    createdAt: DateTime.utc(2026, 10, 1, 8),
+  );
+
+  Future<void> seedEvent({String sync = 'PENDING_SYNC'}) async {
+    final row = <String, dynamic>{
+      'id': 7,
+      'status': 'ON',
+      'startTime': '2026-10-01T09:00:00.000',
+      'duration': 1800,
+      'location': 'Dock 4',
+      'syncStatus': sync,
+    };
+    await local.cacheLogEvents(logId, [row]);
+    await local.upsertCachedLogEvent(logId, row);
+  }
+
+  Future<Map<String, dynamic>> cachedEvent() async =>
+      (await local.getCachedLogEvents(logId))!.single;
 
   Future<void> seed({
     String form = 'INCOMPLETE',
@@ -68,6 +100,7 @@ void main() {
     dir = await Directory.systemTemp.createTemp('log_sync_outcome_');
     Hive.init(dir.path);
     box = await Hive.openBox<String>(StorageConstants.dailyLogsCacheBox);
+    await Hive.openBox<String>(StorageConstants.eventsBox);
     local = LogLocalDataSourceImpl();
     bus = AppEventBus();
     visibleEvents = [];
@@ -77,29 +110,31 @@ void main() {
 
   tearDown(() async {
     await subscription.cancel();
-    await box.close();
+    await Hive.close();
     if (await dir.exists()) await dir.delete(recursive: true);
   });
 
   group('certification outcome', () {
-    test('confirmed only after server isCertified=true → CERTIFIED + UI',
-        () async {
-      await seed(cert: 'PENDING_SYNC');
+    test(
+      'confirmed only after server isCertified=true → CERTIFIED + UI',
+      () async {
+        await seed(cert: 'PENDING_SYNC');
 
-      await handler.onVerified(
-        VerifiedSyncResult(
-          event: certificationEvent(),
-          ownerDriverId: driverId,
-          verification: SyncVerification.confirmed,
-        ),
-      );
-      await flushEvents();
+        await handler.onVerified(
+          VerifiedSyncResult(
+            event: certificationEvent(),
+            ownerDriverId: driverId,
+            verification: SyncVerification.confirmed,
+          ),
+        );
+        await flushEvents();
 
-      final row = await cachedRow();
-      expect(row['certificationStatus'], 'CERTIFIED');
-      expect(row['isCertified'], isTrue);
-      expect(visibleEvents, [AppEvent.logDataChanged]);
-    });
+        final row = await cachedRow();
+        expect(row['certificationStatus'], 'CERTIFIED');
+        expect(row['isCertified'], isTrue);
+        expect(visibleEvents, [AppEvent.logDataChanged]);
+      },
+    );
 
     test('retryable keeps PENDING_SYNC and does not rebuild the UI', () async {
       await seed(cert: 'PENDING_SYNC');
@@ -244,6 +279,133 @@ void main() {
       final row = await cachedRow();
       expect(row['formStatus'], 'SYNC_FAILED');
       expect(await local.getCachedDailyForm(logId), isNotNull);
+      expect(visibleEvents, [AppEvent.logDataChanged]);
+    });
+  });
+
+  group('duty-status edit outcome', () {
+    test('confirmed clears PENDING_SYNC and merges the server echo', () async {
+      await seedEvent();
+
+      await handler.onVerified(
+        VerifiedSyncResult(
+          event: dutyEdit(),
+          ownerDriverId: driverId,
+          verification: SyncVerification.confirmed,
+          serverData: {
+            'event': {
+              'id': 7,
+              'status': 'DRIVING',
+              'timeRange': {
+                'startTime': '2026-10-01T09:00:00Z',
+                'durationSeconds': 1800,
+              },
+            },
+          },
+        ),
+      );
+      await flushEvents();
+
+      final row = await cachedEvent();
+      expect(row.containsKey('syncStatus'), isFalse);
+      expect(row['status'], 'DRIVING');
+      expect(
+        row['location'],
+        'Dock 4',
+        reason: 'the echo omitted location; the user edit must survive',
+      );
+      expect(visibleEvents, [AppEvent.logDataChanged]);
+    });
+
+    test('retryable keeps PENDING_SYNC and does not rebuild the UI', () async {
+      await seedEvent();
+
+      await handler.onVerified(
+        VerifiedSyncResult(
+          event: dutyEdit(),
+          ownerDriverId: driverId,
+          verification: SyncVerification.retryable,
+        ),
+      );
+      await flushEvents();
+
+      final row = await cachedEvent();
+      expect(row['syncStatus'], 'PENDING_SYNC');
+      expect(visibleEvents, isEmpty);
+    });
+
+    test('rejected becomes SYNC_FAILED and keeps local data', () async {
+      await seedEvent();
+
+      await handler.onVerified(
+        VerifiedSyncResult(
+          event: dutyEdit(),
+          ownerDriverId: driverId,
+          verification: SyncVerification.rejected,
+        ),
+      );
+      await flushEvents();
+
+      final row = await cachedEvent();
+      expect(row['syncStatus'], 'SYNC_FAILED');
+      expect(row['location'], 'Dock 4');
+      expect(row['duration'], 1800);
+      expect(visibleEvents, [AppEvent.logDataChanged]);
+    });
+
+    test('dead-lettering becomes SYNC_FAILED', () async {
+      await seedEvent();
+
+      await handler.onDeadLettered(dutyEdit());
+      await flushEvents();
+
+      final row = await cachedEvent();
+      expect(row['syncStatus'], 'SYNC_FAILED');
+      expect(visibleEvents, [AppEvent.logDataChanged]);
+    });
+
+    test('an older confirmation waits for a newer queued edit', () async {
+      final queue = MemoryOfflineQueue(
+        now: () => DateTime.utc(2026, 10, 1, 12),
+      );
+      final first = dutyEdit(id: 'edit-1');
+      final second = dutyEdit(id: 'edit-2');
+      await queue.enqueue(first);
+      await queue.enqueue(second);
+      final withQueue = LogSyncOutcomeHandler(
+        local: local,
+        events: bus,
+        queue: queue,
+      );
+      await seedEvent();
+
+      await withQueue.onVerified(
+        VerifiedSyncResult(
+          event: first,
+          ownerDriverId: driverId,
+          verification: SyncVerification.confirmed,
+        ),
+      );
+      await flushEvents();
+
+      expect(
+        (await cachedEvent())['syncStatus'],
+        'PENDING_SYNC',
+        reason: 'the newer edit is still in the queue',
+      );
+      expect(visibleEvents, isEmpty);
+
+      await queue.removeEvent(first.id);
+      await withQueue.onVerified(
+        VerifiedSyncResult(
+          event: second,
+          ownerDriverId: driverId,
+          verification: SyncVerification.confirmed,
+        ),
+      );
+      await flushEvents();
+
+      expect((await cachedEvent()).containsKey('syncStatus'), isFalse);
       expect(visibleEvents, [AppEvent.logDataChanged]);
     });
   });

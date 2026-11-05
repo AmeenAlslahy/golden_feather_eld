@@ -681,6 +681,7 @@
   "cannotSaveDriverSessionNotFound": "جلسة السائق غير موجودة. لا يمكن الحفظ.",
   "automaticDrivingTimeCannotBeShortened": "لا يمكن تقصير أو حذف وقت القيادة الآلي.",
   "eventCannotBeInFuture": "لا يمكن تسجيل وقت حدث الحالة في المستقبل.",
+  "eventTimeOverlap": "تتعارض أوقات هذه الحالة مع حدث آخر مسجل في نفس اليوم.",
   "eventSavedSuccessfully": "تم حفظ الحدث بنجاح",
   "reCertificationRequiredEditsWereMade": "يلزم إعادة الاعتماد: حدثت تعديلات بعد آخر توقيع.",
   "typeHere": "اكتب هنا",

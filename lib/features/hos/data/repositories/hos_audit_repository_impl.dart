@@ -19,18 +19,14 @@ class HosAuditRepositoryImpl implements HosAuditRepository {
   @override
   Future<void> logViolation(HosViolation violation) async {
     final dateStr = violation.timestamp.toIso8601String().substring(0, 10);
-    final all = await getViolations();
-
-    for (final v in all) {
-      final vDateStr = v.timestamp.toIso8601String().substring(0, 10);
-      if (v.type == violation.type && vDateStr == dateStr) {
-        return; // Already logged for this day
-      }
-    }
-
-    final jsonStr = jsonEncode(violation.toJson());
     final key = '$_keyPrefix${dateStr}_${violation.type.name}';
-    await _auditBox.put(key, jsonStr);
+
+    // المفتاح نفسه يمثّل (النوع + اليوم)، فوجود المفتاح كافٍ للكشف عن
+    // التكرار. كان الفحص يقرأ **كل** صفوف صندوق التدقيق ويفكّ JSON كلها
+    // عند كل مخالفة وكل نبضة/دقيقة — عمل متكرر بلا فائدة.
+    if (_auditBox.containsKey(key)) return;
+
+    await _auditBox.put(key, jsonEncode(violation.toJson()));
   }
 
   @override

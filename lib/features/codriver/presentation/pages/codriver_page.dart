@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_typography.dart';
+import '../../../../core/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_status_badge.dart';
-import '../../../../core/extensions/context_extensions.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../domain/entities/codriver.dart';
 import '../providers/codriver_provider.dart';
@@ -17,7 +13,6 @@ import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../hos/presentation/providers/hos_provider.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
-import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
@@ -40,28 +35,38 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
     final textColor = context.styles.body.color!;
 
     final selfId = ref.watch(currentDriverIdProvider)?.toString();
+    final authUserId = ref.watch(authStateProvider).user?.id;
     final drivers = [
       CoDriver.none,
-      ...codriverState.availableDrivers.where((d) => d.id != selfId),
+      ...codriverState.availableDrivers.where(
+        (d) => d.id != selfId && (authUserId == null || d.id != authUserId),
+      ),
     ];
 
     final currentSelectedId =
         _selectedId ?? codriverState.selectedCoDriver?.id ?? 'none';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.coDriver, style: context.styles.appBarTitle),
-        centerTitle: true,
-        // Back arrow when pushed on top of another screen; drawer menu when
-        // this is the root destination.
+      appBar: GoldenAppBar(
+        variant: GoldenAppBarVariant.brand,
+        titleText: loc.coDriver,
         leading: Builder(
           builder: (context) => Navigator.of(context).canPop()
-              ? BackButton(
+              ? IconButton(
                   key: const Key('codriver_back'),
+                  icon: Icon(
+                    Icons.arrow_back,
+                    color: context.onGold,
+                    size: AppSpacing.iconSize,
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 )
               : IconButton(
-                  icon: const Icon(Icons.menu),
+                  icon: Icon(
+                    Icons.menu,
+                    color: context.onGold,
+                    size: AppSpacing.iconSize,
+                  ),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
         ),
@@ -227,36 +232,18 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                       );
                                       return;
                                     }
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text(
-                                          loc.coDriverConfirmSwitchTitle,
-                                        ),
-                                        content: Text(
+                                    final confirm = await AppDialog.show(
+                                      context,
+                                      title: loc.coDriverConfirmSwitchTitle,
+                                      contentText:
                                           loc.coDriverConfirmSwitchBody,
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: Text(
-                                              MaterialLocalizations.of(
-                                                context,
-                                              ).cancelButtonLabel,
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: Text(
-                                              MaterialLocalizations.of(
-                                                context,
-                                              ).okButtonLabel,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                      type: AppDialogType.confirmation,
+                                      primaryLabel: MaterialLocalizations.of(
+                                        context,
+                                      ).okButtonLabel,
+                                      secondaryLabel: MaterialLocalizations.of(
+                                        context,
+                                      ).cancelButtonLabel,
                                     );
 
                                     if (confirm == true && mounted) {
@@ -279,31 +266,27 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                                       // (current → co-driver, co-driver → primary).
                                       await showDialog<void>(
                                         context: context,
-                                        builder: (dialogContext) => AlertDialog(
+                                        builder: (dialogContext) =>
+                                            AppDialog.informational(
                                           key: const Key(
                                             'switch_result_dialog',
                                           ),
-                                          title: Text(
-                                            loc.coDriverRolesSwitchedTitle,
-                                          ),
-                                          content: Text(
+                                          title:
+                                              loc.coDriverRolesSwitchedTitle,
+                                          contentWidget: Text(
                                             loc.coDriverRolesSwitchedBody(
                                               newPrimary ??
                                                   loc.coDriverDefaultNewPrimary,
                                             ),
+                                            textAlign: TextAlign.center,
                                             style: context.styles.success,
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(dialogContext),
-                                              child: Text(
-                                                MaterialLocalizations.of(
-                                                  dialogContext,
-                                                ).okButtonLabel,
-                                              ),
-                                            ),
-                                          ],
+                                          primaryActionLabel:
+                                              MaterialLocalizations.of(
+                                            dialogContext,
+                                          ).okButtonLabel,
+                                          onPrimaryAction: () =>
+                                              Navigator.pop(dialogContext),
                                         ),
                                       );
                                       if (!context.mounted) return;
@@ -350,16 +333,10 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
 
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: surfaceColor,
-              title: Text(
-                context.loc.coDriver,
-                style: context.styles.body.copyWith(
-                  fontWeight: AppTypography.regular,
-                ),
-              ),
-              contentPadding: const EdgeInsets.only(top: AppSpacing.md),
-              content: SizedBox(
+            return AppDialog(
+              title: context.loc.coDriver,
+              type: AppDialogType.confirmation,
+              contentWidget: SizedBox(
                 width: double.maxFinite,
                 child: RadioGroup<String>(
                   groupValue: dialogSelectedId,
@@ -388,34 +365,25 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                   ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    context.loc.cancelAction,
-                    style: context.styles.gold,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // الربط (link/add) إجراء إدارة للناقل عبر البوابة —
-                    // السائق يختار محلياً من سيبدأ معه تبديل الأدوار.
-                    final selected = drivers.firstWhere(
-                      (d) => d.id == dialogSelectedId,
-                    );
-                    ref
-                        .read(codriverProvider.notifier)
-                        .selectCoDriver(selected);
-                    setState(() {
-                      _selectedId = dialogSelectedId;
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(context.loc.okButton, style: context.styles.gold),
-                ),
-              ],
+              secondaryActionLabel: context.loc.cancelAction,
+              onSecondaryAction: () => Navigator.of(context).pop(),
+              primaryActionLabel: MaterialLocalizations.of(
+                context,
+              ).okButtonLabel,
+              onPrimaryAction: () {
+                // الربط (link/add) إجراء إدارة للناقل عبر البوابة —
+                // السائق يختار محلياً من سيبدأ معه تبديل الأدوار.
+                final selected = drivers.firstWhere(
+                  (d) => d.id == dialogSelectedId,
+                );
+                ref
+                    .read(codriverProvider.notifier)
+                    .selectCoDriver(selected);
+                setState(() {
+                  _selectedId = dialogSelectedId;
+                });
+                Navigator.of(context).pop();
+              },
             );
           },
         );

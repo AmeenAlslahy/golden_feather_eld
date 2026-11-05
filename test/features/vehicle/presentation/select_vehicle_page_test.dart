@@ -25,6 +25,8 @@ class _Storage extends Mock implements LocalStorageService {
   Future<void> setDeviceId(String value) async {}
   @override
   String? get selectedVehicleId => null;
+  @override
+  Future<void> saveSelectedVehicleId(String id) async {}
 }
 
 /// SRS 3.1 — Select Vehicle: View ≠ Select ≠ Operate. My vehicles are

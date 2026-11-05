@@ -2004,6 +2004,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La hora del evento de estado no puede estar en el futuro.';
 
   @override
+  String get eventTimeOverlap =>
+      'El rango de tiempo seleccionado entra en conflicto con otro evento de este día.';
+
+  @override
   String get eventSavedSuccessfully => 'Evento guardado con éxito';
 
   @override

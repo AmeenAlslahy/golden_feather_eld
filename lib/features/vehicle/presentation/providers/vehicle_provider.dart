@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../data/providers/vehicle_repository_providers.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/vehicle.dart';
@@ -83,7 +84,10 @@ class VehicleState {
 final vehicleProvider = StateNotifierProvider<VehicleNotifier, VehicleState>((
   ref,
 ) {
-  final notifier = VehicleNotifier(ref.watch(vehicleRepositoryProvider));
+  final notifier = VehicleNotifier(
+    ref.watch(vehicleRepositoryProvider),
+    ref.watch(localStorageProvider),
+  );
   ref.listen<AuthState>(authStateProvider, (previous, next) {
     if (next.user == null || next.transitioning) {
       notifier.reset();
@@ -106,6 +110,7 @@ final vehicleProvider = StateNotifierProvider<VehicleNotifier, VehicleState>((
 
 class VehicleNotifier extends StateNotifier<VehicleState> {
   final VehicleRepository _repository;
+  final LocalStorageService? _localStorage;
 
   /// P0 Stage 1 — مالك الحالة + تسلسل الطلبات لسياج الردود المتأخرة.
   String? _ownerDriverId;
@@ -131,7 +136,8 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   // (مثل tracking_orchestrator) كان يُطلق GET مالك-بلا-مالك عند كل إقلاع
   // بارد. التحميل الأولي تقوده الصفحة (SelectVehiclePage.initState) أو
   // تغير المالك، وكلاهما محمي بالتسلسل أدناه.
-  VehicleNotifier(this._repository) : super(const VehicleState());
+  VehicleNotifier(this._repository, [this._localStorage])
+      : super(const VehicleState());
 
   /// ربط بمالك جديد: إسقاط متزامن للحالة (بلا API) وإبطال أي طلب جارٍ.
   void bindOwner(String? driverId, int? epoch) {
@@ -190,11 +196,28 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       (vehicles) {
         final currentSelectedId = state.selectedVehicle?.id;
         final serverSelected = _serverSelected(vehicles);
-        final selected =
-            serverSelected ??
+        final savedVehicleId = _localStorage?.selectedVehicleId;
+
+        final selected = serverSelected ??
             (currentSelectedId != null
                 ? vehicles.where((v) => v.id == currentSelectedId).firstOrNull
+                : null) ??
+            (savedVehicleId != null && savedVehicleId.isNotEmpty
+                ? vehicles
+                    .where(
+                      (v) =>
+                          v.id == savedVehicleId ||
+                          v.uniqueId == savedVehicleId,
+                    )
+                    .firstOrNull
+                : null) ??
+            (!state.isCompanyFleet && vehicles.length == 1
+                ? vehicles.first
                 : null);
+
+        if (selected != null) {
+          _localStorage?.saveSelectedVehicleId(selected.id);
+        }
 
         state = state.copyWith(
           vehicles: vehicles,
@@ -241,9 +264,13 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   }
 
   Vehicle? _serverSelected(List<Vehicle> vehicles) {
+    final ownerIdNum = int.tryParse(_ownerDriverId ?? '');
     for (final vehicle in vehicles) {
       if (vehicle.activeForCurrentDriver == true ||
-          vehicle.selectedByServer == true) {
+          vehicle.selectedByServer == true ||
+          (ownerIdNum != null &&
+              vehicle.activeDriverId != null &&
+              vehicle.activeDriverId == ownerIdNum)) {
         return vehicle;
       }
     }
@@ -297,5 +324,6 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       isSuccess: true,
       clearError: true,
     );
+    _localStorage?.saveSelectedVehicleId(vehicle.id);
   }
 }

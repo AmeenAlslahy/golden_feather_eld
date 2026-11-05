@@ -27,6 +27,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import com.goldenfeather.golden_feather_eld.services.TrackingForegroundService
 import com.goldenfeather.golden_feather_eld.services.TrackingServiceManager
+import com.goldenfeather.golden_feather_eld.location.LastKnownLocationSource
 
 /**
  * TraccarPlugin - تتبع GPS حقيقي للتواصل مع خادم Traccar
@@ -85,6 +86,8 @@ class TraccarPlugin(
                 sink.success(cachedLocationData)
                 cachedLocationData = null
                 android.util.Log.i("TRACCAR_PLUGIN", "Sent cached location on sink attach")
+            } else {
+                seedLastKnownLocation(sink)
             }
         } else {
             try {
@@ -113,6 +116,7 @@ class TraccarPlugin(
                 "stop" -> stopTracking(result)
                 "isTracking" -> result.success(isTracking)
                 "requestPosition" -> requestPosition(call, result)
+                "getLastKnownPosition" -> getLastKnownPosition(result)
                 "getLogs" -> result.success(emptyList<Map<String, Any>>())
                 "clearLogs" -> {
                     // مسح السجلات - لا يوجد تخزين Native حالياً
@@ -222,6 +226,33 @@ class TraccarPlugin(
         }
     }
 
+    /**
+     * قراءة فقط لآخر قفل حديث من نظام التشغيل. لا تُدخل في SQLite ولا ترفع
+     * إلى Traccar — على عكس [requestPosition] التي تُطلق دورة رفع كاملة.
+     */
+    @SuppressLint("MissingPermission")
+    private fun getLastKnownPosition(result: Result) {
+        if (!checkLocationPermission()) {
+            result.error("PERMISSION_DENIED", "Location permission not granted", null)
+            return
+        }
+
+        val location = LastKnownLocationSource.latest(context)
+        if (location == null) {
+            android.util.Log.i("TRACCAR_PLUGIN", "getLastKnownPosition: No fresh cached fix")
+            result.success(null)
+            return
+        }
+        result.success(locationToMap(location, null, location.time))
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun seedLastKnownLocation(sink: EventChannel.EventSink) {
+        val location = LastKnownLocationSource.latest(context) ?: return
+        sink.success(locationToMap(location, null, location.time))
+        android.util.Log.i("TRACCAR_PLUGIN", "Seeded last known location on sink attach")
+    }
+
     private fun setupNetworkListener() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -260,7 +291,11 @@ class TraccarPlugin(
         }
     }
 
-    private fun locationToMap(location: Location, alarm: String?): Map<String, Any> {
+    private fun locationToMap(
+        location: Location,
+        alarm: String?,
+        timestampMillis: Long = System.currentTimeMillis()
+    ): Map<String, Any> {
         val map = mutableMapOf<String, Any>(
             "latitude" to location.latitude,
             "longitude" to location.longitude,
@@ -268,7 +303,7 @@ class TraccarPlugin(
             "bearing" to location.bearing.toDouble(),
             "altitude" to location.altitude,
             "accuracy" to location.accuracy.toDouble(),
-            "timestamp" to System.currentTimeMillis()
+            "timestamp" to timestampMillis
         )
         if (alarm != null) {
             map["alarm"] = alarm

@@ -16,9 +16,10 @@ class EldRulesScreenBackend implements RulesScreenBackend {
 
   @override
   Future<Result<RulesScreenModel>> getRulesScreen({DriverId? driverId}) async {
+    // ⚠️ لا نمرر driverId كـ query parameter: المسار هو /eld/driver-rules
+    // حيث يستخرج الخادم هوية السائق تلقائياً من توكن المصادقة (Bearer token).
     final res = await _apiClient.get<RulesScreenDto>(
       EldEndpoints.rulesScreen,
-      queryParameters: driverId != null ? {'driverId': driverId.value} : null,
       parser: (data) => RulesScreenDto.fromJson(data as Map<String, dynamic>),
     );
     return res.mapValue((r) => RulesScreenMapper.toModel(r.data!));
@@ -29,22 +30,33 @@ class EldRulesScreenBackend implements RulesScreenBackend {
     required DriverId driverId,
     required RawJson update,
   }) async {
-    final res = await _apiClient.put<dynamic>(
+    var res = await _apiClient.put<dynamic>(
       EldEndpoints.rulesScreen,
       data: update,
     );
+    if (res.isLeft() &&
+        (res.errorOrNull?.code == '404' ||
+            res.errorOrNull?.code.contains('not_found') == true)) {
+      res = await _apiClient.put<dynamic>(
+        EldEndpoints.driverRules(driverId.value),
+        data: update,
+      );
+    }
     final error = res.errorOrNull;
     if (error != null) return err(error);
     final response = res.valueOrNull!;
     final body = response.data ?? response.rawBody;
     if (body is Map<String, dynamic> &&
-        (body.containsKey('cycleRule') || body.containsKey('limits'))) {
+        (body.containsKey('cycleRule') ||
+            body.containsKey('ruleSetId') ||
+            body.containsKey('rules') ||
+            body.containsKey('limits'))) {
       try {
         return ok(RulesScreenMapper.toModel(RulesScreenDto.fromJson(body)));
       } catch (_) {
         // Empty/partial PUT body is not a blank rules screen.
       }
     }
-    return getRulesScreen(driverId: driverId);
+    return getRulesScreen();
   }
 }

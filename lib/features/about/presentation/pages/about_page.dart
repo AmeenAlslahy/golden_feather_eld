@@ -36,8 +36,8 @@ class AboutPage extends ConsumerWidget {
     final notAvailable = loc.notAvailable;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.aboutTitle, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: loc.aboutTitle,
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screenPadding),

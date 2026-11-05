@@ -46,7 +46,7 @@ Duration computeElapsedSinceSnapshot({
 }
 
 /// الدائرة المركزية الكبيرة لعرض الوقت القانوني المتبقي وحركة المؤشر
-/// مطابقة بنسبة 100% للتطبيق الأصلي مع العد التنازلي المباشر وتحول اللون للأحمر عند الاقتراب من النهاية
+/// مطابقة بنسبة 100% للتطبيق الأصلي مع العد التنازلي المباشر والقوس الدائري
 class MainCircularTimer extends ConsumerStatefulWidget {
   final RemainingCircle circle;
   final String statusLabel;
@@ -59,14 +59,7 @@ class MainCircularTimer extends ConsumerStatefulWidget {
   /// `regulatoryConstraints.ruleSet`.
   final Duration cycleLimit;
 
-  /// لحظةZY-βاللقطة على **ساعة موثوقة** (خادم مُثبَّت عبر ترويسة `Date:`).
-  ///
-  /// ⚠️ يجب أن تأتي من `TrustedTimeProvider` لا من `DateTime.now()`.
-  /// العدّاد التنازلي يحسب:
-  ///     liveRemaining = serverRemaining − (trustedNow − snapshotStamp)
-  /// كلا طرفي الطرح على الساعة نفسها → النتيجة صحيحة ولو عبث السائق
-  /// بساعة الجهاز. استخدام `DateTime.now()` هنا يجعل الطرح بين ساعتين
-  /// غير مرتبطتين ويجعل العدّاد قابلاً للتلاعب.
+  /// لحظة اللقطة على **ساعة موثوقة** (خادم مُثبَّت عبر ترويسة `Date:`).
   final DateTime? snapshotTimestamp;
 
   /// اختياري: مصدر موحّد للزمن المنقضي لمزامنة الدائرة مع بقية عناصر الشاشة
@@ -101,9 +94,6 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
   bool get wantKeepAlive => true;
 
   /// الزمن المنقضي منذ اللقطة — على الساعة الموثوقة واحدة.
-  ///
-  /// [computeElapsedSinceSnapshot] هي المرجع الوحيد؛ هذه مجرد مغلّف يقرأ
-  /// المزوّدات. البطاقات تستخدم نفس الدالة.
   Duration _computeElapsed() => computeElapsedSinceSnapshot(
     trustedTime: ref.read(trustedTimeProvider).currentTime,
     snapshotTimestamp: widget.snapshotTimestamp,
@@ -195,21 +185,21 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                   final progress = uiState.progress;
                   final isRest = uiState.isRest;
 
-                  // تحديد اللون: رمادي عند الراحة. وعند انتهاء الوقت أو بلوغ النطاق الحرج
-                  // (ساعة أو أقل، أو تقدم >= 90%) يتحول إلى الأحمر/التحذيري، والأخضر للوقت الآمن فقط.
+                  // تحديد اللون:
+                  // 1. في حالة الراحة: رمادي محايد (كما في الصورة المرجعية 5).
+                  // 2. عند انتهاء الوقت في العمل (00:00 أو سالب): أحمر كامل (كما في الصورة المرجعية 2).
+                  // 3. في حالة العمل مع وجود وقت متبقي: أخضر ناصع (كما في الصور المرجعية 1، 3، 4، 6).
                   final Color arcColor;
                   final Color timeTextColor;
-                  final isCritical =
-                      liveRemaining <= const Duration(hours: 1) ||
-                      progress >= 0.90;
-                  if (isCritical) {
+                  if (isRest) {
+                    arcColor = theme.disabledColor;
+                    timeTextColor = theme.colorScheme.onSurface.withValues(
+                      alpha: 0.5,
+                    );
+                  } else if (liveRemaining <= Duration.zero) {
                     arcColor = theme.colorScheme.error;
                     timeTextColor = theme.colorScheme.error;
-                  } else if (isRest) {
-                    arcColor = theme.disabledColor;
-                    timeTextColor = theme.colorScheme.onSurface;
                   } else {
-                    // أخضر ناصع (Safe color)
                     arcColor = context.success;
                     timeTextColor = context.success;
                   }
@@ -233,53 +223,59 @@ class _MainCircularTimerState extends ConsumerState<MainCircularTimer>
                           painter: _OriginalEldCirclePainter(
                             progress: progress,
                             isRest: isRest,
-                            trackColor: isRest
-                                ? theme.disabledColor.withValues(alpha: 0.3)
-                                : theme.dividerColor,
+                            trackColor: context.border,
                             progressColor: arcColor,
                           ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                remainingText,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                  fontSize: circleSize * 0.05,
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(circleSize * 0.12),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      remainingText,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                        fontSize: circleSize * 0.05,
+                                      ),
+                                    ),
+                                    SizedBox(height: circleSize * 0.02),
+                                    Text(
+                                      timeString,
+                                      style: theme.textTheme.displayLarge?.copyWith(
+                                        fontSize: circleSize * 0.23,
+                                        fontWeight: AppTypography.light,
+                                        color: timeTextColor,
+                                        letterSpacing: -1.0,
+                                        height: 1.1,
+                                      ),
+                                    ),
+                                    SizedBox(height: circleSize * 0.02),
+                                    Text(
+                                      widget.statusLabel.toUpperCase(),
+                                      textAlign: TextAlign.center,
+                                      style: theme.textTheme.titleLarge?.copyWith(
+                                        fontWeight: AppTypography.regular,
+                                        fontSize: circleSize * 0.075,
+                                        color: theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: circleSize * 0.05),
+                                    Icon(
+                                      Icons.keyboard_arrow_down,
+                                      size: circleSize * 0.09,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: circleSize * 0.02),
-                              Text(
-                                timeString,
-                                style: theme.textTheme.displayLarge?.copyWith(
-                                  fontSize: circleSize * 0.23,
-                                  fontWeight: AppTypography.light,
-                                  color: timeTextColor,
-                                  letterSpacing: -1.0,
-                                  height: 1.1,
-                                ),
-                              ),
-                              SizedBox(height: circleSize * 0.02),
-                              Text(
-                                widget.statusLabel.toUpperCase(),
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: AppTypography.regular,
-                                  fontSize: circleSize * 0.075,
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: circleSize * 0.05),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                size: circleSize * 0.09,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -323,21 +319,28 @@ class _OriginalEldCirclePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
 
-    // رسم مسار الدائرة الأساسي
+    // رسم مسار الدائرة الأساسي (الحلقة الخلفية الرمادية)
     canvas.drawCircle(center, radius, trackPaint);
 
-    // إذا كانت النسبة صفرية، المسار الرمادي الأساسي كافٍ
-    if (progress <= 0.0) {
+    // إذا كانت النسبة صفرية أو في حالة راحة، المسار الرمادي الأساسي كافٍ
+    if (progress <= 0.0 || isRest) {
       return;
     }
 
-    // رسم القوس الأخضر/الأحمر المتقدم مع الوقت
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.butt;
 
+    // إذا اكتمل الوقت بالكامل (100% أو أكثر كما في الصورة 2 عند 00:00):
+    // رسم دائرة حمراء كاملة متصلة 360 درجة
+    if (progress >= 1.0) {
+      canvas.drawCircle(center, radius, progressPaint);
+      return;
+    }
+
+    // رسم القوس الأخضر المتقدم باتجاه عقارب الساعة من الساعة 12
     final sweepAngle = 2 * math.pi * progress.clamp(0.0, 1.0);
 
     canvas.drawArc(

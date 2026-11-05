@@ -57,7 +57,7 @@ class _DvirDetailPageState extends ConsumerState<DvirDetailPage> {
     return Scaffold(
       appBar: GoldenAppBar(
         titleText: context.loc.dvirTitle,
-        variant: GoldenAppBarVariant.standard,
+        variant: GoldenAppBarVariant.brand,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

@@ -183,6 +183,8 @@ class RulesFormNotifier extends AutoDisposeNotifier<RulesFormState> {
         sixteenHourException: sixteenEligible
             ? sixteenValue
             : model.sixteenHourException,
+        personalConveyanceAllowed: model.isPersonalConveyanceAllowed,
+        yardMovesAllowed: model.isYardMoveAllowed,
       );
 
       final result = await ref

@@ -29,6 +29,7 @@ import '../../../tracking/data/providers/tracking_providers.dart';
 import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../../domain/shared/value_objects.dart';
 
 const Object _unsetConnectionField = Object();
 
@@ -217,6 +218,10 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
         try {
           return await hardwareBackend.connectSession(
             uniqueId: selectedUniqueId,
+            driverId: _ref.read(currentDriverIdProvider) != null &&
+                    _ref.read(currentDriverIdProvider)! > 0
+                ? DriverId(_ref.read(currentDriverIdProvider)!)
+                : null,
           );
         } finally {
           _serverWriteInFlight = false;
@@ -365,7 +370,7 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
     }
   }
 
-  /// `POST /eld/hardware/connect?disconnected=true`. No reason form and no
+  /// `POST /eld/sessions/connect` (manualMode = true). No reason form and no
   /// duty event. Local tracking is started only after a confirmed server
   /// result; offline, failure, and unconfirmed outcomes stay on this screen.
   Future<void> continueDisconnected() async {
@@ -423,7 +428,14 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
         try {
           return await _ref
               .read(hardwareBackendProvider)
-              .connectSession(uniqueId: vUniqueId, disconnected: true);
+              .connectSession(
+                uniqueId: vUniqueId,
+                disconnected: true,
+                driverId: _ref.read(currentDriverIdProvider) != null &&
+                        _ref.read(currentDriverIdProvider)! > 0
+                    ? DriverId(_ref.read(currentDriverIdProvider)!)
+                    : null,
+              );
         } finally {
           _serverWriteInFlight = false;
           _setServerPending(false);
@@ -943,25 +955,29 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                           spacing: AppSpacing.sm,
                           runSpacing: AppSpacing.xs,
                           children: [
-                            TextButton(
+                            AppButton.tertiary(
                               key: const Key('cancel_connection_button'),
+                              isFullWidth: false,
+                              isCompact: true,
                               onPressed: () => ref
                                   .read(eldConnectionProvider.notifier)
                                   .cancelConnection(),
-                              child: Text(context.loc.cancelButton),
+                              label: context.loc.cancelButton,
                             ),
                             if (connectionState.isConnecting)
-                              TextButton(
+                              AppButton.secondary(
                                 key: const Key(
                                   'continue_disconnected_overlay_button',
                                 ),
+                                isFullWidth: false,
+                                isCompact: true,
                                 // لا كتابة خادم ثانية أثناء طلب معلّق.
                                 onPressed: connectionState.serverRequestPending
                                     ? null
                                     : () => ref
                                           .read(eldConnectionProvider.notifier)
                                           .continueDisconnected(),
-                                child: Text(context.loc.continueDisconnected),
+                                label: context.loc.continueDisconnected,
                               ),
                           ],
                         ),

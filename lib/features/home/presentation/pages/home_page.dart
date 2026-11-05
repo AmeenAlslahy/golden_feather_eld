@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/domain/entities/connection_status.dart' as core;
+import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
+import '../../../../domain/duty_status/status_dashboard.dart' as dash;
 import '../../../hos/presentation/pages/recap_page.dart';
 import '../../../hos/presentation/widgets/driving_lock_screen.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
@@ -15,6 +18,7 @@ import '../providers/dashboard_provider.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
@@ -36,7 +40,6 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authGate = ref.watch(authStateProvider);
-    final dashboard = ref.watch(dashboardDataProvider);
     final currentNavIndex = ref.watch(homeNavIndexProvider);
     final statusDashboardState = ref.watch(statusDashboardProvider);
 
@@ -50,27 +53,7 @@ class HomePage extends ConsumerWidget {
       );
     }
 
-    // الأولوية: اسم السائق - معرّف/رقم المركبة (Top Compliance ELD Standard)
-    final rawDriverName =
-        (dashboard.driverName != 'Unknown' && dashboard.driverName.isNotEmpty)
-        ? dashboard.driverName
-        : (ref.watch(authStateProvider).user?.fullName ?? '');
-
-    final vehicleIdentifier =
-        (dashboard.vehicleDisplayName.isNotEmpty &&
-            dashboard.vehicleDisplayName != 'Select a vehicle' &&
-            dashboard.vehicleDisplayName != 'No Vehicle')
-        ? dashboard.vehicleDisplayName
-        : (dashboard.vehicleId.isNotEmpty && dashboard.vehicleId != 'None'
-              ? dashboard.vehicleId
-              : null);
-
-    final driverText = vehicleIdentifier != null
-        ? '$rawDriverName - $vehicleIdentifier'
-        : (statusDashboardState.valueOrNull?.driver.displayText ??
-              (ref.watch(currentDriverIdProvider) != null
-                  ? '$rawDriverName - ${ref.watch(currentDriverIdProvider)}'
-                  : rawDriverName));
+    final driverText = ref.watch(driverSessionHeaderProvider);
 
     final isDriving =
         statusDashboardState.valueOrNull?.currentDutyStatus ==
@@ -83,7 +66,8 @@ class HomePage extends ConsumerWidget {
         Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           // ========== شريط العنوان ==========
-          appBar: AppBar(
+          appBar: GoldenAppBar(
+            variant: GoldenAppBarVariant.brand,
             title: Text(
               currentNavIndex == 0 ? driverText : context.loc.hoursRecap,
               style: context.styles.appBarTitle,
@@ -98,16 +82,32 @@ class HomePage extends ConsumerWidget {
             ),
             actions: currentNavIndex == 0
                 ? [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                      child: ConnectionStatusIndicator(
-                        showWarningTriangle: false,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final alerts = ref
+                              .watch(statusDashboardProvider)
+                              .valueOrNull
+                              ?.operationalAlerts;
+                          final isServerOk =
+                              alerts?.connectionStatus ==
+                              dash.ConnectionStatus.ok;
+                          return ConnectionStatusIndicator(
+                            showWarningTriangle: false,
+                            statusOverride: isServerOk
+                                ? core.ConnectionStatus.connected
+                                : null,
+                          );
+                        },
                       ),
                     ),
                     const SyncStatusIndicator(),
-                    // SRS 4.2 operational alerts: server-driven tool icon +
-                    // yellow triangle (`operationalAlerts`), plus the local
-                    // GPS-off condition on the tool icon.
+                    // SRS 4.2 operational alerts:
+                    // أيقونة الأداة مرتبطة بحالة تشغيل/إيقاف الموقع (GPS) وتختفي فور تفعيله.
+                    // مثلث التحذير مرتبط بحالة اتصال جهاز ELD والأعطال التشغيلية.
                     Consumer(
                       builder: (context, ref, child) {
                         final gpsStatus = ref.watch(gpsStatusProvider);
@@ -117,14 +117,23 @@ class HomePage extends ConsumerWidget {
                             .watch(statusDashboardProvider)
                             .valueOrNull
                             ?.operationalAlerts;
-                        final isDisconnected =
-                            (ref.watch(isConnectedProvider).value ?? true) ==
-                            false;
+                        final eldStatus =
+                            ref.watch(eldConnectionStatusProvider).value;
 
-                        final showTool =
-                            isGpsOff || (alerts?.toolIcon ?? false);
+                        final isEldDisconnected =
+                            alerts?.connectionStatus ==
+                                dash.ConnectionStatus.disconnected ||
+                            (eldStatus != core.ConnectionStatus.connected &&
+                                eldStatus != core.ConnectionStatus.connecting &&
+                                alerts?.connectionStatus !=
+                                    dash.ConnectionStatus.ok);
+
+                        // تختفي أيقونة الأداة فور تفعيل الموقع وتعود أثناء إيقافه
+                        final showTool = isGpsOff;
                         final showTriangle =
-                            isDisconnected ||
+                            isEldDisconnected ||
+                            alerts?.connectionStatus ==
+                                dash.ConnectionStatus.warning ||
                             (alerts?.warningTriangleIcon ?? false);
 
                         if (!showTool && !showTriangle) {
@@ -147,16 +156,19 @@ class HomePage extends ConsumerWidget {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: Text(loc.noticeTitle),
-                                      content: Text(
-                                        isGpsOff
-                                            ? loc.gpsTurnedOff
-                                            : loc.serverReportsEldAlert,
-                                      ),
+                                      content: Text(loc.gpsTurnedOff),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context),
                                           child: Text(loc.okButton),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            Geolocator.openLocationSettings();
+                                          },
+                                          child: Text(loc.openSettings),
                                         ),
                                       ],
                                     ),

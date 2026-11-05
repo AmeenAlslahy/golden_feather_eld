@@ -109,6 +109,17 @@ AppError _mapBadResponse(DioException e) {
 
   switch (statusCode) {
     case 400:
+      final rawData = response.data?.toString().toLowerCase() ?? '';
+      if (rawData.contains('excl_status_no_overlap') ||
+          rawData.contains('no_overlap')) {
+        return ConflictError(
+          code: 'duty_status.overlap',
+          l10nKey: 'eventTimeOverlap',
+          cause: e,
+          stackTrace: e.stackTrace,
+          context: context,
+        );
+      }
       // DEBUG: print detailed errors array if present
       return ValidationError(
         code: serverErrorCode ?? 'validation.badRequest',

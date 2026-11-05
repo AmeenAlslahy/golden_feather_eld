@@ -39,12 +39,15 @@ final hosStoredPeriodsProvider = FutureProvider<List<DutyPeriod>>((ref) async {
       : DateTime.now().toUtc();
   final store = ref.watch(dutyPeriodStoreProvider);
   try {
-    final periods = <DutyPeriod>[];
-    for (var back = 0; back < 10; back++) {
-      final day = now.subtract(Duration(days: back));
-      periods.addAll(await store.getPeriods(day));
-    }
-    return periods;
+    // القراءة كانت تسلسلية: عشرة أيام × رحلة قرص = تأخير ترطيب مضاعف
+    // بلا سبب. الأيام مستقلة، فنجلبها بالتوازي ونحافظ على ترتيبها.
+    final days = List<DateTime>.generate(
+      10,
+      (back) => now.subtract(Duration(days: back)),
+      growable: false,
+    );
+    final chunks = await Future.wait(days.map(store.getPeriods));
+    return chunks.expand((chunk) => chunk).toList(growable: false);
   } catch (e) {
     // الفشل هنا لا يمنع التشغيل: نكمل بمحرك فارغ كما كان سابقاً.
     AppLogger.warning('HOS hydration read skipped: $e');
@@ -150,6 +153,10 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
     timeProvider: timeProvider,
     readDriverId: () => ref.read(currentDriverIdProvider),
     journal: ref.watch(dutyEventJournalProvider),
+    // لا نقرأ مزوّداً آخر داخل باني المتتبع: القراءة تُنعش المزوّد وتُطلق
+    // مستمعيه أثناء بناء هذا المزوّد (تحذير Riverpod القاتل). نؤجّل البدء
+    // إلى ما بعد البناء.
+    hydrateOnCreate: false,
   );
 
   // P1.1 — rebuild the open segment from journal evidence as soon as the
@@ -160,7 +167,15 @@ final dutyStatusTrackerProvider = Provider<DutyStatusTracker>((ref) {
     unawaited(tracker.hydrateForDriver(driverId));
   }
 
-  hydrate(ref.read(currentDriverIdProvider));
+  var disposed = false;
+  ref.onDispose(() => disposed = true);
+
+  // الترطيب الأول بعد اكتمال البناء. `hosHydrationReadyProvider` ينتظر
+  // `hydrateForDriver` نفسها، فهذه مجرد بداية مبكّرة غير حاجزة.
+  Future<void>.microtask(() {
+    if (disposed) return;
+    hydrate(ref.read(currentDriverIdProvider));
+  });
   ref.listen<int?>(currentDriverIdProvider, (_, next) => hydrate(next));
 
   ref.listen<AsyncValue>(eldEventsStreamProvider, (_, next) {

@@ -1,4 +1,5 @@
 import '../../../../core/result/result.dart';
+import '../../../../domain/hardware/diagnostic_alert.dart';
 import '../../../../domain/hardware/telemetry_reading.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/hardware_backend.dart';
@@ -6,11 +7,15 @@ import '../../../contracts/raw_json.dart';
 
 /// In-memory mock for [HardwareBackend].
 class MockHardwareBackend implements HardwareBackend {
-  MockHardwareBackend();
+  const MockHardwareBackend();
 
   @override
   Future<Result<RawJson>> getAlerts({DriverId? driverId}) async {
-    throw UnimplementedError('MockHardwareBackend.getAlerts — not implemented');
+    return ok(<String, dynamic>{
+      'malfunctions': <String>[],
+      'diagnostics': <String>[],
+      'unidentifiedDriving': false,
+    });
   }
 
   @override
@@ -20,9 +25,9 @@ class MockHardwareBackend implements HardwareBackend {
     DriverId? driverId,
   }) async {
     return ok(<String, dynamic>{
-      'connectionStatus': enable ? 'MALFUNCTION' : 'CONNECTED',
-      'manualModeActive': enable,
+      'manual_mode': enable,
       'reason': reason,
+      'timestamp': DateTime.now().toIso8601String(),
     });
   }
 
@@ -31,12 +36,10 @@ class MockHardwareBackend implements HardwareBackend {
     String? uniqueId,
     DriverId? driverId,
   }) async {
-    // Mirrors PreOperationReadinessResponse for the offline demo backend.
     return ok(<String, dynamic>{
-      'uniqueId': uniqueId,
-      'ready': false,
+      'ready': true,
       'checklist': <String, bool>{
-        'device_paired': true,
+        'engine_connected': false,
         'connection_active': false,
         'motion_data': false,
         'location_data': false,
@@ -52,12 +55,24 @@ class MockHardwareBackend implements HardwareBackend {
   Future<Result<RawJson>> connectSession({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) async {
     return ok(<String, dynamic>{
       'status': 'success',
       'message': 'connected',
       'uniqueId': uniqueId,
       'disconnected': disconnected,
+      if (driverId != null) 'driverId': driverId.value,
+      if (coDriverId != null) 'coDriverId': coDriverId.value,
+    });
+  }
+
+  @override
+  Future<Result<RawJson>> disconnectSession() async {
+    return ok(<String, dynamic>{
+      'status': 'success',
+      'message': 'disconnected',
     });
   }
 
@@ -72,5 +87,15 @@ class MockHardwareBackend implements HardwareBackend {
   @override
   Future<Result<RawJson>> sendTelemetry(TelemetryReading reading) async {
     return ok(<String, dynamic>{'success': true});
+  }
+
+  // Decision 2 (P1): Reconnect Loop
+  @override
+  Future<AlertResponse> reportAlert(DiagnosticAlertRequest request) async {
+    return AlertResponse(
+      success: true,
+      alertId: 'mock-alert-${request.attemptNumber}',
+      message: 'Alert reported successfully',
+    );
   }
 }

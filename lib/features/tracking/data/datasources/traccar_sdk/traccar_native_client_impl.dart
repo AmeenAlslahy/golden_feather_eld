@@ -58,6 +58,22 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
   }
 
   @override
+  Future<Map<String, dynamic>?> getLastKnownPosition() async {
+    try {
+      final dynamic result = await _channel.invokeMethod(
+        'getLastKnownPosition',
+      );
+      if (result is! Map) return null;
+      return Map<String, dynamic>.from(result);
+    } on PlatformException catch (e) {
+      debugPrint('Failed to read last known position: ${e.message}');
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> getNativeLogs() async {
     try {
       final List<dynamic>? result = await _channel.invokeMethod<List<dynamic>>(

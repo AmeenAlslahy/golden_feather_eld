@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/result/result.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/dispatch_auth.dart';
 import '../../domain/entities/event_ownership.dart';
@@ -401,7 +402,16 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         },
         expectedOwnerDriverId: owner,
       );
-      return _mapResult(result, owner);
+      final mapped = _mapResult(result, owner);
+      // استجابة التعديل تحمل الحدث المؤكد (وقد تحمل حقولاً أحدث من
+      // الحمولة)؛ نمرّرها كي يمسح معالج النتيجة PENDING_SYNC ويثري الكاش.
+      await _reportSettled(
+        event,
+        owner,
+        mapped,
+        serverData: result.valueOrNull,
+      );
+      return mapped;
     }
 
     if (statusId != null && statusId > 0) {
@@ -415,7 +425,14 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
           if (payload['notes'] != null) 'editReason': payload['notes'],
         },
       );
-      return _mapResult(result, owner);
+      final mapped = _mapResult(result, owner);
+      await _reportSettled(
+        event,
+        owner,
+        mapped,
+        serverData: result.valueOrNull,
+      );
+      return mapped;
     }
 
     final result = await _dutyStatusBackend.submitLegacyDutyStatusEvent(

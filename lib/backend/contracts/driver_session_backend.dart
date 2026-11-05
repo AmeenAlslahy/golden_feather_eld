@@ -8,18 +8,26 @@ abstract interface class DriverSessionBackend {
   // TODO(P2): replace with DriverSession
   Future<Result<RawJson>> getActiveSession(DriverId driverId);
 
-  /// GET /api/drivers
+  /// GET /eld/sessions/co-drivers
   Future<Result<List<dynamic>>> getAvailableDrivers();
 
   /// GET /eld/sessions/co-driver
   Future<Result<RawJson>> getCurrentCoDriver();
 
-  /// POST /eld/hardware/connect
+  /// POST /eld/sessions/connect
+  ///
+  /// لا توجد Query Parameters؛ كل الحقول تُرسل في جسم الطلب:
+  /// `driverId`, `coDriverId`, `deviceId`, `manualMode`, `manualModeEnabled`.
   // TODO(P2): replace with DriverSession
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   });
+
+  /// POST /eld/sessions/disconnect
+  Future<Result<RawJson>> disconnect();
 
   /// POST /eld/sessions/primary-driver/switch
   Future<Result<void>> switchPrimaryDriver({

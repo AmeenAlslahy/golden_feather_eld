@@ -19,6 +19,11 @@ abstract class TrackingRepository {
   /// طلب تحديث فوري للموقع
   Future<Either<Failure, LocationEntity>> requestPosition({String? alarm});
 
+  /// آخر موقع معروف من النظام — قراءة فقط بلا تخزين أو رفع.
+  ///
+  /// يعيد `Right(null)` إذا لم يوجد قفل حديث؛ لا يُعدّ غيابه فشلاً.
+  Future<Either<Failure, LocationEntity?>> getLastKnownPosition();
+
   /// الحصول على سجلات التتبع
   Future<Either<Failure, List<TrackingLogEntity>>> getLogs();
 

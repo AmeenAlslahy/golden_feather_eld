@@ -13,7 +13,6 @@ import '../../../domain/entities/log_readiness.dart';
 import '../../pages/edit_log_page.dart';
 import '../../providers/certify_log_provider.dart';
 import '../../providers/log_draft_signature_provider.dart';
-import 'pending_carrier_edits_section.dart';
 
 class CertifyTab extends ConsumerStatefulWidget {
   final DailyLog selectedLog;
@@ -311,15 +310,6 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
             label: Text(context.loc.addButton),
           ),
           const SizedBox(height: AppSpacing.xl),
-          PendingCarrierEditsSection(
-            edits: readinessData.pendingCarrierEdits,
-            isBusy: isLoading,
-            onRespond: (editId, response) => notifier.respondToCarrierEdit(
-              editId: editId,
-              response: response,
-            ),
-            showWarningHeader: false,
-          ),
           AppButton(
             label: context.loc.clearSignature,
             type: EldButtonType.secondary,
@@ -365,15 +355,6 @@ class _CertifyTabState extends ConsumerState<CertifyTab> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            PendingCarrierEditsSection(
-              edits: readinessData.pendingCarrierEdits,
-              isBusy: isLoading,
-              onRespond: (editId, response) => notifier.respondToCarrierEdit(
-                editId: editId,
-                response: response,
-              ),
-              showWarningHeader: true,
-            ),
             if (!widget.selectedLog.isFormComplete)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),

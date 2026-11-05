@@ -35,6 +35,10 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    androidResources {
+        noCompress += listOf("bin")
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.goldenfeather.golden_feather_eld"
@@ -85,4 +89,10 @@ dependencies {
 
     // Firebase Cloud Messaging
     implementation("com.google.firebase:firebase-messaging")
+
+    // Unit Testing for Decision 2 (P1)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("org.mockito:mockito-core:5.14.2")
 }

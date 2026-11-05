@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../inspection/domain/inspection_transfer.dart';
@@ -19,8 +20,8 @@ class InfoPacketPage extends ConsumerWidget {
     final loc = context.loc;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.infoPacket, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: loc.infoPacket,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),

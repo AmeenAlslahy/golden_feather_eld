@@ -7,6 +7,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_date_paginator.dart';
 import '../../../../core/widgets/eld_events_table.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -156,7 +157,7 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         leading: const BackButton(),
         title: Text(loc.inspectionPreview, style: context.styles.appBarTitle),
         actions: [

@@ -10,7 +10,7 @@
 
 ### Executive Summary
 
-This addendum provides an exhaustive, evidence-based reconciliation of the Golden Feather ELD Driver Interaction, Navigation, and Error Message Audit. Every technical assertion, route path, validator limit, and error string has been audited directly against the active Dart source files, localization resource bundles (`.arb`), and targeted test execution logs.
+This addendum provides a comprehensive, evidence-based reconciliation of the Golden Feather ELD Driver Interaction, Navigation, and Error Message Audit. Every technical assertion, route path, validator limit, and error string has been audited directly against the active Dart source files, localization resource bundles (`.arb`), and targeted test execution logs.
 
 All audit findings strictly comply with the **Driver App Scope Rule**: functionality is evaluated solely from the authenticated driver's operational view and actions. Technical assertions, test limitations, and regulatory citations are rigorously separated and demarcated.
 
@@ -22,7 +22,9 @@ All audit findings strictly comply with the **Driver App Scope Rule**: functiona
 3. [Trailer and Shipping Document Limits Contradiction Resolution](#3-trailer-and-shipping-document-limits-contradiction-resolution)
 4. [Trace of errBusinessRuleViolation and certifyNotConfirmed](#4-trace-of-errbusinessruleviolation-and-certifynotconfirmed)
 5. [Message Catalog Corrections & Completeness Declaration](#5-message-catalog-corrections--completeness-declaration)
-6. [Offline Sync Guarantees vs. Generic Server Errors](#6-offline-sync-guarantees-vs-generic-server-errors)
+6. [Offline Sync Enqueue Calls vs. Generic Server Errors](#6-offline-sync-enqueue-calls-vs-generic-server-errors)
+   - 6.1 [Flows with Offline Enqueue Calls (`SQLiteOfflineQueue`) (Round 1 Claim Superseded)](#61-flows-with-offline-enqueue-calls-sqliteofflinequeue)
+   - 6.2 [Flows WITHOUT Offline Queuing (Immediate Server Failure)](#62-flows-without-offline-queuing-immediate-server-failure)
 7. [Bounded Test Execution Results](#7-bounded-test-execution-results)
 8. [Imperative Navigation & SelectVehiclePage Lifecycle UX](#8-imperative-navigation--selectvehiclepage-lifecycle-ux)
 9. [Reclassification of Audit Evidence Confidence](#9-reclassification-of-audit-evidence-confidence)
@@ -94,9 +96,20 @@ state = state.copyWith(
 4. The driver is transitioned immediately and successfully to the Home dashboard (`/home`).
 5. **Test Outcome**: The dedicated cancellation and fallback test (`test/unit/features/connection/eld_connection_cancellation_test.dart`) completed with **Exit Code 0** (all 8 tests passed).
 
-#### 1.5 Verification Status
-- **Test Runner Verification**: Confirmed as a test-environment platform channel limitation that does not impede control flow.
-- **Android Physical Runtime**: **UNVERIFIED on Android device runtime**. Execution on physical Android hardware with native plugins compiled remains to be validated.
+#### 1.5 Verification Status & Platform Channel Demarcation
+- **Test Runner Verification**: Confirmed as a test-environment platform channel limitation that does not impede control flow (swallowed by `catch (_) {}` guard).
+- **Physical Device Runtime Demarcation**:
+  - `CONN-05` ("Switch Vehicle Button") is an in-app navigation button pushing `AppRoutes.selectVehicle`; it has **zero hardware/platform channel interaction** and is classified as `unit/widget-test confirmed`.
+  - The actual interaction triggering Traccar SDK initialization is `CONN-04` ("Continue Disconnected Button") via `EldConnectionNotifier._activateLocalSessionTracking()`.
+  - Exactly **7 interactions** invoke BLE, GPS, Traccar, or native OS permission channels that remain unverified on a physical Android device:
+    1. `CONN-04`: Disconnected mode local tracking activation (`com.goldenfeather.eld/traccar`).
+    2. `CONN-01`: BLE device scan start (`flutter_blue_plus`).
+    3. `CONN-02`: BLE GATT connect & ELD dongle hardware handshake (`flutter_blue_plus`).
+    4. `CONN-03`: In-flight BLE connect cancellation & socket disconnect (`flutter_blue_plus`).
+    5. `PERM-01`: Native Bluetooth permission request dialog (`flutter.baseflow.com/permissions/methods`).
+    6. `PERM-02`: Native Location permission request dialog (`flutter.baseflow.com/permissions/methods`).
+    7. `PERM-04`: Native application settings launch intent (`openAppSettings()`).
+  - These 7 rows are classified as **`unverified on physical Android device`**.
 
 ---
 
@@ -134,7 +147,8 @@ When a motor carrier proposes edits to a driver's daily log (e.g., duty status c
 
 #### 2.3 Separation of Source Facts from Regulatory Conclusions
 - **Source Facts**: The application client strictly requires driver acceptance, removes the pending edit item, refreshes readiness, displays a localized re-certification prompt, and requires an interactive signature submission to achieve `isCertified == true`.
-- **Regulatory Interpretation (49 CFR § 395.30(d))**: Under FMCSA technical specifications, any carrier-proposed edit accepted by a driver constitutes an alteration of the official Record of Duty Status (RODS) and legally mandates re-certification by the driver under penalty of law.
+- **Regulatory Mapping & Compliance Hypotheses (49 CFR § 395.30(d))**: *(Superseded Round 1 statement: Round 1 asserted definitive legal mandates 'under penalty of law'. In Round 2, this is formally demarcated as an engineering compliance mapping rather than a legal determination).*  
+  The application client behavior (clearing the certified flag and presenting the signature pad upon accepting a carrier edit) is designed to align with 49 CFR § 395.30(d) workflows. However, legal determinations of compliance are hypotheses subject to formal review and sign-off by a qualified ELD compliance specialist or transportation attorney.
 - **Review Notice**: *Marked for qualified review by an ELD compliance specialist or safety director.*
 
 ---
@@ -216,23 +230,28 @@ Several entries in the initial catalog mistakenly listed camelCase localization 
 | **ERR-25** | [send_logs_page.dart:86](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/inspection/presentation/pages/send_logs_page.dart#L86) | `inspectionCommentErrorLength` | The comment must be 4 to 60 characters. | يجب أن يكون التعليق بين 4 و60 حرفاً. |
 
 #### 5.2 Completeness Declaration
-- **Catalog Status**: **Explicitly Labeled as Partial (27 records, ERR-01 to ERR-27)**.
-- **Scope**: The 27 cataloged messages focus on critical user-facing failure, validation, and recovery pathways across core driver flows (Auth, Connection, Duty Status, Daily Logs, DVIR, Inspection, Rules). It is not an exhaustive enumeration of all 1,028 keys in `app_en.arb`.
+- **Catalog Status**: **Explicitly Labeled as Partial (28 records, ERR-01 to ERR-28)**.
+- **Scope**: The 28 cataloged messages focus on critical user-facing failure, validation, and recovery pathways across core driver flows (Auth, Connection, Duty Status, Daily Logs, DVIR, Inspection, Rules). It is not an exhaustive enumeration of all 1,028 keys in `app_en.arb`.
 - **Driver-Visible Non-Error Messages**: A separate catalog, [user_message_catalog.csv](file:///d:/Flutter%20projects/golden_feather_eld/user_message_catalog.csv), has been published containing 15 driver-visible success, info, dialog prompt, and empty state strings.
 
 ---
 
-### 6. Offline Sync Guarantees vs. Generic Server Errors
+### 6. Offline Sync Enqueue Calls vs. Generic Server Errors
 
-The audit originally implied that any server error triggers automatic offline queue persistence. Code analysis reveals that local SQLite offline persistence is strictly flow-specific:
+The audit originally implied that any server error triggers automatic offline queue persistence. Code analysis reveals that local SQLite offline queuing is strictly flow-specific:
 
-#### 6.1 Flows with Guaranteed Offline Persistence (`SQLiteOfflineQueue`)
-The following actions write directly to the local SQLite queue (`offline_queue`) and persist across app restarts and network loss:
+#### 6.1 Flows with Offline Enqueue Calls (`SQLiteOfflineQueue`)
+*(Superseded Round 1 Claim: Round 1 previously asserted "guaranteed" offline persistence across restarts and network loss for these flows. In Round 2, this claim is reconciled to distinguish between invoking `_offlineQueue.enqueue(...)` in repository code and having automated test-verified durable persistence and recovery across restarts and concurrency races).*
+
+The following actions invoke `_offlineQueue.enqueue(...)` or `enqueueIfAbsent(...)` in repository code to attempt local SQLite serialization:
 1. **Duty Status Changes**: `DutyStatusTracker` writes to `_offlineQueue.enqueue(...)`.
 2. **Daily Log Form Edits**: Trailers, shipping documents, and carrier remarks write to `_offlineQueue.enqueue(...)` ([log_repository_impl.dart:320](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/data/repositories/log_repository_impl.dart#L320)).
 3. **Log Certification**: Digital signatures and legal certification statements call `_offlineQueue.enqueueIfAbsent(...)` ([log_repository_impl.dart:768](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/data/repositories/log_repository_impl.dart#L768)).
 4. **Manual Log Event Edits / Additions**: Calls `_offlineQueue.enqueue(...)` ([log_repository_impl.dart:247](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/data/repositories/log_repository_impl.dart#L247)).
 5. **DVIR Inspections & Reviews**: Pre-trip/post-trip reports and 49 CFR § 396.13 driver reviews call `_offlineQueue.enqueue(...)` ([dvir_repository_impl.dart:498, :569](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/dvir/data/repositories/dvir_repository_impl.dart#L498)).
+
+**Verification Caveat (Unverified Durable Persistence)**:  
+While the source code paths dispatch enqueue calls, automated test execution revealed failures in `test/features/sync/queue_ownership_storage_test.dart` (atomic insert races, restart deduplication) and `test/features/logs/data/sync/log_sync_outcome_handler_test.dart` (dead-lettering mark). Consequently, durable recovery under concurrency races, edge-case restarts, and sync-failure dead-lettering remains **unverified by test suite proof** (see §11.5).
 
 #### 6.2 Flows WITHOUT Offline Queuing (Immediate Server Failure)
 The following actions require live network connectivity and fail immediately if the server returns an error or is unreachable:
@@ -256,7 +275,7 @@ The following targeted tests were executed on the test runner with bounded timeo
 | `test/features/logs/presentation/pages/trailers_page_test.dart` | `flutter test test/features/logs/presentation/pages/trailers_page_test.dart` | 2.6s | 1 | Completed | 5 passed, 2 failed: Widget tests looked for widget with text `"ADD"` (all caps), but button renders localized string `"Add"` (`context.loc.addButton`). |
 | `test/features/sync/queue_ownership_storage_test.dart` | `flutter test test/features/sync/queue_ownership_storage_test.dart` | 8.2s | 1 | Completed | 11 passed, 3 failed: `enqueueIfAbsent is atomic` (length 8 vs 1), `dedupe survives restart` (true vs false), `v5→v6 upgrade` (true vs false). |
 | `test/unit/features/connection/eld_connection_cancellation_test.dart` | `flutter test --timeout 10s test/unit/features/connection/eld_connection_cancellation_test.dart` | 3.1s | 0 | Completed | **All 8 tests passed**. Captured `MissingPluginException` for traccar and permissions channels, handled cleanly by `_activateLocalSessionTracking()`. |
-| `test/features/sync/dispatch_ownership_test.dart` | `flutter test --timeout 15s test/features/sync/dispatch_ownership_test.dart` | >120s | Cancelled | Cancelled | Tests T1–T8 passed. Test `T10: certified=false keeps the request for retry, never success` entered an infinite retry loop / uncompleted future. Terminated via `manage_task(kill)`. |
+| `test/features/sync/dispatch_ownership_test.dart` | `flutter test --timeout 15s test/features/sync/dispatch_ownership_test.dart` | >120s | Cancelled | Cancelled | **Observed Test Behavior**: Tests T1–T8 passed. Test `T10: certified=false keeps the request for retry, never success` did not complete within the bounded execution window (>120s), and the test runner process did not terminate. Terminated externally via `manage_task(kill)`.<br>**Hypothesized Causes (Unverified)**: Background asynchronous streams, pending microtasks, or uncancelled timers may prevent process termination despite test-level timeouts. |
 
 *Note*: In adherence to the strict audit guidelines, no failing test is classified as "pre-existing" due to the absence of a verified historical baseline in this execution session.
 
@@ -379,6 +398,45 @@ An audit of `SuggestedEventsPage` versus `CertifyTab` resolves the structural re
      - AR: *"تم قبول تعديل الناقل. أعد التصديق."* ([app_ar.arb:715](file:///d:/Flutter%20projects/golden_feather_eld/lib/l10n/app_ar.arb#L715))
    - Resulting Certification State: Log becomes `isCertified == false` / `readinessStatus: 'READY'`, requiring driver digital signature submission.
 
+3. **Carrier-Proposed Edit Accept/Reject End-to-End Serialization & Casing Forensics**:
+   - Source Code Trace:
+     1. [carrier_edit_card.dart:43, :53](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/widgets/log_detail_tabs/carrier_edit_card.dart#L43): Passes enum values `CarrierEditResponse.reject` and `CarrierEditResponse.accept`.
+     2. [certify_log_provider.dart:99–107](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/providers/certify_log_provider.dart#L99-L107): Defines the enum with uppercase wire values:
+        ```dart
+        enum CarrierEditResponse {
+          accept('ACCEPT'),
+          reject('REJECT');
+          final String apiValue;
+        }
+        ```
+     3. [certify_log_provider.dart:246](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/providers/certify_log_provider.dart#L246): Passes `action: response.apiValue` (`'ACCEPT'` or `'REJECT'`).
+     4. [log_repository_impl.dart:847](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/data/repositories/log_repository_impl.dart#L847): Forwards `action: action` directly to backend adapter without transformation.
+     5. [eld_daily_logs_backend.dart:157–161](file:///d:/Flutter%20projects/golden_feather_eld/lib/backend/adapters/eld_engine/sub/eld_daily_logs_backend.dart#L157-L161):
+        ```dart
+        data: {
+          'editId': editId.value,
+          'action': action,
+          if (driverNotes != null) 'driverNotes': driverNotes,
+        }
+        ```
+   - **Wire Value & Payload Casing Resolution**:
+     - `action`: **CONFIRMED UPPERCASE**. The wire value transmitted over HTTP is `"ACCEPT"` or `"REJECT"`. Mock assertions expecting uppercase match the exact serialized wire value.
+     - `editId`: **CONFIRMED ALWAYS SENT** as a String in both the URL path (`/carrier-edits/{editId}/respond`) and the JSON request body map (`'editId': editId.value`).
+     - `driverNotes`: Controlled by Dart collection-if (`if (driverNotes != null)`). When `driverNotes` is null (the invariant UI state for `CarrierEditCard`), the key is **OMITTED ENTIRELY** from the serialized JSON payload. It is **NOT** transmitted as `null`.
+   - **Source Evidence vs. Live Wire Capture Demarcation**:
+     - The serialized payload structure (`'action': 'ACCEPT'` / `'action': 'REJECT'`, `'editId': editId.value`, and the omission of `'driverNotes'` when null) is **definitively source-traced** from the active Dart client implementation in [eld_daily_logs_backend.dart:157–161](file:///d:/Flutter%20projects/golden_feather_eld/lib/backend/adapters/eld_engine/sub/eld_daily_logs_backend.dart#L157-L161) and [certify_log_provider.dart:99–107](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/providers/certify_log_provider.dart#L99-L107).
+     - **No live HTTP wire capture or network proxy interception test exists** in the repository test suite for this endpoint.
+     - The verification is established via source code tracing of the outgoing `data` map passed into `_apiClient.post()` rather than a byte-stream wire packet capture.
+   - **Driver Rejection Reason Handling**:
+     - Earlier audit drafts hypothesized a rejection confirmation dialog prompting the driver for notes/reasons.
+     - Source code inspection of `CarrierEditCard` ([carrier_edit_card.dart:38–44](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/widgets/log_detail_tabs/carrier_edit_card.dart#L38-L44)) confirms that tapping "REJECT" immediately dispatches `onRespond(CarrierEditResponse.reject)`.
+     - No dialog, modal, or text input exists in the UI. Consequently, `driverNotes` is never collected and is omitted from the backend payload.
+     - Driver rejection reason annotations under FMCSA technical specifications are recorded as an unresolved UI feature gap.
+   - Local State Changes: Removes edit from `pendingCarrierEdits`, calls `checkReadiness()`.
+   - Exact Localized Feedback:
+     - Acceptance: *"Carrier edit accepted. Re-certify the log."* (`carrierEditAcceptedReCertifyThe` in [app_en.arb:715](file:///d:/Flutter%20projects/golden_feather_eld/lib/l10n/app_en.arb#L715))
+     - Rejection: *"Carrier edit rejected."* (`carrierEditRejected` in [app_en.arb:716](file:///d:/Flutter%20projects/golden_feather_eld/lib/l10n/app_en.arb#L716))
+
 #### 11.3 Limit Specifications & Test Assertion Diagnostics
 1. **Trailer Limits**:
    - Validator: `FormListRules(maxCount: 5, labelMaxLength: 50)` ([trailers_provider.dart:14](file:///d:/Flutter%20projects/golden_feather_eld/lib/features/logs/presentation/providers/trailers_provider.dart#L14)).
@@ -419,8 +477,8 @@ An audit of `SuggestedEventsPage` versus `CertifyTab` resolves the structural re
      ```
    - Discrepancy Resolved: `invalidTime` is an internal Dart enum code (`EditLogErrorCode.invalidTime`). It does **not** exist in ARB. The function `editLogErrorUserMessage` maps it to `loc.invalidValue` (*"Invalid value"* / *"قيمة غير صالحة"*). If the selected time is in the future, it throws `EditLogErrorCode.futureTime`, which maps to `loc.eventCannotBeInFuture` (*"Duty status event time cannot be in the future."* / *"لا يمكن تسجيل وقت حدث الحالة في المستقبل."*).
 3. **Catalog Data Counts & Completeness**:
-   - `error_message_catalog.csv`: Contains **exactly 27 data records** (`ERR-01` to `ERR-27`) excluding header. No duplicates exist. Retained as **Partial (Errors & Form Validation Only)**.
-   - `user_message_catalog.csv`: Created as a dedicated catalog containing **15 driver-visible messages** across non-error interaction categories (Success feedback, Information banners, Dialogs & prompts, Empty states, Offline feedback).
+   - `error_message_catalog.csv`: Contains **exactly 28 data records** (`ERR-01` to `ERR-28`) excluding header. No duplicates exist. Reconciled so invalid time (`ERR-23`, `invalidValue`) and future time (`ERR-28`, `eventCannotBeInFuture`) have distinct, accurate triggers and messages. Retained as **Partial (Errors & Form Validation Only)**.
+   - `user_message_catalog.csv`: Created as a dedicated catalog containing **15 driver-visible messages** across non-error interaction categories (Success feedback, Information banners, Dialogs & prompts, Empty states, Offline feedback). `MSG-01` (`vehicleSelectedConnect`) and `MSG-07` (`serverAcceptedDisconnected`) reconciled to exact ARB text.
 
 #### 11.5 Offline Queue and Durable Persistence Verification
 1. **Source Code Call vs. Verified Durable Persistence**:
@@ -440,18 +498,22 @@ An audit of `SuggestedEventsPage` versus `CertifyTab` resolves the structural re
    - `ERR-07`'s suggested replacement was updated to remove unconditional promises of local saving.
 
 #### 11.6 Test Coverage and Execution Diagnostics
-1. **Taxonomy of Coverage Status**:
-   - To prevent conflating test existence with test verification, every flow in `flow_test_coverage_matrix.csv` is classified into:
-     - `direct test passed`
-     - `direct test failed`
-     - `test incomplete/cancelled/timed out`
-     - `related test only`
-     - `not run or status unknown`
-2. **`dispatch_ownership_test.dart` Timeout Discrepancy**:
-   - The test was launched with command `flutter test --timeout 15s test/features/sync/dispatch_ownership_test.dart`.
-   - Despite the `--timeout 15s` parameter, the test run exceeded 120 seconds without completing test `T10: certified=false keeps the request for retry, never success`.
-   - Technical Cause: In Flutter's test runner, the `--timeout` flag applies per-test timeout inside the test framework; however, if asynchronous streams, background isolate tasks, or uncancelled timers remain active, the process remains open and deadlocks.
-   - Status: Cancelled manually via `manage_task(kill)`. Flows dependent on this test (`CODR-01`, `CODR-02`) are marked **`test incomplete/cancelled/timed out`**.
+1. **Taxonomy of Coverage Status & LOG-15 Direct Verification**:
+   - To prevent conflating test existence with test verification, every flow in `flow_test_coverage_matrix.csv` is strictly classified.
+   - **`LOG-15` Direct Passing Verification**:
+     - Test File: [certify_tab_test.dart:182–284](file:///d:/Flutter%20projects/golden_feather_eld/test/features/logs/presentation/widgets/log_detail_tabs/certify_tab_test.dart#L182-L284).
+     - Exact Test Name: `'carrier-proposed edits are shown and ACCEPT hits the respond API'`.
+     - Direct Assertions Executed:
+       1. Taps button: `await tester.tap(find.widgetWithText(AppButton, 'ACCEPT'));`
+       2. Verifies API call: `verify(() => logRepository.respondToCarrierEdit(logId: const DailyLogId(123), editId: 'edit-77', action: 'ACCEPT', driverNotes: any(named: 'driverNotes'))).called(1);`
+       3. Verifies readiness re-fetch: `expect(readinessCalls, 2);`
+       4. Verifies card removal: `expect(find.widgetWithText(AppButton, 'ACCEPT'), findsNothing);`
+       5. Verifies feedback banner: `expect(find.text('Carrier edit accepted. Re-certify the log.'), findsOneWidget);`
+     - Test Execution Outcome: **PASSED** (all 3 tests passed in 2.2s, exit code 0). Retains `direct test passed`.
+2. **`dispatch_ownership_test.dart` Execution Non-Completion (T10)**:
+   - **Observed Test Behavior**: The test suite was launched with command `flutter test --timeout 15s test/features/sync/dispatch_ownership_test.dart`. Tests T1–T8 completed and passed. Test `T10: certified=false keeps the request for retry, never success` remained uncompleted, and the test process did not terminate within >120 seconds. Terminated externally via `manage_task(kill)`.
+   - **Hypothesized Cause (Unverified)**: In Flutter's test runner, `--timeout` governs the test body lifecycle, but unclosed streams, pending event loop microtasks, or active timers can prevent the isolate/process from terminating gracefully. The exact root cause in production vs test harness remains unverified.
+   - **Status & Classification**: Flows dependent on this test (`CODR-01`, `CODR-02`) are classified as **`test incomplete/cancelled/timed out`**.
 3. **Design-System Guard Separation**:
    - `test/architecture/design_system_guard_test.dart` failed (17 token violations) in 5.6s. This failure is an architectural token enforcement check and is strictly separated from driver functional/behavioral flows.
 
@@ -464,7 +526,7 @@ All regulatory references across the documentation and CSV matrices have been re
 
 ### 12. Change Log & Deliverables Verification
 
-#### 12.1 Detailed Change Log (Rounds 1 & 2)
+#### 12.1 Detailed Change Log (Rounds 1, 2 & 2.1)
 
 | Date | Target File | Nature of Change | Summary of Revisions |
 | :--- | :--- | :--- | :--- |
@@ -477,17 +539,22 @@ All regulatory references across the documentation and CSV matrices have been re
 | **2026-11-03** | `user_message_catalog.csv` | New Deliverable | Created comprehensive 15-record catalog for driver-visible success, info, dialog prompt, and empty state messages. |
 | **2026-11-03** | `error_message_catalog.csv` | Catalog Integrity | Verified exactly 27 data rows (`ERR-01` to `ERR-27`), 0 duplicates. Qualified ERR-22 regulatory phrasing. Explicitly labeled as Partial. |
 | **2026-11-03** | `interaction_audit_reconciliation.md` | Addendum Update | Added Round 2 comprehensive section covering Sections 11–12 and Change Log. Synced between root and Artifacts directory. |
+| **2026-11-03** | `interaction_inventory.csv` | Round 2.1 Consistency Patch | Reclassified `SUGG-02`/`SUGG-03` as non-interactions. Assigned success feedback to `AUTH-09` instead of `AUTH-08`. Reconciled `VEH-01` (`vehicleSelectedConnect`) and `CONN-04` (`serverAcceptedDisconnected`) to exact ARB text. Documented carrier rejection payload and null driver notes for `LOG-16`. Updated `TRLR-02`/`SHIP-02` to `source-traced (test failed)`. |
+| **2026-11-03** | `flow_test_coverage_matrix.csv` | Round 2.1 Consistency Patch | Replaced fictional `SUGG-02`/`SUGG-03` with `SUGG-01`, `LOG-15`, and `LOG-16` in `FLOW-10` (expanded matrix to 57 rows). Reclassified DTO/provider tests (`ACCT-02`, `DRAW-01`, `DRAW-03`) to `related test only`. |
+| **2026-11-03** | `error_message_catalog.csv` | Round 2.1 Consistency Patch | Added `ERR-28` (`eventCannotBeInFuture`) to separate future time from invalid time (`ERR-23`, `invalidValue`). Total catalog count updated to 28 records. |
+| **2026-11-03** | `user_message_catalog.csv` | Round 2.1 Consistency Patch | Updated `MSG-01` and `MSG-07` to exact ARB text. Updated `MSG-06` source line and inline status. |
+| **2026-11-03** | `interaction_audit_reconciliation.md` | Round 2.1 Consistency Patch | Reconciled §2.3 legal conclusions; reconciled §6.1 to distinguish enqueue calls from unverified persistence; separated observed T10 behavior from hypothesized cause; fixed Markdown code fences; marked superseded Round 1 statements. |
 
 #### 12.2 Deliverables Verification Table
 
 | File Name | Location | Header Rows | Data Rows | Unique IDs | First ID | Last ID | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`interaction_inventory.csv`** | Root & Artifacts | 1 | 124 | 124 | `AUTH-01` | `DRAW-04` | Verified & Content-Equivalent |
+| **`interaction_inventory.csv`** | Root & Artifacts | 1 | 124 (122 + 2) | 124 | `AUTH-01` | `DRAW-04` | Verified & Content-Equivalent (122 actionable interactions + 2 reclassified reference records; 90 unit/widget confirmed, 27 source-traced, 7 unverified on physical Android device) |
 | **`navigation_transition_matrix.csv`** | Root & Artifacts | 1 | 47 | 47 | `NAV-01` | `NAV-47` | Verified & Content-Equivalent |
-| **`error_message_catalog.csv`** | Root & Artifacts | 1 | 27 | 27 | `ERR-01` | `ERR-27` | Verified & Content-Equivalent (Partial) |
-| **`user_message_catalog.csv`** | Root & Artifacts | 1 | 15 | 15 | `MSG-01` | `MSG-15` | Verified & Content-Equivalent |
-| **`flow_test_coverage_matrix.csv`** | Root & Artifacts | 1 | 56 | 18 (Flows) | `FLOW-01` | `FLOW-18` | Verified & Content-Equivalent |
-| **`interaction_audit_reconciliation.md`** | Root & Artifacts | N/A | N/A | N/A | N/A | N/A | Verified & Content-Equivalent |
+| **`error_message_catalog.csv`** | Root & Artifacts | 1 | 28 | 28 | `ERR-01` | `ERR-28` | Verified & Content-Equivalent (Partial: 28 critical error/validation paths) |
+| **`user_message_catalog.csv`** | Root & Artifacts | 1 | 15 | 15 | `MSG-01` | `MSG-15` | Verified & Content-Equivalent (Exact ARB & inline locale strings) |
+| **`flow_test_coverage_matrix.csv`** | Root & Artifacts | 1 | 57 | 18 (Flows) | `FLOW-01` | `FLOW-18` | Verified & Content-Equivalent (40 passed, 2 failed, 13 related-only, 2 timed out) |
+| **`interaction_audit_reconciliation.md`** | Root & Artifacts | N/A | N/A | N/A | N/A | N/A | Verified & Content-Equivalent (Bitwise identical between root and Artifacts) |
 
 #### 12.3 Explicit Confirmation of Codebase Invariance
 - Production Dart Code under `lib/`: **0 files modified** (100% untouched).

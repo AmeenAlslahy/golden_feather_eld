@@ -82,5 +82,31 @@ void main() {
       expect(dto.editableFields, contains('shortHaul16HourException'));
       expect(dto.editableFields.contains('cargoType'), isFalse);
     });
+
+    test('fromJson parses OAS 3.0 Swagger limits format correctly', () {
+      final json = {
+        'driverId': 101,
+        'limits': {
+          'drivingLimitHours': 11,
+          'dutyLimitHours': 14,
+          'restBreakMinutes': 30,
+          'restBreakTriggerHours': 8,
+          'cycleDutyHours': 70,
+          'cycleDays': 8,
+          'restartHours': 34
+        }
+      };
+
+      final dto = RulesScreenDto.fromJson(json);
+
+      expect(dto.driverId, '101');
+      expect(dto.limits.cycleHours, 70);
+      expect(dto.limits.cycleDays, 8);
+      expect(dto.limits.maxDrivingHours, 11);
+      expect(dto.limits.maxShiftHours, 14);
+      expect(dto.limits.mandatoryRestHours, 34);
+      expect(dto.limits.restBreakMinutes, 30);
+      expect(dto.limits.restBreakTriggerHours, 8);
+    });
   });
 }

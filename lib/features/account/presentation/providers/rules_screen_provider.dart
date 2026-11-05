@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/app_error.dart';
 import '../../../../core/utils/provider_cache.dart';
-import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../application/models/rules_screen_model.dart';
 import '../../data/providers/rules_screen_providers.dart';
@@ -16,12 +15,10 @@ final rulesScreenProvider = FutureProvider.autoDispose<RulesScreenModel>((
   if (user == null) {
     throw const SessionExpiredError();
   }
-  final parsedId = int.tryParse(user.id);
   final repository = ref.watch(rulesScreenRepositoryProvider);
 
-  final result = await repository.getRulesScreen(
-    driverId: parsedId == null ? null : DriverId(parsedId),
-  );
+  // الخادم يستخرج هوية السائق تلقائياً من توكن المصادقة (Bearer token) على المسار /eld/driver-rules
+  final result = await repository.getRulesScreen();
 
   return result.fold((failure) => throw failure, (model) => model);
 });

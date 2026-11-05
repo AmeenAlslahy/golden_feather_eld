@@ -629,6 +629,7 @@
   "cannotSaveDriverSessionNotFound": "No se puede guardar: sesión de conductor no encontrada.",
   "automaticDrivingTimeCannotBeShortened": "El tiempo de conducción automático no puede ser acortado o eliminado.",
   "eventCannotBeInFuture": "La hora del evento de estado no puede estar en el futuro.",
+  "eventTimeOverlap": "El rango de tiempo seleccionado entra en conflicto con otro evento de este día.",
   "eventSavedSuccessfully": "Evento guardado con éxito",
   "reCertificationRequiredEditsWereMade": "Recertificación requerida: Las ediciones fueron hechas después de su última firma.",
   "typeHere": "Tipo aquí",

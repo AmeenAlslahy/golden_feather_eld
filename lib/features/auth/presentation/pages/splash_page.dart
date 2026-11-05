@@ -61,7 +61,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       if (!locationGranted || !bluetoothGranted) {
         AppLogger.info('SplashPage: Redirecting to permissions');
         StartupProfiler.mark('splash:decision:permissions');
-        context.goNamed('permissions');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.goNamed('permissions');
+        });
         return;
       }
     } catch (e) {
@@ -72,7 +74,17 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
     StartupProfiler.mark('splash:auth-check:start (incl. GET /session when online)');
     AppLogger.info('SplashPage: Checking auth status...');
-    await ref.read(authStateProvider.notifier).checkAuthStatus();
+    // أي استثناء هنا كان يقطع `_checkFirstLaunch` قبل `goNamed` فيبقى
+    // المستخدم على شاشة البداية بلا نهاية. نكمل دائماً بالحالة المتاحة.
+    try {
+      await ref.read(authStateProvider.notifier).checkAuthStatus();
+    } catch (e, stack) {
+      AppLogger.error(
+        'SplashPage: auth check failed — continuing with current state',
+        e,
+        stack,
+      );
+    }
     StartupProfiler.mark('splash:auth-check:end');
 
     if (!mounted) return;
@@ -83,7 +95,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     StartupProfiler.mark(
       'splash:decision:${isLoggedIn ? 'connection' : 'login'}',
     );
-    context.goNamed(isLoggedIn ? 'connection' : 'login');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.goNamed(isLoggedIn ? 'connection' : 'login');
+      }
+    });
   }
 
   @override

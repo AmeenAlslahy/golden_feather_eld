@@ -26,6 +26,9 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
       text: state.customLocation,
     );
     _notesController = TextEditingController(text: state.notes);
+
+    // بذر فوري من آخر قفل نظام حديث بدل انتظار دورة GPS التالية (5 دقائق).
+    ref.read(changeStatusProvider.notifier).ensureLocation();
   }
 
   @override

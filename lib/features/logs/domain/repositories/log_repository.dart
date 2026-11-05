@@ -83,18 +83,6 @@ abstract class LogRepository {
 
   /// حالة شاشة الاعتماد (`GET /eld/daily-logs/{id}/certify`).
   Future<Either<Failure, LogCertifyState>> getCertifyState(DailyLogId logId);
-  Future<Either<Failure, bool>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required String editId,
-    required String action,
-    String? driverNotes,
-  });
-  Future<Either<Failure, bool>> reassignDriving({
-    required DailyLogId logId,
-    required int statusId,
-    required int targetCoDriverId,
-    required String annotation,
-  });
 
   /// يعتمد السجل قانونياً (`POST /eld/daily-logs/{id}/certify`).
   /// [signatureImageBase64] = صورة التوقيع المرسوم (PNG base64).

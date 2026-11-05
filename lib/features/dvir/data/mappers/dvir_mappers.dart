@@ -209,6 +209,8 @@ Map<String, dynamic>? buildDvirCreateBody({
   String? vehicleDefects,
   String? trailerDefects,
   String? clientUuid,
+  String? timeZone,
+  List<String> photos = const [],
   List<Map<String, dynamic>> catalogDefects = const [],
 }) {
   final vehicle = uniqueId.trim();
@@ -288,7 +290,9 @@ Map<String, dynamic>? buildDvirCreateBody({
     'vehicleName': vehicle,
     'inspectionType': inspectionType.toUpperCase().replaceAll('-', '_'),
     'inspectionTime': inspectionTime,
+    'timeZone': timeZone ?? DateTime.now().timeZoneName,
     if (locationText.isNotEmpty) 'location': locationText,
+    if (locationText.isNotEmpty) 'locationText': locationText,
     if (latitude != null && longitude != null) ...{
       'latitude': latitude,
       'longitude': longitude,
@@ -302,6 +306,12 @@ Map<String, dynamic>? buildDvirCreateBody({
     'signatureData': signature,
     'clientUuid': clientUuid ?? const Uuid().v4(),
     'syncStatus': 'SYNCED',
+    'photos': photos
+        .map((p) => {
+          'fileName': p.split('/').last.split(r'\').last,
+          'url': p,
+        })
+        .toList(),
     'defects': defects, // Legacy flat defects
 
     // Swagger root defect arrays

@@ -15,6 +15,7 @@ class LogEventModel extends LogEvent {
     super.automatedDriving,
     super.editable,
     super.startedOnPreviousDay,
+    super.syncStatus,
   });
 
   /// Parses the unified event wire shape (`GET /eld/daily-logs/{id}/events`:
@@ -106,10 +107,67 @@ class LogEventModel extends LogEvent {
       automatedDriving: automatedDriving,
       editable: json['editable'] is bool ? json['editable'] as bool : null,
       startedOnPreviousDay: json['startedOnPreviousDay'] == true,
+      syncStatus: parseSyncStatus(json['syncStatus']),
     );
   }
 
   static const double _kmToMiles = 0.621371;
+
+  /// حالة المزامنة كما تُحفظ في الكاش. `null` للحدث المؤكد كي لا تتضخم
+  /// لقطة الخادم بحقل محلي.
+  static String? syncStatusToWire(EventSyncStatus status) {
+    return switch (status) {
+      EventSyncStatus.none => null,
+      EventSyncStatus.pendingSync => 'PENDING_SYNC',
+      EventSyncStatus.syncFailed => 'SYNC_FAILED',
+    };
+  }
+
+  static EventSyncStatus parseSyncStatus(Object? raw) {
+    final value = raw?.toString().trim().toUpperCase();
+    return switch (value) {
+      'PENDING_SYNC' ||
+      'PENDINGSYNC' ||
+      'PENDING' => EventSyncStatus.pendingSync,
+      'SYNC_FAILED' || 'SYNCFAILED' || 'FAILED' => EventSyncStatus.syncFailed,
+      _ => EventSyncStatus.none,
+    };
+  }
+
+  /// يدمج استجابة/نسخة جديدة مع نسخة مخزّنة: الحقول الغائبة تبقى، والقيم
+  /// غير الفارغة تتغلب، والخرائط المتداخلة تُدمج بدل استبدالها.
+  ///
+  /// هذا مهم لاستجابة `PUT` التي قد تعيد `location` بلا `description` أو
+  /// تحذف حقولاً لم تتغير؛ بلا الدمج يصبح الموقع `Unknown Location`.
+  static Map<String, dynamic> mergeJson(
+    Map<String, dynamic> existing,
+    Map<String, dynamic> incoming,
+  ) {
+    final merged = <String, dynamic>{...existing};
+    for (final entry in incoming.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      final current = merged[entry.key];
+      if (current is Map && value is Map) {
+        merged[entry.key] = mergeJson(
+          Map<String, dynamic>.from(current),
+          Map<String, dynamic>.from(value),
+        );
+      } else {
+        merged[entry.key] = value;
+      }
+    }
+
+    // إذا جاءت النسخة الجديدة بالشكل المحلي (`startTime` أعلى المستوى) فلا
+    // نترك `timeRange` قديماً من لقطة سابقة يتغلب في [fromJson].
+    if (!incoming.containsKey('timeRange') &&
+        (incoming.containsKey('startTime') ||
+            incoming.containsKey('duration') ||
+            incoming.containsKey('durationSeconds'))) {
+      merged.remove('timeRange');
+    }
+    return merged;
+  }
 
   /// Parses a list of events, skipping (and logging) any malformed entry so a
   /// single bad record never hides the rest of the driver's day.
@@ -129,6 +187,7 @@ class LogEventModel extends LogEvent {
   }
 
   Map<String, dynamic> toJson() {
+    final syncStatusWire = syncStatusToWire(syncStatus);
     return {
       'id': id,
       'status': status,
@@ -137,6 +196,10 @@ class LogEventModel extends LogEvent {
       'location': location,
       'odometer': odometer,
       'engineHours': engineHours,
+      'editable': editable,
+      'automatedDriving': automatedDriving,
+      'startedOnPreviousDay': startedOnPreviousDay,
+      if (syncStatusWire != null) 'syncStatus': syncStatusWire,
     };
   }
 
@@ -153,6 +216,7 @@ class LogEventModel extends LogEvent {
       automatedDriving: entity.automatedDriving,
       editable: entity.editable,
       startedOnPreviousDay: entity.startedOnPreviousDay,
+      syncStatus: entity.syncStatus,
     );
   }
 }

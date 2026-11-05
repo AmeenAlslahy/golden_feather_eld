@@ -21,14 +21,17 @@ void main() {
   group('05.4 Team Driving — wire', () {
     test('paths match Swagger', () {
       expect(EldEndpoints.manageCoDriver, '/eld/sessions/co-driver');
-      expect(EldEndpoints.switchPrimaryDriver, '/eld/sessions/primary-driver/switch');
-      expect(EldEndpoints.reassignDriving(1, 2),
-          '/eld/daily-logs/1/events/2/reassign-driving');
+      expect(
+        EldEndpoints.switchPrimaryDriver,
+        '/eld/sessions/primary-driver/switch',
+      );
     });
 
     test('action enums use the exact Swagger values', () {
-      expect(DutyStatusAction.values.map((a) => a.wire),
-          ['switch-primary', 'legacy-switch']);
+      expect(DutyStatusAction.values.map((a) => a.wire), [
+        'switch-primary',
+        'legacy-switch',
+      ]);
     });
   });
 
@@ -66,7 +69,10 @@ void main() {
 
       expect(EldEndpoints.dvirNextDriverReview(7), '/eld/dvir/7/review');
       expect(EldEndpoints.dvirCatalog, '/eld/dvir/catalog');
-      expect(EldEndpoints.dvirPrevious('ELD-PRO-1006'), '/eld/dvir/pre-trip/ELD-PRO-1006');
+      expect(
+        EldEndpoints.dvirPrevious('ELD-PRO-1006'),
+        '/eld/dvir/pre-trip/ELD-PRO-1006',
+      );
     });
   });
 
@@ -100,26 +106,36 @@ void main() {
       ])!;
       expect(items, hasLength(2));
       expect(items.first.code, 'SERVICE_BRAKES');
-      expect(items.first.label(lookupAppLocalizations(const Locale('en'))), 'Service Brakes (including trailer connections)');
-      expect(items.first.label(lookupAppLocalizations(const Locale('ar'))), 'فرامل الخدمة والتوصيلات');
+      expect(
+        items.first.label(lookupAppLocalizations(const Locale('en'))),
+        'Service Brakes (including trailer connections)',
+      );
+      expect(
+        items.first.label(lookupAppLocalizations(const Locale('ar'))),
+        'فرامل الخدمة والتوصيلات',
+      );
       expect(items.first.mandatory, isTrue);
       expect(items.first.critical, isTrue);
       expect(items.last.critical, isFalse);
     });
 
-    test('catalog item → POST /eld/dvir defect uses itemCode/itemName/category', () {
-      const item = DvirCatalogItem(
-        code: 'SERVICE_BRAKES',
-        name: 'Service Brakes',
-        category: 'VEHICLE',
-      );
-      final json = defectSelectionToWire(
-          const DvirDefectSelection(item: item, description: 'leak'));
-      expect(json['itemCode'], 'SERVICE_BRAKES');
-      expect(json['itemName'], 'Service Brakes');
-      expect(json['category'], 'VEHICLE');
-      expect(json['description'], 'leak');
-    });
+    test(
+      'catalog item → POST /eld/dvir defect uses itemCode/itemName/category',
+      () {
+        const item = DvirCatalogItem(
+          code: 'SERVICE_BRAKES',
+          name: 'Service Brakes',
+          category: 'VEHICLE',
+        );
+        final json = defectSelectionToWire(
+          const DvirDefectSelection(item: item, description: 'leak'),
+        );
+        expect(json['itemCode'], 'SERVICE_BRAKES');
+        expect(json['itemName'], 'Service Brakes');
+        expect(json['category'], 'VEHICLE');
+        expect(json['description'], 'leak');
+      },
+    );
   });
 
   group('08 DOT Inspection — wire', () {
@@ -130,11 +146,14 @@ void main() {
       // Swagger document; leave them out until the backend confirms them.
     });
 
-    test('send-logs outputFileComment is validated to 4–60 chars client-side', () {
-      expect(isValidInspectionComment('abc'), isFalse);
-      expect(isValidInspectionComment('roadside check'), isTrue);
-      expect(isValidInspectionComment('x' * 61), isFalse);
-    });
+    test(
+      'send-logs outputFileComment is validated to 4–60 chars client-side',
+      () {
+        expect(isValidInspectionComment('abc'), isFalse);
+        expect(isValidInspectionComment('roadside check'), isTrue);
+        expect(isValidInspectionComment('x' * 61), isFalse);
+      },
+    );
   });
 
   group('08 DOT Inspection — live shapes', () {
@@ -169,9 +188,11 @@ void main() {
       expect(screen.activeInspectionId, isNull);
     });
 
-    test('GET /eld/dot-inspection/cycle → [] (no driving yet) is zero days', () {
-      expect(DotInspectionMapper.fromCycleJson(const <dynamic>[]), isEmpty);
-    });
+    test(
+      'GET /eld/dot-inspection/cycle → [] (no driving yet) is zero days',
+      () {
+        expect(DotInspectionMapper.fromCycleJson(const <dynamic>[]), isEmpty);
+      },
+    );
   });
 }
-

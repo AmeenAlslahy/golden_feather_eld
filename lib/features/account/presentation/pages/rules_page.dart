@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/eld_footer_notice.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/rules_form_provider.dart';
@@ -44,8 +45,8 @@ class RulesPage extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.rules, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: loc.rules,
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(

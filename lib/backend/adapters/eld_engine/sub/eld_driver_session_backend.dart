@@ -6,6 +6,7 @@ import '../../../contracts/contract_enums.dart';
 import '../../../contracts/driver_session_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/eld_endpoints.dart';
+import '../session_connect.dart';
 
 /// ELD Engine implementation of [DriverSessionBackend].
 class EldDriverSessionBackend implements DriverSessionBackend {
@@ -37,32 +38,51 @@ class EldDriverSessionBackend implements DriverSessionBackend {
 
   @override
   Future<Result<List<dynamic>>> getAvailableDrivers() async {
-    final response = await _apiClient.get<List<dynamic>>(EldEndpoints.drivers);
-    return response.map((res) {
-      if (res.isSuccess && res.data != null) {
-        return res.data!;
-      }
-      throw Exception(res.message ?? 'Failed to fetch drivers');
-    });
+    final response = await _apiClient.get<List<dynamic>>(
+      EldEndpoints.availableCoDrivers,
+      parser: (data) {
+        if (data is List) return data;
+        if (data is Map && data['availableCoDrivers'] is List) {
+          return (data['availableCoDrivers'] as List).cast<dynamic>();
+        }
+        if (data is Map && data['data'] is List) {
+          return (data['data'] as List).cast<dynamic>();
+        }
+        return <dynamic>[];
+      },
+    );
+    return response.mapValue((r) => r.data ?? <dynamic>[]);
   }
 
   @override
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) async {
-    final payload = <String, dynamic>{
-      if (uniqueId != null) 'deviceId': uniqueId,
-      'manualMode': disconnected,
-      'manualModeEnabled': disconnected,
-    };
+    // العقد الحيّ: لا Query Parameters، والجسم يحمل
+    // driverId / coDriverId / deviceId / manualMode / manualModeEnabled.
+    // بناء الجسم والمسار (مع بديل /start عند 404) مشترك في [EldSessionConnect].
+    final res = await EldSessionConnect.post(
+      apiClient: _apiClient,
+      payload: EldSessionConnect.payload(
+        uniqueId: uniqueId,
+        disconnected: disconnected,
+        driverId: driverId,
+        coDriverId: coDriverId,
+      ),
+      // ملاحظة: هذا القارئ المتراخي هو السلوك القديم المحفوظ عن قصد —
+      // لا يُوحّد مع قارئ مسار الأجهزة (انظر [EldSessionConnect]).
+      parser: EldSessionConnect.parseTypedMapBody,
+    );
+    return res.mapValue(EldSessionConnect.dataOrEmpty);
+  }
+
+  @override
+  Future<Result<RawJson>> disconnect() async {
     final res = await _apiClient.post<RawJson>(
-      EldEndpoints.connectSession,
-      queryParameters: {
-        if (uniqueId != null) 'uniqueId': uniqueId,
-        if (disconnected) 'disconnected': disconnected,
-      },
-      data: payload,
+      EldEndpoints.disconnectSession,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
     return res.mapValue((r) => r.data ?? <String, dynamic>{});

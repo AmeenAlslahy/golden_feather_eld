@@ -29,7 +29,14 @@ class MockDriverSessionBackend implements DriverSessionBackend {
   Future<Result<RawJson>> connect({
     String? uniqueId,
     bool disconnected = false,
+    DriverId? driverId,
+    DriverId? coDriverId,
   }) => throw UnimplementedError('MockDriverSessionBackend.connect — Phase 2');
+
+  @override
+  Future<Result<RawJson>> disconnect() => throw UnimplementedError(
+    'MockDriverSessionBackend.disconnect — Phase 2',
+  );
 
   @override
   Future<Result<void>> switchPrimaryDriver({

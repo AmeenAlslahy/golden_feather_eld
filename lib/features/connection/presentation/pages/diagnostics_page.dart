@@ -6,6 +6,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../domain/entities/hardware_alert.dart';
 import '../../presentation/providers/hardware_alerts_provider.dart';
 import '../widgets/diagnostics/active_malfunction_actions.dart';
@@ -28,8 +29,8 @@ class DiagnosticsPage extends ConsumerWidget {
     final loc = context.loc;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.diagnosticsScreen, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: loc.diagnosticsScreen,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

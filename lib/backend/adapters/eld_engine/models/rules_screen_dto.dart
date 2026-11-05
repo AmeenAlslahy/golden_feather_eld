@@ -113,23 +113,47 @@ class RulesScreenDto {
 
       ruleSource: data['ruleSource']?.toString() ?? '',
 
-      cycleRule: rules['cycleRule']?.toString() ?? '',
+      cycleRule: (rules['cycleRule'] ??
+              rules['ruleSetId'] ??
+              data['ruleSetId'] ??
+              data['cycleRule'])
+          ?.toString() ??
+          '',
 
-      cargoType: rules['cargoType']?.toString() ?? '',
+      cargoType: (rules['cargoType'] ?? data['cargoType'])?.toString() ?? '',
 
-      restart: rules['restart']?.toString() ?? '',
+      restart: (rules['restart'] ??
+              rules['restartType'] ??
+              data['restartType'] ??
+              data['restart'])
+          ?.toString() ??
+          '',
 
-      restBreak: rules['restBreak']?.toString() ?? '',
+      restBreak: (rules['restBreak'] ??
+              rules['breakPolicy'] ??
+              data['breakPolicy'] ??
+              data['restBreak'])
+          ?.toString() ??
+          '',
 
-      sixteenHourException:
-          (rules['shortHaul16HourException'] ??
-              rules['sixteenHourException']) == true,
+      sixteenHourException: (rules['sixteenHourExceptionEnabled'] ??
+              data['sixteenHourExceptionEnabled'] ??
+              rules['shortHaul16HourException'] ??
+              rules['sixteenHourException'] ??
+              data['sixteenHourException']) ==
+          true,
 
-      personalConveyance:
-          rules['personalConveyance'] == true,
+      personalConveyance: (rules['personalConveyanceAllowed'] ??
+              data['personalConveyanceAllowed'] ??
+              rules['personalConveyance'] ??
+              data['personalConveyance']) ==
+          true,
 
-      yardMoves:
-          rules['yardMoves'] == true,
+      yardMoves: (rules['yardMovesAllowed'] ??
+              data['yardMovesAllowed'] ??
+              rules['yardMoves'] ??
+              data['yardMoves']) ==
+          true,
 
       unlimitedTrailers:
           rules['unlimitedTrailers'] == true,
@@ -187,6 +211,8 @@ class RulesScreenLimitsDto {
   final int maxShiftHours;
   final int maxDrivingHours;
   final int mandatoryRestHours;
+  final int restBreakMinutes;
+  final int restBreakTriggerHours;
 
   const RulesScreenLimitsDto({
     required this.cycleHours,
@@ -194,17 +220,21 @@ class RulesScreenLimitsDto {
     required this.maxShiftHours,
     required this.maxDrivingHours,
     required this.mandatoryRestHours,
+    this.restBreakMinutes = 0,
+    this.restBreakTriggerHours = 0,
   });
 
   factory RulesScreenLimitsDto.fromJson(
     Map<String, dynamic> json,
   ) {
     return RulesScreenLimitsDto(
-      cycleHours: _parseInt(json['cycleHours']),
+      cycleHours: _parseInt(json['cycleDutyHours'] ?? json['cycleHours']),
       cycleDays: _parseInt(json['cycleDays']),
-      maxShiftHours: _parseInt(json['maxShiftHours']),
-      maxDrivingHours: _parseInt(json['maxDrivingHours']),
-      mandatoryRestHours: _parseInt(json['mandatoryRestHours']),
+      maxShiftHours: _parseInt(json['dutyLimitHours'] ?? json['maxShiftHours']),
+      maxDrivingHours: _parseInt(json['drivingLimitHours'] ?? json['maxDrivingHours']),
+      mandatoryRestHours: _parseInt(json['restartHours'] ?? json['mandatoryRestHours']),
+      restBreakMinutes: _parseInt(json['restBreakMinutes']),
+      restBreakTriggerHours: _parseInt(json['restBreakTriggerHours']),
     );
   }
 

@@ -21,6 +21,10 @@ class FakeTrackingRepository implements TrackingRepository {
       StreamController<LocationEntity>.broadcast();
   bool isServiceStarted = false;
 
+  LocationEntity? lastKnownPosition;
+  Failure? lastKnownFailure;
+  int lastKnownCalls = 0;
+
   @override
   Stream<LocationEntity> get locationStream => _locationStreamController.stream;
 
@@ -54,6 +58,14 @@ class FakeTrackingRepository implements TrackingRepository {
   @override
   Future<Either<Failure, LocationEntity>> getCurrentLocation() async =>
       throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, LocationEntity?>> getLastKnownPosition() async {
+    lastKnownCalls++;
+    final failure = lastKnownFailure;
+    if (failure != null) return Left(failure);
+    return Right(lastKnownPosition);
+  }
 
   @override
   Future<Either<Failure, List<TrackingLogEntity>>> getLogs() async =>
@@ -197,5 +209,62 @@ void main() {
     expect(
         container.read(trackingStateProvider).status, TrackingStatus.stopped);
     expect(container.read(trackingStateProvider).isTracking, false);
+  });
+
+  test(
+      'ensureLocation hydrates a cached fix without starting tracking or changing status',
+      () async {
+    final cached = LocationEntity(
+      latitude: 24.7,
+      longitude: 46.6,
+      speed: 12.5,
+      timestamp: DateTime.now(),
+    );
+    fakeRepository.lastKnownPosition = cached;
+
+    await notifier.ensureLocation();
+
+    final state = container.read(trackingStateProvider);
+    expect(state.currentLocation, cached);
+    expect(state.status, TrackingStatus.initial);
+    expect(state.isTracking, false);
+    expect(fakeRepository.isServiceStarted, false);
+    expect(container.read(currentVehicleSpeedProvider), 12.5);
+  });
+
+  test('ensureLocation does not replace an existing valid location', () async {
+    await notifier.startTracking();
+
+    final live = LocationEntity(
+      latitude: 24.0,
+      longitude: 46.0,
+      timestamp: DateTime.now(),
+    );
+    fakeRepository.emitLocation(live);
+    await Future.delayed(Duration.zero);
+
+    fakeRepository.lastKnownPosition = LocationEntity(
+      latitude: 10.0,
+      longitude: 10.0,
+      timestamp: DateTime.now(),
+    );
+
+    await notifier.ensureLocation();
+
+    expect(container.read(trackingStateProvider).currentLocation, live);
+    expect(fakeRepository.lastKnownCalls, 0);
+  });
+
+  test('ensureLocation tolerates a missing cached fix without surfacing an error',
+      () async {
+    fakeRepository.lastKnownFailure =
+        const TrackingFailure(message: 'No fresh fix');
+
+    await notifier.ensureLocation();
+
+    final state = container.read(trackingStateProvider);
+    expect(state.currentLocation, isNull);
+    expect(state.errorMessage, isNull);
+    expect(state.status, TrackingStatus.initial);
   });
 }

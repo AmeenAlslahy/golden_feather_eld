@@ -5,6 +5,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/localization_helper.dart';
 import '../../../../core/widgets/eld_footer_notice.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/account_provider.dart';
 import '../providers/account_ui_state.dart';
@@ -36,8 +37,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
     final loc = context.loc;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.account, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+        titleText: loc.account,
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(

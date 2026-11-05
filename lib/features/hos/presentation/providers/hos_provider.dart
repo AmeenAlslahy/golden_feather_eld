@@ -1,6 +1,7 @@
 import "../../data/providers/hos_audit_providers.dart";
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/hos/domain/engine/hos_rules_engine.dart';
 import 'hos_engine_provider.dart';
@@ -20,15 +21,21 @@ final hosStatusProvider = StateNotifierProvider<HosNotifier, HosEngineResult>((
   return HosNotifier(engine, tracker, ref);
 });
 
-class HosNotifier extends StateNotifier<HosEngineResult> {
+class HosNotifier extends StateNotifier<HosEngineResult>
+    with WidgetsBindingObserver {
   final HosRulesEngine _engine;
   final DutyStatusTracker _tracker;
   final Ref _ref;
   Timer? _refreshTimer;
   StreamSubscription? _trackerSub;
 
+  /// بصمة آخر مخالفات عولجت — تمنع مسح/كتابة Hive عند كل نبضة GPS أو
+  /// دقيقة بينما المخالفة نفسها ما زالت قائمة.
+  String? _lastViolationSignature;
+
   HosNotifier(this._engine, this._tracker, this._ref)
     : super(_engine.currentStatus) {
+    _attachLifecycle();
     _startRefreshTimer();
     _trackerSub = _tracker.onTransition.listen((transition) {
       final status = _mapStatus(transition.newStatus);
@@ -76,10 +83,42 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   }
 
   void _startRefreshTimer() {
-    // تحديث الحالة كل دقيقة لتحديث المؤقتات في الواجهة
+    // تحديث الحالة كل دقيقة لتحديث المؤقتات في الواجهة.
+    // إعادة البدء آمنة: نلغي أي مؤقّت سابق أولاً (العودة للمقدمة).
+    _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       refresh();
     });
+  }
+
+  void _stopRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  /// مراقبة دورة الحياة: كان المؤقّت يعمل طوال عمر العملية حتى في
+  /// الخلفية حيث لا واجهة تُحدَّث. الإيقاف في الخلفية يوقف عمل عدّاد
+  /// HOS الدوري بلا فقدان أي حساب — كل نبضة تعيد الحساب من الحالة.
+  void _attachLifecycle() {
+    try {
+      WidgetsBinding.instance.addObserver(this);
+    } catch (_) {
+      // اختبار وحدات بلا WidgetsBinding — يبقى المؤقّت كما هو.
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startRefreshTimer();
+        refresh();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _stopRefreshTimer();
+    }
   }
 
   /// تغيير حالة الخدمة. يُعاد توجيه نتيجة المتتبع كما هي (رفض اختياري
@@ -151,11 +190,24 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
   /// تحديث الحالة
 
   void _processAndLogViolations(HosEngineResult result) {
-    if (result is HosEngineReady && result.update.violations.isNotEmpty) {
-      final auditRepo = _ref.read(hosAuditRepositoryProvider);
-      for (final v in result.update.violations) {
-        auditRepo.logViolation(v);
-      }
+    if (result is! HosEngineReady || result.update.violations.isEmpty) {
+      _lastViolationSignature = null;
+      return;
+    }
+
+    final violations = result.update.violations;
+    final signature = violations
+        .map(
+          (v) =>
+              '${v.type.name}:${v.timestamp.toIso8601String().substring(0, 10)}',
+        )
+        .join('|');
+    if (signature == _lastViolationSignature) return;
+    _lastViolationSignature = signature;
+
+    final auditRepo = _ref.read(hosAuditRepositoryProvider);
+    for (final v in violations) {
+      auditRepo.logViolation(v);
     }
   }
 
@@ -167,7 +219,12 @@ class HosNotifier extends StateNotifier<HosEngineResult> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    try {
+      WidgetsBinding.instance.removeObserver(this);
+    } catch (_) {
+      // بلا WidgetsBinding (اختبار وحدات) — لا شيء يُزال.
+    }
+    _stopRefreshTimer();
     _trackerSub?.cancel();
     super.dispose();
   }

@@ -191,6 +191,9 @@ class _FakeStorage implements LocalStorageService {
   HosConfiguration get hosConfiguration => HosConfiguration.usa70_8();
 
   @override
+  @override
+  String? get selectedVehicleId => null;
+  @override
   String get currentDutyStatus => _dutyStatus;
 
   @override

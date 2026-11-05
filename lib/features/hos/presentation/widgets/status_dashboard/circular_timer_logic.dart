@@ -57,23 +57,22 @@ class CircularTimerLogic {
   ///
   /// عبر الإنترنت لا يوجد اشتقاق محلي: الدائرة تعرض `متبقي الخادم` من
   /// اللقطة، وينقص بالمنقضي منذ لحظة القياس، ثم **يُستبدل كاملاً**
-  /// ببيانات الخادم عند كل نبضة جلب (كل 5 دقائق). الاشتقاق المحلي القديم
-  /// (أضيق حد بين الوردية والاستراحة) كان يخالف الخادم — مقيس حياً:
-  /// الخادم 00:58 (حاكم بالدورة) والتطبيق 07:57.
+  /// ببيانات الخادم عند كل نبضة جلب (كل 5 دقائق).
   ///
-  /// ### القوس (كما في التطبيق المرجعي)
+  /// ### القوس الدائري (مطابق للتطبيق المرجعي)
   ///
-  /// يتقدم **ثانية بثانية** مع الوقت من الحدّ القانوني الحاكم، والحدّ
-  /// يُستنتج من **مؤشرات الخادم نفسها** — المؤشر الذي «متبقيه» يطابق
-  /// `circle.remaining` (المصدر الذي أنتج الدائرة). قيست المطابقة حياً:
-  /// `00:58 = 70:00 − 69:02` (الدورة) و`03:48 = 14:00 − 10:12` (الوردية).
+  /// 1. **في حالة الراحة (OFF_DUTY, SLEEPER, PERSONAL_CONVEYANCE)**:
+  ///    - الدائرة فارغة تماماً (`progress = 0.0`) بدون أي قوس ملون.
+  ///    - لون النص رمادي محايد.
   ///
-  /// - الراحة: صفر ودائرة فارغة.
-  /// - السالب القادم **من الخادم** يُعرض كما ورد (تجاوز حدّ)، أما النزول
-  ///   تحت الصفر **بسبب مرور الوقت** فيُقيَّد عند الصفر.
-  ///
-  /// [hosIndicators] تُستخدم لمطابقة الحدّ الحاكم (طول القوس) فقط — ولا
-  /// تُغيّر الرقم المعروض إطلاقاً.
+  /// 2. **في حالة العمل النشطة (ON_DUTY, DRIVING, YARD_MOVE)**:
+  ///    - عند انتهاء الوقت أو تجاوزه (`liveRemaining <= 0`):
+  ///      تكتمل الدائرة 100% (`progress = 1.0`) وتظهر كحلقة حمراء مغلقة بالكامل
+  ///      والنص بالأحمر.
+  ///    - عند وجود وقت متبقي (`liveRemaining > 0`):
+  ///      القوس يمثل نسبة الوقت **المستهلك** من الحد القانوني الحاكم:
+  ///      `progress = 1.0 - (liveRemaining / governingLimit)`
+  ///      ويبدأ من الأعلى (الساعة 12) متقدماً باتجاه عقارب الساعة بلون أخضر ناصع.
   static TimerUiState calculateUiState({
     required RemainingCircle circle,
     required DutyStatusCode? dutyStatus,
@@ -101,32 +100,23 @@ class CircularTimerLogic {
       liveRemaining = drivenBelowZeroByElapsed ? Duration.zero : raw;
     }
 
-    // القوس يتقدم مع الوقت (كما في التطبيق المرجعي): نسبة المستهلك من
-    // الحدّ القانوني **الحاكم**، ثانية بثانية مع العدّاد.
-    //
-    // ⚠️ لا يُشتق الإجمالي من نسبة الخادم: الصيغة القديمة
-    // `total = متبقي ÷ (1−نسبة)` منفجرة — النسبة تصل بدقتين عشريتين،
-    // وعند 0.99 يتراوح «الإجمالي» بين ~64 و193 ساعة والدورة 70، وكانت
-    // تصفّر القوس عند تقريب الخادم إلى 1.00 (آخر ~21 دقيقة من الدورة)
-    // عند كل نبضة (سنّ منشار). الحدّ يأتي من مطابقة مؤشرات الخادم.
-    //
-    // بلا مؤشرات (أو بلا مطابقة معقولة): قيمة الخادم حرفياً — لا نخترع
-    // إجمالاً؛ وإذا بلغ العدّاد الصفر قبل النبضة التالية فالقوس يكتمل.
     final double progress;
     if (isRest) {
-      // في حالة الراحة، تُعرض نسبة تقدم الخادم مباشرة.
-      progress = circle.progress.clamp(0.0, 1.0);
+      // في حالة الراحة، الدائرة فارغة تماماً
+      progress = 0.0;
+    } else if (liveRemaining <= Duration.zero) {
+      // عند انتهاء الوقت في العمل، تكتمل الدائرة 360 درجة
+      progress = 1.0;
     } else {
       final governing = _matchingLimit(
+        dutyStatus: dutyStatus,
         circleRemaining: circle.remaining,
         indicators: hosIndicators,
         cycleLimit: cycleLimit,
       );
       if (governing != null) {
         final liveSeconds = math.max(0, liveRemaining.inSeconds);
-        progress = (1 - liveSeconds / governing.inSeconds).clamp(0.0, 1.0);
-      } else if (liveRemaining <= Duration.zero) {
-        progress = 1.0;
+        progress = (1.0 - liveSeconds / governing.inSeconds).clamp(0.0, 1.0);
       } else {
         progress = circle.progress.clamp(0.0, 1.0);
       }
@@ -141,25 +131,6 @@ class CircularTimerLogic {
 
   /// المؤشرات الأربعة بصيغتها **الحية** — تنزلق بنفس `elapsedSinceSnapshot`
   /// الذي تنزلق به الدائرة بالضبط.
-  ///
-  /// ### لماذا
-  ///
-  /// كانت البطاقة تعرض `indicator.value` الخام بلا طرح ولا إضافة:
-  ///
-  /// ```dart
-  /// Text(DurationFormat.hhMm(indicator.value))   // لا يتغير أبداً
-  /// ```
-  ///
-  /// فبينما الدائرة تنقص ثانية بثانية تبقى البطاقة على قيمة آخر جلب،
-  /// فيعرض التطبيق **رقمين مختلفين لنفس الحدّ القانوني في وقت واحد**.
-  /// Worse، مع الجلب الدوري كل 5 دقائق قفز الرقم كل خمس دقائق
-  /// (قفزة خمس دقائق في لحظة واحدة) — يقرأها السائق كقفزة عشوائية.
-  ///
-  /// ### القاعدة
-  ///
-  /// - في حالة عمل نشطة: `USED` يزداد بـ elapsed، و`REMAINING` ينقص
-  ///   بـ elapsed (مع الإبقاء عند الصفر).
-  /// - في حالة الراحة: لا شيء يتحرّك — لا عمل ولا قيادة، فلا استهلاك.
   static HosIndicators liveIndicators({
     required HosIndicators indicators,
     required DutyStatusCode? dutyStatus,
@@ -169,8 +140,6 @@ class CircularTimerLogic {
     final isRest = isRestDuty(dutyStatus, statusLabel);
     if (isRest || elapsedSinceSnapshot <= Duration.zero) return indicators;
 
-    // 🔴 مؤشرا القيادة والاستراحة يُحرَّكان فقط أثناء القيادة الفعلية (FMCSA § 395.3).
-    // في حالة onDutyNotDriving أو yardMove يبقيان ثابتين — السائق لا يقود.
     final isDriving = dutyStatus == DutyStatusCode.driving;
     HosIndicator live(HosIndicator i) {
       if (i.type == IndicatorType.used) {
@@ -188,14 +157,13 @@ class CircularTimerLogic {
     );
   }
 
-  /// الحدّ القانوني الحاكم لدائرة الخادم — من **بيانات الخادم وحدها**.
+  /// الحدّ القانوني الحاكم لدائرة الخادم.
   ///
-  /// يُختار المؤشر الذي «متبقيه» (المشتق من حدّه الثابت لقيم `USED`، أو
-  /// قيمته لقيم `REMAINING`) هو الأقرب إلى `circleRemaining`. الخادم
-  /// يحسب الدائرة من أحد مؤشراته الأربعة في اللقطة نفسها، فالمطابقة
-  /// دقيقة (± دقيقة تقريب). إن بعدت كل المطابقات أكثر من ساعة (بيانات
-  /// غير متسقة) يُعاد `null` — فيعرض القوس قيمة الخادم حرفياً.
+  /// يُختار أولاً المؤشر الذي «متبقيه» يطابق `circleRemaining` بدقة (± ساعة).
+  /// فإن لم يوجد تطابق (فارق كبير أو استجابة غير متزامنة)، نختار المؤشر
+  /// الأكثر تقييداً (الأقل متبقياً) للحالة الراهنة حتى لا نقع في fallback لقيم اعتباطية.
   static Duration? _matchingLimit({
+    required DutyStatusCode? dutyStatus,
     required Duration circleRemaining,
     required HosIndicators? indicators,
     required Duration cycleLimit,
@@ -217,10 +185,49 @@ class CircularTimerLogic {
       }
     }
 
-    consider(indicators.drive, const Duration(hours: 11));
-    consider(indicators.shift, const Duration(hours: 14));
-    consider(indicators.breakTime, const Duration(hours: 8));
-    consider(indicators.cycle, cycleLimit);
-    return best;
+    final isDriving = dutyStatus == DutyStatusCode.driving;
+    if (isDriving) {
+      consider(indicators.drive, const Duration(hours: 11));
+      consider(indicators.shift, const Duration(hours: 14));
+      consider(indicators.breakTime, const Duration(hours: 8));
+      consider(indicators.cycle, cycleLimit);
+    } else {
+      consider(indicators.shift, const Duration(hours: 14));
+      consider(indicators.cycle, cycleLimit);
+    }
+
+    if (best != null) return best;
+
+    // استنتاج الحد الحاكم من المؤشر الأقل متبقياً لحالة السائق
+    Duration remainingOf(HosIndicator ind, Duration limit) =>
+        ind.type == IndicatorType.used ? limit - ind.value : ind.value;
+
+    if (isDriving) {
+      var minRemaining = remainingOf(indicators.drive, const Duration(hours: 11));
+      var governing = const Duration(hours: 11);
+
+      final shiftRem = remainingOf(indicators.shift, const Duration(hours: 14));
+      if (shiftRem < minRemaining) {
+        minRemaining = shiftRem;
+        governing = const Duration(hours: 14);
+      }
+
+      final breakRem = remainingOf(indicators.breakTime, const Duration(hours: 8));
+      if (breakRem < minRemaining) {
+        minRemaining = breakRem;
+        governing = const Duration(hours: 8);
+      }
+
+      final cycleRem = remainingOf(indicators.cycle, cycleLimit);
+      if (cycleRem < minRemaining) {
+        governing = cycleLimit;
+      }
+
+      return governing;
+    } else {
+      final shiftRem = remainingOf(indicators.shift, const Duration(hours: 14));
+      final cycleRem = remainingOf(indicators.cycle, cycleLimit);
+      return cycleRem < shiftRem ? cycleLimit : const Duration(hours: 14);
+    }
   }
 }

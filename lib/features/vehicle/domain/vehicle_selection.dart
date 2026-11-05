@@ -76,6 +76,10 @@ Vehicle? readVehicle(Map<String, dynamic> json) {
       : int.tryParse(rawDeviceId.toString());
   final assigned = _bool(json['assignedToCurrentDriver']);
   final mine = _bool(json['myVehicle']);
+  final rawActiveDriverId = json['activeDriverId'];
+  final activeDriverId = rawActiveDriverId == null
+      ? null
+      : int.tryParse(rawActiveDriverId.toString());
   return Vehicle(
     id: id,
     uniqueId: uniqueId,
@@ -92,6 +96,7 @@ Vehicle? readVehicle(Map<String, dynamic> json) {
     activeForCurrentDriver: _bool(
       json['activeForCurrentDriver'] ?? json['currentlyUsedByCurrentDriver'],
     ),
+    activeDriverId: activeDriverId,
   );
 }
 

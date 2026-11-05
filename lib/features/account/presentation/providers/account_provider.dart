@@ -5,6 +5,7 @@ import '../../../../backend/contracts/account_backend.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../../core/utils/logger.dart';
+import '../../../../core/session/session_epoch.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/localization/locale_provider.dart';
@@ -86,6 +87,17 @@ class AccountNotifier extends StateNotifier<AccountState> {
     return null;
   }
 
+  void _setActiveDriverId(int driverId) {
+    if (driverId <= 0) return;
+    Future.microtask(() {
+      final current = _ref.read(activeDriverIdProvider);
+      if (current?.$1 != SessionEpoch.current || current?.$2 != driverId) {
+        _ref.read(activeDriverIdProvider.notifier).state =
+            (SessionEpoch.current, driverId);
+      }
+    });
+  }
+
   /// ربط بمالك جديد: إسقاط متزامن (بلا API) وإبطال الطلبات الجارية.
   /// الجلب اللاحق مسؤولية صفحة الحساب عند فتحها (تجنب عاصفة طلبات).
   void bindOwner(String? driverId, int? epoch) {
@@ -93,6 +105,16 @@ class AccountNotifier extends StateNotifier<AccountState> {
     _requestSeq++;
     _ownerDriverId = driverId;
     _ownerEpoch = epoch;
+    if (driverId != null && driverId.isNotEmpty) {
+      final cached = _loadCachedAccount(driverId);
+      if (cached != null) {
+        state = AccountState(accountData: cached);
+        if (cached.driverId > 0) {
+          _setActiveDriverId(cached.driverId);
+        }
+        return;
+      }
+    }
     state = const AccountState();
   }
 
@@ -169,6 +191,9 @@ class AccountNotifier extends StateNotifier<AccountState> {
         },
         (driverAccount) {
           _saveCachedAccount(owner, driverAccount);
+          if (driverAccount.driverId > 0) {
+            _setActiveDriverId(driverAccount.driverId);
+          }
           state = state.copyWith(
             isLoading: false,
             accountData: driverAccount,
@@ -225,6 +250,9 @@ class AccountNotifier extends StateNotifier<AccountState> {
         },
         (driverAccount) {
           if (owner != null) _saveCachedAccount(owner, driverAccount);
+          if (driverAccount.driverId > 0) {
+            _setActiveDriverId(driverAccount.driverId);
+          }
           // تحديث البيانات المرجعة في الشاشة
           state = state.copyWith(
             isLoading: false,
@@ -263,13 +291,27 @@ final accountProvider = StateNotifierProvider<AccountNotifier, AccountState>((
 
   // P0 Stage 1: أي غياب هوية أو انتقال أو تغير مالك يُسقط الحالة فوراً
   // (متزامن، بلا API). الجلب لمالك جديد يتم عند فتح صفحة الحساب.
-  ref.listen<AuthState>(authStateProvider, (previous, next) {
-    if (next.user == null || next.transitioning) {
+  void bindFromAuth(AuthState auth) {
+    if (auth.user == null || auth.transitioning) {
       notifier.reset();
       return;
     }
-    notifier.bindOwner(next.user!.id, next.sessionEpoch);
-  }, fireImmediately: true);
+    notifier.bindOwner(auth.user!.id, auth.sessionEpoch);
+  }
+
+  ref.listen<AuthState>(authStateProvider, (previous, next) {
+    bindFromAuth(next);
+  });
+
+  // ⛔ لا `fireImmediately: true` هنا: الـcallback كان يعمل **داخل** بناء هذا
+  // المزوّد، و`bindOwner` يكتب في `activeDriverIdProvider`، وRiverpod يمنع
+  // تعديل مزوّد آخر أثناء بناء مزوّد (Assertion في element.dart:479) — كان
+  // يُسقط فحص المصادقة ويُبقي شاشة البداية معلّقة.
+  // الربط الأولي يُؤجَّل إلى ما بعد انتهاء البناء.
+  Future.microtask(() {
+    if (!notifier.mounted) return;
+    bindFromAuth(ref.read(authStateProvider));
+  });
 
   return notifier;
 });

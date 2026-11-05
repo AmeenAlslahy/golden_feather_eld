@@ -4,6 +4,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 
 /// ودجت عام وموحد لإدارة قوائم النماذج اليومية (مثل المقطورات ووثائق الشحن).
 class FormListEditorView extends StatelessWidget {
@@ -31,7 +32,7 @@ class FormListEditorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: Text(title)),
+      appBar: GoldenAppBar(titleText: title),
       body: Column(
         children: [
           // ========== منطقة الإدخال ==========
@@ -59,7 +60,7 @@ class FormListEditorView extends StatelessWidget {
                 Flexible(
                   flex: 1,
                   child: AppButton(
-                    label: '', //context.loc.addButton,
+                    label: context.loc.addButton,
                     icon: Icons.add,
                     type: EldButtonType.primary,
                     isFullWidth: false,

@@ -6,6 +6,16 @@ class MemoryOfflineQueue implements OfflineQueue {
   final List<PendingEvent> _queue = [];
   final Map<String, QuarantineRecord> _parked = {};
 
+  /// مصدر "الآن" الموحّد — انظر [SQLiteOfflineQueue] لنفس السبب.
+  final DateTime Function()? _now;
+
+  DateTime _currentTime() {
+    final fn = _now;
+    return fn != null ? fn() : DateTime.now();
+  }
+
+  MemoryOfflineQueue({DateTime Function()? now}) : _now = now;
+
   @override
   Future<void> enqueue(PendingEvent event) async {
     // Deduplication check
@@ -39,7 +49,7 @@ class MemoryOfflineQueue implements OfflineQueue {
 
   @override
   Future<List<PendingEvent>> getReadyEvents({int limit = 50}) async {
-    final now = DateTime.now();
+    final now = _currentTime().toUtc();
 
     // فلترة الأحداث التي حان وقت محاولتها أو لم تحاول من قبل
     final readyEvents = _queue.where((e) {
@@ -93,7 +103,7 @@ class MemoryOfflineQueue implements OfflineQueue {
       event: event,
       state: state,
       reason: reason,
-      quarantinedAt: DateTime.now().toUtc(),
+      quarantinedAt: _currentTime().toUtc(),
       ownerDriverId: ownerDriverId,
     );
   }

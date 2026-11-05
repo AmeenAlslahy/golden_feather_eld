@@ -90,6 +90,34 @@ class TrackingEventProcessor {
     _locationEventsController.add(locationPoint);
   }
 
+  /// Ingests confirmed ECM telemetry directly from BLE adapter / hardware data source.
+  /// Only forwards when [fromEcm] is true.
+  ///
+  /// Verification Note on speedDurationSeconds (Decision 1 & Decision 3):
+  /// `speedDurationSeconds: 0` represents an instantaneous ECM sample. In `DutyStatusTracker`,
+  /// HOS calculations and stationary/driving time calculations rely exclusively on actual event
+  /// timestamps (`eldEvent.timestamp`) and elapsed differences (`difference()`), with zero reliance
+  /// on `speedDurationSeconds`.
+  void processEcmPacket({
+    required double speedMps,
+    double? odometerMiles,
+    double? engineHours,
+    required bool fromEcm,
+    DateTime? timestamp,
+  }) {
+    if (!fromEcm) return;
+
+    final eldEvent = EldEvent(
+      timestamp: timestamp ?? DateTime.now().toUtc(),
+      speedMph: speedMps * 2.23694,
+      speedDurationSeconds: 0,
+      odometerMiles: odometerMiles,
+      engineHours: engineHours,
+      fromEcm: true,
+    );
+    _eldEventsController.add(eldEvent);
+  }
+
   EldEvent _mapToEldEvent(TrackingEvent event) {
     // 3. الحفاظ على إشارة fromEcm التي قد تأتي من البلوتوث (OBD)
     // أو إذا كان الحدث مسجلاً صراحة بأنه قادم من obd

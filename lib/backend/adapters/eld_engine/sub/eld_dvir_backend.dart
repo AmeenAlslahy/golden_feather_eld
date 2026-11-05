@@ -183,6 +183,36 @@ class EldDvirBackend implements DvirBackend {
       EldEndpoints.dvirVehicleDefects(uniqueId),
       parser: _asMap,
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.fold(
+      (error) async {
+        final isNotFound = error is NotFoundError ||
+            error.code == 'resource.notFound' ||
+            error.code == 'http_404' ||
+            error.code.contains('404');
+        if (isNotFound) {
+          final fallback = await _apiClient.get<RawJson>(
+            EldEndpoints.dvirDefects,
+            queryParameters: {'uniqueId': uniqueId, 'deviceId': uniqueId},
+            parser: _asMap,
+          );
+          return fallback.fold(
+            (fbError) {
+              final fbNotFound = fbError is NotFoundError ||
+                  fbError.code == 'resource.notFound' ||
+                  fbError.code == 'http_404' ||
+                  fbError.code.contains('404');
+              if (fbNotFound) {
+                // إذا لم توجد عيوب للمركبة في الخادم (404)، تُعاد قائمة فارغة طبيعية
+                return ok(<String, dynamic>{'data': <dynamic>[]});
+              }
+              return err(fbError);
+            },
+            (success) => ok(success.data ?? <String, dynamic>{}),
+          );
+        }
+        return err(error);
+      },
+      (success) => ok(success.data ?? <String, dynamic>{}),
+    );
   }
 }

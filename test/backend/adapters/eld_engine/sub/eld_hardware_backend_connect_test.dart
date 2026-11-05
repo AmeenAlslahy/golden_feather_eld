@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_hardware_backend.dart';
+import 'package:golden_feather_eld/core/error/app_error.dart';
 import 'package:golden_feather_eld/core/network/api_client.dart';
 import 'package:golden_feather_eld/core/network/api_config.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 
 /// Builds a live-adapter instance whose HTTP response is resolved locally.
 /// No network, server, or device is touched.
@@ -35,10 +37,26 @@ EldHardwareBackend backendReplying(
   );
 }
 
+/// Like [backendReplying] but lets each test decide the fate of every request
+/// (resolve or reject) based on its path.
+EldHardwareBackend backendHandling(
+  void Function(RequestOptions options, RequestInterceptorHandler handler)
+  onRequest,
+) {
+  final dio = Dio();
+  dio.interceptors.add(InterceptorsWrapper(onRequest: onRequest));
+  return EldHardwareBackend(
+    ApiClient(
+      config: const ApiConfig(baseUrl: 'https://api.example.com/api'),
+      dio: dio,
+    ),
+  );
+}
+
 void main() {
   group('EldHardwareBackend.connectSession — confirmed success', () {
     test(
-      'sends the existing query/body and unwraps a non-empty envelope data',
+      'sends the contract body with no query parameters and unwraps data',
       () async {
         RequestOptions? captured;
         final backend = backendReplying({
@@ -59,11 +77,11 @@ void main() {
         });
         expect(captured?.method, 'POST');
         expect(captured?.uri.path, '/api/eld/sessions/connect');
-        expect(captured?.queryParameters, {'uniqueId': 'AA:BB:CC:DD:EE:FF'});
+        expect(captured?.queryParameters, isEmpty);
         expect(captured?.data, {
           'deviceId': 'AA:BB:CC:DD:EE:FF',
           'manualMode': false,
-          'manualModeEnabled': false,
+          'manualModeEnabled': true,
         });
       },
     );
@@ -81,29 +99,29 @@ void main() {
       expect(result.valueOrNull?['id'], 7);
     });
 
-    test('keeps the disconnected payload flags unchanged', () async {
-      RequestOptions? captured;
-      final backend = backendReplying({
-        'success': true,
-        'data': {'id': 8, 'status': 'ACTIVE', 'manualMode': true},
-      }, onRequest: (options) => captured = options);
+    test(
+      'disconnected mode sends manualMode=true with no query params',
+      () async {
+        RequestOptions? captured;
+        final backend = backendReplying({
+          'success': true,
+          'data': {'id': 8, 'status': 'ACTIVE', 'manualMode': true},
+        }, onRequest: (options) => captured = options);
 
-      final result = await backend.connectSession(
-        uniqueId: '44A4',
-        disconnected: true,
-      );
+        final result = await backend.connectSession(
+          uniqueId: '44A4',
+          disconnected: true,
+        );
 
-      expect(result.isSuccess, isTrue);
-      expect(captured?.queryParameters, {
-        'uniqueId': '44A4',
-        'disconnected': true,
-      });
-      expect(captured?.data, {
-        'deviceId': '44A4',
-        'manualMode': true,
-        'manualModeEnabled': true,
-      });
-    });
+        expect(result.isSuccess, isTrue);
+        expect(captured?.queryParameters, isEmpty);
+        expect(captured?.data, {
+          'deviceId': '44A4',
+          'manualMode': true,
+          'manualModeEnabled': true,
+        });
+      },
+    );
   });
 
   group('EldHardwareBackend.connectSession — explicit rejection', () {
@@ -199,6 +217,185 @@ void main() {
         'success': true,
         'requestId': 'req-unconfirmed',
       }, requestId: 'req-unconfirmed');
+    });
+
+    test('sends driverId and coDriverId in the body only', () async {
+      RequestOptions? captured;
+      final backend = backendReplying({
+        'success': true,
+        'data': {'id': 7, 'driverId': 101, 'status': 'ACTIVE'},
+      }, onRequest: (options) => captured = options);
+
+      final result = await backend.connectSession(
+        uniqueId: '1001',
+        driverId: const DriverId(101),
+        coDriverId: const DriverId(202),
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(captured?.queryParameters, isEmpty);
+      expect(captured?.data, {
+        'driverId': 101,
+        'coDriverId': 202,
+        'deviceId': '1001',
+        'manualMode': false,
+        'manualModeEnabled': true,
+      });
+    });
+
+    test('disconnectSession calls /eld/sessions/disconnect', () async {
+      RequestOptions? captured;
+      final backend = backendReplying({
+        'success': true,
+        'data': {'id': 7, 'status': 'ENDED'},
+      }, onRequest: (options) => captured = options);
+
+      final result = await backend.disconnectSession();
+
+      expect(result.isSuccess, isTrue);
+      expect(captured?.method, 'POST');
+      expect(captured?.uri.path, '/api/eld/sessions/disconnect');
+    });
+  });
+
+  group('EldHardwareBackend.connectSession — /start fallback on 404', () {
+    void rejectNotFound(
+      RequestOptions options,
+      RequestInterceptorHandler handler,
+    ) {
+      handler.reject(
+        DioException(
+          requestOptions: options,
+          type: DioExceptionType.badResponse,
+          response: Response<dynamic>(
+            requestOptions: options,
+            statusCode: 404,
+            data: {'message': 'not found'},
+          ),
+        ),
+      );
+    }
+
+    test('404 from /connect retries /start with the same payload', () async {
+      final paths = <String>[];
+      final payloads = <Object?>[];
+
+      final backend = backendHandling((options, handler) {
+        paths.add(options.uri.path);
+        payloads.add(options.data);
+        if (options.uri.path.endsWith('/sessions/connect')) {
+          rejectNotFound(options, handler);
+          return;
+        }
+        handler.resolve(
+          Response<dynamic>(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'data': {'id': 9, 'status': 'ACTIVE'},
+            },
+          ),
+        );
+      });
+
+      final result = await backend.connectSession(
+        uniqueId: '44A4',
+        driverId: const DriverId(101),
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(result.valueOrNull?['id'], 9);
+      expect(paths, ['/api/eld/sessions/connect', '/api/eld/sessions/start']);
+      expect(payloads[0], payloads[1]);
+      expect(payloads[1], {
+        'driverId': 101,
+        'deviceId': '44A4',
+        'manualMode': false,
+        'manualModeEnabled': true,
+      });
+    });
+
+    test('strict rejection still applies to the /start response', () async {
+      final backend = backendHandling((options, handler) {
+        if (options.uri.path.endsWith('/sessions/connect')) {
+          rejectNotFound(options, handler);
+          return;
+        }
+        handler.resolve(
+          Response<dynamic>(
+            requestOptions: options,
+            statusCode: 200,
+            data: {'success': false, 'requestId': 'req-start-rejected'},
+          ),
+        );
+      });
+
+      final result = await backend.connectSession(uniqueId: '44A4');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull?.code, 'eld.session.connectRejected');
+      expect(result.errorOrNull?.context?['reason'], 'success_false');
+      expect(result.errorOrNull?.context?['requestId'], 'req-start-rejected');
+    });
+
+    test('unconfirmed /start payload keeps the unconfirmed error', () async {
+      final backend = backendHandling((options, handler) {
+        if (options.uri.path.endsWith('/sessions/connect')) {
+          rejectNotFound(options, handler);
+          return;
+        }
+        handler.resolve(
+          Response<dynamic>(
+            requestOptions: options,
+            statusCode: 200,
+            data: {'success': true, 'message': 'accepted'},
+          ),
+        );
+      });
+
+      final result = await backend.connectSession(uniqueId: '44A4');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull?.code, 'eld.session.connectUnconfirmed');
+    });
+
+    test('does not fall back on a non-404 failure', () async {
+      final paths = <String>[];
+      final backend = backendHandling((options, handler) {
+        paths.add(options.uri.path);
+        handler.reject(
+          DioException(
+            requestOptions: options,
+            type: DioExceptionType.badResponse,
+            response: Response<dynamic>(
+              requestOptions: options,
+              statusCode: 500,
+              data: {'message': 'boom'},
+            ),
+          ),
+        );
+      });
+
+      final result = await backend.connectSession(uniqueId: '44A4');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<ServerError>());
+      expect(paths, ['/api/eld/sessions/connect']);
+    });
+
+    test('both routes returning 404 surfaces NotFoundError', () async {
+      final paths = <String>[];
+      final backend = backendHandling((options, handler) {
+        paths.add(options.uri.path);
+        rejectNotFound(options, handler);
+      });
+
+      final result = await backend.connectSession(uniqueId: '44A4');
+
+      expect(result.isFailure, isTrue);
+      expect(result.errorOrNull, isA<NotFoundError>());
+      expect(paths, ['/api/eld/sessions/connect', '/api/eld/sessions/start']);
     });
   });
 }

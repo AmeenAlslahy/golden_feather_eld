@@ -15,6 +15,7 @@ import '../widgets/log_detail_tabs/form_tab.dart';
 import '../widgets/log_detail_tabs/certify_tab.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../core/error/user_facing_message.dart';
 
 /// شاشة تفاصيل اليوم (Shell)
@@ -145,7 +146,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
     if (selectedLog == null) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: GoldenAppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
@@ -182,7 +183,7 @@ class _LogDetailPageState extends ConsumerState<LogDetailPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: GoldenAppBar(
           leading: BackButton(
             onPressed: () {
               ref.read(logDetailTabProvider.notifier).state = 0; // Reset state

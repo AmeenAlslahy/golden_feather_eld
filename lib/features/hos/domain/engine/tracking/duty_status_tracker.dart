@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../../../../core/utils/logger.dart';
+import '../../../../../core/constants/app_constants.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../../../../core/services/local_storage_service.dart';
 import '../../repositories/duty_period_store.dart';
@@ -87,6 +88,39 @@ class DutyStatusTracker {
 
   DateTime? _movingSince;
   int _consecutiveMovingEvents = 0;
+  int get consecutiveMovingEvents => _consecutiveMovingEvents;
+
+  // Decision 3 (P0): Active ECM telemetry state tracking for Priority 1 & Conflict Resolution
+  //
+  // Time Source Decision & Clock Skew Guard:
+  // `_lastEcmTimestamp` is captured directly from `eldEvent.timestamp` (the legal hardware frame timestamp).
+  // Freshness comparisons calculate `age = (_getCurrentTime() ?? DateTime.now().toUtc()).difference(_lastEcmTimestamp!).abs()`.
+  // Using `.abs()` safely prevents failure if minor clock drift exists between the phone OS clock and device hardware.
+  DateTime? _lastEcmTimestamp;
+  double? _lastEcmSpeedMph;
+
+  DateTime? get lastEcmTimestamp => _lastEcmTimestamp;
+  double? get lastEcmSpeedMph => _lastEcmSpeedMph;
+
+  /// Decision 3 (P0): Active ECM stationary state check.
+  /// Considered active if latest confirmed ECM packet is within [AppConstants.ecmActiveWindowSeconds] (30s)
+  /// and speed <= 5.0 mph.
+  bool get isEcmStationaryActive {
+    if (_lastEcmTimestamp == null || _lastEcmSpeedMph == null) return false;
+    final now = _getCurrentTime() ?? DateTime.now().toUtc();
+    final ageMs = now.difference(_lastEcmTimestamp!).abs().inMilliseconds;
+    return ageMs <= (AppConstants.ecmActiveWindowSeconds * 1000) && _lastEcmSpeedMph! <= 5.0;
+  }
+
+  /// Decision 3 (P0): Active ECM driving state check.
+  /// Considered active if latest confirmed ECM packet is within [AppConstants.ecmActiveWindowSeconds] (30s)
+  /// and speed > 5.0 mph.
+  bool get isEcmDrivingActive {
+    if (_lastEcmTimestamp == null || _lastEcmSpeedMph == null) return false;
+    final now = _getCurrentTime() ?? DateTime.now().toUtc();
+    final ageMs = now.difference(_lastEcmTimestamp!).abs().inMilliseconds;
+    return ageMs <= (AppConstants.ecmActiveWindowSeconds * 1000) && _lastEcmSpeedMph! > 5.0;
+  }
 
   DutyStatusTracker({
     required DutyPeriodStore dutyPeriodStore,
@@ -96,6 +130,13 @@ class DutyStatusTracker {
     required TrustedTimeProvider timeProvider,
     int? Function()? readDriverId,
     DutyEventJournal? journal,
+
+    /// استدعاء [readDriverId] داخل الباني لبدء الترطيب فوراً.
+    ///
+    /// يبقى `true` للاختبارات والاستخدام المباشر. أما المزوّد فيمرّر
+    /// `false` ثم يبدأ الترطيب بعد اكتمال البناء: قراءة مزوّد Riverpod
+    /// داخل باني مزوّد آخر تُنعشه وتُطلق مستمعيه أثناء البناء.
+    bool hydrateOnCreate = true,
   }) : _periodStore = dutyPeriodStore,
        _localStorage = localStorage,
        _syncEngine = syncEngine,
@@ -106,7 +147,7 @@ class DutyStatusTracker {
     _initStationaryState();
     if (_journal == null) {
       _hydrated = true;
-    } else {
+    } else if (hydrateOnCreate) {
       final owner = _readDriverId?.call();
       if (owner != null && owner > 0) {
         unawaited(hydrateForDriver(owner));
@@ -301,33 +342,33 @@ class DutyStatusTracker {
     // POST /eld/hardware/telemetry.
     if (!eldEvent.fromEcm) return;
 
+    // Decision 3 (P0): Update active ECM state
+    _lastEcmTimestamp = eldEvent.timestamp;
+    _lastEcmSpeedMph = eldEvent.speedMph;
+
     if (eldEvent.speedMph > 5.0) {
-      // Moving logic
+      // Decision 3 (P0) - Priority 1: Immediate transition to driving (> 5 mph from confirmed ECM).
+      // No debounce: instantaneous transition on the very first packet when valid ECM speed exceeds 5 mph threshold.
+      final isNewMovement = _movingSince == null;
       _movingSince ??= eldEvent.timestamp;
       _consecutiveMovingEvents++;
 
-      final elapsed = eldEvent.timestamp.difference(_movingSince!);
+      if (_stationarySince != null) {
+        _stationarySince = null;
+        _localStorage.setStationarySince('');
+        _wakeupTimer?.cancel();
+      }
 
-      // Require at least 3 seconds of sustained movement AND 3 consecutive events
-      // to reject GPS hardware spikes (Outliers).
-      if (_consecutiveMovingEvents >= 3 && elapsed.inSeconds >= 3) {
-        if (_stationarySince != null) {
-          _stationarySince = null;
-          _localStorage.setStationarySince('');
-          _wakeupTimer?.cancel();
-        }
-
-        if (_currentStatus != 'driving') {
-          await _transitionTo(
-            newStatus: 'driving',
-            timestamp:
-                _movingSince!, // Use the timestamp when movement first started
-            odometer: eldEvent.odometerMiles,
-            engineHours: eldEvent.engineHours,
-            annotation: 'Auto Transition to Driving (> 5 mph sustained)',
-            origin: 'ECM',
-          );
-        }
+      if (_currentStatus != 'driving' && isNewMovement) {
+        await _transitionTo(
+          newStatus: 'driving',
+          timestamp: eldEvent.timestamp,
+          odometer: eldEvent.odometerMiles,
+          engineHours: eldEvent.engineHours,
+          annotation: 'Auto Transition to Driving (> 5 mph ECM)',
+          origin: 'ECM',
+          source: DutyEventSource.ecm,
+        );
       }
     } else {
       // Stationary logic
@@ -496,6 +537,146 @@ class DutyStatusTracker {
   /// tracker's public state changes or `DutyTransition` is emitted. Without a
   /// journal (legacy tests/call sites) the previous synchronous behaviour is
   /// kept unchanged.
+  /// Decision 3 (P0): Priority 2 - Server telemetry fallback to driving.
+  ///
+  /// AUTHORIZATION & INVOCATION CONSTRAINTS:
+  /// - Only `TrackingOrchestrator` is authorized to invoke this method upon receiving
+  ///   confirmed `transitionedToDriving == true` from backend telemetry (POST /eld/hardware/telemetry).
+  /// - Phone GPS and manual UI flows MUST NOT invoke this method.
+  /// - Governed strictly by Conflict Policy: if active local ECM telemetry contradicts
+  ///   (`isEcmStationaryActive == true`), this transition is REJECTED and ECM wins.
+  Future<bool> transitionToDriving({
+    DutyEventSource source = DutyEventSource.server,
+    DateTime? timestamp,
+    double? odometer,
+    double? engineHours,
+  }) async {
+    // Decision 3 Conflict Policy: ECM always wins over server.
+    if (source == DutyEventSource.server && isEcmStationaryActive) {
+      AppLogger.warning(
+        'Decision 3 Conflict: Server reported transitionedToDriving but active ECM indicates stationary. ECM wins.',
+      );
+      await _recordConflictResolution(
+        serverEvent: 'transitionedToDriving',
+        reason: 'ecm_override_server',
+        ecmSpeedMph: _lastEcmSpeedMph,
+        ecmTimestamp: _lastEcmTimestamp,
+      );
+      return false;
+    }
+
+    if (_currentStatus == 'driving') return true;
+
+    final effectiveTime =
+        timestamp ?? _getCurrentTime() ?? DateTime.now().toUtc();
+    await _transitionTo(
+      newStatus: 'driving',
+      timestamp: effectiveTime,
+      odometer: odometer,
+      engineHours: engineHours,
+      annotation: source == DutyEventSource.server
+          ? 'Auto Transition to Driving (Server Telemetry Fallback)'
+          : 'Auto Transition to Driving',
+      origin: source == DutyEventSource.server ? 'server' : 'ECM',
+      source: source,
+    );
+    return true;
+  }
+
+  /// Decision 3 (P0): External / Server status transition with conflict policy.
+  ///
+  /// AUTHORIZATION & INVOCATION CONSTRAINTS:
+  /// - Used when the server attempts to command a duty status change (e.g. OnDuty, OffDuty).
+  /// - Conflict Policy: If server attempts to change status to non-driving while ECM is actively
+  ///   driving (> 5 mph, `isEcmDrivingActive == true`), ECM wins: transition is REJECTED, driver
+  ///   remains in driving, and `conflict_resolution: ecm_override_server_driving` is recorded in the journal.
+  Future<bool> transitionToStatus(
+    String newStatus, {
+    DutyEventSource source = DutyEventSource.server,
+    DateTime? timestamp,
+    double? odometer,
+    double? engineHours,
+    String? annotation,
+  }) async {
+    if (source == DutyEventSource.server) {
+      if (newStatus == 'driving') {
+        return transitionToDriving(
+          source: source,
+          timestamp: timestamp,
+          odometer: odometer,
+          engineHours: engineHours,
+        );
+      }
+
+      // Conflict Policy: ECM Driving wins over Server NotDriving / OnDuty.
+      if (newStatus != 'driving' && isEcmDrivingActive) {
+        AppLogger.warning(
+          'Decision 3 Conflict: Server attempted to transition to $newStatus but active ECM indicates driving (> 5 mph). ECM wins.',
+        );
+        await _recordConflictResolution(
+          serverEvent: 'server_transition_$newStatus',
+          reason: 'ecm_override_server_driving',
+          ecmSpeedMph: _lastEcmSpeedMph,
+          ecmTimestamp: _lastEcmTimestamp,
+        );
+        return false;
+      }
+    }
+
+    if (_currentStatus == newStatus) return true;
+
+    final effectiveTime =
+        timestamp ?? _getCurrentTime() ?? DateTime.now().toUtc();
+    await _transitionTo(
+      newStatus: newStatus,
+      timestamp: effectiveTime,
+      odometer: odometer,
+      engineHours: engineHours,
+      annotation: annotation ?? 'Server Transition to $newStatus',
+      origin: source == DutyEventSource.server ? 'server' : 'manual',
+      source: source,
+    );
+    return true;
+  }
+
+  /// Decision 3: Record conflict resolution row into append-only journal.
+  Future<void> _recordConflictResolution({
+    required String serverEvent,
+    required String reason,
+    double? ecmSpeedMph,
+    DateTime? ecmTimestamp,
+  }) async {
+    if (_journal == null) return;
+    final trusted = _getCurrentTime() ?? DateTime.now().toUtc();
+    final record = DutyEventRecord(
+      eventId: 'conflict_',
+      ownerDriverId: _readDriverId?.call(),
+      source: DutyEventSource.ecm,
+      status: _currentStatus,
+      eventTimeUtc: trusted,
+      receivedAtUtc: trusted,
+      timeSource: DutyTimeSource.device,
+      timeConfidence: DutyTimeConfidence.trusted,
+      monotonicMs: _timeProvider.monotonicElapsed.inMilliseconds,
+      payload: {
+        'conflict_resolution': reason, // 'ecm_override_server'
+        'server_event': serverEvent,
+        'ecm_speed_mph': ecmSpeedMph,
+        'ecm_timestamp': ecmTimestamp?.toIso8601String(),
+        'current_status': _currentStatus,
+      },
+      syncState: DutyEventSyncState.localOnly,
+      createdAt: trusted,
+    );
+    await _journal.append(record);
+  }
+
+  /// P1.1 — durable transition path.
+  ///
+  /// With a journal: journal row + queue row commit atomically **before** the
+  /// tracker's public state changes or DutyTransition is emitted. Without a
+  /// journal (legacy tests/call sites) the previous synchronous behaviour is
+  /// kept unchanged.
   Future<void> _transitionTo({
     required String newStatus,
     required DateTime timestamp,
@@ -505,6 +686,7 @@ class DutyStatusTracker {
     double? engineHours,
     String? annotation,
     String? origin,
+    DutyEventSource? source,
     bool enqueue = true,
   }) async {
     if (_currentStatus == newStatus) return;
@@ -522,6 +704,7 @@ class DutyStatusTracker {
           engineHours: engineHours,
           annotation: annotation,
           origin: origin,
+          source: source,
         );
       } else {
         AppLogger.warning('Refusing duty transition: trusted time unavailable');
@@ -551,7 +734,7 @@ class DutyStatusTracker {
     }
 
     // P1.3 gate: during hydration the intent is journaled and queued but not
-    // applied; `_hydrate` replays it exactly once.
+    // applied; _hydrate replays it exactly once.
     await _journalTransition(
       newStatus: newStatus,
       trusted: trusted,
@@ -562,6 +745,7 @@ class DutyStatusTracker {
       engineHours: engineHours,
       annotation: annotation,
       origin: origin,
+      source: source,
       enqueue: enqueue,
     );
   }
@@ -639,6 +823,7 @@ class DutyStatusTracker {
     double? engineHours,
     String? annotation,
     String? origin,
+    DutyEventSource? source,
   }) async {
     final previous = _persistChain;
     final completion = Completer<void>();
@@ -678,12 +863,17 @@ class DutyStatusTracker {
 
         // Same id in the journal, the queue row, and `clientId`.
         final eventId = pendingEvent?.id ?? const Uuid().v4();
+        final eventSource = source ??
+            (origin == 'ECM'
+                ? DutyEventSource.ecm
+                : (origin == 'server'
+                    ? DutyEventSource.server
+                    : DutyEventSource.manual));
+
         final record = DutyEventRecord(
           eventId: eventId,
           ownerDriverId: _readDriverId?.call(),
-          source: origin == 'ECM'
-              ? DutyEventSource.ecm
-              : DutyEventSource.manual,
+          source: eventSource,
           status: newStatus,
           eventTimeUtc: trusted,
           receivedAtUtc: trusted,
@@ -693,6 +883,7 @@ class DutyStatusTracker {
           payload: {
             'status': newStatus,
             'clientId': eventId,
+            'source': eventSource.name, // Decision 3: explicit source in payload
             if (latitude != null) 'latitude': latitude,
             if (longitude != null) 'longitude': longitude,
             if (odometer != null) 'odometerMiles': odometer,
@@ -760,6 +951,7 @@ class DutyStatusTracker {
     double? engineHours,
     String? annotation,
     String? origin,
+    DutyEventSource? source,
   }) async {
     final journal = _journal;
     if (journal == null || _disposed) return;
@@ -770,9 +962,12 @@ class DutyStatusTracker {
         DutyEventRecord(
           eventId: eventId,
           ownerDriverId: _readDriverId?.call(),
-          source: origin == 'ECM'
-              ? DutyEventSource.ecm
-              : DutyEventSource.manual,
+          source: source ??
+              (origin == 'ECM'
+                  ? DutyEventSource.ecm
+                  : (origin == 'server'
+                      ? DutyEventSource.server
+                      : DutyEventSource.manual)),
           status: newStatus,
           eventTimeUtc: null,
           receivedAtUtc: receivedAt,
@@ -881,10 +1076,20 @@ class DutyStatusTracker {
         ? DriverId(driverIdInt)
         : null;
 
+    VehicleId? vehicleId;
+    final savedVehicleId = _localStorage.selectedVehicleId;
+    if (savedVehicleId != null && savedVehicleId.isNotEmpty) {
+      final parsed = int.tryParse(savedVehicleId);
+      if (parsed != null && parsed > 0) {
+        vehicleId = VehicleId(parsed);
+      }
+    }
+
     final result = await _dashboardBackend.updateDutyStatus(
       status: code,
       notes: (annotation == null || annotation.isEmpty) ? null : annotation,
       driverId: driverId,
+      vehicleId: vehicleId,
       // إحداثيات لحظة تأكيد التغيير تصل للطلب المباشر (المسار المحلي/الطابور
       // كان يحملها أصلاً — أونلاين كانت تُسقَط هنا قبل هذا التعديل).
       latitude: lat,

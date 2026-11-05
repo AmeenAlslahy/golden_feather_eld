@@ -61,6 +61,7 @@ class EventsTab extends ConsumerWidget {
 
     return Column(
       children: [
+        if (logsState.eventsPendingConfirmation) const _UnconfirmedBanner(),
         if (logsState.eventsFromSavedData) const _SavedDataBanner(),
         Directionality(
           textDirection: TextDirection.ltr,
@@ -106,6 +107,41 @@ class EventsTab extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// تنبيه أن آخر تعديل قُبل من الخادم لكن دون echo قابل للتحليل؛ لا
+/// ندّعي نجاحاً كاملاً ولا نمحو تعديل المستخدم.
+class _UnconfirmedBanner extends StatelessWidget {
+  const _UnconfirmedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('events_unconfirmed_banner'),
+      width: double.infinity,
+      color: context.warningContainer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.compact,
+        vertical: 6,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_upload_outlined,
+            size: AppSpacing.iconSmall,
+            color: context.warning,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              context.loc.statusSavedUnconfirmed,
+              style: context.styles.caption.copyWith(color: context.warning),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

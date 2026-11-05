@@ -4,6 +4,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
@@ -98,7 +99,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),

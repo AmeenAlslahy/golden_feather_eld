@@ -125,28 +125,6 @@ class MockDailyLogsBackend implements DailyLogsBackend {
       throw UnimplementedError('MockDailyLogsBackend.getById — Phase 2');
 
   @override
-  Future<Result<RawJson>> getTeamStatus(DailyLogId logId) async {
-    // Live shape 2026-09-25 (no co-driver linked).
-    return ok(<String, dynamic>{
-      'dailyLogId': logId.value,
-      'primaryDriver': {'id': 101, 'name': 'Demo Driver'},
-      'teamModeActive': false,
-      'hosRecordsIsolated': true,
-      'complianceNote': 'HOS records are fully isolated (SRS 5.8 / FMCSA).',
-    });
-  }
-
-  @override
-  Future<Result<void>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required EditId editId,
-    required String action,
-    String? driverNotes,
-  }) async {
-    return ok(null);
-  }
-
-  @override
   Future<Result<CertifyResponseDto>> certify(
     CertifyRequestDto request, {
     int? expectedOwnerDriverId,
@@ -158,16 +136,6 @@ class MockDailyLogsBackend implements DailyLogsBackend {
         isCertified: true,
       ),
     );
-  }
-
-  @override
-  Future<Result<void>> reassignDriving({
-    required DailyLogId logId,
-    required DutyStatusId statusId,
-    required DriverId targetCoDriverId,
-    required String annotation,
-  }) async {
-    return ok(null);
   }
 
   @override
@@ -229,10 +197,6 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   @override
   Future<Result<RawJson>> getFormOptions(DailyLogId logId) async =>
       ok(<String, dynamic>{'vehicles': <dynamic>[], 'coDrivers': <dynamic>[]});
-
-  @override
-  Future<Result<void>> lock(DailyLogId logId) =>
-      throw UnimplementedError('MockDailyLogsBackend.lock — Phase 2');
 
   @override
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId) async {

@@ -60,4 +60,9 @@ class MainActivity : FlutterActivity() {
             BatteryPlugin.METHOD_CHANNEL
         ).setMethodCallHandler(BatteryPlugin(applicationContext))
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        BluetoothPlugin.destroy()
+    }
 }

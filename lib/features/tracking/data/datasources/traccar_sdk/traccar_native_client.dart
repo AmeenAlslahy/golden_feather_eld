@@ -16,6 +16,12 @@ abstract class TraccarNativeClient {
   /// طلب موقع فوري من خدمة الخلفية
   Future<void> requestImmediatePosition({String? alarm});
 
+  /// آخر موقع معروف من نظام التشغيل — قراءة فقط.
+  ///
+  /// لا يُدخل الموقع في قاعدة البيانات الأصلية ولا يرفعه إلى Traccar؛
+  /// يعيد `null` إذا لم يوجد قفل حديث ضمن نافذة العمر المسموح.
+  Future<Map<String, dynamic>?> getLastKnownPosition();
+
   /// جلب سجلات التتبع المحلية (Logs) من الخدمة
   Future<List<Map<String, dynamic>>> getNativeLogs();
 

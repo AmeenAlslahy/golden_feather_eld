@@ -165,6 +165,13 @@ class DailyLog extends Equatable {
   ];
 }
 
+/// حالة مزامنة حدث عُدّل محلياً.
+///
+/// لا تُستنتج من HTTP 2xx وحده: [pendingSync] تعني أن التعديل محفوظ على
+/// الجهاز وينتظر استجابة مؤكدة، و[syncFailed] تعني رفضاً نهائياً أو
+/// استنفاد محاولات مع إبقاء بيانات المستخدم.
+enum EventSyncStatus { none, pendingSync, syncFailed }
+
 /// كيان حدث في السجل
 class LogEvent extends Equatable {
   final String id;
@@ -181,6 +188,9 @@ class LogEvent extends Equatable {
   /// عقد `/events`: بدأ الحدث في اليوم السابق ويمتد إلى هذا اليوم.
   final bool startedOnPreviousDay;
 
+  /// حالة مزامنة التعديل المحلي؛ [EventSyncStatus.none] للحدث المؤكد.
+  final EventSyncStatus syncStatus;
+
   const LogEvent({
     required this.id,
     required this.status,
@@ -193,6 +203,7 @@ class LogEvent extends Equatable {
     this.automatedDriving,
     this.editable,
     this.startedOnPreviousDay = false,
+    this.syncStatus = EventSyncStatus.none,
   });
 
   String get formattedStartTime {
@@ -219,6 +230,7 @@ class LogEvent extends Equatable {
     bool? automatedDriving,
     bool? editable,
     bool? startedOnPreviousDay,
+    EventSyncStatus? syncStatus,
   }) {
     return LogEvent(
       id: id ?? this.id,
@@ -232,6 +244,7 @@ class LogEvent extends Equatable {
       automatedDriving: automatedDriving ?? this.automatedDriving,
       editable: editable ?? this.editable,
       startedOnPreviousDay: startedOnPreviousDay ?? this.startedOnPreviousDay,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -248,5 +261,6 @@ class LogEvent extends Equatable {
     automatedDriving,
     editable,
     startedOnPreviousDay,
+    syncStatus,
   ];
 }

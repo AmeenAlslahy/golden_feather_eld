@@ -290,6 +290,7 @@ class _FailingStatusDashboard implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async {
@@ -343,6 +344,7 @@ class _ScriptedStatusDashboard implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async => ok(dashboard);

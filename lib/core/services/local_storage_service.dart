@@ -129,7 +129,8 @@ class LocalStorageService implements ServerConfigProvider {
   String get theme => _preferencesStorage.theme;
   String get currentDutyStatus => _preferencesStorage.currentDutyStatus;
   String? get stationarySince => _preferencesStorage.stationarySince;
-  String? get selectedVehicleId => _preferencesStorage.selectedVehicleId;
+  String? get selectedVehicleId =>
+      _initialized ? _preferencesStorage.selectedVehicleId : null;
 
   // ========== Setters ==========
 
@@ -184,10 +185,17 @@ class LocalStorageService implements ServerConfigProvider {
 
   // ========== تخزين المركبة ==========
 
-  Future<void> saveSelectedVehicleId(String id) =>
-      _preferencesStorage.saveSelectedVehicleId(id);
-  Future<void> clearSelectedVehicle() =>
-      _preferencesStorage.clearSelectedVehicle();
+  Future<void> saveSelectedVehicleId(String id) async {
+    if (_initialized) {
+      await _preferencesStorage.saveSelectedVehicleId(id);
+    }
+  }
+
+  Future<void> clearSelectedVehicle() async {
+    if (_initialized) {
+      await _preferencesStorage.clearSelectedVehicle();
+    }
+  }
 
   /// P0 عزل السائقين — مسح الحالة القانونية الحية عند تبديل السائق.
   /// التفصيل في [UserPreferencesStorageService.clearDutyTrackingState].

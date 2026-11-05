@@ -123,6 +123,9 @@ String? _mapTechnicalCode(String code, AppLocalizations loc) {
   final flat = lower.replaceAll(RegExp(r'[._\-\s/]+'), '');
 
   // ── 1) رموز هذا الخادم تماماً (من `openapi.yaml` وسجلات التشغيل) ──────
+  if (flat.contains('overlap') || flat.contains('nooverlap')) {
+    return loc.eventTimeOverlap;
+  }
   if (lower == 'business_rule_violation' || flat == 'businessruleviolation') {
     return loc.errBusinessRuleViolation;
   }

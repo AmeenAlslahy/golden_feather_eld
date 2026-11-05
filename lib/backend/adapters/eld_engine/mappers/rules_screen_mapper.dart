@@ -21,12 +21,16 @@ class RulesScreenMapper {
         shiftLimitMinutes: dto.limits.maxShiftHours * 60,
         cycleLimitHours: dto.limits.cycleHours,
         maxConsecutiveDays: dto.limits.cycleDays,
-        // The Rules API does not provide these fields. We provide safe defaults here,
-        // but the actual merge logic MUST use PRESERVE_CURRENT on these fields.
-        breakDurationMinutes: 30,
+        breakDurationMinutes: dto.limits.restBreakMinutes > 0
+            ? dto.limits.restBreakMinutes
+            : 30,
         movingSpeedThresholdKmh: 8.0,
-        driveBeforeBreakMinutes: 8 * 60,
-        weeklyRestartHours: 34,
+        driveBeforeBreakMinutes: dto.limits.restBreakTriggerHours > 0
+            ? dto.limits.restBreakTriggerHours * 60
+            : 8 * 60,
+        weeklyRestartHours: dto.limits.mandatoryRestHours > 0
+            ? dto.limits.mandatoryRestHours
+            : 34,
       ),
     );
   }

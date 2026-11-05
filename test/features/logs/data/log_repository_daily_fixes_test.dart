@@ -97,6 +97,9 @@ void main() {
     when(() => local.getCachedLogEvents(any())).thenAnswer((_) async => null);
     when(() => local.getEvents(any())).thenAnswer((_) async => const []);
     when(() => local.updateEvent(any())).thenAnswer((_) async => true);
+    when(
+      () => local.upsertCachedLogEvent(any(), any()),
+    ).thenAnswer((_) async {});
     when(() => local.getCachedDailyLogs(any())).thenAnswer((_) async => null);
     when(() => local.getCachedDailyForm(any())).thenAnswer((_) async => null);
   });
@@ -194,38 +197,40 @@ void main() {
       ).called(1);
     });
 
-    test('offline repeat + screen reopen keeps one request and first signature',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
+    test(
+      'offline repeat + screen reopen keeps one request and first signature',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
 
-      await repo.certifyLog(
-        logId: logId,
-        driverId: 101,
-        signatureImageBase64: 'Zmlyc3Q=',
-      );
-      // إعادة المحاولة عبر مستودع جديد (إعادة فتح الشاشة/التطبيق) بنفس
-      // الطابور الدائم: لا طلب ثانٍ، ولا استبدال للتوقيع الأصلي.
-      final reopened = LogRepositoryImpl(
-        localDataSource: local,
-        dailyLogsBackend: dailyLogs,
-        dutyStatusBackend: _DutyStatus(),
-        networkInfo: net,
-        offlineQueue: queue,
-        timeAuthority: FakeTimeAuthority(),
-        idGenerator: _FakeIdGenerator(),
-      );
-      final second = await reopened.certifyLog(
-        logId: logId,
-        driverId: 101,
-        signatureImageBase64: 'c2Vjb25k',
-      );
+        await repo.certifyLog(
+          logId: logId,
+          driverId: 101,
+          signatureImageBase64: 'Zmlyc3Q=',
+        );
+        // إعادة المحاولة عبر مستودع جديد (إعادة فتح الشاشة/التطبيق) بنفس
+        // الطابور الدائم: لا طلب ثانٍ، ولا استبدال للتوقيع الأصلي.
+        final reopened = LogRepositoryImpl(
+          localDataSource: local,
+          dailyLogsBackend: dailyLogs,
+          dutyStatusBackend: _DutyStatus(),
+          networkInfo: net,
+          offlineQueue: queue,
+          timeAuthority: FakeTimeAuthority(),
+          idGenerator: _FakeIdGenerator(),
+        );
+        final second = await reopened.certifyLog(
+          logId: logId,
+          driverId: 101,
+          signatureImageBase64: 'c2Vjb25k',
+        );
 
-      expect(second.getRight().toNullable()!.isPendingSync, isTrue);
-      expect(await queue.count, 1);
-      final pending = (await queue.getPending()).single;
-      expect(pending.payload['signatureImage'], 'Zmlyc3Q=');
-      expect(pending.dedupeKey, 'certification:${logId.value}:101');
-    });
+        expect(second.getRight().toNullable()!.isPendingSync, isTrue);
+        expect(await queue.count, 1);
+        final pending = (await queue.getPending()).single;
+        expect(pending.payload['signatureImage'], 'Zmlyc3Q=');
+        expect(pending.dedupeKey, 'certification:${logId.value}:101');
+      },
+    );
 
     test('offline concurrent taps are deduped atomically', () async {
       when(() => net.isConnected).thenReturn(false);
@@ -248,32 +253,38 @@ void main() {
       expect((await queue.getPending()).single.type, 'certification');
     });
 
-    test('offline: an old queued request without dedupeKey is not duplicated',
-        () async {
-      when(() => net.isConnected).thenReturn(false);
-      await queue.enqueue(
-        PendingEvent(
-          id: 'legacy-cert',
-          type: 'certification',
-          payload: {
-            'logId': logId.value,
-            'certified': true,
-            'signatureImage': 'bGVnYWN5',
-            'ownerDriverId': 101,
-          },
-          createdAt: DateTime.utc(2026, 9, 24, 8),
-        ),
-      );
+    test(
+      'offline: an old queued request without dedupeKey is not duplicated',
+      () async {
+        when(() => net.isConnected).thenReturn(false);
+        await queue.enqueue(
+          PendingEvent(
+            id: 'legacy-cert',
+            type: 'certification',
+            payload: {
+              'logId': logId.value,
+              'certified': true,
+              'signatureImage': 'bGVnYWN5',
+              'ownerDriverId': 101,
+            },
+            createdAt: DateTime.utc(2026, 9, 24, 8),
+          ),
+        );
 
-      await repo.certifyLog(
-        logId: logId,
-        driverId: 101,
-        signatureImageBase64: 'bmV3',
-      );
+        await repo.certifyLog(
+          logId: logId,
+          driverId: 101,
+          signatureImageBase64: 'bmV3',
+        );
 
-      expect(await queue.count, 1, reason: 'legacy row still matches by fields');
-      expect((await queue.getPending()).single.id, 'legacy-cert');
-    });
+        expect(
+          await queue.count,
+          1,
+          reason: 'legacy row still matches by fields',
+        );
+        expect((await queue.getPending()).single.id, 'legacy-cert');
+      },
+    );
   });
 
   group('updateEvent', () {
@@ -338,6 +349,77 @@ void main() {
       },
     );
 
+    test(
+      'confirmed response is cached and keeps fields omitted by the echo',
+      () async {
+        when(() => net.isConnected).thenReturn(true);
+        when(() => local.getCachedLogEvents(logId)).thenAnswer(
+          (_) async => [
+            {
+              'id': 7,
+              'status': 'ON_DUTY',
+              'timeRange': {
+                'startTime': '2026-09-24T22:00:00Z',
+                'durationSeconds': 3600,
+              },
+              'location': {
+                'description': 'Dock 4',
+                'latitude': 35.1,
+                'longitude': -97.2,
+              },
+            },
+          ],
+        );
+        when(
+          () => dailyLogs.updateEvent(
+            logId: any(named: 'logId'),
+            eventId: any(named: 'eventId'),
+            event: any(named: 'event'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer(
+          (_) async => const Right(<String, dynamic>{
+            'event': {
+              'id': 7,
+              'status': 'ON_DUTY',
+              'timeRange': {
+                'startTime': '2026-09-24T22:30:00Z',
+                'durationSeconds': 9000,
+              },
+            },
+          }),
+        );
+
+        final result = await repo.updateEvent(
+          event(
+            start: DateTime(2026, 9, 24, 22, 30),
+            duration: const Duration(hours: 2, minutes: 30),
+          ),
+          reason: 'Corrected start',
+          logId: logId,
+          ownerDriverId: 101,
+        );
+
+        expect(result.isRight(), isTrue);
+        final confirmed = result.getRight().toNullable()!;
+        expect(
+          confirmed.location,
+          'Dock 4',
+          reason: 'the PUT echo omitted location; cached value must survive',
+        );
+        expect(confirmed.startTime.toUtc(), DateTime.utc(2026, 9, 24, 22, 30));
+        expect(confirmed.duration, const Duration(hours: 2, minutes: 30));
+
+        final captured =
+            verify(
+                  () => local.upsertCachedLogEvent(logId, captureAny()),
+                ).captured.single
+                as Map<String, dynamic>;
+        expect(captured['location'], 'Dock 4');
+        expect(captured['startTime'], isNotNull);
+      },
+    );
+
     test('online: zero duration sends an explicit equal endTime', () async {
       when(() => net.isConnected).thenReturn(true);
       Map<String, dynamic>? captured;
@@ -355,7 +437,7 @@ void main() {
         return const Right(<String, dynamic>{});
       });
 
-      await repo.updateEvent(
+      final result = await repo.updateEvent(
         event(
           start: DateTime(2026, 9, 24, 8),
           duration: Duration.zero,
@@ -374,6 +456,12 @@ void main() {
         (captured!['location'] as Map<String, dynamic>)['description'],
         'Dock 4',
       );
+      expect(
+        result.getRight().toNullable(),
+        isNull,
+        reason: 'success:true without an event echo is accepted, not confirmed',
+      );
+      verify(() => local.upsertCachedLogEvent(logId, any())).called(1);
     });
 
     test('offline: queued payload keeps durationSeconds for replay', () async {
@@ -393,7 +481,21 @@ void main() {
       final pending = (await queue.getReadyEvents()).single;
       expect(pending.type, 'duty_status');
       expect(pending.payload['durationSeconds'], 9000);
+      expect(pending.payload['logId'], logId.value);
       expect(pending.payload.containsKey('locationText'), isFalse);
+
+      final returned = result.getRight().toNullable()!;
+      expect(
+        returned.syncStatus,
+        EventSyncStatus.pendingSync,
+        reason: 'an offline edit is not confirmed by the server yet',
+      );
+      final cached =
+          verify(
+                () => local.upsertCachedLogEvent(logId, captureAny()),
+              ).captured.single
+              as Map<String, dynamic>;
+      expect(cached['syncStatus'], 'PENDING_SYNC');
     });
   });
 
@@ -554,6 +656,53 @@ void main() {
 
       expect(result.isLeft(), isTrue);
       verifyNever(() => local.cacheLogEvents(any(), any()));
+    });
+
+    test('a pending local edit overlays a stale server snapshot', () async {
+      when(() => net.isConnected).thenReturn(true);
+      when(() => dailyLogs.getEvents(logId)).thenAnswer(
+        (_) async => const Right({
+          'events': [
+            {
+              'id': 7,
+              'status': 'ON_DUTY',
+              'timeRange': {
+                'startTime': '2026-09-24T08:00:00Z',
+                'durationSeconds': 3600,
+              },
+              'location': {'description': 'Server Yard'},
+            },
+          ],
+        }),
+      );
+      when(() => local.getCachedLogEvents(logId)).thenAnswer(
+        (_) async => [
+          {
+            'id': '7',
+            'status': 'ON',
+            'startTime': '2026-09-24T09:00:00.000',
+            'duration': 1800,
+            'location': 'Dock 4',
+            'syncStatus': 'PENDING_SYNC',
+          },
+        ],
+      );
+
+      final result = await repo.getEvents(logId, day);
+
+      final event = result.getRight().toNullable()!.events.single;
+      expect(event.startTime, DateTime(2026, 9, 24, 9));
+      expect(event.duration, const Duration(minutes: 30));
+      expect(event.location, 'Dock 4');
+      expect(event.syncStatus, EventSyncStatus.pendingSync);
+
+      final cached =
+          verify(
+                () => local.cacheLogEvents(logId, captureAny()),
+              ).captured.single
+              as List<Map<String, dynamic>>;
+      expect(cached.single['syncStatus'], 'PENDING_SYNC');
+      expect(cached.single['startTime'], contains('09:00'));
     });
 
     test('online failure falls back to a cache snapshot', () async {

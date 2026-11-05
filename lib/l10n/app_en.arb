@@ -681,6 +681,7 @@
   "cannotSaveDriverSessionNotFound": "Cannot save: driver session not found.",
   "automaticDrivingTimeCannotBeShortened": "Automatic driving time cannot be shortened or removed.",
   "eventCannotBeInFuture": "Duty status event time cannot be in the future.",
+  "eventTimeOverlap": "The selected time range conflicts with another event on this day.",
   "eventSavedSuccessfully": "Event saved successfully",
   "reCertificationRequiredEditsWereMade": "Re-certification Required: Edits were made after your last signature.",
   "typeHere": "Type here",

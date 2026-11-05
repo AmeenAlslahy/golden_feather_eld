@@ -6,6 +6,7 @@ import '../../../../core/theme/app_decorations.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 
 /// دليل المستخدم — صفحة مرجعية كثيفة النصوص (9-11px مقصودة)،
 /// لكن الألوان والأوزان كلها من `context.styles` عبر copyWith.
@@ -17,9 +18,9 @@ class UserManualPage extends StatelessWidget {
     final loc = context.loc;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GoldenAppBar(
         leading: const BackButton(),
-        title: Text(loc.eldUserManual, style: context.styles.appBarTitle),
+        titleText: loc.eldUserManual,
       ),
       body: ListView(
         padding: EdgeInsets.zero,

@@ -668,6 +668,9 @@ class _TestStorage implements LocalStorageService {
   }
 
   @override
+  String? get selectedVehicleId => data['selected_vehicle_id'];
+
+  @override
   String? get stationarySince => data['stationary_since'];
 
   @override
@@ -717,6 +720,7 @@ class _TestDashboardBackend implements StatusDashboardBackend {
     required DutyStatusCode status,
     String? notes,
     DriverId? driverId,
+    VehicleId? vehicleId,
     double? latitude,
     double? longitude,
   }) async {

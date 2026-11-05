@@ -33,12 +33,16 @@ DvirDefect? parseDvirDefect(Object? raw) {
         _asList(
           json['repairActions'],
         )?.map(_parseRepairAction).toList(growable: false) ??
-        const [],
+        (json['repairAction'] is Map
+            ? [_parseRepairAction(json['repairAction'] as Map)]
+            : const []),
     certifications:
         _asList(
           json['certifications'],
         )?.map(_parseCertification).toList(growable: false) ??
-        const [],
+        (json['certification'] is Map
+            ? [_parseCertification(json['certification'] as Map)]
+            : const []),
   );
 }
 

@@ -1987,6 +1987,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Duty status event time cannot be in the future.';
 
   @override
+  String get eventTimeOverlap =>
+      'The selected time range conflicts with another event on this day.';
+
+  @override
   String get eventSavedSuccessfully => 'Event saved successfully';
 
   @override

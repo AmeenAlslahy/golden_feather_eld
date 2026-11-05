@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/extensions/context_extensions.dart';
-import '../../../../../core/widgets/app_text_field.dart';
+import '../../../../../core/design_system.dart';
 
 /// FMCSA §395.34 reason dialog for manual recording mode toggle.
 ///
@@ -28,26 +27,21 @@ class _ManualModeReasonDialogState extends State<ManualModeReasonDialog> {
   Widget build(BuildContext context) {
     final loc = context.loc;
     final enable = widget.enable;
-    return AlertDialog(
-      title: Text(
-        enable ? loc.eldMalfunctionReasonStart : loc.eldMalfunctionReasonEnd,
-      ),
-      content: AppTextField(
+    return AppDialog(
+      title:
+          enable ? loc.eldMalfunctionReasonStart : loc.eldMalfunctionReasonEnd,
+      type: AppDialogType.confirmation,
+      contentWidget: AppTextField(
         controller: _controller,
         maxLines: 2,
         keyboardType: TextInputType.text,
         hint: enable ? loc.eldMalfunctionHintStart : loc.eldMalfunctionHintEnd,
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(loc.cancelAction),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, _controller.text),
-          child: Text(loc.okButton),
-        ),
-      ],
+      secondaryActionLabel: loc.cancelAction,
+      onSecondaryAction: () => Navigator.pop(context),
+      primaryActionLabel: loc.okButton,
+      onPrimaryAction: () => Navigator.pop(context, _controller.text),
     );
   }
 }
+

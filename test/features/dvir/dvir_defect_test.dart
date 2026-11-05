@@ -58,6 +58,41 @@ void main() {
       );
     });
 
+    test('parses OAS 3.0 Swagger defect payload with singular repairAction and certification', () {
+      final swaggerDefect = {
+        'id': 105,
+        'itemCode': 'BRAKES',
+        'itemName': 'Brakes',
+        'severity': 'MAJOR',
+        'stage': 'REPAIRED',
+        'outOfService': false,
+        'repairAction': {
+          'id': 1,
+          'actionPerformed': 'Replaced front pads',
+          'performedByName': 'Tech Mike',
+          'repairNotes': 'Torqued to spec',
+          'workOrderNumber': 'WO-101',
+          'performedAt': '2026-11-03T01:59:23.403Z',
+        },
+        'certification': {
+          'id': 2,
+          'certificationType': 'SAFE_TO_OPERATE',
+          'certifiedByName': 'Fleet Manager Alice',
+          'certificationNotes': 'Passed visual inspection',
+          'certifiedAt': '2026-11-03T01:59:23.403Z',
+        },
+      };
+
+      final defect = parseDvirDefect(swaggerDefect);
+      expect(defect, isNotNull);
+      expect(defect!.id, 105);
+      expect(defect.repairActions, hasLength(1));
+      expect(defect.repairActions.first.performedByName, 'Tech Mike');
+      expect(defect.repairActions.first.workOrderNumber, 'WO-101');
+      expect(defect.certifications, hasLength(1));
+      expect(defect.certifications.first.certifiedByName, 'Fleet Manager Alice');
+    });
+
     test('absent fields stay null and unknown id returns null', () {
       final defect = parseDvirDefect({'itemName': 'Brakes'});
       expect(defect, isNull); // لا معرف = جسم غير موثوق

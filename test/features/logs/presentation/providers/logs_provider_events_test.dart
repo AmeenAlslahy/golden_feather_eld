@@ -125,7 +125,7 @@ void main() {
   });
 
   test(
-    'updateEvent forwards the mandatory reason and refreshes from server',
+    'updateEvent applies the PUT echo without an immediate refetch',
     () async {
       when(() => repo.getEvents(any(), any())).thenAnswer(
         (_) async => Right(LogEventsSnapshot.server([ev('7', 'OFF', 60)])),
@@ -152,6 +152,11 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(ok.isRight(), isTrue);
+      expect(
+        container.read(logsProvider).selectedLog!.events.single.status,
+        'SB',
+      );
+      expect(container.read(logsProvider).eventsPendingConfirmation, isFalse);
       verify(
         () => repo.updateEvent(
           any(),
@@ -160,8 +165,72 @@ void main() {
           ownerDriverId: any(named: 'ownerDriverId'),
         ),
       ).called(1);
-      // Initial load + refresh after the edit.
-      verify(() => repo.getEvents(any(), any())).called(2);
+      // لا جلب تلقائي بعد التعديل: استجابة PUT هي المرجع.
+      verify(() => repo.getEvents(any(), any())).called(1);
     },
   );
+
+  test(
+    'unparseable PUT echo keeps the edit and marks it unconfirmed',
+    () async {
+      when(() => repo.getEvents(any(), any())).thenAnswer(
+        (_) async => Right(LogEventsSnapshot.server([ev('7', 'OFF', 60)])),
+      );
+      when(
+        () => repo.updateEvent(
+          any(),
+          reason: any(named: 'reason'),
+          logId: any(named: 'logId'),
+          ownerDriverId: any(named: 'ownerDriverId'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final notifier = container.read(logsProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+      notifier.selectLog(day);
+      await Future<void>.delayed(Duration.zero);
+
+      await notifier.updateEvent(ev('7', 'SB', 60), reason: 'Wrong status');
+
+      final state = container.read(logsProvider);
+      expect(state.selectedLog!.events.single.status, 'SB');
+      expect(state.eventsPendingConfirmation, isTrue);
+      verify(() => repo.getEvents(any(), any())).called(1);
+    },
+  );
+
+  test('a failed refresh does not remove the confirmed edit', () async {
+    var eventsCalls = 0;
+    when(() => repo.getEvents(any(), any())).thenAnswer((_) async {
+      eventsCalls++;
+      if (eventsCalls == 1) {
+        return Right(LogEventsSnapshot.server([ev('7', 'OFF', 60)]));
+      }
+      return const Left(ServerFailure(message: 'offline', statusCode: 0));
+    });
+    when(
+      () => repo.updateEvent(
+        any(),
+        reason: any(named: 'reason'),
+        logId: any(named: 'logId'),
+        ownerDriverId: any(named: 'ownerDriverId'),
+      ),
+    ).thenAnswer((_) async => Right(ev('7', 'SB', 60)));
+
+    final notifier = container.read(logsProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+    notifier.selectLog(day);
+    await Future<void>.delayed(Duration.zero);
+    await notifier.updateEvent(ev('7', 'SB', 60), reason: 'Wrong status');
+
+    await notifier.loadSelectedLogEvents();
+
+    final state = container.read(logsProvider);
+    expect(
+      state.selectedLog!.events.single.status,
+      'SB',
+      reason: 'the confirmed edit must survive a failed GET',
+    );
+    expect(state.eventsError, 'offline');
+  });
 }

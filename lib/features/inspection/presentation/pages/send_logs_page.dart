@@ -13,6 +13,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../domain/inspection_transfer.dart';
 import '../providers/inspection_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/constants/fmcsa_constants.dart';
 
@@ -153,9 +154,9 @@ class _SendLogsPageState extends ConsumerState<SendLogsPage> {
     final title = widget.isEmailMode ? loc.emailLogs : loc.sendLogs;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(title, style: context.styles.appBarTitle),
+      appBar: GoldenAppBar(
+
+        titleText: title,
       ),
       body: _sent
           ? _buildSuccessView(context, message, loc)

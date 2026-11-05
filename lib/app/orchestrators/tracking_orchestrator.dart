@@ -4,6 +4,8 @@ import '../../features/tracking/data/providers/tracking_providers.dart';
 import '../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../features/vehicle/presentation/providers/vehicle_provider.dart';
 import '../../features/hos/presentation/providers/hos_provider.dart';
+import '../../features/hos/presentation/providers/hos_engine_provider.dart';
+import '../../features/sync/domain/entities/duty_event_record.dart';
 import '../../features/hos/domain/engine/hos_rules_engine.dart';
 import 'package:golden_feather_eld/core/domain/entities/hos_models.dart';
 import '../../core/utils/logger.dart';
@@ -53,8 +55,17 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
       lastTelemetrySent = now;
       lastSpeedSent = speed;
 
+      // 🔴 فضاء معرّف السائق: القياس يجب أن يُنسب لمعرّف سائق ELD
+      // (`currentDriverIdProvider`) لا لمعرّف مستخدم Traccar. كان يُرسل
+      // `auth.user.id` مباشرة، وهو فضاء مختلف — فيُقيَّد الوقت لسائق خاطئ
+      // أو للمعرّف 0. نبقي السقوط إلى مستخدم المصادقة كما كان حفاظاً على
+      // السلوك عند غياب الختم.
+      final driverId =
+          ref.read(currentDriverIdProvider) ??
+          int.tryParse(auth.user!.id) ??
+          0;
       final reading = TelemetryReading(
-        driverId: DriverId(int.tryParse(auth.user!.id) ?? 0),
+        driverId: DriverId(driverId),
         speedMps: speed,
         engineOn: speed > 0,
       );
@@ -62,7 +73,7 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
       ref.read(hardwareBackendProvider).sendTelemetry(reading).then((result) {
         result.fold(
           (err) => AppLogger.warning('Telemetry send failed: ${err.code}'),
-          (data) {
+          (data) async {
             AppLogger.info(
               '📡 Telemetry sent to API server: speed=${speed.toStringAsFixed(1)} m/s',
             );
@@ -72,6 +83,11 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
                 : json;
             if (inner is Map && inner['transitionedToDriving'] == true) {
               AppLogger.info('🚗 Server reported transitionedToDriving=true');
+              // Decision 3 (P0): Priority 2 - Server telemetry fallback.
+              // Invokes tracker.transitionToDriving(source: DutyEventSource.server).
+              // If active ECM state contradicts (stationary), ECM wins, conflict is logged, and transition is rejected.
+              final tracker = ref.read(dutyStatusTrackerProvider);
+              await tracker.transitionToDriving(source: DutyEventSource.server);
               ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
             }
           },
@@ -85,9 +101,17 @@ final trackingOrchestratorProvider = Provider<void>((ref) {
         previous?.status != AuthStatus.authenticated) {
       AppLogger.info('🚀 Auth successful, configuring tracking service');
       // After POST /eld/hardware/connect, configure tracking Plugin (nativeUploadEnabled is implicit in Traccar SDK)
-      ref.read(trackingRepositoryProvider).getCurrentConfig().then((config) {
-        ref.read(trackingRepositoryProvider).updateConfig(config);
-      });
+      ref
+          .read(trackingRepositoryProvider)
+          .getCurrentConfig()
+          .then((config) {
+            ref.read(trackingRepositoryProvider).updateConfig(config);
+          })
+          .catchError((Object e, StackTrace stack) {
+            // بلا هذا كان أي فشل يظهر كـUnhandled Exception ويختلط بأخطاء
+            // أخرى في السجل، بلا أي أثر يمكن تتبعه.
+            AppLogger.error('Failed to refresh tracking config', e, stack);
+          });
     } else if (next.status == AuthStatus.unauthenticated &&
         previous?.status == AuthStatus.authenticated) {
       // Owner decision 2026-09-25 + SRS §1 / 49 CFR §395.32: the device keeps

@@ -35,6 +35,10 @@ class LogsState {
   /// تعرض تنبيهاً حتى لا يظن السائق أن اليوم مؤكد من الخادم.
   final bool eventsFromSavedData;
 
+  /// آخر تعديل قُبل من الخادم دون echo قابل للتحليل. نعرض «محفوظ —
+  /// غير مؤكد» بدل ادّعاء نجاح كامل، ونبقي التعديل ظاهراً.
+  final bool eventsPendingConfirmation;
+
   const LogsState({
     this.logs = const [],
     this.selectedLog,
@@ -46,6 +50,7 @@ class LogsState {
     this.isLoadingEvents = false,
     this.eventsError,
     this.eventsFromSavedData = false,
+    this.eventsPendingConfirmation = false,
     this.serverForm,
   });
 
@@ -65,6 +70,7 @@ class LogsState {
     String? eventsError,
     bool clearEventsError = false,
     bool? eventsFromSavedData,
+    bool? eventsPendingConfirmation,
     DailyFormData? serverForm,
     bool clearServerForm = false,
   }) {
@@ -81,6 +87,8 @@ class LogsState {
       isLoadingEvents: isLoadingEvents ?? this.isLoadingEvents,
       eventsError: clearEventsError ? null : (eventsError ?? this.eventsError),
       eventsFromSavedData: eventsFromSavedData ?? this.eventsFromSavedData,
+      eventsPendingConfirmation:
+          eventsPendingConfirmation ?? this.eventsPendingConfirmation,
       serverForm: clearServerForm ? null : (serverForm ?? this.serverForm),
     );
   }
@@ -96,6 +104,9 @@ final logsProvider = StateNotifierProvider.autoDispose<LogsNotifier, LogsState>(
     final sub = ref.read(appEventBusProvider).stream.listen((event) {
       if (event == AppEvent.logDataChanged) {
         notifier.loadLogs(refresh: true);
+        // قد يكون التغيير حدثاً في اليوم المفتوح (مزامنة خلفية لتعديل
+        // حدث أو اعتماد)؛ حدّث أحداثه أيضاً بدل انتظار إعادة الفتح.
+        notifier.loadSelectedLogEvents();
       }
     });
 
@@ -191,6 +202,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
       selectedLog: log,
       clearEventsError: true,
       eventsFromSavedData: false,
+      eventsPendingConfirmation: false,
       clearServerForm: true,
     );
     _applyRowToLiveDashboard(log);
@@ -371,10 +383,11 @@ class LogsNotifier extends StateNotifier<LogsState> {
       (failure) {
         // Inspection views must distinguish an empty day from an event-load
         // failure, including offline/network failures, so they can offer retry.
+        // لا نمسح الأحداث المعروضة ولا مصدرها عند فشل التحديث؛ التعديل
+        // المؤكد يبقى ظاهراً وتُعرض حالة الخطأ مع إمكانية إعادة المحاولة.
         state = state.copyWith(
           isLoadingEvents: false,
           eventsError: failure.message,
-          eventsFromSavedData: false,
         );
       },
       (snapshot) {
@@ -393,6 +406,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
           isLoadingEvents: false,
           clearEventsError: true,
           eventsFromSavedData: snapshot.isSavedData,
+          eventsPendingConfirmation: false,
         );
       },
     );
@@ -483,27 +497,28 @@ class LogsNotifier extends StateNotifier<LogsState> {
           );
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    return confirmed.fold((failure) => Left(failure), (persistedEvent) {
-      if (persistedEvent == null) {
-        _replaceSelected(
-          state.selectedLog!.copyWith(
-            events: state.selectedLog!.events
-                .map((e) => e.id == event.id ? event : e)
-                .toList(),
-          ),
+    return confirmed.fold(
+      (failure) {
+        state = state.copyWith(eventsPendingConfirmation: false);
+        return Left(failure);
+      },
+      (persistedEvent) {
+        final updatedEvents = state.selectedLog!.events.map((e) {
+          if (e.id == event.id) return persistedEvent ?? event;
+          if (persistedEvent != null && e.id == persistedEvent.id) {
+            return persistedEvent;
+          }
+          return e;
+        }).toList();
+        _replaceSelected(state.selectedLog!.copyWith(events: updatedEvents));
+        state = state.copyWith(
+          eventsPendingConfirmation: persistedEvent == null,
         );
-      } else {
-        _replaceSelected(
-          state.selectedLog!.copyWith(
-            events: state.selectedLog!.events
-                .map((e) => e.id == persistedEvent.id ? persistedEvent : e)
-                .toList(),
-          ),
-        );
-      }
-      unawaited(loadSelectedLogEvents());
-      return const Right(null);
-    });
+        // لا نعيد جلب `/events` فوراً: استجابة PUT هي مصدر الحقيقة،
+        // والجلب الفوري كان يسمح لنسخة قديمة/متأخرة بمحو التعديل المؤكد.
+        return const Right(null);
+      },
+    );
   }
 
   /// تحديث سجل بالكامل (مثل إكمال النموذج)

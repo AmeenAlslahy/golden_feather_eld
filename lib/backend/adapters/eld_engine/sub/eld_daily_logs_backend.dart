@@ -1,5 +1,6 @@
 import '../../../../core/error/app_error.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_response.dart';
 import '../../../../core/result/result.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/daily_logs_backend.dart';
@@ -137,33 +138,6 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<RawJson>> getTeamStatus(DailyLogId logId) async {
-    final res = await _apiClient.get<RawJson>(
-      EldEndpoints.teamStatus(logId.value),
-      parser: (data) => data is Map<String, dynamic> ? data : {},
-    );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
-  }
-
-  @override
-  Future<Result<void>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required EditId editId,
-    required String action,
-    String? driverNotes,
-  }) async {
-    final res = await _apiClient.post<dynamic>(
-      EldEndpoints.respondCarrierEdit(logId.value, editId.value),
-      data: {
-        'editId': editId.value,
-        'action': action,
-        if (driverNotes != null) 'driverNotes': driverNotes,
-      },
-    );
-    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
-  }
-
-  @override
   Future<Result<CertifyResponseDto>> certify(
     CertifyRequestDto request, {
     int? expectedOwnerDriverId,
@@ -176,23 +150,6 @@ class EldDailyLogsBackend implements DailyLogsBackend {
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     return res.mapValue((r) => r.data!);
-  }
-
-  @override
-  Future<Result<void>> reassignDriving({
-    required DailyLogId logId,
-    required DutyStatusId statusId,
-    required DriverId targetCoDriverId,
-    required String annotation,
-  }) async {
-    final res = await _apiClient.post<dynamic>(
-      EldEndpoints.reassignDriving(logId.value, statusId.value),
-      data: {
-        'targetCoDriverId': targetCoDriverId.value,
-        'annotation': annotation,
-      },
-    );
-    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
   }
 
   @override
@@ -226,16 +183,6 @@ class EldDailyLogsBackend implements DailyLogsBackend {
       parser: (data) =>
           data is Map<String, dynamic> ? data : <String, dynamic>{},
     );
-    // خادم لم يُحدَّث بعد إلى العقد الجديد → fallback للمسار القديم
-    // `graph-grid` (نفس شكل الحمولة: data.events).
-    if (res.isLeft() && res.errorOrNull is NotFoundError) {
-      final legacy = await _apiClient.get<RawJson>(
-        EldEndpoints.dailyLogGraphGrid(logId.value),
-        parser: (data) =>
-            data is Map<String, dynamic> ? data : <String, dynamic>{},
-      );
-      return legacy.mapValue((r) => r.data ?? <String, dynamic>{});
-    }
     return res.mapValue((r) => r.data ?? <String, dynamic>{});
   }
 
@@ -266,7 +213,57 @@ class EldDailyLogsBackend implements DailyLogsBackend {
           data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.fold((error) => err(error), (response) {
+      // HTTP 200 وحده ليس نجاحاً: المغلف الموحّد قد يحمل
+      // `success:false` مع `errors[]`. بدون هذا الفحص كان المستودع
+      // يستقبل `{}` ويعرض التعديل كأنه محفوظ.
+      if (!response.isSuccess) return err(_envelopeFailure(response));
+      return ok(response.data ?? <String, dynamic>{});
+    });
+  }
+
+  /// يحوّل مغلفاً فاشلاً (HTTP 2xx مع `success:false`) إلى [AppError]
+  /// قابلاً للتصنيف في طبقة المزامنة. الأخطاء الحقلية رفض نهائي، لذا
+  /// تُصنّف [ValidationError] حتى لا يعاد إرسالها إلى ما لا نهاية.
+  AppError _envelopeFailure(ApiResponse<RawJson> response) {
+    final fieldErrors = <String, String>{
+      for (final error in response.errors) error.field: error.message,
+    };
+    final message = fieldErrors.isNotEmpty
+        ? fieldErrors.entries
+              .map((entry) => '${entry.key}: ${entry.value}')
+              .join('; ')
+        : response.message ?? response.errorCode ?? 'serverRejectedRequest';
+    final context = <String, dynamic>{
+      'statusCode': response.statusCode,
+      'serverMessage': message,
+      if (response.errorCode != null) 'errorCode': response.errorCode,
+      if (response.requestId != null) 'requestId': response.requestId,
+      if (fieldErrors.isNotEmpty) 'fieldErrors': fieldErrors,
+    };
+    final code = response.errorCode ?? 'server.rejectedRequest';
+
+    if (fieldErrors.isNotEmpty) {
+      return ValidationError(
+        code: code,
+        l10nKey: 'validationError',
+        fieldErrors: fieldErrors,
+        context: context,
+      );
+    }
+    if (code.toLowerCase().contains('conflict') ||
+        code.toLowerCase().contains('already')) {
+      return ConflictError(
+        code: code,
+        l10nKey: 'conflictError',
+        context: context,
+      );
+    }
+    return ValidationError(
+      code: code,
+      l10nKey: 'validationError',
+      context: context,
+    );
   }
 
   @override
@@ -290,43 +287,27 @@ class EldDailyLogsBackend implements DailyLogsBackend {
   }
 
   @override
-  Future<Result<void>> lock(DailyLogId logId) async {
-    final res = await _apiClient.post<dynamic>(
-      EldEndpoints.lockLog(logId.value),
-    );
-    return res.map((r) => r.isSuccess ? null : throw Exception(r.message));
-  }
-
-  @override
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId) async {
-    // في مواصفة السواجر (القسم 05: Daily Logs & Certification)، النقطة المعتمدة لفحص
-    // حالة شاشة الاعتماد والجاهزية وموانع التحقق هي `GET /eld/daily-logs/{id}/certify`.
-    final certifyRes = await getCertifyState(logId);
-    if (certifyRes.isSuccess && certifyRes.valueOrNull != null) {
-      return certifyRes.mapValue(
-        (c) => ReadinessDto(
-          dailyLogId: c.dailyLogId != 0 ? c.dailyLogId : logId.value,
-          driverId: 0,
-          driverName: '',
-          logDate: c.logDate,
-          readinessStatus: c.canCertify
-              ? 'READY'
-              : (c.certified ? 'CERTIFIED' : 'NOT_READY'),
-          missingRequirements: c.validationCodes,
-          legalStatement: c.statementText,
-          availableActions: c.canCertify ? const ['CERTIFY'] : const [],
-          carrierProposedEditsPending:
-              c.validationCodes.contains('UNCERTIFIED_EDITS_PENDING'),
-          pendingCarrierEdits: const [],
+    // الجاهزية مشتقة من `GET /eld/daily-logs/{id}/certify` — لا نقطة
+    // readiness مستقلة في واجهة الـ12 مساراً المعتمدة.
+    return (await getCertifyState(logId)).mapValue(
+      (c) => ReadinessDto(
+        dailyLogId: c.dailyLogId != 0 ? c.dailyLogId : logId.value,
+        driverId: 0,
+        driverName: '',
+        logDate: c.logDate,
+        readinessStatus: c.canCertify
+            ? 'READY'
+            : (c.certified ? 'CERTIFIED' : 'NOT_READY'),
+        missingRequirements: c.validationCodes,
+        legalStatement: c.statementText,
+        availableActions: c.canCertify ? const ['CERTIFY'] : const [],
+        carrierProposedEditsPending: c.validationCodes.contains(
+          'UNCERTIFIED_EDITS_PENDING',
         ),
-      );
-    }
-
-    final res = await _apiClient.get<ReadinessDto>(
-      EldEndpoints.checkReadiness(logId.value),
-      parser: (data) => ReadinessDto.fromJson(data as Map<String, dynamic>),
+        pendingCarrierEdits: const [],
+      ),
     );
-    return res.mapValue((r) => r.data!);
   }
 
   @override

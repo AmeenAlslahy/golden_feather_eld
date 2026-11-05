@@ -45,29 +45,10 @@ abstract interface class DailyLogsBackend {
   // TODO(P2): replace with DailyLog
   Future<Result<RawJson>> getById(DailyLogId logId);
 
-  /// GET /eld/daily-logs/{id}/team — team status + HOS isolation (§5.8).
-  Future<Result<RawJson>> getTeamStatus(DailyLogId logId);
-
-  /// POST /eld/daily-logs/{id}/carrier-edits/{editId}/respond
-  Future<Result<void>> respondToCarrierEdit({
-    required DailyLogId logId,
-    required EditId editId,
-    required String action,
-    String? driverNotes,
-  });
-
   /// POST /eld/daily-logs/{id}/certify
   Future<Result<CertifyResponseDto>> certify(
     CertifyRequestDto request, {
     int? expectedOwnerDriverId,
-  });
-
-  /// POST /eld/daily-logs/{id}/events/{statusId}/reassign-driving
-  Future<Result<void>> reassignDriving({
-    required DailyLogId logId,
-    required DutyStatusId statusId,
-    required DriverId targetCoDriverId,
-    required String annotation,
   });
 
   /// GET /eld/daily-logs/{id}/form
@@ -110,10 +91,8 @@ abstract interface class DailyLogsBackend {
   /// GET /eld/daily-logs/{id}/form/options — selectable vehicles/co-drivers.
   Future<Result<RawJson>> getFormOptions(DailyLogId logId);
 
-  /// POST /eld/daily-logs/{id}/lock
-  Future<Result<void>> lock(DailyLogId logId);
-
-  /// GET /eld/daily-logs/{id}/readiness
+  /// Ready to certify — derived from `GET /eld/daily-logs/{id}/certify`
+  /// (no separate readiness endpoint in the adopted API).
   Future<Result<ReadinessDto>> getReadiness(DailyLogId logId);
 
   /// GET /eld/daily-logs/{id}/certify — certification screen state:

@@ -243,7 +243,7 @@ void main() {
         'cached snapshot is served instantly; server refresh runs in '
         'background', () async {
       final backend = _Backend();
-      when(() => backend.getDashboard(driverId: null)).thenAnswer(
+      when(() => backend.getDashboard(driverId: any(named: 'driverId'))).thenAnswer(
         (_) async => err(
           const NetworkError(
             code: 'dashboard.offline',
@@ -289,7 +289,7 @@ void main() {
       // النبضة الخلفية تجلب من الخادم (وتفشل هنا) دون مساس اللوحة
       // أو الختم: اللقطة تبقى معروضة بلحظة قياسها الأصلية.
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      verify(() => backend.getDashboard(driverId: null)).called(1);
+      verify(() => backend.getDashboard(driverId: any(named: 'driverId'))).called(1);
       expect(
         container.read(statusDashboardProvider).value?.remainingCircle.remaining,
         const Duration(hours: 8),
@@ -304,7 +304,7 @@ void main() {
 
     test('cold start without cache still goes to the network', () async {
       final backend = _Backend();
-      when(() => backend.getDashboard(driverId: null))
+      when(() => backend.getDashboard(driverId: any(named: 'driverId')))
           .thenAnswer((_) async => ok(_sampleDashboard()));
 
       final repo = StatusDashboardRepositoryImpl(
@@ -326,7 +326,7 @@ void main() {
       final dashboard =
           await container.read(statusDashboardProvider.future);
 
-      verify(() => backend.getDashboard(driverId: null)).called(1);
+      verify(() => backend.getDashboard(driverId: any(named: 'driverId'))).called(1);
       expect(dashboard.driver.id.value, 646);
     });
   });

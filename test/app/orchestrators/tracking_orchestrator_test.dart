@@ -78,6 +78,10 @@ class _FakeTrackingRepository implements TrackingRepository {
       throw UnimplementedError();
 
   @override
+  Future<Either<Failure, LocationEntity?>> getLastKnownPosition() async =>
+      const Right(null);
+
+  @override
   Future<Either<Failure, List<TrackingLogEntity>>> getLogs() async =>
       const Right([]);
 

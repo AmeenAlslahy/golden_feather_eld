@@ -98,13 +98,9 @@ class CoDriverRepositoryImpl implements CoDriverRepository {
           },
           (rawDrivers) {
             final drivers = rawDrivers
-                .map(
-                  (json) => CoDriver(
-                    id: json['id']?.toString() ?? '',
-                    name: json['name'] ?? 'Unknown',
-                    licenseNumber: json['attributes']?['licenseNumber'],
-                  ),
-                )
+                .whereType<Map>()
+                .map((m) => CoDriver.fromJson(Map<String, dynamic>.from(m)))
+                .where((d) => d.id.isNotEmpty && d.id != '0')
                 .toList();
 
             _cachedDrivers = drivers;
