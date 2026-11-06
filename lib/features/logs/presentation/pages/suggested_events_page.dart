@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/design_system.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../domain/entities/daily_log.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../providers/logs_provider.dart';

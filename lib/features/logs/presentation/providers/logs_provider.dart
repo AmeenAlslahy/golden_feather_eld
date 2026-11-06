@@ -475,7 +475,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
 
   /// تعديل حدث (العقد الموحّد: PUT /eld/daily-logs/{logId}/events/{eventId}
   /// مع سبب إلزامي؛ الرواسب القديمة تعود لمسار /eld/duty-status).
-  Future<Either<Failure, void>> updateEvent(
+  Future<Either<Failure, LogEvent?>> updateEvent(
     LogEvent event, {
     required String reason,
   }) async {
@@ -516,7 +516,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
         );
         // لا نعيد جلب `/events` فوراً: استجابة PUT هي مصدر الحقيقة،
         // والجلب الفوري كان يسمح لنسخة قديمة/متأخرة بمحو التعديل المؤكد.
-        return const Right(null);
+        return Right(persistedEvent);
       },
     );
   }

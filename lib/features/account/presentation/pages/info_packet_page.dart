@@ -6,7 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../inspection/domain/inspection_transfer.dart';
 import '../../../inspection/presentation/providers/inspection_provider.dart';

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/extensions/context_extensions.dart';
 import '../../../../../core/theme/app_spacing.dart';
 import '../../../../../domain/duty_status/status_dashboard.dart';
-import '../../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../../connection/presentation/providers/hardware_alerts_provider.dart';
 
 /// شريط التنبيهات التشغيلية وحالة اتصال جهاز ELD أعلى شاشة الداشبورد.

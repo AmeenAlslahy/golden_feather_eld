@@ -6,7 +6,7 @@ import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/logs_provider.dart';

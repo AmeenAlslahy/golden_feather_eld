@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/utils/logger.dart';
 
 class RequestLogger extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    AppLogger.debug('🌐 Request: ${options.method} ${options.uri}');
+    AppLogger.debug('🌐 Request: ${options.method} ${_redactUri(options.uri)}');
 
     // Log headers safely
     if (options.headers.isNotEmpty) {
@@ -17,30 +18,64 @@ class RequestLogger extends Interceptor {
     super.onRequest(options, handler);
   }
 
-  dynamic _redactSensitiveData(dynamic data) {
-    const sensitiveKeys = {
-      'password',
-      'pass',
-      'token',
-      'access_token',
-      'refresh_token',
-      'authorization',
-      'cookie',
-      'set-cookie',
-      'session',
-      'jsessionid',
-      'secret',
-      'api_key',
-      'credential',
-      'auth',
-      'bearer',
-    };
+  @visibleForTesting
+  String redactUri(Uri uri) => _redactUri(uri);
 
+  @visibleForTesting
+  dynamic redactSensitiveData(dynamic data) => _redactSensitiveData(data);
+
+  static const _sensitiveKeys = {
+    // Passwords & Tokens
+    'password',
+    'pass',
+    'token',
+    'access_token',
+    'refresh_token',
+    'authorization',
+    'cookie',
+    'set-cookie',
+    'session',
+    'jsessionid',
+    'secret',
+    'api_key',
+    'credential',
+    'auth',
+    'bearer',
+    'jwt',
+    'pin',
+    'code',
+    // PII
+    'email',
+    'phone',
+    'phonenumber',
+    'telephone',
+    'mobile',
+    'ssn',
+    'licensenumber',
+    'driverlicense',
+    // Signatures
+    'signature',
+    'signatureimage',
+    'signaturedata',
+    'signaturedraft',
+    'signaturecertificateid',
+    // Coordinates & Location
+    'latitude',
+    'longitude',
+    'lat',
+    'lng',
+    'coordinates',
+    'geolocation',
+    'locationtext',
+    'manuallocation',
+  };
+
+  dynamic _redactSensitiveData(dynamic data) {
     if (data is Map) {
       final redacted = {};
       for (final key in data.keys) {
         final keyStr = key.toString().toLowerCase();
-        if (sensitiveKeys.any((sensitive) => keyStr.contains(sensitive))) {
+        if (_sensitiveKeys.any((sensitive) => keyStr.contains(sensitive))) {
           redacted[key] = '[REDACTED]';
         } else {
           redacted[key] = _redactSensitiveData(data[key]);
@@ -53,10 +88,33 @@ class RequestLogger extends Interceptor {
     return data;
   }
 
+  String _redactUri(Uri uri) {
+    if (!uri.hasQuery || uri.queryParameters.isEmpty) {
+      return uri.toString();
+    }
+    bool hasSensitive = false;
+    final redactedParams = <String, String>{};
+    for (final entry in uri.queryParameters.entries) {
+      final keyLower = entry.key.toLowerCase();
+      final isSensitive =
+          _sensitiveKeys.any((sensitive) => keyLower.contains(sensitive));
+      if (isSensitive) {
+        hasSensitive = true;
+        redactedParams[entry.key] = '[REDACTED]';
+      } else {
+        redactedParams[entry.key] = entry.value;
+      }
+    }
+    if (!hasSensitive) {
+      return uri.toString();
+    }
+    return uri.replace(queryParameters: redactedParams).toString();
+  }
+
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     AppLogger.debug(
-      '✅ Response [${response.statusCode}] ${response.requestOptions.uri}',
+      '✅ Response [${response.statusCode}] ${_redactUri(response.requestOptions.uri)}',
     );
     if (response.data != null &&
         (response.requestOptions.uri.path.contains('/sessions') ||
@@ -78,7 +136,7 @@ class RequestLogger extends Interceptor {
 
     final statusCode = err.response?.statusCode ?? 'N/A';
     final type = err.type.name;
-    AppLogger.error('❌ Error [$statusCode] ($type) ${err.requestOptions.uri}');
+    AppLogger.error('❌ Error [$statusCode] ($type) ${_redactUri(err.requestOptions.uri)}');
 
     if (err.type == DioExceptionType.badResponse) {
       final serverMsg = err.response?.statusMessage;
@@ -99,7 +157,9 @@ class RequestLogger extends Interceptor {
     }
 
     if (err.response?.data != null) {
-      final data = err.response?.data;
+      // ⚠️ تحذير أمني: بيانات الاستجابة قد تحتوي على حقول حساسة (coordinates,
+      // PII) — يجب تشغيل _redactSensitiveData قبل الطباعة.
+      final data = _redactSensitiveData(err.response?.data);
       if (data is String) {
         if (data.trim().startsWith('<html')) {
           final titleMatch = RegExp(

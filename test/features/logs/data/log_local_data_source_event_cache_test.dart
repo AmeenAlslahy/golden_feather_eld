@@ -151,6 +151,39 @@ void main() {
     },
   );
 
+  test('event sync status survives a cache restart', () async {
+    await local.cacheLogEvents(logId, [
+      {
+        'id': 7,
+        'status': 'ON',
+        'startTime': '2026-09-24T09:00:00.000',
+        'duration': 1800,
+        'location': 'Dock 4',
+        'syncStatus': 'PENDING_SYNC',
+      },
+    ]);
+    await local.upsertCachedLogEvent(
+      logId,
+      (await local.getCachedLogEvents(logId))!.single,
+    );
+
+    // إغلاق الصناديق وإعادة فتحها يحاكي إعادة تشغيل التطبيق: الحالة
+    // يجب ألا تعتمد على ذاكرة العملية.
+    await Hive.close();
+    await Hive.openBox<String>(StorageConstants.dailyLogsCacheBox);
+    await Hive.openBox<String>(StorageConstants.eventsBox);
+    local = LogLocalDataSourceImpl();
+
+    expect(
+      (await local.getCachedLogEvents(logId))!.single['syncStatus'],
+      'PENDING_SYNC',
+    );
+    expect(
+      (await local.getEvents(newDay)).single.syncStatus,
+      EventSyncStatus.pendingSync,
+    );
+  });
+
   test('upsert replaces only the edited event in the log snapshot', () async {
     await local.cacheLogEvents(logId, [
       {'id': 1, 'status': 'OFF_DUTY', 'startTime': '2026-09-24T00:00:00Z'},

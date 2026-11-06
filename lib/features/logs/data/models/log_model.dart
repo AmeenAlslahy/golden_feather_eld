@@ -14,6 +14,8 @@ class LogEventModel extends LogEvent {
     super.isExpanded,
     super.automatedDriving,
     super.editable,
+    super.originalLatitude,
+    super.originalLongitude,
     super.startedOnPreviousDay,
     super.syncStatus,
   });
@@ -87,12 +89,33 @@ class LogEventModel extends LogEvent {
     // تفاصيل/تعديل الحدث، أو نصاً في العقد المضغوط.
     final rawLocation = json['location'];
     String? location;
+    double? originalLatitude;
+    double? originalLongitude;
     if (rawLocation is Map) {
       location = rawLocation['description']?.toString();
+      if (rawLocation['latitude'] != null) {
+        originalLatitude = double.tryParse(rawLocation['latitude'].toString());
+      }
+      if (rawLocation['longitude'] != null) {
+        originalLongitude = double.tryParse(rawLocation['longitude'].toString());
+      }
     } else if (rawLocation != null) {
       location = rawLocation.toString();
     }
     location ??= json['locationText']?.toString();
+
+    if (originalLatitude == null) {
+      final rawLat = json['latitude'] ?? json['originalLatitude'];
+      if (rawLat != null) {
+        originalLatitude = double.tryParse(rawLat.toString());
+      }
+    }
+    if (originalLongitude == null) {
+      final rawLng = json['longitude'] ?? json['originalLongitude'];
+      if (rawLng != null) {
+        originalLongitude = double.tryParse(rawLng.toString());
+      }
+    }
 
     return LogEventModel(
       id: id,
@@ -108,6 +131,8 @@ class LogEventModel extends LogEvent {
       editable: json['editable'] is bool ? json['editable'] as bool : null,
       startedOnPreviousDay: json['startedOnPreviousDay'] == true,
       syncStatus: parseSyncStatus(json['syncStatus']),
+      originalLatitude: originalLatitude,
+      originalLongitude: originalLongitude,
     );
   }
 
@@ -200,6 +225,8 @@ class LogEventModel extends LogEvent {
       'automatedDriving': automatedDriving,
       'startedOnPreviousDay': startedOnPreviousDay,
       if (syncStatusWire != null) 'syncStatus': syncStatusWire,
+      if (originalLatitude != null) 'originalLatitude': originalLatitude,
+      if (originalLongitude != null) 'originalLongitude': originalLongitude,
     };
   }
 
@@ -217,6 +244,8 @@ class LogEventModel extends LogEvent {
       editable: entity.editable,
       startedOnPreviousDay: entity.startedOnPreviousDay,
       syncStatus: entity.syncStatus,
+      originalLatitude: entity.originalLatitude,
+      originalLongitude: entity.originalLongitude,
     );
   }
 }

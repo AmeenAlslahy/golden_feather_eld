@@ -60,7 +60,19 @@ class DailyLogDto {
 
     final driver = json['driver'];
     List<String> stringList(Object? raw) =>
-        (raw as List?)?.map((e) => e.toString()).toList() ?? const [];
+        (raw as List?)
+            ?.map((e) {
+              if (e is Map) {
+                return e['trailerNumber']?.toString() ??
+                    e['documentNumber']?.toString() ??
+                    e['number']?.toString() ??
+                    '';
+              }
+              return e?.toString() ?? '';
+            })
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        const [];
 
     // شكل الوثيقة: `totals.total.{seconds,formatted}`؛ الحقول المسطّحة
     // القديمة (formattedTotalWorkTime/totalDurationMinutes) تبقى احتياطاً.
@@ -138,7 +150,9 @@ class DailyLogDto {
               .toList() ??
           [],
       requiresAction: json['requiresAction'] as bool? ?? false,
-      driverName: driver is Map ? driver['name']?.toString() : null,
+      driverName: driver is Map
+          ? driver['name']?.toString()
+          : (json['driverName'] as String?)?.trim(),
       vehicleName: (json['vehicleName'] as String?)?.trim(),
       vin: (json['vin'] as String?)?.trim(),
       licensePlate: (json['licensePlate'] as String?)?.trim(),
@@ -146,8 +160,10 @@ class DailyLogDto {
       usdotNumber: (json['usdotNumber'] as String?)?.trim(),
       mainOfficeAddress: (json['mainOfficeAddress'] as String?)?.trim(),
       homeTerminalAddress: (json['homeTerminalAddress'] as String?)?.trim(),
-      trailers: stringList(json['trailers']),
-      shippingDocuments: stringList(json['shippingDocuments']),
+      trailers: stringList(json['trailers'] ?? json['trailerNumbers']),
+      shippingDocuments: stringList(
+        json['shippingDocuments'] ?? json['documentNumbers'],
+      ),
     );
   }
 

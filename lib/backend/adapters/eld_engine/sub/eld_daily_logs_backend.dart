@@ -13,7 +13,23 @@ import '../models/readiness_dto.dart';
 class EldDailyLogsBackend implements DailyLogsBackend {
   final ApiClient _apiClient;
 
-  const EldDailyLogsBackend(this._apiClient);
+  CertifyStateDto? _cachedCertifyState;
+  int? _cachedCertifyStateLogId;
+  DateTime? _cachedCertifyStateTime;
+  Future<Result<CertifyStateDto>>? _inFlightCertifyState;
+  int? _inFlightCertifyLogId;
+  int _certifyEpoch = 0;
+
+  void _invalidateCertifyCache([int? logId]) {
+    _certifyEpoch++;
+    _cachedCertifyState = null;
+    _cachedCertifyStateLogId = null;
+    _cachedCertifyStateTime = null;
+    _inFlightCertifyState = null;
+    _inFlightCertifyLogId = null;
+  }
+
+  EldDailyLogsBackend(this._apiClient);
 
   @override
   Future<Result<RawJson>> list({
@@ -142,6 +158,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     CertifyRequestDto request, {
     int? expectedOwnerDriverId,
   }) async {
+    _invalidateCertifyCache(request.dailyLogId);
     final res = await _apiClient.post<CertifyResponseDto>(
       EldEndpoints.certifyLog(request.dailyLogId),
       data: request.toJson(),
@@ -149,6 +166,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
           CertifyResponseDto.fromJson(data as Map<String, dynamic>),
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
+    _invalidateCertifyCache(request.dailyLogId);
     return res.mapValue((r) => r.data!);
   }
 
@@ -206,6 +224,10 @@ class EldDailyLogsBackend implements DailyLogsBackend {
     required RawJson event,
     int? expectedOwnerDriverId,
   }) async {
+    // تعديل أي حدث في السجل اليومي يُبطل كاش حالة الاعتماد فوراً
+    // (حسب لوائح FMCSA، تعديل الحدث يلغي الاعتماد السابق ويتطلب إعادة اعتماد).
+    _invalidateCertifyCache(logId.value);
+
     final res = await _apiClient.put<RawJson>(
       EldEndpoints.dailyLogEvent(logId.value, eventId.value),
       data: event,
@@ -213,6 +235,7 @@ class EldDailyLogsBackend implements DailyLogsBackend {
           data is Map<String, dynamic> ? data : <String, dynamic>{},
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
+    _invalidateCertifyCache(logId.value);
     return res.fold((error) => err(error), (response) {
       // HTTP 200 وحده ليس نجاحاً: المغلف الموحّد قد يحمل
       // `success:false` مع `errors[]`. بدون هذا الفحص كان المستودع
@@ -312,10 +335,46 @@ class EldDailyLogsBackend implements DailyLogsBackend {
 
   @override
   Future<Result<CertifyStateDto>> getCertifyState(DailyLogId logId) async {
+    final now = DateTime.now();
+    if (_cachedCertifyState != null &&
+        _cachedCertifyStateLogId == logId.value &&
+        _cachedCertifyStateTime != null &&
+        now.difference(_cachedCertifyStateTime!) < const Duration(seconds: 4)) {
+      return ok(_cachedCertifyState!);
+    }
+    if (_inFlightCertifyState != null && _inFlightCertifyLogId == logId.value) {
+      return _inFlightCertifyState!;
+    }
+
+    final requestEpoch = _certifyEpoch;
+    final future = _fetchCertifyState(logId, requestEpoch);
+    _inFlightCertifyState = future;
+    _inFlightCertifyLogId = logId.value;
+    try {
+      return await future;
+    } finally {
+      if (_certifyEpoch == requestEpoch) {
+        _inFlightCertifyState = null;
+        _inFlightCertifyLogId = null;
+      }
+    }
+  }
+
+  Future<Result<CertifyStateDto>> _fetchCertifyState(
+    DailyLogId logId,
+    int requestEpoch,
+  ) async {
     final res = await _apiClient.get<CertifyStateDto>(
       EldEndpoints.certifyLog(logId.value),
       parser: (data) => CertifyStateDto.fromJson(data as Map<String, dynamic>),
     );
+    if (_certifyEpoch == requestEpoch &&
+        res.isSuccess &&
+        res.valueOrNull?.data != null) {
+      _cachedCertifyState = res.valueOrNull!.data!;
+      _cachedCertifyStateLogId = logId.value;
+      _cachedCertifyStateTime = DateTime.now();
+    }
     return res.mapValue((r) => r.data!);
   }
 }

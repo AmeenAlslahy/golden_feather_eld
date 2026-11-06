@@ -8,5 +8,5 @@ import 'ports/secure_storage_port.dart';
 /// **Default:** [FlutterSecureStorageAdapter].
 /// **Override in tests:** Provide an in-memory fake.
 final secureStorageProvider = Provider<SecureStoragePort>((ref) {
-  return const FlutterSecureStorageAdapter();
+  return FlutterSecureStorageAdapter();
 });

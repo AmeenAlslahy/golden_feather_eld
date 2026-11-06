@@ -9,30 +9,48 @@ class EditLogFormState {
   final String selectedStatus;
   final String startTime;
   final String duration;
-  final String location;
+  final String originalLocation;
+  final String manualLocation;
   final String reason;
+  final double? originalLatitude;
+  final double? originalLongitude;
 
   EditLogFormState({
     required this.selectedStatus,
     required this.startTime,
     required this.duration,
-    required this.location,
+    required this.originalLocation,
+    this.manualLocation = '',
     this.reason = '',
+    this.originalLatitude,
+    this.originalLongitude,
+    String? location,
   });
+
+  /// الموقع الفعال: الموقع اليدوي إن أُدخل، وإلا الموقع التاريخي الأصلي للحدث
+  String get location =>
+      manualLocation.trim().isNotEmpty ? manualLocation.trim() : originalLocation;
 
   EditLogFormState copyWith({
     String? selectedStatus,
     String? startTime,
     String? duration,
-    String? location,
+    String? originalLocation,
+    String? manualLocation,
     String? reason,
+    double? originalLatitude,
+    double? originalLongitude,
+    String? location,
   }) {
     return EditLogFormState(
       selectedStatus: selectedStatus ?? this.selectedStatus,
       startTime: startTime ?? this.startTime,
       duration: duration ?? this.duration,
-      location: location ?? this.location,
+      originalLocation: originalLocation ?? this.originalLocation,
+      manualLocation: manualLocation ?? (location ?? this.manualLocation),
       reason: reason ?? this.reason,
+      originalLatitude: originalLatitude ?? this.originalLatitude,
+      originalLongitude: originalLongitude ?? this.originalLongitude,
     );
   }
 }
@@ -67,8 +85,11 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
     );
   }
 
+  void setManualLocation(String location) =>
+      state = state.copyWith(manualLocation: location);
+
   void setLocation(String location) =>
-      state = state.copyWith(location: location);
+      state = state.copyWith(manualLocation: location);
 
   void setReason(String reason) => state = state.copyWith(reason: reason);
 
@@ -152,7 +173,10 @@ final editLogFormProvider = StateNotifierProvider.autoDispose
       startTime:
           event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
       duration: event?.formattedDuration ?? '00:00',
-      location: event?.location ?? '',
+      originalLocation: event?.location ?? '',
+      manualLocation: '',
+      originalLatitude: event?.originalLatitude,
+      originalLongitude: event?.originalLongitude,
     ),
     timeAuthority: timeAuthority,
     editingEvent: event,

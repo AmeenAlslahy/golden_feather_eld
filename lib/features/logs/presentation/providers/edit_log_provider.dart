@@ -13,6 +13,17 @@ import 'logs_provider.dart';
 import 'edit_log_form_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
 
+enum EditLogOutcomeType {
+  confirmed,
+  offlineQueued,
+  unconfirmed,
+}
+
+class EditLogOutcome {
+  final EditLogOutcomeType type;
+  const EditLogOutcome(this.type);
+}
+
 enum EditLogErrorCode {
   invalidTime,
   futureTime,
@@ -51,9 +62,9 @@ String editLogErrorUserMessage(Object? error, AppLocalizations loc) {
   return loc.theEventCouldNotBeSaved;
 }
 
-class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
+class EditLogNotifier extends AutoDisposeAsyncNotifier<EditLogOutcome?> {
   @override
-  FutureOr<void> build() {}
+  FutureOr<EditLogOutcome?> build() => null;
 
   /// إرسال وحفظ الحدث استناداً إلى حالة النموذج الحالية
   Future<void> submit({
@@ -69,6 +80,8 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       durationStr: formState.duration,
       location: formState.location,
       reason: formState.reason,
+      originalLatitude: formState.originalLatitude,
+      originalLongitude: formState.originalLongitude,
     );
   }
 
@@ -80,6 +93,8 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
     required String durationStr,
     required String location,
     required String reason,
+    double? originalLatitude,
+    double? originalLongitude,
   }) async {
     state = const AsyncLoading();
     try {
@@ -145,12 +160,17 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
 
       final idGenerator = ref.read(idGeneratorProvider);
 
+      final effectiveLat = originalLatitude ?? existing?.originalLatitude;
+      final effectiveLng = originalLongitude ?? existing?.originalLongitude;
+
       final updatedEvent =
           existing?.copyWith(
             status: status,
             startTime: newStart,
             duration: parsedDuration,
             location: normalizedLocation,
+            originalLatitude: effectiveLat,
+            originalLongitude: effectiveLng,
           ) ??
           LogEvent(
             id: idGenerator.v4(),
@@ -158,6 +178,8 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
             startTime: newStart,
             duration: parsedDuration,
             location: normalizedLocation,
+            originalLatitude: effectiveLat,
+            originalLongitude: effectiveLng,
           );
 
       final authState = ref.read(authStateProvider);
@@ -167,17 +189,37 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
       }
 
       final notifier = ref.read(logsProvider.notifier);
-      final result = isNewEvent
-          ? await notifier.addEvent(updatedEvent, reason: reason)
-          : await notifier.updateEvent(updatedEvent, reason: reason);
+      final EditLogOutcome outcome;
 
-      final failure = result.fold((f) => f, (_) => null);
-      if (failure != null) {
-        final msg = failure.message.toLowerCase();
-        if (msg.contains('overlap') || msg.contains('no_overlap')) {
-          throw EditLogError(EditLogErrorCode.overlapConflict);
+      if (isNewEvent) {
+        final addResult = await notifier.addEvent(updatedEvent, reason: reason);
+        final failure = addResult.fold((f) => f, (_) => null);
+        if (failure != null) {
+          final msg = failure.message.toLowerCase();
+          if (msg.contains('overlap') || msg.contains('no_overlap')) {
+            throw EditLogError(EditLogErrorCode.overlapConflict);
+          }
+          throw EditLogError(EditLogErrorCode.saveFailed);
         }
-        throw EditLogError(EditLogErrorCode.saveFailed);
+        outcome = const EditLogOutcome(EditLogOutcomeType.confirmed);
+      } else {
+        final updateResult = await notifier.updateEvent(updatedEvent, reason: reason);
+        final failure = updateResult.fold((f) => f, (_) => null);
+        if (failure != null) {
+          final msg = failure.message.toLowerCase();
+          if (msg.contains('overlap') || msg.contains('no_overlap')) {
+            throw EditLogError(EditLogErrorCode.overlapConflict);
+          }
+          throw EditLogError(EditLogErrorCode.saveFailed);
+        }
+        final persisted = updateResult.fold((_) => null, (val) => val);
+        if (persisted == null) {
+          outcome = const EditLogOutcome(EditLogOutcomeType.unconfirmed);
+        } else if (persisted.syncStatus == EventSyncStatus.pendingSync) {
+          outcome = const EditLogOutcome(EditLogOutcomeType.offlineQueued);
+        } else {
+          outcome = const EditLogOutcome(EditLogOutcomeType.confirmed);
+        }
       }
 
       final entry = AuditEntry(
@@ -203,7 +245,7 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
         );
       }
 
-      state = const AsyncData(null);
+      state = AsyncData(outcome);
     } catch (e, st) {
       state = AsyncError(e, st);
     }
@@ -211,7 +253,7 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<void> {
 }
 
 /// موفر تعديل السجل
-final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, void>(
+final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, EditLogOutcome?>(
   () {
     return EditLogNotifier();
   },

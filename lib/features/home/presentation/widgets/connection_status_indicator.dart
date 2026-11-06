@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/domain/entities/connection_status.dart' as entity;
 import '../../../../core/widgets/connection_status_indicator.dart' as core;
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 
 /// مغلّف لمؤشر حالة الاتصال في الشاشة الرئيسية مع ربطه بالتنقل الافتراضي.
 class ConnectionStatusIndicator extends StatelessWidget {

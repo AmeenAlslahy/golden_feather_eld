@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../features/sync/domain/entities/pending_event.dart';
@@ -40,7 +40,7 @@ import '../../domain/entities/daily_form_update.dart';
 // جسر توافق (المرحلة 3b): تعريف logRepositoryProvider انتقل إلى
 // data/providers/log_repository_providers.dart — التصدير هنا يبقي
 // الاختبارات القائمة التي تستورد هذا الملف تعمل.
-export '../providers/log_repository_providers.dart';
+
 import '../../../../core/utils/repository_helper.dart';
 
 class LogRepositoryImpl implements LogRepository {
@@ -363,6 +363,10 @@ class LogRepositoryImpl implements LogRepository {
       'startTime': event.startTime.toUtc().toIso8601String(),
       'durationSeconds': event.duration.inSeconds,
       if (location != null) 'locationText': location,
+      if (event.originalLatitude != null)
+        'originalLatitude': event.originalLatitude,
+      if (event.originalLongitude != null)
+        'originalLongitude': event.originalLongitude,
     };
 
     // نحسم معرّف السجل قبل مسار الأوفلاين أيضاً، حتى يُحدَّث كاش
@@ -448,6 +452,11 @@ class LogRepositoryImpl implements LogRepository {
       'reason': reason.trim(),
       'notes': reason.trim(),
       'editReason': reason.trim(),
+      // TODO(server-team): Confirm whether PUT /eld/daily-logs/{id}/events/{eventId}
+      // accepts 'latitude'/'longitude' as top-level fields or inside 'location: { latitude, longitude }'.
+      // Until confirmed, we do NOT send coordinates to avoid overwriting the server's
+      // authoritative position with stale or null values.
+      // The original coordinates are preserved in-memory via LogEvent.originalLatitude/Longitude.
       if (location != null) ...{
         'location': {'description': location},
         'manualLocation': location,
@@ -634,25 +643,35 @@ class LogRepositoryImpl implements LogRepository {
       return [];
     }
 
-    final trailersList = extractList(data['trailers'])
+    final trailersList = extractList(data['trailers'] ?? data['trailerNumbers'])
         .map((e) {
-          if (e is Map) return e['trailerNumber']?.toString() ?? '';
+          if (e is Map) {
+            return e['trailerNumber']?.toString() ??
+                e['number']?.toString() ??
+                '';
+          }
           if (e is String) return e.trim();
           return e?.toString() ?? '';
         })
         .where((e) => e.isNotEmpty)
         .toList();
 
-    final docsList = extractList(data['shippingDocuments'])
+    final docsList = extractList(
+          data['shippingDocuments'] ?? data['documentNumbers'],
+        )
         .map((e) {
-          if (e is Map) return e['documentNumber']?.toString() ?? '';
+          if (e is Map) {
+            return e['documentNumber']?.toString() ??
+                e['number']?.toString() ??
+                '';
+          }
           if (e is String) return e.trim();
           return e?.toString() ?? '';
         })
         .where((e) => e.isNotEmpty)
         .toList();
 
-    int? coDriverId = data['coDriverId'] as int?;
+    int? coDriverId = (data['coDriverId'] as num?)?.toInt();
     String? coDriverName;
     if (data['coDriver'] is Map) {
       final coDriverMap = data['coDriver'] as Map<dynamic, dynamic>;
@@ -667,7 +686,9 @@ class LogRepositoryImpl implements LogRepository {
         : null;
     // الوثيقة: `vehicle.identifier`/`vehicle.id`؛ نقرأ أيضاً الأشكال
     // المسطّحة القديمة (uniqueId/vehicleName) كي لا ينكسر سجل من عقد أقدم.
-    final vehicleId = (vehicle?['id'] as num?)?.toInt();
+    final vehicleId =
+        (vehicle?['id'] as num?)?.toInt() ??
+        (data['vehicleId'] as num?)?.toInt();
     final vehicleUniqueId =
         vehicle?['identifier']?.toString() ??
         vehicle?['uniqueId']?.toString() ??

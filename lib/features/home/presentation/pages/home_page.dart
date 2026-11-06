@@ -1,10 +1,11 @@
+import '../providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/domain/entities/connection_status.dart' as core;
 import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart' as dash;
@@ -24,10 +25,7 @@ import '../../../hos/presentation/providers/status_dashboard_providers.dart';
 import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
-final homeNavIndexProvider = StateProvider<int>((ref) => 0);
-final developerBypassDrivingScreenProvider = StateProvider<bool>(
-  (ref) => false,
-);
+// Nav & bypass providers moved to home_provider.dart
 
 /// الشاشة الرئيسية لتطبيق ELD
 class HomePage extends ConsumerWidget {

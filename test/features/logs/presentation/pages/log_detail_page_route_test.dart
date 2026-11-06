@@ -10,7 +10,8 @@ import 'package:golden_feather_eld/core/widgets/eld_retry_view.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
-import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
+import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
+
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/log_events_snapshot.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log_page.dart';

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_spacing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/error/failure.dart';
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
@@ -28,12 +29,18 @@ class StatusDashboardPage extends ConsumerWidget {
     final state = ref.watch(statusDashboardProvider);
 
     return state.when(
+      skipError: true,
       loading: () => const _LoadingView(),
-      error: (error, _) => _ErrorView(
-        error: error,
-        onRetry: () =>
-            ref.read(statusDashboardProvider.notifier).clearErrorAndReload(),
-      ),
+      error: (error, _) {
+        if (error is SessionMissingFailure) {
+          return const _LoadingView();
+        }
+        return _ErrorView(
+          error: error,
+          onRetry: () =>
+              ref.read(statusDashboardProvider.notifier).clearErrorAndReload(),
+        );
+      },
       data: (dashboard) => _DashboardView(dashboard: dashboard),
     );
   }

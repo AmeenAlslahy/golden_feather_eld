@@ -9,9 +9,6 @@ import '../services/bluetooth_service.dart';
 import '../config/app_environment.dart';
 import '../config/runtime_selection.dart';
 
-// Re-export apiClientProvider so files only need to import core_providers.dart
-export '../../backend/providers/backend_network_providers.dart'
-    show apiClientProvider, traccarNativeClientProvider;
 
 final bluetoothServiceProvider = Provider<BluetoothService>((ref) {
   final service = BluetoothService();

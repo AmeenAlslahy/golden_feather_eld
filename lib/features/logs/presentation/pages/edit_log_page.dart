@@ -78,7 +78,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(editLogControllerProvider, (_, state) {
+    ref.listen<AsyncValue<EditLogOutcome?>>(editLogControllerProvider, (_, state) {
       if (state.isLoading) return;
 
       if (state.hasError) {
@@ -86,8 +86,16 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
           context,
           editLogErrorUserMessage(state.error, context.loc),
         );
-      } else if (state.hasValue) {
-        AppFeedback.success(context, context.loc.eventSavedSuccessfully);
+      } else if (state.hasValue && state.value != null) {
+        final outcome = state.value!;
+        switch (outcome.type) {
+          case EditLogOutcomeType.confirmed:
+            AppFeedback.success(context, context.loc.eventSavedSuccessfully);
+          case EditLogOutcomeType.offlineQueued:
+            AppFeedback.info(context, context.loc.formSavedOffline);
+          case EditLogOutcomeType.unconfirmed:
+            AppFeedback.warning(context, context.loc.statusSavedUnconfirmed);
+        }
         Navigator.pop(context, true);
       }
     });
@@ -223,10 +231,9 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    formState.location.isEmpty
-                        ? ' '
-                        : formState
-                              .location, // empty space to keep height if empty
+                    formState.originalLocation.isEmpty
+                        ? (formState.location.isEmpty ? ' ' : formState.location)
+                        : formState.originalLocation,
                     style: context.styles.subtitle,
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -256,7 +263,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                 onChanged: (value) {
                   ref
                       .read(editLogFormProvider(widget.event).notifier)
-                      .setLocation(value);
+                      .setManualLocation(value);
                 },
               ),
               const SizedBox(height: AppSpacing.md),

@@ -4,6 +4,8 @@ import '../../../../domain/shared/value_objects.dart';
 import '../../../contracts/duty_status_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../http/eld_endpoints.dart';
+import '../../../../core/error/app_error.dart';
+import '../../../../core/network/api_response.dart';
 
 /// ELD Engine implementation of [DutyStatusBackend].
 class EldDutyStatusBackend implements DutyStatusBackend {
@@ -18,7 +20,10 @@ class EldDutyStatusBackend implements DutyStatusBackend {
       data: event,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.fold((error) => err(error), (response) {
+      if (!response.isSuccess) return err(_envelopeFailure(response));
+      return ok(response.data ?? <String, dynamic>{});
+    });
   }
 
   @override
@@ -31,7 +36,51 @@ class EldDutyStatusBackend implements DutyStatusBackend {
       data: update,
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    return res.fold((error) => err(error), (response) {
+      if (!response.isSuccess) return err(_envelopeFailure(response));
+      return ok(response.data ?? <String, dynamic>{});
+    });
+  }
+
+  AppError _envelopeFailure(ApiResponse<RawJson> response) {
+    final fieldErrors = <String, String>{
+      for (final error in response.errors) error.field: error.message,
+    };
+    final message = fieldErrors.isNotEmpty
+        ? fieldErrors.entries
+              .map((entry) => '${entry.key}: ${entry.value}')
+              .join('; ')
+        : response.message ?? response.errorCode ?? 'serverRejectedRequest';
+    final context = <String, dynamic>{
+      'statusCode': response.statusCode,
+      'serverMessage': message,
+      if (response.errorCode != null) 'errorCode': response.errorCode,
+      if (response.requestId != null) 'requestId': response.requestId,
+      if (fieldErrors.isNotEmpty) 'fieldErrors': fieldErrors,
+    };
+    final code = response.errorCode ?? 'server.rejectedRequest';
+
+    if (fieldErrors.isNotEmpty) {
+      return ValidationError(
+        code: code,
+        l10nKey: 'validationError',
+        fieldErrors: fieldErrors,
+        context: context,
+      );
+    }
+    if (code.toLowerCase().contains('conflict') ||
+        code.toLowerCase().contains('already')) {
+      return ConflictError(
+        code: code,
+        l10nKey: 'conflictError',
+        context: context,
+      );
+    }
+    return ValidationError(
+      code: code,
+      l10nKey: 'validationError',
+      context: context,
+    );
   }
 
   @override

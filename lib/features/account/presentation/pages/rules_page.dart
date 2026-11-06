@@ -11,7 +11,7 @@ import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/eld_footer_notice.dart';
 import '../../../../core/widgets/eld_retry_view.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/rules_form_provider.dart';
 import '../providers/rules_screen_provider.dart';

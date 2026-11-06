@@ -184,6 +184,8 @@ class LogEvent extends Equatable {
   final bool isExpanded; // للـ UI
   final bool? automatedDriving;
   final bool? editable;
+  final double? originalLatitude;
+  final double? originalLongitude;
 
   /// عقد `/events`: بدأ الحدث في اليوم السابق ويمتد إلى هذا اليوم.
   final bool startedOnPreviousDay;
@@ -202,6 +204,8 @@ class LogEvent extends Equatable {
     this.isExpanded = false,
     this.automatedDriving,
     this.editable,
+    this.originalLatitude,
+    this.originalLongitude,
     this.startedOnPreviousDay = false,
     this.syncStatus = EventSyncStatus.none,
   });
@@ -229,6 +233,8 @@ class LogEvent extends Equatable {
     bool? isExpanded,
     bool? automatedDriving,
     bool? editable,
+    double? originalLatitude,
+    double? originalLongitude,
     bool? startedOnPreviousDay,
     EventSyncStatus? syncStatus,
   }) {
@@ -243,6 +249,8 @@ class LogEvent extends Equatable {
       isExpanded: isExpanded ?? this.isExpanded,
       automatedDriving: automatedDriving ?? this.automatedDriving,
       editable: editable ?? this.editable,
+      originalLatitude: originalLatitude ?? this.originalLatitude,
+      originalLongitude: originalLongitude ?? this.originalLongitude,
       startedOnPreviousDay: startedOnPreviousDay ?? this.startedOnPreviousDay,
       syncStatus: syncStatus ?? this.syncStatus,
     );
@@ -260,6 +268,8 @@ class LogEvent extends Equatable {
     isExpanded,
     automatedDriving,
     editable,
+    originalLatitude,
+    originalLongitude,
     startedOnPreviousDay,
     syncStatus,
   ];

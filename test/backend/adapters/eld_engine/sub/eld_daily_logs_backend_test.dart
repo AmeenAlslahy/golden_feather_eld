@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_feather_eld/backend/adapters/eld_engine/sub/eld_daily_logs_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
@@ -222,6 +223,122 @@ void main() {
         expect(result.isFailure, isTrue);
       },
     );
+
+    test(
+      'deduplicates successive getCertifyState and getReadiness calls within cache window',
+      () async {
+        const certifyDto = CertifyStateDto(
+          dailyLogId: 102,
+          logDate: '2026-10-22',
+          statementText: 'Legal Statement',
+          ruleReference: 'FMCSA 395.15',
+          hasSignature: false,
+          signatureImageData: null,
+          certificationStatus: 'NOT_CERTIFIED',
+          certified: false,
+          canCertify: true,
+          validationCodes: ['SIGNATURE_REQUIRED'],
+        );
+
+        when(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).thenAnswer((_) async => ok(const ApiResponse(statusCode: 200, isSuccess: true, data: certifyDto)));
+
+        final r1 = await backend.getReadiness(logId);
+        final r2 = await backend.getCertifyState(logId);
+
+        expect(r1.isSuccess, isTrue);
+        expect(r2.isSuccess, isTrue);
+        verify(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'certify cache invalidated after certify POST: next getCertifyState hits network',
+      () async {
+        final certifyDto = CertifyStateDto(
+          dailyLogId: logId.value,
+          logDate: '2026-10-22',
+          statementText: 'Legal Statement',
+          ruleReference: 'FMCSA 395.15',
+          hasSignature: false,
+          signatureImageData: null,
+          certificationStatus: 'NOT_CERTIFIED',
+          certified: false,
+          canCertify: true,
+          validationCodes: ['SIGNATURE_REQUIRED'],
+        );
+
+        when(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            ApiResponse(
+              statusCode: 200,
+              isSuccess: true,
+              data: certifyDto,
+            ),
+          ),
+        );
+
+        when(
+          () => api.post<CertifyResponseDto>(
+            EldEndpoints.certifyLog(logId.value),
+            data: any(named: 'data'),
+            parser: any(named: 'parser'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            ApiResponse(
+              statusCode: 200,
+              isSuccess: true,
+              data: CertifyResponseDto(
+                dailyLogId: logId.value,
+                certificationStatus: 'CERTIFIED',
+                isCertified: true,
+              ),
+            ),
+          ),
+        );
+
+        // 1. Initial fetch caches the certify state
+        final r1 = await backend.getCertifyState(logId);
+        expect(r1.isSuccess, isTrue);
+
+        // 2. Submitting certify() POST invalidates the cache
+        final certifyResult = await backend.certify(
+          CertifyRequestDto(
+            dailyLogId: logId.value,
+            certified: true,
+            signatureImage: 'signature_data',
+          ),
+        );
+        expect(certifyResult.isSuccess, isTrue);
+
+        // 3. Next getCertifyState() must hit the network again (call count 2)
+        final r2 = await backend.getCertifyState(logId);
+        expect(r2.isSuccess, isTrue);
+
+        verify(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).called(2);
+      },
+    );
   });
 
   group('EldDailyLogsBackend.updateEvent', () {
@@ -312,5 +429,186 @@ void main() {
       expect(result.isSuccess, isTrue);
       expect(result.valueOrNull?['event'], isNotNull);
     });
+
+    test(
+      'updateEvent invalidates certify cache: next getCertifyState hits network',
+      () async {
+        final certifyDto = CertifyStateDto(
+          dailyLogId: logId.value,
+          logDate: '2026-10-22',
+          statementText: 'Legal Statement',
+          ruleReference: 'FMCSA 395.15',
+          hasSignature: false,
+          signatureImageData: null,
+          certificationStatus: 'CERTIFIED',
+          certified: true,
+          canCertify: false,
+          validationCodes: const [],
+        );
+
+        when(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            ApiResponse(
+              statusCode: 200,
+              isSuccess: true,
+              data: certifyDto,
+            ),
+          ),
+        );
+
+        when(
+          () => api.put<RawJson>(
+            EldEndpoints.dailyLogEvent(logId.value, eventId.value),
+            data: any(named: 'data'),
+            parser: any(named: 'parser'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            const ApiResponse<RawJson>(
+              statusCode: 200,
+              isSuccess: true,
+              data: {'event': {'id': 9002, 'status': 'OFF_DUTY'}},
+            ),
+          ),
+        );
+
+        // 1. Initial fetch caches the certify state
+        final r1 = await backend.getCertifyState(logId);
+        expect(r1.isSuccess, isTrue);
+
+        // 2. Editing an event in the log invalidates the certify cache
+        final updateRes = await backend.updateEvent(
+          logId: logId,
+          eventId: eventId,
+          event: const {'status': 'OFF_DUTY'},
+        );
+        expect(updateRes.isSuccess, isTrue);
+
+        // 3. Next getCertifyState() must hit network again because cache was invalidated
+        final r2 = await backend.getCertifyState(logId);
+        expect(r2.isSuccess, isTrue);
+
+        verify(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).called(2);
+      },
+    );
+
+    test(
+      'in-flight getCertifyState completing after updateEvent does NOT re-cache stale certify state',
+      () async {
+        final completer = Completer<Result<ApiResponse<CertifyStateDto>>>();
+        final staleCertifyDto = CertifyStateDto(
+          dailyLogId: logId.value,
+          logDate: '2026-10-22',
+          statementText: 'Legal Statement',
+          ruleReference: 'FMCSA 395.15',
+          hasSignature: false,
+          signatureImageData: null,
+          certificationStatus: 'CERTIFIED',
+          certified: true,
+          canCertify: false,
+          validationCodes: const [],
+        );
+
+        when(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).thenAnswer((_) => completer.future);
+
+        when(
+          () => api.put<RawJson>(
+            EldEndpoints.dailyLogEvent(logId.value, eventId.value),
+            data: any(named: 'data'),
+            parser: any(named: 'parser'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            const ApiResponse<RawJson>(
+              statusCode: 200,
+              isSuccess: true,
+              data: {'event': {'id': 9002, 'status': 'OFF_DUTY'}},
+            ),
+          ),
+        );
+
+        // 1. Start in-flight getCertifyState
+        final inFlightCertify = backend.getCertifyState(logId);
+
+        // 2. While in-flight, updateEvent is executed
+        final updateRes = await backend.updateEvent(
+          logId: logId,
+          eventId: eventId,
+          event: const {'status': 'OFF_DUTY'},
+        );
+        expect(updateRes.isSuccess, isTrue);
+
+        // 3. Complete the in-flight GET request with stale data
+        completer.complete(
+          ok(
+            ApiResponse(
+              statusCode: 200,
+              isSuccess: true,
+              data: staleCertifyDto,
+            ),
+          ),
+        );
+        await inFlightCertify;
+
+        // 4. Now set up fresh mock response for next call
+        final freshCertifyDto = CertifyStateDto(
+          dailyLogId: logId.value,
+          logDate: '2026-10-22',
+          statementText: 'Legal Statement',
+          ruleReference: 'FMCSA 395.15',
+          hasSignature: false,
+          signatureImageData: null,
+          certificationStatus: 'NOT_CERTIFIED',
+          certified: false,
+          canCertify: true,
+          validationCodes: const ['SIGNATURE_REQUIRED'],
+        );
+
+        when(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).thenAnswer(
+          (_) async => ok(
+            ApiResponse(
+              statusCode: 200,
+              isSuccess: true,
+              data: freshCertifyDto,
+            ),
+          ),
+        );
+
+        // The subsequent call must NOT hit cache with the stale response; it must hit network!
+        final nextResult = await backend.getCertifyState(logId);
+        expect(nextResult.isSuccess, isTrue);
+        expect(nextResult.valueOrNull?.certified, isFalse,
+            reason: 'Stale in-flight certify state must not be cached after event edit');
+
+        verify(
+          () => api.get<CertifyStateDto>(
+            EldEndpoints.certifyLog(logId.value),
+            parser: any(named: 'parser'),
+          ),
+        ).called(2);
+      },
+    );
   });
 }

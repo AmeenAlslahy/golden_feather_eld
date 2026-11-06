@@ -11,7 +11,7 @@ const Set<String> _allowedViolations = {
   'PRESENTATION->BACKEND|features/account/presentation/providers/account_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/auth/presentation/providers/auth_state_provider.dart|backend/providers/backend_network_providers.dart',
   'PRESENTATION->BACKEND|features/auth/presentation/widgets/forgot_password_form.dart|backend/providers/backend_providers.dart',
-  'PRESENTATION->BACKEND|features/connection/presentation/pages/eld_connection_page.dart|backend/providers/backend_providers.dart',
+  'PRESENTATION->BACKEND|features/connection/presentation/providers/eld_connection_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/connection/presentation/providers/hardware_alerts_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/connection/presentation/providers/hardware_status_provider.dart|backend/providers/backend_providers.dart',
   'PRESENTATION->BACKEND|features/hos/presentation/providers/hos_engine_provider.dart|backend/providers/backend_providers.dart',

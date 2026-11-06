@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// عنصر في القائمة
@@ -75,3 +75,8 @@ class EldMenu {
 final menuProvider = Provider<List<MenuItem>>((ref) {
   return EldMenu.items;
 });
+
+final homeNavIndexProvider = StateProvider<int>((ref) => 0);
+final developerBypassDrivingScreenProvider = StateProvider<bool>(
+  (ref) => false,
+);

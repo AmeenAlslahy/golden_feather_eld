@@ -372,6 +372,8 @@ void main() {
     // Legitimate-looking carrier name that contains a comma.
     screenBody = Map<String, dynamic>.from(screenLiveBody)
       ..['carrierName'] = 'Smith, John Transport';
+    logResp = Map<String, dynamic>.from(logResp!)
+      ..['carrierName'] = 'Smith, John Transport';
 
     expect((await repo.getScreen(driverId: driver)).isRight(), isTrue);
     expect((await repo.getLogs(driverId: driver)).isRight(), isTrue);

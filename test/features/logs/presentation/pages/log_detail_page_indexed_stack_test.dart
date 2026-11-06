@@ -7,7 +7,8 @@ import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
-import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
+import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
+
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/entities/log_readiness.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';

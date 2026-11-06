@@ -214,7 +214,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       final appBar = tester.widget<GoldenAppBar>(find.byType(GoldenAppBar));
-      expect(appBar.titleText, 'Kenworth W900 #77');
+      // العنوان: رقم المركبة فقط — لا اسم ولا موديل ولا سنة.
+      expect(appBar.titleText, 'VH-777');
     });
 
     testWidgets('MAC Address field has Directionality LTR and AppButton roles',

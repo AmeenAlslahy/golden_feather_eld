@@ -6,7 +6,8 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/localization/locale_provider.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/domain/shared/value_objects.dart';
-import 'package:golden_feather_eld/features/logs/data/repositories/log_repository_impl.dart';
+import 'package:golden_feather_eld/features/logs/data/providers/log_repository_providers.dart';
+
 import 'package:golden_feather_eld/features/logs/domain/entities/daily_log.dart';
 import 'package:golden_feather_eld/features/logs/domain/repositories/log_repository.dart';
 import 'package:golden_feather_eld/features/logs/presentation/widgets/log_detail_tabs/certify_tab.dart';

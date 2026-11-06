@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/design_system.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../home/presentation/providers/dashboard_provider.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/vehicle_selection.dart';

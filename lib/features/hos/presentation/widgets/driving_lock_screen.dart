@@ -1,3 +1,4 @@
+import '../../../home/presentation/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +6,6 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/utils/duration_format.dart';
-import '../../../home/presentation/pages/home_page.dart';
 import '../providers/status_dashboard_providers.dart';
 
 /// شاشة تظهر عندما تتغير حالة السائق إلى Driving

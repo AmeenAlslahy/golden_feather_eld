@@ -29,7 +29,11 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   /// لعرض قيم مُختلَقة أو شاشة خطأ أثناء العمل أوفلاين.
   final DashboardLocalCache? _disk;
 
+  int _cacheEpoch = 0;
   Future<Either<Failure, StatusDashboard>>? _inFlightDashboard;
+  DriverId? _inFlightDriverId;
+  DateTime? _lastFetchCompletedAt;
+  DriverId? _lastFetchedDriverId;
 
   @override
   DateTime? get snapshotAt => _cachedSnapshot?.takenAt;
@@ -54,31 +58,75 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
   Future<Either<Failure, StatusDashboard>> getDashboard({
     DriverId? driverId,
   }) async {
-    if (_inFlightDashboard != null) {
+    // إذا تغير السائق المطلوب عن آخر سائق محفوظ في الكاش أو الجاري جلبه،
+    // نرفع epoch ونفرغ الكاش فوراً حتى لا يرى السائق الجديد بيانات السائق السابق
+    // وحتى يُلغى أي طلب معلق للسائق القديم.
+    if (driverId != null &&
+        ((_lastFetchedDriverId != null && _lastFetchedDriverId != driverId) ||
+         (_inFlightDriverId != null && _inFlightDriverId != driverId))) {
+      _cacheEpoch++;
+      _inFlightDashboard = null;
+      _inFlightDriverId = null;
+      _lastFetchCompletedAt = null;
+      _lastFetchedDriverId = null;
+      _cachedSnapshot = null;
+      _cachedRecap = null;
+    }
+
+    if (_inFlightDashboard != null && _inFlightDriverId == driverId) {
       return _inFlightDashboard!;
     }
-    final future = _fetchDashboard(driverId);
+
+    final cached = _cachedSnapshot;
+    if (cached != null &&
+        _lastFetchCompletedAt != null &&
+        _lastFetchedDriverId == driverId &&
+        _trustedNowUtc().difference(_lastFetchCompletedAt!) < const Duration(seconds: 2)) {
+      return Right(cached.dashboard);
+    }
+
+    final requestEpoch = _cacheEpoch;
+    final future = _fetchDashboard(driverId, requestEpoch);
     _inFlightDashboard = future;
+    _inFlightDriverId = driverId;
     try {
-      return await future;
+      final res = await future;
+      if (_cacheEpoch == requestEpoch && res.isRight()) {
+        _lastFetchCompletedAt = _trustedNowUtc();
+        _lastFetchedDriverId = driverId;
+      }
+      return res;
     } finally {
-      _inFlightDashboard = null;
+      if (_cacheEpoch == requestEpoch) {
+        _inFlightDashboard = null;
+        _inFlightDriverId = null;
+      }
     }
   }
 
   Future<Either<Failure, StatusDashboard>> _fetchDashboard(
     DriverId? driverId,
+    int requestEpoch,
   ) async {
     return guardedNetwork(
       _networkInfo,
       () async {
         final result = await _backend.getDashboard(driverId: driverId);
+        // تحقق الجيل: إذا أُبطل الكاش (تسجيل خروج، تغيير سائق، تغيير حالة) أثناء الطلب،
+        // نرفض تخزين أو إرجاع النتيجة القديمة لمنع عرضها لسائق آخر أو كتابة كاش قديم.
+        if (_cacheEpoch != requestEpoch) {
+          return const Left(
+            CacheFailure(message: 'requestAbortedDueToCacheInvalidation'),
+          );
+        }
         return result.fold(
           (error) {
             // الخادم تعذّر، لكن لدينا آخر لقطة معروفة — نعرضها بدل الخطأ،
             // وهي محمّلة بلحظة قياسها الأصلية فيبقى العدّاد صادقاً.
             final cached = _cachedSnapshot;
-            if (cached != null) return Right(cached.dashboard);
+            if (cached != null && _cacheEpoch == requestEpoch) {
+              return Right(cached.dashboard);
+            }
             return Left(
               ServerFailure(
                 message: error.code,
@@ -87,6 +135,11 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
             );
           },
           (data) {
+            if (_cacheEpoch != requestEpoch) {
+              return const Left(
+                CacheFailure(message: 'requestAbortedDueToCacheInvalidation'),
+              );
+            }
             // استجابة حيّة ⇒ تُقاس لحظة وصولها على الساعة الموثوقة.
             final takenAt = _trustedNowUtc();
             _cachedSnapshot = CachedDashboard(
@@ -99,6 +152,11 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
         );
       },
       offline: () async {
+        if (_cacheEpoch != requestEpoch) {
+          return const Left(
+            CacheFailure(message: 'requestAbortedDueToCacheInvalidation'),
+          );
+        }
         final cached = _cachedSnapshot;
         if (cached != null) return Right(cached.dashboard);
         // لا نولّد أرقاماً مُختلَقة: كان المسار يُرجع offDuty مع
@@ -111,12 +169,23 @@ class StatusDashboardRepositoryImpl implements StatusDashboardRepository {
 
   @override
   void cacheDashboard(StatusDashboard dashboard, {required DateTime takenAt}) {
+    // تبديل الحالة أو حفظ لقطة أحدث يلغي أي طلب GET سابق كان جارياً
+    _cacheEpoch++;
+    _inFlightDashboard = null;
+    _inFlightDriverId = null;
     _cachedSnapshot = CachedDashboard(dashboard: dashboard, takenAt: takenAt);
+    _lastFetchCompletedAt = takenAt;
+    _lastFetchedDriverId = dashboard.driver.id;
     _disk?.saveDashboard(dashboard, takenAt: takenAt);
   }
 
-  /// مسح اللقطة المحفوظة (عند تبديل السائق/الدورة).
+  /// مسح اللقطة المحفوظة (عند تبديل السائق/الدورة/تسجيل الخروج).
   Future<void> clearCache() async {
+    _cacheEpoch++;
+    _inFlightDashboard = null;
+    _inFlightDriverId = null;
+    _lastFetchCompletedAt = null;
+    _lastFetchedDriverId = null;
     _cachedSnapshot = null;
     _cachedRecap = null;
     await _disk?.clear();

@@ -1,0 +1,2421 @@
+{
+  "version": 8,
+  "created": "2026-11-06T15:12:09+00:00",
+  "updated": "2026-11-06T19:37:47+00:00",
+  "queue_order": [],
+  "deferred": [],
+  "skipped": {},
+  "active_cluster": null,
+  "overrides": {
+    "test_coverage::lib/backend/providers/backend_network_providers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/providers/backend_network_providers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/l10n/app_localizations_es.dart::untested_module": {
+      "issue_id": "test_coverage::lib/l10n/app_localizations_es.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/dashed_line_painter.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/dashed_line_painter.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/domain/entities/location_point.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/domain/entities/location_point.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/certify_log_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/certify_log_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/home/presentation/providers/dashboard_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/home/presentation/providers/dashboard_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/memory_duty_event_journal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/memory_duty_event_journal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/pages/shipping_documents_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/pages/shipping_documents_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_text_field.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_text_field.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/home/presentation/widgets/eld_bottom_nav.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/home/presentation/widgets/eld_bottom_nav.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/log_readiness.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/log_readiness.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_events_table.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_events_table.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/data/mappers/dvir_defect_mappers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/data/mappers/dvir_defect_mappers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/eld_connectivity_panel.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/eld_connectivity_panel.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_footer_notice.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_footer_notice.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/providers/sync_providers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/providers/sync_providers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/domain/hardware/diagnostic_alert.dart::untested_module": {
+      "issue_id": "test_coverage::lib/domain/hardware/diagnostic_alert.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/presentation/widgets/login_form.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/presentation/widgets/login_form.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_info_row.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_info_row.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/widgets/status_option_tiles.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/widgets/status_option_tiles.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_zoom_overlay.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_zoom_overlay.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/models/saved_form_dto.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/data/models/saved_form_dto.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/event_ownership.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/event_ownership.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/inspection_filter_dialog.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/inspection_filter_dialog.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/utils/logger.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/utils/logger.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/core/backend_kind.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/core/backend_kind.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_radius.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_radius.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/repositories/unidentified_events_repository_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/data/repositories/unidentified_events_repository_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/unidentified_stats_row.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/unidentified_stats_row.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/repositories/duty_event_journal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/repositories/duty_event_journal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_vehicle_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_vehicle_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/datasources/sync_local_data_source.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/datasources/sync_local_data_source.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/data/mappers/inspection_mappers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/inspection/data/mappers/inspection_mappers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_websocket_client_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_websocket_client_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/main.dart::untested_module": {
+      "issue_id": "test_coverage::lib/main.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/presentation/widgets/sync_status_indicator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/presentation/widgets/sync_status_indicator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/status_radio_group.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/status_radio_group.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/log_detail_tab_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/log_detail_tab_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/providers/account_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/providers/account_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/diagnostics/active_malfunction_actions.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/diagnostics/active_malfunction_actions.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/vehicle/presentation/widget/vehicle_card.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/vehicle/presentation/widget/vehicle_card.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/contracts/contract_enums.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/contracts/contract_enums.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/instructions/malfunction_manual_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/instructions/malfunction_manual_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/log_certify_state.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/log_certify_state.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_sizing.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_sizing.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/providers/account_ui_state.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/providers/account_ui_state.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/domain/dvir_vehicle.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/domain/dvir_vehicle.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/diagnostics/event_card.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/diagnostics/event_card.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_typography.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_typography.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/contracts/raw_json.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/contracts/raw_json.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_theme_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_theme_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/mac_address_validation.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/mac_address_validation.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/tracking_local_data_source.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/tracking_local_data_source.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/presentation/pages/inspection_start_view.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/inspection/presentation/pages/inspection_start_view.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/duty_event_record.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/duty_event_record.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_auth_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_auth_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/rules/rule_switch_row.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/rules/rule_switch_row.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/presentation/providers/auth_mode_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/presentation/providers/auth_mode_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/certify_submission.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/certify_submission.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/domain/entities/dvir_report.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/domain/entities/dvir_report.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_dvir_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_dvir_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/vehicle/data/repositories/vehicle_repository_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/vehicle/data/repositories/vehicle_repository_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/unidentified_event.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/unidentified_event.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/config/hos_configuration.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/config/hos_configuration.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/daily_log.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/daily_log.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/app.dart::untested_module": {
+      "issue_id": "test_coverage::lib/app.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/application/ble_reconnect_coordinator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/application/ble_reconnect_coordinator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/providers/dvir_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/providers/dvir_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/form_list_editor_view.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/form_list_editor_view.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_duty_status_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_duty_status_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/user_preferences_storage_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/user_preferences_storage_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/presentation/pages/inspection_active_view.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/inspection/presentation/pages/inspection_active_view.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/manual_recording_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/manual_recording_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_animations.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_animations.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_dropdown_row.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_dropdown_row.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/operational_alerts_banner.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/operational_alerts_banner.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/dvir_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/dvir_routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/unidentified_events_list.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/unidentified_events_list.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/data/services/fmcsa_eld_output_generator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/inspection/data/services/fmcsa_eld_output_generator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/hos_audit_migration.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/hos_audit_migration.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/pages/user_manual_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/pages/user_manual_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_feedback.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_feedback.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/presentation/providers/login_form_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/presentation/providers/login_form_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/vehicle/domain/entities/vehicle.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/vehicle/domain/entities/vehicle.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/models/sync_item_model.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/models/sync_item_model.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/account/account_details_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/account/account_details_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_dialog.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_dialog.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/domain/entities/location_entity.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/domain/entities/location_entity.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/logs_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/logs_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/localization/locale_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/localization/locale_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/pages/log_detail_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/pages/log_detail_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/dialogs/manual_mode_reason_dialog.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/dialogs/manual_mode_reason_dialog.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/inspection_audit_trail_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/inspection_audit_trail_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/rules/rule_dropdown_field.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/rules/rule_dropdown_field.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_api_client_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_api_client_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/auth_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/auth_routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_hardware_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_hardware_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/models/unidentified_event_dto.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/data/models/unidentified_event_dto.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/home/presentation/providers/home_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/home/presentation/providers/home_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/golden_colors.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/golden_colors.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/domain/usecases/check_auth_status_usecase.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/domain/usecases/check_auth_status_usecase.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/status_chip.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/status_chip.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/quarantine_record.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/quarantine_record.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_vehicle_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_vehicle_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_button.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_button.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_spacing.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_spacing.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/data/providers/status_dashboard_repository_providers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/data/providers/status_dashboard_repository_providers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/mappers/json_primitives.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/mappers/json_primitives.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/sync_repository_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/sync_repository_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/domain/engine/hos_rules_engine.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/domain/engine/hos_rules_engine.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/log_events_snapshot.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/log_events_snapshot.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/codriver/presentation/providers/codriver_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/codriver/presentation/providers/codriver_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/daily_form_data.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/daily_form_data.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/models/location_model.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/models/location_model.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/edit_log_form_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/edit_log_form_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/sync_verification.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/sync_verification.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/codriver/domain/current_codriver.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/codriver/domain/current_codriver.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/constants/fmcsa_constants.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/constants/fmcsa_constants.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_shared.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_shared.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/permissions/presentation/pages/permissions_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/permissions/presentation/pages/permissions_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/trailers_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/trailers_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/parsers/j1708_packet_parser.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/parsers/j1708_packet_parser.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/circular_timer_logic.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/circular_timer_logic.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/onboarding/presentation/pages/onboarding_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/onboarding/presentation/pages/onboarding_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/vehicle/data/datasources/vehicle_local_cache.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/vehicle/data/datasources/vehicle_local_cache.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/data/mappers/dvir_mappers.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/data/mappers/dvir_mappers.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/status_color_resolver.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/status_color_resolver.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/data/repositories/auth_repository_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/data/repositories/auth_repository_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_date_paginator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_date_paginator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/models/certify_dto.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/models/certify_dto.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_components.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_components.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/extensions/context_extensions.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/extensions/context_extensions.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_unidentified_events_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_unidentified_events_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/providers/hardware_alerts_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/providers/hardware_alerts_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/providers/dashboard_reconciler.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/providers/dashboard_reconciler.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/active_defects_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/active_defects_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/config/server_config_store.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/config/server_config_store.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/parsers/j1939_packet_parser.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/parsers/j1939_packet_parser.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_card.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_card.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_driver_session_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_driver_session_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/utils/localization_helper.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/utils/localization_helper.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/home/presentation/widgets/eld_drawer.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/home/presentation/widgets/eld_drawer.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/providers/hos_engine_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/providers/hos_engine_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/domain/entities/value_objects/password.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/domain/entities/value_objects/password.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/daily_log_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/daily_log_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/domain/entities/hardware_alert.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/domain/entities/hardware_alert.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/pages/dvir_detail_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/pages/dvir_detail_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/providers/rules_screen_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/providers/rules_screen_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_loading_state.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_loading_state.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_hardware_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_hardware_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/local_database_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/local_database_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_status_pill.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_status_pill.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/edit_log_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/edit_log_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_theme.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_theme.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_colors.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_colors.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/time/time_formatter.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/time/time_formatter.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/formatters/log_date_formatter.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/formatters/log_date_formatter.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/domain/usecases/logout_usecase.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/domain/usecases/logout_usecase.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_daily_logs_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_daily_logs_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/dispatch_auth.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/dispatch_auth.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/contracts/unidentified_events_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/contracts/unidentified_events_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/extensions/dvir_catalog_extensions.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/extensions/dvir_catalog_extensions.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/expanded_content.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/expanded_content.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_driver_session_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_driver_session_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/rules/rules_settings_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/rules/rules_settings_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/entities/daily_form_update.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/entities/daily_form_update.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/data/models/user_model.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/data/models/user_model.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_sections.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_sections.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/domain/defect_enums.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/domain/defect_enums.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_status_badge.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_status_badge.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/presentation/providers/inspection_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/inspection/presentation/providers/inspection_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/domain/entities/native_location_event.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/domain/entities/native_location_event.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/log_event_tile.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/log_event_tile.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/constants/app_constants.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/constants/app_constants.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_signature_canvas.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_signature_canvas.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/providers/hos_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/providers/hos_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/instructions/send_logs_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/instructions/send_logs_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/annotation_dialog.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/annotation_dialog.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/providers/recap_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/providers/recap_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/sqlite_duty_event_journal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/sqlite_duty_event_journal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/live_tracking_data_source.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/live_tracking_data_source.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/parsers/geometris_packet_parser.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/parsers/geometris_packet_parser.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/home_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/home_routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/mappers/form_validation_mapper.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/mappers/form_validation_mapper.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/critical_error_app.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/critical_error_app.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/logs_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/logs_routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/time_field_widget.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/time_field_widget.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/domain/entities/tracking_event.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/domain/entities/tracking_event.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/domain/entities/value_objects/login_identifier.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/domain/entities/value_objects/login_identifier.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/home/presentation/widgets/connection_status_indicator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/home/presentation/widgets/connection_status_indicator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/rules/daily_limits_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/rules/daily_limits_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/app/app_initializer.dart::untested_module": {
+      "issue_id": "test_coverage::lib/app/app_initializer.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/domain/duty_status/weekly_recap.dart::untested_module": {
+      "issue_id": "test_coverage::lib/domain/duty_status/weekly_recap.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/constants/storage_constants.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/constants/storage_constants.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/usecases/sync_engine.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/usecases/sync_engine.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_theme_toggle_button.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_theme_toggle_button.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/domain/entities/sync_item.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/domain/entities/sync_item.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_selection_tile.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_selection_tile.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/connection_status_indicator.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/connection_status_indicator.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/suggested_log_card.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/suggested_log_card.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/defects_modal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/defects_modal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/presentation/providers/sync_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/presentation/providers/sync_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/services/unidentified_events.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/services/unidentified_events.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/pages/diagnostics_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/pages/diagnostics_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/instructions/inspection_mode_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/instructions/inspection_mode_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/domain/usecases/login_usecase.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/domain/usecases/login_usecase.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/domain/entities/user.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/domain/entities/user.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_dvir_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_dvir_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/memory_offline_queue.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/memory_offline_queue.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/parsers/pacific_track_packet_parser.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/parsers/pacific_track_packet_parser.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/extensions/duty_status_l10n.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/extensions/duty_status_l10n.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/repositories/tracking_repository_impl.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/repositories/tracking_repository_impl.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/log_day_slice.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/log_day_slice.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/datasources/traccar_data_source.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/datasources/traccar_data_source.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/domain/account/driver_rules.dart::untested_module": {
+      "issue_id": "test_coverage::lib/domain/account/driver_rules.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/domain/engine/hos_offline_dashboard.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/domain/engine/hos_offline_dashboard.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/account_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/account_routes.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/models/log_model.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/data/models/log_model.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/widgets/rules/rules_notice_banner.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/widgets/rules/rules_notice_banner.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/sqlite_offline_queue.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/sqlite_offline_queue.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/mappers/rules_screen_mapper.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/mappers/rules_screen_mapper.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/time_picker_sheet.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/time_picker_sheet.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/session/auth_session_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/session/auth_session_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/parsers/composite_eld_parser.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/parsers/composite_eld_parser.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/sync/data/repositories/traccar_remote_event_dispatcher.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/sync/data/repositories/traccar_remote_event_dispatcher.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/presentation/widgets/forgot_password_form.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/presentation/widgets/forgot_password_form.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/pages/inspection_preview_page.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/pages/inspection_preview_page.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/codriver_picker_dialog.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/codriver_picker_dialog.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_density.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_density.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/tracking_config_storage_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/tracking_config_storage_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/utils/app_date_utils.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/utils/app_date_utils.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/tracking/data/services/tracking_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/tracking/data/services/tracking_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/models/rules_screen_options.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/models/rules_screen_options.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hardware/domain/models/parsed_ecm_packet.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hardware/domain/models/parsed_ecm_packet.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_rules_screen_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_rules_screen_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/l10n/app_localizations_ar.dart::untested_module": {
+      "issue_id": "test_coverage::lib/l10n/app_localizations_ar.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/domain/entities/hos_models.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/domain/entities/hos_models.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/domain/usecases/get_weekly_recap_use_case.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/domain/usecases/get_weekly_recap_use_case.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/domain/daily_form_rules.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/domain/daily_form_rules.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/data/datasources/dashboard_local_cache.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/data/datasources/dashboard_local_cache.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/directional_chevron.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/directional_chevron.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/mock/sub/mock_duty_status_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/mock/sub/mock_duty_status_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/app/services/push_notification_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/app/services/push_notification_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/app/services/quick_actions_initializer.dart::untested_module": {
+      "issue_id": "test_coverage::lib/app/services/quick_actions_initializer.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/auth/data/models/auth_session_dto.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/auth/data/models/auth_session_dto.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/eld_readiness_panel.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/eld_readiness_panel.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_graph_grid.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_graph_grid.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/extensions/dvir_status_extensions.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/extensions/dvir_status_extensions.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_logo.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_logo.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/shipping_documents_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/shipping_documents_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/bluetooth_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/bluetooth_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/utils/provider_cache.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/utils/provider_cache.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/events/app_events.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/events/app_events.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/backend/adapters/eld_engine/sub/eld_rules_screen_backend.dart::untested_module": {
+      "issue_id": "test_coverage::lib/backend/adapters/eld_engine/sub/eld_rules_screen_backend.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/log_graph.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/log_graph.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/services/utc_sync_service.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/services/utc_sync_service.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/presentation/duty_change_message.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/presentation/duty_change_message.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/providers/log_draft_signature_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/providers/log_draft_signature_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/eld_retry_view.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/eld_retry_view.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/error/exception.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/error/exception.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/network/network_info.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/network/network_info.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/widgets/status_modal.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/widgets/status_modal.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/providers/hardware_status_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/providers/hardware_status_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/presentation/widgets/log_list_item.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/logs/presentation/widgets/log_list_item.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/connection/presentation/widgets/diagnostics/stat_row.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/connection/presentation/widgets/diagnostics/stat_row.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/account/presentation/providers/rules_form_provider.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/account/presentation/providers/rules_form_provider.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/domain/usecases/get_status_dashboard_use_case.dart::untested_module": {
+      "issue_id": "test_coverage::lib/features/hos/domain/usecases/get_status_dashboard_use_case.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/theme/app_styles.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/theme/app_styles.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/widgets/app_section.dart::untested_module": {
+      "issue_id": "test_coverage::lib/core/widgets/app_section.dart::untested_module",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/datasources/log_local_data_source.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/logs/data/datasources/log_local_data_source.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/core/error/failure.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/core/error/failure.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/inspection/data/repositories/inspection_repository_impl.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/inspection/data/repositories/inspection_repository_impl.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/data/repositories/dvir_repository_impl.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/dvir/data/repositories/dvir_repository_impl.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/dvir/presentation/pages/dvir_form_page.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/dvir/presentation/pages/dvir_form_page.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/hos/domain/engine/hos_state_machine.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/hos/domain/engine/hos_state_machine.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/l10n/app_localizations_en.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/l10n/app_localizations_en.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/l10n/app_localizations.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/l10n/app_localizations.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/features/logs/data/repositories/log_repository_impl.dart::untested_critical": {
+      "issue_id": "test_coverage::lib/features/logs/data/repositories/log_repository_impl.dart::untested_critical",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/test_coverage-untested_critical",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.dart_tool::.dart_tool": {
+      "issue_id": "stale_exclude::.dart_tool::.dart_tool",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.widget_preview::.widget_preview": {
+      "issue_id": "stale_exclude::.widget_preview::.widget_preview",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.vscode::.vscode": {
+      "issue_id": "stale_exclude::.vscode::.vscode",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.agents::.agents": {
+      "issue_id": "stale_exclude::.agents::.agents",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.github::.github": {
+      "issue_id": "stale_exclude::.github::.github",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::.zcode::.zcode": {
+      "issue_id": "stale_exclude::.zcode::.zcode",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::architecture_audit::architecture_audit": {
+      "issue_id": "stale_exclude::architecture_audit::architecture_audit",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::business_process_modeling::business_process_modeling": {
+      "issue_id": "stale_exclude::business_process_modeling::business_process_modeling",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::strict_as_built_workflows::strict_as_built_workflows": {
+      "issue_id": "stale_exclude::strict_as_built_workflows::strict_as_built_workflows",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "stale_exclude::windows::windows": {
+      "issue_id": "stale_exclude::windows::windows",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/stale_exclude",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::abstraction_fitness": {
+      "issue_id": "subjective::abstraction_fitness",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::ai_generated_debt": {
+      "issue_id": "subjective::ai_generated_debt",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::api_surface_coherence": {
+      "issue_id": "subjective::api_surface_coherence",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::authorization_consistency": {
+      "issue_id": "subjective::authorization_consistency",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::contract_coherence": {
+      "issue_id": "subjective::contract_coherence",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::convention_outlier": {
+      "issue_id": "subjective::convention_outlier",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::cross_module_architecture": {
+      "issue_id": "subjective::cross_module_architecture",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::dependency_health": {
+      "issue_id": "subjective::dependency_health",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::design_coherence": {
+      "issue_id": "subjective::design_coherence",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::error_consistency": {
+      "issue_id": "subjective::error_consistency",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::high_level_elegance": {
+      "issue_id": "subjective::high_level_elegance",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::incomplete_migration": {
+      "issue_id": "subjective::incomplete_migration",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::initialization_coupling": {
+      "issue_id": "subjective::initialization_coupling",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::logic_clarity": {
+      "issue_id": "subjective::logic_clarity",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::low_level_elegance": {
+      "issue_id": "subjective::low_level_elegance",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::mid_level_elegance": {
+      "issue_id": "subjective::mid_level_elegance",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::naming_quality": {
+      "issue_id": "subjective::naming_quality",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::package_organization": {
+      "issue_id": "subjective::package_organization",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::test_strategy": {
+      "issue_id": "subjective::test_strategy",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "subjective::type_safety": {
+      "issue_id": "subjective::type_safety",
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "cluster": "auto/initial-review",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    },
+    "test_coverage::lib/routes/app_routes.dart::untested_module": {
+      "issue_id": "test_coverage::lib/routes/app_routes.dart::untested_module",
+      "created_at": "2026-11-06T18:42:00+00:00",
+      "cluster": "auto/test_coverage-untested_module",
+      "updated_at": "2026-11-06T18:42:00+00:00"
+    }
+  },
+  "clusters": {
+    "auto/test_coverage-untested_module": {
+      "name": "auto/test_coverage-untested_module",
+      "description": "Fix 275 test coverage issues",
+      "issue_ids": [
+        "test_coverage::lib/backend/providers/backend_network_providers.dart::untested_module",
+        "test_coverage::lib/l10n/app_localizations_es.dart::untested_module",
+        "test_coverage::lib/core/widgets/dashed_line_painter.dart::untested_module",
+        "test_coverage::lib/core/domain/entities/location_point.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/certify_log_provider.dart::untested_module",
+        "test_coverage::lib/features/home/presentation/providers/dashboard_provider.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/memory_duty_event_journal.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/pages/shipping_documents_page.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_text_field.dart::untested_module",
+        "test_coverage::lib/features/home/presentation/widgets/eld_bottom_nav.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/log_readiness.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_events_table.dart::untested_module",
+        "test_coverage::lib/features/dvir/data/mappers/dvir_defect_mappers.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/eld_connectivity_panel.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_footer_notice.dart::untested_module",
+        "test_coverage::lib/features/sync/data/providers/sync_providers.dart::untested_module",
+        "test_coverage::lib/domain/hardware/diagnostic_alert.dart::untested_module",
+        "test_coverage::lib/features/auth/presentation/widgets/login_form.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_info_row.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/widgets/status_option_tiles.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_zoom_overlay.dart::untested_module",
+        "test_coverage::lib/features/logs/data/models/saved_form_dto.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/event_ownership.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/inspection_filter_dialog.dart::untested_module",
+        "test_coverage::lib/core/utils/logger.dart::untested_module",
+        "test_coverage::lib/backend/core/backend_kind.dart::untested_module",
+        "test_coverage::lib/core/theme/app_radius.dart::untested_module",
+        "test_coverage::lib/features/logs/data/repositories/unidentified_events_repository_impl.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/mock_traccar_native_client.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/unidentified_stats_row.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/repositories/duty_event_journal.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_vehicle_backend.dart::untested_module",
+        "test_coverage::lib/features/sync/data/datasources/sync_local_data_source.dart::untested_module",
+        "test_coverage::lib/features/inspection/data/mappers/inspection_mappers.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_websocket_client_impl.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_native_client_impl.dart::untested_module",
+        "test_coverage::lib/main.dart::untested_module",
+        "test_coverage::lib/features/sync/presentation/widgets/sync_status_indicator.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/status_radio_group.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/log_detail_tab_provider.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/providers/account_provider.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/diagnostics/active_malfunction_actions.dart::untested_module",
+        "test_coverage::lib/features/vehicle/presentation/widget/vehicle_card.dart::untested_module",
+        "test_coverage::lib/backend/contracts/contract_enums.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/instructions/malfunction_manual_section.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/log_certify_state.dart::untested_module",
+        "test_coverage::lib/core/theme/app_sizing.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/providers/account_ui_state.dart::untested_module",
+        "test_coverage::lib/features/dvir/domain/dvir_vehicle.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/diagnostics/event_card.dart::untested_module",
+        "test_coverage::lib/core/theme/app_typography.dart::untested_module",
+        "test_coverage::lib/backend/contracts/raw_json.dart::untested_module",
+        "test_coverage::lib/core/theme/app_theme_provider.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/mac_address_validation.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/tracking_local_data_source.dart::untested_module",
+        "test_coverage::lib/features/inspection/presentation/pages/inspection_start_view.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/duty_event_record.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_auth_backend.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/rules/rule_switch_row.dart::untested_module",
+        "test_coverage::lib/features/auth/presentation/providers/auth_mode_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/certify_submission.dart::untested_module",
+        "test_coverage::lib/features/dvir/domain/entities/dvir_report.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_dvir_backend.dart::untested_module",
+        "test_coverage::lib/features/vehicle/data/repositories/vehicle_repository_impl.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/unidentified_event.dart::untested_module",
+        "test_coverage::lib/core/config/hos_configuration.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/daily_log.dart::untested_module",
+        "test_coverage::lib/app.dart::untested_module",
+        "test_coverage::lib/features/hardware/application/ble_reconnect_coordinator.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/providers/dvir_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/form_list_editor_view.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_duty_status_backend.dart::untested_module",
+        "test_coverage::lib/core/services/user_preferences_storage_service.dart::untested_module",
+        "test_coverage::lib/features/inspection/presentation/pages/inspection_active_view.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/manual_recording_section.dart::untested_module",
+        "test_coverage::lib/core/theme/app_animations.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_dropdown_row.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/operational_alerts_banner.dart::untested_module",
+        "test_coverage::lib/routes/dvir_routes.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/unidentified_events_list.dart::untested_module",
+        "test_coverage::lib/features/inspection/data/services/fmcsa_eld_output_generator.dart::untested_module",
+        "test_coverage::lib/core/services/hos_audit_migration.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/pages/user_manual_page.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_feedback.dart::untested_module",
+        "test_coverage::lib/features/auth/presentation/providers/login_form_provider.dart::untested_module",
+        "test_coverage::lib/features/vehicle/domain/entities/vehicle.dart::untested_module",
+        "test_coverage::lib/features/sync/data/models/sync_item_model.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/account/account_details_section.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_dialog.dart::untested_module",
+        "test_coverage::lib/features/tracking/domain/entities/location_entity.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/logs_provider.dart::untested_module",
+        "test_coverage::lib/core/localization/locale_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/pages/log_detail_page.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/dialogs/manual_mode_reason_dialog.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/inspection_audit_trail_section.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/rules/rule_dropdown_field.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/traccar_sdk/traccar_api_client_impl.dart::untested_module",
+        "test_coverage::lib/routes.dart::untested_module",
+        "test_coverage::lib/routes/auth_routes.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_hardware_backend.dart::untested_module",
+        "test_coverage::lib/features/logs/data/models/unidentified_event_dto.dart::untested_module",
+        "test_coverage::lib/features/home/presentation/providers/home_provider.dart::untested_module",
+        "test_coverage::lib/core/theme/golden_colors.dart::untested_module",
+        "test_coverage::lib/features/auth/domain/usecases/check_auth_status_usecase.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/status_chip.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/quarantine_record.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_vehicle_backend.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_button.dart::untested_module",
+        "test_coverage::lib/core/theme/app_spacing.dart::untested_module",
+        "test_coverage::lib/features/hos/data/providers/status_dashboard_repository_providers.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/mappers/json_primitives.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/sync_repository_impl.dart::untested_module",
+        "test_coverage::lib/features/hos/domain/engine/hos_rules_engine.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/log_events_snapshot.dart::untested_module",
+        "test_coverage::lib/features/codriver/presentation/providers/codriver_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/daily_form_data.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/models/location_model.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/edit_log_form_provider.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/sync_verification.dart::untested_module",
+        "test_coverage::lib/features/codriver/domain/current_codriver.dart::untested_module",
+        "test_coverage::lib/core/constants/fmcsa_constants.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/instructions/instructions_shared.dart::untested_module",
+        "test_coverage::lib/features/permissions/presentation/pages/permissions_page.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/trailers_provider.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/parsers/j1708_packet_parser.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/widgets/status_dashboard/circular_timer_logic.dart::untested_module",
+        "test_coverage::lib/features/onboarding/presentation/pages/onboarding_page.dart::untested_module",
+        "test_coverage::lib/features/vehicle/data/datasources/vehicle_local_cache.dart::untested_module",
+        "test_coverage::lib/features/dvir/data/mappers/dvir_mappers.dart::untested_module",
+        "test_coverage::lib/core/widgets/status_color_resolver.dart::untested_module",
+        "test_coverage::lib/features/auth/data/repositories/auth_repository_impl.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_date_paginator.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/models/certify_dto.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_components.dart::untested_module",
+        "test_coverage::lib/core/extensions/context_extensions.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_unidentified_events_backend.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/providers/hardware_alerts_provider.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/providers/dashboard_reconciler.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/active_defects_section.dart::untested_module",
+        "test_coverage::lib/core/config/server_config_store.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/parsers/j1939_packet_parser.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_card.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_driver_session_backend.dart::untested_module",
+        "test_coverage::lib/core/utils/localization_helper.dart::untested_module",
+        "test_coverage::lib/features/home/presentation/widgets/eld_drawer.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/providers/hos_engine_provider.dart::untested_module",
+        "test_coverage::lib/features/auth/domain/entities/value_objects/password.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/daily_log_page.dart::untested_module",
+        "test_coverage::lib/features/connection/domain/entities/hardware_alert.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/pages/dvir_detail_page.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/providers/rules_screen_provider.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_loading_state.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_hardware_backend.dart::untested_module",
+        "test_coverage::lib/core/services/local_database_service.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_status_pill.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/edit_log_provider.dart::untested_module",
+        "test_coverage::lib/core/theme/app_theme.dart::untested_module",
+        "test_coverage::lib/core/theme/app_colors.dart::untested_module",
+        "test_coverage::lib/core/time/time_formatter.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/formatters/log_date_formatter.dart::untested_module",
+        "test_coverage::lib/features/auth/domain/usecases/logout_usecase.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_daily_logs_backend.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/dispatch_auth.dart::untested_module",
+        "test_coverage::lib/backend/contracts/unidentified_events_backend.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/extensions/dvir_catalog_extensions.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/expanded_content.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_driver_session_backend.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/rules/rules_settings_section.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/entities/daily_form_update.dart::untested_module",
+        "test_coverage::lib/core/data/models/user_model.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/dvir_form_sections.dart::untested_module",
+        "test_coverage::lib/features/dvir/domain/defect_enums.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_status_badge.dart::untested_module",
+        "test_coverage::lib/features/inspection/presentation/providers/inspection_provider.dart::untested_module",
+        "test_coverage::lib/features/tracking/domain/entities/native_location_event.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/log_event_tile.dart::untested_module",
+        "test_coverage::lib/core/constants/app_constants.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_signature_canvas.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/providers/hos_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/log_detail_tabs/form_tab.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/instructions/send_logs_section.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/annotation_dialog.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/providers/recap_provider.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/sqlite_duty_event_journal.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/live_tracking_data_source.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/parsers/geometris_packet_parser.dart::untested_module",
+        "test_coverage::lib/routes/home_routes.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/mappers/form_validation_mapper.dart::untested_module",
+        "test_coverage::lib/core/widgets/critical_error_app.dart::untested_module",
+        "test_coverage::lib/routes/logs_routes.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/time_field_widget.dart::untested_module",
+        "test_coverage::lib/features/tracking/domain/entities/tracking_event.dart::untested_module",
+        "test_coverage::lib/features/auth/domain/entities/value_objects/login_identifier.dart::untested_module",
+        "test_coverage::lib/features/home/presentation/widgets/connection_status_indicator.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/rules/daily_limits_section.dart::untested_module",
+        "test_coverage::lib/app/app_initializer.dart::untested_module",
+        "test_coverage::lib/domain/duty_status/weekly_recap.dart::untested_module",
+        "test_coverage::lib/core/constants/storage_constants.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/usecases/sync_engine.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/previous_dvir_review_modal.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_theme_toggle_button.dart::untested_module",
+        "test_coverage::lib/features/sync/domain/entities/sync_item.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_selection_tile.dart::untested_module",
+        "test_coverage::lib/core/widgets/connection_status_indicator.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/suggested_log_card.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/defects_modal.dart::untested_module",
+        "test_coverage::lib/features/sync/presentation/providers/sync_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/services/unidentified_events.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/pages/diagnostics_page.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/instructions/inspection_mode_section.dart::untested_module",
+        "test_coverage::lib/features/auth/domain/usecases/login_usecase.dart::untested_module",
+        "test_coverage::lib/core/domain/entities/user.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_dvir_backend.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/memory_offline_queue.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/parsers/pacific_track_packet_parser.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/extensions/duty_status_l10n.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/repositories/tracking_repository_impl.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/log_day_slice.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/datasources/traccar_data_source.dart::untested_module",
+        "test_coverage::lib/domain/account/driver_rules.dart::untested_module",
+        "test_coverage::lib/features/hos/domain/engine/hos_offline_dashboard.dart::untested_module",
+        "test_coverage::lib/routes/account_routes.dart::untested_module",
+        "test_coverage::lib/features/logs/data/models/log_model.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/widgets/rules/rules_notice_banner.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/sqlite_offline_queue.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/mappers/rules_screen_mapper.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/time_picker_sheet.dart::untested_module",
+        "test_coverage::lib/core/session/auth_session_provider.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/parsers/composite_eld_parser.dart::untested_module",
+        "test_coverage::lib/features/sync/data/repositories/traccar_remote_event_dispatcher.dart::untested_module",
+        "test_coverage::lib/features/auth/presentation/widgets/forgot_password_form.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/pages/inspection_preview_page.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/codriver_picker_dialog.dart::untested_module",
+        "test_coverage::lib/core/theme/app_density.dart::untested_module",
+        "test_coverage::lib/core/services/tracking_config_storage_service.dart::untested_module",
+        "test_coverage::lib/core/utils/app_date_utils.dart::untested_module",
+        "test_coverage::lib/features/tracking/data/services/tracking_service.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/models/rules_screen_options.dart::untested_module",
+        "test_coverage::lib/features/hardware/domain/models/parsed_ecm_packet.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_rules_screen_backend.dart::untested_module",
+        "test_coverage::lib/l10n/app_localizations_ar.dart::untested_module",
+        "test_coverage::lib/core/domain/entities/hos_models.dart::untested_module",
+        "test_coverage::lib/features/hos/domain/usecases/get_weekly_recap_use_case.dart::untested_module",
+        "test_coverage::lib/features/logs/domain/daily_form_rules.dart::untested_module",
+        "test_coverage::lib/features/hos/data/datasources/dashboard_local_cache.dart::untested_module",
+        "test_coverage::lib/core/widgets/directional_chevron.dart::untested_module",
+        "test_coverage::lib/backend/adapters/mock/sub/mock_duty_status_backend.dart::untested_module",
+        "test_coverage::lib/app/services/push_notification_service.dart::untested_module",
+        "test_coverage::lib/app/services/quick_actions_initializer.dart::untested_module",
+        "test_coverage::lib/features/auth/data/models/auth_session_dto.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/eld_readiness_panel.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_graph_grid.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/extensions/dvir_status_extensions.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_logo.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/shipping_documents_provider.dart::untested_module",
+        "test_coverage::lib/core/services/bluetooth_service.dart::untested_module",
+        "test_coverage::lib/core/utils/provider_cache.dart::untested_module",
+        "test_coverage::lib/core/events/app_events.dart::untested_module",
+        "test_coverage::lib/backend/adapters/eld_engine/sub/eld_rules_screen_backend.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/log_graph.dart::untested_module",
+        "test_coverage::lib/core/services/utc_sync_service.dart::untested_module",
+        "test_coverage::lib/features/hos/presentation/duty_change_message.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/providers/log_draft_signature_provider.dart::untested_module",
+        "test_coverage::lib/core/widgets/eld_retry_view.dart::untested_module",
+        "test_coverage::lib/core/error/exception.dart::untested_module",
+        "test_coverage::lib/core/network/network_info.dart::untested_module",
+        "test_coverage::lib/features/dvir/presentation/widgets/status_modal.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/providers/hardware_status_provider.dart::untested_module",
+        "test_coverage::lib/features/logs/presentation/widgets/log_list_item.dart::untested_module",
+        "test_coverage::lib/features/connection/presentation/widgets/diagnostics/stat_row.dart::untested_module",
+        "test_coverage::lib/features/account/presentation/providers/rules_form_provider.dart::untested_module",
+        "test_coverage::lib/features/hos/domain/usecases/get_status_dashboard_use_case.dart::untested_module",
+        "test_coverage::lib/core/theme/app_styles.dart::untested_module",
+        "test_coverage::lib/core/widgets/app_section.dart::untested_module",
+        "test_coverage::lib/routes/app_routes.dart::untested_module"
+      ],
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "updated_at": "2026-11-06T18:42:00+00:00",
+      "auto": true,
+      "cluster_key": "detector::test_coverage::untested_module",
+      "action": "review test coverage gaps",
+      "execution_status": "review",
+      "user_modified": false,
+      "action_type": "refactor",
+      "execution_policy": "planned_only"
+    },
+    "auto/test_coverage-untested_critical": {
+      "name": "auto/test_coverage-untested_critical",
+      "description": "Fix 9 test coverage issues",
+      "issue_ids": [
+        "test_coverage::lib/features/logs/data/datasources/log_local_data_source.dart::untested_critical",
+        "test_coverage::lib/core/error/failure.dart::untested_critical",
+        "test_coverage::lib/features/inspection/data/repositories/inspection_repository_impl.dart::untested_critical",
+        "test_coverage::lib/features/dvir/data/repositories/dvir_repository_impl.dart::untested_critical",
+        "test_coverage::lib/features/dvir/presentation/pages/dvir_form_page.dart::untested_critical",
+        "test_coverage::lib/features/hos/domain/engine/hos_state_machine.dart::untested_critical",
+        "test_coverage::lib/l10n/app_localizations_en.dart::untested_critical",
+        "test_coverage::lib/l10n/app_localizations.dart::untested_critical",
+        "test_coverage::lib/features/logs/data/repositories/log_repository_impl.dart::untested_critical"
+      ],
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "updated_at": "2026-11-06T15:12:09+00:00",
+      "auto": true,
+      "cluster_key": "detector::test_coverage::untested_critical",
+      "action": "review test coverage gaps",
+      "execution_status": "review",
+      "user_modified": false,
+      "action_type": "refactor",
+      "execution_policy": "planned_only"
+    },
+    "auto/stale_exclude": {
+      "name": "auto/stale_exclude",
+      "description": "Fix 10 stale exclude issues",
+      "issue_ids": [
+        "stale_exclude::.dart_tool::.dart_tool",
+        "stale_exclude::.widget_preview::.widget_preview",
+        "stale_exclude::.vscode::.vscode",
+        "stale_exclude::.agents::.agents",
+        "stale_exclude::.github::.github",
+        "stale_exclude::.zcode::.zcode",
+        "stale_exclude::architecture_audit::architecture_audit",
+        "stale_exclude::business_process_modeling::business_process_modeling",
+        "stale_exclude::strict_as_built_workflows::strict_as_built_workflows",
+        "stale_exclude::windows::windows"
+      ],
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "updated_at": "2026-11-06T15:12:09+00:00",
+      "auto": true,
+      "cluster_key": "detector::stale_exclude",
+      "action": "remove stale exclusion or verify it's still needed",
+      "execution_status": "review",
+      "user_modified": false,
+      "action_type": "manual_fix",
+      "execution_policy": "planned_only"
+    },
+    "auto/initial-review": {
+      "name": "auto/initial-review",
+      "description": "Initial review of 20 unscored subjective dimensions",
+      "issue_ids": [
+        "subjective::abstraction_fitness",
+        "subjective::ai_generated_debt",
+        "subjective::api_surface_coherence",
+        "subjective::authorization_consistency",
+        "subjective::contract_coherence",
+        "subjective::convention_outlier",
+        "subjective::cross_module_architecture",
+        "subjective::dependency_health",
+        "subjective::design_coherence",
+        "subjective::error_consistency",
+        "subjective::high_level_elegance",
+        "subjective::incomplete_migration",
+        "subjective::initialization_coupling",
+        "subjective::logic_clarity",
+        "subjective::low_level_elegance",
+        "subjective::mid_level_elegance",
+        "subjective::naming_quality",
+        "subjective::package_organization",
+        "subjective::test_strategy",
+        "subjective::type_safety"
+      ],
+      "created_at": "2026-11-06T15:12:09+00:00",
+      "updated_at": "2026-11-06T15:12:09+00:00",
+      "auto": true,
+      "cluster_key": "subjective::unscored",
+      "action": "desloppify review --prepare --dimensions abstraction_fitness,ai_generated_debt,api_surface_coherence,authorization_consistency,contract_coherence,convention_outlier,cross_module_architecture,dependency_health,design_coherence,error_consistency,high_level_elegance,incomplete_migration,initialization_coupling,logic_clarity,low_level_elegance,mid_level_elegance,naming_quality,package_organization,test_strategy,type_safety",
+      "execution_status": "review",
+      "user_modified": false,
+      "action_type": "manual_fix",
+      "execution_policy": "planned_only"
+    }
+  },
+  "superseded": {},
+  "promoted_ids": [],
+  "plan_start_scores": {},
+  "refresh_state": {
+    "_subjective_migration_pruned": true,
+    "lifecycle_phase": "plan",
+    "postflight_scan_completed_at_scan_count": 4
+  },
+  "execution_log": [
+    {
+      "timestamp": "2026-11-06T15:12:09+00:00",
+      "action": "sync_subjective",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T15:12:09+00:00",
+      "action": "auto_cluster",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T15:12:09+00:00",
+      "action": "sync_lifecycle_phase",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "phase": "review_initial"
+      }
+    },
+    {
+      "timestamp": "2026-11-06T15:12:09+00:00",
+      "action": "seed_start_scores",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-11-06T18:25:13+00:00",
+      "action": "sync_subjective",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T18:25:13+00:00",
+      "action": "clear_start_scores",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-11-06T18:25:13+00:00",
+      "action": "complete_postflight_scan",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "scan_count": 2
+      }
+    },
+    {
+      "timestamp": "2026-11-06T18:42:00+00:00",
+      "action": "sync_subjective",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T18:42:00+00:00",
+      "action": "auto_cluster",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T18:42:00+00:00",
+      "action": "seed_start_scores",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-11-06T19:37:47+00:00",
+      "action": "sync_subjective",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "changes": true
+      }
+    },
+    {
+      "timestamp": "2026-11-06T19:37:47+00:00",
+      "action": "clear_start_scores",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {}
+    },
+    {
+      "timestamp": "2026-11-06T19:37:47+00:00",
+      "action": "complete_postflight_scan",
+      "issue_ids": [],
+      "cluster_name": null,
+      "actor": "system",
+      "note": null,
+      "detail": {
+        "scan_count": 4
+      }
+    }
+  ],
+  "epic_triage_meta": {},
+  "commit_log": [],
+  "uncommitted_issues": [],
+  "commit_tracking_branch": null,
+  "scan_count_at_plan_start": 3
+}

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/press_feedback.dart';
-import '../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../providers/home_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';

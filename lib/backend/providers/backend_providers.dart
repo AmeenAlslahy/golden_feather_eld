@@ -9,6 +9,7 @@ import '../adapters/eld_engine/eld_engine_adapter.dart';
 import '../adapters/mock/mock_adapter.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../core/network/core_providers.dart';
+import 'backend_network_providers.dart';
 import '../contracts/account_backend.dart';
 import '../contracts/auth_backend.dart';
 import '../contracts/daily_logs_backend.dart';

@@ -9,7 +9,7 @@ import '../../../../../../domain/duty_status/duty_status_code.dart';
 import '../../providers/logs_provider.dart';
 import '../../widgets/log_graph.dart';
 import 'log_event_tile.dart';
-import '../../../../../../routes.dart';
+import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../../../../core/error/user_facing_message.dart';
 import '../../../../../../core/extensions/context_extensions.dart';
 import '../../../../../../core/widgets/eld_retry_view.dart';
