@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import '../routes.dart';
+import 'app_routes.dart';
 import '../features/account/presentation/pages/account_page.dart';
 import '../features/account/presentation/pages/rules_page.dart';
 import '../features/account/presentation/pages/info_packet_page.dart';

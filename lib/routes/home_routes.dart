@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import '../routes.dart';
+import 'app_routes.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/hos/presentation/pages/status_dashboard_page.dart';
 import '../features/vehicle/presentation/pages/select_vehicle_page.dart';

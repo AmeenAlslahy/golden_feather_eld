@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import '../routes.dart';
+import 'app_routes.dart';
 import '../features/dvir/presentation/pages/dvir_list_page.dart';
 import '../features/dvir/presentation/pages/dvir_form_page.dart';
 import '../features/inspection/presentation/pages/dot_inspection_page.dart';
