@@ -6,7 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../pages/eld_connection_page.dart';
+import '../providers/eld_connection_provider.dart';
 import '../providers/hardware_status_provider.dart';
 import 'dialogs/manual_mode_reason_dialog.dart';
 
