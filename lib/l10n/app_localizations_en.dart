@@ -1029,7 +1029,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noVehiclesFound => 'No vehicles available';
 
   @override
-  String get vehicleSelected => 'Vehicle selected';
+  String get vehicleSelected => 'Vehicle selected successfully';
 
   @override
   String get unassigned => 'Unassigned';

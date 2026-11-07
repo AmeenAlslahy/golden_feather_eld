@@ -2125,7 +2125,7 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleSelected.
   ///
   /// In ar, this message translates to:
-  /// **'تم اختيار المركبة'**
+  /// **'تم اختيار المركبة بنجاح'**
   String get vehicleSelected;
 
   /// No description provided for @unassigned.

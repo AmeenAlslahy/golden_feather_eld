@@ -112,6 +112,10 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
   final VehicleRepository _repository;
   final LocalStorageService? _localStorage;
 
+  /// فاصل يربط الاختيار بمالكه داخل قيمة `selected_vehicle`:
+  /// `driverId|vehicleId`. القيم القديمة بلا فاصل تُقرأ كسابق عهدها.
+  static const String _savedVehicleOwnerSeparator = '|';
+
   /// P0 Stage 1 — مالك الحالة + تسلسل الطلبات لسياج الردود المتأخرة.
   String? _ownerDriverId;
   int? _ownerEpoch;
@@ -196,7 +200,7 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       (vehicles) {
         final currentSelectedId = state.selectedVehicle?.id;
         final serverSelected = _serverSelected(vehicles);
-        final savedVehicleId = _localStorage?.selectedVehicleId;
+        final savedVehicleId = _savedVehicleId(owner);
 
         final selected = serverSelected ??
             (currentSelectedId != null
@@ -216,7 +220,7 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
                 : null);
 
         if (selected != null) {
-          _localStorage?.saveSelectedVehicleId(selected.id);
+          _persistSelectedVehicle(selected.id);
         }
 
         state = state.copyWith(
@@ -263,6 +267,31 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     );
   }
 
+  /// الاختيار المحفوظ لمالك الحالة الحالي فقط. القيمة المركّبة تحمل
+  /// معرّف السائق، فلا يرث سائقٌ اختيارَ سائق آخر بعد تبديل الحساب أو
+  /// إعادة الدخول. القيمة القديمة بلا فاصل تُقبل للتوافق ثم تُعاد كتابتها
+  /// موسومة عند أول تحميل ناجح.
+  String? _savedVehicleId(String? ownerDriverId) {
+    final raw = _localStorage?.selectedVehicleId;
+    if (raw == null || raw.isEmpty) return null;
+    final separator = raw.indexOf(_savedVehicleOwnerSeparator);
+    if (separator <= 0) return raw;
+    final owner = raw.substring(0, separator);
+    if (ownerDriverId != null && owner != ownerDriverId) return null;
+    final vehicleId = raw.substring(separator + 1);
+    return vehicleId.isEmpty ? null : vehicleId;
+  }
+
+  /// يحفظ الاختيار موسوماً بمالكه. بلا مالك (حالة نادرة قبل الربط) يُحفظ
+  /// المجرّد كما كان.
+  void _persistSelectedVehicle(String vehicleId) {
+    final owner = _ownerDriverId;
+    final value = (owner == null || owner.isEmpty)
+        ? vehicleId
+        : '$owner$_savedVehicleOwnerSeparator$vehicleId';
+    _localStorage?.saveSelectedVehicleId(value);
+  }
+
   Vehicle? _serverSelected(List<Vehicle> vehicles) {
     final ownerIdNum = int.tryParse(_ownerDriverId ?? '');
     for (final vehicle in vehicles) {
@@ -291,6 +320,11 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
     required bool trackingLive,
   }) {
     if (state.isLoading) return;
+
+    // مسح نتيجة المحاولة السابقة قبل تقييم الجديدة: يجعل رسالة الفشل تظهر
+    // مجدداً عند تكرار المحاولة بنفس السبب (كان المستمع يتجاهلها لأن قيمة
+    // الخطأ لم تتغيّر).
+    state = state.copyWith(clearError: true, isSuccess: false);
 
     // SRS 9.4: المركبة قيد الحركة فعلياً (تيار موقع حي) — رفض فوري.
     if (trackingLive && speedMps != null && speedMps * 3.6 >= thresholdKmh) {
@@ -324,6 +358,6 @@ class VehicleNotifier extends StateNotifier<VehicleState> {
       isSuccess: true,
       clearError: true,
     );
-    _localStorage?.saveSelectedVehicleId(vehicle.id);
+    _persistSelectedVehicle(vehicle.id);
   }
 }

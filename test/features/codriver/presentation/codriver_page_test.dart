@@ -10,6 +10,7 @@ import 'package:golden_feather_eld/core/error/failure.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
+import 'package:golden_feather_eld/core/widgets/app_dialog.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/features/codriver/domain/current_codriver.dart';
 import 'package:golden_feather_eld/features/codriver/domain/entities/codriver.dart';
@@ -361,5 +362,37 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('HOS records isolated'), findsNothing);
     expect(find.text('HOS records not isolated'), findsNothing);
+  });
+
+  testWidgets('driver picker list scrolls when there are many co-drivers', (
+    tester,
+  ) async {
+    final many = List.generate(
+      25,
+      (i) => CoDriver(id: '${200 + i}', name: 'Driver ${200 + i}'),
+    );
+    when(
+      () => repo.getAvailableDrivers(),
+    ).thenAnswer((_) async => Right(many));
+    await pump(tester);
+
+    await tester.tap(find.text('NO CO-DRIVER'));
+    await tester.pumpAndSettle();
+
+    // الحوار ملفوف بـ SingleChildScrollView؛ القائمة الداخلية يجب ألا
+    // تحتكر إيماءة السحب وتمنع تمرير الحوار.
+    final scrollable = find
+        .descendant(of: find.byType(AppDialog), matching: find.byType(Scrollable))
+        .first;
+    final position = tester.state<ScrollableState>(scrollable).position;
+    expect(position.maxScrollExtent, greaterThan(0));
+
+    await tester.drag(
+      find.byType(RadioListTile<String>).first,
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+
+    expect(position.pixels, greaterThan(0));
   });
 }

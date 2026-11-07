@@ -91,11 +91,11 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
       } else if (uid != null && uid.isNotEmpty) {
         ref.read(localStorageProvider).setDeviceId(uid);
       }
-      ref.read(localStorageProvider).saveSelectedVehicleId(v.id);
-      AppFeedback.success(
-        context,
-        context.loc.vehicleSelectedConnect(v.displayName),
-      );
+      // حفظ الاختيار يتم داخل VehicleNotifier موسوماً بمالكه؛ لا نكتب هنا
+      // قيمة مجرّدة حتى لا نمحو وسم المالك.
+      // رسالة حالة مختصرة: نجاح الاختيار فقط، بلا بيانات المركبة الكاملة.
+      // رقم المركبة يظهر في شريط صفحة الاتصال بعد الانتقال.
+      AppFeedback.success(context, context.loc.vehicleSelected);
       context.go(AppRoutes.connection);
     }
   }

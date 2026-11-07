@@ -54,7 +54,7 @@ void main() {
     await notifier.loadVehicles();
 
     expect(notifier.selectedVehicle, equals(vehicleA));
-    verify(() => storage.saveSelectedVehicleId('TRK-101')).called(1);
+    verify(() => storage.saveSelectedVehicleId('101|TRK-101')).called(1);
   });
 
   test('loadVehicles: restores previously saved vehicle from storage when server is unselected', () async {
@@ -71,6 +71,34 @@ void main() {
     expect(notifier.selectedVehicle, equals(vehicleB));
   });
 
+  test('loadVehicles: restores a vehicle saved for the same driver', () async {
+    when(() => storage.selectedVehicleId).thenReturn('999|TRK-102');
+    when(() => repo.getVehicles()).thenAnswer(
+      (_) async => const Right([vehicleB, vehicleC]),
+    );
+
+    final notifier = VehicleNotifier(repo, storage);
+    notifier.bindOwner('999', 1);
+
+    await notifier.loadVehicles();
+
+    expect(notifier.selectedVehicle, equals(vehicleB));
+  });
+
+  test('loadVehicles: ignores a selection saved by another driver', () async {
+    when(() => storage.selectedVehicleId).thenReturn('111|TRK-102');
+    when(() => repo.getVehicles()).thenAnswer(
+      (_) async => const Right([vehicleB, vehicleC]),
+    );
+
+    final notifier = VehicleNotifier(repo, storage);
+    notifier.bindOwner('999', 1);
+
+    await notifier.loadVehicles();
+
+    expect(notifier.selectedVehicle, isNull);
+  });
+
   test('loadVehicles: auto-selects single vehicle when driver has only one vehicle assigned', () async {
     when(() => storage.selectedVehicleId).thenReturn(null);
     when(() => repo.getVehicles()).thenAnswer(
@@ -83,11 +111,12 @@ void main() {
     await notifier.loadVehicles();
 
     expect(notifier.selectedVehicle, equals(vehicleB));
-    verify(() => storage.saveSelectedVehicleId('TRK-102')).called(1);
+    verify(() => storage.saveSelectedVehicleId('999|TRK-102')).called(1);
   });
 
   test('selectVehicle: saves selected vehicle id to storage', () {
     final notifier = VehicleNotifier(repo, storage);
+    notifier.bindOwner('999', 1);
 
     notifier.selectVehicle(
       vehicleB,
@@ -97,7 +126,7 @@ void main() {
     );
 
     expect(notifier.selectedVehicle, equals(vehicleB));
-    verify(() => storage.saveSelectedVehicleId('TRK-102')).called(1);
+    verify(() => storage.saveSelectedVehicleId('999|TRK-102')).called(1);
   });
 }
 

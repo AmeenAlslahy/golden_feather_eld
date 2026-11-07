@@ -152,10 +152,9 @@ void main() {
 
       // Nothing is claimed as accepted by the server on this screen.
       expect(find.textContaining('server accepted'), findsNothing);
+      // رسالة الحالة لا تعرض بيانات المركبة الكاملة (الرقم/السنة/الاسم).
       expect(
-        find.text(
-          'Selected TRK-102 | 2021 | Volvo VNL. Connect to the ELD to operate it. Hours were not copied.',
-        ),
+        find.text('Vehicle selected successfully'),
         findsOneWidget,
       );
       expect(find.text('CONNECTION ROUTE'), findsOneWidget);
@@ -199,6 +198,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('CONNECTION ROUTE'), findsNothing);
+
+    // تكرار المحاولة بنفس السبب يعرض رسالة الفشل مرة أخرى، لا يُكتفى
+    // بتغيّر قيمة الخطأ.
+    await tester.tap(find.text('TRK-102'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Vehicle motion is unknown. That is not treated as stopped.'),
+      findsOneWidget,
+    );
+
     // Pump past the AppFeedback auto-dismiss timer (3s).
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();

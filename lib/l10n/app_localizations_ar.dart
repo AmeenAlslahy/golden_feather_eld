@@ -1030,7 +1030,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noVehiclesFound => 'لا توجد مركبات متاحة';
 
   @override
-  String get vehicleSelected => 'تم اختيار المركبة';
+  String get vehicleSelected => 'تم اختيار المركبة بنجاح';
 
   @override
   String get unassigned => 'غير مسندة';

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
-import '../../../../domain/inspection/dot_inspection.dart';
 import '../../../account/presentation/providers/account_provider.dart';
 import '../../../home/presentation/widgets/eld_drawer.dart';
 import '../providers/dot_inspection_providers.dart';
@@ -24,20 +23,10 @@ class _DotInspectionPageState extends ConsumerState<DotInspectionPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionProvider);
 
-    // تزامن وضع التفتيش مع الخادم: إذا كان التفتيش نشطاً على الخادم
-    // ولم يكن وضع التفتيش مفعل محلياً، يتم الانتقال إلى التفتيش النشط تلقائياً
-    ref.listen<AsyncValue<DotInspectionScreen>>(dotInspectionScreenProvider, (
-      previous,
-      next,
-    ) {
-      final screen = next.asData?.value;
-      if (screen != null &&
-          screen.inspectionActive &&
-          !state.isInspectionMode &&
-          !state.isLoading) {
-        _startDirectly();
-      }
-    });
+    // لا يُفتح وضع التفتيش تلقائياً لمجرد أن الخادم يبلّغ عن تفتيش نشط:
+    // الدخول قرار صريح بزر «بدء التفتيش». كانت المزامنة التلقائية تفتح
+    // الشاشة المقفلة فور دخول الصفحة، وبعد أي تفتيش سابق يبقى علمه نشطاً
+    // على الخادم فيتكرر الفتح التلقائي في كل زيارة.
 
     return PopScope(
       canPop: !state.locked,

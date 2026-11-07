@@ -351,7 +351,7 @@
   "selectVehicle": "Select Vehicle",
   "searchVehicle": "Search vehicles...",
   "noVehiclesFound": "No vehicles available",
-  "vehicleSelected": "Vehicle selected",
+  "vehicleSelected": "Vehicle selected successfully",
   "unassigned": "Unassigned",
   "underDevelopment": "Under Development...",
   "am": "AM",

@@ -344,24 +344,28 @@ class _CoDriverPageState extends ConsumerState<CoDriverPage> {
                     if (value == null) return;
                     setStateDialog(() => dialogSelectedId = value);
                   },
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: drivers.length,
-                    itemBuilder: (context, index) {
-                      final driver = drivers[index];
-                      return RadioListTile<String>(
-                        title: Text(
-                          _driverLabel(driver, context.loc).toUpperCase(),
-                          style: context.styles.subtitle.copyWith(
-                            color: dialogSelectedId == driver.id
-                                ? context.gold
-                                : null,
+                  // قائمة غير قابلة للتمرير عمداً: AppDialog يلفّ المحتوى
+                  // كله بـ SingleChildScrollView. وضع ListView هنا (حتى مع
+                  // shrinkWrap) يخلق تمريراً متداخلاً يبتلع إيماءة السحب
+                  // بلا مدى تمرير، فلا تتحرك القائمة ولا الحوار. Column يجعل
+                  // الحوار نفسه هو القابل للتمرير.
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final driver in drivers)
+                        RadioListTile<String>(
+                          title: Text(
+                            _driverLabel(driver, context.loc).toUpperCase(),
+                            style: context.styles.subtitle.copyWith(
+                              color: dialogSelectedId == driver.id
+                                  ? context.gold
+                                  : null,
+                            ),
                           ),
+                          value: driver.id,
+                          activeColor: context.gold,
                         ),
-                        value: driver.id,
-                        activeColor: context.gold,
-                      );
-                    },
+                    ],
                   ),
                 ),
               ),

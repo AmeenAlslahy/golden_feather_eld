@@ -42,7 +42,10 @@ final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 Future<void> _clearDriverScopedTracking(WidgetRef ref) async {
   try {
     await ref.read(localStorageProvider).clearDutyTrackingState();
-    await ref.read(localStorageProvider).clearSelectedVehicle();
+    // لا يُمسح اختيار المركبة: صار محفوظاً موسوماً بمالكه
+    // (`driverId|vehicleId`) في VehicleNotifier. مسحه هنا كان يجعل كل
+    // إقلاع/إعادة دخول يطلب من السائق الاختيار من جديد، كما أن مالكاً
+    // آخر لا يقرأ اختيار غيره بسبب الوسم.
     await ref.read(logLocalDataSourceProvider).clearPeriods();
     ref.invalidate(dutyStatusTrackerProvider);
   } catch (e) {
