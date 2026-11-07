@@ -1,25 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/logger.dart';
-import '../constants/storage_constants.dart';
-import 'hos_audit_migration.dart';
 
 class LocalDatabaseService {
+  /// يهيّئ Hive فقط — **لا يفتح أي صندوق**.
+  ///
+  /// الصناديق تُفتح عند أول استخدام عبر `ensureHiveBox` (انظر
+  /// `lib/core/storage/hive_box_registry.dart`)، فلا يحجب الإقلاع فتح
+  /// خمسة صناديق متتالية وترحيلها. هذا هو الفرق الجوهري عن السابق.
   Future<void> init() async {
     try {
+      final watch = Stopwatch()..start();
       await Hive.initFlutter();
-
-      await Hive.openBox<String>(StorageConstants.eventsBox);
-      await Hive.openBox<String>(StorageConstants.periodsBox);
-      // audit_box يخصّ سجلات السجلات اليومية (قيمه قوائم JSON).
-      await Hive.openBox<String>(StorageConstants.auditBox);
-      await Hive.openBox<String>(StorageConstants.dailyLogsCacheBox);
-
-      // ⚠️ يجب أن يأتي بعد فتح audit_box القديم: الترحيل ينقل مخالفات HOS
-      // من الصندوق القديم إلى الصندوق المنفصل. ل�� يعطّل الإقلاع.
-      await openHosAuditBoxAndMigrate();
-
-      AppLogger.info('✅ LocalDatabaseService initialized successfully');
+      AppLogger.info(
+        '✅ Hive initialized in ${watch.elapsedMilliseconds}ms '
+        '(boxes open lazily on first use)',
+      );
     } catch (e, stack) {
       AppLogger.error('❌ Failed to initialize LocalDatabaseService', e, stack);
       rethrow;
@@ -28,7 +24,7 @@ class LocalDatabaseService {
 
   // All database CRUD operations have been moved to their respective
   // LocalDataSource implementations to adhere to the Single Responsibility Principle.
-  // This class now acts purely as a DatabaseManager that initializes Hive boxes at startup.
+  // This class now only prepares Hive; boxes are opened lazily by their consumers.
 }
 
 final localDatabaseServiceProvider = Provider<LocalDatabaseService>((ref) {

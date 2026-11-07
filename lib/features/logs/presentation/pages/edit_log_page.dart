@@ -18,6 +18,7 @@ import '../providers/edit_log_form_provider.dart';
 import '../../../../core/widgets/dashed_line_painter.dart';
 import '../widgets/time_picker_sheet.dart';
 import '../widgets/status_radio_group.dart';
+import '../providers/event_options_provider.dart';
 import '../widgets/time_field_widget.dart';
 
 /// شاشة تعديل الحدث
@@ -78,7 +79,10 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<EditLogOutcome?>>(editLogControllerProvider, (_, state) {
+    ref.listen<AsyncValue<EditLogOutcome?>>(editLogControllerProvider, (
+      _,
+      state,
+    ) {
       if (state.isLoading) return;
 
       if (state.hasError) {
@@ -92,7 +96,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
           case EditLogOutcomeType.confirmed:
             AppFeedback.success(context, context.loc.eventSavedSuccessfully);
           case EditLogOutcomeType.offlineQueued:
-            AppFeedback.info(context, context.loc.formSavedOffline);
+            AppFeedback.info(context, context.loc.eventSavedOffline);
           case EditLogOutcomeType.unconfirmed:
             AppFeedback.warning(context, context.loc.statusSavedUnconfirmed);
         }
@@ -104,6 +108,9 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
     final selectedLog = ref
         .watch(logsProvider)
         .selectedLog; // جلب اليوم المختار
+    final optionsAsync = selectedLog != null
+        ? ref.watch(eventScreenOptionsProvider(selectedLog.id))
+        : null;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -163,6 +170,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
               // 3. قائمة الحالات
               StatusRadioGroup(
                 groupValue: formState.selectedStatus,
+                allowedStatuses: optionsAsync?.value?.statuses,
                 onChanged: (value) {
                   ref
                       .read(editLogFormProvider(widget.event).notifier)
@@ -232,7 +240,9 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     formState.originalLocation.isEmpty
-                        ? (formState.location.isEmpty ? ' ' : formState.location)
+                        ? (formState.location.isEmpty
+                              ? ' '
+                              : formState.location)
                         : formState.originalLocation,
                     style: context.styles.subtitle,
                   ),

@@ -134,9 +134,12 @@ void main() {
     WidgetTester tester,
     Widget home, {
     List<Override> overrides = const [],
+    Size surfaceSize = const Size(1080, 2340),
+    double devicePixelRatio = 3.0,
+    double textScale = 1.0,
   }) async {
-    tester.view.physicalSize = const Size(1080, 2340);
-    tester.view.devicePixelRatio = 3.0;
+    tester.view.physicalSize = surfaceSize;
+    tester.view.devicePixelRatio = devicePixelRatio;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -156,6 +159,12 @@ void main() {
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           home: home,
         ),
       ),
@@ -245,6 +254,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(dashboardDataProvider).shippingDocuments, 'None');
   });
+
+  testWidgets(
+    'Shipping document validation error is shown inline under its field and clears on typing',
+    (tester) async {
+      await pump(
+        tester,
+        const ShippingDocumentsPage(),
+        overrides: [
+          logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null)),
+        ],
+      );
+
+      await tester.tap(find.text('ADD'));
+      await tester.pumpAndSettle();
+
+      final errorFinder = find.text('Enter the document number.');
+      expect(errorFinder, findsOneWidget);
+      // The message is rendered inside the field's own decoration (below the
+      // input), not in a floating toast far from the field.
+      expect(
+        find.descendant(
+          of: find.byType(TextField),
+          matching: errorFinder,
+        ),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), 'BOL-1');
+      await tester.pump();
+      expect(errorFinder, findsNothing);
+    },
+  );
+
+  testWidgets(
+    'ADD stacks below the field on a 320dp-wide screen with 2.0x text',
+    (tester) async {
+      await pump(
+        tester,
+        const ShippingDocumentsPage(),
+        overrides: [
+          logsProvider.overrideWith((ref) => LogsNotifier(_Repo(), null)),
+        ],
+        surfaceSize: const Size(320, 640),
+        devicePixelRatio: 1.0,
+        textScale: 2.0,
+      );
+
+      final fieldRect = tester.getRect(find.byType(TextField));
+      final addRect = tester.getRect(find.text('ADD'));
+      // Stacked layout: the action is fully below the field, full width.
+      expect(addRect.top, greaterThanOrEqualTo(fieldRect.bottom));
+      expect(addRect.width, greaterThan(0));
+    },
+  );
 
   group('Form tab SAVE', () {
     late _Repo repo;

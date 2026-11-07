@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
 
 import '../../../../core/constants/storage_constants.dart';
+import '../../../../core/storage/hive_box_registry.dart';
 import '../../../../core/utils/logger.dart';
 
 /// A previous-DVIR cache answer.
@@ -177,8 +179,22 @@ class DvirReportCache {
   }
 
   Box<String>? _box() {
-    if (!Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) return null;
-    return Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+    if (Hive.isBoxOpen(StorageConstants.dailyLogsCacheBox)) {
+      return Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+    }
+    // الصندوق لم يعد يُفتح عند الإقلاع. نطلبه هنا؛ فإن لم يكن جاهزاً بعد
+    // تعمل العملية الحالية كـ cache miss (سلوك آمن) وتنجح المحاولة التالية.
+    // وحدات الاختبار التي لا تهيّئ Hive إطلاقاً تُبقي السلوك القديم: "لا كاش".
+    if (!isHiveInitialized) return null;
+    unawaited(
+      ensureHiveBox<String>(StorageConstants.dailyLogsCacheBox).then<void>(
+        (_) {},
+        onError: (Object error) {
+          AppLogger.warning('DVIR cache box unavailable: $error');
+        },
+      ),
+    );
+    return null;
   }
 
   void _write(String key, Map<String, dynamic> value) {

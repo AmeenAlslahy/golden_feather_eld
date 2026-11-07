@@ -121,6 +121,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelButton => 'Cancel';
 
   @override
+  String get cancelAvailableAnytime => 'You can cancel at any time.';
+
+  @override
   String get okButton => 'OK';
 
   @override
@@ -1029,7 +1032,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noVehiclesFound => 'No vehicles available';
 
   @override
-  String get vehicleSelected => 'Vehicle selected successfully';
+  String get vehicleSelected =>
+      'Vehicle selected successfully. The ELD is not connected yet, and duty hours were not copied.';
 
   @override
   String get unassigned => 'Unassigned';
@@ -1991,7 +1995,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'The selected time range conflicts with another event on this day.';
 
   @override
-  String get eventSavedSuccessfully => 'Event saved successfully';
+  String get eventSavedSuccessfully =>
+      'Event saved and confirmed by the server.';
+
+  @override
+  String get eventSavedOffline =>
+      'Event saved locally — will sync when the connection returns.';
 
   @override
   String get reCertificationRequiredEditsWereMade =>
@@ -2172,6 +2181,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enterDocumentNumber => 'Enter the document number.';
+
+  @override
+  String get documentNumberHint => 'Document number (e.g. BOL-2024-001)';
 
   @override
   String get documentNumberTooLong =>
@@ -2520,7 +2532,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetBanner =>
-      'Offline mode. Check your internet connection.';
+      'No internet connection. HOS is calculated on the device from the local duty record.';
 
   @override
   String get dvirSatisfactory => 'Vehicle Condition Satisfactory';

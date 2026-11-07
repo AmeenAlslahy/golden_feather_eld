@@ -322,6 +322,12 @@ abstract class AppLocalizations {
   /// **'إلغاء'**
   String get cancelButton;
 
+  /// No description provided for @cancelAvailableAnytime.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمكنك الإلغاء في أي وقت.'**
+  String get cancelAvailableAnytime;
+
   /// No description provided for @okButton.
   ///
   /// In ar, this message translates to:
@@ -2125,7 +2131,7 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleSelected.
   ///
   /// In ar, this message translates to:
-  /// **'تم اختيار المركبة بنجاح'**
+  /// **'تم اختيار المركبة بنجاح. لم يتم الاتصال بجهاز ELD بعد، ولم تُنقل ساعات الخدمة.'**
   String get vehicleSelected;
 
   /// No description provided for @unassigned.
@@ -3883,8 +3889,14 @@ abstract class AppLocalizations {
   /// No description provided for @eventSavedSuccessfully.
   ///
   /// In ar, this message translates to:
-  /// **'تم حفظ الحدث بنجاح'**
+  /// **'تم حفظ الحدث وتأكيده من الخادم.'**
   String get eventSavedSuccessfully;
+
+  /// No description provided for @eventSavedOffline.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ الحدث محلياً — سيُزامن عند عودة الاتصال.'**
+  String get eventSavedOffline;
 
   /// No description provided for @reCertificationRequiredEditsWereMade.
   ///
@@ -4197,6 +4209,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أدخل رقم المستند.'**
   String get enterDocumentNumber;
+
+  /// No description provided for @documentNumberHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم المستند (مثال: BOL-2024-001)'**
+  String get documentNumberHint;
 
   /// No description provided for @documentNumberTooLong.
   ///
@@ -4777,7 +4795,7 @@ abstract class AppLocalizations {
   /// No description provided for @noInternetBanner.
   ///
   /// In ar, this message translates to:
-  /// **'وضع عدم الاتصال. تحقق من اتصالك بالإنترنت.'**
+  /// **'لا يوجد اتصال بالإنترنت. تُحسب ساعات الخدمة على الجهاز من سجل الخدمة المحلي.'**
   String get noInternetBanner;
 
   /// No description provided for @dvirSatisfactory.

@@ -73,8 +73,8 @@ void main() {
 
       final EditLogOutcomeType outcomeType =
           persisted.syncStatus == EventSyncStatus.pendingSync
-              ? EditLogOutcomeType.offlineQueued
-              : EditLogOutcomeType.confirmed;
+          ? EditLogOutcomeType.offlineQueued
+          : EditLogOutcomeType.confirmed;
 
       expect(outcomeType, EditLogOutcomeType.offlineQueued);
     });
@@ -84,12 +84,11 @@ void main() {
     test('null persisted event maps to unconfirmed', () {
       const LogEvent? persisted = null;
 
-      final outcomeType =
-          persisted == null
-              ? EditLogOutcomeType.unconfirmed
-              : (persisted.syncStatus == EventSyncStatus.pendingSync
-                  ? EditLogOutcomeType.offlineQueued
-                  : EditLogOutcomeType.confirmed);
+      final outcomeType = persisted == null
+          ? EditLogOutcomeType.unconfirmed
+          : (persisted.syncStatus == EventSyncStatus.pendingSync
+                ? EditLogOutcomeType.offlineQueued
+                : EditLogOutcomeType.confirmed);
 
       expect(outcomeType, EditLogOutcomeType.unconfirmed);
     });
@@ -104,10 +103,9 @@ void main() {
         syncStatus: EventSyncStatus.none,
       );
 
-      final outcomeType =
-          persisted.syncStatus == EventSyncStatus.pendingSync
-              ? EditLogOutcomeType.offlineQueued
-              : EditLogOutcomeType.confirmed;
+      final outcomeType = persisted.syncStatus == EventSyncStatus.pendingSync
+          ? EditLogOutcomeType.offlineQueued
+          : EditLogOutcomeType.confirmed;
 
       expect(outcomeType, EditLogOutcomeType.confirmed);
     });
@@ -191,7 +189,8 @@ void main() {
         // unconfirmed means HTTP 200 was received but the server did not echo a parseable event.
         // The local state is updated optimistically. The user is informed this is unconfirmed.
         when(
-          () => mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+          () =>
+              mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
         ).thenAnswer((_) async => const Right(null));
 
         final notifier = container.read(editLogProvider.notifier);
@@ -223,7 +222,8 @@ void main() {
         );
 
         when(
-          () => mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+          () =>
+              mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
         ).thenAnswer((_) async => Right(queuedEvent));
 
         final notifier = container.read(editLogProvider.notifier);
@@ -253,7 +253,8 @@ void main() {
         );
 
         when(
-          () => mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+          () =>
+              mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
         ).thenAnswer((_) async => Right(confirmedEvent));
 
         final notifier = container.read(editLogProvider.notifier);
@@ -275,12 +276,101 @@ void main() {
     );
 
     test(
+      'new event: Right(LogEvent(pendingSync)) → offlineQueued (local save, not server-confirmed)',
+      () async {
+        final queuedEvent = LogEvent(
+          id: 'new-1',
+          status: 'ON',
+          startTime: DateTime(2026, 1, 1, 10, 0),
+          duration: const Duration(hours: 1),
+          location: 'Dallas, TX',
+          syncStatus: EventSyncStatus.pendingSync,
+        );
+
+        when(
+          () => mockLogsNotifier.addEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => Right(queuedEvent));
+
+        final notifier = container.read(editLogProvider.notifier);
+        await notifier.saveEvent(
+          isNewEvent: true,
+          existing: null,
+          selectedStatus: 'ON',
+          startTimeStr: '10:00',
+          durationStr: '01:00',
+          location: 'Dallas, TX',
+          reason: 'New offline event',
+        );
+
+        final state = container.read(editLogProvider);
+        expect(state.value!.type, EditLogOutcomeType.offlineQueued);
+      },
+    );
+
+    test(
+      'new event: Right(LogEvent(none)) → confirmed (server returned the event)',
+      () async {
+        final confirmedEvent = LogEvent(
+          id: 'new-2',
+          status: 'ON',
+          startTime: DateTime(2026, 1, 1, 10, 0),
+          duration: const Duration(hours: 1),
+          location: 'Dallas, TX',
+          syncStatus: EventSyncStatus.none,
+        );
+
+        when(
+          () => mockLogsNotifier.addEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => Right(confirmedEvent));
+
+        final notifier = container.read(editLogProvider.notifier);
+        await notifier.saveEvent(
+          isNewEvent: true,
+          existing: null,
+          selectedStatus: 'ON',
+          startTimeStr: '10:00',
+          durationStr: '01:00',
+          location: 'Dallas, TX',
+          reason: 'New confirmed event',
+        );
+
+        final state = container.read(editLogProvider);
+        expect(state.value!.type, EditLogOutcomeType.confirmed);
+      },
+    );
+
+    test(
+      'new event: Right(null) → unconfirmed (never presented as a sync confirmation)',
+      () async {
+        when(
+          () => mockLogsNotifier.addEvent(any(), reason: any(named: 'reason')),
+        ).thenAnswer((_) async => const Right(null));
+
+        final notifier = container.read(editLogProvider.notifier);
+        await notifier.saveEvent(
+          isNewEvent: true,
+          existing: null,
+          selectedStatus: 'ON',
+          startTimeStr: '10:00',
+          durationStr: '01:00',
+          location: 'Dallas, TX',
+          reason: 'New unconfirmed event',
+        );
+
+        final state = container.read(editLogProvider);
+        expect(state.value!.type, EditLogOutcomeType.unconfirmed);
+      },
+    );
+
+    test(
       'Left(failure) → outcome is NOT set (exception is thrown, state becomes AsyncError)',
       () async {
         when(
-          () => mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
+          () =>
+              mockLogsNotifier.updateEvent(any(), reason: any(named: 'reason')),
         ).thenAnswer(
-          (_) async => const Left(ServerFailure(message: 'server.internal_error')),
+          (_) async =>
+              const Left(ServerFailure(message: 'server.internal_error')),
         );
 
         final notifier = container.read(editLogProvider.notifier);

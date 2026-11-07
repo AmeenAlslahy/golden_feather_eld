@@ -115,8 +115,9 @@ class HomePage extends ConsumerWidget {
                             .watch(statusDashboardProvider)
                             .valueOrNull
                             ?.operationalAlerts;
-                        final eldStatus =
-                            ref.watch(eldConnectionStatusProvider).value;
+                        final eldStatus = ref
+                            .watch(eldConnectionStatusProvider)
+                            .value;
 
                         final isEldDisconnected =
                             alerts?.connectionStatus ==
@@ -203,18 +204,38 @@ class HomePage extends ConsumerWidget {
               final pages = _pagesFor(ref);
               return Column(
                 children: [
+                  // شريط تحذير مدمج أعلى اللوحة: لا يغطي مؤشر HOS ولا
+                  // يحجب أي معلومة، ويحمل أيقونة ونصاً معاً (لا اللون وحده).
                   if (!isOnline && currentNavIndex == 0)
                     Container(
+                      key: const Key('home_offline_banner'),
                       width: double.infinity,
-                      color: Theme.of(context).colorScheme.inverseSurface,
+                      color: context.warningContainer,
                       padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
                       ),
-                      child: Text(
-                        context.loc.noInternetBanner,
-                        textAlign: TextAlign.center,
-                        style: context.styles.subtitle.copyWith(
-                          color: Theme.of(context).colorScheme.onInverseSurface,
+                      child: Semantics(
+                        liveRegion: true,
+                        container: true,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.cloud_off,
+                              size: AppSpacing.iconMedium,
+                              color: context.warning,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                context.loc.noInternetBanner,
+                                style: context.styles.subtitle.copyWith(
+                                  color: context.warning,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

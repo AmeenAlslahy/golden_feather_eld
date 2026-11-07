@@ -189,9 +189,26 @@ class MockDailyLogsBackend implements DailyLogsBackend {
   @override
   Future<Result<RawJson>> getEventsOptions(DailyLogId logId) async =>
       ok(<String, dynamic>{
-        'statuses': ['OFF_DUTY', 'SLEEPER_BERTH', 'DRIVING', 'ON_DUTY'],
-        'specialCategories': <dynamic>[],
-        'editWindowDays': 14,
+        'statuses': [
+          {'code': 'OFF_DUTY', 'baseStatus': null},
+          {'code': 'SLEEPER', 'baseStatus': null},
+          {'code': 'DRIVING', 'baseStatus': null},
+          {'code': 'ON_DUTY', 'baseStatus': null},
+          {'code': 'PERSONAL_CONVEYANCE', 'baseStatus': 'DRIVING'},
+          {'code': 'YARD_MOVE', 'baseStatus': 'ON_DUTY'},
+        ],
+        'vehicles': [
+          {'id': 485, 'identifier': '485'},
+          {'id': 502, 'identifier': 'Volvo VNL 860 #102'},
+          {'id': 503, 'identifier': 'Peterbilt 579 #103 (Standby)'},
+          {'id': 504, 'identifier': 'Kenworth T680 #104'},
+          {'id': 1001, 'identifier': 'شاحنة فولفو - Truck #1001'},
+          {'id': 1002, 'identifier': 'مرسيدس أكتروس - Truck #1002'},
+        ],
+        'locationSources': [
+          {'code': 'ELD_AUTO'},
+          {'code': 'MANUAL'},
+        ],
       });
 
   @override

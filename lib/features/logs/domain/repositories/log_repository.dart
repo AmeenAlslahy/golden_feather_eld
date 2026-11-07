@@ -12,6 +12,7 @@ import '../entities/daily_form_data.dart';
 import '../entities/daily_form_update.dart';
 import '../entities/certify_submission.dart';
 import '../entities/log_events_snapshot.dart';
+import '../entities/event_screen_options.dart';
 
 abstract class LogRepository {
   /// قائمة السجلات اليومية (`GET /eld/daily-logs` الموحّد): ترقيم
@@ -57,7 +58,11 @@ abstract class LogRepository {
 
   /// Records a new manual duty-status event (`POST /eld/duty-status`).
   /// Falls back to the local store and offline queue when offline so nothing is lost (SRS 6.8).
-  Future<Either<Failure, bool>> addEvent(
+  ///
+  /// Returns the persisted event so the caller can distinguish a
+  /// server-confirmed save ([EventSyncStatus.none]) from a local save waiting
+  /// for sync ([EventSyncStatus.pendingSync]).
+  Future<Either<Failure, LogEvent?>> addEvent(
     LogEvent event, {
     String? reason,
     int? ownerDriverId,
@@ -103,6 +108,11 @@ abstract class LogRepository {
   Future<Either<Failure, Map<String, dynamic>?>> getEventDetails(
     DailyLogId logId,
     DutyStatusId eventId,
+  );
+
+  /// خيارات شاشة تعديل الأحداث والحالات المعتمدة بنموذج Type-Safe (`GET /eld/daily-logs/{id}/events/options`).
+  Future<Either<Failure, EventScreenOptions>> getEventScreenOptions(
+    DailyLogId logId,
   );
 
   /// خيارات شاشة تعديل الأحداث والحالات المعتمدة (`GET /eld/daily-logs/{id}/events/options`).

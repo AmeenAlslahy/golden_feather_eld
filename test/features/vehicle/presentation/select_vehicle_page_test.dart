@@ -152,9 +152,13 @@ void main() {
 
       // Nothing is claimed as accepted by the server on this screen.
       expect(find.textContaining('server accepted'), findsNothing);
-      // رسالة الحالة لا تعرض بيانات المركبة الكاملة (الرقم/السنة/الاسم).
+      // رسالة الحالة لا تعرض بيانات المركبة الكاملة (الرقم/السنة/الاسم)،
+      // وتفصل نجاح الاختيار عن الاتصال بالجهاز ونقل الساعات.
       expect(
-        find.text('Vehicle selected successfully'),
+        find.text(
+          'Vehicle selected successfully. The ELD is not connected yet, '
+          'and duty hours were not copied.',
+        ),
         findsOneWidget,
       );
       expect(find.text('CONNECTION ROUTE'), findsOneWidget);

@@ -5,6 +5,7 @@ import '../../../../core/utils/logger.dart';
 import '../../../../core/error/exception.dart';
 import '../../../../core/utils/app_date_utils.dart';
 import '../../../../core/constants/storage_constants.dart';
+import '../../../../core/storage/hive_box_registry.dart';
 import '../../../../domain/shared/value_objects.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/entities/audit_entry.dart';
@@ -101,11 +102,15 @@ abstract class LogLocalDataSource {
 }
 
 class LogLocalDataSourceImpl implements LogLocalDataSource {
-  Box<String> get _eventsBox => Hive.box<String>(StorageConstants.eventsBox);
-  Box<String> get _periodsBox => Hive.box<String>(StorageConstants.periodsBox);
-  Box<String> get _auditBox => Hive.box<String>(StorageConstants.auditBox);
-  Box<String> get _cacheBox =>
-      Hive.box<String>(StorageConstants.dailyLogsCacheBox);
+  // كل صندوق يُفتح عند أول استخدام فعلي (lazy) بدل فتح الخمسة عند الإقلاع.
+  Future<Box<String>> get _eventsBox =>
+      ensureHiveBox<String>(StorageConstants.eventsBox);
+  Future<Box<String>> get _periodsBox =>
+      ensureHiveBox<String>(StorageConstants.periodsBox);
+  Future<Box<String>> get _auditBox =>
+      ensureHiveBox<String>(StorageConstants.auditBox);
+  Future<Box<String>> get _cacheBox =>
+      ensureHiveBox<String>(StorageConstants.dailyLogsCacheBox);
 
   // --- SRS 6.8 offline snapshot ---
 
@@ -119,7 +124,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       // لا تمسح حالة محلية لم يؤكدها الخادم بعد (PENDING_SYNC) أو رفضها
       // نهائياً (SYNC_FAILED) عند كل تحديث للقائمة. الخادم لا يعرف حالة
       // الطابور المحلي، فاستبدال الصف كان يمحوها فور إعادة فتح الشاشة.
-      final previous = _readCachedList(key);
+      final previous = await _readCachedList(key);
       final localById = <String, Map<String, String>>{};
       if (previous != null) {
         for (final row in previous) {
@@ -162,7 +167,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
         return copy;
       }).toList();
 
-      await _cacheBox.put(key, jsonEncode(merged));
+      await (await _cacheBox).put(key, jsonEncode(merged));
     } catch (e) {
       AppLogger.warning('Daily-logs cache write skipped: $e');
     }
@@ -187,7 +192,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   static bool _serverConfirmsCert(String? status) => status == 'CERTIFIED';
 
   @override
-  Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId) async =>
+  Future<List<Map<String, dynamic>>?> getCachedDailyLogs(int driverId) =>
       _readCachedList('logs:$driverId');
 
   @override
@@ -196,16 +201,18 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     List<Map<String, dynamic>> eventsJson,
   ) async {
     try {
-      await _cacheBox.put('events:${logId.value}', jsonEncode(eventsJson));
+      await (await _cacheBox).put(
+        'events:${logId.value}',
+        jsonEncode(eventsJson),
+      );
     } catch (e) {
       AppLogger.warning('Log-events cache write skipped: $e');
     }
   }
 
   @override
-  Future<List<Map<String, dynamic>>?> getCachedLogEvents(
-    DailyLogId logId,
-  ) async => _readCachedList('events:${logId.value}');
+  Future<List<Map<String, dynamic>>?> getCachedLogEvents(DailyLogId logId) =>
+      _readCachedList('events:${logId.value}');
 
   @override
   Future<void> upsertCachedLogEvent(
@@ -219,28 +226,30 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     final normalized = <String, dynamic>{...eventJson, 'id': id};
 
     try {
+      final cacheBox = await _cacheBox;
+      final eventsBox = await _eventsBox;
       // 1) لقطة الخادم: استبدال/إضافة الحدث نفسه فقط، بلا مسح بقية اليوم.
       final key = 'events:${logId.value}';
-      final cached = _readCachedList(key) ?? <Map<String, dynamic>>[];
+      final cached = (await _readCachedList(key)) ?? <Map<String, dynamic>>[];
       final cachedIndex = cached.indexWhere((e) => e['id']?.toString() == id);
       if (cachedIndex >= 0) {
         cached[cachedIndex] = normalized;
       } else {
         cached.add(normalized);
       }
-      await _cacheBox.put(key, jsonEncode(cached));
+      await cacheBox.put(key, jsonEncode(cached));
 
       // 2) صندوق الأحداث المحلي: قد يكون الحدث في يوم سابق بعد تعديل
       // وقت البدء؛ نزيله من كل الأيام ثم نضيفه ليومه الجديد.
-      await _removeLocalEventById(id);
+      await _removeLocalEventById(id, eventsBox);
 
       final startRaw = normalized['startTime']?.toString();
       final start = startRaw == null ? null : DateTime.tryParse(startRaw);
       if (start != null) {
         final dateStr = AppDateUtils.formatDate(start);
-        final list = _getListFromBox(_eventsBox, dateStr);
+        final list = _getListFromBox(eventsBox, dateStr);
         list.add(normalized);
-        await _eventsBox.put(dateStr, jsonEncode(list));
+        await eventsBox.put(dateStr, jsonEncode(list));
       }
     } catch (e) {
       // فشل الكاش لا يحوّل تعديلاً مؤكداً إلى فشل. يُسجّل ويُترك للـGET
@@ -249,14 +258,14 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     }
   }
 
-  Future<void> _removeLocalEventById(String id) async {
-    for (final rawKey in _eventsBox.keys.toList()) {
+  Future<void> _removeLocalEventById(String id, Box<String> eventsBox) async {
+    for (final rawKey in eventsBox.keys.toList()) {
       final dateKey = rawKey.toString();
-      final list = _getListFromBox(_eventsBox, dateKey);
+      final list = _getListFromBox(eventsBox, dateKey);
       final before = list.length;
       list.removeWhere((e) => e['id']?.toString() == id);
       if (list.length != before) {
-        await _eventsBox.put(dateKey, jsonEncode(list));
+        await eventsBox.put(dateKey, jsonEncode(list));
       }
     }
   }
@@ -269,8 +278,10 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   }) async {
     final wire = LogEventModel.syncStatusToWire(status);
     try {
+      final cacheBox = await _cacheBox;
+      final eventsBox = await _eventsBox;
       final key = 'events:${logId.value}';
-      final cached = _readCachedList(key);
+      final cached = await _readCachedList(key);
       if (cached != null) {
         var changed = false;
         final updated = cached.map((row) {
@@ -278,14 +289,14 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
           changed = true;
           return _withSyncStatus(row, wire);
         }).toList();
-        if (changed) await _cacheBox.put(key, jsonEncode(updated));
+        if (changed) await cacheBox.put(key, jsonEncode(updated));
       }
 
       // صندوق الأحداث قد يحمل الحدث تحت يوم آخر إذا تغيّر وقت البدء؛
       // نحدّث كل النسخ المطابقة بدل الافتراض أن اليوم الحالي فقط.
-      for (final rawKey in _eventsBox.keys.toList()) {
+      for (final rawKey in eventsBox.keys.toList()) {
         final dateKey = rawKey.toString();
-        final list = _getListFromBox(_eventsBox, dateKey);
+        final list = _getListFromBox(eventsBox, dateKey);
         var changed = false;
         final updated = list.map((row) {
           if (row['id']?.toString() != eventId) return row;
@@ -293,7 +304,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
           return _withSyncStatus(row, wire);
         }).toList();
         if (changed) {
-          await _eventsBox.put(dateKey, jsonEncode(updated));
+          await eventsBox.put(dateKey, jsonEncode(updated));
         }
       }
     } catch (e) {
@@ -317,7 +328,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<void> saveSignature(DailyLogId logId, String base64Signature) async {
     try {
-      await _cacheBox.put('sig:${logId.value}', base64Signature);
+      await (await _cacheBox).put('sig:${logId.value}', base64Signature);
     } catch (e) {
       AppLogger.warning('Signature write skipped: $e');
     }
@@ -325,13 +336,13 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<String?> getSignature(DailyLogId logId) async {
-    return _cacheBox.get('sig:${logId.value}');
+    return (await _cacheBox).get('sig:${logId.value}');
   }
 
   @override
   Future<void> saveDraftSignature(DailyLogId logId, String pointsJson) async {
     try {
-      await _cacheBox.put('sig_draft:${logId.value}', pointsJson);
+      await (await _cacheBox).put('sig_draft:${logId.value}', pointsJson);
     } catch (e) {
       AppLogger.warning('Signature draft write skipped: $e');
     }
@@ -339,13 +350,13 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<String?> getDraftSignature(DailyLogId logId) async {
-    return _cacheBox.get('sig_draft:${logId.value}');
+    return (await _cacheBox).get('sig_draft:${logId.value}');
   }
 
   @override
   Future<void> deleteDraftSignature(DailyLogId logId) async {
     try {
-      await _cacheBox.delete('sig_draft:${logId.value}');
+      await (await _cacheBox).delete('sig_draft:${logId.value}');
     } catch (e) {
       AppLogger.warning('Signature draft delete skipped: $e');
     }
@@ -357,7 +368,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     Map<String, dynamic> formJson,
   ) async {
     try {
-      await _cacheBox.put('form:${logId.value}', jsonEncode(formJson));
+      await (await _cacheBox).put('form:${logId.value}', jsonEncode(formJson));
     } catch (e) {
       AppLogger.warning('Form cache write skipped: $e');
     }
@@ -365,7 +376,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<Map<String, dynamic>?> getCachedDailyForm(DailyLogId logId) async {
-    final raw = _cacheBox.get('form:${logId.value}');
+    final raw = (await _cacheBox).get('form:${logId.value}');
     if (raw == null) return null;
     try {
       final decoded = jsonDecode(raw);
@@ -407,8 +418,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     String? certificationStatus,
   }) async {
     try {
+      final cacheBox = await _cacheBox;
       final key = 'logs:$driverId';
-      final logs = _readCachedList(key);
+      final logs = await _readCachedList(key);
       if (logs == null) return;
       var changed = false;
       final updated = logs.map((log) {
@@ -433,7 +445,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       }).toList();
 
       if (changed) {
-        await _cacheBox.put(key, jsonEncode(updated));
+        await cacheBox.put(key, jsonEncode(updated));
       }
     } catch (e) {
       AppLogger.warning('markCachedDailyLogSyncStatus skipped: $e');
@@ -443,12 +455,13 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   @override
   Future<int?> ownerOfCachedLog(int logId) async {
     try {
+      final cacheBox = await _cacheBox;
       final owners = <int>{};
-      for (final key in _cacheBox.keys) {
+      for (final key in cacheBox.keys) {
         if (key is! String || !key.startsWith('logs:')) continue;
         final owner = int.tryParse(key.substring('logs:'.length));
         if (owner == null || owner <= 0) continue;
-        final entries = _readCachedList(key);
+        final entries = await _readCachedList(key);
         if (entries == null) continue;
         for (final entry in entries) {
           final id = entry['id'];
@@ -465,8 +478,8 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     }
   }
 
-  List<Map<String, dynamic>>? _readCachedList(String key) {
-    final raw = _cacheBox.get(key);
+  Future<List<Map<String, dynamic>>?> _readCachedList(String key) async {
+    final raw = (await _cacheBox).get(key);
     if (raw == null) return null;
     try {
       return (jsonDecode(raw) as List)
@@ -530,7 +543,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<List<LogEvent>> getEvents(DateTime date) async {
-    final data = await _getFromBox(_eventsBox, date, 'events');
+    final data = await _getFromBox(await _eventsBox, date, 'events');
     final events = <LogEvent>[];
     for (final e in data) {
       try {
@@ -566,20 +579,21 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<bool> addEvent(LogEvent event) async {
-    return _saveToBox(_eventsBox, _eventMap(event), 'timestamp', 'event');
+    return _saveToBox(await _eventsBox, _eventMap(event), 'timestamp', 'event');
   }
 
   @override
   Future<bool> updateEvent(LogEvent event) async {
     final map = _eventMap(event);
     try {
+      final eventsBox = await _eventsBox;
       // وقت البدء قد انتقل إلى يوم آخر: إزالة النسخة القديمة أولاً تمنع
       // ظهور الحدث مرتين في يومين مختلفين بعد إعادة فتح التطبيق.
-      await _removeLocalEventById(event.id);
+      await _removeLocalEventById(event.id, eventsBox);
       final dateStr = AppDateUtils.formatDate(event.startTime);
-      final currentList = _getListFromBox(_eventsBox, dateStr);
+      final currentList = _getListFromBox(eventsBox, dateStr);
       currentList.add(map);
-      await _eventsBox.put(dateStr, jsonEncode(currentList));
+      await eventsBox.put(dateStr, jsonEncode(currentList));
       return true;
     } catch (e) {
       AppLogger.error('Failed to update event', e);
@@ -592,7 +606,7 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
     DateTime date, [
     DateTime? referenceNow,
   ]) async {
-    final data = await _getFromBox(_periodsBox, date, 'periods');
+    final data = await _getFromBox(await _periodsBox, date, 'periods');
     final now = referenceNow;
     final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
     final fallbackEnd =
@@ -635,13 +649,13 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
       'endLat': period.endLat,
       'endLon': period.endLon,
     };
-    return _saveToBox(_periodsBox, map, 'startTime', 'period');
+    return _saveToBox(await _periodsBox, map, 'startTime', 'period');
   }
 
   @override
   Future<void> clearPeriods() async {
     try {
-      await _periodsBox.clear();
+      await (await _periodsBox).clear();
     } catch (e) {
       AppLogger.warning('Failed to clear periods box: $e');
     }
@@ -649,12 +663,12 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
 
   @override
   Future<bool> logAudit(AuditEntry entry) async {
-    return _saveToBox(_auditBox, entry.toMap(), 'timestamp', 'audit');
+    return _saveToBox(await _auditBox, entry.toMap(), 'timestamp', 'audit');
   }
 
   @override
   Future<List<AuditEntry>> getAuditEntries(DateTime date) async {
-    final data = await _getFromBox(_auditBox, date, 'audit');
+    final data = await _getFromBox(await _auditBox, date, 'audit');
     return data.map((e) => AuditEntry.fromMap(e)).toList();
   }
 
@@ -662,8 +676,9 @@ class LogLocalDataSourceImpl implements LogLocalDataSource {
   Future<List<AuditEntry>> getRecentAuditEntries({int limit = 100}) async {
     // الصندوق مجزأ بمفاتيح الأيام؛ نجمع كل الأيام ثم نرتب تنازلياً.
     final all = <AuditEntry>[];
-    for (final key in _auditBox.keys) {
-      final raw = _auditBox.get(key);
+    final auditBox = await _auditBox;
+    for (final key in auditBox.keys) {
+      final raw = auditBox.get(key);
       if (raw == null) continue;
       try {
         final list = (jsonDecode(raw) as List)

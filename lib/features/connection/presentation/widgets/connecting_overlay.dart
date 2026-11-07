@@ -36,20 +36,29 @@ class ConnectingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(width: AppSpacing.md),
-                  Flexible(
-                    child: Text(
-                      isContinuingDisconnected
-                          ? context.loc.continueDisconnectedInProgress
-                          : context.loc.connecting,
-                      style: context.styles.bodyBold,
+              Semantics(
+                liveRegion: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(width: AppSpacing.md),
+                    Flexible(
+                      child: Text(
+                        isContinuingDisconnected
+                            ? context.loc.continueDisconnectedInProgress
+                            : context.loc.connecting,
+                        style: context.styles.bodyBold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                context.loc.cancelAvailableAnytime,
+                textAlign: TextAlign.center,
+                style: context.styles.subtitle,
               ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
@@ -58,10 +67,14 @@ class ConnectingOverlay extends StatelessWidget {
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.xs,
                 children: [
-                  AppButton.tertiary(
+                  // الزر مفعّل فعلاً (onCancel غير فارغ). الدور الثانوي
+                  // المؤطّر يجعل مظهره مطابقاً لقابليته، بدل الدور الثالثي
+                  // الخافت الذي كان يبدو معطّلاً.
+                  AppButton.secondary(
                     key: const Key('cancel_connection_button'),
                     isFullWidth: false,
                     isCompact: true,
+                    icon: Icons.close,
                     onPressed: onCancel,
                     label: context.loc.cancelButton,
                   ),
@@ -70,7 +83,9 @@ class ConnectingOverlay extends StatelessWidget {
                       key: const Key('continue_disconnected_overlay_button'),
                       isFullWidth: false,
                       isCompact: true,
-                      onPressed: serverRequestPending ? null : onContinueDisconnected,
+                      onPressed: serverRequestPending
+                          ? null
+                          : onContinueDisconnected,
                       label: context.loc.continueDisconnected,
                     ),
                 ],

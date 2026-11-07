@@ -17,6 +17,15 @@ class FormListEditorView extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<String> onRemove;
 
+  /// خطأ التحقق المرتبط بالحقل — يظهر أسفله مباشرة، لا كتنبيه منفصل.
+  final String? errorText;
+
+  /// تلميح الحقل الخاص بالميزة (مثل رقم المستند) بدل التلميح العام.
+  final String? hintText;
+
+  /// إبلاغ الصفحة بتغيّر النص لمسح الخطأ القديم عند بدء التصحيح.
+  final ValueChanged<String>? onChanged;
+
   const FormListEditorView({
     super.key,
     required this.title,
@@ -27,6 +36,9 @@ class FormListEditorView extends StatelessWidget {
     required this.onAdd,
     required this.onRemove,
     this.inputFormatters,
+    this.errorText,
+    this.hintText,
+    this.onChanged,
   });
 
   @override
@@ -43,31 +55,51 @@ class FormListEditorView extends StatelessWidget {
               AppSpacing.md,
               AppSpacing.sm,
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: AppTextField(
-                    controller: controller,
-                    hint: context.loc.typeHere,
-                    textInputAction: TextInputAction.done,
-                    keyboardType: TextInputType.text,
-                    inputFormatters: inputFormatters,
-                    onSubmitted: (_) => onAdd(),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(
-                  flex: 1,
-                  child: AppButton(
-                    label: context.loc.addButton,
-                    icon: Icons.add,
-                    type: EldButtonType.primary,
-                    isFullWidth: false,
-                    onPressed: onAdd,
-                  ),
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final scale = MediaQuery.textScalerOf(context).scale(1);
+                // على الشاشات الضيقة أو مع تكبير النص، يوضع الزر تحت الحقل
+                // بعرض كامل بدل حصاره في عمود ضيق يقطع «إضافة».
+                final stack = constraints.maxWidth < 360 || scale > 1.3;
+
+                Widget field() => AppTextField(
+                  controller: controller,
+                  hint: hintText ?? context.loc.typeHere,
+                  errorText: errorText,
+                  onChanged: onChanged,
+                  textInputAction: TextInputAction.done,
+                  keyboardType: TextInputType.text,
+                  inputFormatters: inputFormatters,
+                  onSubmitted: (_) => onAdd(),
+                );
+
+                Widget addButton({required bool fullWidth}) => AppButton(
+                  label: context.loc.addButton,
+                  icon: Icons.add,
+                  type: EldButtonType.primary,
+                  isFullWidth: fullWidth,
+                  onPressed: onAdd,
+                );
+
+                if (stack) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      field(),
+                      const SizedBox(height: AppSpacing.sm),
+                      addButton(fullWidth: true),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(flex: 2, child: field()),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(flex: 1, child: addButton(fullWidth: false)),
+                  ],
+                );
+              },
             ),
           ),
           Divider(height: 1, color: context.border),

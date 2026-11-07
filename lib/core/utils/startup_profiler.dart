@@ -32,11 +32,13 @@ abstract final class StartupProfiler {
     if (current != null) return current;
     final ms = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
     final suffix = (_boot.elapsedMicroseconds & 0xFFF).toRadixString(36);
-    return _runId = '${ms.substring(ms.length > 6 ? ms.length - 6 : 0)}-$suffix';
+    return _runId =
+        '${ms.substring(ms.length > 6 ? ms.length - 6 : 0)}-$suffix';
   }
 
   /// طابع لحظي: `label @+Xms` — الزمن منذ [start].
-  static void mark(String label) => _log('$label @+${_boot.elapsedMilliseconds}ms');
+  static void mark(String label) =>
+      _log('$label @+${_boot.elapsedMilliseconds}ms');
 
   /// طابع يُسجل مرة واحدة فقط (أول إطار، أول صفحة تفاعلية...).
   static void markOnce(String label) {
@@ -57,10 +59,12 @@ abstract final class StartupProfiler {
 
   /// يحدد ظهور أول إطار مرة واحدة — يُستدعى من بناء الجذر، والحارس
   /// الداخلي يجعل الاستدعاءات المتكررة بلا أثر.
-  static void scheduleFirstFrameMark() {
+  ///
+  /// [label] يسمح بتمييز إطار الـ Bootstrap عن إطار التطبيق الحقيقي.
+  static void scheduleFirstFrameMark([String label = 'first-frame']) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_once.add('first-frame')) return;
-      mark('first-frame rendered');
+      if (!_once.add(label)) return;
+      mark('$label rendered');
     });
   }
 

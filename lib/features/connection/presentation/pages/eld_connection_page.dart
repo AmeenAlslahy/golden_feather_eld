@@ -252,10 +252,11 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
 
                         const SizedBox(height: AppSpacing.lg),
 
+                        // لا مؤشر تحميل داخل الزر: النافذة العائمة أعلاه
+                        // تعرض التقدّم، فتكرار المؤشر خلفها يوحي بعمليتين.
                         AppButton(
                           label: context.loc.connect,
                           type: EldButtonType.primary,
-                          isLoading: connectionState.isConnecting,
                           onPressed:
                               connectionState.isBusy ||
                                   connectionState.serverRequestPending
@@ -267,7 +268,6 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                         AppButton(
                           label: context.loc.continueDisconnected,
                           type: EldButtonType.secondary,
-                          isLoading: connectionState.isContinuingDisconnected,
                           onPressed:
                               connectionState.isContinuingDisconnected ||
                                   connectionState.serverRequestPending
@@ -284,12 +284,12 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
             ),
             if (connectionState.isBusy)
               ConnectingOverlay(
-                isContinuingDisconnected: connectionState.isContinuingDisconnected,
+                isContinuingDisconnected:
+                    connectionState.isContinuingDisconnected,
                 isConnecting: connectionState.isConnecting,
                 serverRequestPending: connectionState.serverRequestPending,
-                onCancel: () => ref
-                    .read(eldConnectionProvider.notifier)
-                    .cancelConnection(),
+                onCancel: () =>
+                    ref.read(eldConnectionProvider.notifier).cancelConnection(),
                 onContinueDisconnected: () => ref
                     .read(eldConnectionProvider.notifier)
                     .continueDisconnected(),
@@ -318,11 +318,7 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
             ? loc.continueDisconnectedFailed
             : '${loc.continueDisconnectedFailed} $detail';
     }
-    return _friendlyConnectionError(
-      context,
-      state.error,
-      _macController.text,
-    );
+    return _friendlyConnectionError(context, state.error, _macController.text);
   }
 
   /// SRS 9.3 #9: the failure names the ELD the driver targeted

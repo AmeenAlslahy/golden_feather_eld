@@ -205,9 +205,19 @@ class HosNotifier extends StateNotifier<HosEngineResult>
     if (signature == _lastViolationSignature) return;
     _lastViolationSignature = signature;
 
-    final auditRepo = _ref.read(hosAuditRepositoryProvider);
-    for (final v in violations) {
-      auditRepo.logViolation(v);
+    unawaited(_logViolations(violations));
+  }
+
+  Future<void> _logViolations(List<HosViolation> violations) async {
+    try {
+      // الـ provider أصبح FutureProvider لأن صندوق Hive يُفتح عند أول طلب.
+      final auditRepo = await _ref.read(hosAuditRepositoryProvider.future);
+      for (final v in violations) {
+        await auditRepo.logViolation(v);
+      }
+    } catch (e, st) {
+      // سجل المخالفات القانوني لا يجوز أن يُسقط واجهة HOS.
+      AppLogger.error('HOS audit logging failed', e, st);
     }
   }
 

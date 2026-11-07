@@ -13,11 +13,7 @@ import 'logs_provider.dart';
 import 'edit_log_form_provider.dart';
 import '../../data/providers/log_repository_providers.dart';
 
-enum EditLogOutcomeType {
-  confirmed,
-  offlineQueued,
-  unconfirmed,
-}
+enum EditLogOutcomeType { confirmed, offlineQueued, unconfirmed }
 
 class EditLogOutcome {
   final EditLogOutcomeType type;
@@ -151,7 +147,8 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<EditLogOutcome?> {
         for (final other in otherEvents) {
           if (other.duration > Duration.zero) {
             final otherEnd = other.startTime.add(other.duration);
-            if (newStart.isBefore(otherEnd) && other.startTime.isBefore(newEnd)) {
+            if (newStart.isBefore(otherEnd) &&
+                other.startTime.isBefore(newEnd)) {
               throw EditLogError(EditLogErrorCode.overlapConflict);
             }
           }
@@ -201,9 +198,21 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<EditLogOutcome?> {
           }
           throw EditLogError(EditLogErrorCode.saveFailed);
         }
-        outcome = const EditLogOutcome(EditLogOutcomeType.confirmed);
+        // نفس تصنيف التعديل: الحدث المحفوظ محلياً بانتظار المزامنة ليس
+        // تأكيداً من الخادم، ولا يُعرض كنجاح مؤكد.
+        final persisted = addResult.fold((_) => null, (val) => val);
+        if (persisted == null) {
+          outcome = const EditLogOutcome(EditLogOutcomeType.unconfirmed);
+        } else if (persisted.syncStatus == EventSyncStatus.pendingSync) {
+          outcome = const EditLogOutcome(EditLogOutcomeType.offlineQueued);
+        } else {
+          outcome = const EditLogOutcome(EditLogOutcomeType.confirmed);
+        }
       } else {
-        final updateResult = await notifier.updateEvent(updatedEvent, reason: reason);
+        final updateResult = await notifier.updateEvent(
+          updatedEvent,
+          reason: reason,
+        );
         final failure = updateResult.fold((f) => f, (_) => null);
         if (failure != null) {
           final msg = failure.message.toLowerCase();
@@ -253,11 +262,10 @@ class EditLogNotifier extends AutoDisposeAsyncNotifier<EditLogOutcome?> {
 }
 
 /// موفر تعديل السجل
-final editLogProvider = AutoDisposeAsyncNotifierProvider<EditLogNotifier, EditLogOutcome?>(
-  () {
-    return EditLogNotifier();
-  },
-);
+final editLogProvider =
+    AutoDisposeAsyncNotifierProvider<EditLogNotifier, EditLogOutcome?>(() {
+      return EditLogNotifier();
+    });
 
 /// اسم بديل للتوافق البرمجي الكامل مع الكود القائم
 final editLogControllerProvider = editLogProvider;

@@ -42,13 +42,20 @@ class AppInitializer {
       }
     });
 
-    // 3. تهيئة الخدمات الأساسية (Hive يُفتح بالتوازي دون حجب الإقلاع)
-    await StartupProfiler.phase('init:local-storage', () => _initCoreServices());
+    // 3. تهيئة الخدمات الأساسية (Hive يهيّئ نفسه فقط؛ الصناديق lazy)
+    await StartupProfiler.phase(
+      'init:local-storage',
+      () => _initCoreServices(),
+    );
 
     // 4. تهيئة الخدمات المعتمدة
-    await StartupProfiler.phase('init:tracking+push', () => _initDependentServices());
+    await StartupProfiler.phase(
+      'init:tracking+push',
+      () => _initDependentServices(),
+    );
 
-    // 5. انتظار اكتمال فتح Hive قبل runApp (المستودعات ستقرؤه بعد ذلك)
+    // 5. انتظار تهيئة Hive فقط (Hive.initFlutter). لا صندوق يُفتح هنا:
+    //    كل صندوق يُفتح عند أول استخدام فعلي عبر ensureHiveBox.
     if (_dbInitFuture != null) {
       await StartupProfiler.phase('init:await-hive', () => _dbInitFuture!);
     }
@@ -61,17 +68,18 @@ class AppInitializer {
     localStorageService = LocalStorageService();
     await localStorageService.init();
 
-    // Hive (1 ثانية على الأجهزة المتوسطة) لا يحجب الإقلاع: يُفتح بالتوازي
-    // مع بقية التهيئة — المستودعات لا تقرأه إلا بعد اكتمال runApp.
+    // Hive: تهيئة المسار فقط (سريعة) — لا فتح صناديق.
+    // الصناديق تُفتح عند أول قراءة/كتابة عبر `ensureHiveBox`، فلا يحجب
+    // الإقلاع فتحُ خمسة صناديق وترحيلها (كان ~13 ثانية على جهاز الاختبار).
     // تنبيه: يُستدعى من initialize() مرة واحدة فقط — إسناد late final
     // مزدوج يرمي LateInitializationError (حدث فعلياً في 2026-09-30).
     localDatabaseService = LocalDatabaseService();
-    StartupProfiler.mark('init:hive:start (5 boxes + audit migration)');
+    StartupProfiler.mark('init:hive:init-start');
     _dbInitFuture = localDatabaseService.init();
     // قياس فقط — مستمع منفصل لا يغيّر المستقبل الأصلي ولا ترتيبه.
     unawaited(
       _dbInitFuture!.whenComplete(
-        () => StartupProfiler.mark('init:hive:boxes-open done'),
+        () => StartupProfiler.mark('init:hive:init-done'),
       ),
     );
   }

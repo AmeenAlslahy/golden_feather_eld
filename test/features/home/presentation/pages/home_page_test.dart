@@ -13,6 +13,8 @@ import 'package:golden_feather_eld/features/connection/presentation/providers/ha
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 
 import 'package:golden_feather_eld/core/config/app_environment.dart';
+import 'package:golden_feather_eld/core/network/core_providers.dart';
+import 'package:golden_feather_eld/core/theme/app_colors.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
 import 'package:golden_feather_eld/core/services/tracking_config_storage_service.dart';
 import 'package:golden_feather_eld/features/tracking/data/datasources/live_tracking_data_source.dart';
@@ -189,9 +191,15 @@ void main() {
 
   // HomePage is a full Scaffold — do NOT wrap it in another Scaffold
   // (that causes unbounded-height RenderFlex errors).
-  Future<ProviderContainer> pumpHomePage(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1080, 2340);
-    tester.view.devicePixelRatio = 3.0;
+  Future<ProviderContainer> pumpHomePage(
+    WidgetTester tester, {
+    List<Override> overrides = const [],
+    Size surfaceSize = const Size(1080, 2340),
+    double devicePixelRatio = 3.0,
+    double textScale = 1.0,
+  }) async {
+    tester.view.physicalSize = surfaceSize;
+    tester.view.devicePixelRatio = devicePixelRatio;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -231,6 +239,7 @@ void main() {
         syncStateProvider.overrideWith((ref) => MockSyncNotifier()),
         hosStatusProvider.overrideWith((ref) => MockHosNotifier()),
         hardwareAlertsProvider.overrideWith(() => MockHardwareAlertsNotifier()),
+        ...overrides,
       ],
     );
 
@@ -249,6 +258,12 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           theme: AppTheme.light,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           home: const HomePage(),
         ),
       ),
@@ -268,5 +283,41 @@ void main() {
 
       expect(find.byType(StatusDashboardPage), findsOneWidget);
     });
+
+    testWidgets(
+      'offline banner is a compact warning strip above the HOS dashboard',
+      (tester) async {
+        await pumpHomePage(
+          tester,
+          overrides: [
+            isConnectedProvider.overrideWith(
+              (ref) => Stream<bool>.value(false),
+            ),
+          ],
+        );
+        await tester.pump(const Duration(seconds: 1));
+
+        final banner = find.byKey(const Key('home_offline_banner'));
+        expect(banner, findsOneWidget);
+        expect(
+          find.text(
+            'No internet connection. HOS is calculated on the device '
+            'from the local duty record.',
+          ),
+          findsOneWidget,
+        );
+        // Not colour-only: an icon accompanies the warning.
+        expect(find.byIcon(Icons.cloud_off), findsOneWidget);
+
+        // Uses the central warning token, not a raw/inverse colour.
+        final container = tester.widget<Container>(banner);
+        expect(container.color, AppColors.warningBg);
+
+        // Sits above the dashboard instead of covering the HOS indicator.
+        final bannerRect = tester.getRect(banner);
+        final dashboardRect = tester.getRect(find.byType(StatusDashboardPage));
+        expect(bannerRect.bottom, lessThanOrEqualTo(dashboardRect.top + 1));
+      },
+    );
   });
 }

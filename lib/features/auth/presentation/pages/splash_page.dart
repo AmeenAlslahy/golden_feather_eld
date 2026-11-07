@@ -54,8 +54,14 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     StartupProfiler.mark('splash:permissions-check:start');
     AppLogger.info('SplashPage: Checking permissions...');
     try {
-      final locationGranted = await Permission.location.isGranted;
-      final bluetoothGranted = await Permission.bluetooth.isGranted;
+      // NAV-001: الفحصان مستقلان — تشغيلهما بالتتابع كان يضيف ~5.6 ثانية
+      // على جهاز الاختبار. `Future.wait` يجعلهما في موجة واحدة.
+      final granted = await Future.wait([
+        Permission.location.isGranted,
+        Permission.bluetooth.isGranted,
+      ]);
+      final locationGranted = granted[0];
+      final bluetoothGranted = granted[1];
       if (!mounted) return;
 
       if (!locationGranted || !bluetoothGranted) {
@@ -72,7 +78,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
     StartupProfiler.mark('splash:permissions-check:end');
 
-    StartupProfiler.mark('splash:auth-check:start (incl. GET /session when online)');
+    StartupProfiler.mark(
+      'splash:auth-check:start (incl. GET /session when online)',
+    );
     AppLogger.info('SplashPage: Checking auth status...');
     // أي استثناء هنا كان يقطع `_checkFirstLaunch` قبل `goNamed` فيبقى
     // المستخدم على شاشة البداية بلا نهاية. نكمل دائماً بالحالة المتاحة.

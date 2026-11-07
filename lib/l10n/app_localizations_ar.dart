@@ -121,6 +121,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancelButton => 'إلغاء';
 
   @override
+  String get cancelAvailableAnytime => 'يمكنك الإلغاء في أي وقت.';
+
+  @override
   String get okButton => 'موافق';
 
   @override
@@ -1030,7 +1033,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noVehiclesFound => 'لا توجد مركبات متاحة';
 
   @override
-  String get vehicleSelected => 'تم اختيار المركبة بنجاح';
+  String get vehicleSelected =>
+      'تم اختيار المركبة بنجاح. لم يتم الاتصال بجهاز ELD بعد، ولم تُنقل ساعات الخدمة.';
 
   @override
   String get unassigned => 'غير مسندة';
@@ -1991,7 +1995,11 @@ class AppLocalizationsAr extends AppLocalizations {
       'تتعارض أوقات هذه الحالة مع حدث آخر مسجل في نفس اليوم.';
 
   @override
-  String get eventSavedSuccessfully => 'تم حفظ الحدث بنجاح';
+  String get eventSavedSuccessfully => 'تم حفظ الحدث وتأكيده من الخادم.';
+
+  @override
+  String get eventSavedOffline =>
+      'حُفظ الحدث محلياً — سيُزامن عند عودة الاتصال.';
 
   @override
   String get reCertificationRequiredEditsWereMade =>
@@ -2171,6 +2179,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get enterDocumentNumber => 'أدخل رقم المستند.';
+
+  @override
+  String get documentNumberHint => 'رقم المستند (مثال: BOL-2024-001)';
 
   @override
   String get documentNumberTooLong => 'رقم مستند الشحن طويل جداً (حتى 100).';
@@ -2508,7 +2519,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get operationalAlertTooltip => 'تنبيه تشغيلي';
 
   @override
-  String get noInternetBanner => 'وضع عدم الاتصال. تحقق من اتصالك بالإنترنت.';
+  String get noInternetBanner =>
+      'لا يوجد اتصال بالإنترنت. تُحسب ساعات الخدمة على الجهاز من سجل الخدمة المحلي.';
 
   @override
   String get dvirSatisfactory => 'حالة المركبة مرضية';

@@ -121,6 +121,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cancelButton => 'Cancelar';
 
   @override
+  String get cancelAvailableAnytime => 'Puede cancelar en cualquier momento.';
+
+  @override
   String get okButton => 'OK';
 
   @override
@@ -1039,7 +1042,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noVehiclesFound => 'No hay vehículos disponibles';
 
   @override
-  String get vehicleSelected => 'Vehículo seleccionado correctamente';
+  String get vehicleSelected =>
+      'Vehículo seleccionado correctamente. El ELD aún no está conectado y las horas de servicio no se copiaron.';
 
   @override
   String get unassigned => 'No asignados';
@@ -2008,7 +2012,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'El rango de tiempo seleccionado entra en conflicto con otro evento de este día.';
 
   @override
-  String get eventSavedSuccessfully => 'Evento guardado con éxito';
+  String get eventSavedSuccessfully =>
+      'Evento guardado y confirmado por el servidor.';
+
+  @override
+  String get eventSavedOffline =>
+      'Evento guardado localmente — se sincronizará al recuperar la conexión.';
 
   @override
   String get reCertificationRequiredEditsWereMade =>
@@ -2191,6 +2200,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get enterDocumentNumber => 'Introduzca el número de documento.';
+
+  @override
+  String get documentNumberHint => 'Número de documento (p. ej. BOL-2024-001)';
 
   @override
   String get documentNumberTooLong =>
@@ -2543,7 +2555,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noInternetBanner =>
-      'Modo sin conexión. Compruebe su conexión a Internet.';
+      'Sin conexión a Internet. Las horas de servicio se calculan en el dispositivo a partir del registro local.';
 
   @override
   String get dvirSatisfactory => 'Condición del vehículo Satisfactoria';

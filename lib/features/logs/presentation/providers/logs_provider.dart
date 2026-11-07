@@ -442,7 +442,7 @@ class LogsNotifier extends StateNotifier<LogsState> {
   }
 
   /// إضافة حدث جديد للسجل المحدد (POST /eld/duty-status، أو محلياً دون اتصال).
-  Future<Either<Failure, void>> addEvent(
+  Future<Either<Failure, LogEvent?>> addEvent(
     LogEvent event, {
     String? reason,
   }) async {
@@ -459,17 +459,17 @@ class LogsNotifier extends StateNotifier<LogsState> {
         : await _repository.addEvent(event, reason: reason);
     if (!mounted) return const Left(ServerFailure(message: 'Unmounted'));
 
-    return result.fold((failure) => Left(failure), (ok) {
-      if (!ok) {
+    return result.fold((failure) => Left(failure), (persisted) {
+      if (persisted == null) {
         return const Left(ServerFailure(message: 'Failed to save event'));
       }
       _replaceSelected(
         state.selectedLog!.copyWith(
-          events: <LogEvent>[...state.selectedLog!.events, event],
+          events: <LogEvent>[...state.selectedLog!.events, persisted],
         ),
       );
       unawaited(loadSelectedLogEvents());
-      return const Right(null);
+      return Right(persisted);
     });
   }
 

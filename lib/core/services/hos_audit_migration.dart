@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../constants/storage_constants.dart';
+import '../storage/hive_box_registry.dart';
 import '../utils/logger.dart';
 
 /// ترحيل صندوق مخالفات HOS خارج صندوق سجلات السجلات اليومية.
@@ -141,23 +142,26 @@ class MigrationReport {
       'malformed: $malformed, dryRun: $dryRun)';
 }
 
-/// يفتح صندوق المخالفات الجديد ويُشغّل الترحيل.
+/// يفتح صندوق المخالفات الجديد ويُشغّل الترحيل **عند أول طلب فقط**.
 ///
-/// يُستدعى من `LocalDatabaseService.init()` بعد فتح `audit_box` القديم.
-Future<void> openHosAuditBoxAndMigrate() async {
+/// يُستدعى من `hosAuditBoxProvider` (أصبح `FutureProvider`)، لا من
+/// `LocalDatabaseService.init()`: فتح الصناديق والترحيل لم يعودا جزءاً من
+/// مسار الإقلاع الحرج. النتيجة نفسها يُعاد استخدامها لكل الطلبات اللاحقة.
+Future<Box<String>>? _openAndMigrateFuture;
+
+Future<Box<String>> openHosAuditBoxAndMigrate() =>
+    _openAndMigrateFuture ??= _openAndMigrate();
+
+Future<Box<String>> _openAndMigrate() async {
+  final target = await ensureHiveBox<String>(StorageConstants.hosAuditBox);
   try {
-    final target = await Hive.openBox<String>(StorageConstants.hosAuditBox);
-    if (!Hive.isBoxOpen(StorageConstants.auditBox)) {
-      AppLogger.info(
-        'HOS audit migration skipped: legacy audit_box not open yet',
-      );
-      return;
-    }
-    final legacy = Hive.box<String>(StorageConstants.auditBox);
+    // فتح الصندوق القديم هنا بدل الافتراض أنه مفتوح: لم يعد يفتح عند الإقلاع.
+    final legacy = await ensureHiveBox<String>(StorageConstants.auditBox);
     await HosAuditBoxMigration(legacyBox: legacy, targetBox: target).run();
   } catch (e, st) {
     // الترحيل لا يجوز أن يمنع الإقلاع. الفشل يعني بقاء السلوك السابق
     // (المخالفات لا تُقرأ) — أخطر من التوقف، فنُسجّله ونكمل.
     AppLogger.error('HOS audit migration failed', e, st);
   }
+  return target;
 }

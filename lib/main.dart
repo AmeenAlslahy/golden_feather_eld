@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,19 +8,24 @@ import 'app.dart';
 import 'core/utils/logger.dart';
 import 'core/utils/startup_profiler.dart';
 import 'app/app_initializer.dart';
+import 'app/bootstrap_app.dart';
 import 'core/widgets/critical_error_app.dart';
 
-void main() async {
-  // M0 — قياس الإقلاع (تشخيص فقط): نقطة الصفر + طوابع حول الخطوات القائمة
-  // بلا إعادة ترتيب ولا أثر وظيفي.
+void main() {
+  // نقطة الصفر قبل أي عمل — القياس لا يغيّر الترتيب.
   StartupProfiler.start();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // تثبيت اتجاه التطبيق عمودي
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // لا ننتظر تثبيت الاتجاه: كان await هنا يؤخر أول إطار ~5.9 ثانية على
+  // جهاز الاختبار. الإطار الأول يُرسم بالاتجاه الحالي ثم يُثبّت فوراً.
+  unawaited(
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]).catchError((Object e) {
+      AppLogger.warning('Failed to lock orientation: $e');
+    }),
+  );
 
   // إعداد شريط الحالة المبدئي — يتناسق مع شريط التطبيق الذهبي والخلفية الفاتحة
   SystemChrome.setSystemUIOverlayStyle(
@@ -36,19 +43,29 @@ void main() async {
     FlutterError.presentError(details);
   };
 
+  // 1) إطار فوري: شعار + مؤشر تحميل، بلا أي اعتماد على الخدمات.
+  runApp(const BootstrapApp());
+
+  // 2) بعد رسم الإطار الأول فقط نبدأ التهيئة الثقيلة في الخلفية.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_bootstrap());
+  });
+}
+
+Future<void> _bootstrap() async {
   final initializer = AppInitializer();
 
   try {
-    // 1. تهيئة النظام والخدمات
+    // تهيئة النظام والخدمات (لم تعد تتضمن فتح صناديق Hive).
     await initializer.initialize();
 
-    // 2. إنشاء الحاوية (ProviderContainer)
+    // إنشاء الحاوية (ProviderContainer)
     final container = initializer.createProviderContainer();
 
-    // 3. مهام ما بعد الإنشاء
+    // مهام ما بعد الإنشاء
     await initializer.initializePostContainer(container);
 
-    // 4. تشغيل التطبيق
+    // 3) استبدال شاشة الـ Bootstrap بالتطبيق الحقيقي.
     StartupProfiler.mark('pre-runApp: all initializers done');
     runApp(
       UncontrolledProviderScope(

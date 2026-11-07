@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:intl/intl.dart';
 import '../../../../core/utils/id_generator.dart';
 import '../../../../features/sync/domain/entities/pending_event.dart';
@@ -20,6 +20,7 @@ import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../domain/repositories/log_repository.dart';
 import '../../domain/entities/certify_submission.dart';
 import '../../domain/entities/log_events_snapshot.dart';
+import '../../domain/entities/event_screen_options.dart';
 import '../../domain/log_edit.dart';
 import '../datasources/log_local_data_source.dart';
 import '../models/log_model.dart';
@@ -287,7 +288,7 @@ class LogRepositoryImpl implements LogRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> addEvent(
+  Future<Either<Failure, LogEvent?>> addEvent(
     LogEvent event, {
     String? reason,
     int? ownerDriverId,
@@ -302,7 +303,12 @@ class LogRepositoryImpl implements LogRepository {
         () => _localDataSource.addEvent(event),
         tag: 'LogRepositoryImpl.addEvent(offline)',
       );
-      if (localResult.isLeft()) return localResult;
+      if (localResult.isLeft()) {
+        return localResult.fold(
+          (failure) => Left(failure),
+          (_) => const Right(null),
+        );
+      }
 
       await _offlineQueue.enqueue(
         PendingEvent(
@@ -322,7 +328,7 @@ class LogRepositoryImpl implements LogRepository {
           createdAt: _timeAuthority.nowUtc(),
         ),
       );
-      return const Right(true);
+      return Right(event.copyWith(syncStatus: EventSyncStatus.pendingSync));
     }
     final result = await _dutyStatusBackend.record({
       'status': wire,
@@ -335,7 +341,7 @@ class LogRepositoryImpl implements LogRepository {
     });
     return result.fold(
       (error) => Left(ServerFailure(message: error.l10nKey)),
-      (_) => const Right(true),
+      (_) => Right(event.copyWith(syncStatus: EventSyncStatus.none)),
     );
   }
 
@@ -656,20 +662,19 @@ class LogRepositoryImpl implements LogRepository {
         .where((e) => e.isNotEmpty)
         .toList();
 
-    final docsList = extractList(
-          data['shippingDocuments'] ?? data['documentNumbers'],
-        )
-        .map((e) {
-          if (e is Map) {
-            return e['documentNumber']?.toString() ??
-                e['number']?.toString() ??
-                '';
-          }
-          if (e is String) return e.trim();
-          return e?.toString() ?? '';
-        })
-        .where((e) => e.isNotEmpty)
-        .toList();
+    final docsList =
+        extractList(data['shippingDocuments'] ?? data['documentNumbers'])
+            .map((e) {
+              if (e is Map) {
+                return e['documentNumber']?.toString() ??
+                    e['number']?.toString() ??
+                    '';
+              }
+              if (e is String) return e.trim();
+              return e?.toString() ?? '';
+            })
+            .where((e) => e.isNotEmpty)
+            .toList();
 
     int? coDriverId = (data['coDriverId'] as num?)?.toInt();
     String? coDriverName;
@@ -1062,6 +1067,19 @@ class LogRepositoryImpl implements LogRepository {
         (data) => data,
       );
     }, tag: 'LogRepositoryImpl.getEventDetails');
+  }
+
+  @override
+  Future<Either<Failure, EventScreenOptions>> getEventScreenOptions(
+    DailyLogId logId,
+  ) {
+    return executeWithHandling(() async {
+      final res = await _dailyLogsBackend.getEventsOptions(logId);
+      return res.match(
+        (f) => throw ServerException(message: f.l10nKey),
+        (data) => EventScreenOptions.fromJson(data),
+      );
+    }, tag: 'LogRepositoryImpl.getEventScreenOptions');
   }
 
   @override
