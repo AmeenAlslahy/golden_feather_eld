@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -261,15 +260,9 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
                             textDirection: TextDirection.ltr,
                             child: AppTextField(
                               controller: _macController,
-                              hint: 'AA:BB:CC:DD:EE:FF',
+                              hint: 'E0B488C7CAE9 / PT30',
                               keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.done,
-                              maxLength: 17,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9a-zA-Z:-]'),
-                                ),
-                              ],
                               onSubmitted: (_) => _attemptConnection(),
                               validator: (v) =>
                                   macAddressError(v, loc: context.loc),

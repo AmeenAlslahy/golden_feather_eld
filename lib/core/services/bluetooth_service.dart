@@ -94,6 +94,68 @@ class BluetoothService {
     }
   }
 
+  /// Formats a 12-char hex string (e.g. E0B488C7CAE9) into colon format (E0:B4:88:C7:CA:E9).
+  static String? formatMacAddress(String input) {
+    final trimmed = input.trim();
+    final stripped = trimmed.replaceAll(RegExp(r'[:\-\s]'), '').toUpperCase();
+    if (stripped.length == 12 && RegExp(r'^[0-9A-F]{12}$').hasMatch(stripped)) {
+      return List.generate(
+        6,
+        (i) => stripped.substring(i * 2, i * 2 + 2),
+      ).join(':');
+    }
+    if (RegExp(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$').hasMatch(trimmed)) {
+      return trimmed.toUpperCase().replaceAll('-', ':');
+    }
+    return null;
+  }
+
+  /// Searches nearby BLE devices if the input is a device name or serial.
+  Future<String> _searchAndResolveDeviceMac(
+    String query, {
+    Duration scanDuration = const Duration(seconds: 6),
+  }) async {
+    final cleanQuery = query.trim().toLowerCase();
+    if (cleanQuery.isEmpty) {
+      throw BluetoothException('INVALID_MAC', 'Device identifier is empty');
+    }
+
+    final completer = Completer<String>();
+    StreamSubscription? sub;
+
+    try {
+      sub = discoveredDevices.listen((event) {
+        final name = (event['name'] as String? ?? '').toLowerCase();
+        final addr = (event['macAddress'] as String? ?? '').toLowerCase();
+        final raw = event['manufacturerData']?.toString().toLowerCase() ?? '';
+
+        if (name.contains(cleanQuery) ||
+            addr.replaceAll(':', '').contains(cleanQuery.replaceAll(':', '')) ||
+            raw.contains(cleanQuery)) {
+          final target = event['macAddress'] as String?;
+          if (target != null && !completer.isCompleted) {
+            completer.complete(target.toUpperCase());
+          }
+        }
+      });
+
+      await startScan();
+
+      return await completer.future.timeout(
+        scanDuration,
+        onTimeout: () => throw BluetoothException(
+          'TIMEOUT',
+          'Could not find any nearby device matching "$query"',
+        ),
+      );
+    } finally {
+      await sub?.cancel();
+      try {
+        await stopScan();
+      } catch (_) {}
+    }
+  }
+
   /// Connect to an ELD device using its MAC address (or UUID on iOS).
   ///
   /// On mobile devices, this waits for the native GATT connection event
@@ -104,7 +166,23 @@ class BluetoothService {
   }) async {
     if (!_platformSupportsBluetooth) return;
 
-    final normalized = macAddress.trim().toUpperCase();
+    final directMac = formatMacAddress(macAddress);
+    var targetAddress = directMac ?? macAddress;
+
+    if (directMac == null) {
+      // User entered a name/serial (e.g. PT30, PT30-U, 3B5000440418)
+      try {
+        targetAddress = await _searchAndResolveDeviceMac(macAddress);
+      } catch (e) {
+        if (e is BluetoothException) rethrow;
+        throw BluetoothException(
+          'TIMEOUT',
+          'Could not find nearby device matching "$macAddress"',
+        );
+      }
+    }
+
+    final normalized = targetAddress.trim().toUpperCase();
 
     // Check if already connected to this device
     try {
@@ -138,7 +216,7 @@ class BluetoothService {
         }
       });
 
-      await _methodChannel.invokeMethod('connect', {'macAddress': macAddress});
+      await _methodChannel.invokeMethod('connect', {'macAddress': targetAddress});
       await completer.future.timeout(timeout);
     } on TimeoutException {
       try {

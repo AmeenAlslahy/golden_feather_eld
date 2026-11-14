@@ -22,6 +22,7 @@ import '../../data/datasources/eld_session_snapshot_store.dart';
 import '../../data/datasources/server_session_lookup.dart';
 import '../../data/providers/eld_session_store_provider.dart';
 import '../../domain/eld_session_snapshot.dart';
+import '../mac_address_validation.dart';
 
 const Object _unsetConnectionField = Object();
 
@@ -361,12 +362,13 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
 
       // 1. الاتصال المحلي بالبلوتوث
       final bluetoothService = _ref.read(bluetoothServiceProvider);
+      final normalizedMac = normalizeMacAddress(macAddress) ?? macAddress.trim();
       try {
         await bluetoothService.connect(macAddress);
         try {
           await _ref
               .read(trackingSourceModeProvider.notifier)
-              .setBleDevice(macAddress: macAddress);
+              .setBleDevice(macAddress: normalizedMac);
         } catch (_) {}
       } catch (e) {
         if (!mounted || seq != _operationSeq) return;
@@ -401,7 +403,7 @@ class EldConnectionNotifier extends StateNotifier<EldConnectionState> {
       final hardwareBackend = _ref.read(hardwareBackendProvider);
 
       final driverId = _currentDriverId();
-      final trimmedMac = macAddress.trim().isEmpty ? null : macAddress.trim();
+      final trimmedMac = normalizedMac.isEmpty ? null : normalizedMac;
 
       // 2أ. GET-first إلزامي: نتبنّى جلسة سيرفر نشطة قبل أي كتابة، حتى في
       // أول تشغيل أو بعد جلسة `synced` (لا نشترط لقطة `pending`).

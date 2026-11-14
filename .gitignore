@@ -66,5 +66,6 @@ analyze_output*.txt
 coverage/
 test_hive_dir
 app-release.apk
+*.hprof
 # Widget Preview related
 .widget_preview/

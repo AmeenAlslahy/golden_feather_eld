@@ -392,9 +392,22 @@ class BluetoothPlugin(
         result.success(true)
     }
 
+    private fun normalizeMac(input: String?): String? {
+        if (input.isNullOrBlank()) return null
+        val trimmed = input.trim()
+        val stripped = trimmed.replace(":", "").replace("-", "")
+        if (stripped.length == 12 && stripped.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }) {
+            return stripped.chunked(2).joinToString(":").uppercase()
+        }
+        if (BluetoothAdapter.checkBluetoothAddress(trimmed.uppercase())) {
+            return trimmed.uppercase()
+        }
+        return null
+    }
+
     @SuppressLint("MissingPermission")
     private fun connectDevice(call: MethodCall, result: Result) {
-        val macAddress = call.argument<String>("macAddress")?.trim() ?: run {
+        val rawMac = call.argument<String>("macAddress")?.trim() ?: run {
             result.error("NO_MAC", "MAC address required", null)
             return
         }
@@ -416,8 +429,8 @@ class BluetoothPlugin(
             return
         }
 
-        if (!BluetoothAdapter.checkBluetoothAddress(macAddress)) {
-            result.error("INVALID_MAC", "Invalid Bluetooth MAC address format: $macAddress", null)
+        val macAddress = normalizeMac(rawMac) ?: run {
+            result.error("INVALID_MAC", "Invalid Bluetooth MAC address format: $rawMac", null)
             return
         }
 
@@ -431,10 +444,11 @@ class BluetoothPlugin(
 
     // Decision 2 (P1): Reconnect Loop. MethodChannel endpoint for executeConnect.
     private fun executeConnectChannel(call: MethodCall, result: Result) {
-        val macAddress = call.argument<String>("macAddress") ?: run {
+        val rawMac = call.argument<String>("macAddress") ?: run {
             result.error("NO_MAC", "MAC address required", null)
             return
         }
+        val macAddress = normalizeMac(rawMac) ?: rawMac
         val ok = executeConnect(macAddress)
         result.success(ok)
     }
@@ -445,7 +459,8 @@ class BluetoothPlugin(
      * Initiates GATT connection and returns true if initiated successfully.
      */
     @SuppressLint("MissingPermission")
-    fun executeConnect(macAddress: String): Boolean {
+    fun executeConnect(rawMac: String): Boolean {
+        val macAddress = normalizeMac(rawMac) ?: rawMac
         if (!checkBluetoothPermissions(requireScan = false)) {
             return false
         }
