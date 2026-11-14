@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../domain/shared/value_objects.dart';
 import '../widgets/log_graph.dart';
 import '../providers/logs_provider.dart';
 import '../../../../core/time/time_authority_provider.dart';
 import '../../../../core/widgets/app_feedback.dart';
+import '../../data/providers/log_repository_providers.dart';
 import '../../domain/entities/daily_log.dart';
 import '../../domain/daily_form_rules.dart';
+import '../../domain/log_edit.dart';
 import '../formatters/log_date_formatter.dart';
 import '../providers/edit_log_provider.dart';
 import '../providers/edit_log_form_provider.dart';
@@ -34,10 +38,16 @@ class EditLogPage extends ConsumerStatefulWidget {
 
 class _EditLogPageState extends ConsumerState<EditLogPage> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _manualLocationController;
+  bool _isFetchingLocation = false;
 
   @override
   void initState() {
     super.initState();
+    final initialManualLoc =
+        ref.read(editLogFormProvider(widget.event)).manualLocation;
+    _manualLocationController = TextEditingController(text: initialManualLoc);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final selectedLog = ref.read(logsProvider).selectedLog;
@@ -46,7 +56,139 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
             .read(editLogFormProvider(widget.event).notifier)
             .updateSelectedLog(selectedLog);
       }
+      _fetchServerEventDetails();
     });
+  }
+
+  @override
+  void dispose() {
+    _manualLocationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchServerEventDetails() async {
+    final event = widget.event;
+    if (widget.isNewEvent || event == null) return;
+    final selectedLog = ref.read(logsProvider).selectedLog;
+    if (selectedLog == null) return;
+    final eventIntId = int.tryParse(event.id);
+    if (eventIntId == null) return;
+
+    try {
+      final repo = ref.read(logRepositoryProvider);
+      final result = await repo.getEventDetails(
+        selectedLog.id,
+        DutyStatusId(eventIntId),
+      );
+      if (!mounted) return;
+      result.fold((_) {}, (data) {
+        if (data == null) return;
+        final serverManual = data['manualLocation']?.toString().trim();
+        final rawLocation = data['location'];
+        String? serverLocDesc;
+        double? lat;
+        double? lng;
+        if (rawLocation is Map) {
+          serverLocDesc = rawLocation['description']?.toString().trim();
+          lat = double.tryParse(rawLocation['latitude']?.toString() ?? '');
+          lng = double.tryParse(rawLocation['longitude']?.toString() ?? '');
+        } else if (rawLocation is String) {
+          serverLocDesc = rawLocation.trim();
+        }
+
+        final serverLocationString =
+            (serverManual != null && serverManual.isNotEmpty)
+                ? serverManual
+                : ((serverLocDesc != null &&
+                        !isPlaceholderLocation(serverLocDesc))
+                    ? serverLocDesc
+                    : null);
+
+        if (serverLocationString != null && serverLocationString.isNotEmpty) {
+          if (_manualLocationController.text.isEmpty ||
+              _manualLocationController.text == widget.event?.location) {
+            _manualLocationController.text = serverLocationString;
+            ref
+                .read(editLogFormProvider(widget.event).notifier)
+                .setManualLocation(
+                  serverLocationString,
+                  latitude: lat,
+                  longitude: lng,
+                );
+          }
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _fetchCurrentLocation() async {
+    if (_isFetchingLocation) return;
+    setState(() => _isFetchingLocation = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          AppFeedback.error(context, context.loc.locationDisabled);
+        }
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            AppFeedback.error(context, context.loc.locationPermissionDenied);
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          AppFeedback.error(context, context.loc.locationPermissionDenied);
+        }
+        return;
+      }
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+      } catch (_) {
+        position = await Geolocator.getLastKnownPosition();
+      }
+
+      if (position == null) {
+        if (mounted) {
+          AppFeedback.error(context, context.loc.dvirLocationUnavailable);
+        }
+        return;
+      }
+
+      final coordsText =
+          '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+
+      if (mounted) {
+        _manualLocationController.text = coordsText;
+        ref.read(editLogFormProvider(widget.event).notifier).setManualLocation(
+          coordsText,
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.error(context, context.loc.theEventCouldNotBeSaved);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
+    }
   }
 
   void _showTimePicker(BuildContext context) {
@@ -259,6 +401,7 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
 
               // 6. إدخال موقع يدوي — يقبل العربية ويرفض الترقيم الخالص
               AppTextField(
+                controller: _manualLocationController,
                 hint: context.loc.manualLocation,
                 keyboardType: TextInputType.streetAddress,
                 validator: (value) {
@@ -266,10 +409,21 @@ class _EditLogPageState extends ConsumerState<EditLogPage> {
                   if (v.isEmpty) return null;
                   return isFreeTextValid(v) ? null : context.loc.invalidValue;
                 },
-                suffixIcon: Icon(
-                  Icons.my_location,
-                  color: context.styles.body.color,
-                ),
+                suffixIcon: _isFetchingLocation
+                    ? const Padding(
+                        padding: EdgeInsets.all(AppSpacing.sm),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.my_location),
+                        color: context.styles.body.color,
+                        tooltip: context.loc.location,
+                        onPressed: _fetchCurrentLocation,
+                      ),
                 onChanged: (value) {
                   ref
                       .read(editLogFormProvider(widget.event).notifier)

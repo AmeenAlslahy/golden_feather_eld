@@ -291,6 +291,8 @@ void main() {
         expect(capturedPayload!['location'], {
           'latitude': initialLat,
           'longitude': initialLng,
+          'description': 'Amarillo, TX',
+          'source': 'MANUAL',
         });
         expect(capturedPayload!['manualLocation'], 'Amarillo, TX');
         expect(capturedPayload!['reason'], 'Corrected duty status and location');

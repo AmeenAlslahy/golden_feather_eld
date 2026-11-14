@@ -58,7 +58,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       // على جهاز الاختبار. `Future.wait` يجعلهما في موجة واحدة.
       final granted = await Future.wait([
         Permission.location.isGranted,
-        Permission.bluetooth.isGranted,
+        Permission.bluetoothConnect.isGranted,
       ]);
       final locationGranted = granted[0];
       final bluetoothGranted = granted[1];

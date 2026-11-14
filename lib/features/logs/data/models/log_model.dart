@@ -9,6 +9,7 @@ class LogEventModel extends LogEvent {
     required super.startTime,
     required super.duration,
     required super.location,
+    super.manualLocation,
     super.odometer,
     super.engineHours,
     super.isExpanded,
@@ -104,8 +105,8 @@ class LogEventModel extends LogEvent {
     } else if (rawLocation != null) {
       location = rawLocation.toString();
     }
-    location ??= json['manualLocation']?.toString() ??
-        json['locationText']?.toString();
+    final manualLocation = json['manualLocation']?.toString();
+    location ??= manualLocation ?? json['locationText']?.toString();
 
     if (originalLatitude == null) {
       final rawLat = json['latitude'] ?? json['originalLatitude'];
@@ -126,6 +127,7 @@ class LogEventModel extends LogEvent {
       startTime: DateTime.parse(startTimeStr).toLocal(),
       duration: duration,
       location: location ?? 'Unknown Location',
+      manualLocation: manualLocation,
       odometer: odometer,
       engineHours: json['engineHours'] != null
           ? double.tryParse(json['engineHours'].toString())
@@ -227,7 +229,7 @@ class LogEventModel extends LogEvent {
       'startTime': startTime.toIso8601String(),
       'duration': duration.inSeconds,
       'location': location,
-      'manualLocation': location,
+      'manualLocation': manualLocation ?? location,
       'odometer': odometer,
       'engineHours': engineHours,
       'editable': editable,
@@ -246,6 +248,7 @@ class LogEventModel extends LogEvent {
       startTime: entity.startTime,
       duration: entity.duration,
       location: entity.location,
+      manualLocation: entity.manualLocation,
       odometer: entity.odometer,
       engineHours: entity.engineHours,
       isExpanded: entity.isExpanded,

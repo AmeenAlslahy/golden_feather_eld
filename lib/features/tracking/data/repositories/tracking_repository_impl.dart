@@ -178,27 +178,76 @@ class TrackingRepositoryImpl implements TrackingRepository {
   Future<Either<Failure, LocationEntity?>> getLastKnownPosition() async {
     try {
       final data = await _service.getLastKnownPosition();
-      if (data == null) return const Right(null);
+      if (data != null) {
+        final latitude = (data['latitude'] as num?)?.toDouble();
+        final longitude = (data['longitude'] as num?)?.toDouble();
+        if (latitude != null && longitude != null) {
+          final timestampMs = (data['timestamp'] as num?)?.toInt();
+          return Right(
+            LocationModel(
+              latitude: latitude,
+              longitude: longitude,
+              speed: (data['speed'] as num?)?.toDouble(),
+              altitude: (data['altitude'] as num?)?.toDouble(),
+              bearing: (data['bearing'] as num?)?.toDouble(),
+              accuracy: (data['accuracy'] as num?)?.toDouble(),
+              timestamp: timestampMs != null
+                  ? DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true)
+                  : DateTime.now().toUtc(),
+              provider: data['provider'] as String?,
+            ),
+          );
+        }
+      }
 
-      final latitude = (data['latitude'] as num?)?.toDouble();
-      final longitude = (data['longitude'] as num?)?.toDouble();
-      if (latitude == null || longitude == null) return const Right(null);
+      // 1. كاش نظام التشغيل عبر Geolocator كبديل فوري
+      try {
+        final position = await Geolocator.getLastKnownPosition();
+        if (position != null) {
+          return Right(
+            LocationModel(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              speed: position.speed,
+              altitude: position.altitude,
+              bearing: position.heading,
+              accuracy: position.accuracy,
+              timestamp: position.timestamp,
+            ),
+          );
+        }
+      } catch (_) {}
 
-      final timestampMs = (data['timestamp'] as num?)?.toInt();
-      return Right(
-        LocationModel(
-          latitude: latitude,
-          longitude: longitude,
-          speed: (data['speed'] as num?)?.toDouble(),
-          altitude: (data['altitude'] as num?)?.toDouble(),
-          bearing: (data['bearing'] as num?)?.toDouble(),
-          accuracy: (data['accuracy'] as num?)?.toDouble(),
-          timestamp: timestampMs != null
-              ? DateTime.fromMillisecondsSinceEpoch(timestampMs, isUtc: true)
-              : DateTime.now().toUtc(),
-          provider: data['provider'] as String?,
-        ),
-      );
+      // 2. إذا لم يتوفر موقع في الكاش، جلب الموقع الحالي المباشر
+      try {
+        final isEnabled = await Geolocator.isLocationServiceEnabled();
+        if (isEnabled) {
+          var permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+          if (permission == LocationPermission.always ||
+              permission == LocationPermission.whileInUse) {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.medium,
+              timeLimit: const Duration(seconds: 5),
+            );
+            return Right(
+              LocationModel(
+                latitude: position.latitude,
+                longitude: position.longitude,
+                speed: position.speed,
+                altitude: position.altitude,
+                bearing: position.heading,
+                accuracy: position.accuracy,
+                timestamp: position.timestamp,
+              ),
+            );
+          }
+        }
+      } catch (_) {}
+
+      return const Right(null);
     } catch (e) {
       AppLogger.warning('Failed to read last known position', e);
       return const Left(TrackingFailure(message: 'فشل قراءة آخر موقع معروف'));

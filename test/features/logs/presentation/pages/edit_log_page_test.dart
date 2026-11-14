@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
+// ignore: depend_on_referenced_packages
+import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
+// ignore: depend_on_referenced_packages
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:golden_feather_eld/core/domain/entities/user.dart';
 import 'package:golden_feather_eld/features/logs/presentation/pages/edit_log_page.dart';
@@ -57,6 +62,10 @@ class TestWidget extends ConsumerWidget {
 
 class MockLogRepository extends Mock implements LogRepository {}
 
+class MockGeolocatorPlatform extends Mock
+    with MockPlatformInterfaceMixin
+    implements GeolocatorPlatform {}
+
 Widget createTestApp(Widget child) {
   final mockRepo = MockLogRepository();
   // We only mock what LogsNotifier might call during initialization or simple rendering
@@ -67,6 +76,9 @@ Widget createTestApp(Widget child) {
       size: any(named: 'size'),
     ),
   ).thenAnswer((_) async => const Right(DailyLogPage.empty));
+  when(
+    () => mockRepo.getEventDetails(any(), any()),
+  ).thenAnswer((_) async => const Right(null));
 
   final mockAuthState = AuthState(
     status: AuthStatus.authenticated,
@@ -98,6 +110,11 @@ Widget createTestApp(Widget child) {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(const DailyLogId(0));
+    registerFallbackValue(const DutyStatusId(0));
+  });
+
   group('EditLogPage & editLogFormProvider', () {
     testWidgets('EditLogPage(event: null) -> Insert Duty Status', (
       tester,
@@ -111,7 +128,7 @@ void main() {
       expect(find.byType(AppBar), findsOneWidget);
     });
 
-    testWidgets('EditLogPage(event: LogEvent(...)) -> Edit Duty Status', (
+    testWidgets('EditLogPage(event: LogEvent(...)) -> Edit Duty Status and prefills manual location', (
       tester,
     ) async {
       final fakeEvent = LogEvent(
@@ -127,6 +144,74 @@ void main() {
 
       expect(find.byType(EditLogPage), findsOneWidget);
       expect(find.byType(AppBar), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Miami, FL'), findsOneWidget);
+      expect(find.widgetWithIcon(IconButton, Icons.my_location), findsOneWidget);
+    });
+
+    testWidgets('EditLogPage prefills manualLocation if explicitly present on event', (
+      tester,
+    ) async {
+      final fakeEventWithManual = LogEvent(
+        id: '124',
+        status: 'ON',
+        startTime: DateTime(2026, 1, 1, 8, 0).toUtc(),
+        duration: const Duration(hours: 1),
+        location: '1mi SW from Clarksville, AR',
+        manualLocation: 'Dallas, TX',
+      );
+
+      await tester.pumpWidget(createTestApp(EditLogPage(event: fakeEventWithManual)));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextField, 'Dallas, TX'), findsOneWidget);
+    });
+
+    testWidgets('tapping location icon fetches GPS coordinates and populates manual location field', (
+      tester,
+    ) async {
+      final mockGeolocator = MockGeolocatorPlatform();
+      GeolocatorPlatform.instance = mockGeolocator;
+
+      when(() => mockGeolocator.isLocationServiceEnabled())
+          .thenAnswer((_) async => true);
+      when(() => mockGeolocator.checkPermission())
+          .thenAnswer((_) async => LocationPermission.always);
+      when(() => mockGeolocator.getCurrentPosition(
+            locationSettings: any(named: 'locationSettings'),
+          )).thenAnswer(
+        (_) async => Position(
+          longitude: -93.4668,
+          latitude: 35.4714,
+          timestamp: DateTime.now(),
+          accuracy: 5.0,
+          altitude: 100.0,
+          altitudeAccuracy: 1.0,
+          heading: 0.0,
+          headingAccuracy: 1.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+        ),
+      );
+
+      final fakeEvent = LogEvent(
+        id: '125',
+        status: 'ON',
+        startTime: DateTime(2026, 1, 1, 8, 0).toUtc(),
+        duration: const Duration(hours: 1),
+        location: '',
+      );
+
+      await tester.pumpWidget(createTestApp(EditLogPage(event: fakeEvent)));
+      await tester.pumpAndSettle();
+
+      final locationIconBtn = find.widgetWithIcon(IconButton, Icons.my_location);
+      expect(locationIconBtn, findsOneWidget);
+
+      await tester.ensureVisible(locationIconBtn);
+      await tester.tap(locationIconBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextField, '35.4714, -93.4668'), findsOneWidget);
     });
 
     test('editLogFormProvider(null) initializes with default values', () {

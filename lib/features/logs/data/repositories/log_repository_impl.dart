@@ -505,6 +505,8 @@ class LogRepositoryImpl implements LogRepository {
         'location': {
           'latitude': event.originalLatitude,
           'longitude': event.originalLongitude,
+          if (location != null && location.isNotEmpty) 'description': location,
+          'source': 'MANUAL',
         },
       if (location != null) ...{
         'manualLocation': location,

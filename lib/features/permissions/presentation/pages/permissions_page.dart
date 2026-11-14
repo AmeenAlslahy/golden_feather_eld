@@ -34,7 +34,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     // logout as Unidentified Driver (SRS §1 / 49 CFR 395.32); "While in use"
     // alone is not enough.
     final locationStatus = await Permission.locationAlways.status;
-    final bluetoothStatus = await Permission.bluetooth.status;
+    final bluetoothStatus = await Permission.bluetoothConnect.status;
     final notificationStatus = await Permission.notification.status;
     final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
     final cameraStatus = await Permission.camera.status;
@@ -147,6 +147,19 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
     );
   }
 
+  Future<void> _requestAllPermissions() async {
+    if (!_locationGranted) {
+      await _requestLocation();
+      if (!_locationGranted) return;
+    }
+    if (!_bluetoothGranted) {
+      await _requestBluetooth();
+    }
+    if (!_batteryGranted) {
+      await _requestBattery();
+    }
+  }
+
   void _navigateToLogin() {
     if (_locationGranted) {
       context.goNamed('login');
@@ -253,10 +266,7 @@ class _PermissionsPageState extends ConsumerState<PermissionsPage> {
                     : 'منح الصلاحيات',
                 onPressed: (_locationGranted && _batteryGranted)
                     ? _navigateToLogin
-                    : () {
-                        if (!_locationGranted) _requestLocation();
-                        if (!_batteryGranted) _requestBattery();
-                      },
+                    : _requestAllPermissions,
               ),
               const SizedBox(height: AppSpacing.lg),
             ],

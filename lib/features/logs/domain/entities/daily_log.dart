@@ -179,6 +179,7 @@ class LogEvent extends Equatable {
   final DateTime startTime;
   final Duration duration;
   final String location;
+  final String? manualLocation;
   final double? odometer;
   final double? engineHours;
   final bool isExpanded; // للـ UI
@@ -199,6 +200,7 @@ class LogEvent extends Equatable {
     required this.startTime,
     required this.duration,
     required this.location,
+    this.manualLocation,
     this.odometer,
     this.engineHours,
     this.isExpanded = false,
@@ -228,6 +230,7 @@ class LogEvent extends Equatable {
     DateTime? startTime,
     Duration? duration,
     String? location,
+    String? manualLocation,
     double? odometer,
     double? engineHours,
     bool? isExpanded,
@@ -244,6 +247,7 @@ class LogEvent extends Equatable {
       startTime: startTime ?? this.startTime,
       duration: duration ?? this.duration,
       location: location ?? this.location,
+      manualLocation: manualLocation ?? this.manualLocation,
       odometer: odometer ?? this.odometer,
       engineHours: engineHours ?? this.engineHours,
       isExpanded: isExpanded ?? this.isExpanded,
@@ -263,6 +267,7 @@ class LogEvent extends Equatable {
     startTime,
     duration,
     location,
+    manualLocation,
     odometer,
     engineHours,
     isExpanded,

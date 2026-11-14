@@ -85,11 +85,23 @@ class EditLogFormNotifier extends StateNotifier<EditLogFormState> {
     );
   }
 
-  void setManualLocation(String location) =>
-      state = state.copyWith(manualLocation: location);
+  void setManualLocation(
+    String location, {
+    double? latitude,
+    double? longitude,
+  }) =>
+      state = state.copyWith(
+        manualLocation: location,
+        originalLatitude: latitude ?? state.originalLatitude,
+        originalLongitude: longitude ?? state.originalLongitude,
+      );
 
-  void setLocation(String location) =>
-      state = state.copyWith(manualLocation: location);
+  void setLocation(
+    String location, {
+    double? latitude,
+    double? longitude,
+  }) =>
+      setManualLocation(location, latitude: latitude, longitude: longitude);
 
   void setReason(String reason) => state = state.copyWith(reason: reason);
 
@@ -167,6 +179,14 @@ String _formatCurrentTime(TimeAuthority timeAuthority) {
 final editLogFormProvider = StateNotifierProvider.autoDispose
     .family<EditLogFormNotifier, EditLogFormState, LogEvent?>((ref, event) {
   final timeAuthority = ref.watch(timeAuthorityProvider);
+  final ev = event;
+  final manualLoc = ev?.manualLocation?.trim();
+  final initialManualLoc = (manualLoc != null && manualLoc.isNotEmpty)
+      ? manualLoc
+      : ((ev != null && !isPlaceholderLocation(ev.location))
+          ? ev.location.trim()
+          : '');
+
   return EditLogFormNotifier(
     EditLogFormState(
       selectedStatus: event?.status ?? 'OFF',
@@ -174,7 +194,7 @@ final editLogFormProvider = StateNotifierProvider.autoDispose
           event?.formattedStartTime ?? _formatCurrentTime(timeAuthority),
       duration: event?.formattedDuration ?? '00:00',
       originalLocation: event?.location ?? '',
-      manualLocation: '',
+      manualLocation: initialManualLoc,
       originalLatitude: event?.originalLatitude,
       originalLongitude: event?.originalLongitude,
     ),

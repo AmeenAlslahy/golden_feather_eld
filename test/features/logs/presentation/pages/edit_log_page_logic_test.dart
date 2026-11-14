@@ -51,6 +51,29 @@ class MockTimeAuthority extends Mock implements TimeAuthority {}
 class MockLogRepository extends Mock implements LogRepository {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(const DailyLogId(0));
+    registerFallbackValue(const DutyStatusId(0));
+    registerFallbackValue(
+      LogEvent(
+        id: 'fallback',
+        status: 'OFF',
+        startTime: DateTime.utc(2026, 1, 1),
+        duration: Duration.zero,
+        location: '',
+      ),
+    );
+    registerFallbackValue(
+      AuditEntry(
+        id: '1',
+        timestamp: DateTime.now(),
+        driverId: 'd',
+        newStatus: 'ON',
+        reason: '',
+      ),
+    );
+  });
+
   group('EditLogPage Bug Fixes', () {
     late MockLogsNotifier logsNotifier;
     late MockTimeAuthority mockTimeAuth;
@@ -91,22 +114,14 @@ void main() {
       );
 
       mockRepo = MockLogRepository();
+      when(
+        () => mockRepo.getEventDetails(any(), any()),
+      ).thenAnswer((_) async => const Right(null));
 
       mockTimeAuth = MockTimeAuthority();
       when(
         () => mockTimeAuth.nowUtc(),
       ).thenReturn(DateTime.utc(2026, 1, 1, 10, 0, 0));
-
-      registerFallbackValue(testEvent);
-      registerFallbackValue(
-        AuditEntry(
-          id: '1',
-          timestamp: DateTime.now(),
-          driverId: 'd',
-          newStatus: 'ON',
-          reason: '',
-        ),
-      );
     });
 
     Widget createTestApp(Widget child) {

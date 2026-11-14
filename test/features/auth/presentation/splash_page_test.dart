@@ -53,7 +53,7 @@ void main() {
   late _LocalStorage storage;
 
   setUp(() {
-    statuses = {3: 1, 21: 1};
+    statuses = {3: 1, 21: 1, 30: 1};
     storage = _LocalStorage();
     // التدفق القائم يفترض أن الـ Onboarding شُوهد سابقاً.
     when(() => storage.onboardingSeen).thenReturn(true);
@@ -144,6 +144,7 @@ void main() {
 
   testWidgets('missing Bluetooth permission → Permissions page, no auth check',
       (tester) async {
+    statuses[30] = 0;
     statuses[21] = 0;
     final auth =
         await pump(tester, AuthState(status: AuthStatus.authenticated, user: user));

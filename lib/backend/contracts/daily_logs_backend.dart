@@ -76,7 +76,7 @@ abstract interface class DailyLogsBackend {
   );
 
   /// PUT /eld/daily-logs/{id}/events/{eventId} — edit one event
-  /// (body: `status`, `startTime`, `notes`, `location{description}`).
+  /// (body: status, specialCategory, timeRange, vehicleId, location{description, latitude, longitude, source}, notes, reason).
   Future<Result<RawJson>> updateEvent({
     required DailyLogId logId,
     required DutyStatusId eventId,

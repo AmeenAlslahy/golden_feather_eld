@@ -320,9 +320,15 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
 
   /// يبذر الموقع من آخر قفل نظام حديث عند فتح الشاشة (قراءة فقط).
   ///
-  /// لا يغيّر التتبع ولا يرسل طلباً حياً؛ فقط يملأ العرض إن كان فارغاً.
-  void ensureLocation() {
-    unawaited(_ref.read(trackingStateProvider.notifier).ensureLocation());
+  /// يملأ العرض تلقائياً بالإحداثيات المتاحة دون تغيير حالة التتبع.
+  Future<void> ensureLocation() async {
+    await _ref.read(trackingStateProvider.notifier).ensureLocation();
+    if (!mounted) return;
+    final text =
+        gpsLocationText(_ref.read(trackingStateProvider).currentLocation);
+    if (text.isNotEmpty && state.location.isEmpty) {
+      state = state.copyWith(location: text);
+    }
   }
 
   /// إرسال التغيير مع التحقق المنطقي وتحديث اللوحة تفاعلياً

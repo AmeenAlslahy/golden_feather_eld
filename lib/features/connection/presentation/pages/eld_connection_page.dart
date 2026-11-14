@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:golden_feather_eld/routes/app_routes.dart';
 
 import '../../../../core/theme/app_spacing.dart';
@@ -78,8 +79,19 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
 
   Future<void> _attemptConnection() async {
     if (!(_macFormKey.currentState?.validate() ?? false)) return;
+
     final notifier = ref.read(eldConnectionProvider.notifier);
     await notifier.attemptConnection(_macController.text.trim());
+  }
+
+  Future<void> _requestBluetoothPermission() async {
+    try {
+      final status = await Permission.bluetoothConnect.request();
+      await Permission.bluetoothScan.request();
+      if (status.isGranted && mounted) {
+        _attemptConnection();
+      }
+    } catch (_) {}
   }
 
   @override
@@ -125,6 +137,10 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
           GoRouter.maybeOf(context)?.go(AppRoutes.home);
         }
         return;
+      }
+      if (current.errorMessage == 'bluetooth_permission_denied' &&
+          previous?.errorMessage != 'bluetooth_permission_denied') {
+        _requestBluetoothPermission();
       }
       if (previous != null &&
           previous.isBusy &&
