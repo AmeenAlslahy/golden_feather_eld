@@ -131,7 +131,13 @@ class _DetailBody extends StatelessWidget {
               label: loc.dvirOdometerMi,
               value: '${report.odometer?.toStringAsFixed(0) ?? "-"} mi',
             ),
-            EldInfoRow(label: loc.vehicle, value: report.vehicleId),
+            EldInfoRow(
+              label: loc.vehicle,
+              value: (report.vehicleName?.isNotEmpty == true &&
+                      report.vehicleName != report.vehicleId)
+                  ? '${report.vehicleName} (${report.vehicleId})'
+                  : report.vehicleId,
+            ),
             if ((report.trailerId ?? '').isNotEmpty)
               EldInfoRow(label: loc.trailer, value: report.trailerId!),
             EldInfoRow(
@@ -215,9 +221,9 @@ class _DetailBody extends StatelessWidget {
         ),
 
         // --- Mechanic Certification Section ---
-        if (report.certified ||
-            (report.mechanicName != null &&
-                report.mechanicName!.isNotEmpty)) ...[
+        if (report.mechanicName != null &&
+            report.mechanicName!.trim().isNotEmpty) ...[
+
           const SizedBox(height: AppSpacing.md),
           _Section(
             title: loc.mechanicCertification,
@@ -360,7 +366,7 @@ class _SignatureImageState extends State<_SignatureImage> {
       final base64Part = dataUrl.contains(',')
           ? dataUrl.split(',')[1]
           : dataUrl;
-      return base64Decode(base64Part);
+      return base64Decode(base64Part.replaceAll(RegExp(r'\s+'), ''));
     } catch (_) {
       return null;
     }
@@ -577,7 +583,7 @@ class _PhotoThumbnailState extends State<_PhotoThumbnail> {
       final base64Part = dataUrl.contains(',')
           ? dataUrl.split(',')[1]
           : dataUrl;
-      return base64Decode(base64Part);
+      return base64Decode(base64Part.replaceAll(RegExp(r'\s+'), ''));
     } catch (_) {
       return null;
     }

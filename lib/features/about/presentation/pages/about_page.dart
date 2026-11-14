@@ -8,7 +8,7 @@ import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/network/core_providers.dart';
 import '../../../../core/services/local_storage_service.dart';
 import '../../../tracking/presentation/providers/tracking_providers.dart';
-import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
+// import '../../../connection/presentation/providers/hardware_alerts_provider.dart';
 import '../../../connection/presentation/providers/hardware_status_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -110,6 +110,8 @@ class AboutPage extends ConsumerWidget {
                   badText: loc.disabled,
                 ),
 
+                // تم تعليق تنبيهات العتاد لحذف نقطة النهاية من الخادم
+                /*
                 // إضافة حالة اتصال الـ ELD
                 Consumer(
                   builder: (context, ref, _) {
@@ -166,6 +168,7 @@ class AboutPage extends ConsumerWidget {
                     );
                   },
                 ),
+                */
               ],
             ),
           ),

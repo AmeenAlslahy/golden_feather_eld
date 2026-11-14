@@ -38,6 +38,7 @@ class RequestLogger extends Interceptor {
     'jsessionid',
     'secret',
     'api_key',
+    'apikey',
     'credential',
     'auth',
     'bearer',
@@ -59,15 +60,6 @@ class RequestLogger extends Interceptor {
     'signaturedata',
     'signaturedraft',
     'signaturecertificateid',
-    // Coordinates & Location
-    'latitude',
-    'longitude',
-    'lat',
-    'lng',
-    'coordinates',
-    'geolocation',
-    'locationtext',
-    'manuallocation',
   };
 
   dynamic _redactSensitiveData(dynamic data) {

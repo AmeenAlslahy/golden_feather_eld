@@ -54,9 +54,10 @@ void main() {
       expect(initialLocale.languageCode, equals('ar'));
     });
 
-    test('First installation defaults cleanly to Locale(ar)', () async {
+    test('First installation defaults cleanly to Locale(en)', () async {
       final storage = LocalStorageService();
       await storage.init();
+      await storage.prefs.clear();
 
       final container = ProviderContainer(
         overrides: [
@@ -66,16 +67,16 @@ void main() {
       addTearDown(container.dispose);
 
       final initialLocale = container.read(localeProvider);
-      expect(initialLocale, equals(const Locale('ar')));
+      expect(initialLocale, equals(const Locale('en')));
     });
 
-    test('Missing preference or uninitialized storage safely defaults to Locale(ar)',
+    test('Missing preference or uninitialized storage safely defaults to Locale(en)',
         () {
       final uninitializedStorage = LocalStorageService();
       // Not calling .init()
 
       final notifier = LocaleNotifier(uninitializedStorage);
-      expect(notifier.state, equals(const Locale('ar')));
+      expect(notifier.state, equals(const Locale('en')));
     });
 
     test('Language switching updates state and persists to storage', () async {

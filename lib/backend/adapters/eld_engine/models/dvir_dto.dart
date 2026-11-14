@@ -9,6 +9,8 @@ class DvirDto {
   final String? inspectionTime;
   final String? formattedTime;
   final String? location;
+  final double? latitude;
+  final double? longitude;
   final double? odometer;
   final String? status;
   final bool hasDefects;
@@ -28,6 +30,7 @@ class DvirDto {
   final String? reviewingDriverName;
   final bool nextDriverReviewed;
   final int? retentionDaysRemaining;
+  final String? retentionUntil;
   final String? createdAt;
 
   const DvirDto({
@@ -41,6 +44,8 @@ class DvirDto {
     this.inspectionTime,
     this.formattedTime,
     this.location,
+    this.latitude,
+    this.longitude,
     this.odometer,
     this.status,
     this.hasDefects = false,
@@ -60,6 +65,7 @@ class DvirDto {
     this.reviewingDriverName,
     this.nextDriverReviewed = false,
     this.retentionDaysRemaining,
+    this.retentionUntil,
     this.createdAt,
   });
 
@@ -71,23 +77,39 @@ class DvirDto {
         ? json['trailers'] as List<dynamic>
         : const <dynamic>[];
 
-    final flatDefects = _defectsFrom(json['defects']);
+    final flatDefects = _defectsFrom(json['detects'] ?? json['defects']);
     final vehicleDefects = _defectsFrom(vehicleObj?['detects']);
     final trailers = [
       for (final raw in trailersArr)
         if (raw is Map) DvirTrailerDto.fromJson(Map<String, dynamic>.from(raw)),
     ];
-    // The detail endpoint can repeat the same defects as a flat legacy list
-    // and as nested `vehicle.detects` / `trailers[].detects`. Keep every
-    // nested row (a defect may legitimately repeat across trailers) and add
-    // only flat rows that are not already represented.
-    final nestedDefects = [
+    // The detail endpoint can repeat the same defects as a flat list
+    // (e.g. root `detects`) and as nested `vehicle.detects` / `trailers[].detects`.
+    // When root `detects` contains rich rows (with id/severity/stage), prefer
+    // those rich rows over code-only nested rows.
+    final flatByKey = <String, DvirDefectDto>{};
+    for (final d in flatDefects) {
+      flatByKey[_defectIdentity(d)] = d;
+    }
+
+    final upgradedNested = <DvirDefectDto>[];
+    for (final d in [
       ...vehicleDefects,
       for (final trailer in trailers) ...trailer.defects,
-    ];
-    final nestedKeys = nestedDefects.map(_defectIdentity).toSet();
+    ]) {
+      final key = _defectIdentity(d);
+      final rich = flatByKey[key];
+      if (rich != null &&
+          (rich.id != null || rich.severity != null || rich.stage != null)) {
+        upgradedNested.add(rich);
+      } else {
+        upgradedNested.add(d);
+      }
+    }
+
+    final nestedKeys = upgradedNested.map(_defectIdentity).toSet();
     final defects = [
-      ...nestedDefects,
+      ...upgradedNested,
       ...flatDefects.where((d) => !nestedKeys.contains(_defectIdentity(d))),
     ];
     final explicitCount = json['defectsCount'] is num
@@ -110,11 +132,11 @@ class DvirDto {
       id: (json['id'] as num).toInt(),
       driver: json['driver'] == null
           ? (json['driverId'] != null || json['driverName'] != null
-              ? DvirDriverDto(
-                  id: (json['driverId'] as num?)?.toInt() ?? 0,
-                  name: json['driverName']?.toString(),
-                )
-              : null)
+                ? DvirDriverDto(
+                    id: (json['driverId'] as num?)?.toInt() ?? 0,
+                    name: json['driverName']?.toString(),
+                  )
+                : null)
           : DvirDriverDto.fromJson(json['driver'] as Map<String, dynamic>),
       uniqueId:
           json['uniqueId']?.toString() ?? vehicleObj?['uniqueId']?.toString(),
@@ -133,10 +155,19 @@ class DvirDto {
           json['inspectionTime']?.toString() ?? json['startTime']?.toString(),
       formattedTime: json['formattedTime']?.toString(),
       location: _locationText(json['location'] ?? json['locationText']),
+      latitude: (json['latitude'] as num?)?.toDouble() ??
+          (json['location'] is Map
+              ? (json['location']['latitude'] as num?)?.toDouble()
+              : null),
+      longitude: (json['longitude'] as num?)?.toDouble() ??
+          (json['location'] is Map
+              ? (json['location']['longitude'] as num?)?.toDouble()
+              : null),
       odometer:
           (json['odometer'] as num?)?.toDouble() ??
           (vehicleObj?['odometer'] as num?)?.toDouble(),
-      status: json['status']?.toString() ??
+      status:
+          json['status']?.toString() ??
           json['vehicleCondition']?.toString() ??
           json['operatingStatus']?.toString(),
       hasDefects: json['hasDefects'] == true || defects.isNotEmpty,
@@ -144,8 +175,8 @@ class DvirDto {
       defectsCount: defects.isEmpty && (explicitCount ?? 0) > 0
           ? explicitCount!
           : (json['totalDefects'] is num
-              ? (json['totalDefects'] as num).toInt()
-              : defects.length),
+                ? (json['totalDefects'] as num).toInt()
+                : defects.length),
       defectsSummary: json['defectsSummary']?.toString(),
       outOfService: json['outOfService'] == true,
       photos: photos,
@@ -154,22 +185,31 @@ class DvirDto {
       defects: defects,
       remarks: json['remarks']?.toString() ?? json['notes']?.toString(),
       certified: json['certified'] == true,
-      signatureData: json['signatureData']?.toString() ?? json['signature']?.toString(),
-      mechanicName: json['mechanicName']?.toString() ??
+      signatureData: json['signature'] is Map
+          ? ((json['signature'] as Map)['signatureData']?.toString() ??
+              (json['signature'] as Map)['data']?.toString())
+          : (json['signatureData']?.toString() ?? json['signature']?.toString()),
+      mechanicName:
+          json['mechanicName']?.toString() ??
           json['repairAction']?['performedByName']?.toString() ??
           json['certification']?['certifiedByName']?.toString(),
-      repairStatus: json['repairStatus']?.toString() ??
+      repairStatus:
+          json['repairStatus']?.toString() ??
           json['repairAction']?['actionPerformed']?.toString() ??
           json['certification']?['certificationType']?.toString(),
-      repairNotes: json['repairNotes']?.toString() ??
+      repairNotes:
+          json['repairNotes']?.toString() ??
           json['repairAction']?['repairNotes']?.toString(),
-      reviewingDriverName: json['reviewingDriverName']?.toString() ??
+      reviewingDriverName:
+          json['reviewingDriverName']?.toString() ??
           json['previousReview']?['reviewedByName']?.toString() ??
           json['reviewedByDriverName']?.toString(),
-      nextDriverReviewed: json['nextDriverReviewed'] == true ||
+      nextDriverReviewed:
+          json['nextDriverReviewed'] == true ||
           json['previousReview'] != null ||
           json['reviewedByDriverId'] != null,
       retentionDaysRemaining: (json['retentionDaysRemaining'] as num?)?.toInt(),
+      retentionUntil: json['retentionUntil']?.toString(),
       createdAt: json['createdAt']?.toString() ?? json['startTime']?.toString(),
     );
   }
@@ -186,6 +226,8 @@ class DvirDto {
       'inspectionTime': inspectionTime,
       'formattedTime': formattedTime,
       'location': location,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'odometer': odometer,
       'status': status,
       'hasDefects': hasDefects,
@@ -208,17 +250,34 @@ class DvirDto {
       'reviewingDriverName': reviewingDriverName,
       'nextDriverReviewed': nextDriverReviewed,
       'retentionDaysRemaining': retentionDaysRemaining,
+      if (retentionUntil != null) 'retentionUntil': retentionUntil,
       'createdAt': createdAt,
     };
   }
 }
 
+/// صف عيب من رد الخادم — شكلان يتعاشران:
+/// - كائن غني (الشكل القديم: itemCode/itemName/severity/...)،
+/// - سلسلة كود (العقد الحيّ بعد قرار إرسال الأكواد: الخادم يخزن ويُعيد
+///   الأكواد كما هي) — الكود يُوضع itemCode وitemName حتى يربط الخادم
+///   أسماء العرض من كتالوجه.
+/// الصفوف الفارغة/غير المعروفة تُسقط بلا اختراع.
+DvirDefectDto? _defectRowFrom(Object? row) {
+  if (row is Map) return DvirDefectDto.fromJson(Map<String, dynamic>.from(row));
+  if (row is String && row.trim().isNotEmpty) {
+    return DvirDefectDto(itemCode: row.trim(), itemName: row.trim());
+  }
+  return null;
+}
+
 List<DvirDefectDto> _defectsFrom(Object? raw) {
   if (raw is! List) return const [];
-  return [
-    for (final row in raw)
-      if (row is Map) DvirDefectDto.fromJson(Map<String, dynamic>.from(row)),
-  ];
+  final defects = <DvirDefectDto>[];
+  for (final row in raw) {
+    final defect = _defectRowFrom(row);
+    if (defect != null) defects.add(defect);
+  }
+  return defects;
 }
 
 /// نص الموقع كما يعود من الخادم: نص مباشر، أو خريطة إحداثيات (شكل قديم
@@ -226,6 +285,8 @@ List<DvirDefectDto> _defectsFrom(Object? raw) {
 String? _locationText(Object? raw) {
   if (raw == null) return null;
   if (raw is Map) {
+    final text = raw['locationText']?.toString().trim();
+    if (text != null && text.isNotEmpty) return text;
     final lat = raw['latitude'];
     final lon = raw['longitude'];
     if (lat == null || lon == null) return null;
@@ -304,6 +365,8 @@ class DvirDefectDto {
   final String? itemCode;
   final String? itemName;
   final String? category;
+  final String? assetType;
+  final String? assetIdentifier;
   final bool safetyAffecting;
   final bool outOfService;
   final String? description;
@@ -319,6 +382,8 @@ class DvirDefectDto {
     this.itemCode,
     this.itemName,
     this.category,
+    this.assetType,
+    this.assetIdentifier,
     this.safetyAffecting = false,
     this.outOfService = false,
     this.description,
@@ -335,7 +400,9 @@ class DvirDefectDto {
       id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}'),
       itemCode: json['itemCode']?.toString(),
       itemName: json['itemName']?.toString(),
-      category: json['category']?.toString(),
+      category: json['category']?.toString() ?? json['assetType']?.toString(),
+      assetType: json['assetType']?.toString(),
+      assetIdentifier: json['assetIdentifier']?.toString(),
       safetyAffecting: json['safetyAffecting'] == true,
       outOfService: json['outOfService'] == true,
       description: json['description']?.toString(),
@@ -354,6 +421,8 @@ class DvirDefectDto {
       'itemCode': itemCode,
       'itemName': itemName,
       'category': category,
+      if (assetType != null) 'assetType': assetType,
+      if (assetIdentifier != null) 'assetIdentifier': assetIdentifier,
       'safetyAffecting': safetyAffecting,
       'outOfService': outOfService,
       'description': description,
@@ -489,14 +558,15 @@ class ReviewDvirRequestDto {
       signatureData: json['signatureData'].toString(),
       driverAgreed: json['driverAgreed'] == true,
       reviewNotes: json['reviewNotes']?.toString(),
-      driverSatisfiedSafe: json['driverSatisfiedSafe'] == true ||
-          json['driverAgreed'] == true,
+      driverSatisfiedSafe:
+          json['driverSatisfiedSafe'] == true || json['driverAgreed'] == true,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (currentInspectionId != null) 'currentInspectionId': currentInspectionId,
+      if (currentInspectionId != null)
+        'currentInspectionId': currentInspectionId,
       if (previousDvirId != null) 'previousDvirId': previousDvirId,
       'reviewingDriverId': reviewingDriverId,
       'reviewingDriverName': reviewingDriverName,
@@ -517,9 +587,12 @@ class DvirTrailerDto {
   factory DvirTrailerDto.fromJson(Map<String, dynamic> json) {
     return DvirTrailerDto(
       trailerNumber: json['trailerNumber']?.toString() ?? '',
+      // صفوف detects قد تكون كائنات (شكل قديم) أو سلاسل أكواد (العقد
+      // الحيّ) — [_defectRowFrom] يقبل الاثنين بدل انهيار type cast.
       defects:
           (json['detects'] as List<dynamic>?)
-              ?.map((e) => DvirDefectDto.fromJson(e as Map<String, dynamic>))
+              ?.map(_defectRowFrom)
+              .whereType<DvirDefectDto>()
               .toList() ??
           [],
     );

@@ -63,6 +63,9 @@ class AuthRepositoryImpl implements AuthRepository {
           final sessionDto = AuthSessionDto.create(
             serverOrigin: rawJson['serverOrigin'],
             sessionCredential: rawJson['credential'],
+            bearerToken: rawJson['token'] is String
+                ? rawJson['token'] as String
+                : null,
             userModel: UserModel.fromMetadata(
               rawJson['user'],
               defaultEmail: identifier,
@@ -96,10 +99,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(SessionMissingFailure());
     }
 
+    // المصادقة أونلاين فقط: لا استعادة جلسة من الكاش أثناء انقطاع الشبكة.
+    // جلسة قائمة داخل تشغيل حالي تبقى صالحة، لكن أي إقلاع بلا شبكة يعود
+    // إلى شاشة الدخول بدل اعتبار الجلسة المحلية مصادقة ناجحة.
     return guardedNetwork(
       _networkInfo,
       () => _validateRemoteSession(savedSession),
-      offline: _handleOfflineSession,
     );
   }
 
@@ -115,12 +120,6 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (_) {
       return false;
     }
-  }
-
-  Future<Either<Failure, User>> _handleOfflineSession() async {
-    final user = await _localDataSource.getUser();
-    if (user != null) return Right(user);
-    return const Left(NetworkFailure());
   }
 
   Future<Either<Failure, User>> _validateRemoteSession(
@@ -151,6 +150,10 @@ class AuthRepositoryImpl implements AuthRepository {
         final validSessionDto = AuthSessionDto.create(
           serverOrigin: rawJson['serverOrigin'],
           sessionCredential: rawJson['credential'],
+          // الخادم قد يصدر رمزاً جديداً عند التحقق؛ وإلا نُبقي المخزّن.
+          bearerToken: rawJson['token'] is String
+              ? rawJson['token'] as String
+              : savedSession.bearerToken,
           userModel: UserModel.fromMetadata(rawJson['user']),
         );
 

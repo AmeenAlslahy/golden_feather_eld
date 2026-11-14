@@ -4,6 +4,7 @@ import 'package:golden_feather_eld/core/data/models/user_model.dart';
 class AuthSessionDto {
   final String serverOrigin;
   final String sessionCredential;
+  final String? bearerToken;
   final UserModel userModel;
   final DateTime createdAt;
 
@@ -12,27 +13,34 @@ class AuthSessionDto {
     required this.sessionCredential,
     required this.userModel,
     required this.createdAt,
+    this.bearerToken,
   });
 
   factory AuthSessionDto.create({
     required String serverOrigin,
     required String sessionCredential,
     required UserModel userModel,
+    String? bearerToken,
   }) {
     return AuthSessionDto(
       serverOrigin: serverOrigin,
       sessionCredential: sessionCredential,
       userModel: userModel,
       createdAt: DateTime.now().toUtc(),
+      bearerToken: bearerToken,
     );
   }
 
   factory AuthSessionDto.fromJson(Map<String, dynamic> json) {
+    final rawToken = json['bearerToken'];
     return AuthSessionDto(
       serverOrigin: json['serverOrigin'] as String,
       sessionCredential: json['sessionCredential'] as String,
       userModel: UserModel.fromJson(json['userModel'] as Map<String, dynamic>),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      bearerToken: rawToken is String && rawToken.trim().isNotEmpty
+          ? rawToken.trim()
+          : null,
     );
   }
 
@@ -40,6 +48,7 @@ class AuthSessionDto {
     return {
       'serverOrigin': serverOrigin,
       'sessionCredential': sessionCredential,
+      if (bearerToken != null) 'bearerToken': bearerToken,
       'userModel': userModel.toJson(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -51,6 +60,7 @@ class AuthSessionDto {
       sessionCredential: sessionCredential,
       user: userModel,
       createdAt: createdAt,
+      bearerToken: bearerToken,
     );
   }
 
@@ -60,6 +70,7 @@ class AuthSessionDto {
       sessionCredential: entity.sessionCredential,
       userModel: UserModel.fromEntity(entity.user),
       createdAt: entity.createdAt,
+      bearerToken: entity.bearerToken,
     );
   }
 }

@@ -7,11 +7,12 @@ enum CertifySubmissionStatus { confirmed, pendingSync }
 
 class CertifySubmission {
   final CertifySubmissionStatus status;
+  final String? serverMessage;
 
-  const CertifySubmission._(this.status);
+  const CertifySubmission._(this.status, {this.serverMessage});
 
-  const CertifySubmission.confirmed()
-    : this._(CertifySubmissionStatus.confirmed);
+  const CertifySubmission.confirmed({String? serverMessage})
+    : this._(CertifySubmissionStatus.confirmed, serverMessage: serverMessage);
 
   const CertifySubmission.pendingSync()
     : this._(CertifySubmissionStatus.pendingSync);

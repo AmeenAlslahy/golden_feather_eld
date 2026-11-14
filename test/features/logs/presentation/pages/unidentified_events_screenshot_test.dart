@@ -52,6 +52,9 @@ class _AuthNotifier extends StateNotifier<AuthState> implements AuthNotifier {
 }
 
 class _ScreenshotBackend implements UnidentifiedEventsBackend {
+  @override
+  String? get lastServerMessage => null;
+
   List<Map<String, dynamic>> rows;
   List<Map<String, dynamic>> rejectedRows;
   AppError? listError;

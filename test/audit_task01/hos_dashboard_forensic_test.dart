@@ -79,6 +79,9 @@ class _OnlineNetwork implements NetworkInfo {
 class _ScriptedDashboardBackend implements StatusDashboardBackend {
   _ScriptedDashboardBackend(this.scripts);
 
+  @override
+  String? get lastServerMessage => null;
+
   /// Each entry: (completer, status to return). Consumed in order per call.
   final List<_ScriptedCall> scripts;
 
@@ -1213,6 +1216,9 @@ class _TimerHostNoSnapshotState extends State<_TimerHostNoSnapshot> {
 }
 
 class _FailingBackend implements StatusDashboardBackend {
+  @override
+  String? get lastServerMessage => null;
+
   @override
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) async {
     return err(const NetworkError(code: 'server.500', l10nKey: 'e'));

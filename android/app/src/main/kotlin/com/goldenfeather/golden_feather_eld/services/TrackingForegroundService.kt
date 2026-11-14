@@ -1,5 +1,6 @@
 package com.goldenfeather.golden_feather_eld.services
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,7 +16,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.goldenfeather.golden_feather_eld.MainActivity
 import com.goldenfeather.golden_feather_eld.R
@@ -23,6 +24,8 @@ import com.goldenfeather.golden_feather_eld.bluetooth.BleReconnectPolicy
 import com.goldenfeather.golden_feather_eld.database.LocationDatabaseHelper
 import com.goldenfeather.golden_feather_eld.database.NetworkUploader
 import com.goldenfeather.golden_feather_eld.location.LastKnownLocationSource
+import com.goldenfeather.golden_feather_eld.location.TrackingLocationFilter
+import com.goldenfeather.golden_feather_eld.logging.NativeLogStore
 import com.goldenfeather.golden_feather_eld.plugins.BleConnectionStateListener
 import com.goldenfeather.golden_feather_eld.plugins.BluetoothPlugin
 
@@ -36,11 +39,14 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
         const val ACTION_START = "START_TRACKING"
         const val ACTION_STOP = "STOP_TRACKING"
         const val ACTION_LOCATION_UPDATE = "ACTION_LOCATION_UPDATE"
-        
+
         // Decision 2 (P1): Reconnect Loop actions
         const val ACTION_SET_MANUAL_MODE = "com.goldenfeather.eld.SET_MANUAL_MODE"
         const val ACTION_SET_SESSION_ACTIVE = "com.goldenfeather.eld.SET_SESSION_ACTIVE"
         const val ACTION_SET_SESSION_STATE = "com.goldenfeather.eld.SET_SESSION_STATE"
+
+        private const val PREFS_NAME = "traccar_config"
+        private const val KEY_TRACKING_ENABLED = "tracking_enabled"
 
         // Defaults
         private const val DEFAULT_INTERVAL = 5000L
@@ -51,6 +57,8 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
     private var isTracking = false
     private lateinit var dbHelper: LocationDatabaseHelper
     private lateinit var networkUploader: NetworkUploader
+    private var locationFilter: TrackingLocationFilter? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     // Decision 2 (P1): Reconnect Loop state variables.
     // Dedicated HandlerThread ensures BLE reconnection attempts, IPC, and disk I/O
@@ -85,6 +93,8 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
     @Volatile
     var targetMacAddress: String? = null
 
+    private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+
     override fun onCreate() {
         super.onCreate()
         dbHelper = LocationDatabaseHelper(this)
@@ -99,12 +109,12 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
         when (intent?.action) {
             ACTION_START -> {
                 isSessionActive = true
-                startForeground()
+                startForegroundTracking()
             }
             ACTION_STOP -> {
                 isSessionActive = false
                 stopReconnectLoop()
-                stopForeground()
+                stopTracking()
             }
             ACTION_SET_MANUAL_MODE -> {
                 val manual = intent.getBooleanExtra("manualMode", false)
@@ -129,9 +139,24 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
                     stopReconnectLoop()
                 }
             }
+            null -> {
+                // Android may restart a START_STICKY service with a null intent
+                // after a process kill. A foreground service MUST call
+                // startForeground promptly or the system throws
+                // ForegroundServiceDidNotStartInTimeException.
+                if (isTrackingEnabledPref()) {
+                    isSessionActive = true
+                    startForegroundTracking()
+                } else {
+                    stopSelf()
+                }
+            }
         }
         return START_STICKY
     }
+
+    private fun isTrackingEnabledPref(): Boolean =
+        prefs.getBoolean(KEY_TRACKING_ENABLED, false)
 
     // Decision 2 (P1): Reconnect Loop. Callback from BluetoothPlugin.
     override fun onConnectionStateChange(isConnected: Boolean, macAddress: String?) {
@@ -139,14 +164,16 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
             targetMacAddress = macAddress
         }
         if (isConnected) {
-            Log.i("TRACKING_SVC", "Decision 2 (P1): BLE Connected. Resetting reconnect counter.")
+            NativeLogStore.info("BLE connected. Resetting reconnect counter.", "TRACKING_SVC")
             consecutiveFailures = 0
             stopReconnectLoop()
-            updateTrackingNotification("Tracking in progress...")
+            updateTrackingNotification(notificationText())
         } else {
-            // Consecutive failures incremented on disconnect per policy
             consecutiveFailures++
-            Log.w("TRACKING_SVC", "Decision 2 (P1): BLE Disconnected (consecutiveFailures=$consecutiveFailures). Triggering reconnect loop.")
+            NativeLogStore.warn(
+                "BLE disconnected (consecutiveFailures=$consecutiveFailures). Triggering reconnect loop.",
+                "TRACKING_SVC"
+            )
             scheduleReconnect()
         }
     }
@@ -155,11 +182,12 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
     private fun applyManualMode(enabled: Boolean) {
         isManualMode = enabled
         if (enabled) {
-            Log.i("TRACKING_SVC", "Decision 2 (P1): Manual mode enabled. Halting reconnect loop immediately and resetting counter.")
+            NativeLogStore.info(
+                "Manual mode enabled. Halting reconnect loop and resetting counter.",
+                "TRACKING_SVC"
+            )
             stopReconnectLoop()
             consecutiveFailures = 0
-        } else {
-            Log.i("TRACKING_SVC", "Decision 2 (P1): Manual mode disabled.")
         }
     }
 
@@ -167,15 +195,19 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
     private fun scheduleReconnect() {
         val mac = targetMacAddress
             ?: BluetoothPlugin.instance?.lastMacAddress
-            ?: getSharedPreferences("eld_config", Context.MODE_PRIVATE).getString("last_mac_address", null)
+            ?: getSharedPreferences("eld_config", Context.MODE_PRIVATE)
+                .getString("last_mac_address", null)
 
         // Explicit stop condition check before scheduling
         if (!BleReconnectPolicy.canAttemptReconnect(isSessionActive, isManualMode, mac)) {
-            Log.i("TRACKING_SVC", "Decision 2 (P1): Reconnect suppressed (isSessionActive=$isSessionActive, isManualMode=$isManualMode, mac=$mac)")
+            NativeLogStore.info(
+                "Reconnect suppressed (isSessionActive=$isSessionActive, " +
+                    "isManualMode=$isManualMode, mac=$mac)",
+                "TRACKING_SVC"
+            )
             return
         }
 
-        // Backoff based on failure count
         val delaySeconds = BleReconnectPolicy.getBackoffDelaySeconds(consecutiveFailures - 1)
         val delayMs = delaySeconds * 1000L
 
@@ -183,16 +215,17 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
         stopReconnectLoop()
 
         reconnectRunnable = Runnable {
-            // Explicit stop condition check before attempt
             if (!BleReconnectPolicy.canAttemptReconnect(isSessionActive, isManualMode, mac)) {
-                Log.i("TRACKING_SVC", "Decision 2 (P1): Reconnect attempt cancelled by stop conditions.")
+                NativeLogStore.info("Reconnect attempt cancelled by stop conditions.", "TRACKING_SVC")
                 stopReconnectLoop()
                 return@Runnable
             }
 
-            Log.w("TRACKING_SVC", "Decision 2 (P1): Reconnect executing attempt #$consecutiveFailures to $mac with delay ${delaySeconds}s")
+            NativeLogStore.warn(
+                "Reconnect executing attempt #$consecutiveFailures to $mac with delay ${delaySeconds}s",
+                "TRACKING_SVC"
+            )
 
-            // Threshold alerts: 5, 10, 15...
             if (BleReconnectPolicy.shouldTriggerAlert(consecutiveFailures)) {
                 notifyReconnectAlert(consecutiveFailures, mac!!)
             }
@@ -200,7 +233,6 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
             val plugin = BluetoothPlugin.instance
             val initiated = plugin?.executeConnect(mac!!) ?: false
             if (!initiated) {
-                // If initial connect call failed immediately, increment and schedule next retry
                 consecutiveFailures++
                 scheduleReconnect()
             }
@@ -209,16 +241,12 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
         handler.postDelayed(reconnectRunnable!!, delayMs)
     }
 
-    // Decision 2 (P1): Reconnect Loop. Notify alert at attempts 5, 10, 15...
     private fun notifyReconnectAlert(attempt: Int, mac: String) {
-        Log.w("TRACKING_SVC", "Decision 2 (P1): Reconnect alert triggered for attempt #$attempt")
-        updateTrackingNotification("ELD Disconnected: Reconnect attempt #$attempt...")
-
-        // Emit event via BluetoothPlugin EventChannel to Flutter
+        NativeLogStore.warn("Reconnect alert triggered for attempt #$attempt", "TRACKING_SVC")
+        updateTrackingNotification("ELD disconnected. Reconnect attempt #$attempt...")
         BluetoothPlugin.instance?.emitReconnectAlert(attempt)
     }
 
-    // Decision 2 (P1): Reconnect Loop. Update foreground notification content.
     private fun updateTrackingNotification(text: String) {
         try {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -231,7 +259,7 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
                 .build()
             notificationManager?.notify(NOTIFICATION_ID, notification)
         } catch (e: Exception) {
-            Log.e("TRACKING_SVC", "Failed to update notification", e)
+            NativeLogStore.error("Failed to update notification: ${e.message}", "TRACKING_SVC")
         }
     }
 
@@ -245,27 +273,41 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
 
     override fun onDestroy() {
         super.onDestroy()
-        // Decision 2 (P1): Reconnect Loop. Complete cleanup on destroy to avoid memory leaks or battery drain.
         BluetoothPlugin.instance?.removeConnectionStateListener(this)
         stopReconnectLoop()
         reconnectThread?.quitSafely()
         reconnectThread = null
         reconnectHandler = null
+        releaseWakeLock()
     }
 
-    private fun startForeground() {
+    private fun startForegroundTracking() {
         if (isTracking) return
 
-        val notification = buildNotification()
-        startForeground(NOTIFICATION_ID, notification)
-
+        startForeground(NOTIFICATION_ID, buildNotification())
         startLocationTracking()
     }
 
+    @SuppressLint("MissingPermission")
     private fun startLocationTracking() {
-        val prefs = getSharedPreferences("traccar_config", Context.MODE_PRIVATE)
         val interval = prefs.getLong("interval", DEFAULT_INTERVAL)
         val distance = prefs.getFloat("distance", DEFAULT_DISTANCE)
+        val accuracy = prefs.getString("accuracy", "medium")
+        val angle = prefs.getInt("angle", 0)
+        val heartbeat = prefs.getLong("heartbeat", 0L)
+        val stopDetection = prefs.getBoolean("stop_detection", true)
+
+        locationFilter = TrackingLocationFilter(
+            minDistanceMeters = distance,
+            minAngleDegrees = angle,
+            heartbeatSeconds = heartbeat,
+            accuracyThresholdMeters = TrackingLocationFilter.accuracyThresholdMeters(accuracy),
+            stopDetection = stopDetection
+        )
+
+        if (prefs.getBoolean("wakelock", false)) {
+            acquireWakeLock()
+        }
 
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -289,28 +331,68 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
             }
 
             isTracking = true
-            Log.i("TRACKING_SVC", "Native location tracking started.")
+            NativeLogStore.info(
+                "Native location tracking started (interval=${interval}ms, distance=${distance}m, " +
+                    "accuracy=$accuracy, angle=$angle, heartbeat=${heartbeat}s)",
+                "TRACKING_SVC"
+            )
 
             // بذر فوري بآخر قفل حديث: قراءة فقط، بلا تخزين أو رفع. يمنع
             // بقاء الواجهة فارغة حتى أول دورة تحديث (5 دقائق/75 متراً).
             seedLastKnownLocation()
+
+            // Flush anything queued while the app was dead/offline.
+            networkUploader.triggerUpload(
+                prefs.getString("serverUrl", "") ?: "",
+                prefs.getString("deviceId", "") ?: ""
+            )
         } catch (e: SecurityException) {
-            Log.e("TRACKING_SVC", "Missing location permissions", e)
+            NativeLogStore.error("Missing location permissions: ${e.message}", "TRACKING_SVC")
         } catch (e: Exception) {
-            Log.e("TRACKING_SVC", "Failed to start location tracking", e)
+            NativeLogStore.error("Failed to start location tracking: ${e.message}", "TRACKING_SVC")
         }
     }
 
-    private fun stopForeground() {
+    private fun stopTracking() {
         try {
             locationManager?.removeUpdates(this)
         } catch (e: Exception) {
-            Log.e("TRACKING_SVC", "Failed to remove updates", e)
+            NativeLogStore.error("Failed to remove updates: ${e.message}", "TRACKING_SVC")
         }
         isTracking = false
+        releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        try {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "GoldenFeatherEld::TrackingWakeLock"
+            ).apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+            NativeLogStore.info("Wake lock acquired", "TRACKING_SVC")
+        } catch (e: Exception) {
+            NativeLogStore.error("Failed to acquire wake lock: ${e.message}", "TRACKING_SVC")
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let { if (it.isHeld) it.release() }
+        } catch (_: Exception) {
+        }
+        wakeLock = null
+    }
+
+    private fun notificationText(): String =
+        prefs.getString("notification_text", null)?.takeIf { it.isNotBlank() }
+            ?: "Tracking in progress..."
 
     private fun buildNotification(): Notification {
         val pendingIntent = PendingIntent.getActivity(
@@ -322,7 +404,7 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Golden Feather ELD")
-            .setContentText("Tracking in progress...")
+            .setContentText(notificationText())
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -345,33 +427,47 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onLocationChanged(location: Location) {
-        Log.i("TRACKING_SVC", "New Location: ${location.latitude}, ${location.longitude}")
+        // In `bleDevice` mode phone GPS must not feed the queue or the live UI:
+        // the ELD owns the position stream and `pushLocation` emits its fixes.
+        if (currentSourceMode() == "bleDevice") {
+            return
+        }
 
-        // 1. Save to SQLite
-        dbHelper.insertLocation(location)
+        // Live UI always gets the fix, even when the upload filter rejects it.
+        broadcastLocation(location, System.currentTimeMillis(), "phone")
 
-        // 2. Trigger Upload
-        val prefs = getSharedPreferences("traccar_config", Context.MODE_PRIVATE)
-        val serverUrl = prefs.getString("serverUrl", "") ?: ""
-        val deviceId = prefs.getString("deviceId", "") ?: ""
-        networkUploader.triggerUpload(serverUrl, deviceId)
+        val filter = locationFilter
+        if (filter != null && !filter.shouldAccept(location)) {
+            return
+        }
 
-        // 3. Broadcast for Flutter UI
-        broadcastLocation(location, System.currentTimeMillis())
+        // 1. Save to SQLite (queue offline-safe)
+        dbHelper.insertLocation(location, source = "phone")
+
+        // 2. Trigger upload (retry/backoff is owned by NetworkUploader)
+        networkUploader.triggerUpload(
+            prefs.getString("serverUrl", "") ?: "",
+            prefs.getString("deviceId", "") ?: ""
+        )
     }
+
+    private fun currentSourceMode(): String =
+        prefs.getString("source_mode", "hybrid") ?: "hybrid"
 
     /**
      * يبثّ آخر قفل حديث إلى Flutter دون حفظه أو رفعه. النافذة قصيرة في
      * [LastKnownLocationSource] حتى لا يُعرض موقع قديم كأنه الحالي.
      */
     private fun seedLastKnownLocation() {
+        if (currentSourceMode() == "bleDevice") return
         val seeded = LastKnownLocationSource.latest(this) ?: return
-        Log.i("TRACKING_SVC", "Seeded last known location.")
-        broadcastLocation(seeded, seeded.time)
+        NativeLogStore.info("Seeded last known location.", "TRACKING_SVC")
+        broadcastLocation(seeded, seeded.time, "phone")
     }
 
-    private fun broadcastLocation(location: Location, timestampMillis: Long) {
+    private fun broadcastLocation(location: Location, timestampMillis: Long, source: String) {
         val intent = Intent(ACTION_LOCATION_UPDATE).apply {
+            setPackage(packageName)
             putExtra("latitude", location.latitude)
             putExtra("longitude", location.longitude)
             putExtra("speed", location.speed.toDouble())
@@ -379,6 +475,7 @@ class TrackingForegroundService : Service(), LocationListener, BleConnectionStat
             putExtra("altitude", location.altitude)
             putExtra("accuracy", location.accuracy.toDouble())
             putExtra("timestamp", timestampMillis)
+            putExtra("source", source)
         }
         sendBroadcast(intent)
     }

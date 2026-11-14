@@ -6,6 +6,9 @@ import '../entities/unidentified_event.dart';
 
 /// عقد قراءة/الاعتراض على أحداث القيادة غير المحددة (SRS 11).
 abstract class UnidentifiedEventsRepository {
+  /// Last server message returned by claim/reject.
+  String? get lastServerMessage;
+
   Future<Either<Failure, List<UnidentifiedEvent>>> getEvents({
     required UnidentifiedTab tab,
     int page = 0,

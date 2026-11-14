@@ -181,7 +181,7 @@ class _UnidentifiedEventCard extends StatelessWidget {
         child: Text(
           durationText,
           style: context.styles.caption.copyWith(
-            color: context.isDark ? context.gold : const Color(0xFF7A5C00),
+            color: context.gold,
             fontWeight: AppTypography.bold,
             fontSize: 11,
           ),

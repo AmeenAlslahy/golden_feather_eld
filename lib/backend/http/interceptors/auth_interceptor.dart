@@ -6,12 +6,13 @@ import '../../../core/session/session_epoch.dart';
 import '../../../core/utils/logger.dart';
 import '../eld_endpoints.dart';
 
-/// Attaches the session cookie issued by `POST /api/session`.
+/// Attaches the session credentials issued by `POST /api/session`.
 ///
 /// The live host rejects JSON login with HTTP 415 and creates the session in
-/// Traccar `SessionResource`, which sets `JSESSIONID`. A stored backend label
-/// is not an authentication scheme, so this does not send `Authorization:
-/// Bearer` or `?token=`.
+/// Traccar `SessionResource`, which sets `JSESSIONID`. مسارات `/api/eld/**`
+/// في عقد OpenAPI محمية بـ `BearerAuth`، لذلك نُرفق رمز Bearer (الصادر من
+/// `POST /api/session/token`) متى توفّر، مع إبقاء الكوكي لواجهات Traccar
+/// الأصلية.
 ///
 /// **أمان الجلسة المخزنة:** رفض 401 لا يُعتبر «انتهاء جلسة» إلا إذا كان
 /// الطلب يحمل جلسة فعلاً. الطلبات التي تخرج بلا جلسة (مثل طلب تهيئة
@@ -28,6 +29,11 @@ class AuthInterceptor extends Interceptor {
 
   /// علامة على RequestOptions تفيد أن هذا الطلب حمل جلسة فعلاً.
   static const _sessionAttachedKey = 'gf_session_attached';
+
+  /// علامة على RequestOptions لتخطّي إرفاق الجلسة: يستخدمها الطلب الذي
+  /// يبني اعتماده بنفسه (مثل `POST /api/session/token` الذي يمرّر كوكي
+  /// الجلسة الجديدة صراحةً) حتى لا تُضاف كوكي/رمز قديمين فوقه.
+  static const skipAuthKey = 'gf_skip_auth';
 
   /// P0 Stage 1: جيل الجلسة الذي أنشأ الطلب — يُقرأ متزامناً لحظة
   /// الإرسال قبل أي await حتى لا يتلوث بجيل أحدث.
@@ -73,9 +79,15 @@ class AuthInterceptor extends Interceptor {
     // تخطّي أي مسار يحتوي الكلمة (مثل /eld/sessions/123/members).
     // (حُذف استثناء POST /users — لم يعد له مستدعٍ وكان يسمح بمرور
     // طلبات إنشاء مستخدمين بلا جلسة، توسيعاً غير مبرر لسطح الهجوم.)
-    if (options.path == EldEndpoints.authSession ||
+    //
+    // `options.uri.path` هي المسار الفعلي بعد إلحاق baseUrl (`/api/session`)،
+    // بينما `options.path` قد يكون URL مطلقاً. السلسلة القديمة كانت
+    // `'/api\${...}'` ($ مُهرَّب) فلم تطابق أبداً وأُرفقت جلسة قديمة بطلب
+    // تسجيل الدخول.
+    if (options.extra[skipAuthKey] == true ||
+        options.path == EldEndpoints.authSession ||
         options.uri.path == EldEndpoints.authSession ||
-        options.uri.path == '/api\${EldEndpoints.authSession}') {
+        options.uri.path == '/api${EldEndpoints.authSession}') {
       return super.onRequest(options, handler);
     }
 
@@ -134,8 +146,18 @@ class AuthInterceptor extends Interceptor {
       final requestHost = options.uri.host;
       final baseHost = Uri.tryParse(options.baseUrl)?.host ?? '';
 
-      // Prevent cross-origin cookie leak: only send session cookie to our backend
+      // Prevent cross-origin credential leak: only send credentials to our backend
       if (requestHost == baseHost || requestHost.isEmpty || baseHost.isEmpty) {
+        // عقد ELD (OpenAPI) يعلن `BearerAuth` فقط لمسارات `/api/eld/**`.
+        // نرسل الرمز متى توفّر، ونُبقي كوكي JSESSIONID لأن واجهات Traccar
+        // الأصلية (المواقع/الأحداث/WebSocket) تعتمد عليه.
+        final token = session.bearerToken;
+        if (token != null && token.isNotEmpty) {
+          options.headers.putIfAbsent(
+            'Authorization',
+            () => 'Bearer $token',
+          );
+        }
         final cookie = 'JSESSIONID=${session.sessionCredential}';
         final existingCookie = options.headers['Cookie'];
         options.headers['Cookie'] = existingCookie != null

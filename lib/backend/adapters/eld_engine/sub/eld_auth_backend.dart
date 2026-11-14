@@ -7,6 +7,7 @@ import '../../../contracts/auth_backend.dart';
 import '../../../contracts/raw_json.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../../http/eld_endpoints.dart';
+import '../../../http/interceptors/auth_interceptor.dart';
 
 class EldAuthBackend implements AuthBackend {
   final ApiClient _apiClient;
@@ -93,6 +94,15 @@ class EldAuthBackend implements AuthBackend {
         );
       }
 
+      // مسارات `/api/eld/**` محمية بـ `BearerAuth` في عقد OpenAPI، بينما
+      // تسجيل الدخول يعيد كوكي JSESSIONID. نولّد رمز Bearer بعد إنشاء الجلسة
+      // (نفس الكوكي)؛ وفشل التوليد لا يُفشل الدخول — تبقى الجلسة صالحة
+      // لواجهات Traccar الأصلية، ويُسجّل السبب فقط.
+      final bearerToken = await _fetchBearerToken(
+        baseUrl: baseUrl,
+        sessionCredential: credential,
+      );
+
       dynamic userData = parsedData;
       if (userData is Map<String, dynamic> &&
           userData.containsKey('data') &&
@@ -105,6 +115,7 @@ class EldAuthBackend implements AuthBackend {
 
       return ok({
         'credential': credential,
+        if (bearerToken != null) 'token': bearerToken,
         'user': userData,
         'serverOrigin': baseUrl,
       });
@@ -112,6 +123,51 @@ class EldAuthBackend implements AuthBackend {
       return err(mapDioException(e));
     } catch (e, st) {
       return err(UnknownError(code: 'login_error', cause: e, stackTrace: st));
+    }
+  }
+
+  /// `POST /api/session/token` — يُصدر رمز Bearer مرتبطاً بالجلسة الحالية.
+  ///
+  /// يعيد `null` عند أي فشل (مسار غير مدعوم، 401، جسم غير نصي). هذا مقصود:
+  /// الرمز إضافة، ولا يجوز أن يمنع الدخول الذي نجح بالفعل.
+  Future<String?> _fetchBearerToken({
+    required String baseUrl,
+    required String sessionCredential,
+  }) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '$baseUrl/api${EldEndpoints.authSession}/token',
+        options: Options(
+          headers: {'Cookie': 'JSESSIONID=$sessionCredential'},
+          // الكوكي هنا جديد ومقصود؛ لا نسمح للـ interceptor بإضافة اعتماد
+          // الجلسة المخزنة (قد تكون قديمة/غير ذات صلة) فوقه.
+          extra: {AuthInterceptor.skipAuthKey: true},
+          responseType: ResponseType.plain,
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return null;
+      }
+      final body = response.data;
+      if (body is! String) return null;
+      final trimmed = body.trim();
+      if (trimmed.isEmpty) return null;
+      // قد يعيد الخادم الرمز كنص خام أو كسلسلة JSON مغلّفة بعلامات اقتباس.
+      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+        try {
+          final decoded = jsonDecode(trimmed);
+          return decoded is String && decoded.trim().isNotEmpty
+              ? decoded.trim()
+              : null;
+        } catch (_) {
+          return null;
+        }
+      }
+      return trimmed;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -160,8 +216,16 @@ class EldAuthBackend implements AuthBackend {
         return err(const ServerError(code: 'invalid_payload'));
       }
 
+      // تجديد/إصدار رمز Bearer عند التحقق: الجلسات المخزنة قبل إضافة الرمز
+      // لا تحمله، ومسارات ELD ترفضها. الفشل لا يُفشل التحقق.
+      final bearerToken = await _fetchBearerToken(
+        baseUrl: serverOrigin,
+        sessionCredential: sessionCredential,
+      );
+
       return ok({
         'credential': sessionCredential,
+        if (bearerToken != null) 'token': bearerToken,
         'user': userData,
         'serverOrigin': serverOrigin,
       });

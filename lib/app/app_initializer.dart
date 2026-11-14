@@ -6,6 +6,7 @@ import '../features/tracking/data/datasources/traccar_sdk/traccar_native_client_
 import '../features/tracking/data/services/tracking_service.dart';
 import '../core/services/local_database_service.dart';
 import '../core/services/local_storage_service.dart';
+import '../core/services/bluetooth_service.dart';
 import 'services/push_notification_service.dart';
 import '../core/services/utc_sync_service.dart';
 import '../core/config/app_environment.dart';
@@ -88,6 +89,7 @@ class AppInitializer {
     trackingService = TrackingService(
       storage: localStorageService,
       tracker: TraccarNativeClientImpl(),
+      bluetoothService: BluetoothService(),
     );
     await StartupProfiler.phase('init:tracking', () => trackingService.init());
 

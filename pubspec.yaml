@@ -85,22 +85,15 @@ flutter:
   uses-material-design: true
 
   # خط Roboto مضمّن محلياً: بلا طلب شبكة عند الإقلاع (كان عبر google_fonts).
+  # الخطوط المائلة (Italic) غير مستخدمة في التطبيق، فحُذفت لتقليل حجم APK.
   fonts:
     - family: Roboto
       fonts:
         - asset: assets/fonts/google_fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/google_fonts/Roboto-Italic.ttf
-          style: italic
         - asset: assets/fonts/google_fonts/Roboto-Medium.ttf
           weight: 500
-        - asset: assets/fonts/google_fonts/Roboto-MediumItalic.ttf
-          weight: 500
-          style: italic
         - asset: assets/fonts/google_fonts/Roboto-Bold.ttf
           weight: 700
-        - asset: assets/fonts/google_fonts/Roboto-BoldItalic.ttf
-          weight: 700
-          style: italic
 
   assets:
     - assets/images/

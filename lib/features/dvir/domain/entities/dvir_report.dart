@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../dvir_catalog.dart';
+import '../dvir_location.dart';
 
 /// نوع الفحص
 enum InspectionType { preTrip, postTrip }
@@ -38,6 +39,25 @@ enum DvirConditionStatus {
     for (final status in DvirConditionStatus.values) {
       if (status == DvirConditionStatus.unknown) continue;
       if (status.wire.toLowerCase() == enumForm) return status;
+    }
+    if (text == 'defects_exist_safe' ||
+        text == 'defects exist safe' ||
+        text == 'conditional' ||
+        text == 'has_defects' ||
+        text == 'defects_exist_unsafe' ||
+        text == 'defects exist unsafe') {
+      return DvirConditionStatus.hasDefects;
+    }
+    if (text == 'satisfactory') {
+      return DvirConditionStatus.satisfactory;
+    }
+    if (text == 'defects_corrected' || text == 'corrected') {
+      return DvirConditionStatus.defectsCorrected;
+    }
+    if (text == 'defects_need_not_be_corrected' ||
+        text == 'defects_not_corrected' ||
+        text == 'not_corrected') {
+      return DvirConditionStatus.defectsNotCorrected;
     }
     return DvirConditionStatus.unknown;
   }
@@ -103,6 +123,7 @@ class DvirReport extends Equatable {
   final DateTime? date;
   final String driverName;
   final String vehicleId;
+  final String? vehicleName;
 
   /// معرف جهاز المركبة الرقمي — شرط الخادم في POST /eld/dvir (لا
   /// اختراع؛ يمر كما قرأته قائمة المركبات).
@@ -120,6 +141,8 @@ class DvirReport extends Equatable {
 
   // Additional fields from API
   final String? location;
+  final double? latitude;
+  final double? longitude;
   final String? companyName;
   final String? vehicleDefects;
   final String? trailerDefects;
@@ -133,6 +156,7 @@ class DvirReport extends Equatable {
   final String? repairNotes;
   final String? reviewingDriverName;
   final bool nextDriverReviewed;
+  final DateTime? serverRetentionUntil;
 
   /// §396.11 catalog items marked defective on this report.
   final List<DvirDefectSelection> selectedDefects;
@@ -149,8 +173,9 @@ class DvirReport extends Equatable {
   }
 
   /// FMCSA requires retaining DVIR records for 3 months from the date of inspection.
-  /// يحسب 3 أشهر بدقة مع مراعاة نهايات الأشهر المختلفة.
+  /// يحسب 3 أشهر بدقة مع مراعاة نهايات الأشهر المختلفة، أو يعتمد تاريخ الخادم الصريح إن وُجد.
   DateTime? get retentionUntil {
+    if (serverRetentionUntil != null) return serverRetentionUntil;
     final d = date;
     if (d == null) return null;
     var targetYear = d.year;
@@ -177,6 +202,7 @@ class DvirReport extends Equatable {
     required DateTime inspectionTimeUtc,
     required String driverName,
     required String vehicleId,
+    String? vehicleName,
     required int? deviceId,
     required DvirConditionStatus selectedStatus,
     required bool hasAnyDefect,
@@ -186,6 +212,9 @@ class DvirReport extends Equatable {
     String? odometerText,
     String? notes,
     String? location,
+    double? latitude,
+    double? longitude,
+    DvirCoordinates? coordinates,
     String? companyName,
     String? vehicleDefects,
     String? trailerDefects,
@@ -194,12 +223,16 @@ class DvirReport extends Equatable {
     final trailer = trailerNumber?.trim();
     final locationTrimmed = location?.trim();
     final companyTrimmed = companyName?.trim();
+    final resolvedCoords = coordinates ??
+        dvirCoordinatesFrom(latitude, longitude) ??
+        parseDvirLocationText(locationTrimmed);
     return DvirReport(
       id: '',
       type: type,
       date: inspectionTimeUtc,
       driverName: driverName,
       vehicleId: vehicleId,
+      vehicleName: vehicleName,
       deviceId: deviceId,
       trailerId: trailer == null || trailer.isEmpty ? null : trailer,
       odometer: parseDvirOdometer(odometerText),
@@ -212,7 +245,9 @@ class DvirReport extends Equatable {
       isSubmitted: false,
       location: locationTrimmed != null && locationTrimmed.isNotEmpty
           ? locationTrimmed
-          : null,
+          : (resolvedCoords != null ? formatDvirLocationText(resolvedCoords) : null),
+      latitude: resolvedCoords?.latitude ?? latitude,
+      longitude: resolvedCoords?.longitude ?? longitude,
       companyName: companyTrimmed != null && companyTrimmed.isNotEmpty
           ? companyTrimmed
           : '',
@@ -229,6 +264,7 @@ class DvirReport extends Equatable {
     this.date,
     required this.driverName,
     required this.vehicleId,
+    this.vehicleName,
     this.deviceId,
     this.trailerId,
     this.odometer,
@@ -238,6 +274,8 @@ class DvirReport extends Equatable {
     this.conditionStatus = DvirConditionStatus.unknown,
     this.isSubmitted = false,
     this.location,
+    this.latitude,
+    this.longitude,
     this.companyName,
     this.vehicleDefects,
     this.trailerDefects,
@@ -251,6 +289,7 @@ class DvirReport extends Equatable {
     this.repairNotes,
     this.reviewingDriverName,
     this.nextDriverReviewed = false,
+    this.serverRetentionUntil,
     this.selectedDefects = const [],
     this.photos = const [],
     this.trailers = const [],
@@ -262,6 +301,7 @@ class DvirReport extends Equatable {
     DateTime? date,
     String? driverName,
     String? vehicleId,
+    String? vehicleName,
     int? deviceId,
     String? trailerId,
     double? odometer,
@@ -271,6 +311,8 @@ class DvirReport extends Equatable {
     DvirConditionStatus? conditionStatus,
     bool? isSubmitted,
     String? location,
+    double? latitude,
+    double? longitude,
     String? companyName,
     String? vehicleDefects,
     String? trailerDefects,
@@ -284,6 +326,7 @@ class DvirReport extends Equatable {
     String? repairNotes,
     String? reviewingDriverName,
     bool? nextDriverReviewed,
+    DateTime? serverRetentionUntil,
     List<DvirDefectSelection>? selectedDefects,
     bool clearSelectedDefects = false,
     List<String>? photos,
@@ -295,6 +338,7 @@ class DvirReport extends Equatable {
       date: date ?? this.date,
       driverName: driverName ?? this.driverName,
       vehicleId: vehicleId ?? this.vehicleId,
+      vehicleName: vehicleName ?? this.vehicleName,
       deviceId: deviceId ?? this.deviceId,
       trailerId: trailerId ?? this.trailerId,
       odometer: odometer ?? this.odometer,
@@ -304,6 +348,8 @@ class DvirReport extends Equatable {
       conditionStatus: conditionStatus ?? this.conditionStatus,
       isSubmitted: isSubmitted ?? this.isSubmitted,
       location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       companyName: companyName ?? this.companyName,
       vehicleDefects: vehicleDefects ?? this.vehicleDefects,
       trailerDefects: trailerDefects ?? this.trailerDefects,
@@ -317,6 +363,7 @@ class DvirReport extends Equatable {
       repairNotes: repairNotes ?? this.repairNotes,
       reviewingDriverName: reviewingDriverName ?? this.reviewingDriverName,
       nextDriverReviewed: nextDriverReviewed ?? this.nextDriverReviewed,
+      serverRetentionUntil: serverRetentionUntil ?? this.serverRetentionUntil,
       selectedDefects: clearSelectedDefects
           ? const []
           : (selectedDefects ?? this.selectedDefects),
@@ -332,6 +379,7 @@ class DvirReport extends Equatable {
     date,
     driverName,
     vehicleId,
+    vehicleName,
     deviceId,
     trailerId,
     odometer,
@@ -341,6 +389,8 @@ class DvirReport extends Equatable {
     conditionStatus,
     isSubmitted,
     location,
+    latitude,
+    longitude,
     companyName,
     vehicleDefects,
     trailerDefects,
@@ -354,6 +404,7 @@ class DvirReport extends Equatable {
     repairNotes,
     reviewingDriverName,
     nextDriverReviewed,
+    serverRetentionUntil,
     selectedDefects,
     photos,
     trailers,

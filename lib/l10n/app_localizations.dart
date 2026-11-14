@@ -1510,6 +1510,72 @@ abstract class AppLocalizations {
   /// **'متابعة بدون اتصال'**
   String get continueDisconnected;
 
+  /// No description provided for @trackingSourceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصدر الموقع'**
+  String get trackingSourceTitle;
+
+  /// No description provided for @trackingSourceHelp.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختر طريقة جلب الموقع: GPS الهاتف أو جهاز ELD عبر البلوتوث.'**
+  String get trackingSourceHelp;
+
+  /// No description provided for @sourcePhoneGps.
+  ///
+  /// In ar, this message translates to:
+  /// **'GPS الهاتف'**
+  String get sourcePhoneGps;
+
+  /// No description provided for @sourceBleDevice.
+  ///
+  /// In ar, this message translates to:
+  /// **'جهاز ELD (بلوتوث)'**
+  String get sourceBleDevice;
+
+  /// No description provided for @sourceHybrid.
+  ///
+  /// In ar, this message translates to:
+  /// **'مختلط (تلقائي)'**
+  String get sourceHybrid;
+
+  /// No description provided for @scanForDevices.
+  ///
+  /// In ar, this message translates to:
+  /// **'بحث عن الأجهزة'**
+  String get scanForDevices;
+
+  /// No description provided for @stopScan.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف البحث'**
+  String get stopScan;
+
+  /// No description provided for @noBleDevicesFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم العثور على أجهزة بعد'**
+  String get noBleDevicesFound;
+
+  /// No description provided for @bleDiagnosticsFrames.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر حزم البلوتوث'**
+  String get bleDiagnosticsFrames;
+
+  /// No description provided for @bleNoFramesCaptured.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد حزم ملتقطة بعد'**
+  String get bleNoFramesCaptured;
+
+  /// No description provided for @bleScanFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر بدء بحث البلوتوث'**
+  String get bleScanFailed;
+
   /// No description provided for @usernameRequired.
   ///
   /// In ar, this message translates to:
@@ -5428,6 +5494,18 @@ abstract class AppLocalizations {
   /// **'لا يوجد اتصال بالشبكة. لم يُرسل طلب المتابعة دون اتصال، وما زلت في شاشة الاتصال.'**
   String get continueDisconnectedOffline;
 
+  /// No description provided for @continueDisconnectedLocalPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالشبكة. سُجّلت الجلسة محلياً وستُزامن مع الخادم عند عودة الشبكة.'**
+  String get continueDisconnectedLocalPending;
+
+  /// No description provided for @sessionConflictOtherVehicle.
+  ///
+  /// In ar, this message translates to:
+  /// **'توجد جلسة نشطة لهذا السائق على مركبة أخرى. أغلقها قبل الاتصال بمركبة جديدة.'**
+  String get sessionConflictOtherVehicle;
+
   /// No description provided for @continueDisconnectedFailed.
   ///
   /// In ar, this message translates to:
@@ -5445,6 +5523,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جارٍ تسجيل المتابعة دون اتصال...'**
   String get continueDisconnectedInProgress;
+
+  /// No description provided for @bluetoothDisabled.
+  ///
+  /// In ar, this message translates to:
+  /// **'البلوتوث متوقف. يرجى تفعيل البلوتوث في الهاتف للمتابعة.'**
+  String get bluetoothDisabled;
+
+  /// No description provided for @bluetoothPermissionRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى منح إذن البلوتوث للتطبيق للاتصال بجهاز ELD.'**
+  String get bluetoothPermissionRequired;
+
+  /// No description provided for @invalidMacAddress.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان MAC غير صالح. يرجى إدخال عنوان مكون من 6 خانات (مثال: AA:BB:CC:DD:EE:FF).'**
+  String get invalidMacAddress;
+
+  /// No description provided for @bluetoothConnectionTimeout.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر العثور على جهاز ELD أو الاتصال به. يرجى التأكد من تشغيل الجهاز وقربه من الهاتف.'**
+  String get bluetoothConnectionTimeout;
 
   /// No description provided for @macAddressRequired.
   ///
@@ -6207,6 +6309,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فشل المزامنة'**
   String get statusSyncFailed;
+
+  /// No description provided for @dvirAddTrailerFirst.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف رقم المقطورة أولاً قبل اختيار عيوبها.'**
+  String get dvirAddTrailerFirst;
+
+  /// No description provided for @dvirRecordDefectsOrChangeStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل عيوباً أو اختر الحالة «سليمة» قبل الحفظ.'**
+  String get dvirRecordDefectsOrChangeStatus;
+
+  /// No description provided for @dvirFutureTimeNotAllowed.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكن اختيار وقت في المستقبل.'**
+  String get dvirFutureTimeNotAllowed;
 }
 
 class _AppLocalizationsDelegate

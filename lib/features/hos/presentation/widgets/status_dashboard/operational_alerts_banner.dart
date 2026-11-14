@@ -103,7 +103,12 @@ class OperationalAlertsBanner extends ConsumerWidget {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(text, style: context.styles.body)),
+          Expanded(
+            child: Text(
+              text,
+              style: context.styles.bodyBold.copyWith(color: color),
+            ),
+          ),
           if (onTap != null)
             Icon(Icons.chevron_right, color: color, size: 20),
         ],

@@ -12,8 +12,12 @@ import '../mappers/status_dashboard_mapper.dart';
 /// ELD Engine implementation of [StatusDashboardBackend].
 class EldStatusDashboardBackend implements StatusDashboardBackend {
   final ApiClient _apiClient;
+  String? _lastServerMessage;
 
-  const EldStatusDashboardBackend(this._apiClient);
+  EldStatusDashboardBackend(this._apiClient);
+
+  @override
+  String? get lastServerMessage => _lastServerMessage;
 
   @override
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) {
@@ -78,6 +82,7 @@ class EldStatusDashboardBackend implements StatusDashboardBackend {
         )
         .then(
           (result) => result.mapValue((response) {
+            _lastServerMessage = response.message;
             final json = response.data ?? const <String, dynamic>{};
             final map = Map<String, dynamic>.from(json);
             // لقطة اللوحة فقط إن حملها الجسم فعلاً. سجل حالة بلا حقول

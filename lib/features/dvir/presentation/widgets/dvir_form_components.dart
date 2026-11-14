@@ -144,7 +144,7 @@ class DvirCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final goldenColors = context.goldenColors;
-    final border = borderColor ?? goldenColors.border;
+    final border = borderColor ?? goldenColors.inputBorder;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -303,7 +303,9 @@ class DvirDropdownField extends StatelessWidget {
             ? goldenColors.errorBackground.withValues(alpha: 0.3)
             : goldenColors.surfaceSecondary.withValues(alpha: 0.35));
 
-    final Color borderColor = isError ? goldenColors.errorText : goldenColors.border;
+    final Color borderColor = isError
+        ? goldenColors.errorText
+        : goldenColors.inputBorder;
 
     return InkWell(
       onTap: readOnly ? null : onTap,

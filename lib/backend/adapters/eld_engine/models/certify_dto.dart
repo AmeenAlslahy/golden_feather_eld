@@ -60,6 +60,7 @@ class CertifyResponseDto {
   final String? certifiedAt;
   final String? certificateId;
   final String? logStatus;
+  final String? message;
 
   const CertifyResponseDto({
     required this.dailyLogId,
@@ -69,7 +70,30 @@ class CertifyResponseDto {
     this.certifiedAt,
     this.certificateId,
     this.logStatus,
+    this.message,
   });
+
+  CertifyResponseDto copyWith({
+    int? dailyLogId,
+    String? logDate,
+    String? certificationStatus,
+    bool? isCertified,
+    String? certifiedAt,
+    String? certificateId,
+    String? logStatus,
+    String? message,
+  }) {
+    return CertifyResponseDto(
+      dailyLogId: dailyLogId ?? this.dailyLogId,
+      logDate: logDate ?? this.logDate,
+      certificationStatus: certificationStatus ?? this.certificationStatus,
+      isCertified: isCertified ?? this.isCertified,
+      certifiedAt: certifiedAt ?? this.certifiedAt,
+      certificateId: certificateId ?? this.certificateId,
+      logStatus: logStatus ?? this.logStatus,
+      message: message ?? this.message,
+    );
+  }
 
   factory CertifyResponseDto.fromJson(Map<String, dynamic> json) {
     final cert = json['certification'] is Map
@@ -97,6 +121,7 @@ class CertifyResponseDto {
           cert['certificateId']?.toString() ??
           json['certificateId']?.toString(),
       logStatus: json['logStatus']?.toString(),
+      message: json['message']?.toString(),
     );
   }
 }

@@ -10,6 +10,8 @@ import 'core/constants/app_constants.dart';
 import 'core/services/local_storage_service.dart';
 import 'core/utils/logger.dart';
 import 'core/utils/startup_profiler.dart';
+import 'core/network/core_providers.dart';
+import 'features/connection/application/eld_session_sync_service.dart';
 import 'app/services/quick_actions_initializer.dart';
 import 'routes.dart';
 import 'core/widgets/app_feedback.dart';
@@ -137,6 +139,28 @@ class GoldenFeatherApp extends ConsumerWidget {
       }
     });
 
+    // ♻️ مزامنة جلسات ELD التي بدأت محلياً أثناء انقطاع الشبكة.
+    //
+    // تُشغَّل عند تغيّر السائق (دخول/تبديل) وعند عودة الشبكة. الخدمة نفسها
+    // تقرأ `GET` أولاً ولا ترسل `POST` إلا بعد إثبات عدم وجود جلسة، وتحتفظ
+    // باللقطة `pending` إن تعذّر السؤال.
+    final eldSessionSync = ref.watch(eldSessionSyncServiceProvider);
+    ref.listen<int?>(currentDriverIdProvider, (previous, next) {
+      if (next != null && next > 0 && next != previous) {
+        unawaited(eldSessionSync.syncPendingForDriver(next));
+      }
+    });
+    ref.listen<AsyncValue<bool>>(isConnectedProvider, (previous, next) {
+      final online = next.valueOrNull == true;
+      final wasOnline = previous?.valueOrNull == true;
+      if (online && !wasOnline) {
+        final driverId = ref.read(currentDriverIdProvider);
+        if (driverId != null && driverId > 0) {
+          unawaited(eldSessionSync.syncPendingForDriver(driverId));
+        }
+      }
+    });
+
     // Global listener for automatic tracking UI side-effects
     ref.listen<HosEngineResult>(hosStatusProvider, (previous, next) {
       if (next is HosEngineReady) {
@@ -183,13 +207,13 @@ class GoldenFeatherApp extends ConsumerWidget {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           localeResolutionCallback: (locale, supportedLocales) {
-            if (locale == null) return const Locale('ar');
+            if (locale == null) return const Locale('en');
             for (final supportedLocale in supportedLocales) {
               if (supportedLocale.languageCode == locale.languageCode) {
                 return supportedLocale;
               }
             }
-            return const Locale('ar');
+            return const Locale('en');
           },
 
           // الثيم

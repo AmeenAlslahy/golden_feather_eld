@@ -9,6 +9,9 @@ class MockDvirBackend implements DvirBackend {
   const MockDvirBackend();
 
   @override
+  String? get lastServerMessage => null;
+
+  @override
   Future<Result<RawJson>> list({
     DriverId? driverId,
     String? uniqueId,
@@ -134,7 +137,10 @@ class MockDvirBackend implements DvirBackend {
   });
 
   @override
-  Future<Result<RawJson>> getPreviousDvir(String uniqueId) async =>
+  Future<Result<RawJson>> getPreviousDvir(
+    String uniqueId, {
+    int? deviceId,
+  }) async =>
       // Live shape when the vehicle has no DVIR yet (2026-09-25).
       ok(<String, dynamic>{'message': 'No Records', 'hasPreviousDvir': false});
 
@@ -143,6 +149,8 @@ class MockDvirBackend implements DvirBackend {
       ok(<String, dynamic>{});
 
   @override
-  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async =>
-      ok(<String, dynamic>{'defects': []});
+  Future<Result<RawJson>> getVehicleDefects(
+    String uniqueId, {
+    int? deviceId,
+  }) async => ok(<String, dynamic>{'defects': []});
 }

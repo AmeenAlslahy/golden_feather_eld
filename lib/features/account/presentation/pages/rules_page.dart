@@ -31,8 +31,12 @@ class RulesPage extends ConsumerWidget {
       (previous, outcome) {
         if (outcome == null) return;
         switch (outcome) {
-          case SaveRulesSuccess():
-            AppFeedback.success(context, loc.rulesUpdated);
+          case SaveRulesSuccess(:final serverMessage):
+            final feedback =
+                (serverMessage != null && serverMessage.trim().isNotEmpty)
+                    ? serverMessage.trim()
+                    : loc.rulesUpdated;
+            AppFeedback.success(context, feedback);
           case SaveRulesSessionExpired():
             AppFeedback.error(context, loc.sessionExpired);
             context.go(AppRoutes.login);

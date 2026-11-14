@@ -283,8 +283,12 @@ class CertifyLogNotifier extends StateNotifier<CertifyLogState> {
         }
         _ref.read(logDraftSignatureProvider(_logId).notifier).clearDraft();
         _ref.read(appEventBusProvider).fire(AppEvent.logDataChanged);
+        final serverMsg = submission.serverMessage;
+        final msg = (serverMsg != null && serverMsg.trim().isNotEmpty)
+            ? serverMsg.trim()
+            : _loc.logSuccessfullyCertified;
         return CertifySucceeded(
-          _loc.logSuccessfullyCertified,
+          msg,
           isLogCertified: true,
         );
       },

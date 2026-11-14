@@ -54,11 +54,23 @@ class AppColors {
   static const Color lightSurfaceElevated = Color(0xFFFFFFFF);
 
   static const Color lightTextPrimary = Color(0xFF171717);
-  static const Color lightTextSecondary = Color(0xFF62666D);
-  static const Color lightTextMuted = Color(0xFF777B82);
+  // ثانوي أغمق من السابق (#62666D): يضمن تبايناً ≥ 7.7:1 على كل أسطح
+  // الاستخدام الفاتحة (أبيض/خلفية/سطح ثانوي/حاويات الحالات والذهبي)،
+  // ويحافظ على تدرج واضح تحت النص الأساسي #171717.
+  static const Color lightTextSecondary = Color(0xFF4A4A4A);
+  // خافت أغمق من السابق (#777B82): يحقق ≥ 4.5:1 للنص العادي على كل
+  // الأسطح الفاتحة الفعلية (بما فيها #F1F3F5 و#F8F1DC)، ويبقى أخف من
+  // lightTextSecondary للحفاظ على التسلسل البصري.
+  static const Color lightTextMuted = Color(0xFF676C74);
 
   static const Color lightBorder = Color(0xFFE4E6EA);
   static const Color lightBorderStrong = Color(0xFFC9CDD3);
+
+  /// حد الحقول التفاعلية (نص/قائمة/توقيع) — رمز مستقل عن [lightBorder]
+  /// الذي يخدم الفواصل والحدود الزخرفية (بطاقات/حوارات/صفوف معلومات).
+  /// القيمة محسوبة لتحقيق ≥ 3:1 على كل خلفيات الحقول الفعلية في الوضع الفاتح
+  /// (أبيض، #F7F8FA، #F1F3F5، #FDF8E7، وخلفيات الخلايا المركبة).
+  static const Color lightInputBorder = Color(0xFF80868F);
 
   static const Color lightPrimary = Color(0xFFD4AF37);
   static const Color lightOnPrimary = Color(0xFF171717);
@@ -82,6 +94,11 @@ class AppColors {
 
   static const Color darkBorder = Color(0xFF35383E);
   static const Color darkBorderStrong = Color(0xFF50545B);
+
+  /// حد الحقول التفاعلية في الوضع الداكن — مستقل عن [darkBorder] الزخرفي.
+  /// محسوب لتحقيق ≥ 3:1 على كل خلفيات الحقول الفعلية، بما فيها السطح
+  /// المرتفع #2B2E33 (أفتح سطح داكن) مع هامش آمن.
+  static const Color darkInputBorder = Color(0xFF767D87);
 
   static const Color darkPrimary = Color(0xFFE8CC73);
   static const Color darkOnPrimary = Color(0xFF171717);
@@ -108,27 +125,43 @@ class AppColors {
 
   // الحالات — قيم خام
   static const Color successGreen = Color(0xFF34C759);
-  static const Color dangerRed = Color(0xFFFF3B30);
+  // أحمر الخطأ القياسي (Material Red 800): آمن كنص أبيض عليه (5.62:1)
+  // وكرَسم للأيقونات/الحدود. كان #FF3B30 ولا يحقق 4.5:1 للنص الأبيض.
+  static const Color dangerRed = Color(0xFFC62828);
   static const Color warningYellow = Color(0xFFFF9500);
   static const Color infoBlue = Color(0xFF1565C0);
 
-  // الحالات — نص على خلفية فاتحة
-  static const Color successText = Color(0xFF157A33);
-  static const Color dangerText = Color(0xFFC5221F);
-  static const Color warningText = Color(0xFFB45309);
-  static const Color infoText = Color(0xFF0D47A1);
+  // الحالات — نص على خلفية فاتحة (قيم Material القياسية المألوفة)
+  static const Color successText = Color(0xFF2E7D32); // Green 800
+  static const Color dangerText = Color(0xFFC62828); // Red 800
+  // أغمق قليلاً من Amber 700 (#B45309) ليحقق 4.5:1 حتى على الحاوية
+  // الذهبية المحددة #F8F1DC، ويبقى برتقالياً دلالياً واضحاً.
+  static const Color warningText = Color(0xFFA94F08);
+  static const Color infoText = Color(0xFF1565C0); // Blue 800
 
   // الحالات — نص على خلفية داكنة
   static const Color successOnDark = Color(0xFF4ADE80);
   static const Color dangerOnDark = Color(0xFFFF6B6B);
-  static const Color warningOnDark = Color(0xFFFFB020);
-  static const Color infoOnDark = Color(0xFF64D2FF);
+  static const Color warningOnDark = Color(0xFFFFB74D); // Amber 300
+  static const Color infoOnDark = Color(0xFF64B5F6); // Blue 300
 
   // الحالات — خلفيات خفيفة
   static const Color successBg = Color(0xFFE8F5E9);
   static const Color dangerBg = Color(0xFFFFEBEE);
   static const Color warningBg = Color(0xFFFFF3E0);
   static const Color infoBg = Color(0xFFE3F2FD);
+
+  // الحالات — تعبئة صلبة للرسائل المنبثقة (SnackBar/Toast).
+  // الألوان الدلالية المألوفة في أغلب التطبيقات، وكل زوج مفحوص ≥ 4.5:1.
+  static const Color successFill = Color(0xFF2E7D32);
+  static const Color onSuccessFill = Color(0xFFFFFFFF);
+  static const Color dangerFill = Color(0xFFC62828);
+  static const Color onDangerFill = Color(0xFFFFFFFF);
+  // البرتقالي المألوف للتحذير يحتاج نصاً داكناً ليحقق التباين.
+  static const Color warningFill = Color(0xFFF57C00);
+  static const Color onWarningFill = Color(0xFF171717);
+  static const Color infoFill = Color(0xFF1565C0);
+  static const Color onInfoFill = Color(0xFFFFFFFF);
 
   // المحايدات — الوضع الفاتح
   static const Color background = lightBackground;
@@ -141,10 +174,12 @@ class AppColors {
   static const Color surfaceDark = darkSurface;
 
   // خلفيات الحالات — الوضع الداكن (المصدر الوحيد)
-  static const Color darkSuccessBg = Color(0xFF0F2417);
-  static const Color darkWarningBg = Color(0xFF2A1F0A);
-  static const Color darkDangerBg = Color(0xFF2A0F0F);
-  static const Color darkInfoBg = Color(0xFF0A1F2A);
+  // أُشبعت أكثر من السابق (#0F2417/#2A1F0A/#2A0F0F/#0A1F2A) لأن الخلفيات
+  // الداكنة جداً كانت تبدو باهتة؛ النصوص الدلالية عليها تبقى ≥ 4.5:1.
+  static const Color darkSuccessBg = Color(0xFF14301C);
+  static const Color darkWarningBg = Color(0xFF3A2A0C);
+  static const Color darkDangerBg = Color(0xFF3A1414);
+  static const Color darkInfoBg = Color(0xFF10293B);
 
   // الذهبي كخلفية
   static const Color goldBg = Color(0xFFFDF8E7);
@@ -210,6 +245,10 @@ class AppColors {
 
   static Color borderFor(Brightness b) =>
       b == Brightness.light ? lightBorder : darkBorder;
+
+  /// حد الحقول التفاعلية حسب السطوع.
+  static Color inputBorderFor(Brightness b) =>
+      b == Brightness.light ? lightInputBorder : darkInputBorder;
 
   /// النص الذهبي الآمن حسب الخلفية
   static Color goldFor(Brightness b) =>

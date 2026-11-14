@@ -728,6 +728,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueDisconnected => 'CONTINUACIÓN CONTINUADA';
 
   @override
+  String get trackingSourceTitle => 'Fuente de ubicación';
+
+  @override
+  String get trackingSourceHelp =>
+      'Elige cómo obtiene la posición la app: GPS del teléfono o un ELD por Bluetooth.';
+
+  @override
+  String get sourcePhoneGps => 'GPS del teléfono';
+
+  @override
+  String get sourceBleDevice => 'Dispositivo ELD (Bluetooth)';
+
+  @override
+  String get sourceHybrid => 'Híbrido (automático)';
+
+  @override
+  String get scanForDevices => 'Buscar dispositivos';
+
+  @override
+  String get stopScan => 'Detener búsqueda';
+
+  @override
+  String get noBleDevicesFound => 'Aún no se encontraron dispositivos';
+
+  @override
+  String get bleDiagnosticsFrames => 'Tramas Bluetooth recientes';
+
+  @override
+  String get bleNoFramesCaptured => 'Aún no hay tramas capturadas';
+
+  @override
+  String get bleScanFailed => 'No se pudo iniciar la búsqueda Bluetooth';
+
+  @override
   String get usernameRequired => 'Se requiere el nombre de usuario';
 
   @override
@@ -2911,6 +2945,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No hay conexión de red. No se envió la solicitud de modo desconectado; sigue en la pantalla de conexión.';
 
   @override
+  String get continueDisconnectedLocalPending =>
+      'Sin conexión de red. La sesión se registró localmente y se sincronizará con el servidor una vez conectado.';
+
+  @override
+  String get sessionConflictOtherVehicle =>
+      'Existe una sesión activa para este conductor en otro vehículo. Ciérrela antes de conectarse a un nuevo vehículo.';
+
+  @override
   String get continueDisconnectedFailed =>
       'No se pudo confirmar el modo desconectado. El seguimiento no se inició y no se le llevó al inicio.';
 
@@ -2921,6 +2963,22 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get continueDisconnectedInProgress =>
       'Registrando el modo desconectado...';
+
+  @override
+  String get bluetoothDisabled =>
+      'Bluetooth está desactivado. Por favor active Bluetooth en su teléfono para continuar.';
+
+  @override
+  String get bluetoothPermissionRequired =>
+      'Por favor conceda permiso de Bluetooth para conectarse al dispositivo ELD.';
+
+  @override
+  String get invalidMacAddress =>
+      'Dirección MAC no válida. Ingrese una dirección de 6 bytes (ej. AA:BB:CC:DD:EE:FF).';
+
+  @override
+  String get bluetoothConnectionTimeout =>
+      'No se pudo encontrar o conectar al dispositivo ELD. Asegúrese de que esté encendido y cerca.';
 
   @override
   String get macAddressRequired => 'Se requiere dirección MAC.';
@@ -3342,4 +3400,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get statusSyncFailed => 'Error de sincronización';
+
+  @override
+  String get dvirAddTrailerFirst =>
+      'Añada el número del tráiler antes de seleccionar sus defectos.';
+
+  @override
+  String get dvirRecordDefectsOrChangeStatus =>
+      'Registre defectos o seleccione el estado Satisfactorio antes de guardar.';
+
+  @override
+  String get dvirFutureTimeNotAllowed =>
+      'No se puede seleccionar una hora futura.';
 }

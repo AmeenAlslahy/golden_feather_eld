@@ -6,6 +6,9 @@ import '../../domain/shared/value_objects.dart';
 
 /// Contract for the status dashboard (main driver screen).
 abstract interface class StatusDashboardBackend {
+  /// Last server message returned by [updateDutyStatus].
+  String? get lastServerMessage;
+
   /// GET /eld/status
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId});
 

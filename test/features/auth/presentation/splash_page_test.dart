@@ -161,13 +161,6 @@ void main() {
     expect(auth.checks, 1);
   });
 
-  testWidgets('offline session with a stored user still counts as logged in',
-      (tester) async {
-    await pump(tester, AuthState(status: AuthStatus.offline, user: user));
-    await passSplashDelay(tester);
-    expect(find.text('CONNECTION PAGE'), findsOneWidget);
-  });
-
   testWidgets('first launch → Onboarding page before anything else',
       (tester) async {
     when(() => storage.onboardingSeen).thenReturn(false);

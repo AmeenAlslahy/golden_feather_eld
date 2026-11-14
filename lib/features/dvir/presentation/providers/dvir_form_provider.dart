@@ -79,6 +79,8 @@ class DvirReviewGate {
 /// يعيش في النطاق أو في هذه الحالة، لا في الواجهة.
 class DvirFormTextValue {
   final String location;
+  final double? latitude;
+  final double? longitude;
   final String odometer;
   final String trailerNumber;
   final String company;
@@ -91,6 +93,8 @@ class DvirFormTextValue {
 
   const DvirFormTextValue({
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.odometer,
     required this.trailerNumber,
     required this.company,
@@ -230,6 +234,7 @@ final dvirFormProvider = StateNotifierProvider.autoDispose
 class DvirFormNotifier extends StateNotifier<DvirFormState> {
   final Ref _ref;
   String? _requestedPreviousVehicleId;
+  int? _requestedPreviousDeviceId;
 
   DvirFormNotifier({required Ref ref, DvirReport? existing})
     : _ref = ref,
@@ -282,9 +287,11 @@ class DvirFormNotifier extends StateNotifier<DvirFormState> {
           state.inspectionVehicle == null &&
           selected != null) {
         state = state.copyWith(inspectionVehicle: selected);
-        _refreshVehicleDisplay();
-        _loadPreviousDvirForCurrentVehicle();
       }
+      // قد يصل deviceId الرقمي بعد التحميل الأول (إثراء الأسطول) — إعادة
+      // العرض والمحاولة مقيّدة بمفتاح (uniqueId + deviceId) فلا تكرار.
+      _refreshVehicleDisplay();
+      _loadPreviousDvirForCurrentVehicle();
     });
     // مركبة لوحة القيادة قد تُحلّ بعد فتح النموذج — بدون هذا لن يُفحص
     // التزام §396.13 لتلك المركبة أبداً. الاختيار الصريح يظل أعلى منها.
@@ -348,12 +355,17 @@ class DvirFormNotifier extends StateNotifier<DvirFormState> {
   void _loadPreviousDvirForCurrentVehicle() {
     if (state.readOnly) return;
     final vehicleId = state.resolvedVehicleId;
+    final deviceId = _resolveDeviceId();
     if (isUnassignedVehicleId(vehicleId) ||
-        vehicleId == _requestedPreviousVehicleId) {
+        (vehicleId == _requestedPreviousVehicleId &&
+            deviceId == _requestedPreviousDeviceId)) {
       return;
     }
     _requestedPreviousVehicleId = vehicleId;
-    _ref.read(dvirProvider.notifier).loadPreviousDvir(vehicleId);
+    _requestedPreviousDeviceId = deviceId;
+    _ref
+        .read(dvirProvider.notifier)
+        .loadPreviousDvir(vehicleId, deviceId: deviceId);
   }
 
   // ---- قرارات النموذج (كانت حقول State في الصفحة) ----
@@ -460,11 +472,15 @@ class DvirFormNotifier extends StateNotifier<DvirFormState> {
       return const DvirReviewGate.failed(DvirTimeUnavailableFailure());
     }
     final vehicleId = state.resolvedVehicleId;
-    if (isUnassignedVehicleId(vehicleId) || _resolveDeviceId() == null) {
+    final deviceId = _resolveDeviceId();
+    if (isUnassignedVehicleId(vehicleId) || deviceId == null) {
       return const DvirReviewGate.failed(DvirVehicleMissingFailure());
     }
     final notifier = _ref.read(dvirProvider.notifier);
-    final ready = await notifier.ensurePreviousDvir(vehicleId);
+    final ready = await notifier.ensurePreviousDvir(
+      vehicleId,
+      deviceId: deviceId,
+    );
     if (!mounted || state.resolvedVehicleId != vehicleId) {
       return const DvirReviewGate.failed(DvirFlowCancelledFailure());
     }
@@ -559,6 +575,8 @@ class DvirFormNotifier extends StateNotifier<DvirFormState> {
       odometerText: text.odometer,
       notes: text.remarks,
       location: text.location,
+      latitude: text.latitude,
+      longitude: text.longitude,
       companyName: text.company,
       vehicleDefects: text.vehicleDefects,
       trailerDefects: text.trailerDefects,

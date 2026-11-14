@@ -41,8 +41,13 @@ abstract final class DutyStampRefusal {
 class ManualDutyChangeResult {
   final String? refusal;
   final StatusDashboard? dashboard;
+  final String? serverMessage;
 
-  const ManualDutyChangeResult({this.refusal, this.dashboard});
+  const ManualDutyChangeResult({
+    this.refusal,
+    this.dashboard,
+    this.serverMessage,
+  });
 
   bool get accepted => refusal == null;
 }
@@ -1150,7 +1155,10 @@ class DutyStatusTracker {
         }
         // تمرير لقطة الخادم عند حملها لتغذية اللوحة فوراً — بلا GET ثانٍ.
         // قد تكون null (قبول بلا لقطة): الواجهة تتصالح مع الخادم بنفسها.
-        return ManualDutyChangeResult(dashboard: dashboard);
+        return ManualDutyChangeResult(
+          dashboard: dashboard,
+          serverMessage: _dashboardBackend.lastServerMessage,
+        );
       },
     );
   }

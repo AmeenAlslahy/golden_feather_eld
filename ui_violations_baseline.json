@@ -144,13 +144,6 @@
             "count": 2
         },
         {
-            "rationale": "Legacy custom hex literal awaiting token migration in Phase 7C.",
-            "rule": "hardcoded_hex_color",
-            "fingerprints": "Color(0xFF7A5C00)",
-            "file": "lib/features/logs/presentation/widgets/unidentified_events_list.dart",
-            "count": 1
-        },
-        {
             "rationale": "Inline font size awaiting typography token adoption in Phase 7C.",
             "rule": "inline_numeric_font_size",
             "fingerprints": [
@@ -172,20 +165,6 @@
             ],
             "file": "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
             "count": 2
-        },
-        {
-            "rationale": "Direct AppColors usage in feature screen awaiting theme context migration.",
-            "rule": "direct_app_colors_semantic",
-            "fingerprints": "? AppColors.darkTextSecondary",
-            "file": "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
-            "count": 1
-        },
-        {
-            "rationale": "Legacy custom hex literal awaiting token migration in Phase 7C.",
-            "rule": "hardcoded_hex_color",
-            "fingerprints": "Color(0xFF4A4A4A)",
-            "file": "lib/features/logs/presentation/widgets/unidentified_stats_row.dart",
-            "count": 1
         },
         {
             "rationale": "Raw Material screen-level component awaiting shared component migration in Phase 7C.",

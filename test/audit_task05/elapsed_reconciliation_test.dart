@@ -137,6 +137,9 @@ class _LegacyNoStampCache implements DashboardLocalCache {
 class _Backend implements StatusDashboardBackend {
   _Backend(this.dashboard);
 
+  @override
+  String? get lastServerMessage => null;
+
   final StatusDashboard dashboard;
   int calls = 0;
   AppError? failWith;

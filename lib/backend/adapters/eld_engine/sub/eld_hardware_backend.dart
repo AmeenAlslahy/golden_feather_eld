@@ -132,6 +132,8 @@ class EldHardwareBackend implements HardwareBackend {
               'statusCode': statusCode,
               'reason': failureMarker ?? 'http_or_envelope_failure',
               if (requestId != null) 'requestId': requestId,
+              if (response.errors.isNotEmpty)
+                'errors': response.errors.map((e) => e.toString()).join('; '),
             },
           ),
         );
@@ -153,7 +155,17 @@ class EldHardwareBackend implements HardwareBackend {
         );
       }
 
-      return ok<RawJson>(data);
+      final payload = Map<String, dynamic>.from(data);
+      final serverMessage = response.message ??
+          (response.rawBody is Map
+              ? (response.rawBody as Map)['message']?.toString()
+              : null);
+      if (serverMessage != null && serverMessage.trim().isNotEmpty) {
+        payload['serverMessage'] = serverMessage.trim();
+        payload.putIfAbsent('message', () => serverMessage.trim());
+      }
+
+      return ok<RawJson>(payload);
     });
   }
 

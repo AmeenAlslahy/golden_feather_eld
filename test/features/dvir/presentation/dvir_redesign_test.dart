@@ -23,6 +23,9 @@ import 'package:golden_feather_eld/features/dvir/presentation/pages/dvir_list_pa
 import 'package:golden_feather_eld/features/dvir/presentation/providers/dvir_provider.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/widgets/dvir_form_sections.dart';
 import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
+import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
+import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:golden_feather_eld/features/tracking/presentation/providers/tracking_provider.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
@@ -35,7 +38,8 @@ class _OnlineNetwork implements NetworkInfo {
   Stream<bool> get onConnectionChange => const Stream.empty();
 }
 
-class _FakeTrackingStorage extends Mock implements TrackingConfigStorageService {
+class _FakeTrackingStorage extends Mock
+    implements TrackingConfigStorageService {
   @override
   String get deviceId => '1001';
 }
@@ -49,6 +53,24 @@ class _FakeLocalStorage extends Mock implements LocalStorageService {
   String get language => 'en';
   @override
   String? get selectedVehicleId => null;
+}
+
+class _FakeTrackingRepository extends Mock implements TrackingRepository {}
+
+/// يجعل `ensureLocation` يبذر قفل GPS محدداً بلا أي اتصال أصلي.
+class _GpsTrackingNotifier extends TrackingNotifier {
+  _GpsTrackingNotifier(Ref ref, this.fix)
+    : super(_FakeTrackingRepository(), ref);
+
+  final LocationEntity? fix;
+
+  @override
+  Future<void> ensureLocation() async {
+    // مثل التنفيذ الحقيقي: لا تُعدّل الحالة أثناء بناء الشجرة.
+    await Future<void>.value();
+    if (fix == null) return;
+    state = state.copyWith(currentLocation: fix);
+  }
 }
 
 class _RedesignTestDvirBackend extends MockDvirBackend {
@@ -114,7 +136,10 @@ class _RedesignTestDvirBackend extends MockDvirBackend {
   }
 
   @override
-  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async {
+  Future<Result<RawJson>> getVehicleDefects(
+    String uniqueId, {
+    int? deviceId,
+  }) async {
     return ok({'data': <Map<String, dynamic>>[]});
   }
 }
@@ -127,6 +152,7 @@ void main() {
     ThemeData? theme,
     Locale locale = const Locale('en'),
     double textScaleFactor = 1.0,
+    LocationEntity? gps,
   }) {
     final backend = _RedesignTestDvirBackend();
     return ProviderScope(
@@ -152,6 +178,10 @@ void main() {
             DvirDefect(id: 1, stage: DefectLifecycleStage.open),
           ],
         ),
+        if (gps != null)
+          trackingStateProvider.overrideWith(
+            (ref) => _GpsTrackingNotifier(ref, gps),
+          ),
       ],
       child: MediaQuery(
         data: MediaQueryData(
@@ -171,7 +201,9 @@ void main() {
   }
 
   group('Phase 4 — DVIR Form Redesign & Usability Verification', () {
-    testWidgets('renders all redesigned sections without overflow', (tester) async {
+    testWidgets('renders all redesigned sections without overflow', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 8000);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -195,7 +227,31 @@ void main() {
       expect(find.byType(AppButton), findsWidgets);
     });
 
-    testWidgets('inspection type selection changes state correctly', (tester) async {
+    testWidgets('the location field is filled from the GPS fix', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 8000);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final fix = LocationEntity(
+        latitude: 21.2356,
+        longitude: -86.7451,
+        timestamp: DateTime.utc(2026, 11, 8, 12),
+      );
+      await tester.pumpWidget(
+        createHarness(child: const DvirFormPage(), gps: fix),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('21.2356, -86.7451'), findsOneWidget);
+    });
+
+    testWidgets('inspection type selection changes state correctly', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 8000);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -208,7 +264,9 @@ void main() {
       expect(find.text('Pre-Trip'), findsWidgets);
     });
 
-    testWidgets('signature canvas displays clear action and resets drawing', (tester) async {
+    testWidgets('signature canvas displays clear action and resets drawing', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 8000);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -231,10 +289,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createHarness(
-        child: const DvirFormPage(),
-        theme: AppTheme.dark,
-      ));
+      await tester.pumpWidget(
+        createHarness(child: const DvirFormPage(), theme: AppTheme.dark),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -248,10 +305,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createHarness(
-        child: const DvirFormPage(),
-        locale: const Locale('ar'),
-      ));
+      await tester.pumpWidget(
+        createHarness(child: const DvirFormPage(), locale: const Locale('ar')),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -266,10 +322,9 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createHarness(
-        child: const DvirFormPage(),
-        locale: const Locale('es'),
-      ));
+      await tester.pumpWidget(
+        createHarness(child: const DvirFormPage(), locale: const Locale('es')),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -281,7 +336,9 @@ void main() {
 
   group('Phase 4 — Responsive Layout & Text Scaling Tests', () {
     for (final width in [320.0, 375.0, 430.0]) {
-      testWidgets('renders on ${width}dp width without overflow', (tester) async {
+      testWidgets('renders on ${width}dp width without overflow', (
+        tester,
+      ) async {
         tester.view.physicalSize = Size(width * 2.0, 800 * 2.0);
         tester.view.devicePixelRatio = 2.0;
         addTearDown(tester.view.resetPhysicalSize);
@@ -297,16 +354,17 @@ void main() {
     }
 
     for (final scale in [1.0, 1.5, 2.0]) {
-      testWidgets('supports text scaling ${scale}x without overflow', (tester) async {
+      testWidgets('supports text scaling ${scale}x without overflow', (
+        tester,
+      ) async {
         tester.view.physicalSize = const Size(375 * 2.0, 900 * 2.0);
         tester.view.devicePixelRatio = 2.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(createHarness(
-          child: const DvirFormPage(),
-          textScaleFactor: scale,
-        ));
+        await tester.pumpWidget(
+          createHarness(child: const DvirFormPage(), textScaleFactor: scale),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
@@ -317,7 +375,9 @@ void main() {
   });
 
   group('Phase 4 — DVIR List & Details Redesign Tests', () {
-    testWidgets('dvir list page renders summary metric card and cards', (tester) async {
+    testWidgets('dvir list page renders summary metric card and cards', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -333,18 +393,23 @@ void main() {
       expect(find.text('Signed'), findsOneWidget);
     });
 
-    testWidgets('dvir detail page renders report sections cleanly in light and dark', (tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 3.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    testWidgets(
+      'dvir detail page renders report sections cleanly in light and dark',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 3.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createHarness(child: const DvirDetailPage(dvirId: '1')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpWidget(
+          createHarness(child: const DvirDetailPage(dvirId: '1')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(DvirDetailPage), findsOneWidget);
-      expect(find.byType(EldCard), findsWidgets);
-    });
+        expect(find.byType(DvirDetailPage), findsOneWidget);
+        expect(find.byType(EldCard), findsWidgets);
+      },
+    );
   });
 }

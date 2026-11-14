@@ -28,7 +28,10 @@ class _MockBluetoothService implements BluetoothService {
   void emit(Map<String, dynamic> event) => _controller.add(event);
 
   @override
-  Future<void> connect(String macAddress) async {}
+  Future<void> connect(
+    String macAddress, {
+    Duration timeout = const Duration(seconds: 10),
+  }) async {}
 
   @override
   Future<bool> executeConnect(String macAddress) async => true;
@@ -55,6 +58,28 @@ class _MockBluetoothService implements BluetoothService {
 
   @override
   Future<void> stopScan() async {}
+
+  @override
+  Stream<Map<String, dynamic>> get discoveredDevices =>
+      events.where((event) => event['type'] == 'deviceFound');
+
+  @override
+  Stream<Map<String, dynamic>> get incomingData =>
+      events.where((event) => event['type'] == 'data');
+
+  @override
+  Future<Map<String, dynamic>> readDeviceInfo() async => const {};
+
+  @override
+  Future<void> sendCommand({
+    String? hex,
+    String? text,
+    String? characteristic,
+    String? writeType,
+  }) async {}
+
+  @override
+  Future<Map<String, dynamic>> getLastDevice() async => const {};
 
   @override
   void dispose() {

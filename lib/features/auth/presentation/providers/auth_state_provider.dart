@@ -17,7 +17,6 @@ import '../../../../backend/providers/backend_network_providers.dart';
 enum AuthStatus {
   initial, // لم يتم التحقق بعد
   authenticated, // مسجل الدخول
-  offline, // جلسة محلية موجودة لكن غير متحقق منها بسبب انقطاع الشبكة
   unauthenticated, // غير مسجل
   loading, // جاري التحميل
   error, // خطأ
@@ -81,9 +80,9 @@ class AuthState {
     );
   }
 
+  /// المصادقة إلزامية أونلاين؛ لا توجد حالة "مصادق عليه أوفلاين".
   bool get isAuthenticated =>
-      (status == AuthStatus.authenticated || status == AuthStatus.offline) &&
-      user != null;
+      status == AuthStatus.authenticated && user != null;
 }
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
@@ -227,8 +226,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// التحقق من حالة المصادقة عند بدء التطبيق
   ///
-  /// P0 Stage 1: استعادة الجلسة (متصلة أو أوفلاين) ليست حداً للهوية —
-  /// لا تزيد الـ epoch. تُحافظ على الجيل الحالي في كل المخارج.
+  /// P0 Stage 1: استعادة الجلسة (بعد تحقق شبكي ناجح فقط) ليست حداً
+  /// للهوية — لا تزيد الـ epoch. تُحافظ على الجيل الحالي في كل المخارج.
   Future<void> checkAuthStatus() async {
     if (_isOperationInProgress) return;
 

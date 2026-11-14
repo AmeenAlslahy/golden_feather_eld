@@ -38,9 +38,7 @@ class DvirNoticeSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.warning.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.input),
-            border: Border.all(
-              color: context.warning.withValues(alpha: 0.6),
-            ),
+            border: Border.all(color: context.warning.withValues(alpha: 0.6)),
           ),
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: Row(
@@ -106,7 +104,9 @@ class DvirInspectionTypeSection extends StatelessWidget {
               if (states.contains(WidgetState.selected)) {
                 return context.gold.withValues(alpha: 0.2);
               }
-              return context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35);
+              return context.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.35,
+              );
             }),
             foregroundColor: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
@@ -119,7 +119,9 @@ class DvirInspectionTypeSection extends StatelessWidget {
                 return BorderSide(color: context.gold, width: 1.5);
               }
               return BorderSide(
-                color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.5,
+                ),
               );
             }),
           ),
@@ -185,11 +187,18 @@ class DvirTimeSection extends StatelessWidget {
                 onTap: onTap,
                 borderRadius: BorderRadius.circular(AppRadius.small),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: 2,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit_calendar_outlined, size: 14, color: context.gold),
+                      Icon(
+                        Icons.edit_calendar_outlined,
+                        size: 14,
+                        color: context.gold,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         loc.edit,
@@ -212,10 +221,14 @@ class DvirTimeSection extends StatelessWidget {
               vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              color: context.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.35,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.input),
               border: Border.all(
-                color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.5,
+                ),
               ),
             ),
             child: Row(
@@ -318,7 +331,10 @@ class DvirOdometerSection extends StatelessWidget {
             size: AppSpacing.iconSmall,
           ),
           suffixIcon: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
+            ),
             child: Text(
               'mi',
               style: context.styles.caption.copyWith(
@@ -576,12 +592,15 @@ class DvirStatusSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final isSatisfactory = selectedStatusLabel.toLowerCase().contains('satisfactory') ||
+    final isSatisfactory =
+        selectedStatusLabel.toLowerCase().contains('satisfactory') ||
         selectedStatusLabel.contains('مرضي') ||
         selectedStatusLabel.contains('سليم');
 
     final statusColor = isSatisfactory ? context.success : context.danger;
-    final statusIcon = isSatisfactory ? Icons.check_circle_outline : Icons.warning_amber_rounded;
+    final statusIcon = isSatisfactory
+        ? Icons.check_circle_outline
+        : Icons.warning_amber_rounded;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -601,12 +620,18 @@ class DvirStatusSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(statusIcon, color: statusColor, size: AppSpacing.iconSmall),
+                    Icon(
+                      statusIcon,
+                      color: statusColor,
+                      size: AppSpacing.iconSmall,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         selectedStatusLabel,
-                        style: context.styles.bodyBold.copyWith(color: statusColor),
+                        style: context.styles.bodyBold.copyWith(
+                          color: statusColor,
+                        ),
                       ),
                     ),
                   ],
@@ -630,12 +655,18 @@ class DvirStatusSection extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(statusIcon, color: statusColor, size: AppSpacing.iconSmall),
+                      Icon(
+                        statusIcon,
+                        color: statusColor,
+                        size: AppSpacing.iconSmall,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           selectedStatusLabel,
-                          style: context.styles.bodyBold.copyWith(color: statusColor),
+                          style: context.styles.bodyBold.copyWith(
+                            color: statusColor,
+                          ),
                         ),
                       ),
                       Icon(
@@ -809,6 +840,9 @@ class DvirSubmitButtonSection extends StatelessWidget {
   final bool isSigned;
   final bool isSubmitting;
   final bool timeAvailable;
+
+  /// مركبة الفحص محسومة — بلاها يُعطَّل الحفظ مع سبب مرئي بدل رفض متأخر.
+  final bool hasVehicle;
   final VoidCallback? onSubmit;
 
   const DvirSubmitButtonSection({
@@ -816,24 +850,50 @@ class DvirSubmitButtonSection extends StatelessWidget {
     required this.isSigned,
     required this.isSubmitting,
     required this.timeAvailable,
+    required this.hasVehicle,
     required this.onSubmit,
   });
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final enabled = timeAvailable && isSigned && hasVehicle && !isSubmitting;
+    // زر معطّل بلا سبب = سائق حائر: التعطيل دائماً مع تفسير تحته.
+    // (التوقيع بلا نص سبب — لوحة التوقيع فوق الزر مباشرة تشرح نفسها.)
+    String? disabledReason;
+    if (!enabled && !isSubmitting) {
+      if (!hasVehicle) {
+        disabledReason = loc.dvirVehicleIdMissing;
+      } else if (!timeAvailable) {
+        disabledReason = loc.dvirTimeUnavailableShort;
+      }
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.screenPadding,
         vertical: AppSpacing.md,
       ),
-      child: AppButton(
-        label: AppLocalizations.of(context)!.dvirSign,
-        type: EldButtonType.primary,
-        isLoading: isSubmitting,
-        onPressed: !timeAvailable ? null : onSubmit,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppButton(
+            label: loc.dvirSign,
+            type: EldButtonType.primary,
+            isLoading: isSubmitting,
+            onPressed: enabled ? onSubmit : null,
+          ),
+          if (disabledReason != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              disabledReason,
+              textAlign: TextAlign.center,
+              style: context.styles.caption.copyWith(
+                color: context.colorScheme.error,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 }
-
-

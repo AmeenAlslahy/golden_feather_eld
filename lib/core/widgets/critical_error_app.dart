@@ -17,7 +17,7 @@ class CriticalErrorApp extends StatelessWidget {
       title: 'Golden Feather ELD - Error',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       home: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Center(

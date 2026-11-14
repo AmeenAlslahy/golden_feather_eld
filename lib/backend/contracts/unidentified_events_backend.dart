@@ -24,6 +24,9 @@ class UnidentifiedEventFilter {
 }
 
 abstract interface class UnidentifiedEventsBackend {
+  /// Last server message returned by claim/reject.
+  String? get lastServerMessage;
+
   /// GET /eld/unidentified
   ///
   /// The active tab is always sent as the documented `status` filter

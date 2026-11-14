@@ -21,6 +21,9 @@ DvirReport _report(String id, String vehicleId, {bool reviewed = false}) {
 }
 
 class _FakeRepository implements DvirRepository {
+  @override
+  String? get lastSuccessMessage => null;
+
   Either<Failure, List<DvirReport>> listResult =
       const Right<Failure, List<DvirReport>>([]);
   Either<Failure, DvirReport?> previousResult =
@@ -48,7 +51,10 @@ class _FakeRepository implements DvirRepository {
   }
 
   @override
-  Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) {
+  Future<Either<Failure, DvirReport?>> getPreviousDvir(
+    String vehicleId, {
+    int? deviceId,
+  }) {
     final controlled = previousByVehicle[vehicleId];
     if (controlled != null) return controlled.future;
     return Future.value(previousResult);
@@ -95,6 +101,7 @@ class _FakeRepository implements DvirRepository {
   @override
   Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
     required String uniqueId,
+    int? deviceId,
   }) async => const Right<Failure, List<DvirDefect>>([]);
 }
 

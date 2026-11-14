@@ -19,6 +19,9 @@ import '../../../contracts/status_dashboard_backend.dart';
 class MockStatusDashboardBackend implements StatusDashboardBackend {
   MockStatusDashboardBackend();
 
+  @override
+  String? get lastServerMessage => null;
+
   DutyStatusCode _currentStatus = DutyStatusCode.onDutyNotDriving;
 
   // ==========================================================================

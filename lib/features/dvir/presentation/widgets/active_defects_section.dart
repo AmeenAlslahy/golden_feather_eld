@@ -17,7 +17,9 @@ import '../providers/dvir_provider.dart';
 /// — قسم قراءة فقط أعلى قائمة الفحوصات؛ الفشل أو الفراغ لا يعرضان
 /// شيئاً ولا يكسران القائمة.
 class ActiveDefectsSection extends ConsumerWidget {
-  const ActiveDefectsSection({super.key});
+  const ActiveDefectsSection({super.key, this.showEmptyState = false});
+
+  final bool showEmptyState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,7 +81,38 @@ class ActiveDefectsSection extends ConsumerWidget {
         ),
       ),
       data: (defects) {
-        if (defects.isEmpty) return const SizedBox.shrink();
+        if (defects.isEmpty) {
+          if (!showEmptyState) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xxl),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 64,
+                    color: context.success,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    context.loc.dvirDefectsNone,
+                    style: context.styles.sectionTitle,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    context.loc.dvirSatisfactory,
+                    style: context.styles.caption.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Column(
@@ -126,9 +159,13 @@ class _ActiveDefectCard extends StatelessWidget {
       final code = defect.itemCode?.trim();
       if (code != null && code.isNotEmpty) {
         final match = catalog!
-            .where((item) => item.code.trim().toUpperCase() == code.toUpperCase())
+            .where(
+              (item) => item.code.trim().toUpperCase() == code.toUpperCase(),
+            )
             .firstOrNull;
-        if (match != null && match.nameAr != null && match.nameAr!.trim().isNotEmpty) {
+        if (match != null &&
+            match.nameAr != null &&
+            match.nameAr!.trim().isNotEmpty) {
           return match.nameAr!.trim();
         }
       }
@@ -136,9 +173,13 @@ class _ActiveDefectCard extends StatelessWidget {
       final name = defect.itemName?.trim();
       if (name != null && name.isNotEmpty) {
         final match = catalog!
-            .where((item) => item.name.trim().toLowerCase() == name.toLowerCase())
+            .where(
+              (item) => item.name.trim().toLowerCase() == name.toLowerCase(),
+            )
             .firstOrNull;
-        if (match != null && match.nameAr != null && match.nameAr!.trim().isNotEmpty) {
+        if (match != null &&
+            match.nameAr != null &&
+            match.nameAr!.trim().isNotEmpty) {
           return match.nameAr!.trim();
         }
       }
@@ -157,16 +198,32 @@ class _ActiveDefectCard extends StatelessWidget {
     final desc = defect.description?.trim();
     if (desc == null || desc.isEmpty) return null;
 
-    final normalizedDesc = desc.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
-    final normalizedTitle = resolvedTitle.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+    final normalizedDesc = desc.toLowerCase().replaceAll(
+      RegExp(r'[\s_\-]'),
+      '',
+    );
+    final normalizedTitle = resolvedTitle.toLowerCase().replaceAll(
+      RegExp(r'[\s_\-]'),
+      '',
+    );
     final normalizedItemName =
-        defect.itemName?.trim().toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '') ?? '';
+        defect.itemName?.trim().toLowerCase().replaceAll(
+          RegExp(r'[\s_\-]'),
+          '',
+        ) ??
+        '';
     final normalizedItemCode =
-        defect.itemCode?.trim().toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '') ?? '';
+        defect.itemCode?.trim().toLowerCase().replaceAll(
+          RegExp(r'[\s_\-]'),
+          '',
+        ) ??
+        '';
 
     if (normalizedDesc == normalizedTitle ||
-        (normalizedItemName.isNotEmpty && normalizedDesc == normalizedItemName) ||
-        (normalizedItemCode.isNotEmpty && normalizedDesc == normalizedItemCode)) {
+        (normalizedItemName.isNotEmpty &&
+            normalizedDesc == normalizedItemName) ||
+        (normalizedItemCode.isNotEmpty &&
+            normalizedDesc == normalizedItemCode)) {
       return null;
     }
 
@@ -215,7 +272,8 @@ class _ActiveDefectCard extends StatelessWidget {
             ),
           ],
           if (defect.outOfService == true ||
-              (defect.stage != null && defect.stage != DefectLifecycleStage.open)) ...[
+              (defect.stage != null &&
+                  defect.stage != DefectLifecycleStage.open)) ...[
             const SizedBox(height: 6),
             Wrap(
               spacing: AppSpacing.xs,
@@ -227,7 +285,8 @@ class _ActiveDefectCard extends StatelessWidget {
                     type: AppStatusBadgeType.error,
                     icon: Icons.do_not_disturb_on_outlined,
                   ),
-                if (defect.stage != null && defect.stage != DefectLifecycleStage.open)
+                if (defect.stage != null &&
+                    defect.stage != DefectLifecycleStage.open)
                   AppStatusBadge(
                     label: defect.stage!.wire,
                     type: AppStatusBadgeType.info,
@@ -242,24 +301,17 @@ class _ActiveDefectCard extends StatelessWidget {
 
   Widget _severityBadge(BuildContext context, DefectSeverity? severity) {
     if (severity == null) {
-      return const AppStatusBadge(
-        label: '—',
-        type: AppStatusBadgeType.neutral,
-      );
+      return const AppStatusBadge(label: '—', type: AppStatusBadgeType.neutral);
     }
     final (type, icon) = switch (severity) {
       DefectSeverity.high => (AppStatusBadgeType.error, Icons.error_outline),
       DefectSeverity.medium => (
         AppStatusBadgeType.warning,
-        Icons.warning_amber_rounded
+        Icons.warning_amber_rounded,
       ),
       DefectSeverity.low => (AppStatusBadgeType.neutral, Icons.info_outline),
     };
-    return AppStatusBadge(
-      label: severity.wire,
-      type: type,
-      icon: icon,
-    );
+    return AppStatusBadge(label: severity.wire, type: type, icon: icon);
   }
 }
 
@@ -289,9 +341,18 @@ class _DefectDetailDialog extends ConsumerWidget {
       backgroundColor: context.colorScheme.surface,
       title: Row(
         children: [
-          Icon(Icons.build_circle_outlined, color: context.gold, size: AppSpacing.iconMedium),
+          Icon(
+            Icons.build_circle_outlined,
+            color: context.gold,
+            size: AppSpacing.iconMedium,
+          ),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(loc.dvirDefectDetailsTitle, style: context.styles.cardTitle)),
+          Expanded(
+            child: Text(
+              loc.dvirDefectDetailsTitle,
+              style: context.styles.cardTitle,
+            ),
+          ),
           if (async.isLoading)
             const SizedBox(
               width: 14,

@@ -14,7 +14,8 @@ sealed class SaveRulesOutcome {
 
 class SaveRulesSuccess extends SaveRulesOutcome {
   final RulesScreenModel model;
-  const SaveRulesSuccess(this.model);
+  final String? serverMessage;
+  const SaveRulesSuccess(this.model, {this.serverMessage});
 }
 
 class SaveRulesSessionExpired extends SaveRulesOutcome {
@@ -195,7 +196,10 @@ class RulesFormNotifier extends AutoDisposeNotifier<RulesFormState> {
         (failure) => SaveRulesError(failure),
         (updatedModel) {
           ref.invalidate(rulesScreenProvider);
-          return SaveRulesSuccess(updatedModel);
+          return SaveRulesSuccess(
+            updatedModel,
+            serverMessage: updatedModel.serverMessage,
+          );
         },
       );
     } catch (e) {

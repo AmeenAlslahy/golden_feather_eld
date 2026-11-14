@@ -161,9 +161,10 @@ void main() {
 
       // Radius is derived from AppRadius.input
       expect(decoration.borderRadius, BorderRadius.circular(AppRadius.input));
-      // Border is derived from GoldenColors.light.border
+      // Border is derived from the interactive-field token, not the decorative
+      // divider/card token (GoldenColors.light.border).
       final border = decoration.border as Border;
-      expect(border.top.color, GoldenColors.light.border);
+      expect(border.top.color, GoldenColors.light.inputBorder);
     });
   });
 }

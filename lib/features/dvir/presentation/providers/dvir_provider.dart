@@ -33,6 +33,7 @@ class DvirState {
   /// including a successful empty read. Used as the §396.13 fallback when the
   /// dedicated pre-trip endpoint is unavailable.
   final bool reportsLoaded;
+  final String? lastSuccessMessage;
 
   const DvirState({
     this.reports = const [],
@@ -45,6 +46,7 @@ class DvirState {
     this.previousLookupDone = false,
     this.previousLookupFailed = false,
     this.reportsLoaded = false,
+    this.lastSuccessMessage,
   });
 
   /// Previous report for [vehicleId] that still needs the §396.13 review.
@@ -77,6 +79,7 @@ class DvirState {
     bool? previousLookupDone,
     bool? previousLookupFailed,
     bool? reportsLoaded,
+    String? lastSuccessMessage,
   }) {
     return DvirState(
       reports: reports ?? this.reports,
@@ -93,6 +96,7 @@ class DvirState {
       previousLookupDone: previousLookupDone ?? this.previousLookupDone,
       previousLookupFailed: previousLookupFailed ?? this.previousLookupFailed,
       reportsLoaded: reportsLoaded ?? this.reportsLoaded,
+      lastSuccessMessage: lastSuccessMessage ?? this.lastSuccessMessage,
     );
   }
 }
@@ -175,18 +179,18 @@ class DvirNotifier extends StateNotifier<DvirState> {
   /// Concurrent calls for the same vehicle share one request. A slower answer
   /// for an older vehicle is discarded (sequence guard) so it cannot overwrite
   /// the answer for the vehicle the driver is currently inspecting.
-  Future<void> loadPreviousDvir(String vehicleId) {
+  Future<void> loadPreviousDvir(String vehicleId, {int? deviceId}) {
     if (isUnassignedVehicleId(vehicleId)) {
       AppLogger.debug(
         'DVIR previous inspection load skipped: vehicle uniqueId is unavailable.',
       );
       return Future.value();
     }
-    final key = vehicleId.trim();
+    final key = '${vehicleId.trim()}|${deviceId ?? ''}';
     final existing = _previousLoads[key];
     if (existing != null) return existing;
 
-    final future = _fetchPreviousDvir(key);
+    final future = _fetchPreviousDvir(vehicleId, deviceId: deviceId);
     _previousLoads[key] = future;
     return future.whenComplete(() {
       if (identical(_previousLoads[key], future)) {
@@ -195,10 +199,13 @@ class DvirNotifier extends StateNotifier<DvirState> {
     });
   }
 
-  Future<void> _fetchPreviousDvir(String vehicleId) async {
+  Future<void> _fetchPreviousDvir(String vehicleId, {int? deviceId}) async {
     final requestId = ++_previousSequence;
     AppLogger.debug('DVIR previous inspection request started.');
-    final result = await _repository.getPreviousDvir(vehicleId);
+    final result = await _repository.getPreviousDvir(
+      vehicleId,
+      deviceId: deviceId,
+    );
     if (!mounted || requestId != _previousSequence) return;
     result.fold(
       (_) => state = state.copyWith(
@@ -225,10 +232,10 @@ class DvirNotifier extends StateNotifier<DvirState> {
   ///
   /// `false` means the obligation is unknown (e.g. offline with no cache);
   /// the caller must not submit silently.
-  Future<bool> ensurePreviousDvir(String vehicleId) async {
+  Future<bool> ensurePreviousDvir(String vehicleId, {int? deviceId}) async {
     final key = vehicleId.trim();
     if (isUnassignedVehicleId(key)) return false;
-    await loadPreviousDvir(key);
+    await loadPreviousDvir(key, deviceId: deviceId);
     if (!mounted) return false;
 
     final authoritative =
@@ -324,7 +331,11 @@ class DvirNotifier extends StateNotifier<DvirState> {
           return false;
         },
         (_) async {
-          state = state.copyWith(isSubmitting: false);
+          final serverMsg = _repository.lastSuccessMessage;
+          state = state.copyWith(
+            isSubmitting: false,
+            lastSuccessMessage: serverMsg,
+          );
           // Refresh and await so the updated list is in state immediately.
           await _loadDvirs();
           return true;
@@ -469,14 +480,16 @@ final dvirCatalogProvider = FutureProvider.autoDispose<List<DvirCatalogItem>>((
   return result.fold((f) => throw f, (items) => items);
 });
 
-/// العيوب النشطة لمركبة السائق (`GET /eld/dvir/defects/device/{uniqueId}`)
+/// العيوب النشطة لمركبة السائق
+/// (`GET /eld/dvir/defects?uniqueId=...&deviceId=...`)
 /// — الهوية من المركبة المحددة (وليس معرف تتبع هاتف السائق). القائمة الفارغة
 /// أو الفشل يعني "لا قسم يُعرض" — لا يكسر شاشة القائمة.
 final activeVehicleDefectsProvider = FutureProvider.autoDispose<List<DvirDefect>>(
   (ref) async {
     final vehicleState = ref.watch(vehicleProvider);
     final selectedVehicle = vehicleState.selectedVehicle;
-    final dashboardVehicle = ref.watch(dashboardDataProvider).vehicleId;
+    final dashboard = ref.watch(dashboardDataProvider);
+    final dashboardVehicle = dashboard.vehicleId;
     final vehicleId = resolveDvirVehicleUniqueId(
       vehicles: vehicleRefsForDvir(vehicleState.vehicles),
       selectedUniqueId: selectedVehicle?.uniqueId,
@@ -489,10 +502,22 @@ final activeVehicleDefectsProvider = FutureProvider.autoDispose<List<DvirDefect>
       );
       throw StateError('dvirVehicleIdMissing');
     }
+    final deviceId = resolveDvirDeviceId(
+      reportVehicleId: vehicleId,
+      selectedVehicle: selectedVehicle == null
+          ? null
+          : DvirVehicleRef(
+              id: selectedVehicle.id,
+              uniqueId: selectedVehicle.uniqueId,
+              deviceId: selectedVehicle.deviceId,
+            ),
+      dashboardDeviceId: dashboard.deviceId,
+      vehicles: vehicleRefsForDvir(vehicleState.vehicles),
+    );
     AppLogger.debug('DVIR active defects request started.');
     final result = await ref
         .watch(dvirRepositoryProvider)
-        .getActiveDefects(uniqueId: vehicleId);
+        .getActiveDefects(uniqueId: vehicleId, deviceId: deviceId);
     return result.fold((failure) => throw failure, (defects) => defects);
   },
 );

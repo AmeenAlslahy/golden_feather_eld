@@ -68,7 +68,7 @@ class AppSelectionTile extends StatelessWidget {
     if (!enabled) {
       backgroundColor = goldenColors.disabledSurface;
       borderSide = BorderSide(
-        color: goldenColors.border.withValues(alpha: 0.4),
+        color: goldenColors.inputBorder.withValues(alpha: 0.4),
         width: 1.0,
       );
       titleColor = goldenColors.disabledForeground;
@@ -86,7 +86,7 @@ class AppSelectionTile extends StatelessWidget {
           ? goldenColors.surfaceElevated
           : theme.colorScheme.surface;
       borderSide = BorderSide(
-        color: goldenColors.border,
+        color: goldenColors.inputBorder,
         width: isDark ? 1.0 : 0.5,
       );
       titleColor = context.textPrimary;

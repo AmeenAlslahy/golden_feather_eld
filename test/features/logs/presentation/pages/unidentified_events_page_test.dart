@@ -52,6 +52,9 @@ class _Backend implements UnidentifiedEventsBackend {
   _Backend({required this.rows, List<Map<String, dynamic>>? rejectedRows})
     : rejectedRows = rejectedRows ?? [];
 
+  @override
+  String? get lastServerMessage => null;
+
   List<Map<String, dynamic>> rows;
   List<Map<String, dynamic>> rejectedRows;
   final calls = <String>[];

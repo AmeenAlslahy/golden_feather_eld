@@ -25,6 +25,9 @@ class MockTraccarClient implements TraccarNativeClient {
   Future<void> requestImmediatePosition({String? alarm}) async {}
 
   @override
+  Future<void> pushLocation(Map<String, dynamic> location) async {}
+
+  @override
   Future<Map<String, dynamic>?> getLastKnownPosition() async => null;
 
   @override

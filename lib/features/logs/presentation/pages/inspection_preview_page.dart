@@ -21,7 +21,7 @@ import '../formatters/log_date_formatter.dart';
 import '../mappers/inspection_preview_event_mapper.dart';
 import '../providers/log_detail_tab_provider.dart';
 import '../providers/logs_provider.dart';
-import '../widgets/inspection_audit_trail_section.dart';
+// import '../widgets/inspection_audit_trail_section.dart';
 import '../widgets/inspection_filter_dialog.dart';
 import '../widgets/log_graph.dart';
 
@@ -223,8 +223,8 @@ class _InspectionPreviewPageState extends ConsumerState<InspectionPreviewPage> {
                   LogGraph(events: visibleEvents, logDate: selectedLog.date),
                   const Divider(height: 1),
                   EldEventsTable(rows: tableRows),
-                  const Divider(height: 1),
-                  const InspectionAuditTrailSection(),
+                  // const Divider(height: 1),
+                  // const InspectionAuditTrailSection(),
                   const SizedBox(height: AppSpacing.lg),
                 ],
               ),

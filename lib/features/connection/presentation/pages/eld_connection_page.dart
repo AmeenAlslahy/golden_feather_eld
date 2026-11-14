@@ -106,19 +106,30 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
     });
 
     ref.listen<EldConnectionState>(eldConnectionProvider, (previous, current) {
-      final confirmedNow =
-          current.connectionConfirmed && previous?.connectionConfirmed != true;
-      if (confirmedNow) {
-        if (current.infoMessage == 'disconnected_accepted') {
+      final startedNow =
+          current.sessionStarted && previous?.sessionStarted != true;
+      if (startedNow) {
+        final msg = current.infoMessage;
+        if (msg == 'disconnected_accepted') {
           AppFeedback.info(context, context.loc.serverAcceptedDisconnected);
+        } else if (msg == 'session_local_pending') {
+          AppFeedback.info(context, context.loc.continueDisconnectedLocalPending);
+        } else if (msg != null && msg.isNotEmpty && msg != 'connected') {
+          AppFeedback.success(context, msg);
+        } else {
+          AppFeedback.success(context, context.loc.connected);
         }
-        context.go(AppRoutes.home);
+        // `maybeOf` بدل `try/catch`: في الإنتاج يوجد Router دائماً، وغيابه
+        // في الاختبارات يجب ألا يبتلع فشل تنقل حقيقي بصمت.
+        if (context.mounted) {
+          GoRouter.maybeOf(context)?.go(AppRoutes.home);
+        }
         return;
       }
       if (previous != null &&
           previous.isBusy &&
           !current.isBusy &&
-          !current.connectionConfirmed &&
+          !current.sessionStarted &&
           !current.wasCancelled) {
         ref.invalidate(hardwareStatusProvider);
       }
@@ -306,8 +317,18 @@ class _EldConnectionPageState extends ConsumerState<EldConnectionPage> {
   ) {
     final loc = AppLocalizations.of(context)!;
     switch (state.errorMessage) {
-      case 'disconnected_offline':
-        return loc.continueDisconnectedOffline;
+      case 'bluetooth_disabled':
+        return loc.bluetoothDisabled;
+      case 'bluetooth_permission_denied':
+        return loc.bluetoothPermissionRequired;
+      case 'bluetooth_invalid_mac':
+        return loc.invalidMacAddress;
+      case 'bluetooth_timeout':
+        return loc.bluetoothConnectionTimeout;
+      case 'vehicle_missing':
+        return loc.selectVehicle;
+      case 'session_conflict':
+        return loc.sessionConflictOtherVehicle;
       case 'disconnected_rejected':
         return loc.continueDisconnectedRejected;
       case 'disconnected_failed':

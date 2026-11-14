@@ -721,6 +721,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueDisconnected => 'CONTINUE DISCONNECTED';
 
   @override
+  String get trackingSourceTitle => 'Location source';
+
+  @override
+  String get trackingSourceHelp =>
+      'Choose how the app gets the position: phone GPS, or an ELD over Bluetooth.';
+
+  @override
+  String get sourcePhoneGps => 'Phone GPS';
+
+  @override
+  String get sourceBleDevice => 'ELD device (Bluetooth)';
+
+  @override
+  String get sourceHybrid => 'Hybrid (automatic)';
+
+  @override
+  String get scanForDevices => 'Scan for devices';
+
+  @override
+  String get stopScan => 'Stop scan';
+
+  @override
+  String get noBleDevicesFound => 'No devices found yet';
+
+  @override
+  String get bleDiagnosticsFrames => 'Recent Bluetooth frames';
+
+  @override
+  String get bleNoFramesCaptured => 'No frames captured yet';
+
+  @override
+  String get bleScanFailed => 'Could not start Bluetooth scan';
+
+  @override
   String get usernameRequired => 'Username is required';
 
   @override
@@ -2884,6 +2918,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'No network connection. The disconnected-mode request was not sent; you are still on the connection screen.';
 
   @override
+  String get continueDisconnectedLocalPending =>
+      'No network connection. The session was recorded locally and will sync with the server once connected.';
+
+  @override
+  String get sessionConflictOtherVehicle =>
+      'An active session exists for this driver on another vehicle. Please close it before connecting to a new vehicle.';
+
+  @override
   String get continueDisconnectedFailed =>
       'Disconnected mode could not be confirmed. Tracking did not start and you were not taken to Home.';
 
@@ -2894,6 +2936,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get continueDisconnectedInProgress =>
       'Submitting disconnected mode...';
+
+  @override
+  String get bluetoothDisabled =>
+      'Bluetooth is turned off. Please enable Bluetooth on your phone to continue.';
+
+  @override
+  String get bluetoothPermissionRequired =>
+      'Please grant Bluetooth permission to connect to the ELD device.';
+
+  @override
+  String get invalidMacAddress =>
+      'Invalid MAC address. Please enter a 6-byte address (e.g. AA:BB:CC:DD:EE:FF).';
+
+  @override
+  String get bluetoothConnectionTimeout =>
+      'Unable to find or connect to the ELD device. Please ensure the device is powered on and nearby.';
 
   @override
   String get macAddressRequired => 'MAC address is required.';
@@ -3310,4 +3368,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusSyncFailed => 'Sync failed';
+
+  @override
+  String get dvirAddTrailerFirst =>
+      'Add a trailer number before selecting its defects.';
+
+  @override
+  String get dvirRecordDefectsOrChangeStatus =>
+      'Record defects or select the Satisfactory status before saving.';
+
+  @override
+  String get dvirFutureTimeNotAllowed => 'A future time cannot be selected.';
 }

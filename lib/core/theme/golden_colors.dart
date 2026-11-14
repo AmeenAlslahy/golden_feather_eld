@@ -15,6 +15,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     required this.textMuted,
     required this.border,
     required this.borderStrong,
+    required this.inputBorder,
     required this.primaryText,
     required this.successText,
     required this.successBackground,
@@ -33,7 +34,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     this.disabledForeground = AppColors.lightTextMuted,
     this.disabledSurface = AppColors.lightSurfaceSecondary,
     this.selectedContainer = AppColors.lightPrimaryContainer,
-    this.focusRing = AppColors.brandGold,
+    this.focusRing = AppColors.brandGoldDark,
     this.pressedOverlay = const Color(0x1F000000),
     this.hoverOverlay = const Color(0x0A000000),
     this.brandGradient = const LinearGradient(
@@ -72,6 +73,10 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
 
   /// حدود واضحة قوية
   final Color borderStrong;
+
+  /// حد الحقول التفاعلية (نص/قائمة/توقيع) — منفصل عن [border] الذي يخدم
+  /// الفواصل والحدود الزخرفية (بطاقات/حوارات/صفوف معلومات).
+  final Color inputBorder;
 
   /// النص الذهبي الدلالي المتناسق مع السطح
   final Color primaryText;
@@ -115,7 +120,8 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
   /// خلفية العنصر المحدد
   final Color selectedContainer;
 
-  /// لون حلقة التركيز للوحة المفاتيح
+  /// لون حلقة التركيز للوحة المفاتيح — ذهبي داكن في الفاتح لتحقيق 3:1
+  /// على خلفيات الحقول، وذهبي فاتح في الداكن.
   final Color focusRing;
 
   /// طبقة التعتيم عند الضغط
@@ -135,6 +141,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     textMuted: AppColors.lightTextMuted,
     border: AppColors.lightBorder,
     borderStrong: AppColors.lightBorderStrong,
+    inputBorder: AppColors.lightInputBorder,
     primaryText: AppColors.lightPrimaryText,
     gold: AppColors.goldDeep,
     goldContainer: AppColors.goldBg,
@@ -149,7 +156,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     disabledForeground: AppColors.lightTextMuted,
     disabledSurface: AppColors.lightSurfaceSecondary,
     selectedContainer: AppColors.lightPrimaryContainer,
-    focusRing: AppColors.brandGold,
+    focusRing: AppColors.brandGoldDark,
     pressedOverlay: Color(0x1F000000),
     hoverOverlay: Color(0x0A000000),
   );
@@ -165,6 +172,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     textMuted: AppColors.darkTextMuted,
     border: AppColors.darkBorder,
     borderStrong: AppColors.darkBorderStrong,
+    inputBorder: AppColors.darkInputBorder,
     primaryText: AppColors.darkPrimaryText,
     gold: AppColors.primaryGold,
     goldContainer: AppColors.darkGoldBg,
@@ -200,6 +208,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
     Color? textMuted,
     Color? border,
     Color? borderStrong,
+    Color? inputBorder,
     Color? primaryText,
     Color? gold,
     Color? goldContainer,
@@ -229,6 +238,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
       textMuted: textMuted ?? this.textMuted,
       border: border ?? this.border,
       borderStrong: borderStrong ?? this.borderStrong,
+      inputBorder: inputBorder ?? this.inputBorder,
       primaryText: primaryText ?? this.primaryText,
       gold: gold ?? this.gold,
       goldContainer: goldContainer ?? this.goldContainer,
@@ -263,6 +273,7 @@ class GoldenColors extends ThemeExtension<GoldenColors> {
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
       border: Color.lerp(border, other.border, t)!,
       borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
+      inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
       primaryText: Color.lerp(primaryText, other.primaryText, t)!,
       gold: Color.lerp(gold, other.gold, t)!,
       goldContainer: Color.lerp(goldContainer, other.goldContainer, t)!,

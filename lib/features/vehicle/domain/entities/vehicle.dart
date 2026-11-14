@@ -5,8 +5,9 @@ class Vehicle extends Equatable {
   final String id;
   final String? uniqueId;
 
-  /// معرف جهاز المركبة الرقمي (Traccar deviceId) — مطلوب في جسم إنشاء
-  /// DVIR من الخادم؛ لا يُستبدل بـ uniqueId ولا يُخترع.
+  /// معرّف رقمي يطلبه الخادم في عقود DVIR/الداشبورد/الأحداث غير المحددة.
+  /// **ليس** هوية قناة التتبع: تلك تعتمد على [uniqueId] فقط
+  /// (`resolveTrackingDeviceId`). لا يُشتق من ترتيب القائمة ولا يُخترع.
   final int? deviceId;
   final String name;
   final String year;

@@ -16,6 +16,12 @@ abstract class TraccarNativeClient {
   /// طلب موقع فوري من خدمة الخلفية
   Future<void> requestImmediatePosition({String? alarm});
 
+  /// يمرّر قفلاً من مصدر خارجي (جهاز BLE/ELD) إلى طابور الرفع الأصلي.
+  ///
+  /// `speed` يجب أن يكون بالمتر/الثانية؛ التحويل إلى عقد (knots) يتم في
+  /// طبقة الرفع الأصلية.
+  Future<void> pushLocation(Map<String, dynamic> location);
+
   /// آخر موقع معروف من نظام التشغيل — قراءة فقط.
   ///
   /// لا يُدخل الموقع في قاعدة البيانات الأصلية ولا يرفعه إلى Traccar؛

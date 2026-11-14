@@ -20,7 +20,34 @@ class EldDriverSessionBackend implements DriverSessionBackend {
       EldEndpoints.eldSession(driverId.value),
       parser: (data) => data is Map<String, dynamic> ? data : {},
     );
-    return res.mapValue((r) => r.data ?? <String, dynamic>{});
+    // لا نستخدم `mapValue` مباشرة: الخادم قد يرد HTTP 200 مع
+    // `success:false`، وحينها `data` فارغة — وكان ذلك يُقرأ كنجاح صامت
+    // (`Right({})`). الآن الفشل الصريح خطأ، والحمولة الفارغة تعني
+    // «لا توجد جلسة نشطة» لا «جلسة فارغة».
+    return res.flatMap((response) {
+      if (!response.isSuccess) {
+        return err<RawJson>(
+          ServerError(
+            code: 'eld.session.requestRejected',
+            l10nKey: 'sessionStatusUnconfirmed',
+            statusCode: response.statusCode,
+            context: {
+              'statusCode': response.statusCode,
+              if (response.requestId != null) 'requestId': response.requestId!,
+              if (response.errors.isNotEmpty)
+                'errors': response.errors.map((e) => e.toString()).join('; '),
+            },
+          ),
+        );
+      }
+      final data = response.data;
+      if (data == null || data.isEmpty) {
+        return err<RawJson>(
+          const NotFoundError(code: 'eld.session.noneActive'),
+        );
+      }
+      return ok<RawJson>(data);
+    });
   }
 
   @override

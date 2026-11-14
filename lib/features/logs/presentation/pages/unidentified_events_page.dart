@@ -91,7 +91,11 @@ class _UnidentifiedEventsPageState extends ConsumerState<UnidentifiedEventsPage>
       AppFeedback.error(context, anyErrorUserMessage(error, loc: context.loc));
       return;
     }
-    AppFeedback.success(context, context.loc.yourRecordWasUpdatedReviewThe);
+    final serverMsg = ref.read(unidentifiedEventsProvider).lastSuccessMessage;
+    final feedback = (serverMsg != null && serverMsg.trim().isNotEmpty)
+        ? serverMsg.trim()
+        : context.loc.yourRecordWasUpdatedReviewThe;
+    AppFeedback.success(context, feedback);
   }
 
   @override

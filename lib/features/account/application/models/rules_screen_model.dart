@@ -28,6 +28,7 @@ class RulesScreenModel {
 
   /// The parsed engine limits corresponding to the selected rule
   final HosConfiguration limits;
+  final String? serverMessage;
 
   const RulesScreenModel({
     required this.ruleSource,
@@ -42,7 +43,40 @@ class RulesScreenModel {
     required this.fixedSettings,
     required this.notice,
     required this.limits,
+    this.serverMessage,
   });
+
+  RulesScreenModel copyWith({
+    String? ruleSource,
+    String? cycleRule,
+    String? cargoType,
+    String? restart,
+    String? restBreak,
+    bool? sixteenHourException,
+    Map<String, List<String>>? options,
+    Set<String>? editableFields,
+    Set<String>? readOnlyFields,
+    Map<String, dynamic>? fixedSettings,
+    String? notice,
+    HosConfiguration? limits,
+    String? serverMessage,
+  }) {
+    return RulesScreenModel(
+      ruleSource: ruleSource ?? this.ruleSource,
+      cycleRule: cycleRule ?? this.cycleRule,
+      cargoType: cargoType ?? this.cargoType,
+      restart: restart ?? this.restart,
+      restBreak: restBreak ?? this.restBreak,
+      sixteenHourException: sixteenHourException ?? this.sixteenHourException,
+      options: options ?? this.options,
+      editableFields: editableFields ?? this.editableFields,
+      readOnlyFields: readOnlyFields ?? this.readOnlyFields,
+      fixedSettings: fixedSettings ?? this.fixedSettings,
+      notice: notice ?? this.notice,
+      limits: limits ?? this.limits,
+      serverMessage: serverMessage ?? this.serverMessage,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {

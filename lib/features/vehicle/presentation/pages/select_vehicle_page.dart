@@ -46,7 +46,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
     super.dispose();
   }
 
-  void _handleVehicleSelected(Vehicle vehicle) {
+  Future<void> _handleVehicleSelected(Vehicle vehicle) async {
     if (!listedVehicleIsOperable(
       browsingCompanyFleet: ref.read(vehicleProvider).isCompanyFleet,
       vehicle: vehicle,
@@ -79,22 +79,25 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
           // لا دليل حركة، والاختيار بدء طبيعي لجلسة جديدة (SRS 9.3).
           trackingLive: ref.read(trackingStateProvider).isTracking,
         );
-    // هوية موحّدة: نجاح الاختيار يكتب لوحة القيادة فوراً (uniqueId +
-    // deviceId الرقمي) حتى لا يبقى نموذج الفحص وربط السائق على قيم افتراضية.
+    // نجاح الاختيار يحدّث لوحة القيادة فوراً حتى لا يبقى نموذج الفحص
+    // وربط السائق على قيم افتراضية (الداشبورد يحتاج uniqueId وdeviceId).
     final state = ref.read(vehicleProvider);
     if (state.isSuccess && state.selectedVehicle != null) {
       final v = state.selectedVehicle!;
       ref.read(dashboardDataProvider.notifier).updateVehicle(v);
-      final uid = v.uniqueId;
-      if (v.deviceId != null) {
-        ref.read(localStorageProvider).setDeviceId(v.deviceId.toString());
-      } else if (uid != null && uid.isNotEmpty) {
-        ref.read(localStorageProvider).setDeviceId(uid);
+      // هوية موحّدة لقناة التتبع: uniqueId النصي فقط (نفس هوية MAC العتاد
+      // ونفس القيمة المرسلة في جلسة الخادم). كان يُفضَّل `deviceId` الرقمي
+      // فيصل إلى Traccar كـ `id` غير مسجّل — سبب رفض الرفع 400.
+      // تُنتظر الكتابة حتى لا يبدأ التتبع بهوية قديمة.
+      final trackingDeviceId = resolveTrackingDeviceId(v);
+      if (trackingDeviceId != null) {
+        await ref.read(localStorageProvider).setDeviceId(trackingDeviceId);
       }
       // حفظ الاختيار يتم داخل VehicleNotifier موسوماً بمالكه؛ لا نكتب هنا
       // قيمة مجرّدة حتى لا نمحو وسم المالك.
       // رسالة حالة مختصرة: نجاح الاختيار فقط، بلا بيانات المركبة الكاملة.
       // رقم المركبة يظهر في شريط صفحة الاتصال بعد الانتقال.
+      if (!mounted) return;
       AppFeedback.success(context, context.loc.vehicleSelected);
       context.go(AppRoutes.connection);
     }
@@ -132,9 +135,7 @@ class _SelectVehiclePageState extends ConsumerState<SelectVehiclePage> {
         secondaryActionLabel: context.loc.viewMyVehicles,
         onSecondaryAction: () {
           Navigator.pop(dialogContext);
-          ref
-              .read(vehicleProvider.notifier)
-              .loadVehicles(forceRefresh: true);
+          ref.read(vehicleProvider.notifier).loadVehicles(forceRefresh: true);
         },
       ),
     );

@@ -53,6 +53,9 @@ class UnidentifiedEventsRepositoryImpl implements UnidentifiedEventsRepository {
   }
 
   @override
+  String? get lastServerMessage => _backend.lastServerMessage;
+
+  @override
   Future<Either<Failure, void>> claim({
     required DutyStatusId id,
     required DriverId driverId,

@@ -13,6 +13,8 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/features/connection/presentation/pages/eld_connection_page.dart';
 import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_status_provider.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
+import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
@@ -21,6 +23,30 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 class _MockBluetoothService extends Mock implements BluetoothService {}
 
 class _MockHardwareBackend extends Mock implements HardwareBackend {}
+
+class _FakeVehicleNotifier extends StateNotifier<VehicleState>
+    implements VehicleNotifier {
+  _FakeVehicleNotifier(super.state);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+const _vehicle = Vehicle(
+  id: 'VH-001',
+  uniqueId: '1001',
+  name: 'Truck 1001',
+  year: '2024',
+);
+
+/// كل محاولة اتصال تشترط هوية مركبة (`vehicle.uniqueId` هو `deviceId`).
+final List<Override> _vehicleOverrides = [
+  vehicleProvider.overrideWith(
+    (ref) => _FakeVehicleNotifier(
+      const VehicleState(selectedVehicle: _vehicle, vehicles: [_vehicle]),
+    ),
+  ),
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +82,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -89,6 +116,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -119,6 +147,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -159,6 +188,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -190,6 +220,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -228,6 +259,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});
@@ -276,6 +308,7 @@ void main() {
             bluetoothServiceProvider.overrideWithValue(mockBt),
             hardwareBackendProvider.overrideWithValue(mockHardware),
             localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
             hardwareStatusProvider.overrideWith(
               (ref) async => const ConnectivityStatus(
                 connectionStatus: 'DISCONNECTED',
@@ -336,6 +369,7 @@ void main() {
           bluetoothServiceProvider.overrideWithValue(mockBt),
           hardwareBackendProvider.overrideWithValue(mockHardware),
           localStorageProvider.overrideWithValue(realStorage),
+          ..._vehicleOverrides,
         ],
       );
       final sub = container.listen(eldConnectionProvider, (_, __) {});

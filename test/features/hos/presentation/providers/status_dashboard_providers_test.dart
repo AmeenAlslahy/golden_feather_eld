@@ -279,6 +279,9 @@ class _FailingAdapter implements BackendAdapter {
 
 class _FailingStatusDashboard implements StatusDashboardBackend {
   @override
+  String? get lastServerMessage => null;
+
+  @override
   Future<Result<StatusDashboard>> getDashboard({DriverId? driverId}) async {
     return err(
       const NetworkError(code: 'test.failure', l10nKey: 'testFailure'),
@@ -332,6 +335,9 @@ class _ScriptedAdapter implements BackendAdapter {
 
 class _ScriptedStatusDashboard implements StatusDashboardBackend {
   _ScriptedStatusDashboard(this.dashboard);
+
+  @override
+  String? get lastServerMessage => null;
 
   StatusDashboard dashboard;
 

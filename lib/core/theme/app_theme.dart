@@ -251,19 +251,23 @@ class AppTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(
-            color: isLight ? AppColors.border : AppColors.darkBorder,
+            color: isLight
+                ? AppColors.lightInputBorder
+                : AppColors.darkInputBorder,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(
-            color: isLight ? AppColors.border : AppColors.darkBorder,
+            color: isLight
+                ? AppColors.lightInputBorder
+                : AppColors.darkInputBorder,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(
-            color: isLight ? AppColors.primaryGold : AppColors.darkPrimary,
+            color: isLight ? AppColors.brandGoldDark : AppColors.darkPrimary,
             width: 2,
           ),
         ),
@@ -285,8 +289,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(
             color: isLight
-                ? AppColors.border.withValues(alpha: 0.6)
-                : AppColors.darkBorder.withValues(alpha: 0.6),
+                ? AppColors.lightInputBorder.withValues(alpha: 0.6)
+                : AppColors.darkInputBorder.withValues(alpha: 0.6),
           ),
         ),
         hintStyle: (isLight

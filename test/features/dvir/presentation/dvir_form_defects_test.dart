@@ -10,6 +10,8 @@ import 'package:golden_feather_eld/core/services/tracking_config_storage_service
 import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/pages/dvir_form_page.dart';
 import 'package:golden_feather_eld/features/dvir/presentation/widgets/dvir_form_sections.dart';
+import 'package:golden_feather_eld/features/home/presentation/providers/dashboard_provider.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,7 +45,7 @@ class _FakeLocalStorage extends Mock implements LocalStorageService {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {bool seedVehicle = false}) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -68,6 +70,23 @@ void main() {
         ),
       ),
     );
+    // البذر بعد أول إطار (خارج مرحلة البناء — تعديل مزوّد أثناء البناء
+    // ممنوع): مستمع لوحة القيادة في مزوّد النموذج يعيد حل هوية المركبة
+    // تفاعلياً. ProviderScope يبقى في الشجرة ليُدمَّر معها فيُلغى مؤقّت
+    // keepAlive الخاص بالكتالوج قبل فحص timersPending.
+    if (seedVehicle) {
+      ProviderScope.containerOf(tester.element(find.byType(DvirFormPage)))
+          .read(dashboardDataProvider.notifier)
+          .updateVehicle(
+            const Vehicle(
+              id: 'V-ID',
+              uniqueId: 'V-U',
+              deviceId: 503,
+              name: 'Truck V',
+              year: '2021',
+            ),
+          );
+    }
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
@@ -91,7 +110,7 @@ void main() {
   }
 
   testWidgets('tapping defects opens the live catalog list', (tester) async {
-    await pump(tester);
+    await pump(tester, seedVehicle: true);
     await openAddDefects(tester);
 
     expect(find.text('Vehicle - Defects'), findsOneWidget);
@@ -110,7 +129,7 @@ void main() {
   testWidgets(
     'picking an item updates field and switches status to Has Defects',
     (tester) async {
-      await pump(tester);
+      await pump(tester, seedVehicle: true);
       await openAddDefects(tester);
 
       await tester.tap(find.widgetWithText(CheckboxListTile, 'Tires'));
@@ -135,7 +154,7 @@ void main() {
   testWidgets('CANCEL keeps the report free of catalog defects', (
     tester,
   ) async {
-    await pump(tester);
+    await pump(tester, seedVehicle: true);
     await openAddDefects(tester);
 
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Service brakes'));
@@ -151,7 +170,7 @@ void main() {
   testWidgets('re-opening defects catalog preserves previous selections', (
     tester,
   ) async {
-    await pump(tester);
+    await pump(tester, seedVehicle: true);
     await openAddDefects(tester);
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Tires'));
     await tester.pump();
@@ -172,7 +191,7 @@ void main() {
   testWidgets(
     'tapping on Vehicle defects field opens the vehicle defect catalog',
     (tester) async {
-      await pump(tester);
+      await pump(tester, seedVehicle: true);
       final vehicleDefectsCell = find.widgetWithText(InkWell, 'Defects').first;
       await tester.tap(vehicleDefectsCell);
       await tester.pump();
@@ -188,7 +207,13 @@ void main() {
   testWidgets(
     'tapping on Trailer defects field opens the trailer defect catalog',
     (tester) async {
-      await pump(tester);
+      await pump(tester, seedVehicle: true);
+      final trailerField = find.descendant(
+        of: find.byType(DvirTrailerSection),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(trailerField, '5555');
+      await tester.pump();
       final trailerDefectsCell = find.widgetWithText(InkWell, 'Defects').last;
       await tester.tap(trailerDefectsCell);
       await tester.pump();

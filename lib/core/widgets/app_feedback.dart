@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../extensions/context_extensions.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_sizing.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
-import '../theme/golden_colors.dart';
 
 /// الأنواع الدلالية لرسائل التنبيهات الفورية (AppFeedback)
 enum AppFeedbackType {
@@ -18,8 +18,9 @@ enum AppFeedbackType {
 
 /// سطح التنبيهات الموحد للتطبيق (Design System 2.0).
 ///
-/// يستمد جميع درجات الخلفيات والنصوص والأيقونات من [GoldenColors]،
-/// والظلال العائمة المتكيفة من [AppShadows]، مما يضمن تباينًا تاماً في Light وDark.
+/// يستخدم تعبئة صلبة بالألوان الدلالية المألوفة (أحمر/أخضر/برتقالي/أزرق)
+/// من رموز [AppColors]، مع لون نص مفحوص لكل تعبئة (≥ 4.5:1)، وظلال
+/// عائمة متكيفة من [AppShadows].
 class AppFeedback {
   AppFeedback._();
 
@@ -63,34 +64,30 @@ class AppFeedback {
       _activeEntry = null;
     }
 
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final goldenColors =
-        theme.extension<GoldenColors>() ??
-        (brightness == Brightness.dark
-            ? GoldenColors.dark
-            : GoldenColors.light);
+    final brightness = Theme.of(context).brightness;
 
+    // خلفية مصمتة باللون الدلالي المألوف (أحمر/أخضر/برتقالي/أزرق) بدل
+    // الخلفيات الباستيل الباهتة، مع لون نص مفحوص لكل تعبئة.
     final (Color background, Color foreground, IconData icon) = switch (type) {
       AppFeedbackType.success => (
-        goldenColors.successBackground,
-        goldenColors.successText,
-        Icons.check_circle_outline,
+        AppColors.successFill,
+        AppColors.onSuccessFill,
+        Icons.check_circle,
       ),
       AppFeedbackType.error => (
-        goldenColors.errorBackground,
-        goldenColors.errorText,
-        Icons.error_outline,
+        AppColors.dangerFill,
+        AppColors.onDangerFill,
+        Icons.error,
       ),
       AppFeedbackType.warning => (
-        goldenColors.warningBackground,
-        goldenColors.warningText,
-        Icons.warning_amber_rounded,
+        AppColors.warningFill,
+        AppColors.onWarningFill,
+        Icons.warning_rounded,
       ),
       AppFeedbackType.info => (
-        goldenColors.infoBackground,
-        goldenColors.infoText,
-        Icons.info_outline,
+        AppColors.infoFill,
+        AppColors.onInfoFill,
+        Icons.info,
       ),
     };
 
@@ -119,10 +116,6 @@ class AppFeedback {
                     decoration: BoxDecoration(
                       color: background,
                       borderRadius: BorderRadius.circular(AppRadius.feedback),
-                      border: Border.all(
-                        color: foreground.withValues(alpha: 0.25),
-                        width: 1.0,
-                      ),
                       boxShadow: AppShadows.floatingFor(brightness),
                     ),
                     child: Row(
@@ -139,7 +132,7 @@ class AppFeedback {
                             message,
                             style: (overlayContext.styles.bodyMedium).copyWith(
                               color: foreground,
-                              fontWeight: AppTypography.semiBold,
+                              fontWeight: AppTypography.bold,
                             ),
                           ),
                         ),

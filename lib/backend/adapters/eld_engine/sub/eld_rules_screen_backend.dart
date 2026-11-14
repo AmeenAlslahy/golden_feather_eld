@@ -45,6 +45,7 @@ class EldRulesScreenBackend implements RulesScreenBackend {
     final error = res.errorOrNull;
     if (error != null) return err(error);
     final response = res.valueOrNull!;
+    final serverMessage = response.message;
     final body = response.data ?? response.rawBody;
     if (body is Map<String, dynamic> &&
         (body.containsKey('cycleRule') ||
@@ -52,11 +53,13 @@ class EldRulesScreenBackend implements RulesScreenBackend {
             body.containsKey('rules') ||
             body.containsKey('limits'))) {
       try {
-        return ok(RulesScreenMapper.toModel(RulesScreenDto.fromJson(body)));
+        final model = RulesScreenMapper.toModel(RulesScreenDto.fromJson(body));
+        return ok(model.copyWith(serverMessage: serverMessage));
       } catch (_) {
         // Empty/partial PUT body is not a blank rules screen.
       }
     }
-    return getRulesScreen();
+    final refreshed = await getRulesScreen();
+    return refreshed.mapValue((m) => m.copyWith(serverMessage: serverMessage));
   }
 }

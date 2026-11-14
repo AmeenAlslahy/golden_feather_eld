@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:signature/signature.dart';
@@ -5,12 +7,17 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/error/user_facing_message.dart';
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../../core/network/core_providers.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/time/trusted_time_provider.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
+import '../../../tracking/domain/entities/location_entity.dart';
+import '../../../tracking/presentation/providers/tracking_provider.dart';
 import '../../domain/dvir_catalog.dart';
+import '../../domain/dvir_location.dart';
 import '../../domain/dvir_previous_review.dart';
+import '../../domain/dvir_vehicle.dart';
 import '../extensions/dvir_catalog_extensions.dart';
 import '../../domain/dvir_signature.dart';
 import '../../domain/entities/dvir_report.dart';
@@ -25,6 +32,7 @@ import '../providers/dvir_form_provider.dart';
 import '../providers/dvir_provider.dart';
 import '../extensions/dvir_status_extensions.dart';
 import '../widgets/previous_dvir_review_modal.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../../core/widgets/app_feedback.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
 
@@ -63,6 +71,29 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   // duplicate to avoid divergence between widget state and provider state.
   bool _signed = false;
 
+  // حقل الموقع يُملأ من GPS تلقائياً حتى يكتب السائق فيه؛ بعدها لا يُستبدل.
+  bool _locationEditedByDriver = false;
+  bool _applyingGpsLocation = false;
+  DvirCoordinates? _gpsCoordinates;
+
+  // حارس الخروج: أي إدخال فعلي من السائق يجعل النموذج "متسخاً" — الخروج
+  // يطلب تأكيداً بدل فقدان نموذج معبأ وتوقيع بلمسة واحدة. ملء GPS
+  // التلقائي لا يُعدّ إدخالاً.
+  bool _dirty = false;
+  bool _allowPop = false;
+  void _markDirty() {
+    if (_readOnly || _dirty) return;
+    _dirty = true;
+    if (mounted) setState(() {});
+  }
+
+  /// مركبة الفحص محسومة (مختارة ومحلولة) — بلاها يُعطَّل الحفظ ويُمنع
+  /// اختيار العيوب من المنبع بدل رفض متأخر بعد التوقيع.
+  bool get _hasVehicle {
+    final id = _formState.displayVehicleId.trim();
+    return id.isNotEmpty && !isUnassignedVehicleId(id);
+  }
+
   DvirFormNotifier get _form =>
       ref.read(dvirFormProvider(widget.existingReport).notifier);
 
@@ -79,17 +110,55 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     // إنشاء الحالة يقرأ المزوّدات مرة واحدة ويجمع القيم الابتدائية.
     final initial = _formState;
     _locationController = TextEditingController(text: r?.location ?? '');
+    _locationController.addListener(_onLocationTextChanged);
     _odometerController = TextEditingController(
       text: r?.odometer?.toString() ?? '',
-    );
+    )..addListener(_markDirty);
     _trailerController = TextEditingController(
       text: r?.trailerId ?? initial.initialTrailerNumber,
-    );
+    )..addListener(_markDirty);
     _companyController = TextEditingController(
       text: r?.companyName ?? initial.initialCompany,
-    );
-    _remarksController = TextEditingController(text: r?.notes ?? '');
+    )..addListener(_markDirty);
+    _remarksController = TextEditingController(text: r?.notes ?? '')
+      ..addListener(_markDirty);
     _signed = r?.signature != null;
+    unawaited(_seedLocationFromGps());
+  }
+
+  void _onLocationTextChanged() {
+    if (_applyingGpsLocation) return;
+    _locationEditedByDriver = true;
+    _markDirty();
+  }
+
+  /// يجلب إحداثيات GPS الحالية ويملأ حقل الموقع بها. `ensureLocation` قراءة
+  /// فقط: لا تبدأ التتبع ولا تطلب موقعاً حياً — نفس نمط شاشة تغيير الحالة.
+  /// لا يعمل في وضع القراءة فقط، فلا يمس موقع تقرير محفوظ.
+  Future<void> _seedLocationFromGps() async {
+    if (_readOnly) return;
+    _applyGpsLocation(ref.read(trackingStateProvider).currentLocation);
+    await ref.read(trackingStateProvider.notifier).ensureLocation();
+    if (!mounted) return;
+    _applyGpsLocation(ref.read(trackingStateProvider).currentLocation);
+  }
+
+  /// يحدّث الحقل فقط قبل أن يكتب السائق فيه؛ نص السائق لا يُستبدل أبداً،
+  /// لكن الإحداثيات تحفظ لضمان إرسال موقع دقيق وفق العقد.
+  void _applyGpsLocation(LocationEntity? location) {
+    if (_readOnly || location == null) return;
+    final coordinates = dvirCoordinatesFrom(
+      location.latitude,
+      location.longitude,
+    );
+    if (coordinates == null) return;
+    _gpsCoordinates = coordinates;
+    if (_locationEditedByDriver) return;
+    final text = formatDvirLocationText(coordinates);
+    if (_locationController.text == text) return;
+    _applyingGpsLocation = true;
+    _locationController.text = text;
+    _applyingGpsLocation = false;
   }
 
   @override
@@ -112,6 +181,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       if (!mounted || _readOnly) return;
       final has = _signatureController.isNotEmpty;
       if (has != _signed) setState(() => _signed = has);
+      if (has) _markDirty();
     });
   }
 
@@ -131,6 +201,11 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
 
   Future<void> _openVehicleDefectCatalog() async {
     if (_readOnly) return;
+    // عيوب مركبة بلا مركبة = رفض متأخر بعد التوقيع — تُمنع من المنبع.
+    if (!_hasVehicle) {
+      _snack(context.loc.dvirVehicleIdMissing);
+      return;
+    }
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) => DefectCatalogDialog(
@@ -142,10 +217,17 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
     if (picked == null || !mounted) return;
     _form.applyPickedDefects(picked, trailerScope: false);
+    _markDirty();
   }
 
   Future<void> _openTrailerDefectCatalog() async {
     if (_readOnly) return;
+    // عيوب مقطورة بلا رقم مقطورة = سجلات TRAILER يتيمة بلا أصل على
+    // الخادم — تُمنع من المنبع.
+    if (_trailerController.text.trim().isEmpty) {
+      _snack(context.loc.dvirAddTrailerFirst);
+      return;
+    }
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) => DefectCatalogDialog(
@@ -158,32 +240,38 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
     if (picked == null || !mounted) return;
     _form.applyPickedDefects(picked, trailerScope: true);
+    _markDirty();
   }
 
   /// كتالوج كامل (SRS 7.6): يُفتح عند اختيار "بها عيوب" بلا عيوب مسجلة.
   Future<void> _openFullDefectCatalog() async {
     if (_readOnly) return;
+    if (!_hasVehicle) {
+      _snack(context.loc.dvirVehicleIdMissing);
+      return;
+    }
     final picked = await showDialog<List<DvirDefectSelection>>(
       context: context,
       builder: (_) => DefectCatalogDialog(initial: _formState.selectedDefects),
     );
     if (picked == null || !mounted) return;
     _form.applyUnscopedPickedDefects(picked);
+    _markDirty();
   }
 
   Future<void> _openTimePicker() async {
     if (_readOnly) return;
     final trusted = ref.read(trustedTimeProvider).currentTime;
-    final initialDate =
-        _formState.customTime ??
-        (trusted is TrustedTimeAvailable
-            ? trusted.utc.toLocal()
-            : DateTime.now());
+    final nowLocal = trusted is TrustedTimeAvailable
+        ? trusted.utc.toLocal()
+        : DateTime.now();
+    final initialDate = _formState.customTime ?? nowLocal;
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      // الوقت القانوني للفحص لا يكون في المستقبل — السقف = اليوم الحالي.
+      lastDate: DateTime(nowLocal.year, nowLocal.month, nowLocal.day),
     );
     if (pickedDate == null || !mounted) return;
     final pickedTime = await showTimePicker(
@@ -191,15 +279,20 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       initialTime: TimeOfDay.fromDateTime(initialDate),
     );
     if (pickedTime == null || !mounted) return;
-    _form.setCustomTime(
-      DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      ),
+    final combined = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
     );
+    // سماحية دقيقة واحدة لحد الدقائق بين حواري التاريخ والوقت.
+    if (combined.isAfter(nowLocal.add(const Duration(minutes: 1)))) {
+      _snack(context.loc.dvirFutureTimeNotAllowed);
+      return;
+    }
+    _form.setCustomTime(combined);
+    _markDirty();
   }
 
   Future<void> _openVehiclePicker() async {
@@ -217,6 +310,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       // مركبة الفحص محلية لهذا التقرير — الحالة تقرر، ولا شيء يُكتب في
       // لوحة القيادة/النموذج اليومي.
       _form.setInspectionVehicle(vehicle);
+      _markDirty();
     }
   }
 
@@ -241,6 +335,7 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
     );
     if (selected == null || !mounted) return;
     _form.selectStatus(selected);
+    _markDirty();
     // SRS 7.6: choosing Has Defects with nothing recorded opens the defects list.
     if (_formState.shouldPromptDefectsAfterStatus(selected)) {
       await _openFullDefectCatalog();
@@ -289,6 +384,13 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
   Future<void> _handleSubmit() async {
     if (ref.read(dvirProvider).isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
+    // «بها عيوب» بصفر عيوب تنقلب صامتة إلى «سليمة» في مصالحة DVIR-09 —
+    // تُمنع هنا بقرار صريح من السائق بدل قلب خفي بين الواجهة والخادم.
+    if (_formState.selectedStatus == DvirConditionStatus.hasDefects &&
+        !_formState.hasAnyDefect) {
+      _snack(context.loc.dvirRecordDefectsOrChangeStatus);
+      return;
+    }
     // فتح عملية الإرسال الكاملة — false يعني عملية جارية أصلاً (حتى
     // مرحلة حوار المراجعة مشمولة، لا isSubmitting وحده). المرجع يُلتقط
     // قبل أول await حتى يبقى finally صالحاً بعد تخلّص الواجهة.
@@ -350,6 +452,8 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
       final failure = await form.submitDraft(
         text: DvirFormTextValue(
           location: _locationController.text,
+          latitude: _gpsCoordinates?.latitude,
+          longitude: _gpsCoordinates?.longitude,
           odometer: _odometerController.text,
           trailerNumber: _trailerController.text,
           company: _companyController.text,
@@ -367,8 +471,26 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         _snack(_failureMessage(failure));
         return;
       }
-      AppFeedback.success(context, context.loc.reportSavedSuccess);
-      Navigator.pop(context);
+      // تمييز صريح: وصل للخادم أم في طابور المزامنة — سجل قانوني لا يُبلَّغ
+      // عنه بنجاح واحد في الحالتين.
+      final wasOffline = !ref.read(networkInfoProvider).isConnected;
+      final serverMsg = ref.read(dvirProvider).lastSuccessMessage;
+      setState(() {
+        _allowPop = true;
+        _dirty = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppFeedback.success(
+          context,
+          wasOffline
+              ? context.loc.formSavedOffline
+              : ((serverMsg != null && serverMsg.trim().isNotEmpty)
+                  ? serverMsg.trim()
+                  : context.loc.reportSavedSuccess),
+        );
+        Navigator.pop(context);
+      });
     } catch (error, stackTrace) {
       // بيانات السائق لا تُسجَّل (لا توقيع ولا هويات) — الاستثناء وحده.
       AppLogger.error(
@@ -401,85 +523,125 @@ class _DvirFormPageState extends ConsumerState<DvirFormPage> {
         ? DateFormat('d MMM yy, hh:mm a').format(trusted.utc.toLocal())
         : context.loc.dvirTimeUnavailableShort;
     final readOnly = formState.readOnly;
+    final bool hasVehicle =
+        formState.displayVehicleId.trim().isNotEmpty &&
+        !isUnassignedVehicleId(formState.displayVehicleId.trim());
 
-    return Scaffold(
-      appBar: GoldenAppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+    // قفل GPS قد يصل أو يُحدَّث بعد فتح النموذج — يتابع الحقل ما لم يكتب
+    // السائق فيه.
+    ref.listen<LocationEntity?>(
+      trackingStateProvider.select((state) => state.currentLocation),
+      (previous, next) => _applyGpsLocation(next),
+    );
+
+    // حارس الخروج: نموذج متسخ يطلب تأكيد التجاهل بدل فقدان صامت — عبر
+    // مكوّن الحوار الموحد (Design System 2.0).
+    return PopScope(
+      canPop: _allowPop || readOnly || !_dirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final discard = await AppDialog.show(
+          context,
+          title: context.loc.discardDraft,
+          contentText: context.loc.confirmDiscard,
+          type: AppDialogType.confirmation,
+          primaryLabel: context.loc.yes,
+          secondaryLabel: context.loc.cancelAction,
+        );
+        if (discard != true || !mounted) return;
+        setState(() {
+          _allowPop = true;
+          _dirty = false;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.of(context).pop();
+        });
+      },
+      child: Scaffold(
+        appBar: GoldenAppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+          titleText: context.loc.dvirInsertDvir,
+          variant: GoldenAppBarVariant.brand,
+          centerTitle: true,
         ),
-        titleText: context.loc.dvirInsertDvir,
-        variant: GoldenAppBarVariant.brand,
-        centerTitle: true,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          children: [
-            DvirInspectionTypeSection(
-              selectedType: formState.inspectionType,
-              readOnly: readOnly,
-              onTypeChanged: _form.setInspectionType,
-            ),
-            DvirNoticeSection(
-              hasExistingReport: readOnly,
-              hasPreviousToReview: formState.hasPreviousToReview,
-            ),
-            DvirTimeSection(
-              currentTime: currentTime,
-              onTap: _openTimePicker,
-              readOnly: readOnly,
-            ),
-            DvirLocationSection(
-              controller: _locationController,
-              readOnly: readOnly,
-            ),
-            DvirOdometerSection(
-              controller: _odometerController,
-              readOnly: readOnly,
-            ),
-            DvirVehicleSection(
-              vehicleId: formState.displayVehicleId,
-              vehicleDisplayName: formState.displayVehicleName,
-              defectsText: _defectsText(formState, trailer: false),
-              readOnly: readOnly,
-              onSelectDefects: _openVehicleDefectCatalog,
-              onSelectVehicle: _openVehiclePicker,
-            ),
-            DvirTrailerSection(
-              controller: _trailerController,
-              defectsText: _defectsText(formState, trailer: true),
-              readOnly: readOnly,
-              onSelectDefects: _openTrailerDefectCatalog,
-            ),
-            DvirCompanySection(
-              controller: _companyController,
-              readOnly: readOnly,
-            ),
-            DvirRemarksSection(
-              controller: _remarksController,
-              readOnly: readOnly,
-            ),
-            DvirStatusSection(
-              selectedStatusLabel: formState.selectedStatus.label(context.loc),
-              onOpenStatusModal: _openStatusModal,
-              readOnly: readOnly,
-            ),
-            DvirSignatureSection(
-              controller: _signatureController,
-              readOnly: readOnly,
-              signatureData: formState.existing?.signature,
-            ),
-            if (!readOnly)
-              DvirSubmitButtonSection(
-                isSigned: _signed,
-                isSubmitting: dvirState.isSubmitting,
-                timeAvailable: timeAvailable,
-                onSubmit: _handleSubmit,
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            children: [
+              DvirInspectionTypeSection(
+                selectedType: formState.inspectionType,
+                readOnly: readOnly,
+                onTypeChanged: (type) {
+                  _markDirty();
+                  _form.setInspectionType(type);
+                },
               ),
-            const SizedBox(height: AppSpacing.xl),
-          ],
+              DvirNoticeSection(
+                hasExistingReport: readOnly,
+                hasPreviousToReview: formState.hasPreviousToReview,
+              ),
+              DvirTimeSection(
+                currentTime: currentTime,
+                onTap: _openTimePicker,
+                readOnly: readOnly,
+              ),
+              DvirLocationSection(
+                controller: _locationController,
+                readOnly: readOnly,
+              ),
+              DvirOdometerSection(
+                controller: _odometerController,
+                readOnly: readOnly,
+              ),
+              DvirVehicleSection(
+                vehicleId: formState.displayVehicleId,
+                vehicleDisplayName: formState.displayVehicleName,
+                defectsText: _defectsText(formState, trailer: false),
+                readOnly: readOnly,
+                onSelectDefects: _openVehicleDefectCatalog,
+                onSelectVehicle: _openVehiclePicker,
+              ),
+              DvirTrailerSection(
+                controller: _trailerController,
+                defectsText: _defectsText(formState, trailer: true),
+                readOnly: readOnly,
+                onSelectDefects: _openTrailerDefectCatalog,
+              ),
+              DvirCompanySection(
+                controller: _companyController,
+                readOnly: readOnly,
+              ),
+              DvirRemarksSection(
+                controller: _remarksController,
+                readOnly: readOnly,
+              ),
+              DvirStatusSection(
+                selectedStatusLabel: formState.selectedStatus.label(
+                  context.loc,
+                ),
+                onOpenStatusModal: _openStatusModal,
+                readOnly: readOnly,
+              ),
+              DvirSignatureSection(
+                controller: _signatureController,
+                readOnly: readOnly,
+                signatureData: formState.existing?.signature,
+              ),
+              if (!readOnly)
+                DvirSubmitButtonSection(
+                  isSigned: _signed,
+                  isSubmitting: dvirState.isSubmitting,
+                  timeAvailable: timeAvailable,
+                  hasVehicle: hasVehicle,
+                  onSubmit: _handleSubmit,
+                ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
         ),
       ),
     );

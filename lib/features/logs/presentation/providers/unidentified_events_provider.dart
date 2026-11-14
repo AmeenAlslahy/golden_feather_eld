@@ -26,6 +26,7 @@ class UnidentifiedListState {
   final String? vehicleName;
   final DateTime? dateFilter;
   final UnidentifiedStats stats;
+  final String? lastSuccessMessage;
 
   const UnidentifiedListState({
     this.loading = false,
@@ -39,6 +40,7 @@ class UnidentifiedListState {
     this.vehicleName,
     this.dateFilter,
     this.stats = UnidentifiedStats.unavailable,
+    this.lastSuccessMessage,
   });
 
   bool get hasFilters => currentVehicleOnly || dateFilter != null;
@@ -58,6 +60,7 @@ class UnidentifiedListState {
     DateTime? dateFilter,
     bool clearDateFilter = false,
     UnidentifiedStats? stats,
+    String? lastSuccessMessage,
   }) {
     return UnidentifiedListState(
       loading: loading ?? this.loading,
@@ -73,6 +76,7 @@ class UnidentifiedListState {
       vehicleName: clearVehicle ? null : (vehicleName ?? this.vehicleName),
       dateFilter: clearDateFilter ? null : (dateFilter ?? this.dateFilter),
       stats: stats ?? this.stats,
+      lastSuccessMessage: lastSuccessMessage ?? this.lastSuccessMessage,
     );
   }
 }
@@ -215,6 +219,9 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
           annotation: normalized,
         );
     return result.fold<Future<Failure?>>((failure) async => failure, (_) async {
+      final msg =
+          ref.read(unidentifiedEventsRepositoryProvider).lastServerMessage;
+      state = state.copyWith(lastSuccessMessage: msg);
       _refreshDependencies();
       await load();
       return null;
@@ -240,6 +247,9 @@ class UnidentifiedEventsNotifier extends StateNotifier<UnidentifiedListState> {
           rejectionReason: normalized,
         );
     return result.fold<Future<Failure?>>((failure) async => failure, (_) async {
+      final msg =
+          ref.read(unidentifiedEventsRepositoryProvider).lastServerMessage;
+      state = state.copyWith(lastSuccessMessage: msg);
       _refreshDependencies();
       await load();
       return null;

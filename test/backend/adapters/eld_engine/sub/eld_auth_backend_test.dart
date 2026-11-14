@@ -11,7 +11,7 @@ void main() {
     RequestOptions? captured;
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        captured = options;
+        captured ??= options;
         handler.resolve(Response(
           requestOptions: options,
           statusCode: 200,

@@ -10,11 +10,7 @@ void main() {
       logger = RequestLogger();
     });
 
-    test('onError: response data with latitude/longitude is redacted before logging', () {
-      // الفجوة السابقة: onError كان يطبع err.response?.data مباشرةً بلا تنقيح.
-      // بعد الإصلاح: يمر الجسم عبر _redactSensitiveData قبل أي AppLogger.error.
-      // هذا الاختبار يتحقق أن redactSensitiveData تُنقّح البيانات الحساسة
-      // التي قد تظهر في جسم استجابة الخطأ.
+    test('onError: response data with sensitive PII is redacted while coordinates pass through', () {
       final sensitiveErrorBody = {
         'error': 'validation_failed',
         'latitude': 32.7767,
@@ -24,10 +20,10 @@ void main() {
       };
 
       final redacted = logger.redactSensitiveData(sensitiveErrorBody) as Map;
-      expect(redacted['latitude'], '[REDACTED]',
-          reason: 'latitude in error response body must be redacted');
-      expect(redacted['longitude'], '[REDACTED]',
-          reason: 'longitude in error response body must be redacted');
+      expect(redacted['latitude'], 32.7767,
+          reason: 'latitude is telemetry data and must not be redacted in logs');
+      expect(redacted['longitude'], -96.7970,
+          reason: 'longitude is telemetry data and must not be redacted in logs');
       expect(redacted['email'], '[REDACTED]',
           reason: 'email in error response body must be redacted');
       expect(redacted['error'], 'validation_failed',
@@ -37,9 +33,6 @@ void main() {
     });
 
     test('onError: redactSensitiveData handles Map response data (simulates error body redaction)', () {
-      // بدلاً من استدعاء onError مباشرةً (يستلزم Dio completer حقيقياً)،
-      // نتحقق أن _redactSensitiveData تُنقّح Map من جسم الاستجابة — وهو ما
-      // يحدث الآن داخل onError بعد الإصلاح.
       final errorResponseBody = {
         'latitude': 32.7767,
         'longitude': -96.7970,
@@ -47,10 +40,9 @@ void main() {
         'error': 'validation_failed',
       };
 
-      // هذا ما يفعله onError الآن: يمرر data عبر redactSensitiveData
       final redacted = logger.redactSensitiveData(errorResponseBody) as Map;
-      expect(redacted['latitude'], '[REDACTED]');
-      expect(redacted['longitude'], '[REDACTED]');
+      expect(redacted['latitude'], 32.7767);
+      expect(redacted['longitude'], -96.7970);
       expect(redacted['email'], '[REDACTED]');
       expect(redacted['error'], 'validation_failed',
           reason: 'non-sensitive field must pass through');
@@ -149,7 +141,7 @@ void main() {
       expect(redacted['status'], 'CERTIFIED');
     });
 
-    test('redacts coordinates, latitude, longitude, and manualLocation', () {
+    test('preserves telemetry coordinates, latitude, longitude, and manualLocation', () {
       final data = {
         'latitude': 32.7767,
         'longitude': -96.7970,
@@ -162,13 +154,12 @@ void main() {
       };
 
       final redacted = logger.redactSensitiveData(data) as Map;
-      expect(redacted['latitude'], '[REDACTED]');
-      expect(redacted['longitude'], '[REDACTED]');
-      expect(redacted['lat'], '[REDACTED]');
-      expect(redacted['lng'], '[REDACTED]');
-      expect(redacted['coordinates'], '[REDACTED]');
-      expect(redacted['manualLocation'], '[REDACTED]');
-      expect(redacted['locationText'], '[REDACTED]');
+      expect(redacted['latitude'], 32.7767);
+      expect(redacted['longitude'], -96.7970);
+      expect(redacted['lat'], 32.7767);
+      expect(redacted['lng'], -96.7970);
+      expect(redacted['manualLocation'], 'Dallas, TX');
+      expect(redacted['locationText'], 'Dallas, TX');
       expect(redacted['status'], 'ON_DUTY');
     });
 
@@ -187,7 +178,7 @@ void main() {
 
       final events = redacted['events'] as List;
       expect((events[0] as Map)['status'], 'DRIVING');
-      expect((events[0] as Map)['latitude'], '[REDACTED]');
+      expect((events[0] as Map)['latitude'], 33.123);
       expect((events[1] as Map)['status'], 'OFF_DUTY');
       expect((events[1] as Map)['signatureImage'], '[REDACTED]');
     });
@@ -200,36 +191,33 @@ void main() {
       logger = RequestLogger();
     });
 
-    test('URI with locationText has locationText value redacted', () {
+    test('URI with auth or token query params has values redacted', () {
       final uri = Uri.parse(
-        'https://snsoft.cloud/api/eld/hardware/status?locationText=Dallas%2C+TX',
+        'https://snsoft.cloud/api/eld/auth?token=secret123&apiKey=key456',
       );
       final redacted = logger.redactUri(uri);
       expect(
-        redacted.contains('locationText=[REDACTED]') ||
-            redacted.contains('locationText=%5BREDACTED%5D'),
+        redacted.contains('token=[REDACTED]') ||
+            redacted.contains('token=%5BREDACTED%5D'),
         isTrue,
-        reason: 'locationText value should be redacted in URI query params',
+        reason: 'token value should be redacted in URI query params',
+      );
+      expect(
+        redacted.contains('apiKey=[REDACTED]') ||
+            redacted.contains('apiKey=%5BREDACTED%5D'),
+        isTrue,
+        reason: 'apiKey value should be redacted in URI query params',
       );
     });
 
-    test('URI with latitude and longitude has both values redacted', () {
+    test('URI with driverId, latitude, and longitude preserves telemetry query params', () {
       final uri = Uri.parse(
-        'https://snsoft.cloud/api/eld/events?latitude=32.77&longitude=-96.79',
+        'https://snsoft.cloud/api/eld/events?driverId=101&latitude=32.77&longitude=-96.79',
       );
       final redacted = logger.redactUri(uri);
-      expect(
-        redacted.contains('latitude=[REDACTED]') ||
-            redacted.contains('latitude=%5BREDACTED%5D'),
-        isTrue,
-      );
-      expect(
-        redacted.contains('longitude=[REDACTED]') ||
-            redacted.contains('longitude=%5BREDACTED%5D'),
-        isTrue,
-      );
-      expect(redacted.contains('32.77'), isFalse);
-      expect(redacted.contains('-96.79'), isFalse);
+      expect(redacted, contains('driverId=101'));
+      expect(redacted, contains('latitude=32.77'));
+      expect(redacted, contains('longitude=-96.79'));
     });
 
     test('URI with driverId and sortBy does not redact non-sensitive keys', () {

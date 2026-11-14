@@ -92,7 +92,9 @@ class LogEventModel extends LogEvent {
     double? originalLatitude;
     double? originalLongitude;
     if (rawLocation is Map) {
-      location = rawLocation['description']?.toString();
+      location = rawLocation['description']?.toString() ??
+          rawLocation['name']?.toString() ??
+          rawLocation['text']?.toString();
       if (rawLocation['latitude'] != null) {
         originalLatitude = double.tryParse(rawLocation['latitude'].toString());
       }
@@ -102,7 +104,8 @@ class LogEventModel extends LogEvent {
     } else if (rawLocation != null) {
       location = rawLocation.toString();
     }
-    location ??= json['locationText']?.toString();
+    location ??= json['manualLocation']?.toString() ??
+        json['locationText']?.toString();
 
     if (originalLatitude == null) {
       final rawLat = json['latitude'] ?? json['originalLatitude'];
@@ -179,6 +182,11 @@ class LogEventModel extends LogEvent {
           Map<String, dynamic>.from(value),
         );
       } else {
+        if (entry.key == 'location' && current is String && value is Map) {
+          if (merged['manualLocation'] == null && !current.startsWith('{')) {
+            merged['manualLocation'] = current;
+          }
+        }
         merged[entry.key] = value;
       }
     }
@@ -219,6 +227,7 @@ class LogEventModel extends LogEvent {
       'startTime': startTime.toIso8601String(),
       'duration': duration.inSeconds,
       'location': location,
+      'manualLocation': location,
       'odometer': odometer,
       'engineHours': engineHours,
       'editable': editable,

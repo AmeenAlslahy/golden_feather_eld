@@ -7,10 +7,8 @@ import '../../../../core/events/eld_events_provider.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import 'package:golden_feather_eld/routes/app_routes.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../domain/duty_status/duty_status_code.dart';
 import '../../../../domain/duty_status/status_dashboard.dart' as dash;
 import '../../../hos/presentation/pages/recap_page.dart';
-import '../../../hos/presentation/widgets/driving_lock_screen.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
 import '../widgets/connection_status_indicator.dart';
 import '../widgets/eld_drawer.dart';
@@ -22,7 +20,6 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/widgets/golden_app_bar.dart';
 import '../../../hos/presentation/pages/status_dashboard_page.dart';
 import '../../../hos/presentation/providers/status_dashboard_providers.dart';
-import '../../../hos/presentation/providers/hos_engine_provider.dart';
 import '../../../auth/presentation/providers/auth_state_provider.dart';
 
 // Nav & bypass providers moved to home_provider.dart
@@ -39,7 +36,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authGate = ref.watch(authStateProvider);
     final currentNavIndex = ref.watch(homeNavIndexProvider);
-    final statusDashboardState = ref.watch(statusDashboardProvider);
+    ref.watch(statusDashboardProvider);
 
     // P0 Stage 1 — بوابة محايدة: أثناء الانتقال بين الحسابات أو غياب
     // المصادقة لا تُعرض أي بيانات سائق/مركبة سابقة، ولا تُبنى الصفحات
@@ -53,15 +50,7 @@ class HomePage extends ConsumerWidget {
 
     final driverText = ref.watch(driverSessionHeaderProvider);
 
-    final isDriving =
-        statusDashboardState.valueOrNull?.currentDutyStatus ==
-        DutyStatusCode.driving;
-    final isMoving = ref.watch(isVehicleMovingProvider);
-    final developerBypass = ref.watch(developerBypassDrivingScreenProvider);
-
-    return Stack(
-      children: [
-        Scaffold(
+    return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           // ========== شريط العنوان ==========
           appBar: GoldenAppBar(
@@ -264,10 +253,6 @@ class HomePage extends ConsumerWidget {
               }
             },
           ),
-        ),
-        if (isDriving && isMoving && !developerBypass)
-          const Positioned.fill(child: DrivingLockScreen()),
-      ],
-    );
+        );
   }
 }

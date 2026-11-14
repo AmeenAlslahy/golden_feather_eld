@@ -23,7 +23,7 @@ class LocaleNotifier extends StateNotifier<Locale> {
         return Locale(lang);
       }
     } catch (_) {}
-    return const Locale('ar');
+    return const Locale('en');
   }
 
   static const String _oldLanguageKey = 'language_code';

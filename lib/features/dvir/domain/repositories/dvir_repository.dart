@@ -10,11 +10,17 @@ abstract class DvirRepository {
   /// `GET /eld/dvir/pre-trip/{uniqueId}` — the server's designated source for
   /// the §396.13 previous-report review. `Right(null)` = server says there is
   /// no previous DVIR for this vehicle (`hasPreviousDvir:false`).
-  Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId);
+  Future<Either<Failure, DvirReport?>> getPreviousDvir(
+    String vehicleId, {
+    int? deviceId,
+  });
   Future<Either<Failure, DvirReport>> getDvirDetails(String id);
 
   /// §396.11 defect catalog from `GET /eld/dvir/catalog`.
   Future<Either<Failure, List<DvirCatalogItem>>> getDefectsCatalog();
+
+  /// Last server message returned by report creation.
+  String? get lastSuccessMessage;
 
   /// الحالة الرسمية تُقرأ من `report.conditionStatus` (طُبِّعت ثوابتها عند
   /// بناء المسودة في النطاق) — لا مصدر ثانٍ لها في التوقيع.
@@ -40,5 +46,6 @@ abstract class DvirRepository {
   /// المفتوحة/قيد الإصلاح/بانتظار اعتماد الناقل.
   Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
     required String uniqueId,
+    int? deviceId,
   });
 }

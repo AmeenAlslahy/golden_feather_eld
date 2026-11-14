@@ -163,7 +163,13 @@ class EldInspectionBackend implements InspectionBackend {
     );
     return res.flatMap((response) {
       if (response.isSuccess) {
-        return ok(response.data ?? <String, dynamic>{});
+        final payload =
+            Map<String, dynamic>.from(response.data ?? <String, dynamic>{});
+        if (response.message != null && response.message!.trim().isNotEmpty) {
+          payload['serverMessage'] = response.message!.trim();
+          payload.putIfAbsent('message', () => response.message!.trim());
+        }
+        return ok(payload);
       }
 
       final message = response.message?.trim();

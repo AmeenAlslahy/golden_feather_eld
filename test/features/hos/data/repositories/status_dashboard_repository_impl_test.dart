@@ -15,6 +15,9 @@ import 'package:golden_feather_eld/features/hos/data/repositories/status_dashboa
 class _Backend implements StatusDashboardBackend {
   _Backend({this.recap, this.dashboard, this.fail = false, this.completer});
 
+  @override
+  String? get lastServerMessage => null;
+
   final Completer<Result<StatusDashboard>>? completer;
 
   final WeeklyRecap? recap;

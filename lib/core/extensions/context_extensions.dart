@@ -124,6 +124,9 @@ extension AppSemanticColors on BuildContext {
   /// حد الفواصل حسب الوضع.
   Color get border => goldenColors.border;
 
+  /// حد الحقول التفاعلية حسب الوضع (منفصل عن حد الفواصل/الزخرفة).
+  Color get inputBorder => goldenColors.inputBorder;
+
   /// الحدود القوية حسب الوضع.
   Color get borderStrong => goldenColors.borderStrong;
 

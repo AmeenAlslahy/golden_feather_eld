@@ -58,6 +58,16 @@ class TraccarNativeClientImpl implements TraccarNativeClient {
   }
 
   @override
+  Future<void> pushLocation(Map<String, dynamic> location) async {
+    try {
+      await _channel.invokeMethod('pushLocation', location);
+    } on PlatformException catch (e) {
+      debugPrint('Failed to push BLE location: ${e.message}');
+      rethrow;
+    }
+  }
+
+  @override
   Future<Map<String, dynamic>?> getLastKnownPosition() async {
     try {
       final dynamic result = await _channel.invokeMethod(

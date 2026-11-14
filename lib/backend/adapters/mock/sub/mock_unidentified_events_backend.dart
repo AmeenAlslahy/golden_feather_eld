@@ -10,6 +10,9 @@ class MockUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
   const MockUnidentifiedEventsBackend();
 
   @override
+  String? get lastServerMessage => null;
+
+  @override
   Future<Result<RawJson>> list({
     UnidentifiedTab tab = UnidentifiedTab.unclaimed,
     int page = 0,

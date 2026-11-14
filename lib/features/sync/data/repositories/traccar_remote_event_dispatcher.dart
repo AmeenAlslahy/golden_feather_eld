@@ -379,6 +379,10 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
         }
       }
 
+      final lat = payload['originalLatitude'] as num?;
+      final lng = payload['originalLongitude'] as num?;
+      final vehicleId = payload['vehicleId'] as num?;
+
       final result = await _dailyLogsBackend.updateEvent(
         logId: DailyLogId(logId),
         eventId: DutyStatusId(statusId),
@@ -394,10 +398,18 @@ class TraccarRemoteEventDispatcher implements RemoteEventDispatcher {
           if (reasonText != null) 'reason': reasonText,
           if (reasonText != null) 'notes': reasonText,
           if (reasonText != null) 'editReason': reasonText,
+          if (lat != null && lng != null)
+            'location': {
+              'latitude': lat.toDouble(),
+              'longitude': lng.toDouble(),
+            },
           if (locationText != null) ...{
-            'location': {'description': locationText},
             'manualLocation': locationText,
             'locationText': locationText,
+          },
+          if (vehicleId != null && vehicleId > 0) ...{
+            'vehicleId': vehicleId.toInt(),
+            'vehicle': {'id': vehicleId.toInt()},
           },
         },
         expectedOwnerDriverId: owner,

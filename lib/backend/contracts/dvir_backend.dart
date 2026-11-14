@@ -3,6 +3,9 @@ import '../../domain/shared/value_objects.dart';
 import 'raw_json.dart';
 
 abstract interface class DvirBackend {
+  /// Last server message returned by a mutation (e.g. POST /eld/dvir).
+  String? get lastServerMessage;
+
   /// GET /eld/dvir
   // TODO(P2): replace with List<DvirReport>
   Future<Result<RawJson>> list({
@@ -33,12 +36,12 @@ abstract interface class DvirBackend {
   /// GET /eld/dvir/catalog
   Future<Result<RawJson>> getDefectsCatalog();
 
-  /// GET /eld/dvir/pre-trip/{uniqueId}
-  Future<Result<RawJson>> getPreviousDvir(String uniqueId);
+  /// GET /eld/dvir/previous — يتطلب deviceId رقمياً في الفلاتر.
+  Future<Result<RawJson>> getPreviousDvir(String uniqueId, {int? deviceId});
 
   /// GET /eld/dvir/defects/{id} — تفاصيل العيب وسجل الإصلاحات والاعتمادات
   Future<Result<RawJson>> getDefectDetails(int defectId);
 
-  /// GET /eld/dvir/defects/device/{uniqueId} — العيوب النشطة لمركبة
-  Future<Result<RawJson>> getVehicleDefects(String uniqueId);
+  /// GET /eld/dvir/defects?uniqueId=...&deviceId=... — العيوب النشطة لمركبة
+  Future<Result<RawJson>> getVehicleDefects(String uniqueId, {int? deviceId});
 }

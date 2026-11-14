@@ -267,23 +267,28 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   @override
-  Future<Either<Failure, DvirReport?>> getPreviousDvir(String vehicleId) async {
+  Future<Either<Failure, DvirReport?>> getPreviousDvir(
+    String vehicleId, {
+    int? deviceId,
+  }) async {
     final key = vehicleId.trim();
-    if (_inFlightPrevious.containsKey(key)) {
-      return _inFlightPrevious[key]!;
+    final inFlightKey = '$key|${deviceId ?? ''}';
+    if (_inFlightPrevious.containsKey(inFlightKey)) {
+      return _inFlightPrevious[inFlightKey]!;
     }
-    final future = _fetchPreviousDvir(vehicleId);
-    _inFlightPrevious[key] = future;
+    final future = _fetchPreviousDvir(vehicleId, deviceId: deviceId);
+    _inFlightPrevious[inFlightKey] = future;
     try {
       return await future;
     } finally {
-      _inFlightPrevious.remove(key);
+      _inFlightPrevious.remove(inFlightKey);
     }
   }
 
   Future<Either<Failure, DvirReport?>> _fetchPreviousDvir(
-    String vehicleId,
-  ) async {
+    String vehicleId, {
+    int? deviceId,
+  }) async {
     final key = vehicleId.trim();
     return guardedNetwork(
       networkInfo,
@@ -293,7 +298,10 @@ class DvirRepositoryImpl implements DvirRepository {
         }
         final Result<RawJson> result;
         try {
-          result = await dvirBackend.getPreviousDvir(vehicleId.trim());
+          result = await dvirBackend.getPreviousDvir(
+            vehicleId.trim(),
+            deviceId: deviceId,
+          );
         } catch (e, stackTrace) {
           AppLogger.error(
             'DvirRepository: pre-trip read failed',
@@ -444,12 +452,13 @@ class DvirRepositoryImpl implements DvirRepository {
   @override
   Future<Either<Failure, List<DvirDefect>>> getActiveDefects({
     required String uniqueId,
+    int? deviceId,
   }) async {
-    final key = uniqueId.trim();
+    final key = '${uniqueId.trim()}|${deviceId ?? ''}';
     if (_inFlightDefects.containsKey(key)) {
       return _inFlightDefects[key]!;
     }
-    final future = _fetchActiveDefects(uniqueId);
+    final future = _fetchActiveDefects(uniqueId, deviceId: deviceId);
     _inFlightDefects[key] = future;
     try {
       return await future;
@@ -459,12 +468,16 @@ class DvirRepositoryImpl implements DvirRepository {
   }
 
   Future<Either<Failure, List<DvirDefect>>> _fetchActiveDefects(
-    String uniqueId,
-  ) async {
+    String uniqueId, {
+    int? deviceId,
+  }) async {
     return guardedNetwork(
       networkInfo,
       () async {
-        final result = await dvirBackend.getVehicleDefects(uniqueId);
+        final result = await dvirBackend.getVehicleDefects(
+          uniqueId,
+          deviceId: deviceId,
+        );
         return result.fold((error) => Left(_failure(error)), (raw) {
           final defects = parseDvirDefectList(
             raw['data'] ?? raw['items'] ?? raw,
@@ -479,6 +492,9 @@ class DvirRepositoryImpl implements DvirRepository {
       },
     );
   }
+
+  @override
+  String? get lastSuccessMessage => dvirBackend.lastServerMessage;
 
   @override
   Future<Either<Failure, bool>> submitDvirReport(
@@ -530,6 +546,8 @@ class DvirRepositoryImpl implements DvirRepository {
           DateTime.now().toUtc().toIso8601String(),
       inspectionType: inspectionTypeWire,
       location: report.location,
+      latitude: report.latitude,
+      longitude: report.longitude,
       odometer: report.odometer,
       trailerNumber: report.trailerId,
       companyName: report.companyName,

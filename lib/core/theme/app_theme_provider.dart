@@ -14,30 +14,47 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final LocalStorageService _storage;
 
-  ThemeModeNotifier(this._storage) : super(ThemeMode.system) {
+  ThemeModeNotifier(this._storage) : super(_resolveInitialThemeMode(_storage)) {
     _loadThemeMode();
+  }
+
+  static ThemeMode _resolveInitialThemeMode(LocalStorageService storage) {
+    try {
+      final themeStr = storage.theme;
+      return ThemeMode.values.firstWhere(
+        (e) => e.name == themeStr,
+        orElse: () => ThemeMode.dark,
+      );
+    } catch (_) {}
+    return ThemeMode.dark;
   }
 
   static const String _oldThemeKey = 'theme_mode';
 
   Future<void> _loadThemeMode() async {
-    // ترحيل من SharedPreferences القديم.
-    final oldPrefs = await SharedPreferences.getInstance();
-    if (oldPrefs.containsKey(_oldThemeKey)) {
-      final oldIndex = oldPrefs.getInt(_oldThemeKey);
-      if (oldIndex != null &&
-          oldIndex >= 0 &&
-          oldIndex < ThemeMode.values.length) {
-        await _storage.setTheme(ThemeMode.values[oldIndex].name);
+    try {
+      // ترحيل من SharedPreferences القديم.
+      final oldPrefs = await SharedPreferences.getInstance();
+      if (oldPrefs.containsKey(_oldThemeKey)) {
+        final oldIndex = oldPrefs.getInt(_oldThemeKey);
+        if (oldIndex != null &&
+            oldIndex >= 0 &&
+            oldIndex < ThemeMode.values.length) {
+          await _storage.setTheme(ThemeMode.values[oldIndex].name);
+        }
+        await oldPrefs.remove(_oldThemeKey);
       }
-      await oldPrefs.remove(_oldThemeKey);
-    }
 
-    final themeStr = _storage.theme;
-    state = ThemeMode.values.firstWhere(
-      (e) => e.name == themeStr,
-      orElse: () => ThemeMode.system,
-    );
+      final themeStr = _storage.theme;
+      if (mounted) {
+        state = ThemeMode.values.firstWhere(
+          (e) => e.name == themeStr,
+          orElse: () => ThemeMode.dark,
+        );
+      }
+    } catch (_) {
+      // Ignore migration lookup errors in test/uninitialized environments
+    }
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

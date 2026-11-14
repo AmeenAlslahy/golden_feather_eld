@@ -722,6 +722,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String get continueDisconnected => 'متابعة بدون اتصال';
 
   @override
+  String get trackingSourceTitle => 'مصدر الموقع';
+
+  @override
+  String get trackingSourceHelp =>
+      'اختر طريقة جلب الموقع: GPS الهاتف أو جهاز ELD عبر البلوتوث.';
+
+  @override
+  String get sourcePhoneGps => 'GPS الهاتف';
+
+  @override
+  String get sourceBleDevice => 'جهاز ELD (بلوتوث)';
+
+  @override
+  String get sourceHybrid => 'مختلط (تلقائي)';
+
+  @override
+  String get scanForDevices => 'بحث عن الأجهزة';
+
+  @override
+  String get stopScan => 'إيقاف البحث';
+
+  @override
+  String get noBleDevicesFound => 'لم يتم العثور على أجهزة بعد';
+
+  @override
+  String get bleDiagnosticsFrames => 'آخر حزم البلوتوث';
+
+  @override
+  String get bleNoFramesCaptured => 'لا توجد حزم ملتقطة بعد';
+
+  @override
+  String get bleScanFailed => 'تعذر بدء بحث البلوتوث';
+
+  @override
   String get usernameRequired => 'اسم المستخدم مطلوب';
 
   @override
@@ -2865,6 +2899,14 @@ class AppLocalizationsAr extends AppLocalizations {
       'لا يوجد اتصال بالشبكة. لم يُرسل طلب المتابعة دون اتصال، وما زلت في شاشة الاتصال.';
 
   @override
+  String get continueDisconnectedLocalPending =>
+      'لا يوجد اتصال بالشبكة. سُجّلت الجلسة محلياً وستُزامن مع الخادم عند عودة الشبكة.';
+
+  @override
+  String get sessionConflictOtherVehicle =>
+      'توجد جلسة نشطة لهذا السائق على مركبة أخرى. أغلقها قبل الاتصال بمركبة جديدة.';
+
+  @override
   String get continueDisconnectedFailed =>
       'تعذر تأكيد المتابعة دون اتصال. لم يبدأ التتبع ولم يتم الانتقال للرئيسية.';
 
@@ -2875,6 +2917,22 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get continueDisconnectedInProgress =>
       'جارٍ تسجيل المتابعة دون اتصال...';
+
+  @override
+  String get bluetoothDisabled =>
+      'البلوتوث متوقف. يرجى تفعيل البلوتوث في الهاتف للمتابعة.';
+
+  @override
+  String get bluetoothPermissionRequired =>
+      'يرجى منح إذن البلوتوث للتطبيق للاتصال بجهاز ELD.';
+
+  @override
+  String get invalidMacAddress =>
+      'عنوان MAC غير صالح. يرجى إدخال عنوان مكون من 6 خانات (مثال: AA:BB:CC:DD:EE:FF).';
+
+  @override
+  String get bluetoothConnectionTimeout =>
+      'تعذر العثور على جهاز ELD أو الاتصال به. يرجى التأكد من تشغيل الجهاز وقربه من الهاتف.';
 
   @override
   String get macAddressRequired => 'عنوان MAC مطلوب.';
@@ -3286,4 +3344,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get statusSyncFailed => 'فشل المزامنة';
+
+  @override
+  String get dvirAddTrailerFirst => 'أضف رقم المقطورة أولاً قبل اختيار عيوبها.';
+
+  @override
+  String get dvirRecordDefectsOrChangeStatus =>
+      'سجّل عيوباً أو اختر الحالة «سليمة» قبل الحفظ.';
+
+  @override
+  String get dvirFutureTimeNotAllowed => 'لا يمكن اختيار وقت في المستقبل.';
 }

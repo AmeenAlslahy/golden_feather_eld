@@ -84,7 +84,7 @@ class AppTextField extends StatelessWidget {
 
     final defaultOutlineBorder = OutlineInputBorder(
       borderRadius: effectiveRadius,
-      borderSide: BorderSide(color: goldenColors.border),
+      borderSide: BorderSide(color: goldenColors.inputBorder),
     );
 
     final defaultFocusedBorder = OutlineInputBorder(
@@ -108,12 +108,12 @@ class AppTextField extends StatelessWidget {
     final defaultDisabledBorder = OutlineInputBorder(
       borderRadius: effectiveRadius,
       borderSide: BorderSide(
-        color: goldenColors.border.withValues(alpha: 0.6),
+        color: goldenColors.inputBorder.withValues(alpha: 0.6),
       ),
     );
 
     final defaultUnderlineBorder = UnderlineInputBorder(
-      borderSide: BorderSide(color: goldenColors.border),
+      borderSide: BorderSide(color: goldenColors.inputBorder),
     );
 
     final defaultUnderlineFocusedBorder = UnderlineInputBorder(
@@ -129,7 +129,7 @@ class AppTextField extends StatelessWidget {
 
     final defaultUnderlineDisabledBorder = UnderlineInputBorder(
       borderSide: BorderSide(
-        color: goldenColors.border.withValues(alpha: 0.6),
+        color: goldenColors.inputBorder.withValues(alpha: 0.6),
       ),
     );
 

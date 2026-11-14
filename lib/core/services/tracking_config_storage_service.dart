@@ -21,6 +21,9 @@ class TrackingConfigStorageService {
   static const String _stopDetectionKey = 'stop_detection';
   static const String _preferPlatformProvidersKey = 'prefer_platform_providers';
   static const String _backendTypeKey = 'backend_type';
+  static const String _trackingSourceModeKey = 'tracking_source_mode';
+  static const String _bleDeviceMacKey = 'ble_device_mac';
+  static const String _bleDeviceNameKey = 'ble_device_name';
 
   // Getters
   String get deviceId => _prefs.getString(_deviceIdKey) ?? '';
@@ -38,6 +41,12 @@ class TrackingConfigStorageService {
   bool get preferPlatformProviders =>
       _prefs.getBool(_preferPlatformProvidersKey) ?? false;
   String get backendType => _prefs.getString(_backendTypeKey) ?? 'traccar';
+
+  /// `phoneGps` | `bleDevice` | `hybrid`.
+  String get trackingSourceMode =>
+      _prefs.getString(_trackingSourceModeKey) ?? 'bleDevice';
+  String? get bleDeviceMac => _prefs.getString(_bleDeviceMacKey);
+  String? get bleDeviceName => _prefs.getString(_bleDeviceNameKey);
 
   // Setters
   Future<void> setDeviceId(String value) =>
@@ -58,6 +67,18 @@ class TrackingConfigStorageService {
       _prefs.setBool(_preferPlatformProvidersKey, value);
   Future<void> setBackendType(String value) =>
       _prefs.setString(_backendTypeKey, value);
+
+  Future<void> setTrackingSourceMode(String value) =>
+      _prefs.setString(_trackingSourceModeKey, value);
+
+  Future<void> setBleDevice({String? macAddress, String? name}) async {
+    if (macAddress != null) {
+      await _prefs.setString(_bleDeviceMacKey, macAddress);
+    }
+    if (name != null) {
+      await _prefs.setString(_bleDeviceNameKey, name);
+    }
+  }
 
   /// Apply settings from URI
   Future<void> applyFromUri(Uri uri) async {

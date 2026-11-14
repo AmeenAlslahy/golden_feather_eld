@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:golden_feather_eld/backend/adapters/mock/mock_adapter.dart';
+import 'package:golden_feather_eld/backend/contracts/driver_session_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/hardware_backend.dart';
 import 'package:golden_feather_eld/backend/contracts/raw_json.dart';
 import 'package:golden_feather_eld/backend/providers/backend_providers.dart';
@@ -12,10 +13,16 @@ import 'package:golden_feather_eld/core/network/core_providers.dart';
 import 'package:golden_feather_eld/core/result/result.dart';
 import 'package:golden_feather_eld/core/services/bluetooth_service.dart';
 import 'package:golden_feather_eld/core/services/local_storage_service.dart';
+import 'package:golden_feather_eld/domain/shared/value_objects.dart';
+import 'package:golden_feather_eld/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:golden_feather_eld/features/connection/data/datasources/eld_session_snapshot_store.dart';
+import 'package:golden_feather_eld/features/connection/domain/eld_session_snapshot.dart';
 import 'package:golden_feather_eld/features/connection/presentation/pages/eld_connection_page.dart';
 import 'package:golden_feather_eld/features/tracking/data/providers/tracking_providers.dart';
 import 'package:golden_feather_eld/features/tracking/domain/entities/location_entity.dart';
 import 'package:golden_feather_eld/features/tracking/domain/repositories/tracking_repository.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
+import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
@@ -24,7 +31,25 @@ class _MockBluetoothService extends Mock implements BluetoothService {}
 
 class _MockHardwareBackend extends Mock implements HardwareBackend {}
 
+class _MockDriverSessionBackend extends Mock implements DriverSessionBackend {}
+
 class _MockTrackingRepository extends Mock implements TrackingRepository {}
+
+/// حالة مركبة ثابتة لاختبارات طبقة الحالة (بلا مستودع/شبكة).
+class _FakeVehicleNotifier extends StateNotifier<VehicleState>
+    implements VehicleNotifier {
+  _FakeVehicleNotifier(super.state);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+const _vehicle = Vehicle(
+  id: 'V-1001',
+  uniqueId: '1001',
+  name: 'Truck 1001',
+  year: '2024',
+);
 
 const _connectRejected = ServerError(
   code: 'eld.session.connectRejected',
@@ -65,12 +90,17 @@ void main() {
         InMemorySharedPreferencesAsync.withData({'language': 'en'});
     storage = LocalStorageService();
     await storage.init();
+    // `LocalStorageService` keeps one process-wide prefs cache; snapshots
+    // written by earlier tests in this file must not leak into the next one.
+    await EldSessionSnapshotStore(storage.prefs).clear(7);
 
     bt = _MockBluetoothService();
     hardware = _MockHardwareBackend();
     tracking = _MockTrackingRepository();
+    registerFallbackValue(const DriverId(0));
 
     when(() => bt.disconnect()).thenAnswer((_) async {});
+    when(() => bt.connect(any())).thenAnswer((_) async {});
     when(
       () => tracking.locationStream,
     ).thenAnswer((_) => const Stream<LocationEntity>.empty());
@@ -83,7 +113,12 @@ void main() {
     when(() => tracking.startTracking()).thenAnswer((_) async => right(true));
   });
 
-  ProviderContainer createContainer({Stream<bool>? connectivity}) {
+  ProviderContainer createContainer({
+    Stream<bool>? connectivity,
+    Vehicle? vehicle = _vehicle,
+    int? driverId,
+    DriverSessionBackend? driverSession,
+  }) {
     final container = ProviderContainer(
       overrides: [
         activeBackendProvider.overrideWithValue(MockAdapter()),
@@ -91,6 +126,18 @@ void main() {
         hardwareBackendProvider.overrideWithValue(hardware),
         localStorageProvider.overrideWithValue(storage),
         trackingRepositoryProvider.overrideWithValue(tracking),
+        vehicleProvider.overrideWith(
+          (ref) => _FakeVehicleNotifier(
+            VehicleState(
+              selectedVehicle: vehicle,
+              vehicles: vehicle == null ? const [] : [vehicle],
+            ),
+          ),
+        ),
+        if (driverId != null)
+          currentDriverIdProvider.overrideWithValue(driverId),
+        if (driverSession != null)
+          driverSessionBackendProvider.overrideWithValue(driverSession),
         if (connectivity != null)
           isConnectedProvider.overrideWith((ref) => connectivity),
       ],
@@ -103,11 +150,15 @@ void main() {
     return container;
   }
 
+  EldSessionSnapshot? snapshotFor(int driverId) =>
+      EldSessionSnapshotStore(storage.prefs).load(driverId);
+
   void stubConnect(Future<Result<RawJson>> Function() answer) {
     when(
       () => hardware.connectSession(
         uniqueId: any(named: 'uniqueId'),
         disconnected: false,
+        driverId: any(named: 'driverId'),
       ),
     ).thenAnswer((_) => answer());
   }
@@ -117,6 +168,7 @@ void main() {
       () => hardware.connectSession(
         uniqueId: any(named: 'uniqueId'),
         disconnected: true,
+        driverId: any(named: 'driverId'),
       ),
     ).thenAnswer((_) => answer());
   }
@@ -152,6 +204,7 @@ void main() {
           () => hardware.connectSession(
             uniqueId: any(named: 'uniqueId'),
             disconnected: false,
+            driverId: any(named: 'driverId'),
           ),
         ).called(1);
         verifyNever(
@@ -189,6 +242,7 @@ void main() {
         () => hardware.connectSession(
           uniqueId: any(named: 'uniqueId'),
           disconnected: true,
+          driverId: any(named: 'driverId'),
         ),
       ).called(1);
 
@@ -226,26 +280,38 @@ void main() {
     );
 
     test(
-      'offline is a failure and never reaches the server or tracking',
+      'offline continue records a pending snapshot and starts tracking',
       () async {
-        final container = createContainer(connectivity: Stream.value(false));
+        final container = createContainer(
+          connectivity: Stream.value(false),
+          driverId: 7,
+        );
         await container.read(isConnectedProvider.future);
         final notifier = container.read(eldConnectionProvider.notifier);
 
         await notifier.continueDisconnected();
 
         final state = container.read(eldConnectionProvider);
-        expect(state.hasFailed, isTrue);
-        expect(state.errorMessage, 'disconnected_offline');
+        expect(state.hasFailed, isFalse);
         expect(state.connectionConfirmed, isFalse);
-        expect(state.infoMessage, isNull);
+        expect(state.localSessionPendingSync, isTrue);
+        expect(state.sessionStarted, isTrue);
+        expect(state.sessionUnconfirmed, isFalse);
+        expect(state.infoMessage, 'session_local_pending');
         verifyNever(
           () => hardware.connectSession(
             uniqueId: any(named: 'uniqueId'),
             disconnected: true,
           ),
         );
-        verifyNever(() => tracking.startTracking());
+        verify(() => tracking.startTracking()).called(1);
+
+        final snapshot = snapshotFor(7);
+        expect(snapshot, isNotNull);
+        expect(snapshot!.syncState, EldSessionSyncState.pending);
+        expect(snapshot.origin, EldSessionOrigin.localManual);
+        expect(snapshot.manualMode, isTrue);
+        expect(snapshot.vehicleUniqueId, '1001');
       },
     );
 
@@ -330,6 +396,153 @@ void main() {
     );
   });
 
+  group('device identity and GET-first', () {
+    test(
+      'POST /connect sends vehicle.uniqueId as deviceId, never the MAC',
+      () async {
+        String? capturedUniqueId;
+        final driverSession = _MockDriverSessionBackend();
+        when(() => driverSession.getActiveSession(any())).thenAnswer(
+          (_) async =>
+              err<RawJson>(const NotFoundError(code: 'eld.session.noneActive')),
+        );
+        when(
+          () => hardware.connectSession(
+            uniqueId: any(named: 'uniqueId'),
+            disconnected: false,
+            driverId: any(named: 'driverId'),
+          ),
+        ).thenAnswer((invocation) async {
+          capturedUniqueId =
+              invocation.namedArguments[#uniqueId] as String?;
+          return ok(const {'id': 1, 'status': 'ACTIVE'});
+        });
+
+        final container = createContainer(
+          driverId: 7,
+          driverSession: driverSession,
+        );
+        final notifier = container.read(eldConnectionProvider.notifier);
+
+        await notifier.attemptConnection('AA:BB:CC:DD:EE:FF');
+
+        expect(capturedUniqueId, '1001');
+        expect(snapshotFor(7)?.vehicleUniqueId, '1001');
+        verify(() => driverSession.getActiveSession(any())).called(1);
+      },
+    );
+
+    test('no selected vehicle is refused before Bluetooth or HTTP', () async {
+      final container = createContainer(vehicle: null, driverId: 7);
+      final notifier = container.read(eldConnectionProvider.notifier);
+
+      await notifier.attemptConnection('AA:BB:CC:DD:EE:FF');
+      expect(
+        container.read(eldConnectionProvider).errorMessage,
+        'vehicle_missing',
+      );
+
+      await notifier.continueDisconnected();
+
+      final state = container.read(eldConnectionProvider);
+      expect(state.hasFailed, isTrue);
+      expect(state.errorMessage, 'vehicle_missing');
+      expect(state.connectionConfirmed, isFalse);
+      expect(state.localSessionPendingSync, isFalse);
+      verifyNever(() => bt.connect(any()));
+      verifyNever(
+        () => hardware.connectSession(
+          uniqueId: any(named: 'uniqueId'),
+          disconnected: false,
+          driverId: any(named: 'driverId'),
+        ),
+      );
+      verifyNever(
+        () => hardware.connectSession(
+          uniqueId: any(named: 'uniqueId'),
+          disconnected: true,
+          driverId: any(named: 'driverId'),
+        ),
+      );
+    });
+
+    test(
+      'GET-first adopts an active server session without a second POST',
+      () async {
+        final driverSession = _MockDriverSessionBackend();
+        when(() => driverSession.getActiveSession(any())).thenAnswer(
+          (_) async => ok(const {
+            'id': 55,
+            'status': 'ACTIVE',
+            'connectionStatus': 'CONNECTED',
+            'vehicle': {'uniqueId': '1001', 'name': 'Truck 1001'},
+          }),
+        );
+
+        final container = createContainer(
+          driverId: 7,
+          driverSession: driverSession,
+        );
+        final notifier = container.read(eldConnectionProvider.notifier);
+
+        // لا توجد لقطة محلية سابقة — ومع ذلك يجب أن يُقرأ السيرفر أولاً.
+        await notifier.attemptConnection('AA:BB:CC:DD:EE:FF');
+
+        final state = container.read(eldConnectionProvider);
+        expect(state.connectionConfirmed, isTrue);
+        expect(state.sessionUnconfirmed, isFalse);
+        expect(state.infoMessage, 'connected');
+        verifyNever(
+          () => hardware.connectSession(
+            uniqueId: any(named: 'uniqueId'),
+            disconnected: false,
+            driverId: any(named: 'driverId'),
+          ),
+        );
+        final snapshot = snapshotFor(7);
+        expect(snapshot?.sessionId, 55);
+        expect(snapshot?.syncState, EldSessionSyncState.synced);
+        expect(snapshot?.origin, EldSessionOrigin.server);
+      },
+    );
+
+    test(
+      'an active server session on another vehicle is a conflict',
+      () async {
+        final driverSession = _MockDriverSessionBackend();
+        when(() => driverSession.getActiveSession(any())).thenAnswer(
+          (_) async => ok(const {
+            'id': 70,
+            'status': 'ACTIVE',
+            'vehicle': {'uniqueId': '2002'},
+          }),
+        );
+
+        final container = createContainer(
+          driverId: 7,
+          driverSession: driverSession,
+        );
+        final notifier = container.read(eldConnectionProvider.notifier);
+
+        await notifier.attemptConnection('AA:BB:CC:DD:EE:FF');
+
+        final state = container.read(eldConnectionProvider);
+        expect(state.hasFailed, isTrue);
+        expect(state.errorMessage, 'session_conflict');
+        expect(state.connectionConfirmed, isFalse);
+        expect(snapshotFor(7), isNull);
+        verifyNever(
+          () => hardware.connectSession(
+            uniqueId: any(named: 'uniqueId'),
+            disconnected: false,
+            driverId: any(named: 'driverId'),
+          ),
+        );
+        verifyNever(() => tracking.startTracking());
+      },
+    );
+  });
+
   group('cancellation', () {
     test(
       'before HTTP dispatch: no server write and no unconfirmed warning',
@@ -359,6 +572,7 @@ void main() {
           () => hardware.connectSession(
             uniqueId: any(named: 'uniqueId'),
             disconnected: false,
+            driverId: any(named: 'driverId'),
           ),
         );
         verifyNever(() => tracking.startTracking());
@@ -429,6 +643,7 @@ void main() {
           () => hardware.connectSession(
             uniqueId: any(named: 'uniqueId'),
             disconnected: false,
+            driverId: any(named: 'driverId'),
           ),
         ).called(1);
 

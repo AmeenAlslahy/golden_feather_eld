@@ -48,6 +48,9 @@ class MockSyncEngine implements SyncEngine {
 }
 
 class MockDashboardBackend implements StatusDashboardBackend {
+  @override
+  String? get lastServerMessage => null;
+
   Either<AppError, StatusDashboard> updateResult = Right(_sampleDashboard());
   DutyStatusCode? lastStatus;
   String? lastNotes;

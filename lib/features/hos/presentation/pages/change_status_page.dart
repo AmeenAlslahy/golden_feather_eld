@@ -43,8 +43,11 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
     if (!mounted) return;
 
     switch (result) {
-      case DutyChangeSuccess():
-        AppFeedback.success(context, dutyChangeAcceptedMessage(context));
+      case DutyChangeSuccess(:final message):
+        final feedback = (message != null && message.trim().isNotEmpty)
+            ? message.trim()
+            : dutyChangeAcceptedMessage(context);
+        AppFeedback.success(context, feedback);
         Navigator.pop(context);
       case DutyChangeAlreadyInProgress():
         break;
@@ -201,26 +204,26 @@ class _ChangeStatusPageState extends ConsumerState<ChangeStatusPage> {
                 padding: const EdgeInsets.only(top: AppSpacing.md),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: context.colors.errorContainer,
+                    color: context.dangerContainer,
                     borderRadius: BorderRadius.circular(AppRadius.card),
                     border: Border.all(
-                      color: context.colors.error.withValues(alpha: 0.3),
-                      width: 1,
+                      color: context.danger.withValues(alpha: 0.5),
+                      width: 1.5,
                     ),
                   ),
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.warning_amber_rounded,
-                        color: context.colors.error,
+                        Icons.error,
+                        color: context.danger,
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           context.loc.errorCannotChangeStatusWhileMoving,
                           style: context.styles.body.copyWith(
-                            color: context.colors.onErrorContainer,
+                            color: context.danger,
                             fontWeight: AppTypography.semiBold,
                           ),
                         ),

@@ -22,6 +22,7 @@ void main() {
       expect(colors.textMuted, AppColors.lightTextMuted);
       expect(colors.border, AppColors.lightBorder);
       expect(colors.borderStrong, AppColors.lightBorderStrong);
+      expect(colors.inputBorder, AppColors.lightInputBorder);
       expect(colors.primaryText, AppColors.lightPrimaryText);
       expect(colors.gold, AppColors.goldDeep);
       expect(colors.goldContainer, AppColors.goldBg);
@@ -36,7 +37,7 @@ void main() {
       expect(colors.disabledForeground, AppColors.lightTextMuted);
       expect(colors.disabledSurface, AppColors.lightSurfaceSecondary);
       expect(colors.selectedContainer, AppColors.lightPrimaryContainer);
-      expect(colors.focusRing, AppColors.brandGold);
+      expect(colors.focusRing, AppColors.brandGoldDark);
       expect(colors.pressedOverlay, const Color(0x1F000000));
       expect(colors.hoverOverlay, const Color(0x0A000000));
     });
@@ -53,6 +54,7 @@ void main() {
       expect(colors.textMuted, AppColors.darkTextMuted);
       expect(colors.border, AppColors.darkBorder);
       expect(colors.borderStrong, AppColors.darkBorderStrong);
+      expect(colors.inputBorder, AppColors.darkInputBorder);
       expect(colors.primaryText, AppColors.darkPrimaryText);
       expect(colors.gold, AppColors.primaryGold);
       expect(colors.goldContainer, AppColors.darkGoldBg);
@@ -80,6 +82,7 @@ void main() {
       expect(colors.disabledSurface, isNot(light.disabledSurface));
       expect(colors.selectedContainer, isNot(light.selectedContainer));
       expect(colors.focusRing, isNot(light.focusRing));
+      expect(colors.inputBorder, isNot(light.inputBorder));
     });
 
     // =========================================================================
@@ -92,12 +95,14 @@ void main() {
         focusRing: const Color(0xFF445566),
         disabledForeground: const Color(0xFF778899),
         selectedContainer: const Color(0xFFAABBCC),
+        inputBorder: const Color(0xFFDDEEFF),
       );
 
       expect(modified.screenSurface, const Color(0xFF112233));
       expect(modified.focusRing, const Color(0xFF445566));
       expect(modified.disabledForeground, const Color(0xFF778899));
       expect(modified.selectedContainer, const Color(0xFFAABBCC));
+      expect(modified.inputBorder, const Color(0xFFDDEEFF));
 
       // Unchanged fields remain equal to base
       expect(modified.background, base.background);
@@ -114,16 +119,19 @@ void main() {
       expect(lerp0.screenSurface, light.screenSurface);
       expect(lerp0.textPrimary, light.textPrimary);
       expect(lerp0.focusRing, light.focusRing);
+      expect(lerp0.inputBorder, light.inputBorder);
 
       final lerp1 = light.lerp(dark, 1.0);
       expect(lerp1.screenSurface, dark.screenSurface);
       expect(lerp1.textPrimary, dark.textPrimary);
       expect(lerp1.focusRing, dark.focusRing);
+      expect(lerp1.inputBorder, dark.inputBorder);
 
       final lerp50 = light.lerp(dark, 0.5);
       expect(lerp50.screenSurface, Color.lerp(light.screenSurface, dark.screenSurface, 0.5));
       expect(lerp50.disabledSurface, Color.lerp(light.disabledSurface, dark.disabledSurface, 0.5));
       expect(lerp50.selectedContainer, Color.lerp(light.selectedContainer, dark.selectedContainer, 0.5));
+      expect(lerp50.inputBorder, Color.lerp(light.inputBorder, dark.inputBorder, 0.5));
 
       // Non-GoldenColors fallback
       expect(light.lerp(null, 0.5), light);
@@ -164,6 +172,7 @@ void main() {
               expect(context.textMuted, golden.textMuted);
               expect(context.border, golden.border);
               expect(context.borderStrong, golden.borderStrong);
+              expect(context.inputBorder, golden.inputBorder);
               expect(context.screenSurface, golden.screenSurface);
               expect(context.background, golden.background);
               expect(context.surfaceSecondary, golden.surfaceSecondary);
@@ -206,6 +215,7 @@ void main() {
               expect(context.textMuted, golden.textMuted);
               expect(context.border, golden.border);
               expect(context.borderStrong, golden.borderStrong);
+              expect(context.inputBorder, golden.inputBorder);
               expect(context.screenSurface, golden.screenSurface);
               expect(context.background, golden.background);
               expect(context.surfaceSecondary, golden.surfaceSecondary);

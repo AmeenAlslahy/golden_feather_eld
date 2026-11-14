@@ -81,9 +81,6 @@ dependencies {
     // Import the Firebase BoM (Bill of Materials) for version alignment
     implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
 
-    // Firebase Analytics (required by BoM)
-    implementation("com.google.firebase:firebase-analytics")
-
     // Firebase Crashlytics
     implementation("com.google.firebase:firebase-crashlytics")
 

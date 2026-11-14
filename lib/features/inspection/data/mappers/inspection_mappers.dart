@@ -6,7 +6,7 @@ import '../../domain/transfer_audit.dart';
 
 /// Reads the server transfer body. A missing status is not a local file.
 TransferOutcome readTransferOutcome(Map<String, dynamic> json) {
-  final message = json['message'];
+  final message = json['serverMessage'] ?? json['message'];
   final status = json['status'];
   final statusText = status is String ? status.trim() : '';
   final messageText = message is String ? message.trim() : '';

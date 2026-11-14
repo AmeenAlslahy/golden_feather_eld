@@ -52,6 +52,9 @@ import 'package:golden_feather_eld/features/sync/domain/usecases/sync_engine.dar
 /// FAKE: replaces EldEngineAdapter.
 class _Backend implements StatusDashboardBackend {
   _Backend({this.onlineFails = false, this.drive = const Duration(hours: 5)});
+
+  @override
+  String? get lastServerMessage => null;
   bool onlineFails;
   Duration drive;
   Duration lastRecapUsed = const Duration(hours: 61);

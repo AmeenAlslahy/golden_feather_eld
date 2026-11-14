@@ -40,7 +40,8 @@ class _OnlineNetwork implements NetworkInfo {
   Stream<bool> get onConnectionChange => const Stream.empty();
 }
 
-class _FakeTrackingStorage extends Mock implements TrackingConfigStorageService {
+class _FakeTrackingStorage extends Mock
+    implements TrackingConfigStorageService {
   @override
   String get deviceId => '1001';
 }
@@ -72,7 +73,8 @@ class _ScreenshotDvirBackend extends MockDvirBackend {
       'location': 'Phoenix Terminal, Bay 4',
       'odometer': 142500.0,
       'companyName': 'Golden Feather Transport Inc.',
-      'remarks': 'Left front tire worn; scheduled for replacement at next stop.',
+      'remarks':
+          'Left front tire worn; scheduled for replacement at next stop.',
       'defects': [
         {
           'itemCode': 'TIRES',
@@ -152,7 +154,10 @@ class _ScreenshotDvirBackend extends MockDvirBackend {
   }
 
   @override
-  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async {
+  Future<Result<RawJson>> getVehicleDefects(
+    String uniqueId, {
+    int? deviceId,
+  }) async {
     return ok({
       'data': [
         {
@@ -196,24 +201,34 @@ void main() {
       final robotoLoader = FontLoader('Roboto');
       final regularFile = File('assets/fonts/google_fonts/Roboto-Regular.ttf');
       if (regularFile.existsSync()) {
-        robotoLoader.addFont(Future.value(ByteData.view(regularFile.readAsBytesSync().buffer)));
+        robotoLoader.addFont(
+          Future.value(ByteData.view(regularFile.readAsBytesSync().buffer)),
+        );
       }
       final mediumFile = File('assets/fonts/google_fonts/Roboto-Medium.ttf');
       if (mediumFile.existsSync()) {
-        robotoLoader.addFont(Future.value(ByteData.view(mediumFile.readAsBytesSync().buffer)));
+        robotoLoader.addFont(
+          Future.value(ByteData.view(mediumFile.readAsBytesSync().buffer)),
+        );
       }
       final boldFile = File('assets/fonts/google_fonts/Roboto-Bold.ttf');
       if (boldFile.existsSync()) {
-        robotoLoader.addFont(Future.value(ByteData.view(boldFile.readAsBytesSync().buffer)));
+        robotoLoader.addFont(
+          Future.value(ByteData.view(boldFile.readAsBytesSync().buffer)),
+        );
       }
       await robotoLoader.load();
     } catch (_) {}
 
     try {
-      final iconFile = File(r'D:\Flutter\bin\cache\artifacts\material_fonts\materialicons-regular.otf');
+      final iconFile = File(
+        r'D:\Flutter\bin\cache\artifacts\material_fonts\materialicons-regular.otf',
+      );
       if (iconFile.existsSync()) {
         final iconLoader = FontLoader('MaterialIcons');
-        iconLoader.addFont(Future.value(ByteData.view(iconFile.readAsBytesSync().buffer)));
+        iconLoader.addFont(
+          Future.value(ByteData.view(iconFile.readAsBytesSync().buffer)),
+        );
         await iconLoader.load();
       }
     } catch (_) {}
@@ -229,7 +244,8 @@ void main() {
     required String filename,
   }) async {
     await tester.binding.runAsync(() async {
-      final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final boundary =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: 2.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final bytes = byteData!.buffer.asUint8List();
@@ -241,7 +257,8 @@ void main() {
       final file = File('build/screenshots/$filename');
       await file.writeAsBytes(bytes);
 
-      const artifactDir = r'C:\Users\Owner\.gemini\antigravity-ide\brain\5a94c5e4-5889-4e0e-a640-28bea96b9f8a';
+      const artifactDir =
+          r'C:\Users\Owner\.gemini\antigravity-ide\brain\5a94c5e4-5889-4e0e-a640-28bea96b9f8a';
       final artDir = Directory(artifactDir);
       if (artDir.existsSync()) {
         await File('$artifactDir/$filename').writeAsBytes(bytes);
@@ -264,7 +281,9 @@ void main() {
           dvirBackendProvider.overrideWithValue(backend),
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
           networkInfoProvider.overrideWithValue(_OnlineNetwork()),
-          trackingConfigStorageProvider.overrideWithValue(_FakeTrackingStorage()),
+          trackingConfigStorageProvider.overrideWithValue(
+            _FakeTrackingStorage(),
+          ),
           dashboardDataProvider.overrideWith(
             (ref) => DashboardNotifier()
               ..updateVehicle(
@@ -300,7 +319,9 @@ void main() {
     );
   }
 
-  testWidgets('Capture 11 DVIR screens for Phase 4 visual verification', (tester) async {
+  testWidgets('Capture 11 DVIR screens for Phase 4 visual verification', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390 * 2.0, 844 * 2.0);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -308,65 +329,98 @@ void main() {
 
     // 1. New Inspection — Light
     final key1 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key1,
-      child: const DvirFormPage(),
-      theme: AppTheme.light,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key1,
+        child: const DvirFormPage(),
+        theme: AppTheme.light,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key1, filename: 'dvir_new_inspection_light.png');
+    await captureScreen(
+      tester: tester,
+      key: key1,
+      filename: 'dvir_new_inspection_light.png',
+    );
 
     // 2. New Inspection — Dark
     final key2 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key2,
-      child: const DvirFormPage(),
-      theme: AppTheme.dark,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key2,
+        child: const DvirFormPage(),
+        theme: AppTheme.dark,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key2, filename: 'dvir_new_inspection_dark.png');
+    await captureScreen(
+      tester: tester,
+      key: key2,
+      filename: 'dvir_new_inspection_dark.png',
+    );
 
     // 3. New Inspection — Arabic RTL
     final key3 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key3,
-      child: const DvirFormPage(),
-      theme: AppTheme.dark,
-      locale: const Locale('ar'),
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key3,
+        child: const DvirFormPage(),
+        theme: AppTheme.dark,
+        locale: const Locale('ar'),
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key3, filename: 'dvir_new_inspection_arabic_rtl.png');
+    await captureScreen(
+      tester: tester,
+      key: key3,
+      filename: 'dvir_new_inspection_arabic_rtl.png',
+    );
 
     // 4. New Inspection — Spanish LTR
     final key4 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key4,
-      child: const DvirFormPage(),
-      theme: AppTheme.light,
-      locale: const Locale('es'),
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key4,
+        child: const DvirFormPage(),
+        theme: AppTheme.light,
+        locale: const Locale('es'),
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key4, filename: 'dvir_new_inspection_spanish_ltr.png');
+    await captureScreen(
+      tester: tester,
+      key: key4,
+      filename: 'dvir_new_inspection_spanish_ltr.png',
+    );
 
     // 5. New Inspection — Validation Errors
     final key5 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key5,
-      child: const DvirFormPage(),
-      theme: AppTheme.light,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key5,
+        child: const DvirFormPage(),
+        theme: AppTheme.light,
+      ),
+    );
     await tester.pumpAndSettle();
     // Scroll down to submit button and trigger validation
     await tester.drag(find.byType(ListView), const Offset(0, -900));
     await tester.pumpAndSettle();
     final submitSection = find.byType(DvirSubmitButtonSection);
-    final submitBtn = find.descendant(of: submitSection, matching: find.byType(AppButton));
+    final submitBtn = find.descendant(
+      of: submitSection,
+      matching: find.byType(AppButton),
+    );
     await tester.tap(submitBtn);
     await tester.pumpAndSettle();
     // Scroll slightly up so inputs with errors are visible
     await tester.drag(find.byType(ListView), const Offset(0, 300));
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key5, filename: 'dvir_new_inspection_validation_errors.png');
+    await captureScreen(
+      tester: tester,
+      key: key5,
+      filename: 'dvir_new_inspection_validation_errors.png',
+    );
 
     // 6. New Inspection — Defects Selected
     const draftWithDefects = DvirReport(
@@ -391,64 +445,100 @@ void main() {
       outOfService: false,
     );
     final key6 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key6,
-      child: const DvirFormPage(existingReport: draftWithDefects),
-      theme: AppTheme.dark,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key6,
+        child: const DvirFormPage(existingReport: draftWithDefects),
+        theme: AppTheme.dark,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key6, filename: 'dvir_new_inspection_defects_selected.png');
+    await captureScreen(
+      tester: tester,
+      key: key6,
+      filename: 'dvir_new_inspection_defects_selected.png',
+    );
 
     // 7. New Inspection — Signature Section
     final key7 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key7,
-      child: const DvirFormPage(),
-      theme: AppTheme.light,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key7,
+        child: const DvirFormPage(),
+        theme: AppTheme.light,
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.drag(find.byType(ListView), const Offset(0, -650));
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key7, filename: 'dvir_new_inspection_signature_section.png');
+    await captureScreen(
+      tester: tester,
+      key: key7,
+      filename: 'dvir_new_inspection_signature_section.png',
+    );
 
     // 8. DVIR List — Light
     final key8 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key8,
-      child: const DvirListPage(),
-      theme: AppTheme.light,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key8,
+        child: const DvirListPage(),
+        theme: AppTheme.light,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key8, filename: 'dvir_list_light.png');
+    await captureScreen(
+      tester: tester,
+      key: key8,
+      filename: 'dvir_list_light.png',
+    );
 
     // 9. DVIR List — Dark
     final key9 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key9,
-      child: const DvirListPage(),
-      theme: AppTheme.dark,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key9,
+        child: const DvirListPage(),
+        theme: AppTheme.dark,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key9, filename: 'dvir_list_dark.png');
+    await captureScreen(
+      tester: tester,
+      key: key9,
+      filename: 'dvir_list_dark.png',
+    );
 
     // 10. DVIR Details — Light
     final key10 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key10,
-      child: const DvirDetailPage(dvirId: '1'),
-      theme: AppTheme.light,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key10,
+        child: const DvirDetailPage(dvirId: '1'),
+        theme: AppTheme.light,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key10, filename: 'dvir_details_light.png');
+    await captureScreen(
+      tester: tester,
+      key: key10,
+      filename: 'dvir_details_light.png',
+    );
 
     // 11. DVIR Details — Dark
     final key11 = GlobalKey();
-    await tester.pumpWidget(buildHarness(
-      repaintKey: key11,
-      child: const DvirDetailPage(dvirId: '1'),
-      theme: AppTheme.dark,
-    ));
+    await tester.pumpWidget(
+      buildHarness(
+        repaintKey: key11,
+        child: const DvirDetailPage(dvirId: '1'),
+        theme: AppTheme.dark,
+      ),
+    );
     await tester.pumpAndSettle();
-    await captureScreen(tester: tester, key: key11, filename: 'dvir_details_dark.png');
+    await captureScreen(
+      tester: tester,
+      key: key11,
+      filename: 'dvir_details_dark.png',
+    );
   });
 }

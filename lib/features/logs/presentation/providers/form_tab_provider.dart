@@ -384,9 +384,12 @@ class FormTabNotifier extends StateNotifier<FormTabState> {
             ),
           );
 
-      final msg = complete == false
-          ? loc.serverSavedFormIncomplete
-          : loc.successMessage;
+      final serverMsg = read.message;
+      final msg = (serverMsg != null && serverMsg.trim().isNotEmpty)
+          ? serverMsg.trim()
+          : (complete == false
+              ? loc.serverSavedFormIncomplete
+              : loc.successMessage);
       onSuccess(msg);
       return null;
     });

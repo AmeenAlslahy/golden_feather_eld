@@ -14,6 +14,16 @@ String? readOperableUniqueId(String? uniqueId) {
   return id;
 }
 
+/// هوية **قناة التتبع** (Traccar/OsmAnd `id=`) — وهي `uniqueId` النصي فقط.
+///
+/// `Vehicle.deviceId` الرقمي معرّف مختلف يخص عقود DVIR/الداشبورد/الأحداث،
+/// ولا يُستخدم هنا: كان يُفضَّل عليه فيُرسل إلى Traccar معرّف غير مسجّل
+/// (وقد يكون رقم الشاحنة أو مجرد `json['id']`). الوحيد هو `uniqueId`،
+/// وبنفس القيمة التي تُرسل كـ `deviceId` في `POST /eld/sessions/connect`.
+String? resolveTrackingDeviceId(Vehicle? vehicle) {
+  return readOperableUniqueId(vehicle?.uniqueId);
+}
+
 /// Company-fleet browse is view. Operate only if this driver is assigned
 /// and another driver is not already using the vehicle.
 bool listedVehicleIsOperable({
@@ -69,7 +79,8 @@ Vehicle? readVehicle(Map<String, dynamic> json) {
   final id = uniqueId ?? vehicleId;
   if (id == null) return null;
   // deviceId الرقمي للجهاز — حقل مستقل عن uniqueId النصي (SRS: لا
-  // استبدال ولا اختراع؛ يُقرأ كما يرسله الخادم فقط).
+  // استبدال ولا اختراع؛ يُقرأ كما يرسله الخادم فقط) ويخص عقود
+  // DVIR/الداشبورد. هوية التتبع هي uniqueId وحدها.
   final rawDeviceId = json['deviceId'] ?? json['id'];
   final deviceId = rawDeviceId == null
       ? null

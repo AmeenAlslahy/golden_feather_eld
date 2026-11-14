@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
 import 'package:golden_feather_eld/features/vehicle/domain/vehicle_selection.dart';
 
 void main() {
@@ -6,6 +7,38 @@ void main() {
     expect(readOperableUniqueId(null), isNull);
     expect(readOperableUniqueId('No Vehicle'), isNull);
     expect(readOperableUniqueId('1001'), '1001');
+  });
+
+  test('tracking identity is uniqueId, never the numeric deviceId', () {
+    // الرقمي موجود (وقد يكون رقم الشاحنة) لكن التتبع يجب أن يستخدم uniqueId.
+    const numericOnly = Vehicle(
+      id: 'TRK-101',
+      uniqueId: '00:1A:7D:DA:71:13',
+      deviceId: 101,
+      name: 'Truck',
+      year: '2022',
+    );
+    expect(resolveTrackingDeviceId(numericOnly), '00:1A:7D:DA:71:13');
+
+    const withSpaces = Vehicle(
+      id: 'TRK-101',
+      uniqueId: '  imei-101  ',
+      deviceId: 101,
+      name: 'Truck',
+      year: '2022',
+    );
+    expect(resolveTrackingDeviceId(withSpaces), 'imei-101');
+  });
+
+  test('tracking identity is never invented when uniqueId is absent', () {
+    const numericOnly = Vehicle(
+      id: 'TRK-101',
+      deviceId: 101,
+      name: 'Truck',
+      year: '2022',
+    );
+    expect(resolveTrackingDeviceId(numericOnly), isNull);
+    expect(resolveTrackingDeviceId(null), isNull);
   });
 
   test('unknown speed is not treated as stopped', () {

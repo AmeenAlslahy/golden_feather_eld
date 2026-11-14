@@ -75,7 +75,9 @@ void main() {
       final events = await queue.getReadyEvents(limit: 10);
       expect(events.length, 1);
       expect(events.first.type, 'dvir_create');
-      expect(events.first.payload['uniqueId'], 'TRK-100');
+      // الخادم يحل الجهاز من vehicle.uniqueId فقط — المعرّف المرسل هو
+      // الرقمي كسلسلة (تجربة 200: "485"→485؛ النصي أعاد NPE).
+      expect(events.first.payload['vehicle']['uniqueId'], '10');
 
       // Cached previous DVIR is updated
       final prevResult = await repo.getPreviousDvir('TRK-100');
@@ -154,7 +156,7 @@ void main() {
       final events = await queue.getReadyEvents(limit: 10);
       expect(events.length, 1);
       expect(events.first.type, 'dvir_create');
-      expect(events.first.payload['uniqueId'], 'TRK-300');
+      expect(events.first.payload['vehicle']['uniqueId'], '10');
     },
   );
 }

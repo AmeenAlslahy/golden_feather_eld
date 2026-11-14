@@ -18,8 +18,8 @@ class UserPreferencesStorageService {
   bool get onboardingSeen => _prefs.getBool(_onboardingSeenKey) ?? false;
   Future<void> setOnboardingSeen() => _prefs.setBool(_onboardingSeenKey, true);
 
-  String get language => _prefs.getString(_languageKey) ?? 'ar';
-  String get theme => _prefs.getString(_themeKey) ?? 'system';
+  String get language => _prefs.getString(_languageKey) ?? 'en';
+  String get theme => _prefs.getString(_themeKey) ?? 'dark';
   String get currentDutyStatus =>
       _prefs.getString(_currentDutyStatusKey) ?? 'off_duty';
   String? get stationarySince => _prefs.getString(_stationarySinceKey);

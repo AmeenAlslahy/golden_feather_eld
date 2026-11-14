@@ -63,6 +63,8 @@ void main() {
 
     setUp(() {
       localDataSource = _MockLocalDataSource();
+      when(() => localDataSource.getCachedDailyForm(any())).thenAnswer((_) async => null);
+      when(() => localDataSource.getCachedDailyLogs(any())).thenAnswer((_) async => null);
       dailyLogsBackend = _MockDailyLogsBackend();
       dutyStatusBackend = _MockDutyStatusBackend();
       networkInfo = _MockNetworkInfo();
@@ -171,17 +173,20 @@ void main() {
         expect(dispatchResult.isRight(), isTrue);
         expect(dispatchResult.getOrElse((_) => false), isTrue);
 
-        // 6. Verify network payload conforms to existing server contract
-        // (canonical location object + text, NO fabricated device GPS coordinates)
+        // 6. Verify network payload conforms to official Swagger contract:
+        // PUT /eld/daily-logs/{id}/events/{eventId}
+        // Location is an object with { latitude, longitude } (original coords preserved without fabricated GPS)
+        // manualLocation is a string containing textual location
         expect(capturedPutPayload, isNotNull);
         expect(capturedPutPayload!['status'], 'OFF_DUTY');
         expect(capturedPutPayload!['locationText'], initialLocationName);
-        expect(capturedPutPayload!['location'], {'description': initialLocationName});
-        // Crucial: until contract confirmation, coordinates are not attached to network payload
-        expect(capturedPutPayload!.containsKey('latitude'), isFalse,
-            reason: 'Network payload must not guess latitude structure before server contract confirmation');
-        expect(capturedPutPayload!.containsKey('longitude'), isFalse,
-            reason: 'Network payload must not guess longitude structure before server contract confirmation');
+        expect(capturedPutPayload!['manualLocation'], initialLocationName);
+        expect(capturedPutPayload!['location'], {
+          'latitude': initialLat,
+          'longitude': initialLng,
+        });
+        expect((capturedPutPayload!['location'] as Map).containsKey('description'), isFalse,
+            reason: 'OAS 3.0 schema expects location: { latitude, longitude }, not description');
 
         // 7. Verification of local cache merge:
         // Even when server echoes back an event without coordinates, mergeJson preserves original coordinates
@@ -198,6 +203,169 @@ void main() {
             reason: 'Original latitude survives server roundtrip without being wiped or overwritten');
         expect(confirmedModel.originalLongitude, initialLng,
             reason: 'Original longitude survives server roundtrip without being wiped or overwritten');
+      },
+    );
+
+    test(
+      'online updateEvent builds exact Swagger payload with resolved vehicle and coordinates',
+      () async {
+        when(() => networkInfo.isConnected).thenReturn(true);
+
+        when(() => localDataSource.getCachedDailyForm(testLogId)).thenAnswer(
+          (_) async => {
+            'vehicle': {'id': 501, 'identifier': 'VH-501'},
+          },
+        );
+
+        when(() => localDataSource.getCachedLogEvents(testLogId)).thenAnswer(
+          (_) async => [
+            {
+              'id': 9001,
+              'status': 'ON_DUTY',
+              'startTime': '2026-10-22T08:00:00Z',
+              'durationSeconds': 3600,
+              'location': initialLocationName,
+              'originalLatitude': initialLat,
+              'originalLongitude': initialLng,
+            },
+          ],
+        );
+
+        Map<String, dynamic>? capturedPayload;
+        when(
+          () => dailyLogsBackend.updateEvent(
+            logId: any(named: 'logId'),
+            eventId: any(named: 'eventId'),
+            event: any(named: 'event'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer((invocation) async {
+          capturedPayload = Map<String, dynamic>.from(
+            invocation.namedArguments[#event] as Map,
+          );
+          // Echo matching Swagger documentation:
+          // { success: true, data: { event: { id, timeRange, status, specialCategory, edited, editedAt, editOrigin } } }
+          return ok(<String, dynamic>{
+            'event': {
+              'id': 9001,
+              'timeRange': {
+                'startTime': '2026-10-22T08:00:00Z',
+                'endTime': '2026-10-22T08:30:00Z',
+                'durationSeconds': 1800,
+                'durationFormatted': '30m',
+              },
+              'status': 'OFF_DUTY',
+              'specialCategory': null,
+              'edited': true,
+              'editedAt': '2026-10-22T09:00:00Z',
+              'editOrigin': 'DRIVER_MANUAL',
+            },
+          });
+        });
+
+        when(
+          () => localDataSource.upsertCachedLogEvent(testLogId, any()),
+        ).thenAnswer((_) async {});
+
+        final updatedEvent = originalServerEvent.copyWith(
+          status: 'OFF',
+          duration: const Duration(minutes: 30),
+          location: 'Amarillo, TX',
+        );
+
+        final result = await repository.updateEvent(
+          updatedEvent,
+          reason: 'Corrected duty status and location',
+          logId: testLogId,
+          ownerDriverId: testOwnerDriverId,
+        );
+
+        expect(result.isRight(), isTrue);
+        final confirmed = result.getOrElse((_) => throw StateError('expected right'))!;
+
+        // 1. Verify Swagger payload structure:
+        expect(capturedPayload, isNotNull);
+        expect(capturedPayload!['status'], 'OFF_DUTY');
+        expect(capturedPayload!['vehicleId'], 501);
+        expect(capturedPayload!['vehicle'], {'id': 501});
+        expect(capturedPayload!['location'], {
+          'latitude': initialLat,
+          'longitude': initialLng,
+        });
+        expect(capturedPayload!['manualLocation'], 'Amarillo, TX');
+        expect(capturedPayload!['reason'], 'Corrected duty status and location');
+
+        // 2. Verify confirmed event model preserved coordinates and updated location
+        // despite server echo omitting location keys:
+        expect(confirmed.location, 'Amarillo, TX');
+        expect(confirmed.originalLatitude, initialLat);
+        expect(confirmed.originalLongitude, initialLng);
+        expect(confirmed.status, 'OFF');
+        expect(confirmed.duration, const Duration(minutes: 30));
+        expect(confirmed.syncStatus, EventSyncStatus.none);
+      },
+    );
+
+    test(
+      'online updateEvent without coordinates omits location object and sends manualLocation',
+      () async {
+        when(() => networkInfo.isConnected).thenReturn(true);
+        when(() => localDataSource.getCachedDailyForm(testLogId)).thenAnswer((_) async => null);
+        when(() => localDataSource.getCachedDailyLogs(testOwnerDriverId)).thenAnswer((_) async => null);
+        when(() => localDataSource.getCachedLogEvents(testLogId)).thenAnswer((_) async => []);
+
+        Map<String, dynamic>? capturedPayload;
+        when(
+          () => dailyLogsBackend.updateEvent(
+            logId: any(named: 'logId'),
+            eventId: any(named: 'eventId'),
+            event: any(named: 'event'),
+            expectedOwnerDriverId: any(named: 'expectedOwnerDriverId'),
+          ),
+        ).thenAnswer((invocation) async {
+          capturedPayload = Map<String, dynamic>.from(
+            invocation.namedArguments[#event] as Map,
+          );
+          return ok(<String, dynamic>{
+            'event': {
+              'id': 9002,
+              'timeRange': {
+                'startTime': '2026-10-22T10:00:00Z',
+                'endTime': '2026-10-22T10:15:00Z',
+                'durationSeconds': 900,
+              },
+              'status': 'ON_DUTY',
+            },
+          });
+        });
+
+        when(() => localDataSource.upsertCachedLogEvent(testLogId, any())).thenAnswer((_) async {});
+
+        final eventWithoutCoords = LogEvent(
+          id: '9002',
+          status: 'ON',
+          startTime: DateTime.utc(2026, 10, 22, 10, 0, 0),
+          duration: const Duration(minutes: 15),
+          location: 'Rest Area Mile 45',
+        );
+
+        final result = await repository.updateEvent(
+          eventWithoutCoords,
+          reason: 'Routine inspection',
+          logId: testLogId,
+          ownerDriverId: testOwnerDriverId,
+        );
+
+        expect(result.isRight(), isTrue);
+        expect(capturedPayload, isNotNull);
+        expect(capturedPayload!.containsKey('location'), isFalse,
+            reason: 'When coordinates are absent, location object should not be sent with null/fake values');
+        expect(capturedPayload!['manualLocation'], 'Rest Area Mile 45');
+
+        final confirmed = result.getOrElse((_) => throw StateError('expected right'))!;
+        expect(confirmed.location, 'Rest Area Mile 45');
+        expect(confirmed.originalLatitude, isNull);
+        expect(confirmed.originalLongitude, isNull);
       },
     );
   });

@@ -18,8 +18,8 @@ class SessionUnconfirmedBanner extends StatelessWidget {
           color: context.warningContainer,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: context.warning.withValues(alpha: 0.3),
-            width: 1,
+            color: context.warning.withValues(alpha: 0.5),
+            width: 1.5,
           ),
         ),
         padding: const EdgeInsets.symmetric(
@@ -72,11 +72,11 @@ class ConnectionFailureBanner extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Container(
         decoration: BoxDecoration(
-          color: context.colors.errorContainer,
+          color: context.dangerContainer,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: context.colors.error.withValues(alpha: 0.3),
-            width: 1,
+            color: context.danger.withValues(alpha: 0.5),
+            width: 1.5,
           ),
         ),
         padding: const EdgeInsets.symmetric(
@@ -85,13 +85,13 @@ class ConnectionFailureBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: context.colors.error),
+            Icon(Icons.error, color: context.danger),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 message,
                 style: context.styles.body.copyWith(
-                  color: context.colors.onErrorContainer,
+                  color: context.danger,
                   fontWeight: AppTypography.semiBold,
                 ),
               ),

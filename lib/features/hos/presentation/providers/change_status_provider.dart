@@ -135,7 +135,8 @@ sealed class DutyChangeResult {
 }
 
 class DutyChangeSuccess extends DutyChangeResult {
-  const DutyChangeSuccess();
+  final String? message;
+  const DutyChangeSuccess([this.message]);
 }
 
 class DutyChangeAlreadyInProgress extends DutyChangeResult {
@@ -435,7 +436,7 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       if (mounted) {
         state = state.copyWith(isSaving: false, isSuccess: true);
       }
-      return const DutyChangeSuccess();
+      return DutyChangeSuccess(outcome.serverMessage);
     } catch (e) {
       if (mounted) {
         state = state.copyWith(

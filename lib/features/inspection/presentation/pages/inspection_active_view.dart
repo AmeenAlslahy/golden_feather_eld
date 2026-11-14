@@ -151,13 +151,13 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.warning.withValues(alpha: 0.15),
+      color: context.dangerContainer,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.compact),
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: context.styles.warning,
+          style: context.styles.error,
         ),
       ),
     );

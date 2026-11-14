@@ -86,6 +86,9 @@ class _Net implements NetworkInfo {
 class _Backend implements StatusDashboardBackend {
   _Backend({this.drive = const Duration(hours: 5), this.onlineFails = false});
 
+  @override
+  String? get lastServerMessage => null;
+
   Duration drive;
   bool onlineFails;
   final List<Completer<Result<StatusDashboard>>> calls = [];

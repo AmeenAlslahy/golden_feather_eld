@@ -92,6 +92,7 @@ class LocalStorageService implements ServerConfigProvider {
     await _setIfNull('stop_detection', true);
     await _setIfNull('wakelock', false);
     await _setIfNull('prefer_platform_providers', false);
+    await _setIfNull('tracking_source_mode', 'bleDevice');
   }
 
   Future<void> _setIfNull<T>(String key, T value) async {
@@ -123,6 +124,9 @@ class LocalStorageService implements ServerConfigProvider {
   bool get wakelock => _trackingStorage.wakelock;
   bool get stopDetection => _trackingStorage.stopDetection;
   bool get preferPlatformProviders => _trackingStorage.preferPlatformProviders;
+  String get trackingSourceMode => _trackingStorage.trackingSourceMode;
+  String? get bleDeviceMac => _trackingStorage.bleDeviceMac;
+  String? get bleDeviceName => _trackingStorage.bleDeviceName;
 
   bool get onboardingSeen => _preferencesStorage.onboardingSeen;
   String get language => _preferencesStorage.language;
@@ -150,6 +154,10 @@ class LocalStorageService implements ServerConfigProvider {
       _trackingStorage.setPreferPlatformProviders(value);
   Future<void> setBackendType(String value) =>
       _trackingStorage.setBackendType(value);
+  Future<void> setTrackingSourceMode(String value) =>
+      _trackingStorage.setTrackingSourceMode(value);
+  Future<void> setBleDevice({String? macAddress, String? name}) =>
+      _trackingStorage.setBleDevice(macAddress: macAddress, name: name);
 
   Future<void> setOnboardingSeen() => _preferencesStorage.setOnboardingSeen();
   Future<void> setLanguage(String value) =>

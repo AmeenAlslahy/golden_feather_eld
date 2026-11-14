@@ -18,9 +18,26 @@ import 'package:golden_feather_eld/core/theme/app_theme.dart';
 import 'package:golden_feather_eld/core/widgets/app_button.dart';
 import 'package:golden_feather_eld/features/connection/presentation/pages/eld_connection_page.dart';
 import 'package:golden_feather_eld/features/connection/presentation/providers/hardware_status_provider.dart';
+import 'package:golden_feather_eld/features/vehicle/domain/entities/vehicle.dart';
+import 'package:golden_feather_eld/features/vehicle/presentation/providers/vehicle_provider.dart';
 import 'package:golden_feather_eld/l10n/app_localizations.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeVehicleNotifier extends StateNotifier<VehicleState>
+    implements VehicleNotifier {
+  _FakeVehicleNotifier(super.state);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+const _vehicle = Vehicle(
+  id: 'V-1001',
+  uniqueId: '1001',
+  name: 'Truck 1001',
+  year: '2024',
+);
 
 class _FakeLocalStorage extends Mock implements LocalStorageService {
   @override
@@ -92,6 +109,7 @@ void main() {
     HardwareBackend? hardware,
     BluetoothService? bluetooth,
     bool? online,
+    Vehicle? vehicle,
   }) async {
     tester.view.physicalSize = const Size(1080, 2340);
     tester.view.devicePixelRatio = 3.0;
@@ -112,6 +130,12 @@ void main() {
             hardwareBackendProvider.overrideWithValue(hardware),
           if (bluetooth != null)
             bluetoothServiceProvider.overrideWithValue(bluetooth),
+          if (vehicle != null)
+            vehicleProvider.overrideWith(
+              (ref) => _FakeVehicleNotifier(
+                VehicleState(selectedVehicle: vehicle, vehicles: [vehicle]),
+              ),
+            ),
         ],
         child: MaterialApp(
           theme: AppTheme.light,
@@ -202,6 +226,7 @@ void main() {
         tester,
         const ConnectivityStatus(connectionStatus: 'DISCONNECTED'),
         bluetooth: bt,
+        vehicle: _vehicle,
       );
       await tester.enterText(find.byType(TextField).first, '44:A4:00:11:22:33');
       final connect = find.widgetWithText(AppButton, 'CONNECT');
@@ -232,6 +257,7 @@ void main() {
         const ConnectivityStatus(connectionStatus: 'DISCONNECTED'),
         hardware: _ServerRefusesHardware(),
         bluetooth: bt,
+        vehicle: _vehicle,
       );
       await tester.enterText(find.byType(TextField).first, '44A4');
       final connect = find.widgetWithText(AppButton, 'CONNECT');
@@ -310,6 +336,7 @@ void main() {
       hardware: hardware,
       bluetooth: bt,
       online: false,
+      vehicle: _vehicle,
     );
 
     final continueButton = find.widgetWithText(
@@ -323,16 +350,12 @@ void main() {
 
     expect(
       find.text(
-        'No network connection. The disconnected-mode request was not sent; '
-        'you are still on the connection screen.',
+        'No network connection. The session was recorded locally and will sync with the server once connected.',
       ),
       findsOneWidget,
     );
     expect(hardware.calls, 0);
-    expect(
-      find.widgetWithText(AppButton, 'CONTINUE DISCONNECTED'),
-      findsOneWidget,
-    );
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets(
@@ -348,6 +371,7 @@ void main() {
         hardware: hardware,
         bluetooth: bt,
         online: true,
+        vehicle: _vehicle,
       );
 
       final continueButton = find.widgetWithText(
@@ -388,6 +412,7 @@ void main() {
         hardware: hardware,
         bluetooth: bt,
         online: true,
+        vehicle: _vehicle,
       );
 
       final continueButton = find.widgetWithText(

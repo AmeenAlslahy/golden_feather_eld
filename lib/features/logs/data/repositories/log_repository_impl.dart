@@ -395,6 +395,41 @@ class LogRepositoryImpl implements LogRepository {
       }
     }
 
+    int? resolvedVehicleId;
+    if (effectiveLogId != null) {
+      try {
+        final cachedForm =
+            await _localDataSource.getCachedDailyForm(effectiveLogId);
+        if (cachedForm != null) {
+          final v = cachedForm['vehicle'];
+          if (v is Map && v['id'] is num) {
+            resolvedVehicleId = (v['id'] as num).toInt();
+          } else if (cachedForm['vehicleId'] is num) {
+            resolvedVehicleId = (cachedForm['vehicleId'] as num).toInt();
+          }
+        }
+      } catch (_) {}
+    }
+    if (resolvedVehicleId == null && ownerDriverId != null) {
+      try {
+        final cachedLogs =
+            await _localDataSource.getCachedDailyLogs(ownerDriverId);
+        if (cachedLogs != null) {
+          for (final item in cachedLogs) {
+            if (item['id'] == effectiveLogId?.value) {
+              final v = item['vehicle'];
+              if (v is Map && v['id'] is num) {
+                resolvedVehicleId = (v['id'] as num).toInt();
+              } else if (item['vehicleId'] is num) {
+                resolvedVehicleId = (item['vehicleId'] as num).toInt();
+              }
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     // If offline, always go local and enqueue for background sync.
     if (!_networkInfo.isConnected) {
       // التعديل لم يصل الخادم بعد: نعلّمه PENDING_SYNC في الكاش والكيان
@@ -434,6 +469,8 @@ class LogRepositoryImpl implements LogRepository {
             'clientId': event.id,
             if (ownerDriverId != null) 'driverId': ownerDriverId,
             if (ownerDriverId != null) 'ownerDriverId': ownerDriverId,
+            if (resolvedVehicleId != null && resolvedVehicleId > 0)
+              'vehicleId': resolvedVehicleId,
           },
           createdAt: _timeAuthority.nowUtc(),
         ),
@@ -445,6 +482,8 @@ class LogRepositoryImpl implements LogRepository {
     final startTimeIso = startTimeUtc.toIso8601String();
 
     // Canonical OAS 3.0 / Swagger PUT /eld/daily-logs/{id}/events/{eventId} body
+    // وفق عقد الخادم المعتمد:
+    // status + timeRange + vehicleId + vehicle + location(lat/lng) + manualLocation + notes + reason
     final updatePayload = <String, dynamic>{
       'status': wire,
       'specialCategory': null,
@@ -458,13 +497,16 @@ class LogRepositoryImpl implements LogRepository {
       'reason': reason.trim(),
       'notes': reason.trim(),
       'editReason': reason.trim(),
-      // TODO(server-team): Confirm whether PUT /eld/daily-logs/{id}/events/{eventId}
-      // accepts 'latitude'/'longitude' as top-level fields or inside 'location: { latitude, longitude }'.
-      // Until confirmed, we do NOT send coordinates to avoid overwriting the server's
-      // authoritative position with stale or null values.
-      // The original coordinates are preserved in-memory via LogEvent.originalLatitude/Longitude.
+      if (resolvedVehicleId != null && resolvedVehicleId > 0) ...{
+        'vehicleId': resolvedVehicleId,
+        'vehicle': {'id': resolvedVehicleId},
+      },
+      if (event.originalLatitude != null && event.originalLongitude != null)
+        'location': {
+          'latitude': event.originalLatitude,
+          'longitude': event.originalLongitude,
+        },
       if (location != null) ...{
-        'location': {'description': location},
         'manualLocation': location,
         'locationText': location,
       },
@@ -534,7 +576,17 @@ class LogRepositoryImpl implements LogRepository {
       final existing = effectiveLogId == null
           ? null
           : await _findCachedEvent(effectiveLogId, event.id);
-      final merged = LogEventModel.mergeJson(existing ?? const {}, candidate);
+      final baseJson = <String, dynamic>{
+        if (existing != null) ...existing,
+        'status': event.status,
+        if (location != null) 'location': location,
+        if (location != null) 'manualLocation': location,
+        if (event.originalLatitude != null)
+          'originalLatitude': event.originalLatitude,
+        if (event.originalLongitude != null)
+          'originalLongitude': event.originalLongitude,
+      };
+      final merged = LogEventModel.mergeJson(baseJson, candidate);
       // التعديل عبر الشبكة مؤكد من الخادم: لا نرث علامة PENDING_SYNC
       // المحلية القديمة إلى النسخة المؤكدة.
       merged.remove('syncStatus');
@@ -991,7 +1043,7 @@ class LogRepositoryImpl implements LogRepository {
               certificationStatus: 'CERTIFIED',
             ),
           );
-          return const CertifySubmission.confirmed();
+          return CertifySubmission.confirmed(serverMessage: data.message);
         },
       );
     }, tag: 'LogRepositoryImpl.certifyLog');

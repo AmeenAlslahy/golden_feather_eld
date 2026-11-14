@@ -453,7 +453,7 @@ void main() {
         DateTime.parse(timeRange['startTime'] as String),
       );
       expect(
-        (captured!['location'] as Map<String, dynamic>)['description'],
+        captured!['manualLocation'],
         'Dock 4',
       );
       expect(

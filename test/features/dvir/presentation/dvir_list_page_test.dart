@@ -121,7 +121,10 @@ class _TwoReportsDvirBackend extends MockDvirBackend {
   }
 
   @override
-  Future<Result<RawJson>> getVehicleDefects(String uniqueId) async {
+  Future<Result<RawJson>> getVehicleDefects(
+    String uniqueId, {
+    int? deviceId,
+  }) async {
     return ok({
       'data': [
         {

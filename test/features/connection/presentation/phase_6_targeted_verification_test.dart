@@ -391,7 +391,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Vehicle moving warning is displayed
-      expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.error), findsOneWidget);
 
       // Non-driving options (Off Duty, Sleeper, On Duty) are disabled while moving
       final offDutyTile =

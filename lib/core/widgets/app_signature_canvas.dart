@@ -63,7 +63,7 @@ class AppSignatureCanvas extends StatelessWidget {
 
     final borderColor = errorText != null
         ? goldenColors.errorText
-        : goldenColors.border;
+        : goldenColors.inputBorder;
     final borderWidth = errorText != null ? 2.0 : 1.0;
 
     return Padding(

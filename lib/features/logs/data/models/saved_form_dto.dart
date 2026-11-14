@@ -14,7 +14,8 @@ class SavedFormDto {
     if (raw == null || raw.isEmpty) {
       raw = indicator?['status']?.toString().trim();
     }
-    final message = body['message']?.toString().trim();
+    final rawMessage = json['message'] ?? body['message'];
+    final message = rawMessage?.toString().trim();
     final text = message == null || message.isEmpty ? null : message;
 
     final indicatorPositive = indicator?['positive'] as bool?;

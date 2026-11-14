@@ -14,8 +14,12 @@ import '../../../http/eld_endpoints.dart';
 /// (SRS §7.13, §8.8, §11).
 class EldUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
   final ApiClient _apiClient;
+  String? _lastServerMessage;
 
-  const EldUnidentifiedEventsBackend(this._apiClient);
+  EldUnidentifiedEventsBackend(this._apiClient);
+
+  @override
+  String? get lastServerMessage => _lastServerMessage;
 
   RawJson _asMap(dynamic data) {
     if (data is Map<String, dynamic>) return data;
@@ -77,6 +81,7 @@ class EldUnidentifiedEventsBackend implements UnidentifiedEventsBackend {
       data: data,
       parser: _asMap,
     );
+    _lastServerMessage = res.valueOrNull?.message;
     return res.flatMap(
       (response) => _checked(response, path).mapValue<void>((_) {}),
     );

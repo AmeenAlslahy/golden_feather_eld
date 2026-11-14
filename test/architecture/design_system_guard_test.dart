@@ -15,13 +15,13 @@ final Map<String, RegExp> _forbiddenPatterns = {
 };
 
 const _allowedViolations = {
-  'features/hos/presentation/widgets/status_dashboard/operational_alerts_banner.dart:115 (direct Colors reference) color: Colors.transparent,',
+  'features/hos/presentation/widgets/status_dashboard/operational_alerts_banner.dart:120 (direct Colors reference) color: Colors.transparent,',
   'features/hos/presentation/widgets/status_option_tiles.dart:43 (direct Colors reference) : Colors.transparent,',
   'features/logs/presentation/pages/suggested_events_page.dart:83 (numeric font size) fontSize: 13,',
-  'features/logs/presentation/pages/unidentified_events_page.dart:147 (direct Colors reference) dividerColor: Colors.transparent,',
-  'features/logs/presentation/pages/unidentified_events_page.dart:148 (direct AppColors reference) labelColor: AppColors.brandBlack,',
-  'features/logs/presentation/pages/unidentified_events_page.dart:149 (direct AppColors reference) unselectedLabelColor: AppColors.brandBlack.withValues(alpha: 0.60),',
-  'features/logs/presentation/pages/unidentified_events_page.dart:150 (direct AppColors reference) indicatorColor: AppColors.brandBlack,',
+  'features/logs/presentation/pages/unidentified_events_page.dart:151 (direct Colors reference) dividerColor: Colors.transparent,',
+  'features/logs/presentation/pages/unidentified_events_page.dart:152 (direct AppColors reference) labelColor: AppColors.brandBlack,',
+  'features/logs/presentation/pages/unidentified_events_page.dart:153 (direct AppColors reference) unselectedLabelColor: AppColors.brandBlack.withValues(alpha: 0.60),',
+  'features/logs/presentation/pages/unidentified_events_page.dart:154 (direct AppColors reference) indicatorColor: AppColors.brandBlack,',
   'features/logs/presentation/widgets/suggested_log_card.dart:79 (numeric font size) fontSize: 15,',
   'features/logs/presentation/widgets/suggested_log_card.dart:100 (numeric font size) fontSize: 11,',
   'features/logs/presentation/widgets/unidentified_events_list.dart:186 (numeric font size) fontSize: 11,',
@@ -31,8 +31,7 @@ const _allowedViolations = {
   'features/logs/presentation/widgets/unidentified_events_list.dart:335 (numeric font size) fontSize: 10,',
   'features/logs/presentation/widgets/unidentified_events_list.dart:504 (numeric font size) fontSize: 10.5,',
   'features/logs/presentation/widgets/unidentified_stats_row.dart:126 (numeric font size) fontSize: 16,',
-  'features/logs/presentation/widgets/unidentified_stats_row.dart:135 (direct AppColors reference) ? AppColors.darkTextSecondary',
-  'features/logs/presentation/widgets/unidentified_stats_row.dart:137 (numeric font size) fontSize: 11.5,',
+  'features/logs/presentation/widgets/unidentified_stats_row.dart:135 (numeric font size) fontSize: 11.5,',
 };
 
 List<String> _scanViolations() {

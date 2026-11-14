@@ -167,7 +167,15 @@ class EldDailyLogsBackend implements DailyLogsBackend {
       expectedOwnerDriverId: expectedOwnerDriverId,
     );
     _invalidateCertifyCache(request.dailyLogId);
-    return res.mapValue((r) => r.data!);
+    return res.mapValue((r) {
+      final dto = r.data!;
+      if ((dto.message == null || dto.message!.isEmpty) &&
+          r.message != null &&
+          r.message!.isNotEmpty) {
+        return dto.copyWith(message: r.message);
+      }
+      return dto;
+    });
   }
 
   @override
