@@ -1,6 +1,0 @@
-﻿00:03 +0 -1: TEST 1: driver B offline never receives driver A cached inspection data [E]
-00:03 +0 -2: TEST 2: two drivers requesting the same date keep separate records [E]
-00:03 +0 -3: TEST 3: data cached in a previous session epoch is never returned [E]
-00:03 +0 -4: TEST 4: FMCSA generation for driver B never embeds driver A data [E]
-00:03 +1 -5: TEST 6: overlapping requests for different drivers stay isolated [E]
-00:03 +1 -5: Some tests failed.

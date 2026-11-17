@@ -1,5 +1,0 @@
-﻿D:/Flutter projects/golden_feather_eld/test/features/inspection/presentation/dot_inspection_page_test.dart: driver exit directly ends inspection, no server call [E]                     
-D:/Flutter projects/golden_feather_eld/test/features/inspection/presentation/send_logs_page_test.dart: a transport error never leaks raw text to the driver [E]                          
-D:/Flutter projects/golden_feather_eld/test/features/inspection/presentation/send_logs_page_test.dart: email mode: invalid address refused; valid ظْ email endpoint [E]                   
-D:/Flutter projects/golden_feather_eld/test/features/inspection/presentation/send_logs_page_test.dart: send mode: valid comment ظْ send-logs (WEB SERVICES default) [E]                   
-D:/Flutter projects/golden_feather_eld/test/features/inspection/presentation/send_logs_page_test.dart: server FAILED status is a refusal, not a success screen [E]                       
