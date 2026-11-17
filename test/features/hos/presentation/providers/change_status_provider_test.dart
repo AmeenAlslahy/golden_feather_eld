@@ -216,7 +216,10 @@ void main() {
   late _FakeNetwork network;
   late _Engine engine;
 
-  ProviderContainer container({HosRulesEngine? engineOverride}) {
+  ProviderContainer container({
+    HosRulesEngine? engineOverride,
+    bool realChangeStatus = false,
+  }) {
     final storage = _Storage();
     when(() => storage.hosConfiguration).thenReturn(HosConfiguration.usa70_8());
 
@@ -240,17 +243,18 @@ void main() {
         trackingStateProvider.overrideWith(
           (ref) => TrackingNotifier(_TrackingRepo(), ref),
         ),
-        changeStatusProvider.overrideWith(
-          (ref) => ChangeStatusNotifier(
-            ref,
-            initialStatus: DutyStatus.offDuty,
-            isYardMoves: false,
-            initialLocation: 'Dallas, TX',
-            isPersonalConveyanceAllowed: false,
-            isYardMoveAllowed: false,
-            isVehicleMoving: false,
+        if (!realChangeStatus)
+          changeStatusProvider.overrideWith(
+            (ref) => ChangeStatusNotifier(
+              ref,
+              initialStatus: DutyStatus.offDuty,
+              isYardMoves: false,
+              initialLocation: 'Dallas, TX',
+              isPersonalConveyanceAllowed: false,
+              isYardMoveAllowed: false,
+              isVehicleMoving: false,
+            ),
           ),
-        ),
       ],
     );
   }
@@ -341,5 +345,52 @@ void main() {
     expect(applied.operationalAlerts.connectionStatus,
         ConnectionStatus.disconnected);
     expect(dashboard.reconcileCalls, 0);
+  });
+
+  // انحدار: نبضة اللوحة (تصحيح كل 5 دقائق أو العودة للتطبيق) كانت تُعيد
+  // بناء المزود كاملاً فيضيع اختيار السائق ويُعطَّل زر التحديث.
+  test('a dashboard emission (periodic reconcile / app resume) keeps the '
+      'driver selection and the same notifier', () async {
+    final c = container(realChangeStatus: true);
+    addTearDown(c.dispose);
+    c.listen(changeStatusProvider, (_, __) {});
+    await c.read(statusDashboardProvider.future);
+
+    final notifier = c.read(changeStatusProvider.notifier);
+    notifier.updateLocation('Dallas, TX');
+    notifier.selectOption(DutyStatusOption.driving);
+
+    expect(
+      c.read(changeStatusProvider).selectedOption,
+      DutyStatusOption.driving,
+    );
+    expect(c.read(changeStatusProvider).isValid, isTrue);
+
+    // نفس الحالة الحالية من الخادم — كما تفعل نبضة التصحيح.
+    c.read(statusDashboardProvider.notifier).applyServerDashboard(_seed());
+
+    expect(
+      c.read(changeStatusProvider).selectedOption,
+      DutyStatusOption.driving,
+    );
+    expect(c.read(changeStatusProvider).isValid, isTrue);
+    expect(identical(c.read(changeStatusProvider.notifier), notifier), isTrue);
+  });
+
+  test('before the driver picks anything, a new server status becomes the '
+      'current status', () async {
+    final c = container(realChangeStatus: true);
+    addTearDown(c.dispose);
+    c.listen(changeStatusProvider, (_, __) {});
+    await c.read(statusDashboardProvider.future);
+
+    c
+        .read(statusDashboardProvider.notifier)
+        .applyServerDashboard(_serverSnapshot(status: DutyStatusCode.driving));
+
+    final state = c.read(changeStatusProvider);
+    expect(state.initialOption, DutyStatusOption.driving);
+    expect(state.selectedOption, DutyStatusOption.driving);
+    expect(state.isValid, isFalse);
   });
 }

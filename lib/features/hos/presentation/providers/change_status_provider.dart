@@ -290,6 +290,26 @@ class ChangeStatusNotifier extends StateNotifier<ChangeStatusState> {
       state = state.copyWith(isVehicleMoving: isMoving);
     });
 
+    // تحديث «الحالة الحالية» عند وصول لوحة جديدة (تصحيح دوري كل 5 دقائق
+    // أو عند العودة للتطبيق) دون المساس باختيار السائق: نُحرّك
+    // [initialOption] فقط، ونُبقي [selectedOption] كما هو — كان المزود
+    // يعيد بناء نفسه بالكامل فيضيع اختيار السائق ويُعطَّل زر التحديث.
+    _ref.listen<AsyncValue<StatusDashboard>>(statusDashboardProvider, (
+      _,
+      next,
+    ) {
+      final code = next.valueOrNull?.currentDutyStatus;
+      if (code == null) return;
+      final option = DutyStatusOption.fromStatusCode(code);
+      if (option == state.initialOption) return;
+      // لم يغيّر السائق شيئاً بعد: يتبع الاختيار الحالة الفعلية الجديدة.
+      final wasOnInitial = state.selectedOption == state.initialOption;
+      state = state.copyWith(
+        initialOption: option,
+        selectedOption: wasOnInitial ? option : state.selectedOption,
+      );
+    });
+
     // الموقع الحي (P3): تعبئة تلقائية للعرض، والإحداثيات الحقيقية تُرسل
     // أيضاً مع الحدث نفسه في [submit] — لا موقع فارغ بلا سبب.
     _ref.listen<TrackingState>(trackingStateProvider, (_, next) {
@@ -483,7 +503,10 @@ final changeStatusProvider =
     StateNotifierProvider.autoDispose<ChangeStatusNotifier, ChangeStatusState>((
       ref,
     ) {
-      final dashboard = ref.watch(statusDashboardProvider).valueOrNull;
+      // قراءة لقطة واحدة عند إنشاء المزود بدل `watch`: إعادة البناء عند كل
+      // تحديث للوحة كانت تُعيد إنشاء المتحكم وتلغي اختيار السائق. المزامنة
+      // الحيّة تتم عبر المستمعات داخل [ChangeStatusNotifier].
+      final dashboard = ref.read(statusDashboardProvider).valueOrNull;
       if (dashboard != null && dashboard.driver.id.value > 0) {
         final stamped = ref.read(activeDriverIdProvider);
         if (stamped?.$2 != dashboard.driver.id.value) {
